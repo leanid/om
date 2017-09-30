@@ -1,0 +1,5 @@
+tests/01-hello-world/.cproject
+tests/01-hello-world/.project
+tests/01-hello-world/.settings/language.settings.xml
+tests/01-hello-world/.settings/org.eclipse.cdt.managedbuilder.core.prefs
+tests/01-hello-world/.gitignore
