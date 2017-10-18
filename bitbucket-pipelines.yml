@@ -1,0 +1,11 @@
+image: leanid/fedora26
+pipelines:
+  default:
+    - step:
+        script:
+          - echo "start building tests only"
+          - cmake -configure tests/01-hello-world/
+          - cmake -generate tests/01-hello-world/
+          - make
+          - ./01-hello-world
+          - echo "finish all good."
