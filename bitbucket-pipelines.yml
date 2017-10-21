@@ -13,5 +13,5 @@ pipelines:
           - mingw64-cmake -configure tests/01-hello-world/
           - mingw64-cmake -generate tests/01-hello-world/
           - mingw64-make
-          - wine ./01-hello-world.exe
+          - WINEPATH=/usr/x86_64-w64-mingw32/sys-root/mingw/bin wine ./01-hello-world.exe
 

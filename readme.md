@@ -54,6 +54,7 @@ RUN dnf install -y gcc-c++
 RUN dnf install -y make
 RUN dnf install -y cmake
 RUN dnf install -y mingw64-gcc
+RUN dnf install -y mingw64-gcc-c++
 RUN dnf install -y clang
 RUN dnf install -y wine
 RUN dnf install -y git
