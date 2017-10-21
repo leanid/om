@@ -38,6 +38,24 @@ $ cmake -G"Makefiles"
 $ make -j 4
 $ bin/engine --test
 ```
+### Generate Docker image
+ - write Dockerfile
+ ```
+ FROM fedora:26
+
+ RUN dnf update -y
+ RUN dnf upgrade -y
+ RUN dnf install -y gcc-c++
+ RUN dnf install -y make
+ RUN dnf install -y cmake
+ RUN dnf install -y mingw64-gcc
+ RUN dnf install -y clang
+ RUN dnf install -y wine
+ RUN dnf install -y git
+ ```
+ - call ```sudo docker build -t leanid/fedora26 .```
+ - call ```sudo docker push leanid/fedora26```
+
 
 ### Todos
 
