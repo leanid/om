@@ -3,9 +3,15 @@ pipelines:
   default:
     - step:
         script:
-          - echo "start building tests only"
+          - git clean -df
           - cmake -configure tests/01-hello-world/
           - cmake -generate tests/01-hello-world/
           - make
           - ./01-hello-world
-          - echo "finish all good."
+          
+          - git clean -df
+          - mingw64-cmake -configure tests/01-hello-world/
+          - mingw64-cmake -generate tests/01-hello-world/
+          - mingw64-make
+          - wine ./01-hello-world.exe
+
