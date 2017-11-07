@@ -9,10 +9,10 @@ configuration:
   - Debug
 
 before_build:
-    - cmake -G "Visual Studio 15 2017 Win64" tests\01-hello-world
+  - cmake -G "Visual Studio 15 2017 Win64" tests\01-hello-world
 
 build:
-  project: $(APPVEYOR_BUILD_FOLDER)\$(APPVEYOR_PROJECT_NAME).sln
+  project: $(APPVEYOR_BUILD_FOLDER)\01-hello-world.sln
 
 test_script:
   - '%APPVEYOR_BUILD_FOLDER%\%CONFIGURATION%\01-hello-world.exe'
