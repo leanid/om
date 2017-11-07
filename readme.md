@@ -2,7 +2,7 @@
 
 [![Om](https://bitbucket.org/account/user/b_y/projects/OM/avatar/32)](https://bitbucket.org/account/user/b_y/projects/OM)
 
-[status](https://ci.appveyor.com/api/projects/status/bitbucket/b_y/om)
+![status](https://ci.appveyor.com/api/projects/status/bitbucket/b_y/om)
 
 Om is a nice 2d game engine for multy platform using. Use it and develop it if you like next principals:
 
