@@ -33,6 +33,8 @@ Om requires [SDL2](http://libsdl.org/) v2.0.5+ to run.
 
 Install the dependencies to build engine on linux.
 
+#### On Ununtu linux
+
 ```sh
 $ git clone git@bitbucket.org:b_y/om.git
 $ sudo apt install libsdl2-dev
@@ -40,8 +42,19 @@ $ cmake -G"Makefiles"
 $ make -j 4
 $ bin/engine --test
 ```
+
+#### On Fedora linux
+```sh
+$ git clone git@bitbucket.org:b_y/om.git
+$ sudo dnf install SDL2
+$ sudo dnf install SDL2-static
+$ cmake -G"Makefiles" 
+$ make -j 4
+$ bin/engine --test
+```
 ### Generate Docker image
  - write Dockerfile
+ - call ```sudo systemctl start docker```
  - call ```sudo docker build -t leanid/fedora26 .```
  - call ```sudo docker push leanid/fedora26```
 
@@ -60,6 +73,10 @@ RUN dnf install -y mingw64-gcc-c++
 RUN dnf install -y clang
 RUN dnf install -y wine
 RUN dnf install -y git
+RUN dnf install -y SDL2-devel
+RUN dnf install -y SDL2-static
+RUN dnf install -y mingw64-SDL2
+RUN dnf install -y mingw64-SDL2-static
 ```
 
 ### Todos

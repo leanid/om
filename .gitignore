@@ -1,3 +1,5 @@
 tests/01-hello-world/.*
 tests/01-hello-world/CMakeFiles/*
 .project
+tests/02-sdl-static/.*
+tests/02-sdl-static/.settings/*
