@@ -21,3 +21,26 @@ pipelines:
           - make
           - ./01-hello-world
 
+          - git clean -df
+          - cmake -configure tests/02-sdl-dynamic/
+          - cmake -generate tests/02-sdl-dynamic/
+          - make
+          - ./02-sdl-dynamic
+
+          - git clean -df
+          - cmake -configure tests/02-sdl-static/
+          - cmake -generate tests/02-sdl-static/
+          - make
+          - ./02-sdl-static
+
+          - git clean -df
+          - mingw64-cmake -configure tests/02-sdl-dynamic/
+          - mingw64-cmake -generate tests/02-sdl-dynamic/
+          - mingw64-make
+          #- WINEPATH=/usr/x86_64-w64-mingw32/sys-root/mingw/bin wine ./02-sdl-dynamic.exe # too long 30 seconds
+
+          - git clean -df
+          - mingw64-cmake -configure tests/02-sdl-static/
+          - mingw64-cmake -generate tests/02-sdl-static/
+          - mingw64-make
+          #- WINEPATH=/usr/x86_64-w64-mingw32/sys-root/mingw/bin wine ./02-sdl-static.exe # too long 30 seconds
