@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.9)
-project(02-sdl-static)
+project(03-sdl-loop)
 
 if(MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
@@ -51,7 +51,6 @@ elseif(UNIX)
     
     target_link_libraries(${PROJECT_NAME} 
                "${SDL2_LIB}" # full path to libSDL2.a force to staticaly link with it
-               -Wl,--no-undefined
                -lm
                -ldl
                -lpthread
