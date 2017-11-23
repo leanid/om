@@ -1,4 +1,8 @@
 .project
+.cproject
 tests/01-hello-world/.*
 tests/02-sdl-dynamic/.*
 tests/02-sdl-static/.*
+tests/03-sdl-loop-to-engine/.*
+tests/*/build/*
+tests/*/.*
