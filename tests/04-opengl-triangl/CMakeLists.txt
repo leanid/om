@@ -27,6 +27,7 @@ if (MINGW)
 elseif(UNIX)
     target_link_libraries(engine
                -lSDL2
+               -lGL
                )
 endif()
 

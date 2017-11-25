@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cassert>
 #include <exception>
 #include <iostream>
 #include <sstream>
@@ -10,6 +11,34 @@
 #include <vector>
 
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_opengles2.h>
+
+#define OM_GL_CHECK()                                                          \
+    {                                                                          \
+        const int err = glGetError();                                          \
+        if (err != GL_NO_ERROR)                                                \
+        {                                                                      \
+            switch (err)                                                       \
+            {                                                                  \
+                case GL_INVALID_ENUM:                                          \
+                    std::cerr << GL_INVALID_ENUM << std::endl;                 \
+                    break;                                                     \
+                case GL_INVALID_VALUE:                                         \
+                    std::cerr << GL_INVALID_VALUE << std::endl;                \
+                    break;                                                     \
+                case GL_INVALID_OPERATION:                                     \
+                    std::cerr << GL_INVALID_OPERATION << std::endl;            \
+                    break;                                                     \
+                case GL_INVALID_FRAMEBUFFER_OPERATION:                         \
+                    std::cerr << GL_INVALID_FRAMEBUFFER_OPERATION              \
+                              << std::endl;                                    \
+                    break;                                                     \
+                case GL_OUT_OF_MEMORY:                                         \
+                    std::cerr << GL_OUT_OF_MEMORY << std::endl;                \
+                    break;                                                     \
+            }                                                                  \
+        }                                                                      \
+    }
 
 namespace om
 {
@@ -142,9 +171,9 @@ public:
             return serr.str();
         }
 
-        SDL_Window* const window = SDL_CreateWindow(
-            "title", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480,
-            ::SDL_WINDOW_OPENGL);
+        window = SDL_CreateWindow("title", SDL_WINDOWPOS_CENTERED,
+                                  SDL_WINDOWPOS_CENTERED, 640, 480,
+                                  ::SDL_WINDOW_OPENGL);
 
         if (window == nullptr)
         {
@@ -154,6 +183,21 @@ public:
             SDL_Quit();
             return serr.str();
         }
+
+        SDL_GLContext gl_context = SDL_GL_CreateContext(window);
+        assert(gl_context != nullptr);
+
+        int gl_major_ver = 0;
+        int result =
+            SDL_GL_GetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, &gl_major_ver);
+        assert(result == 0);
+        int gl_minor_ver = 0;
+        result =
+            SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, &gl_minor_ver);
+        assert(result == 0);
+
+        std::clog << "gl: " << gl_major_ver << '.' << gl_minor_ver << std::endl;
+
         return "";
     }
     /// pool event from input queue
@@ -191,15 +235,24 @@ public:
         }
         return false;
     }
-    void render_triangle(const triangle& t) final
+    void render_triangle(const triangle&) final
     {
-        for (const vertex& v : t.v)
+        glClearColor(0.f, 1.0, 0.f, 0.0f);
+        OM_GL_CHECK();
+        glClear(GL_COLOR_BUFFER_BIT);
+        OM_GL_CHECK();
+        // for (const vertex& v : t.v)
         {
-            std::cout << '(' << std::fixed << v.x << ' ' << v.y << ')' << ' ';
+            // std::cout << '(' << std::fixed << v.x << ' ' << v.y << ')' << '
+            // ';
         }
-        std::cout << std::endl;
+        // std::cout << std::endl;
     }
+    void swap_buffers() final { SDL_GL_SwapWindow(window); }
     void uninitialize() final {}
+
+private:
+    SDL_Window* window = nullptr;
 };
 
 static bool already_exist = false;

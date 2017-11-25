@@ -76,6 +76,7 @@ public:
     /// return true if more events in queue
     virtual bool read_input(event& e)             = 0;
     virtual void render_triangle(const triangle&) = 0;
+    virtual void swap_buffers()                   = 0;
     virtual void uninitialize()                   = 0;
 };
 

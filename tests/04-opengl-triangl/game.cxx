@@ -41,6 +41,8 @@ int main(int /*argc*/, char* /*argv*/ [])
         file >> tr;
 
         engine->render_triangle(tr);
+
+        engine->swap_buffers();
     }
 
     engine->uninitialize();
