@@ -44,3 +44,9 @@ pipelines:
           - mingw64-cmake -generate tests/02-sdl-static/
           - mingw64-make
           #- WINEPATH=/usr/x86_64-w64-mingw32/sys-root/mingw/bin wine ./02-sdl-static.exe # too long 30 seconds
+         
+          - git clean -df
+          - mingw64-cmake -configure tests/04-opengl-minimal/
+          - mingw64-cmake -generate tests/04-opengl-minimal/
+          - mingw64-make
+          #- WINEPATH=/usr/x86_64-w64-mingw32/sys-root/mingw/bin wine ./game.exe # run opengl minimal on linux with wine (works)
