@@ -62,8 +62,8 @@ struct OM_DECLSPEC triangle
     vertex v[3];
 };
 
-std::istream& operator>>(std::istream& is, vertex&);
-std::istream& operator>>(std::istream& is, triangle&);
+std::istream& OM_DECLSPEC operator>>(std::istream& is, vertex&);
+std::istream& OM_DECLSPEC operator>>(std::istream& is, triangle&);
 
 class OM_DECLSPEC engine
 {

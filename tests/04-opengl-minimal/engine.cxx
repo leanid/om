@@ -11,7 +11,11 @@
 #include <vector>
 
 #include <SDL2/SDL.h>
+#if __MINGW32__
+#include <SDL2/SDL_opengl.h> // on windows for mingw
+#else
 #include <SDL2/SDL_opengles2.h>
+#endif
 
 #define OM_GL_CHECK()                                                          \
     {                                                                          \
@@ -37,6 +41,7 @@
                     std::cerr << GL_OUT_OF_MEMORY << std::endl;                \
                     break;                                                     \
             }                                                                  \
+            assert(false);                                                     \
         }                                                                      \
     }
 
@@ -196,7 +201,14 @@ public:
             SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, &gl_minor_ver);
         assert(result == 0);
 
-        std::clog << "gl: " << gl_major_ver << '.' << gl_minor_ver << std::endl;
+        if (gl_major_ver <= 2 && gl_minor_ver < 1)
+        {
+            std::clog << "current context opengl version: " << gl_major_ver
+                      << '.' << gl_minor_ver << '\n'
+                      << "need openg version at least: 2.1\n"
+                      << std::flush;
+            throw std::runtime_error("opengl version too low");
+        }
 
         return "";
     }
@@ -241,12 +253,7 @@ public:
         OM_GL_CHECK();
         glClear(GL_COLOR_BUFFER_BIT);
         OM_GL_CHECK();
-        // for (const vertex& v : t.v)
-        {
-            // std::cout << '(' << std::fixed << v.x << ' ' << v.y << ')' << '
-            // ';
-        }
-        // std::cout << std::endl;
+        // TODO continue...
     }
     void swap_buffers() final { SDL_GL_SwapWindow(window); }
     void uninitialize() final {}

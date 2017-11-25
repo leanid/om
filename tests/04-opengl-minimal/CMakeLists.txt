@@ -23,6 +23,7 @@ if (MINGW)
                -lSDL2main 
                -lSDL2
                -mwindows
+               -lopengl32
                )
 elseif(UNIX)
     target_link_libraries(engine
