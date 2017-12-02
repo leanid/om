@@ -72,10 +72,11 @@ public:
     /// create main window
     /// on success return empty string
     virtual std::string initialize(std::string_view config) = 0;
+    /// return seconds from initialization
+    virtual float get_time_from_init() = 0;
     /// pool event from input queue
     /// return true if more events in queue
     virtual bool read_input(event& e)             = 0;
-    virtual bool load_texture(std::string_view path) = 0;
     virtual void render_triangle(const triangle&) = 0;
     virtual void swap_buffers()                   = 0;
     virtual void uninitialize()                   = 0;

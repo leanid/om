@@ -4,8 +4,8 @@
 #include <array>
 #include <cassert>
 #include <exception>
-#include <iostream>
 #include <fstream>
+#include <iostream>
 #include <sstream>
 #include <stdexcept>
 #include <string_view>
@@ -14,8 +14,6 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>
 #include <SDL2/SDL_opengl_glext.h>
-
-#include "picopng.cpp"
 
 // we have to load all extension GL function pointers
 // dynamically from opengl library
@@ -393,6 +391,13 @@ void main()
 
         return "";
     }
+    /// return seconds from initialization
+    float get_time_from_init() final
+    {
+        std::uint32_t ms_from_library_initialization = SDL_GetTicks();
+        float         seconds = ms_from_library_initialization * 0.001f;
+        return seconds;
+    }
     /// pool event from input queue
     /// return true if more events in queue
     bool read_input(event& e) final
@@ -427,53 +432,6 @@ void main()
             }
         }
         return false;
-    }
-
-    bool load_texture(std::string_view path)
-    {
-    	std::vector<unsigned char> png_file_in_memory;
-    	std::ifstream ifs(path.data(), std::ios_base::binary);
-    	if (!ifs)
-    	{
-    		return false;
-    	}
-    	ifs.seekg(0, std::ios_base::end);
-    	size_t pos_in_file = ifs.tellg();
-    	png_file_in_memory.resize(pos_in_file);
-    	ifs.seekg(0, std::ios_base::beg);
-    	if(!ifs)
-    	{
-    		return false;
-    	}
-
-    	ifs.read(reinterpret_cast<char*>(png_file_in_memory.data()), pos_in_file);
-    	if(!ifs.good())
-    	{
-    		return false;
-    	}
-
-    	std::vector<unsigned char> image;
-    	unsigned long w = 0;
-    	unsigned long h = 0;
-    	int error = decodePNG(image, w, h, &png_file_in_memory[0], png_file_in_memory.size());
-
-    	  //if there's an error, display it
-    	if(error != 0)
-    	{
-    		std::cerr << "error: " << error << std::endl;
-    		return false;
-    	} else {
-    		std::cout << "texture loaded!\n" << std::flush;
-    	}
-
-    	GLuint tex_handl = 0;
-    	glGenTextures(1, &tex_handl);
-    	OM_GL_CHECK();
-    	glBindTexture(GL_TEXTURE_2D, tex_handl);
-    	OM_GL_CHECK();
-    	glTexImage2D(GL_TEXTURE_2D, 1, GL_RGBA, w, h, 0, GL_RGBA, 0, &image[0]);
-    	OM_GL_CHECK();
-    	return true;
     }
     void render_triangle(const triangle& t) final
     {
