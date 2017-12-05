@@ -9,17 +9,15 @@
 
 #include "engine.hxx"
 
-om::v0 blend_vertex(const om::v0& vl, const om::v0& vr,
-                        const float a)
+om::v0 blend_vertex(const om::v0& vl, const om::v0& vr, const float a)
 {
     om::v0 r;
-    r.x = (1.0f - a) * vl.x + a * vr.x;
-    r.y = (1.0f - a) * vl.y + a * vr.y;
+    r.p.x = (1.0f - a) * vl.p.x + a * vr.p.x;
+    r.p.y = (1.0f - a) * vl.p.y + a * vr.p.y;
     return r;
 }
 
-om::tri0 blend(const om::tri0& tl, const om::tri0& tr,
-                   const float a)
+om::tri0 blend(const om::tri0& tl, const om::tri0& tr, const float a)
 {
     om::tri0 r;
     r.v[0] = blend_vertex(tl.v[0], tr.v[0], a);
@@ -58,7 +56,7 @@ int main(int /*argc*/, char* /*argv*/ [])
             }
         }
 
-        std::ifstream file("vert_and_tex_coord.txt");
+        std::ifstream file("vert_pos.txt");
         assert(!!file);
 
         om::tri0 tr1;
@@ -66,8 +64,8 @@ int main(int /*argc*/, char* /*argv*/ [])
 
         file >> tr1 >> tr2;
 
-        engine->render_triangle(tr1);
-        engine->render_triangle(tr2);
+        engine->render(tr1, om::color(1.f, 0.f, 0.f, 1.f));
+        engine->render(tr2, om::color(0.f, 0.f, 1.f, 1.f));
 
         engine->swap_buffers();
     }

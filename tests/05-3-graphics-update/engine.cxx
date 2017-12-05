@@ -10,6 +10,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string_view>
+#include <tuple>
 #include <vector>
 
 #include <SDL2/SDL.h>
@@ -19,7 +20,7 @@
 #include "picopng.hxx"
 
 // we have to load all extension GL function pointers
-// dynamically from opengl library
+// dynamically from OpenGL library
 // so first declare function pointers for all we need
 PFNGLCREATESHADERPROC            glCreateShader            = nullptr;
 PFNGLSHADERSOURCEARBPROC         glShaderSource            = nullptr;
@@ -39,6 +40,8 @@ PFNGLVERTEXATTRIBPOINTERPROC     glVertexAttribPointer     = nullptr;
 PFNGLENABLEVERTEXATTRIBARRAYPROC glEnableVertexAttribArray = nullptr;
 PFNGLGETUNIFORMLOCATIONPROC      glGetUniformLocation      = nullptr;
 PFNGLUNIFORM1IPROC               glUniform1i               = nullptr;
+PFNGLACTIVETEXTUREPROC           glActiveTextureMY         = nullptr;
+PFNGLUNIFORM4FVPROC              glUniform4fv              = nullptr;
 
 template <typename T>
 static void load_gl_func(const char* func_name, T& result)
@@ -82,6 +85,239 @@ static void load_gl_func(const char* func_name, T& result)
 
 namespace om
 {
+
+texture::~texture()
+{
+}
+
+class texture_gl_es20 final : public texture
+{
+public:
+    explicit texture_gl_es20(std::string_view path)
+    {
+        std::vector<unsigned char> png_file_in_memory;
+        std::ifstream              ifs(path.data(), std::ios_base::binary);
+        if (!ifs)
+        {
+            throw std::runtime_error("can't load texture");
+        }
+        ifs.seekg(0, std::ios_base::end);
+        size_t pos_in_file = ifs.tellg();
+        png_file_in_memory.resize(pos_in_file);
+        ifs.seekg(0, std::ios_base::beg);
+        if (!ifs)
+        {
+            throw std::runtime_error("can't load texture");
+        }
+
+        ifs.read(reinterpret_cast<char*>(png_file_in_memory.data()),
+                 pos_in_file);
+        if (!ifs.good())
+        {
+            throw std::runtime_error("can't load texture");
+        }
+
+        std::vector<unsigned char> image;
+        unsigned long              w = 0;
+        unsigned long              h = 0;
+        int error = decodePNG(image, w, h, &png_file_in_memory[0],
+                              png_file_in_memory.size(), false);
+
+        // if there's an error, display it
+        if (error != 0)
+        {
+            std::cerr << "error: " << error << std::endl;
+            throw std::runtime_error("can't load texture");
+        }
+
+        glGenTextures(1, &tex_handl);
+        OM_GL_CHECK();
+        glBindTexture(GL_TEXTURE_2D, tex_handl);
+        OM_GL_CHECK();
+
+        GLint mipmap_level = 0;
+        GLint border       = 0;
+        glTexImage2D(GL_TEXTURE_2D, mipmap_level, GL_RGBA, w, h, border,
+                     GL_RGBA, GL_UNSIGNED_BYTE, &image[0]);
+        OM_GL_CHECK();
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        OM_GL_CHECK();
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        OM_GL_CHECK();
+    }
+    ~texture_gl_es20()
+    {
+        glDeleteTextures(1, &tex_handl);
+        OM_GL_CHECK();
+    }
+
+    void bind() const
+    {
+        glBindTexture(GL_TEXTURE_2D, tex_handl);
+        OM_GL_CHECK();
+    }
+
+    std::uint32_t get_width() const final { return width; }
+    std::uint32_t get_height() const final { return height; }
+
+private:
+    GLuint        tex_handl = 0;
+    std::uint32_t width     = 0;
+    std::uint32_t height    = 0;
+};
+
+class shader_gl_es20
+{
+public:
+    shader_gl_es20(
+        std::string_view vertex_src, std::string_view         fragment_src,
+        const std::vector<std::tuple<GLuint, const GLchar*>>& attributes)
+    {
+        vert_shader = compile_shader(GL_VERTEX_SHADER, vertex_src);
+        frag_shader = compile_shader(GL_FRAGMENT_SHADER, fragment_src);
+        if (vert_shader == 0 || frag_shader == 0)
+        {
+            throw std::runtime_error("can't compile shader");
+        }
+        program_id = link_shader_program(attributes);
+        if (program_id == 0)
+        {
+            throw std::runtime_error("can't link shader");
+        }
+    }
+
+    void use() const
+    {
+        glUseProgram(program_id);
+        OM_GL_CHECK();
+    }
+
+    void set_uniform(std::string_view uniform_name, texture_gl_es20* texture)
+    {
+        assert(texture != nullptr);
+        const int location =
+            glGetUniformLocation(program_id, uniform_name.data());
+        OM_GL_CHECK();
+        if (location == -1)
+        {
+            std::cerr << "can't get uniform location from shader\n";
+            throw std::runtime_error("can't get uniform location");
+        }
+        int texture_unit = 0;
+        glActiveTextureMY(GL_TEXTURE0 + texture_unit);
+        OM_GL_CHECK();
+
+        texture->bind();
+
+        // http://www.khronos.org/opengles/sdk/docs/man/xhtml/glUniform.xml
+        glUniform1i(location, 0 + texture_unit);
+        OM_GL_CHECK();
+    }
+
+    void set_uniform(std::string_view uniform_name, const color& c)
+    {
+        const int location =
+            glGetUniformLocation(program_id, uniform_name.data());
+        OM_GL_CHECK();
+        if (location == -1)
+        {
+            std::cerr << "can't get uniform location from shader\n";
+            throw std::runtime_error("can't get uniform location");
+        }
+        float values[4] = { c.get_r(), c.get_g(), c.get_b(), c.get_a() };
+        glUniform4fv(location, 1, &values[0]);
+        OM_GL_CHECK();
+    }
+
+private:
+    GLuint compile_shader(GLenum shader_type, std::string_view src)
+    {
+        GLuint shader_id = glCreateShader(shader_type);
+        OM_GL_CHECK();
+        std::string_view vertex_shader_src = src;
+        const char*      source            = vertex_shader_src.data();
+        glShaderSource(shader_id, 1, &source, nullptr);
+        OM_GL_CHECK();
+
+        glCompileShader(shader_id);
+        OM_GL_CHECK();
+
+        GLint compiled_status = 0;
+        glGetShaderiv(shader_id, GL_COMPILE_STATUS, &compiled_status);
+        OM_GL_CHECK();
+        if (compiled_status == 0)
+        {
+            GLint info_len = 0;
+            glGetShaderiv(shader_id, GL_INFO_LOG_LENGTH, &info_len);
+            OM_GL_CHECK();
+            std::vector<char> info_chars(info_len);
+            glGetShaderInfoLog(shader_id, info_len, NULL, info_chars.data());
+            OM_GL_CHECK();
+            glDeleteShader(shader_id);
+            OM_GL_CHECK();
+
+            std::string shader_type_name =
+                shader_type == GL_VERTEX_SHADER ? "vertex" : "fragment";
+            std::cerr << "Error compiling shader(vertex)\n"
+                      << vertex_shader_src << "\n"
+                      << info_chars.data();
+            return 0;
+        }
+        return shader_id;
+    }
+    GLuint link_shader_program(
+        const std::vector<std::tuple<GLuint, const GLchar*>>& attributes)
+    {
+        GLuint program_id_ = glCreateProgram();
+        OM_GL_CHECK();
+        if (0 == program_id_)
+        {
+            std::cerr << "failed to create gl program";
+            throw std::runtime_error("can't link shader");
+        }
+
+        glAttachShader(program_id_, vert_shader);
+        OM_GL_CHECK();
+        glAttachShader(program_id_, frag_shader);
+        OM_GL_CHECK();
+
+        // bind attribute location
+        for (const auto& attr : attributes)
+        {
+            GLuint        loc  = std::get<0>(attr);
+            const GLchar* name = std::get<1>(attr);
+            glBindAttribLocation(program_id_, loc, name);
+            OM_GL_CHECK();
+        }
+
+        // link program after binding attribute locations
+        glLinkProgram(program_id_);
+        OM_GL_CHECK();
+        // Check the link status
+        GLint linked_status = 0;
+        glGetProgramiv(program_id_, GL_LINK_STATUS, &linked_status);
+        OM_GL_CHECK();
+        if (linked_status == 0)
+        {
+            GLint infoLen = 0;
+            glGetProgramiv(program_id_, GL_INFO_LOG_LENGTH, &infoLen);
+            OM_GL_CHECK();
+            std::vector<char> infoLog(infoLen);
+            glGetProgramInfoLog(program_id_, infoLen, NULL, infoLog.data());
+            OM_GL_CHECK();
+            std::cerr << "Error linking program:\n" << infoLog.data();
+            glDeleteProgram(program_id_);
+            OM_GL_CHECK();
+            return 0;
+        }
+        return program_id_;
+    }
+
+    GLuint vert_shader = 0;
+    GLuint frag_shader = 0;
+    GLuint program_id  = 0;
+};
 
 static std::array<std::string_view, 17> event_names = {
     /// input events
@@ -127,8 +363,8 @@ static std::ostream& operator<<(std::ostream& out, const SDL_version& v)
 
 std::istream& operator>>(std::istream& is, v0& v)
 {
-    is >> v.x;
-    is >> v.y;
+    is >> v.p.x;
+    is >> v.p.y;
 
     return is;
 }
@@ -279,151 +515,63 @@ public:
                          glEnableVertexAttribArray);
             load_gl_func("glGetUniformLocation", glGetUniformLocation);
             load_gl_func("glUniform1i", glUniform1i);
+            load_gl_func("glActiveTexture", glActiveTextureMY);
+            load_gl_func("glUniform4fv", glUniform4fv);
         }
         catch (std::exception& ex)
         {
             return ex.what();
         }
-        // create vertex shader
 
-        GLuint vert_shader = glCreateShader(GL_VERTEX_SHADER);
-        OM_GL_CHECK();
-        string_view vertex_shader_src = R"(
-attribute vec2 a_position;
-attribute vec2 a_tex_coord;
-varying vec2 v_tex_coord;
-void main()
-{
-    v_tex_coord = a_tex_coord;
-    gl_Position = vec4(a_position, 0.0, 1.0);
-}
-)";
-        const char* source            = vertex_shader_src.data();
-        glShaderSource(vert_shader, 1, &source, nullptr);
-        OM_GL_CHECK();
+        shader00 = new shader_gl_es20(R"(
+                attribute vec2 a_position;
+                void main()
+                {
+                    gl_Position = vec4(a_position, 0.0, 1.0);
+                }
+                )",
+                                      R"(
+		        uniform vec4 u_color;
+		        void main()
+		        {
+		            gl_FragColor = u_color;
+		        }
+		        )",
+                                      { { 0, "a_position" } });
 
-        glCompileShader(vert_shader);
-        OM_GL_CHECK();
+        shader00->use();
+        shader00->set_uniform("u_color", color(1.f, 0.f, 0.f, 1.f));
 
-        GLint compiled_status = 0;
-        glGetShaderiv(vert_shader, GL_COMPILE_STATUS, &compiled_status);
-        OM_GL_CHECK();
-        if (compiled_status == 0)
-        {
-            GLint info_len = 0;
-            glGetShaderiv(vert_shader, GL_INFO_LOG_LENGTH, &info_len);
-            OM_GL_CHECK();
-            std::vector<char> info_chars(info_len);
-            glGetShaderInfoLog(vert_shader, info_len, NULL, info_chars.data());
-            OM_GL_CHECK();
-            glDeleteShader(vert_shader);
-            OM_GL_CHECK();
-
-            std::string shader_type_name = "vertex";
-            serr << "Error compiling shader(vertex)\n"
-                 << vertex_shader_src << "\n"
-                 << info_chars.data();
-            return serr.str();
-        }
-
-        // create fragment shader
-
-        GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-        OM_GL_CHECK();
-        string_view fragment_shader_src = R"(
-varying vec2 v_tex_coord;
-uniform sampler2D s_texture;
-void main()
-{
-    gl_FragColor = texture2D(s_texture, v_tex_coord);
-}
-)";
-        source                          = fragment_shader_src.data();
-        glShaderSource(fragment_shader, 1, &source, nullptr);
-        OM_GL_CHECK();
-
-        glCompileShader(fragment_shader);
-        OM_GL_CHECK();
-
-        compiled_status = 0;
-        glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &compiled_status);
-        OM_GL_CHECK();
-        if (compiled_status == 0)
-        {
-            GLint info_len = 0;
-            glGetShaderiv(fragment_shader, GL_INFO_LOG_LENGTH, &info_len);
-            OM_GL_CHECK();
-            std::vector<char> info_chars(info_len);
-            glGetShaderInfoLog(fragment_shader, info_len, NULL,
-                               info_chars.data());
-            OM_GL_CHECK();
-            glDeleteShader(fragment_shader);
-            OM_GL_CHECK();
-
-            serr << "Error compiling shader(fragment)\n"
-                 << vertex_shader_src << "\n"
-                 << info_chars.data();
-            return serr.str();
-        }
-
-        // now create program and attach vertex and fragment shaders
-
-        GLuint program_id_ = glCreateProgram();
-        OM_GL_CHECK();
-        if (0 == program_id_)
-        {
-            serr << "failed to create gl program";
-            return serr.str();
-        }
-
-        glAttachShader(program_id_, vert_shader);
-        OM_GL_CHECK();
-        glAttachShader(program_id_, fragment_shader);
-        OM_GL_CHECK();
-
-        // bind attribute location
-        glBindAttribLocation(program_id_, 0, "a_position");
-        OM_GL_CHECK();
-        // link program after binding attribute locations
-        glLinkProgram(program_id_);
-        OM_GL_CHECK();
-        // Check the link status
-        GLint linked_status = 0;
-        glGetProgramiv(program_id_, GL_LINK_STATUS, &linked_status);
-        OM_GL_CHECK();
-        if (linked_status == 0)
-        {
-            GLint infoLen = 0;
-            glGetProgramiv(program_id_, GL_INFO_LOG_LENGTH, &infoLen);
-            OM_GL_CHECK();
-            std::vector<char> infoLog(infoLen);
-            glGetProgramInfoLog(program_id_, infoLen, NULL, infoLog.data());
-            OM_GL_CHECK();
-            serr << "Error linking program:\n" << infoLog.data();
-            glDeleteProgram(program_id_);
-            OM_GL_CHECK();
-            return serr.str();
-        }
+        shader01 = new shader_gl_es20(R"(
+                attribute vec2 a_position;
+                attribute vec2 a_tex_coord;
+                varying vec2 v_tex_coord;
+                void main()
+                {
+                    v_tex_coord = a_tex_coord;
+                    gl_Position = vec4(a_position, 0.0, 1.0);
+                }
+                )",
+                                      R"(
+		        varying vec2 v_tex_coord;
+		        uniform sampler2D s_texture;
+		        void main()
+		        {
+		            gl_FragColor = texture2D(s_texture, v_tex_coord);
+		        }
+		        )",
+                                      { { 0, "a_position" } });
 
         // turn on rendering with just created shader program
-        glUseProgram(program_id_);
-        OM_GL_CHECK();
+        shader01->use();
 
-        int location = glGetUniformLocation(program_id_, "s_texture");
-        OM_GL_CHECK();
-        assert(-1 != location);
-        int texture_unit = 0;
-        glActiveTexture(GL_TEXTURE0 + texture_unit);
-        OM_GL_CHECK();
-
-        if (!load_texture("tank.png"))
+        texture = static_cast<texture_gl_es20*>(create_texture("tank.png"));
+        if (nullptr == texture)
         {
             return "failed load texture\n";
         }
 
-        // http://www.khronos.org/opengles/sdk/docs/man/xhtml/glUniform.xml
-        glUniform1i(location, 0 + texture_unit);
-        OM_GL_CHECK();
+        shader01->set_uniform("s_texture", texture);
 
         glEnable(GL_BLEND);
         OM_GL_CHECK();
@@ -475,78 +623,41 @@ void main()
         return false;
     }
 
-    bool load_texture(std::string_view path) final
+    texture* create_texture(std::string_view path) final
     {
-        std::vector<unsigned char> png_file_in_memory;
-        std::ifstream              ifs(path.data(), std::ios_base::binary);
-        if (!ifs)
-        {
-            return false;
-        }
-        ifs.seekg(0, std::ios_base::end);
-        size_t pos_in_file = ifs.tellg();
-        png_file_in_memory.resize(pos_in_file);
-        ifs.seekg(0, std::ios_base::beg);
-        if (!ifs)
-        {
-            return false;
-        }
-
-        ifs.read(reinterpret_cast<char*>(png_file_in_memory.data()),
-                 pos_in_file);
-        if (!ifs.good())
-        {
-            return false;
-        }
-
-        std::vector<unsigned char> image;
-        unsigned long              w = 0;
-        unsigned long              h = 0;
-        int error = decodePNG(image, w, h, &png_file_in_memory[0],
-                              png_file_in_memory.size(), false);
-
-        // if there's an error, display it
-        if (error != 0)
-        {
-            std::cerr << "error: " << error << std::endl;
-            return false;
-        }
-
-        GLuint tex_handl = 0;
-        glGenTextures(1, &tex_handl);
-        OM_GL_CHECK();
-        glBindTexture(GL_TEXTURE_2D, tex_handl);
-        OM_GL_CHECK();
-
-        GLint mipmap_level = 0;
-        GLint border       = 0;
-        glTexImage2D(GL_TEXTURE_2D, mipmap_level, GL_RGBA, w, h, border,
-                     GL_RGBA, GL_UNSIGNED_BYTE, &image[0]);
-        OM_GL_CHECK();
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        OM_GL_CHECK();
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        OM_GL_CHECK();
-        return true;
+        return new texture_gl_es20(path);
     }
-    void render_triangle(const tri0& t) final
+    void destroy_texture(texture* t) final { delete t; }
+
+    void render(const tri0& t, const color& c) final
     {
+        shader00->use();
+        shader00->set_uniform("u_color", c);
         // vertex coordinates
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(v0), &t.v[0].x);
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(v0),
+                              &t.v[0].p.x);
         OM_GL_CHECK();
         glEnableVertexAttribArray(0);
         OM_GL_CHECK();
 
         // texture coordinates
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(v0), &t.v[0].tx);
-        OM_GL_CHECK();
-        glEnableVertexAttribArray(1);
-        OM_GL_CHECK();
+        // glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(v0),
+        // &t.v[0].tx);
+        // OM_GL_CHECK();
+        // glEnableVertexAttribArray(1);
+        // OM_GL_CHECK();
 
         glDrawArrays(GL_TRIANGLES, 0, 3);
         OM_GL_CHECK();
     }
+    void render(const tri1&) final
+    {
+        throw std::runtime_error("not implemented");
+    }
+    void render(const tri2&, const texture* const) final
+    {
+        throw std::runtime_error("not implemented");
+    };
     void swap_buffers() final
     {
         SDL_GL_SwapWindow(window);
@@ -564,8 +675,12 @@ void main()
     }
 
 private:
-    SDL_Window*   window     = nullptr;
-    SDL_GLContext gl_context = nullptr;
+    SDL_Window*      window     = nullptr;
+    SDL_GLContext    gl_context = nullptr;
+    texture_gl_es20* texture    = nullptr;
+
+    shader_gl_es20* shader00 = nullptr;
+    shader_gl_es20* shader01 = nullptr;
 };
 
 static bool already_exist = false;
@@ -605,56 +720,56 @@ color::color(float r, float g, float b, float a)
     assert(b <= 1 && b >= 0);
     assert(a <= 1 && a >= 0);
 
-    std::byte r_ = static_cast<std::byte>(r * 255);
-    std::byte g_ = static_cast<std::byte>(g * 255);
-    std::byte b_ = static_cast<std::byte>(b * 255);
-    std::byte a_ = static_cast<std::byte>(a * 255);
+    std::uint32_t r_ = static_cast<std::uint32_t>(r * 255);
+    std::uint32_t g_ = static_cast<std::uint32_t>(g * 255);
+    std::uint32_t b_ = static_cast<std::uint32_t>(b * 255);
+    std::uint32_t a_ = static_cast<std::uint32_t>(a * 255);
 
-    rgba = r_ << 24 | g_ << 16 | b << 8 | a;
+    rgba = r_ << 24 | g_ << 16 | b_ << 8 | a_;
 }
 
 float color::get_r() const
 {
-    std::byte r_ = (rgba & 0xFF000000) >> 24;
+    std::uint32_t r_ = (rgba & 0xFF000000) >> 24;
     return r_ / 255.f;
 }
 float color::get_g() const
 {
-    std::byte g_ = (rgba & 0x00FF0000) >> 16;
+    std::uint32_t g_ = (rgba & 0x00FF0000) >> 16;
     return g_ / 255.f;
 }
 float color::get_b() const
 {
-    std::byte b_ = (rgba & 0x0000FF00) >> 8;
+    std::uint32_t b_ = (rgba & 0x0000FF00) >> 8;
     return b_ / 255.f;
 }
 float color::get_a() const
 {
-    std::byte a_ = (rgba & 0x000000FF) >> 0;
+    std::uint32_t a_ = (rgba & 0x000000FF) >> 0;
     return a_ / 255.f;
 }
 
 void color::set_r(const float r)
 {
-    std::byte r_ = static_cast<std::byte>(r * 255);
+    std::uint32_t r_ = static_cast<std::uint32_t>(r * 255);
     rgba &= 0x00FFFFFF;
     rgba |= (r_ << 24);
 }
 void color::set_g(const float g)
 {
-    std::byte g_ = static_cast<std::byte>(g * 255);
+    std::uint32_t g_ = static_cast<std::uint32_t>(g * 255);
     rgba &= 0xFF00FFFF;
     rgba |= (g_ << 16);
 }
 void color::set_b(const float b)
 {
-    std::byte b_ = static_cast<std::byte>(b * 255);
+    std::uint32_t b_ = static_cast<std::uint32_t>(b * 255);
     rgba &= 0xFFFF00FF;
     rgba |= (b_ << 8);
 }
 void color::set_a(const float a)
 {
-    std::byte a_ = static_cast<std::byte>(a * 255);
+    std::uint32_t a_ = static_cast<std::uint32_t>(a * 255);
     rgba &= 0xFFFFFF00;
     rgba |= a_;
 }

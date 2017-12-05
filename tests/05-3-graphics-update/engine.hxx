@@ -110,7 +110,7 @@ struct OM_DECLSPEC tri1
     v1 v[3];
 };
 
-/// triangle with positions and color
+/// triangle with positions color and texture coordinate
 struct OM_DECLSPEC tri2
 {
     tri2();
@@ -124,8 +124,8 @@ class OM_DECLSPEC texture
 {
 public:
     virtual ~texture();
-    std::uint32_t get_width() const  = 0;
-    std::uint32_t get_height() const = 0;
+    virtual std::uint32_t get_width() const  = 0;
+    virtual std::uint32_t get_height() const = 0;
 };
 
 class OM_DECLSPEC engine
@@ -139,12 +139,12 @@ public:
     virtual float get_time_from_init() = 0;
     /// pool event from input queue
     /// return true if more events in queue
-    virtual bool read_input(event& e)                                  = 0;
-    virtual const texture* const create_texture(std::string_view path) = 0;
-    virtual void destroy_texture(texture* t)                           = 0;
-    virtual void render_triangle(const tri0&, const color&) = 0;
-    virtual void render_triangle(const tri1&) = 0;
-    virtual void render_triangle(const tri2&, const texture* const) = 0;
+    virtual bool read_input(event& e)                      = 0;
+    virtual texture* create_texture(std::string_view path) = 0;
+    virtual void destroy_texture(texture* t)               = 0;
+    virtual void render(const tri0&, const color&) = 0;
+    virtual void render(const tri1&) = 0;
+    virtual void render(const tri2&, const texture* const) = 0;
     virtual void swap_buffers() = 0;
     virtual void uninitialize() = 0;
 };
