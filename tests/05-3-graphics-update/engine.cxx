@@ -357,12 +357,24 @@ tri1::tri1()
 {
 }
 
+tri2::tri2()
+    : v{ v2(), v2(), v2() }
+{
+}
+
 std::ostream& operator<<(std::ostream& out, const SDL_version& v)
 {
     out << static_cast<int>(v.major) << '.';
     out << static_cast<int>(v.minor) << '.';
     out << static_cast<int>(v.patch);
     return out;
+}
+
+std::istream& operator>>(std::istream& is, uv_pos& uv)
+{
+    is >> uv.u;
+    is >> uv.v;
+    return is;
 }
 
 std::istream& operator>>(std::istream& is, color& c)
@@ -395,6 +407,15 @@ std::istream& operator>>(std::istream& is, v1& v)
     return is;
 }
 
+std::istream& operator>>(std::istream& is, v2& v)
+{
+    is >> v.p.x;
+    is >> v.p.y;
+    is >> v.uv;
+    is >> v.c;
+    return is;
+}
+
 std::istream& operator>>(std::istream& is, tri0& t)
 {
     is >> t.v[0];
@@ -404,6 +425,14 @@ std::istream& operator>>(std::istream& is, tri0& t)
 }
 
 std::istream& operator>>(std::istream& is, tri1& t)
+{
+    is >> t.v[0];
+    is >> t.v[1];
+    is >> t.v[2];
+    return is;
+}
+
+std::istream& operator>>(std::istream& is, tri2& t)
 {
     is >> t.v[0];
     is >> t.v[1];
@@ -600,36 +629,33 @@ public:
 
         shader01->use();
 
-        shader02 = new shader_gl_es20(R"(
+        shader02 = new shader_gl_es20(
+            R"(
                 attribute vec2 a_position;
                 attribute vec2 a_tex_coord;
+                attribute vec4 a_color;
+                varying vec4 v_color;
                 varying vec2 v_tex_coord;
                 void main()
                 {
                     v_tex_coord = a_tex_coord;
+                    v_color = a_color;
                     gl_Position = vec4(a_position, 0.0, 1.0);
                 }
                 )",
-                                      R"(
+            R"(
 		        varying vec2 v_tex_coord;
+                varying vec4 v_color;
 		        uniform sampler2D s_texture;
 		        void main()
 		        {
-		            gl_FragColor = texture2D(s_texture, v_tex_coord);
+		            gl_FragColor = texture2D(s_texture, v_tex_coord) * v_color;
 		        }
 		        )",
-                                      { { 0, "a_position" } });
+            { { 0, "a_position" }, { 1, "a_color" }, { 2, "a_tex_coord" } });
 
         // turn on rendering with just created shader program
         shader02->use();
-
-        texture = static_cast<texture_gl_es20*>(create_texture("tank.png"));
-        if (nullptr == texture)
-        {
-            return "failed load texture\n";
-        }
-
-        shader02->set_uniform("s_texture", texture);
 
         glEnable(GL_BLEND);
         OM_GL_CHECK();
@@ -733,9 +759,39 @@ public:
         glDisableVertexAttribArray(1);
         OM_GL_CHECK();
     }
-    void render(const tri2&, const texture* const) final
+    void render(const tri2& t, texture* tex) final
     {
-        throw std::runtime_error("not implemented");
+        shader02->use();
+        texture_gl_es20* texture = static_cast<texture_gl_es20*>(tex);
+        texture->bind();
+        shader02->set_uniform("s_texture", texture);
+        // positions
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(t.v[0]),
+                              &t.v[0].p);
+        OM_GL_CHECK();
+        glEnableVertexAttribArray(0);
+        OM_GL_CHECK();
+        // colors
+        glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(t.v[0]),
+                              &t.v[0].c);
+        OM_GL_CHECK();
+        glEnableVertexAttribArray(1);
+        OM_GL_CHECK();
+
+        // texture coordinates
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(t.v[0]),
+                              &t.v[0].uv);
+        OM_GL_CHECK();
+        glEnableVertexAttribArray(2);
+        OM_GL_CHECK();
+
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+        OM_GL_CHECK();
+
+        glDisableVertexAttribArray(1);
+        OM_GL_CHECK();
+        glDisableVertexAttribArray(2);
+        OM_GL_CHECK();
     };
     void swap_buffers() final
     {

@@ -117,11 +117,14 @@ struct OM_DECLSPEC tri2
     v2 v[3];
 };
 
+std::istream& OM_DECLSPEC operator>>(std::istream& is, uv_pos&);
 std::istream& OM_DECLSPEC operator>>(std::istream& is, color&);
 std::istream& OM_DECLSPEC operator>>(std::istream& is, v0&);
 std::istream& OM_DECLSPEC operator>>(std::istream& is, v1&);
+std::istream& OM_DECLSPEC operator>>(std::istream& is, v2&);
 std::istream& OM_DECLSPEC operator>>(std::istream& is, tri0&);
 std::istream& OM_DECLSPEC operator>>(std::istream& is, tri1&);
+std::istream& OM_DECLSPEC operator>>(std::istream& is, tri2&);
 
 class OM_DECLSPEC texture
 {
@@ -147,7 +150,7 @@ public:
     virtual void destroy_texture(texture* t)               = 0;
     virtual void render(const tri0&, const color&) = 0;
     virtual void render(const tri1&) = 0;
-    virtual void render(const tri2&, const texture* const) = 0;
+    virtual void render(const tri2&, texture*) = 0;
     virtual void swap_buffers() = 0;
     virtual void uninitialize() = 0;
 };

@@ -38,7 +38,15 @@ int main(int /*argc*/, char* /*argv*/ [])
         return EXIT_FAILURE;
     }
 
-    bool continue_loop = true;
+    om::texture* texture = (engine->create_texture("tank.png"));
+    if (nullptr == texture)
+    {
+        std::cerr << "failed load texture\n";
+        return EXIT_FAILURE;
+    }
+
+    bool continue_loop  = true;
+    int  current_shader = 0;
     while (continue_loop)
     {
         om::event event;
@@ -51,32 +59,60 @@ int main(int /*argc*/, char* /*argv*/ [])
                 case om::event::turn_off:
                     continue_loop = false;
                     break;
+                case om::event::button1_released:
+                    ++current_shader;
+                    if (current_shader > 2)
+                    {
+                        current_shader = 0;
+                    }
+                    break;
                 default:
+
                     break;
             }
         }
 
-        std::ifstream file("vert_pos.txt");
-        assert(!!file);
+        if (current_shader == 0)
+        {
+            std::ifstream file("vert_pos.txt");
+            assert(!!file);
 
-        om::tri0 tr1;
-        om::tri0 tr2;
+            om::tri0 tr1;
+            om::tri0 tr2;
 
-        file >> tr1 >> tr2;
+            file >> tr1 >> tr2;
 
-        // engine->render(tr1, om::color(1.f, 0.f, 0.f, 1.f));
-        // engine->render(tr2, om::color(0.f, 0.f, 1.f, 1.f));
+            engine->render(tr1, om::color(1.f, 0.f, 0.f, 1.f));
+            engine->render(tr2, om::color(0.f, 0.f, 1.f, 1.f));
+        }
 
-        std::ifstream file1("vert_pos_color.txt");
-        assert(!!file1);
+        if (current_shader == 1)
+        {
+            std::ifstream file("vert_pos_color.txt");
+            assert(!!file);
 
-        om::tri1 tr11;
-        om::tri1 tr12;
+            om::tri1 tr1;
+            om::tri1 tr2;
 
-        file1 >> tr11 >> tr12;
+            file >> tr1 >> tr2;
 
-        engine->render(tr11);
-        engine->render(tr12);
+            engine->render(tr1);
+            engine->render(tr2);
+        }
+
+        if (current_shader == 2)
+        {
+            std::ifstream file("vert_tex_color.txt");
+            assert(!!file);
+
+            om::tri2 tr1;
+            om::tri2 tr2;
+
+            file >> tr1 >> tr2;
+
+            engine->render(tr1, texture);
+            engine->render(tr2, texture);
+        }
 
         engine->swap_buffers();
     }
