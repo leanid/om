@@ -10,7 +10,7 @@
 
 #include "engine.hxx"
 
-om::v0 blend_vertex(const om::v0& vl, const om::v0& vr, const float a)
+om::v0 blend(const om::v0& vl, const om::v0& vr, const float a)
 {
     om::v0 r;
     r.p.x = (1.0f - a) * vl.p.x + a * vr.p.x;
@@ -21,9 +21,9 @@ om::v0 blend_vertex(const om::v0& vl, const om::v0& vr, const float a)
 om::tri0 blend(const om::tri0& tl, const om::tri0& tr, const float a)
 {
     om::tri0 r;
-    r.v[0] = blend_vertex(tl.v[0], tr.v[0], a);
-    r.v[1] = blend_vertex(tl.v[1], tr.v[1], a);
-    r.v[2] = blend_vertex(tl.v[2], tr.v[2], a);
+    r.v[0] = blend(tl.v[0], tr.v[0], a);
+    r.v[1] = blend(tl.v[1], tr.v[1], a);
+    r.v[2] = blend(tl.v[2], tr.v[2], a);
     return r;
 }
 
@@ -80,11 +80,19 @@ int main(int /*argc*/, char* /*argv*/ [])
 
             om::tri0 tr1;
             om::tri0 tr2;
+            om::tri0 tr11;
+            om::tri0 tr22;
 
-            file >> tr1 >> tr2;
+            file >> tr1 >> tr2 >> tr11 >> tr22;
 
-            engine->render(tr1, om::color(1.f, 0.f, 0.f, 1.f));
-            engine->render(tr2, om::color(0.f, 0.f, 1.f, 1.f));
+            float time  = engine->get_time_from_init();
+            float alpha = sin(time);
+
+            om::tri0 t1 = blend(tr1, tr11, alpha);
+            om::tri0 t2 = blend(tr2, tr22, alpha);
+
+            engine->render(t1, om::color(1.f, 0.f, 0.f, 1.f));
+            engine->render(t2, om::color(0.f, 1.f, 0.f, 1.f));
         }
 
         if (current_shader == 1)
