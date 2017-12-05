@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <array>
 #include <cassert>
+#include <cmath>
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
@@ -109,6 +110,17 @@ int main(int /*argc*/, char* /*argv*/ [])
             om::tri2 tr2;
 
             file >> tr1 >> tr2;
+
+            float time = engine->get_time_from_init();
+            float s    = sin(time);
+            float c    = cos(time);
+
+            // animate one triangle texture coordinates
+            for (auto& v : tr1.v)
+            {
+                v.uv.u += c;
+                v.uv.v += s;
+            }
 
             engine->render(tr1, texture);
             engine->render(tr2, texture);
