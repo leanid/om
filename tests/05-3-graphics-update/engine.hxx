@@ -117,8 +117,11 @@ struct OM_DECLSPEC tri2
     v2 v[3];
 };
 
+std::istream& OM_DECLSPEC operator>>(std::istream& is, color&);
 std::istream& OM_DECLSPEC operator>>(std::istream& is, v0&);
+std::istream& OM_DECLSPEC operator>>(std::istream& is, v1&);
 std::istream& OM_DECLSPEC operator>>(std::istream& is, tri0&);
+std::istream& OM_DECLSPEC operator>>(std::istream& is, tri1&);
 
 class OM_DECLSPEC texture
 {

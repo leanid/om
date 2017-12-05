@@ -22,26 +22,27 @@
 // we have to load all extension GL function pointers
 // dynamically from OpenGL library
 // so first declare function pointers for all we need
-PFNGLCREATESHADERPROC            glCreateShader            = nullptr;
-PFNGLSHADERSOURCEARBPROC         glShaderSource            = nullptr;
-PFNGLCOMPILESHADERARBPROC        glCompileShader           = nullptr;
-PFNGLGETSHADERIVPROC             glGetShaderiv             = nullptr;
-PFNGLGETSHADERINFOLOGPROC        glGetShaderInfoLog        = nullptr;
-PFNGLDELETESHADERPROC            glDeleteShader            = nullptr;
-PFNGLCREATEPROGRAMPROC           glCreateProgram           = nullptr;
-PFNGLATTACHSHADERPROC            glAttachShader            = nullptr;
-PFNGLBINDATTRIBLOCATIONPROC      glBindAttribLocation      = nullptr;
-PFNGLLINKPROGRAMPROC             glLinkProgram             = nullptr;
-PFNGLGETPROGRAMIVPROC            glGetProgramiv            = nullptr;
-PFNGLGETPROGRAMINFOLOGPROC       glGetProgramInfoLog       = nullptr;
-PFNGLDELETEPROGRAMPROC           glDeleteProgram           = nullptr;
-PFNGLUSEPROGRAMPROC              glUseProgram              = nullptr;
-PFNGLVERTEXATTRIBPOINTERPROC     glVertexAttribPointer     = nullptr;
-PFNGLENABLEVERTEXATTRIBARRAYPROC glEnableVertexAttribArray = nullptr;
-PFNGLGETUNIFORMLOCATIONPROC      glGetUniformLocation      = nullptr;
-PFNGLUNIFORM1IPROC               glUniform1i               = nullptr;
-PFNGLACTIVETEXTUREPROC           glActiveTextureMY         = nullptr;
-PFNGLUNIFORM4FVPROC              glUniform4fv              = nullptr;
+PFNGLCREATESHADERPROC             glCreateShader             = nullptr;
+PFNGLSHADERSOURCEARBPROC          glShaderSource             = nullptr;
+PFNGLCOMPILESHADERARBPROC         glCompileShader            = nullptr;
+PFNGLGETSHADERIVPROC              glGetShaderiv              = nullptr;
+PFNGLGETSHADERINFOLOGPROC         glGetShaderInfoLog         = nullptr;
+PFNGLDELETESHADERPROC             glDeleteShader             = nullptr;
+PFNGLCREATEPROGRAMPROC            glCreateProgram            = nullptr;
+PFNGLATTACHSHADERPROC             glAttachShader             = nullptr;
+PFNGLBINDATTRIBLOCATIONPROC       glBindAttribLocation       = nullptr;
+PFNGLLINKPROGRAMPROC              glLinkProgram              = nullptr;
+PFNGLGETPROGRAMIVPROC             glGetProgramiv             = nullptr;
+PFNGLGETPROGRAMINFOLOGPROC        glGetProgramInfoLog        = nullptr;
+PFNGLDELETEPROGRAMPROC            glDeleteProgram            = nullptr;
+PFNGLUSEPROGRAMPROC               glUseProgram               = nullptr;
+PFNGLVERTEXATTRIBPOINTERPROC      glVertexAttribPointer      = nullptr;
+PFNGLENABLEVERTEXATTRIBARRAYPROC  glEnableVertexAttribArray  = nullptr;
+PFNGLDISABLEVERTEXATTRIBARRAYPROC glDisableVertexAttribArray = nullptr;
+PFNGLGETUNIFORMLOCATIONPROC       glGetUniformLocation       = nullptr;
+PFNGLUNIFORM1IPROC                glUniform1i                = nullptr;
+PFNGLACTIVETEXTUREPROC            glActiveTextureMY          = nullptr;
+PFNGLUNIFORM4FVPROC               glUniform4fv               = nullptr;
 
 template <typename T>
 static void load_gl_func(const char* func_name, T& result)
@@ -347,18 +348,35 @@ std::ostream& operator<<(std::ostream& stream, const event e)
 }
 
 tri0::tri0()
+    : v{ v0(), v0(), v0() }
 {
-    v[0] = v0();
-    v[1] = v0();
-    v[2] = v0();
 }
 
-static std::ostream& operator<<(std::ostream& out, const SDL_version& v)
+tri1::tri1()
+    : v{ v1(), v1(), v1() }
+{
+}
+
+std::ostream& operator<<(std::ostream& out, const SDL_version& v)
 {
     out << static_cast<int>(v.major) << '.';
     out << static_cast<int>(v.minor) << '.';
     out << static_cast<int>(v.patch);
     return out;
+}
+
+std::istream& operator>>(std::istream& is, color& c)
+{
+    float r = 0.f;
+    float g = 0.f;
+    float b = 0.f;
+    float a = 0.f;
+    is >> r;
+    is >> g;
+    is >> b;
+    is >> a;
+    c = color(r, g, b, a);
+    return is;
 }
 
 std::istream& operator>>(std::istream& is, v0& v)
@@ -369,7 +387,23 @@ std::istream& operator>>(std::istream& is, v0& v)
     return is;
 }
 
+std::istream& operator>>(std::istream& is, v1& v)
+{
+    is >> v.p.x;
+    is >> v.p.y;
+    is >> v.c;
+    return is;
+}
+
 std::istream& operator>>(std::istream& is, tri0& t)
+{
+    is >> t.v[0];
+    is >> t.v[1];
+    is >> t.v[2];
+    return is;
+}
+
+std::istream& operator>>(std::istream& is, tri1& t)
 {
     is >> t.v[0];
     is >> t.v[1];
@@ -513,6 +547,8 @@ public:
             load_gl_func("glVertexAttribPointer", glVertexAttribPointer);
             load_gl_func("glEnableVertexAttribArray",
                          glEnableVertexAttribArray);
+            load_gl_func("glDisableVertexAttribArray",
+                         glDisableVertexAttribArray);
             load_gl_func("glGetUniformLocation", glGetUniformLocation);
             load_gl_func("glUniform1i", glUniform1i);
             load_gl_func("glActiveTexture", glActiveTextureMY);
@@ -542,7 +578,29 @@ public:
         shader00->use();
         shader00->set_uniform("u_color", color(1.f, 0.f, 0.f, 1.f));
 
-        shader01 = new shader_gl_es20(R"(
+        shader01 = new shader_gl_es20(
+            R"(
+               attribute vec2 a_position;
+               attribute vec4 a_color;
+               varying vec4 v_color;
+                void main()
+                {
+					v_color = a_color;
+                    gl_Position = vec4(a_position, 0.0, 1.0);
+                }
+               )",
+            R"(
+                varying vec4 v_color;
+		        void main()
+		        {
+		            gl_FragColor = v_color;
+		        }
+              )",
+            { { 0, "a_position" }, { 1, "a_color" } });
+
+        shader01->use();
+
+        shader02 = new shader_gl_es20(R"(
                 attribute vec2 a_position;
                 attribute vec2 a_tex_coord;
                 varying vec2 v_tex_coord;
@@ -563,7 +621,7 @@ public:
                                       { { 0, "a_position" } });
 
         // turn on rendering with just created shader program
-        shader01->use();
+        shader02->use();
 
         texture = static_cast<texture_gl_es20*>(create_texture("tank.png"));
         if (nullptr == texture)
@@ -571,11 +629,14 @@ public:
             return "failed load texture\n";
         }
 
-        shader01->set_uniform("s_texture", texture);
+        shader02->set_uniform("s_texture", texture);
 
         glEnable(GL_BLEND);
         OM_GL_CHECK();
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        OM_GL_CHECK();
+
+        glClearColor(0.f, 0.0, 0.f, 0.0f);
         OM_GL_CHECK();
 
         return "";
@@ -650,9 +711,27 @@ public:
         glDrawArrays(GL_TRIANGLES, 0, 3);
         OM_GL_CHECK();
     }
-    void render(const tri1&) final
+    void render(const tri1& t) final
     {
-        throw std::runtime_error("not implemented");
+        shader01->use();
+        // positions
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(t.v[0]),
+                              &t.v[0].p);
+        OM_GL_CHECK();
+        glEnableVertexAttribArray(0);
+        OM_GL_CHECK();
+        // colors
+        glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(t.v[0]),
+                              &t.v[0].c);
+        OM_GL_CHECK();
+        glEnableVertexAttribArray(1);
+        OM_GL_CHECK();
+
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+        OM_GL_CHECK();
+
+        glDisableVertexAttribArray(1);
+        OM_GL_CHECK();
     }
     void render(const tri2&, const texture* const) final
     {
@@ -662,8 +741,6 @@ public:
     {
         SDL_GL_SwapWindow(window);
 
-        glClearColor(0.f, 1.0, 0.f, 0.0f);
-        OM_GL_CHECK();
         glClear(GL_COLOR_BUFFER_BIT);
         OM_GL_CHECK();
     }
@@ -681,6 +758,7 @@ private:
 
     shader_gl_es20* shader00 = nullptr;
     shader_gl_es20* shader01 = nullptr;
+    shader_gl_es20* shader02 = nullptr;
 };
 
 static bool already_exist = false;
@@ -725,27 +803,27 @@ color::color(float r, float g, float b, float a)
     std::uint32_t b_ = static_cast<std::uint32_t>(b * 255);
     std::uint32_t a_ = static_cast<std::uint32_t>(a * 255);
 
-    rgba = r_ << 24 | g_ << 16 | b_ << 8 | a_;
+    rgba = a_ << 24 | b_ << 16 | g_ << 8 | r_;
 }
 
 float color::get_r() const
 {
-    std::uint32_t r_ = (rgba & 0xFF000000) >> 24;
+    std::uint32_t r_ = (rgba & 0x000000FF) >> 0;
     return r_ / 255.f;
 }
 float color::get_g() const
 {
-    std::uint32_t g_ = (rgba & 0x00FF0000) >> 16;
+    std::uint32_t g_ = (rgba & 0x0000FF00) >> 8;
     return g_ / 255.f;
 }
 float color::get_b() const
 {
-    std::uint32_t b_ = (rgba & 0x0000FF00) >> 8;
+    std::uint32_t b_ = (rgba & 0x00FF0000) >> 16;
     return b_ / 255.f;
 }
 float color::get_a() const
 {
-    std::uint32_t a_ = (rgba & 0x000000FF) >> 0;
+    std::uint32_t a_ = (rgba & 0xFF000000) >> 24;
     return a_ / 255.f;
 }
 

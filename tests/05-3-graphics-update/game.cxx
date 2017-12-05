@@ -64,8 +64,19 @@ int main(int /*argc*/, char* /*argv*/ [])
 
         file >> tr1 >> tr2;
 
-        engine->render(tr1, om::color(1.f, 0.f, 0.f, 1.f));
-        engine->render(tr2, om::color(0.f, 0.f, 1.f, 1.f));
+        // engine->render(tr1, om::color(1.f, 0.f, 0.f, 1.f));
+        // engine->render(tr2, om::color(0.f, 0.f, 1.f, 1.f));
+
+        std::ifstream file1("vert_pos_color.txt");
+        assert(!!file1);
+
+        om::tri1 tr11;
+        om::tri1 tr12;
+
+        file1 >> tr11 >> tr12;
+
+        engine->render(tr11);
+        engine->render(tr12);
 
         engine->swap_buffers();
     }
