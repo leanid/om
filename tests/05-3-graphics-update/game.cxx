@@ -39,7 +39,7 @@ int main(int /*argc*/, char* /*argv*/ [])
         return EXIT_FAILURE;
     }
 
-    om::texture* texture = (engine->create_texture("tank.png"));
+    om::texture* texture = engine->create_texture("tank.png");
     if (nullptr == texture)
     {
         std::cerr << "failed load texture\n";
@@ -86,7 +86,7 @@ int main(int /*argc*/, char* /*argv*/ [])
             file >> tr1 >> tr2 >> tr11 >> tr22;
 
             float time  = engine->get_time_from_init();
-            float alpha = sin(time);
+            float alpha = std::sin(time);
 
             om::tri0 t1 = blend(tr1, tr11, alpha);
             om::tri0 t2 = blend(tr2, tr22, alpha);
@@ -120,8 +120,8 @@ int main(int /*argc*/, char* /*argv*/ [])
             file >> tr1 >> tr2;
 
             float time = engine->get_time_from_init();
-            float s    = sin(time);
-            float c    = cos(time);
+            float s    = std::sin(time);
+            float c    = std::cos(time);
 
             // animate one triangle texture coordinates
             for (auto& v : tr1.v)

@@ -22,27 +22,27 @@
 // we have to load all extension GL function pointers
 // dynamically from OpenGL library
 // so first declare function pointers for all we need
-PFNGLCREATESHADERPROC             glCreateShader             = nullptr;
-PFNGLSHADERSOURCEARBPROC          glShaderSource             = nullptr;
-PFNGLCOMPILESHADERARBPROC         glCompileShader            = nullptr;
-PFNGLGETSHADERIVPROC              glGetShaderiv              = nullptr;
-PFNGLGETSHADERINFOLOGPROC         glGetShaderInfoLog         = nullptr;
-PFNGLDELETESHADERPROC             glDeleteShader             = nullptr;
-PFNGLCREATEPROGRAMPROC            glCreateProgram            = nullptr;
-PFNGLATTACHSHADERPROC             glAttachShader             = nullptr;
-PFNGLBINDATTRIBLOCATIONPROC       glBindAttribLocation       = nullptr;
-PFNGLLINKPROGRAMPROC              glLinkProgram              = nullptr;
-PFNGLGETPROGRAMIVPROC             glGetProgramiv             = nullptr;
-PFNGLGETPROGRAMINFOLOGPROC        glGetProgramInfoLog        = nullptr;
-PFNGLDELETEPROGRAMPROC            glDeleteProgram            = nullptr;
-PFNGLUSEPROGRAMPROC               glUseProgram               = nullptr;
-PFNGLVERTEXATTRIBPOINTERPROC      glVertexAttribPointer      = nullptr;
-PFNGLENABLEVERTEXATTRIBARRAYPROC  glEnableVertexAttribArray  = nullptr;
-PFNGLDISABLEVERTEXATTRIBARRAYPROC glDisableVertexAttribArray = nullptr;
-PFNGLGETUNIFORMLOCATIONPROC       glGetUniformLocation       = nullptr;
-PFNGLUNIFORM1IPROC                glUniform1i                = nullptr;
-PFNGLACTIVETEXTUREPROC            glActiveTextureMY          = nullptr;
-PFNGLUNIFORM4FVPROC               glUniform4fv               = nullptr;
+static PFNGLCREATESHADERPROC             glCreateShader             = nullptr;
+static PFNGLSHADERSOURCEARBPROC          glShaderSource             = nullptr;
+static PFNGLCOMPILESHADERARBPROC         glCompileShader            = nullptr;
+static PFNGLGETSHADERIVPROC              glGetShaderiv              = nullptr;
+static PFNGLGETSHADERINFOLOGPROC         glGetShaderInfoLog         = nullptr;
+static PFNGLDELETESHADERPROC             glDeleteShader             = nullptr;
+static PFNGLCREATEPROGRAMPROC            glCreateProgram            = nullptr;
+static PFNGLATTACHSHADERPROC             glAttachShader             = nullptr;
+static PFNGLBINDATTRIBLOCATIONPROC       glBindAttribLocation       = nullptr;
+static PFNGLLINKPROGRAMPROC              glLinkProgram              = nullptr;
+static PFNGLGETPROGRAMIVPROC             glGetProgramiv             = nullptr;
+static PFNGLGETPROGRAMINFOLOGPROC        glGetProgramInfoLog        = nullptr;
+static PFNGLDELETEPROGRAMPROC            glDeleteProgram            = nullptr;
+static PFNGLUSEPROGRAMPROC               glUseProgram               = nullptr;
+static PFNGLVERTEXATTRIBPOINTERPROC      glVertexAttribPointer      = nullptr;
+static PFNGLENABLEVERTEXATTRIBARRAYPROC  glEnableVertexAttribArray  = nullptr;
+static PFNGLDISABLEVERTEXATTRIBARRAYPROC glDisableVertexAttribArray = nullptr;
+static PFNGLGETUNIFORMLOCATIONPROC       glGetUniformLocation       = nullptr;
+static PFNGLUNIFORM1IPROC                glUniform1i                = nullptr;
+static PFNGLACTIVETEXTUREPROC            glActiveTextureMY          = nullptr;
+static PFNGLUNIFORM4FVPROC               glUniform4fv               = nullptr;
 
 template <typename T>
 static void load_gl_func(const char* func_name, T& result)
@@ -58,7 +58,7 @@ static void load_gl_func(const char* func_name, T& result)
 
 #define OM_GL_CHECK()                                                          \
     {                                                                          \
-        const int err = glGetError();                                          \
+        const unsigned int err = glGetError();                                 \
         if (err != GL_NO_ERROR)                                                \
         {                                                                      \
             switch (err)                                                       \
@@ -94,64 +94,8 @@ texture::~texture()
 class texture_gl_es20 final : public texture
 {
 public:
-    explicit texture_gl_es20(std::string_view path)
-    {
-        std::vector<unsigned char> png_file_in_memory;
-        std::ifstream              ifs(path.data(), std::ios_base::binary);
-        if (!ifs)
-        {
-            throw std::runtime_error("can't load texture");
-        }
-        ifs.seekg(0, std::ios_base::end);
-        size_t pos_in_file = ifs.tellg();
-        png_file_in_memory.resize(pos_in_file);
-        ifs.seekg(0, std::ios_base::beg);
-        if (!ifs)
-        {
-            throw std::runtime_error("can't load texture");
-        }
-
-        ifs.read(reinterpret_cast<char*>(png_file_in_memory.data()),
-                 pos_in_file);
-        if (!ifs.good())
-        {
-            throw std::runtime_error("can't load texture");
-        }
-
-        std::vector<unsigned char> image;
-        unsigned long              w = 0;
-        unsigned long              h = 0;
-        int error = decodePNG(image, w, h, &png_file_in_memory[0],
-                              png_file_in_memory.size(), false);
-
-        // if there's an error, display it
-        if (error != 0)
-        {
-            std::cerr << "error: " << error << std::endl;
-            throw std::runtime_error("can't load texture");
-        }
-
-        glGenTextures(1, &tex_handl);
-        OM_GL_CHECK();
-        glBindTexture(GL_TEXTURE_2D, tex_handl);
-        OM_GL_CHECK();
-
-        GLint mipmap_level = 0;
-        GLint border       = 0;
-        glTexImage2D(GL_TEXTURE_2D, mipmap_level, GL_RGBA, w, h, border,
-                     GL_RGBA, GL_UNSIGNED_BYTE, &image[0]);
-        OM_GL_CHECK();
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        OM_GL_CHECK();
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        OM_GL_CHECK();
-    }
-    ~texture_gl_es20()
-    {
-        glDeleteTextures(1, &tex_handl);
-        OM_GL_CHECK();
-    }
+    explicit texture_gl_es20(std::string_view path);
+    ~texture_gl_es20() override;
 
     void bind() const
     {
@@ -163,6 +107,7 @@ public:
     std::uint32_t get_height() const final { return height; }
 
 private:
+    std::string   file_path;
     GLuint        tex_handl = 0;
     std::uint32_t width     = 0;
     std::uint32_t height    = 0;
@@ -205,14 +150,14 @@ public:
             std::cerr << "can't get uniform location from shader\n";
             throw std::runtime_error("can't get uniform location");
         }
-        int texture_unit = 0;
+        unsigned int texture_unit = 0;
         glActiveTextureMY(GL_TEXTURE0 + texture_unit);
         OM_GL_CHECK();
 
         texture->bind();
 
         // http://www.khronos.org/opengles/sdk/docs/man/xhtml/glUniform.xml
-        glUniform1i(location, 0 + texture_unit);
+        glUniform1i(location, static_cast<int>(0 + texture_unit));
         OM_GL_CHECK();
     }
 
@@ -252,7 +197,7 @@ private:
             GLint info_len = 0;
             glGetShaderiv(shader_id, GL_INFO_LOG_LENGTH, &info_len);
             OM_GL_CHECK();
-            std::vector<char> info_chars(info_len);
+            std::vector<char> info_chars(static_cast<size_t>(info_len));
             glGetShaderInfoLog(shader_id, info_len, NULL, info_chars.data());
             OM_GL_CHECK();
             glDeleteShader(shader_id);
@@ -304,7 +249,7 @@ private:
             GLint infoLen = 0;
             glGetProgramiv(program_id_, GL_INFO_LOG_LENGTH, &infoLen);
             OM_GL_CHECK();
-            std::vector<char> infoLog(infoLen);
+            std::vector<char> infoLog(static_cast<size_t>(infoLen));
             glGetProgramInfoLog(program_id_, infoLen, NULL, infoLog.data());
             OM_GL_CHECK();
             std::cerr << "Error linking program:\n" << infoLog.data();
@@ -322,13 +267,13 @@ private:
 
 static std::array<std::string_view, 17> event_names = {
     /// input events
-    "left_pressed", "left_released", "right_pressed", "right_released",
-    "up_pressed", "up_released", "down_pressed", "down_released",
-    "select_pressed", "select_released", "start_pressed", "start_released",
-    "button1_pressed", "button1_released", "button2_pressed",
-    "button2_released",
-    /// virtual console events
-    "turn_off"
+    { "left_pressed", "left_released", "right_pressed", "right_released",
+      "up_pressed", "up_released", "down_pressed", "down_released",
+      "select_pressed", "select_released", "start_pressed", "start_released",
+      "button1_pressed", "button1_released", "button2_pressed",
+      "button2_released",
+      /// virtual console events
+      "turn_off" }
 };
 
 std::ostream& operator<<(std::ostream& stream, const event e)
@@ -442,32 +387,34 @@ std::istream& operator>>(std::istream& is, tri2& t)
 
 struct bind
 {
-    bind(SDL_Keycode k, std::string_view s, event pressed, event released)
-        : key(k)
-        , name(s)
+    bind(std::string_view s, SDL_Keycode k, event pressed, event released)
+        : name(s)
+        , key(k)
         , event_pressed(pressed)
         , event_released(released)
     {
     }
 
-    SDL_Keycode      key;
     std::string_view name;
-    event            event_pressed;
-    event            event_released;
+    SDL_Keycode      key;
+
+    event event_pressed;
+    event event_released;
 };
 
 const std::array<bind, 8> keys{
-    bind{ SDLK_w, "up", event::up_pressed, event::up_released },
-    bind{ SDLK_a, "left", event::left_pressed, event::left_released },
-    bind{ SDLK_s, "down", event::down_pressed, event::down_released },
-    bind{ SDLK_d, "right", event::right_pressed, event::right_released },
-    bind{ SDLK_LCTRL, "button1", event::button1_pressed,
-          event::button1_released },
-    bind{ SDLK_SPACE, "button2", event::button2_pressed,
-          event::button2_released },
-    bind{ SDLK_ESCAPE, "select", event::select_pressed,
-          event::select_released },
-    bind{ SDLK_RETURN, "start", event::start_pressed, event::start_released }
+    { bind{ "up", SDLK_w, event::up_pressed, event::up_released },
+      bind{ "left", SDLK_a, event::left_pressed, event::left_released },
+      bind{ "down", SDLK_s, event::down_pressed, event::down_released },
+      bind{ "right", SDLK_d, event::right_pressed, event::right_released },
+      bind{ "button1", SDLK_LCTRL, event::button1_pressed,
+            event::button1_released },
+      bind{ "button2", SDLK_SPACE, event::button2_pressed,
+            event::button2_released },
+      bind{ "select", SDLK_ESCAPE, event::select_pressed,
+            event::select_released },
+      bind{ "start", SDLK_RETURN, event::start_pressed,
+            event::start_released } }
 };
 
 static bool check_input(const SDL_Event& e, const bind*& result)
@@ -491,182 +438,7 @@ class engine_impl final : public engine
 public:
     /// create main window
     /// on success return empty string
-    std::string initialize(std::string_view /*config*/) final
-    {
-        using namespace std;
-
-        stringstream serr;
-
-        SDL_version compiled = { 0, 0, 0 };
-        SDL_version linked   = { 0, 0, 0 };
-
-        SDL_VERSION(&compiled);
-        SDL_GetVersion(&linked);
-
-        if (SDL_COMPILEDVERSION !=
-            SDL_VERSIONNUM(linked.major, linked.minor, linked.patch))
-        {
-            serr << "warning: SDL2 compiled and linked version mismatch: "
-                 << compiled << " " << linked << endl;
-        }
-
-        const int init_result = SDL_Init(SDL_INIT_EVERYTHING);
-        if (init_result != 0)
-        {
-            const char* err_message = SDL_GetError();
-            serr << "error: failed call SDL_Init: " << err_message << endl;
-            return serr.str();
-        }
-
-        window = SDL_CreateWindow("title", SDL_WINDOWPOS_CENTERED,
-                                  SDL_WINDOWPOS_CENTERED, 640, 480,
-                                  ::SDL_WINDOW_OPENGL);
-
-        if (window == nullptr)
-        {
-            const char* err_message = SDL_GetError();
-            serr << "error: failed call SDL_CreateWindow: " << err_message
-                 << endl;
-            SDL_Quit();
-            return serr.str();
-        }
-
-        gl_context = SDL_GL_CreateContext(window);
-        if (gl_context == nullptr)
-        {
-            std::string msg("can't create opengl context: ");
-            msg += SDL_GetError();
-            serr << msg << endl;
-            return serr.str();
-        }
-
-        int gl_major_ver = 0;
-        int result =
-            SDL_GL_GetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, &gl_major_ver);
-        assert(result == 0);
-        int gl_minor_ver = 0;
-        result =
-            SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, &gl_minor_ver);
-        assert(result == 0);
-
-        if (gl_major_ver <= 2 && gl_minor_ver < 1)
-        {
-            serr << "current context opengl version: " << gl_major_ver << '.'
-                 << gl_minor_ver << '\n'
-                 << "need opengl version at least: 2.1\n"
-                 << std::flush;
-            return serr.str();
-        }
-        try
-        {
-            load_gl_func("glCreateShader", glCreateShader);
-            load_gl_func("glShaderSource", glShaderSource);
-            load_gl_func("glCompileShader", glCompileShader);
-            load_gl_func("glGetShaderiv", glGetShaderiv);
-            load_gl_func("glGetShaderInfoLog", glGetShaderInfoLog);
-            load_gl_func("glDeleteShader", glDeleteShader);
-            load_gl_func("glCreateProgram", glCreateProgram);
-            load_gl_func("glAttachShader", glAttachShader);
-            load_gl_func("glBindAttribLocation", glBindAttribLocation);
-            load_gl_func("glLinkProgram", glLinkProgram);
-            load_gl_func("glGetProgramiv", glGetProgramiv);
-            load_gl_func("glGetProgramInfoLog", glGetProgramInfoLog);
-            load_gl_func("glDeleteProgram", glDeleteProgram);
-            load_gl_func("glUseProgram", glUseProgram);
-            load_gl_func("glVertexAttribPointer", glVertexAttribPointer);
-            load_gl_func("glEnableVertexAttribArray",
-                         glEnableVertexAttribArray);
-            load_gl_func("glDisableVertexAttribArray",
-                         glDisableVertexAttribArray);
-            load_gl_func("glGetUniformLocation", glGetUniformLocation);
-            load_gl_func("glUniform1i", glUniform1i);
-            load_gl_func("glActiveTexture", glActiveTextureMY);
-            load_gl_func("glUniform4fv", glUniform4fv);
-        }
-        catch (std::exception& ex)
-        {
-            return ex.what();
-        }
-
-        shader00 = new shader_gl_es20(R"(
-                attribute vec2 a_position;
-                void main()
-                {
-                    gl_Position = vec4(a_position, 0.0, 1.0);
-                }
-                )",
-                                      R"(
-		        uniform vec4 u_color;
-		        void main()
-		        {
-		            gl_FragColor = u_color;
-		        }
-		        )",
-                                      { { 0, "a_position" } });
-
-        shader00->use();
-        shader00->set_uniform("u_color", color(1.f, 0.f, 0.f, 1.f));
-
-        shader01 = new shader_gl_es20(
-            R"(
-               attribute vec2 a_position;
-               attribute vec4 a_color;
-               varying vec4 v_color;
-                void main()
-                {
-					v_color = a_color;
-                    gl_Position = vec4(a_position, 0.0, 1.0);
-                }
-               )",
-            R"(
-                varying vec4 v_color;
-		        void main()
-		        {
-		            gl_FragColor = v_color;
-		        }
-              )",
-            { { 0, "a_position" }, { 1, "a_color" } });
-
-        shader01->use();
-
-        shader02 = new shader_gl_es20(
-            R"(
-                attribute vec2 a_position;
-                attribute vec2 a_tex_coord;
-                attribute vec4 a_color;
-                varying vec4 v_color;
-                varying vec2 v_tex_coord;
-                void main()
-                {
-                    v_tex_coord = a_tex_coord;
-                    v_color = a_color;
-                    gl_Position = vec4(a_position, 0.0, 1.0);
-                }
-                )",
-            R"(
-		        varying vec2 v_tex_coord;
-                varying vec4 v_color;
-		        uniform sampler2D s_texture;
-		        void main()
-		        {
-		            gl_FragColor = texture2D(s_texture, v_tex_coord) * v_color;
-		        }
-		        )",
-            { { 0, "a_position" }, { 1, "a_color" }, { 2, "a_tex_coord" } });
-
-        // turn on rendering with just created shader program
-        shader02->use();
-
-        glEnable(GL_BLEND);
-        OM_GL_CHECK();
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        OM_GL_CHECK();
-
-        glClearColor(0.f, 0.0, 0.f, 0.0f);
-        OM_GL_CHECK();
-
-        return "";
-    }
+    std::string initialize(std::string_view /*config*/) final;
     /// return seconds from initialization
     float get_time_from_init() final
     {
@@ -792,7 +564,7 @@ public:
         OM_GL_CHECK();
         glDisableVertexAttribArray(2);
         OM_GL_CHECK();
-    };
+    }
     void swap_buffers() final
     {
         SDL_GL_SwapWindow(window);
@@ -808,9 +580,8 @@ public:
     }
 
 private:
-    SDL_Window*      window     = nullptr;
-    SDL_GLContext    gl_context = nullptr;
-    texture_gl_es20* texture    = nullptr;
+    SDL_Window*   window     = nullptr;
+    SDL_GLContext gl_context = nullptr;
 
     shader_gl_es20* shader00 = nullptr;
     shader_gl_es20* shader01 = nullptr;
@@ -910,6 +681,241 @@ void color::set_a(const float a)
 
 engine::~engine()
 {
+}
+
+texture_gl_es20::texture_gl_es20(std::string_view path)
+    : file_path(path)
+{
+    std::vector<unsigned char> png_file_in_memory;
+    std::ifstream              ifs(path.data(), std::ios_base::binary);
+    if (!ifs)
+    {
+        throw std::runtime_error("can't load texture");
+    }
+    ifs.seekg(0, std::ios_base::end);
+    std::streamoff pos_in_file = ifs.tellg();
+    png_file_in_memory.resize(static_cast<size_t>(pos_in_file));
+    ifs.seekg(0, std::ios_base::beg);
+    if (!ifs)
+    {
+        throw std::runtime_error("can't load texture");
+    }
+
+    ifs.read(reinterpret_cast<char*>(png_file_in_memory.data()), pos_in_file);
+    if (!ifs.good())
+    {
+        throw std::runtime_error("can't load texture");
+    }
+
+    std::vector<unsigned char> image;
+    unsigned long              w = 0;
+    unsigned long              h = 0;
+    int error = decodePNG(image, w, h, &png_file_in_memory[0],
+                          png_file_in_memory.size(), false);
+
+    // if there's an error, display it
+    if (error != 0)
+    {
+        std::cerr << "error: " << error << std::endl;
+        throw std::runtime_error("can't load texture");
+    }
+
+    glGenTextures(1, &tex_handl);
+    OM_GL_CHECK();
+    glBindTexture(GL_TEXTURE_2D, tex_handl);
+    OM_GL_CHECK();
+
+    GLint   mipmap_level = 0;
+    GLint   border       = 0;
+    GLsizei width        = static_cast<GLsizei>(w);
+    GLsizei height       = static_cast<GLsizei>(h);
+    glTexImage2D(GL_TEXTURE_2D, mipmap_level, GL_RGBA, width, height, border,
+                 GL_RGBA, GL_UNSIGNED_BYTE, &image[0]);
+    OM_GL_CHECK();
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    OM_GL_CHECK();
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    OM_GL_CHECK();
+}
+
+texture_gl_es20::~texture_gl_es20()
+{
+    glDeleteTextures(1, &tex_handl);
+    OM_GL_CHECK();
+}
+
+std::string engine_impl::initialize(std::string_view)
+{
+    using namespace std;
+
+    stringstream serr;
+
+    SDL_version compiled = { 0, 0, 0 };
+    SDL_version linked   = { 0, 0, 0 };
+
+    SDL_VERSION(&compiled);
+    SDL_GetVersion(&linked);
+
+    if (SDL_COMPILEDVERSION !=
+        SDL_VERSIONNUM(linked.major, linked.minor, linked.patch))
+    {
+        serr << "warning: SDL2 compiled and linked version mismatch: "
+             << compiled << " " << linked << endl;
+    }
+
+    const int init_result = SDL_Init(SDL_INIT_EVERYTHING);
+    if (init_result != 0)
+    {
+        const char* err_message = SDL_GetError();
+        serr << "error: failed call SDL_Init: " << err_message << endl;
+        return serr.str();
+    }
+
+    window =
+        SDL_CreateWindow("title", SDL_WINDOWPOS_CENTERED,
+                         SDL_WINDOWPOS_CENTERED, 640, 480, ::SDL_WINDOW_OPENGL);
+
+    if (window == nullptr)
+    {
+        const char* err_message = SDL_GetError();
+        serr << "error: failed call SDL_CreateWindow: " << err_message << endl;
+        SDL_Quit();
+        return serr.str();
+    }
+
+    gl_context = SDL_GL_CreateContext(window);
+    if (gl_context == nullptr)
+    {
+        std::string msg("can't create opengl context: ");
+        msg += SDL_GetError();
+        serr << msg << endl;
+        return serr.str();
+    }
+
+    int gl_major_ver = 0;
+    int result =
+        SDL_GL_GetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, &gl_major_ver);
+    assert(result == 0);
+    int gl_minor_ver = 0;
+    result = SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, &gl_minor_ver);
+    assert(result == 0);
+
+    if (gl_major_ver <= 2 && gl_minor_ver < 1)
+    {
+        serr << "current context opengl version: " << gl_major_ver << '.'
+             << gl_minor_ver << '\n'
+             << "need opengl version at least: 2.1\n"
+             << std::flush;
+        return serr.str();
+    }
+    try
+    {
+        load_gl_func("glCreateShader", glCreateShader);
+        load_gl_func("glShaderSource", glShaderSource);
+        load_gl_func("glCompileShader", glCompileShader);
+        load_gl_func("glGetShaderiv", glGetShaderiv);
+        load_gl_func("glGetShaderInfoLog", glGetShaderInfoLog);
+        load_gl_func("glDeleteShader", glDeleteShader);
+        load_gl_func("glCreateProgram", glCreateProgram);
+        load_gl_func("glAttachShader", glAttachShader);
+        load_gl_func("glBindAttribLocation", glBindAttribLocation);
+        load_gl_func("glLinkProgram", glLinkProgram);
+        load_gl_func("glGetProgramiv", glGetProgramiv);
+        load_gl_func("glGetProgramInfoLog", glGetProgramInfoLog);
+        load_gl_func("glDeleteProgram", glDeleteProgram);
+        load_gl_func("glUseProgram", glUseProgram);
+        load_gl_func("glVertexAttribPointer", glVertexAttribPointer);
+        load_gl_func("glEnableVertexAttribArray", glEnableVertexAttribArray);
+        load_gl_func("glDisableVertexAttribArray", glDisableVertexAttribArray);
+        load_gl_func("glGetUniformLocation", glGetUniformLocation);
+        load_gl_func("glUniform1i", glUniform1i);
+        load_gl_func("glActiveTexture", glActiveTextureMY);
+        load_gl_func("glUniform4fv", glUniform4fv);
+    }
+    catch (std::exception& ex)
+    {
+        return ex.what();
+    }
+
+    shader00 = new shader_gl_es20(R"(
+                                  attribute vec2 a_position;
+                                  void main()
+                                  {
+                                  gl_Position = vec4(a_position, 0.0, 1.0);
+                                  }
+                                  )",
+                                  R"(
+                                  uniform vec4 u_color;
+                                  void main()
+                                  {
+                                  gl_FragColor = u_color;
+                                  }
+                                  )",
+                                  { { 0, "a_position" } });
+
+    shader00->use();
+    shader00->set_uniform("u_color", color(1.f, 0.f, 0.f, 1.f));
+
+    shader01 = new shader_gl_es20(
+        R"(
+                attribute vec2 a_position;
+                attribute vec4 a_color;
+                varying vec4 v_color;
+                void main()
+                {
+                v_color = a_color;
+                gl_Position = vec4(a_position, 0.0, 1.0);
+                }
+                )",
+        R"(
+                varying vec4 v_color;
+                void main()
+                {
+                gl_FragColor = v_color;
+                }
+                )",
+        { { 0, "a_position" }, { 1, "a_color" } });
+
+    shader01->use();
+
+    shader02 = new shader_gl_es20(
+        R"(
+                attribute vec2 a_position;
+                attribute vec2 a_tex_coord;
+                attribute vec4 a_color;
+                varying vec4 v_color;
+                varying vec2 v_tex_coord;
+                void main()
+                {
+                v_tex_coord = a_tex_coord;
+                v_color = a_color;
+                gl_Position = vec4(a_position, 0.0, 1.0);
+                }
+                )",
+        R"(
+                varying vec2 v_tex_coord;
+                varying vec4 v_color;
+                uniform sampler2D s_texture;
+                void main()
+                {
+                gl_FragColor = texture2D(s_texture, v_tex_coord) * v_color;
+                }
+                )",
+        { { 0, "a_position" }, { 1, "a_color" }, { 2, "a_tex_coord" } });
+
+    // turn on rendering with just created shader program
+    shader02->use();
+
+    glEnable(GL_BLEND);
+    OM_GL_CHECK();
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    OM_GL_CHECK();
+
+    glClearColor(0.f, 0.0, 0.f, 0.0f);
+    OM_GL_CHECK();
+
+    return "";
 }
 
 } // end namespace om
