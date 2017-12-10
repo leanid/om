@@ -42,8 +42,9 @@ static PFNGLENABLEVERTEXATTRIBARRAYPROC  glEnableVertexAttribArray  = nullptr;
 static PFNGLDISABLEVERTEXATTRIBARRAYPROC glDisableVertexAttribArray = nullptr;
 static PFNGLGETUNIFORMLOCATIONPROC       glGetUniformLocation       = nullptr;
 static PFNGLUNIFORM1IPROC                glUniform1i                = nullptr;
-static PFNGLACTIVETEXTUREPROC            glActiveTextureMY          = nullptr;
+static PFNGLACTIVETEXTUREPROC            glActiveTexture_           = nullptr;
 static PFNGLUNIFORM4FVPROC               glUniform4fv               = nullptr;
+static PFNGLUNIFORMMATRIX3FVPROC         glUniformMatrix3fv         = nullptr;
 
 template <typename T>
 static void load_gl_func(const char* func_name, T& result)
@@ -170,7 +171,9 @@ mat2x3 operator*(const mat2x3& m1, const mat2x3& m2)
     return r;
 }
 
-texture::~texture() {}
+texture::~texture()
+{
+}
 
 class texture_gl_es20 final : public texture
 {
@@ -198,7 +201,7 @@ class shader_gl_es20
 {
 public:
     shader_gl_es20(
-        std::string_view vertex_src, std::string_view fragment_src,
+        std::string_view vertex_src, std::string_view         fragment_src,
         const std::vector<std::tuple<GLuint, const GLchar*>>& attributes)
     {
         vert_shader = compile_shader(GL_VERTEX_SHADER, vertex_src);
@@ -232,7 +235,7 @@ public:
             throw std::runtime_error("can't get uniform location");
         }
         unsigned int texture_unit = 0;
-        glActiveTextureMY(GL_TEXTURE0 + texture_unit);
+        glActiveTexture_(GL_TEXTURE0 + texture_unit);
         OM_GL_CHECK();
 
         texture->bind();
@@ -254,6 +257,26 @@ public:
         }
         float values[4] = { c.get_r(), c.get_g(), c.get_b(), c.get_a() };
         glUniform4fv(location, 1, &values[0]);
+        OM_GL_CHECK();
+    }
+
+    void set_uniform(std::string_view uniform_name, const mat2x3& m)
+    {
+        const int location =
+            glGetUniformLocation(program_id, uniform_name.data());
+        OM_GL_CHECK();
+        if (location == -1)
+        {
+            std::cerr << "can't get uniform location from shader\n";
+            throw std::runtime_error("can't get uniform location");
+        }
+        // OpenGL wants matrix in column major order
+        // clang-format off
+        float values[9] = { m.col0.x,  m.col0.y, m.delta.x,
+                            m.col1.x, m.col1.y, m.delta.y,
+                            0.f,      0.f,       1.f };
+        // clang-format on
+        glUniformMatrix3fv(location, 1, GL_FALSE, &values[0]);
         OM_GL_CHECK();
     }
 
@@ -589,13 +612,6 @@ public:
         glEnableVertexAttribArray(0);
         OM_GL_CHECK();
 
-        // texture coordinates
-        // glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(v0),
-        // &t.v[0].tx);
-        // OM_GL_CHECK();
-        // glEnableVertexAttribArray(1);
-        // OM_GL_CHECK();
-
         glDrawArrays(GL_TRIANGLES, 0, 3);
         OM_GL_CHECK();
     }
@@ -655,6 +671,41 @@ public:
         glDisableVertexAttribArray(2);
         OM_GL_CHECK();
     }
+    void render(const tri2& t, texture* tex, const mat2x3& m)
+    {
+        shader03->use();
+        texture_gl_es20* texture = static_cast<texture_gl_es20*>(tex);
+        texture->bind();
+        shader03->set_uniform("s_texture", texture);
+        shader03->set_uniform("u_matrix", m);
+        // positions
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(t.v[0]),
+                              &t.v[0].pos);
+        OM_GL_CHECK();
+        glEnableVertexAttribArray(0);
+        OM_GL_CHECK();
+        // colors
+        glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(t.v[0]),
+                              &t.v[0].c);
+        OM_GL_CHECK();
+        glEnableVertexAttribArray(1);
+        OM_GL_CHECK();
+
+        // texture coordinates
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(t.v[0]),
+                              &t.v[0].uv);
+        OM_GL_CHECK();
+        glEnableVertexAttribArray(2);
+        OM_GL_CHECK();
+
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+        OM_GL_CHECK();
+
+        glDisableVertexAttribArray(1);
+        OM_GL_CHECK();
+        glDisableVertexAttribArray(2);
+        OM_GL_CHECK();
+    }
     void swap_buffers() final
     {
         SDL_GL_SwapWindow(window);
@@ -676,6 +727,7 @@ private:
     shader_gl_es20* shader00 = nullptr;
     shader_gl_es20* shader01 = nullptr;
     shader_gl_es20* shader02 = nullptr;
+    shader_gl_es20* shader03 = nullptr;
 };
 
 static bool already_exist = false;
@@ -769,7 +821,9 @@ void color::set_a(const float a)
     rgba |= a_ << 24;
 }
 
-engine::~engine() {}
+engine::~engine()
+{
+}
 
 texture_gl_es20::texture_gl_es20(std::string_view path)
     : file_path(path)
@@ -918,8 +972,9 @@ std::string engine_impl::initialize(std::string_view)
         load_gl_func("glDisableVertexAttribArray", glDisableVertexAttribArray);
         load_gl_func("glGetUniformLocation", glGetUniformLocation);
         load_gl_func("glUniform1i", glUniform1i);
-        load_gl_func("glActiveTexture", glActiveTextureMY);
+        load_gl_func("glActiveTexture", glActiveTexture_);
         load_gl_func("glUniform4fv", glUniform4fv);
+        load_gl_func("glUniformMatrix3fv", glUniformMatrix3fv);
     }
     catch (std::exception& ex)
     {
@@ -994,6 +1049,34 @@ std::string engine_impl::initialize(std::string_view)
 
     // turn on rendering with just created shader program
     shader02->use();
+
+    shader03 = new shader_gl_es20(
+        R"(
+                uniform mat3 u_matrix;
+                attribute vec2 a_position;
+                attribute vec2 a_tex_coord;
+                attribute vec4 a_color;
+                varying vec4 v_color;
+                varying vec2 v_tex_coord;
+                void main()
+                {
+                v_tex_coord = a_tex_coord;
+                v_color = a_color;
+                vec3 pos = vec3(a_position, 1.0) * u_matrix;
+                gl_Position = vec4(pos, 1.0);
+                }
+                )",
+        R"(
+                varying vec2 v_tex_coord;
+                varying vec4 v_color;
+                uniform sampler2D s_texture;
+                void main()
+                {
+                gl_FragColor = texture2D(s_texture, v_tex_coord) * v_color;
+                }
+                )",
+        { { 0, "a_position" }, { 1, "a_color" }, { 2, "a_tex_coord" } });
+    shader03->use();
 
     glEnable(GL_BLEND);
     OM_GL_CHECK();

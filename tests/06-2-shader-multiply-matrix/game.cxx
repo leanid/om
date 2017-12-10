@@ -85,14 +85,7 @@ int main(int /*argc*/, char* /*argv*/ [])
 
             file >> tr1 >> tr2 >> tr11 >> tr22;
 
-            float time = engine->get_time_from_init();
-            // float alpha = std::sin(time);
-
-            // om::tri0 t1 = blend(tr1, tr11, alpha);
-            // om::tri0 t2 = blend(tr2, tr22, alpha);
-
-            // float time = engine->get_time_from_init();
-
+            float      time = engine->get_time_from_init();
             om::mat2x3 move = om::mat2x3::move(om::vec2(std::sin(time), 0.f));
 
             om::mat2x3 aspect;
@@ -140,8 +133,19 @@ int main(int /*argc*/, char* /*argv*/ [])
 
             file >> tr1 >> tr2;
 
-            engine->render(tr1, texture);
-            engine->render(tr2, texture);
+            float      time = engine->get_time_from_init();
+            om::mat2x3 move = om::mat2x3::move(om::vec2(std::sin(time), 0.f));
+
+            om::mat2x3 aspect;
+            aspect.col0.x = 1;
+            aspect.col0.y = 0.f;
+            aspect.col1.x = 0.f;
+            aspect.col1.y = 640.f / 480.f;
+
+            om::mat2x3 m = om::mat2x3::rotation(std::sin(time)) * move * aspect;
+
+            engine->render(tr1, texture, m);
+            engine->render(tr2, texture, m);
         }
 
         engine->swap_buffers();

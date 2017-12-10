@@ -26,9 +26,9 @@ struct OM_DECLSPEC mat2x3
     static mat2x3 scale(float scale);
     static mat2x3 rotation(float thetha);
     static mat2x3 move(const vec2& delta);
-    vec2          col0;
-    vec2          col1;
-    vec2          delta;
+    vec2 col0;
+    vec2 col1;
+    vec2 delta;
 };
 
 vec2 OM_DECLSPEC operator*(const vec2& v, const mat2x3& m);
@@ -158,14 +158,15 @@ public:
     virtual float get_time_from_init() = 0;
     /// pool event from input queue
     /// return true if more events in queue
-    virtual bool     read_input(event& e)                  = 0;
+    virtual bool read_input(event& e)                      = 0;
     virtual texture* create_texture(std::string_view path) = 0;
-    virtual void     destroy_texture(texture* t)           = 0;
-    virtual void     render(const tri0&, const color&)     = 0;
-    virtual void     render(const tri1&)                   = 0;
-    virtual void     render(const tri2&, texture*)         = 0;
-    virtual void     swap_buffers()                        = 0;
-    virtual void     uninitialize()                        = 0;
+    virtual void destroy_texture(texture* t)               = 0;
+    virtual void render(const tri0&, const color&) = 0;
+    virtual void render(const tri1&) = 0;
+    virtual void render(const tri2&, texture*) = 0;
+    virtual void render(const tri2&, texture*, const mat2x3& m) = 0;
+    virtual void swap_buffers() = 0;
+    virtual void uninitialize() = 0;
 };
 
 } // end namespace om
