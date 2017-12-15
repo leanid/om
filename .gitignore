@@ -6,3 +6,7 @@ tests/02-sdl-static/.*
 tests/03-sdl-loop-to-engine/.*
 tests/*/build/*
 tests/*/.*
+*.user
+tests/06-2-shader-multiply-matrix/cmake-*
+tests/*/cmake-*
+tests/build-*
