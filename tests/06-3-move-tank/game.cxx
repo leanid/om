@@ -53,7 +53,7 @@ int main(int /*argc*/, char* /*argv*/ [])
 
     om::vec2    current_tank_pos(0.f, 0.f);
     float       current_tank_direction(0.f);
-    const float pi = 3.1459f;
+    const float pi = 3.1415926f;
 
     while (continue_loop)
     {
@@ -73,26 +73,25 @@ int main(int /*argc*/, char* /*argv*/ [])
             }
         }
 
-        current_tank_direction = 0;
         if (engine->is_key_down(om::keys::left))
         {
             current_tank_pos.x -= 0.01f;
-            current_tank_direction += pi / 2.f;
+            current_tank_direction = pi / 2.f;
         }
-        if (engine->is_key_down(om::keys::right))
+        else if (engine->is_key_down(om::keys::right))
         {
             current_tank_pos.x += 0.01f;
-            current_tank_direction -= pi / 2.f;
+            current_tank_direction = -pi / 2.f;
         }
-        if (engine->is_key_down(om::keys::up))
+        else if (engine->is_key_down(om::keys::up))
         {
             current_tank_pos.y += 0.01f;
-            current_tank_direction += 0.f;
+            current_tank_direction = 0.f;
         }
-        if (engine->is_key_down(om::keys::down))
+        else if (engine->is_key_down(om::keys::down))
         {
             current_tank_pos.y -= 0.01f;
-            current_tank_direction -= pi;
+            current_tank_direction = -pi;
         }
 
         om::mat2x3 move   = om::mat2x3::move(current_tank_pos);
