@@ -954,8 +954,8 @@ texture_gl_es20::texture_gl_es20(std::string_view path)
         throw std::runtime_error("can't load texture");
     }
 
-    const om::png_image img =
-        decode_png_file_from_memory(png_file_in_memory, convert::to_rgba32);
+    const om::png_image img = decode_png_file_from_memory(
+        png_file_in_memory, convert_color::to_rgba32);
 
     // if there's an error, display it
     if (img.error != 0)

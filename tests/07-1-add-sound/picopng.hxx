@@ -72,14 +72,14 @@ struct png_image
     int32_t              error  = 1; // 0 - success
 };
 
-enum class convert
+enum class convert_color
 {
     to_rgba32,
     leave_as_is
 };
 
 png_image decode_png_file_from_memory(const std::vector<uint8_t>& png_file,
-                                      const convert               convertion)
+                                      const convert_color         convertion)
 {
     // picoPNG is a PNG decoder in one C++ function of around 500 lines. Use
     // picoPNG for
@@ -95,7 +95,7 @@ png_image decode_png_file_from_memory(const std::vector<uint8_t>& png_file,
 
     png_image result;
 
-    bool convert_to_rgba32 = convert::to_rgba32 == convertion;
+    bool convert_to_rgba32 = convert_color::to_rgba32 == convertion;
 
     const uint8_t* in_png  = png_file.data();
     const size_t   in_size = png_file.size();
