@@ -28,9 +28,9 @@ data
 information.
 return: 0 if success, not 0 if some error occured.
 */
-int decodePNG(std::vector<uint8_t>& out_image, unsigned long& image_width,
-              unsigned long& image_height, const uint8_t* in_png,
-              size_t in_size, bool convert_to_rgba32 = true)
+int decodePNG(std::vector<uint8_t>& out_image, uint32_t& image_width,
+              uint32_t& image_height, const uint8_t* in_png, size_t in_size,
+              bool convert_to_rgba32 = true)
 {
     // picoPNG version 20101224
     // Copyright (c) 2005-2010 Lode Vandevenne
@@ -66,59 +66,57 @@ int decodePNG(std::vector<uint8_t>& out_image, unsigned long& image_width,
     // header file.
     // Apologies for the compact code style, it's to make this tiny.
 
-    static const unsigned long LENBASE[29] = {
-        3,  4,  5,  6,  7,  8,  9,  10, 11,  13,  15,  17,  19,  23, 27,
-        31, 35, 43, 51, 59, 67, 83, 99, 115, 131, 163, 195, 227, 258
-    };
-    static const unsigned long LENEXTRA[29] = { 0, 0, 0, 0, 0, 0, 0, 0, 1, 1,
-                                                1, 1, 2, 2, 2, 2, 3, 3, 3, 3,
-                                                4, 4, 4, 4, 5, 5, 5, 5, 0 };
-    static const unsigned long DISTBASE[30] = {
+    static const uint32_t LENBASE[29] = { 3,   4,   5,   6,   7,  8,  9,  10,
+                                          11,  13,  15,  17,  19, 23, 27, 31,
+                                          35,  43,  51,  59,  67, 83, 99, 115,
+                                          131, 163, 195, 227, 258 };
+    static const uint32_t LENEXTRA[29] = { 0, 0, 0, 0, 0, 0, 0, 0, 1, 1,
+                                           1, 1, 2, 2, 2, 2, 3, 3, 3, 3,
+                                           4, 4, 4, 4, 5, 5, 5, 5, 0 };
+    static const uint32_t DISTBASE[30] = {
         1,    2,    3,    4,    5,    7,    9,    13,    17,    25,
         33,   49,   65,   97,   129,  193,  257,  385,   513,   769,
         1025, 1537, 2049, 3073, 4097, 6145, 8193, 12289, 16385, 24577
     };
-    static const unsigned long DISTEXTRA[30] = { 0,  0,  0,  0,  1,  1, 2,  2,
-                                                 3,  3,  4,  4,  5,  5, 6,  6,
-                                                 7,  7,  8,  8,  9,  9, 10, 10,
-                                                 11, 11, 12, 12, 13, 13 };
-    static const unsigned long CLCL[19] = {
+    static const uint32_t DISTEXTRA[30] = {
+        0, 0, 0, 0, 1, 1, 2, 2,  3,  3,  4,  4,  5,  5,  6,
+        6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13
+    };
+    static const uint32_t CLCL[19] = {
         16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15
     };          // code length code lengths
     struct Zlib // nested functions for zlib decompression
     {
-        static unsigned long readBitFromStream(size_t&        bitp,
-                                               const uint8_t* bits)
+        static uint32_t readBitFromStream(size_t& bitp, const uint8_t* bits)
         {
-            unsigned long result = (bits[bitp >> 3] >> (bitp & 0x7)) & 1;
+            uint32_t result = (bits[bitp >> 3] >> (bitp & 0x7)) & 1;
             bitp++;
             return result;
         }
-        static unsigned long readBitsFromStream(size_t&        bitp,
-                                                const uint8_t* bits,
-                                                size_t         nbits)
+        static uint32_t readBitsFromStream(size_t& bitp, const uint8_t* bits,
+                                           size_t nbits)
         {
-            unsigned long result = 0;
+            uint32_t result = 0;
             for (size_t i = 0; i < nbits; i++)
                 result += (readBitFromStream(bitp, bits)) << i;
             return result;
         }
         struct HuffmanTree
         {
-            int makeFromLengths(const std::vector<unsigned long>& bitlen,
-                                unsigned long                     maxbitlen)
+            int makeFromLengths(const std::vector<uint32_t>& bitlen,
+                                uint32_t                     maxbitlen)
             { // make tree given the lengths
-                unsigned long numcodes = (unsigned long)(bitlen.size()),
-                              treepos = 0, nodefilled = 0;
-                std::vector<unsigned long> tree1d(numcodes),
+                uint32_t numcodes = (uint32_t)(bitlen.size()), treepos = 0,
+                         nodefilled = 0;
+                std::vector<uint32_t> tree1d(numcodes),
                     blcount(maxbitlen + 1, 0), nextcode(maxbitlen + 1, 0);
-                for (unsigned long bits = 0; bits < numcodes; bits++)
+                for (uint32_t bits = 0; bits < numcodes; bits++)
                     blcount[bitlen[bits]]++; // count number of instances of
                                              // each code length
-                for (unsigned long bits = 1; bits <= maxbitlen; bits++)
+                for (uint32_t bits = 1; bits <= maxbitlen; bits++)
                     nextcode[bits] = (nextcode[bits - 1] + blcount[bits - 1])
                                      << 1;
-                for (unsigned long n = 0; n < numcodes; n++)
+                for (uint32_t n = 0; n < numcodes; n++)
                     if (bitlen[n] != 0)
                         tree1d[n] =
                             nextcode[bitlen[n]]++; // generate all the codes
@@ -126,12 +124,11 @@ int decodePNG(std::vector<uint8_t>& out_image, unsigned long& image_width,
                 tree2d.resize(numcodes * 2, 32767); // 32767 here means the
                                                     // tree2d isn't filled there
                                                     // yet
-                for (unsigned long n = 0; n < numcodes; n++) // the codes
-                    for (unsigned long i = 0; i < bitlen[n];
+                for (uint32_t n = 0; n < numcodes; n++) // the codes
+                    for (uint32_t i = 0; i < bitlen[n];
                          i++) // the bits for this code
                     {
-                        unsigned long bit =
-                            (tree1d[n] >> (bitlen[n] - i - 1)) & 1;
+                        uint32_t bit = (tree1d[n] >> (bitlen[n] - i - 1)) & 1;
                         if (treepos > numcodes - 2)
                             return 55;
                         if (tree2d[2 * treepos + bit] ==
@@ -156,10 +153,10 @@ int decodePNG(std::vector<uint8_t>& out_image, unsigned long& image_width,
                     }
                 return 0;
             }
-            int decode(bool& decoded, unsigned long& result, size_t& treepos,
-                       unsigned long bit) const
+            int decode(bool& decoded, uint32_t& result, size_t& treepos,
+                       uint32_t bit) const
             { // Decodes a symbol from the tree
-                unsigned long numcodes = (unsigned long)tree2d.size() / 2;
+                uint32_t numcodes = (uint32_t)tree2d.size() / 2;
                 if (treepos >= numcodes)
                     return 11; // error: you appeared outside the codetree
                 result  = tree2d[2 * treepos + bit];
@@ -167,10 +164,10 @@ int decodePNG(std::vector<uint8_t>& out_image, unsigned long& image_width,
                 treepos = decoded ? 0 : result - numcodes;
                 return 0;
             }
-            std::vector<unsigned long> tree2d; // 2D representation of a huffman
-                                               // tree: The one dimension is "0"
-                                               // or "1", the other contains all
-                                               // nodes and leaves of the tree.
+            std::vector<uint32_t> tree2d; // 2D representation of a huffman
+                                          // tree: The one dimension is "0"
+                                          // or "1", the other contains all
+                                          // nodes and leaves of the tree.
         };
         struct Inflator
         {
@@ -179,8 +176,8 @@ int decodePNG(std::vector<uint8_t>& out_image, unsigned long& image_width,
                          const std::vector<uint8_t>& in, size_t inpos = 0)
             {
                 size_t bp = 0, pos = 0; // bit pointer and byte pointer
-                error                = 0;
-                unsigned long BFINAL = 0;
+                error           = 0;
+                uint32_t BFINAL = 0;
                 while (!BFINAL && !error)
                 {
                     if (bp >> 3 >= in.size())
@@ -188,8 +185,8 @@ int decodePNG(std::vector<uint8_t>& out_image, unsigned long& image_width,
                         error = 52;
                         return;
                     } // error, bit pointer will jump past memory
-                    BFINAL              = readBitFromStream(bp, &in[inpos]);
-                    unsigned long BTYPE = readBitFromStream(bp, &in[inpos]);
+                    BFINAL         = readBitFromStream(bp, &in[inpos]);
+                    uint32_t BTYPE = readBitFromStream(bp, &in[inpos]);
                     BTYPE += 2 * readBitFromStream(bp, &in[inpos]);
                     if (BTYPE == 3)
                     {
@@ -212,7 +209,7 @@ int decodePNG(std::vector<uint8_t>& out_image, unsigned long& image_width,
                                                         // deflated block with
                                                         // fixed tree
             {
-                std::vector<unsigned long> bitlen(288, 8), bitlenD(32, 5);
+                std::vector<uint32_t> bitlen(288, 8), bitlenD(32, 5);
                 ;
                 for (size_t i = 144; i <= 255; i++)
                     bitlen[i] = 9;
@@ -224,13 +221,13 @@ int decodePNG(std::vector<uint8_t>& out_image, unsigned long& image_width,
             HuffmanTree codetree, codetreeD,
                 codelengthcodetree; // the code tree for Huffman codes, dist
                                     // codes, and code length codes
-            unsigned long huffmanDecodeSymbol(const uint8_t* in, size_t& bp,
-                                              const HuffmanTree& codetree,
-                                              size_t             inlength)
+            uint32_t huffmanDecodeSymbol(const uint8_t* in, size_t& bp,
+                                         const HuffmanTree& codetree,
+                                         size_t             inlength)
             { // decode a single symbol from given list of bits with given code
                 // tree. return value is the symbol
-                bool          decoded;
-                unsigned long ct;
+                bool     decoded;
+                uint32_t ct;
                 for (size_t treepos = 0;;)
                 {
                     if ((bp & 0x07) == 0 && (bp >> 3) > inlength)
@@ -252,7 +249,7 @@ int decodePNG(std::vector<uint8_t>& out_image, unsigned long& image_width,
                                        size_t inlength)
             { // get the tree of a deflated block with dynamic tree, the tree
                 // itself is also Huffman compressed with a known tree
-                std::vector<unsigned long> bitlen(288, 0), bitlenD(32, 0);
+                std::vector<uint32_t> bitlen(288, 0), bitlenD(32, 0);
                 if (bp >> 3 >= inlength - 2)
                 {
                     error = 49;
@@ -264,11 +261,11 @@ int decodePNG(std::vector<uint8_t>& out_image, unsigned long& image_width,
                                1; // number of dist codes + 1
                 size_t HCLEN = readBitsFromStream(bp, in, 4) +
                                4; // number of code length codes + 4
-                std::vector<unsigned long> codelengthcode(19); // lengths of
-                                                               // tree to decode
-                                                               // the lengths of
-                                                               // the dynamic
-                                                               // tree
+                std::vector<uint32_t> codelengthcode(19); // lengths of
+                                                          // tree to decode
+                                                          // the lengths of
+                                                          // the dynamic
+                                                          // tree
                 for (size_t i = 0; i < 19; i++)
                     codelengthcode[CLCL[i]] =
                         (i < HCLEN) ? readBitsFromStream(bp, in, 3) : 0;
@@ -278,7 +275,7 @@ int decodePNG(std::vector<uint8_t>& out_image, unsigned long& image_width,
                 size_t i = 0, replength;
                 while (i < HLIT + HDIST)
                 {
-                    unsigned long code = huffmanDecodeSymbol(
+                    uint32_t code = huffmanDecodeSymbol(
                         in, bp, codelengthcodetree, inlength);
                     if (error)
                         return;
@@ -297,7 +294,7 @@ int decodePNG(std::vector<uint8_t>& out_image, unsigned long& image_width,
                             return;
                         } // error, bit pointer jumps past memory
                         replength = 3 + readBitsFromStream(bp, in, 2);
-                        unsigned long value; // set value to the previous code
+                        uint32_t value; // set value to the previous code
                         if ((i - 1) < HLIT)
                             value = bitlen[i - 1];
                         else
@@ -382,7 +379,7 @@ int decodePNG(std::vector<uint8_t>& out_image, unsigned long& image_width,
             }
             void inflateHuffmanBlock(std::vector<uint8_t>& out,
                                      const uint8_t* in, size_t& bp, size_t& pos,
-                                     size_t inlength, unsigned long btype)
+                                     size_t inlength, uint32_t btype)
             {
                 if (btype == 1)
                 {
@@ -397,7 +394,7 @@ int decodePNG(std::vector<uint8_t>& out_image, unsigned long& image_width,
                 }
                 for (;;)
                 {
-                    unsigned long code =
+                    uint32_t code =
                         huffmanDecodeSymbol(in, bp, codetree, inlength);
                     if (error)
                         return;
@@ -419,7 +416,7 @@ int decodePNG(std::vector<uint8_t>& out_image, unsigned long& image_width,
                             return;
                         } // error, bit pointer will jump past memory
                         length += readBitsFromStream(bp, in, numextrabits);
-                        unsigned long codeD =
+                        uint32_t codeD =
                             huffmanDecodeSymbol(in, bp, codetreeD, inlength);
                         if (error)
                             return;
@@ -428,8 +425,8 @@ int decodePNG(std::vector<uint8_t>& out_image, unsigned long& image_width,
                             error = 18;
                             return;
                         } // error: invalid dist code (30-31 are never used)
-                        unsigned long dist          = DISTBASE[codeD],
-                                      numextrabitsD = DISTEXTRA[codeD];
+                        uint32_t dist          = DISTBASE[codeD],
+                                 numextrabitsD = DISTEXTRA[codeD];
                         if ((bp >> 3) >= inlength)
                         {
                             error = 51;
@@ -460,8 +457,8 @@ int decodePNG(std::vector<uint8_t>& out_image, unsigned long& image_width,
                     error = 52;
                     return;
                 } // error, bit pointer will jump past memory
-                unsigned long LEN  = in[p] + 256 * in[p + 1],
-                              NLEN = in[p + 2] + 256 * in[p + 3];
+                uint32_t LEN  = in[p] + 256 * in[p + 1],
+                         NLEN = in[p + 2] + 256 * in[p + 3];
                 p += 4;
                 if (LEN + NLEN != 65535)
                 {
@@ -475,9 +472,9 @@ int decodePNG(std::vector<uint8_t>& out_image, unsigned long& image_width,
                     error = 23;
                     return;
                 } // error: reading outside of in buffer
-                for (unsigned long n = 0; n < LEN; n++)
-                    out[pos++] = in[p++]; // read LEN bytes of literal data
-                bp             = p * 8;
+                for (uint32_t n = 0; n < LEN; n++)
+                    out[pos++]  = in[p++]; // read LEN bytes of literal data
+                bp              = p * 8;
             }
         };
         int decompress(std::vector<uint8_t>&       out,
@@ -493,8 +490,8 @@ int decodePNG(std::vector<uint8_t>& out_image, unsigned long& image_width,
                 return 24;
             } // error: 256 * in[0] + in[1] must be a multiple of 31, the FCHECK
               // value is supposed to be made that way
-            unsigned long CM = in[0] & 15, CINFO = (in[0] >> 4) & 15,
-                          FDICT = (in[1] >> 5) & 1;
+            uint32_t CM = in[0] & 15, CINFO = (in[0] >> 4) & 15,
+                     FDICT = (in[1] >> 5) & 1;
             if (CM != 8 || CINFO > 7)
             {
                 return 25;
@@ -514,7 +511,7 @@ int decodePNG(std::vector<uint8_t>& out_image, unsigned long& image_width,
     {
         struct Info
         {
-            unsigned long width, height, colorType, bitDepth, compressionMethod,
+            uint32_t width, height, colorType, bitDepth, compressionMethod,
                 filterMethod, interlaceMethod, key_r, key_g, key_b;
             bool key_defined; // is a transparent color key given?
             std::vector<uint8_t> palette;
@@ -660,7 +657,7 @@ int decodePNG(std::vector<uint8_t>& out_image, unsigned long& image_width,
                 }
                 pos += 4; // step over CRC (which is ignored)
             }
-            unsigned long        bpp = getBpp(info);
+            uint32_t             bpp = getBpp(info);
             std::vector<uint8_t> scanlines(
                 ((info.width * (info.height * bpp + 7)) / 8) +
                 info.height); // now the out buffer will be filled
@@ -682,9 +679,9 @@ int decodePNG(std::vector<uint8_t>& out_image, unsigned long& image_width,
                                     8; // length in bytes of a scanline,
                                        // excluding the filtertype byte
                 if (bpp >= 8)          // byte per byte
-                    for (unsigned long y = 0; y < info.height; y++)
+                    for (uint32_t y = 0; y < info.height; y++)
                     {
-                        unsigned long  filterType = scanlines[linestart];
+                        uint32_t       filterType = scanlines[linestart];
                         const uint8_t* prevline =
                             (y == 0) ? 0
                                      : &out_[(y - 1) * info.width * bytewidth];
@@ -702,7 +699,7 @@ int decodePNG(std::vector<uint8_t>& out_image, unsigned long& image_width,
                                                   3); // only used if bpp < 8
                     for (size_t y = 0, obp = 0; y < info.height; y++)
                     {
-                        unsigned long  filterType = scanlines[linestart];
+                        uint32_t       filterType = scanlines[linestart];
                         const uint8_t* prevline =
                             (y == 0) ? 0
                                      : &out_[(y - 1) * info.width * bytewidth];
@@ -806,7 +803,7 @@ int decodePNG(std::vector<uint8_t>& out_image, unsigned long& image_width,
         }
         void unFilterScanline(uint8_t* recon, const uint8_t* scanline,
                               const uint8_t* precon, size_t bytewidth,
-                              unsigned long filterType, size_t length)
+                              uint32_t filterType, size_t length)
         {
             switch (filterType)
             {
@@ -873,9 +870,9 @@ int decodePNG(std::vector<uint8_t>& out_image, unsigned long& image_width,
             }
         }
         void adam7Pass(uint8_t* out, uint8_t* linen, uint8_t* lineo,
-                       const uint8_t* in, unsigned long w, size_t passleft,
+                       const uint8_t* in, uint32_t w, size_t passleft,
                        size_t passtop, size_t spacex, size_t spacey,
-                       size_t passw, size_t passh, unsigned long bpp)
+                       size_t passw, size_t passh, uint32_t bpp)
         { // filter and reposition the pixels into the output when the image is
             // Adam7 interlaced. This function can only do it after the full
             // image
@@ -886,7 +883,7 @@ int decodePNG(std::vector<uint8_t>& out_image, unsigned long& image_width,
                 return;
             size_t bytewidth  = (bpp + 7) / 8,
                    linelength = 1 + ((bpp * passw + 7) / 8);
-            for (unsigned long y = 0; y < passh; y++)
+            for (uint32_t y = 0; y < passh; y++)
             {
                 uint8_t filterType = in[y * linelength],
                         *prevline  = (y == 0) ? 0 : lineo;
@@ -918,36 +915,35 @@ int decodePNG(std::vector<uint8_t>& out_image, unsigned long& image_width,
                               // "line new"
             }
         }
-        static unsigned long readBitFromReversedStream(size_t&        bitp,
-                                                       const uint8_t* bits)
+        static uint32_t readBitFromReversedStream(size_t&        bitp,
+                                                  const uint8_t* bits)
         {
-            unsigned long result = (bits[bitp >> 3] >> (7 - (bitp & 0x7))) & 1;
+            uint32_t result = (bits[bitp >> 3] >> (7 - (bitp & 0x7))) & 1;
             bitp++;
             return result;
         }
-        static unsigned long readBitsFromReversedStream(size_t&        bitp,
-                                                        const uint8_t* bits,
-                                                        unsigned long  nbits)
+        static uint32_t readBitsFromReversedStream(size_t&        bitp,
+                                                   const uint8_t* bits,
+                                                   uint32_t       nbits)
         {
-            unsigned long result = 0;
+            uint32_t result = 0;
             for (size_t i = nbits - 1; i < nbits; i--)
                 result += ((readBitFromReversedStream(bitp, bits)) << i);
             return result;
         }
-        void setBitOfReversedStream(size_t& bitp, uint8_t* bits,
-                                    unsigned long bit)
+        void setBitOfReversedStream(size_t& bitp, uint8_t* bits, uint32_t bit)
         {
             bits[bitp >> 3] |= (bit << (7 - (bitp & 0x7)));
             bitp++;
         }
-        unsigned long read32bitInt(const uint8_t* buffer)
+        uint32_t read32bitInt(const uint8_t* buffer)
         {
             return (buffer[0] << 24) | (buffer[1] << 16) | (buffer[2] << 8) |
                    buffer[3];
         }
         int checkColorValidity(
-            unsigned long colorType,
-            unsigned long bd) // return type is a LodePNG error code
+            uint32_t colorType,
+            uint32_t bd) // return type is a LodePNG error code
         {
             if ((colorType == 2 || colorType == 4 || colorType == 6))
             {
@@ -973,7 +969,7 @@ int decodePNG(std::vector<uint8_t>& out_image, unsigned long& image_width,
             else
                 return 31; // unexisting color type
         }
-        unsigned long getBpp(const Info& info)
+        uint32_t getBpp(const Info& info)
         {
             if (info.colorType == 2)
                 return (3 * info.bitDepth);
@@ -983,7 +979,7 @@ int decodePNG(std::vector<uint8_t>& out_image, unsigned long& image_width,
                 return info.bitDepth;
         }
         int convert(std::vector<uint8_t>& out, const uint8_t* in, Info& infoIn,
-                    unsigned long w, unsigned long h)
+                    uint32_t w, uint32_t h)
         { // converts from any color type to 32-bit. return value = LodePNG
             // error code
             size_t numpixels = w * h, bp = 0;
@@ -1074,7 +1070,7 @@ int decodePNG(std::vector<uint8_t>& out_image, unsigned long& image_width,
             else if (infoIn.bitDepth < 8 && infoIn.colorType == 0) // greyscale
                 for (size_t i = 0; i < numpixels; i++)
                 {
-                    unsigned long value =
+                    uint32_t value =
                         (readBitsFromReversedStream(bp, in, infoIn.bitDepth) *
                          255) /
                         ((1 << infoIn.bitDepth) -
@@ -1091,7 +1087,7 @@ int decodePNG(std::vector<uint8_t>& out_image, unsigned long& image_width,
             else if (infoIn.bitDepth < 8 && infoIn.colorType == 3) // palette
                 for (size_t i = 0; i < numpixels; i++)
                 {
-                    unsigned long value =
+                    uint32_t value =
                         readBitsFromReversedStream(bp, in, infoIn.bitDepth);
                     if (4 * value >= infoIn.palette.size())
                         return 47;
@@ -1156,7 +1152,7 @@ int main(int argc, char *argv[])
   //load and decode
   std::vector<uint8_t> buffer, image;
   loadFile(buffer, filename);
-  unsigned long w, h;
+  uint32_t w, h;
   int error = decodePNG(image, w, h, buffer.empty() ? 0 : &buffer[0], (unsigned
 long)buffer.size());
 

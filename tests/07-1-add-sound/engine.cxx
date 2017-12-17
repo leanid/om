@@ -951,8 +951,8 @@ texture_gl_es20::texture_gl_es20(std::string_view path)
     }
 
     std::vector<unsigned char> image;
-    unsigned long              w = 0;
-    unsigned long              h = 0;
+    uint32_t                   w = 0;
+    uint32_t                   h = 0;
     int error = decodePNG(image, w, h, &png_file_in_memory[0],
                           png_file_in_memory.size(), false);
 
