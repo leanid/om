@@ -950,16 +950,13 @@ texture_gl_es20::texture_gl_es20(std::string_view path)
         throw std::runtime_error("can't load texture");
     }
 
-    std::vector<unsigned char> image;
-    uint32_t                   w = 0;
-    uint32_t                   h = 0;
-    int error = decodePNG(image, w, h, &png_file_in_memory[0],
-                          png_file_in_memory.size(), false);
+    const om::png_image img =
+        decode_png_file_from_memory(png_file_in_memory, convert::to_rgba32);
 
     // if there's an error, display it
-    if (error != 0)
+    if (img.error != 0)
     {
-        std::cerr << "error: " << error << std::endl;
+        std::cerr << "error: " << img.error << std::endl;
         throw std::runtime_error("can't load texture");
     }
 
@@ -970,10 +967,10 @@ texture_gl_es20::texture_gl_es20(std::string_view path)
 
     GLint   mipmap_level = 0;
     GLint   border       = 0;
-    GLsizei width        = static_cast<GLsizei>(w);
-    GLsizei height       = static_cast<GLsizei>(h);
+    GLsizei width        = static_cast<GLsizei>(img.width);
+    GLsizei height       = static_cast<GLsizei>(img.height);
     glTexImage2D(GL_TEXTURE_2D, mipmap_level, GL_RGBA, width, height, border,
-                 GL_RGBA, GL_UNSIGNED_BYTE, &image[0]);
+                 GL_RGBA, GL_UNSIGNED_BYTE, &img.raw_image[0]);
     OM_GL_CHECK();
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
