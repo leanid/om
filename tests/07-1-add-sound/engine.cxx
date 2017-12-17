@@ -63,6 +63,7 @@ static void load_gl_func(const char* func_name, T& result)
         const unsigned int err = glGetError();                                 \
         if (err != GL_NO_ERROR)                                                \
         {                                                                      \
+            std::cerr << __FILE__ << '(' << __LINE__ - 1 << ") error: ";       \
             switch (err)                                                       \
             {                                                                  \
                 case GL_INVALID_ENUM:                                          \
@@ -220,6 +221,9 @@ public:
 
     void bind() const
     {
+        GLboolean is_texture = glIsTexture(tex_handl);
+        assert(is_texture);
+        OM_GL_CHECK();
         glBindTexture(GL_TEXTURE_2D, tex_handl);
         OM_GL_CHECK();
     }
