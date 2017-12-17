@@ -78,8 +78,15 @@ enum class convert_color
     leave_as_is
 };
 
+enum class origin_point
+{
+    top_left,
+    bottom_left
+};
+
 png_image decode_png_file_from_memory(const std::vector<uint8_t>& png_file,
-                                      const convert_color         convertion)
+                                      const convert_color         convertion,
+                                      const origin_point          origin)
 {
     // picoPNG is a PNG decoder in one C++ function of around 500 lines. Use
     // picoPNG for
@@ -561,7 +568,7 @@ png_image decode_png_file_from_memory(const std::vector<uint8_t>& png_file,
         } info;
         int  error;
         void decode(std::vector<uint8_t>& out, const uint8_t* in, size_t size,
-                    bool convert_to_rgba32)
+                    bool convert_to_rgba32, bool origin_top_left)
         {
             error = 0;
             if (size == 0 || in == 0)
@@ -722,22 +729,58 @@ png_image decode_png_file_from_memory(const std::vector<uint8_t>& png_file,
                                     8; // length in bytes of a scanline,
                                        // excluding the filtertype byte
                 if (bpp >= 8)          // byte per byte
-                    for (uint32_t y = 0; y < info.height; y++)
+                {
+                    if (origin_top_left)
                     {
-                        uint32_t       filterType = scanlines[linestart];
-                        const uint8_t* prevline =
-                            (y == 0) ? 0
-                                     : &out_[(y - 1) * info.width * bytewidth];
-                        unFilterScanline(&out_[linestart - y],
-                                         &scanlines[linestart + 1], prevline,
-                                         bytewidth, filterType, linelength);
-                        if (error)
-                            return;
-                        linestart +=
-                            (1 + linelength); // go to start of next scanline
+                        for (uint32_t y = 0; y < info.height; y++)
+                        {
+                            uint32_t       filterType = scanlines[linestart];
+                            const uint8_t* prevline =
+                                (y == 0)
+                                    ? 0
+                                    : &out_[(y - 1) * info.width * bytewidth];
+                            unFilterScanline(
+                                &out_[linestart - y], &scanlines[linestart + 1],
+                                prevline, bytewidth, filterType, linelength);
+                            if (error)
+                                return;
+                            linestart +=
+                                (1 +
+                                 linelength); // go to start of next scanline
+                        }
                     }
+                    else
+                    {
+                        // flip scan lines from up to bottom
+                        const size_t   line_size = info.width * bytewidth;
+                        const uint8_t* prevline  = nullptr;
+                        for (uint32_t y = 0; y < info.height; y++)
+                        {
+                            uint32_t filterType   = scanlines[linestart];
+                            uint8_t* cur_scanline = &scanlines[linestart + 1];
+                            uint8_t* cur_line =
+                                &out_[(info.height - y - 1) * line_size];
+
+                            unFilterScanline(cur_line, cur_scanline, prevline,
+                                             bytewidth, filterType, linelength);
+                            if (error)
+                            {
+                                return;
+                            }
+                            // go to start of next scanline
+                            linestart += (1 + linelength);
+                            prevline = cur_line;
+                        }
+                        return;
+                    }
+                }
                 else // less than 8 bits per pixel, so fill it up bit per bit
                 {
+                    if (!origin_top_left)
+                    {
+                        error = 1; // TODO implement flip up to bottom lines
+                        return;
+                    }
                     std::vector<uint8_t> templine((info.width * bpp + 7) >>
                                                   3); // only used if bpp < 8
                     for (size_t y = 0, obp = 0; y < info.height; y++)
@@ -762,6 +805,11 @@ png_image decode_png_file_from_memory(const std::vector<uint8_t>& png_file,
             }
             else // interlaceMethod is 1 (Adam7)
             {
+                if (!origin_top_left)
+                {
+                    error = 1; // TODO implement flip up to botton
+                    return;
+                }
                 size_t passw[7] = { (info.width + 7) / 8, (info.width + 3) / 8,
                                     (info.width + 3) / 4, (info.width + 1) / 4,
                                     (info.width + 1) / 2, (info.width + 0) / 2,
@@ -1152,8 +1200,11 @@ png_image decode_png_file_from_memory(const std::vector<uint8_t>& png_file,
                 (pa <= pb && pa <= pc) ? a : pb <= pc ? b : c);
         }
     };
-    PNG decoder;
-    decoder.decode(result.raw_image, in_png, in_size, convert_to_rgba32);
+
+    bool origin_tom_left = origin == origin_point::top_left;
+    PNG  decoder;
+    decoder.decode(result.raw_image, in_png, in_size, convert_to_rgba32,
+                   origin_tom_left);
     result.width  = decoder.info.width;
     result.height = decoder.info.height;
     result.error  = decoder.error;

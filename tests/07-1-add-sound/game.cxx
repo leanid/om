@@ -76,12 +76,12 @@ int main(int /*argc*/, char* /*argv*/ [])
         if (engine->is_key_down(om::keys::left))
         {
             current_tank_pos.x -= 0.01f;
-            current_tank_direction = pi / 2.f;
+            current_tank_direction = -pi / 2.f;
         }
         else if (engine->is_key_down(om::keys::right))
         {
             current_tank_pos.x += 0.01f;
-            current_tank_direction = -pi / 2.f;
+            current_tank_direction = pi / 2.f;
         }
         else if (engine->is_key_down(om::keys::up))
         {
