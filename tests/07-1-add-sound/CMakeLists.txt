@@ -8,19 +8,19 @@ else()
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -Werror")
 endif()
 
-add_library(engine SHARED engine.cxx)
+add_library(engine SHARED engine.cxx engine.hxx picopng.hxx)
 target_compile_features(engine PUBLIC cxx_std_17)
 
-if(WIN32)   
+if(WIN32)
   target_compile_definitions(engine PRIVATE "-DOM_DECLSPEC=__declspec(dllexport)")
 endif(WIN32)
 
 find_library(SDL2_LIB NAMES SDL2)
 
 if (MINGW)
-    target_link_libraries(engine 
-               -lmingw32 
-               -lSDL2main 
+    target_link_libraries(engine
+               -lmingw32
+               -lSDL2main
                -lSDL2
                -mwindows
                -lopengl32

@@ -8,6 +8,7 @@
 #include <exception>
 #include <fstream>
 #include <iostream>
+#include <map>
 #include <sstream>
 #include <stdexcept>
 #include <string_view>
@@ -208,6 +209,62 @@ public:
 private:
     std::vector<tri2> triangles;
 };
+
+class sound_buffer_impl : public sound_buffer
+{
+public:
+    sound_buffer_impl(std::string_view path, SDL_AudioDeviceID device);
+    ~sound_buffer_impl() final;
+
+    void play()
+    {
+        // Lock callback function
+        SDL_LockAudioDevice(device);
+
+        // TODO here we can change properties
+        // of sound and dont collade with multithreaded playing
+
+        // unlock callback for continue mixing of audio
+        SDL_UnlockAudioDevice(device);
+    }
+
+private:
+    SDL_AudioSpec audio_spec;
+
+    uint8_t* buffer;
+    uint32_t length;
+
+    SDL_AudioDeviceID device;
+};
+
+sound_buffer_impl::sound_buffer_impl(std::string_view  path,
+                                     SDL_AudioDeviceID device_)
+    : buffer(nullptr)
+    , length(0)
+    , device(device_)
+{
+    SDL_RWops* file = SDL_RWFromFile(path.data(), "rb");
+    if (file == nullptr)
+    {
+        throw std::runtime_error(std::string("can't open audio file: ") +
+                                 path.data());
+    }
+
+    if (nullptr == SDL_LoadWAV_RW(file, 1, &audio_spec, &buffer, &length))
+    {
+        throw std::runtime_error(std::string("can't load wav: ") + path.data());
+    }
+    audio_spec.callback = nullptr;
+    audio_spec.userdata = nullptr;
+}
+
+sound_buffer::~sound_buffer()
+{
+}
+
+sound_buffer_impl::~sound_buffer_impl()
+{
+}
 
 vertex_buffer_impl::~vertex_buffer_impl()
 {
@@ -410,31 +467,37 @@ private:
     GLuint program_id  = 0;
 };
 
-static std::array<std::string_view, 17> event_names = {
-    /// input events
-    { "left_pressed", "left_released", "right_pressed", "right_released",
-      "up_pressed", "up_released", "down_pressed", "down_released",
-      "select_pressed", "select_released", "start_pressed", "start_released",
-      "button1_pressed", "button1_released", "button2_pressed",
-      "button2_released",
-      /// virtual console events
-      "turn_off" }
-};
+std::ostream& operator<<(std::ostream& stream, const input_data& i)
+{
+    static const std::array<std::string_view, 8> key_names = {
+        { "left", "right", "up", "down", "select", "start", "button1",
+          "button2" }
+    };
+
+    const std::string_view& key_name = key_names[static_cast<size_t>(i.key)];
+
+    stream << "key: " << key_name << " is_down: " << i.is_down;
+    return stream;
+}
+
+std::ostream& operator<<(std::ostream& stream, const hardware_data& h)
+{
+    stream << "reset console: " << h.is_reset;
+    return stream;
+}
 
 std::ostream& operator<<(std::ostream& stream, const event e)
 {
-    std::uint32_t value   = static_cast<std::uint32_t>(e);
-    std::uint32_t minimal = static_cast<std::uint32_t>(event::left_pressed);
-    std::uint32_t maximal = static_cast<std::uint32_t>(event::turn_off);
-    if (value >= minimal && value <= maximal)
+    switch (e.type)
     {
-        stream << event_names[value];
-        return stream;
-    }
-    else
-    {
-        throw std::runtime_error("too big event value");
-    }
+        case om::event_type::input_key:
+            stream << std::get<om::input_data>(e.info);
+            break;
+        case om::event_type::hardware:
+            stream << std::get<om::hardware_data>(e.info);
+            break;
+    };
+    return stream;
 }
 
 tri0::tri0()
@@ -541,12 +604,9 @@ std::istream& operator>>(std::istream& is, tri2& t)
 
 struct bind
 {
-    bind(std::string_view s, SDL_Keycode k, event pressed, event released,
-         keys om_k)
+    bind(std::string_view s, SDL_Keycode k, keys om_k)
         : name(s)
         , key(k)
-        , event_pressed(pressed)
-        , event_released(released)
         , om_key(om_k)
     {
     }
@@ -554,28 +614,16 @@ struct bind
     std::string_view name;
     SDL_Keycode      key;
 
-    event event_pressed;
-    event event_released;
-
     om::keys om_key;
 };
 
 const std::array<bind, 8> keys{
-    { bind{ "up", SDLK_w, event::up_pressed, event::up_released, keys::up },
-      bind{ "left", SDLK_a, event::left_pressed, event::left_released,
-            keys::left },
-      bind{ "down", SDLK_s, event::down_pressed, event::down_released,
-            keys::down },
-      bind{ "right", SDLK_d, event::right_pressed, event::right_released,
-            keys::right },
-      bind{ "button1", SDLK_LCTRL, event::button1_pressed,
-            event::button1_released, keys::button1 },
-      bind{ "button2", SDLK_SPACE, event::button2_pressed,
-            event::button2_released, keys::button2 },
-      bind{ "select", SDLK_ESCAPE, event::select_pressed,
-            event::select_released, keys::select },
-      bind{ "start", SDLK_RETURN, event::start_pressed, event::start_released,
-            keys::start } }
+    { bind{ "up", SDLK_w, keys::up }, bind{ "left", SDLK_a, keys::left },
+      bind{ "down", SDLK_s, keys::down }, bind{ "right", SDLK_d, keys::right },
+      bind{ "button1", SDLK_LCTRL, keys::button1 },
+      bind{ "button2", SDLK_SPACE, keys::button2 },
+      bind{ "select", SDLK_ESCAPE, keys::select },
+      bind{ "start", SDLK_RETURN, keys::start } }
 };
 
 static bool check_input(const SDL_Event& e, const bind*& result)
@@ -620,22 +668,20 @@ public:
 
             if (sdl_event.type == SDL_QUIT)
             {
-                e = event::turn_off;
+                e.info      = om::hardware_data{ true };
+                e.timestamp = sdl_event.common.timestamp * 0.001;
+                e.type      = om::event_type::hardware;
                 return true;
             }
-            else if (sdl_event.type == SDL_KEYDOWN)
+            else if (sdl_event.type == SDL_KEYDOWN ||
+                     sdl_event.type == SDL_KEYUP)
             {
                 if (check_input(sdl_event, binding))
                 {
-                    e = binding->event_pressed;
-                    return true;
-                }
-            }
-            else if (sdl_event.type == SDL_KEYUP)
-            {
-                if (check_input(sdl_event, binding))
-                {
-                    e = binding->event_released;
+                    bool is_down = sdl_event.type == SDL_KEYDOWN;
+                    e.info       = om::input_data{ binding->om_key, is_down };
+                    e.timestamp  = sdl_event.common.timestamp * 0.001;
+                    e.type       = om::event_type::input_key;
                     return true;
                 }
             }
@@ -669,6 +715,24 @@ public:
         return new vertex_buffer_impl(triangles, n);
     }
     void destroy_vertex_buffer(vertex_buffer* buffer) { delete buffer; }
+
+    sound_buffer* create_sound_buffer(std::string_view path) final
+    {
+        return new sound_buffer_impl(path, audio_device);
+    }
+    void destroy_sound_buffer(sound_buffer* sound) final { delete sound; }
+    void                                    play_sound(sound_buffer*) final
+    {
+        // TODO implement it
+    }
+    void play_sound_looped(sound_buffer*) final
+    {
+        // TODO implement it
+    }
+    void stop_sound(sound_buffer*) final
+    {
+        // TODO implement it
+    }
 
     void render(const tri0& t, const color& c) final
     {
@@ -826,6 +890,8 @@ public:
     }
 
 private:
+    static void audio_callback(void*, uint8_t*, int);
+
     SDL_Window*   window     = nullptr;
     SDL_GLContext gl_context = nullptr;
 
@@ -833,6 +899,9 @@ private:
     shader_gl_es20* shader01 = nullptr;
     shader_gl_es20* shader02 = nullptr;
     shader_gl_es20* shader03 = nullptr;
+
+    SDL_AudioDeviceID audio_device;
+    SDL_AudioSpec     audio_want_spec;
 };
 
 static bool already_exist = false;
@@ -1192,7 +1261,58 @@ std::string engine_impl::initialize(std::string_view)
     glViewport(0, 0, 640, 480);
     OM_GL_CHECK();
 
+    // initialize audio
+    audio_want_spec.freq     = 48000;
+    audio_want_spec.format   = AUDIO_S16LSB;
+    audio_want_spec.channels = 2;
+    audio_want_spec.samples  = 4096; // must be power of 2
+    audio_want_spec.callback = engine_impl::audio_callback;
+    audio_want_spec.userdata = this;
+
+    SDL_AudioSpec audio_obtained_spec;
+
+    audio_device =
+        SDL_OpenAudioDevice(nullptr, 0, &audio_want_spec, &audio_obtained_spec,
+                            SDL_AUDIO_ALLOW_ANY_CHANGE);
+
+    if (audio_device == 0)
+    {
+        std::cerr << "failed open audio device: " << SDL_GetError();
+        throw std::runtime_error("audio failed");
+    }
+    else
+    {
+        std::map<uint16_t, std::string> format;
+        format[AUDIO_U8]     = "AUDIO_U8";
+        format[AUDIO_S8]     = "AUDIO_S8";
+        format[AUDIO_U16LSB] = "AUDIO_U16LSB";
+        format[AUDIO_S16LSB] = "AUDIO_S16LSB";
+        format[AUDIO_U16MSB] = "AUDIO_U16MSB";
+        format[AUDIO_S16MSB] = "AUDIO_S16MSB";
+        format[AUDIO_S32LSB] = "AUDIO_S32LSB";
+        format[AUDIO_S32MSB] = "AUDIO_S32MSB";
+        format[AUDIO_F32LSB] = "AUDIO_F32LSB";
+        format[AUDIO_F32MSB] = "AUDIO_F32MSB";
+
+        std::cout << "audio device:"
+                  << "freq: " << audio_obtained_spec.freq << '\n'
+                  << "format: " << format[audio_obtained_spec.format] << '\n'
+                  << "channels: "
+                  << static_cast<uint32_t>(audio_obtained_spec.channels) << '\n'
+                  << "samples: " << audio_obtained_spec.samples << '\n'
+                  << std::flush;
+
+        // unpause device
+        SDL_PauseAudioDevice(audio_device, 0);
+    }
+
     return "";
+}
+
+void engine_impl::audio_callback(void* /*engine_ptr*/, uint8_t* /*stream*/,
+                                 int /*len*/)
+{
+    // TODO implement it
 }
 
 } // end namespace om

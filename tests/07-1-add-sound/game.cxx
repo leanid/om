@@ -62,10 +62,13 @@ int main(int /*argc*/, char* /*argv*/ [])
         while (engine->read_event(event))
         {
             std::cout << event << std::endl;
-            switch (event)
+            switch (event.type)
             {
-                case om::event::turn_off:
-                    continue_loop = false;
+                case om::event_type::hardware:
+                    if (std::get<om::hardware_data>(event.info).is_reset)
+                    {
+                        continue_loop = false;
+                    }
                     break;
                 default:
 

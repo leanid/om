@@ -1,6 +1,7 @@
 #include <iosfwd>
 #include <string>
 #include <string_view>
+#include <variant>
 
 #ifndef OM_DECLSPEC
 #define OM_DECLSPEC
@@ -36,30 +37,11 @@ vec2 OM_DECLSPEC operator*(const vec2& v, const mat2x3& m);
 mat2x3 OM_DECLSPEC operator*(const mat2x3& m1, const mat2x3& m2);
 
 /// dendy gamepad emulation events
-enum class event
+enum class event_type
 {
-    /// input events
-    left_pressed,
-    left_released,
-    right_pressed,
-    right_released,
-    up_pressed,
-    up_released,
-    down_pressed,
-    down_released,
-    select_pressed,
-    select_released,
-    start_pressed,
-    start_released,
-    button1_pressed,
-    button1_released,
-    button2_pressed,
-    button2_released,
-    /// virtual console events
-    turn_off
+    input_key,
+    hardware
 };
-
-std::ostream& OM_DECLSPEC operator<<(std::ostream& stream, const event e);
 
 enum class keys
 {
@@ -71,6 +53,24 @@ enum class keys
     start,
     button1,
     button2
+};
+
+struct input_data
+{
+    keys key;
+    bool is_down;
+};
+
+struct hardware_data
+{
+    bool is_reset;
+};
+
+struct event
+{
+    std::variant<input_data, hardware_data> info;
+    double     timestamp;
+    event_type type;
 };
 
 class engine;
@@ -142,6 +142,11 @@ struct OM_DECLSPEC tri2
     v2 v[3];
 };
 
+std::ostream& OM_DECLSPEC operator<<(std::ostream& stream, const input_data&);
+std::ostream& OM_DECLSPEC operator<<(std::ostream& stream,
+                                     const hardware_data&);
+std::ostream& OM_DECLSPEC operator<<(std::ostream& stream, const event e);
+
 std::istream& OM_DECLSPEC operator>>(std::istream& is, mat2x3&);
 std::istream& OM_DECLSPEC operator>>(std::istream& is, vec2&);
 std::istream& OM_DECLSPEC operator>>(std::istream& is, color&);
@@ -169,6 +174,12 @@ public:
     virtual size_t size() const = 0;
 };
 
+class OM_DECLSPEC sound_buffer
+{
+public:
+    virtual ~sound_buffer();
+};
+
 class OM_DECLSPEC engine
 {
 public:
@@ -187,6 +198,12 @@ public:
 
     virtual vertex_buffer* create_vertex_buffer(const tri2*, std::size_t) = 0;
     virtual void           destroy_vertex_buffer(vertex_buffer*) = 0;
+
+    virtual sound_buffer* create_sound_buffer(std::string_view path) = 0;
+    virtual void destroy_sound_buffer(sound_buffer*)                 = 0;
+    virtual void play_sound(sound_buffer*)                           = 0;
+    virtual void play_sound_looped(sound_buffer*)                    = 0;
+    virtual void stop_sound(sound_buffer*)                           = 0;
 
     virtual void render(const tri0&, const color&) = 0;
     virtual void render(const tri1&) = 0;
