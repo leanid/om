@@ -49,6 +49,8 @@ int main(int /*argc*/, char* /*argv*/ [])
         }
     }
 
+    engine->create_sound_buffer("t2_no_problemo.wav");
+
     bool continue_loop = true;
 
     om::vec2    current_tank_pos(0.f, 0.f);
