@@ -228,7 +228,6 @@ public:
         SDL_UnlockAudioDevice(device);
     }
 
-private:
     SDL_AudioSpec audio_spec;
 
     uint8_t* buffer;
@@ -718,7 +717,11 @@ public:
 
     sound_buffer* create_sound_buffer(std::string_view path) final
     {
-        return new sound_buffer_impl(path, audio_device);
+        SDL_LockAudioDevice(audio_device);
+        sound_buffer_impl* s = new sound_buffer_impl(path, audio_device);
+        sounds.push_back(s);
+        SDL_UnlockAudioDevice(audio_device);
+        return s;
     }
     void destroy_sound_buffer(sound_buffer* sound) final { delete sound; }
     void                                    play_sound(sound_buffer*) final
@@ -900,8 +903,9 @@ private:
     shader_gl_es20* shader02 = nullptr;
     shader_gl_es20* shader03 = nullptr;
 
-    SDL_AudioDeviceID audio_device;
-    SDL_AudioSpec     audio_want_spec;
+    SDL_AudioDeviceID               audio_device;
+    SDL_AudioSpec                   audio_want_spec;
+    std::vector<sound_buffer_impl*> sounds;
 };
 
 static bool already_exist = false;
@@ -1309,10 +1313,20 @@ std::string engine_impl::initialize(std::string_view)
     return "";
 }
 
-void engine_impl::audio_callback(void* /*engine_ptr*/, uint8_t* /*stream*/,
-                                 int /*len*/)
+void engine_impl::audio_callback(void* engine_ptr, uint8_t* stream,
+                                 int stream_size)
 {
-    // TODO implement it
+    // no sound default
+    std::fill_n(stream, stream_size, 0);
+    // TODO fill stream with stream_size bytes of sound samples
+    engine_impl* e = static_cast<engine_impl*>(engine_ptr);
+    for (sound_buffer_impl* snd : e->sounds)
+    {
+        SDL_MixAudioFormat(
+            stream, snd->buffer, e->audio_want_spec.format,
+            std::min(static_cast<uint32_t>(stream_size), snd->length),
+            SDL_MIX_MAXVOLUME);
+    }
 }
 
 } // end namespace om
