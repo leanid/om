@@ -210,10 +210,27 @@ private:
     std::vector<tri2> triangles;
 };
 
+    static std::string_view get_sound_format_name(int format_value)
+    {
+        std::map<uint16_t, std::string_view> format;
+        format[AUDIO_U8]     = "AUDIO_U8";
+        format[AUDIO_S8]     = "AUDIO_S8";
+        format[AUDIO_U16LSB] = "AUDIO_U16LSB";
+        format[AUDIO_S16LSB] = "AUDIO_S16LSB";
+        format[AUDIO_U16MSB] = "AUDIO_U16MSB";
+        format[AUDIO_S16MSB] = "AUDIO_S16MSB";
+        format[AUDIO_S32LSB] = "AUDIO_S32LSB";
+        format[AUDIO_S32MSB] = "AUDIO_S32MSB";
+        format[AUDIO_F32LSB] = "AUDIO_F32LSB";
+        format[AUDIO_F32MSB] = "AUDIO_F32MSB";
+
+        return format[format_value];
+    }
+
 class sound_buffer_impl : public sound_buffer
 {
 public:
-    sound_buffer_impl(std::string_view path, SDL_AudioDeviceID device);
+    sound_buffer_impl(std::string_view path, SDL_AudioDeviceID device, SDL_AudioSpec audio_spec);
     ~sound_buffer_impl() final;
 
     void play()
@@ -228,8 +245,6 @@ public:
         SDL_UnlockAudioDevice(device);
     }
 
-    SDL_AudioSpec audio_spec;
-
     uint8_t* buffer;
     uint32_t length;
 
@@ -237,7 +252,8 @@ public:
 };
 
 sound_buffer_impl::sound_buffer_impl(std::string_view  path,
-                                     SDL_AudioDeviceID device_)
+                                     SDL_AudioDeviceID device_,
+                                     SDL_AudioSpec audio_spec)
     : buffer(nullptr)
     , length(0)
     , device(device_)
@@ -249,10 +265,18 @@ sound_buffer_impl::sound_buffer_impl(std::string_view  path,
                                  path.data());
     }
 
-    if (nullptr == SDL_LoadWAV_RW(file, 1, &audio_spec, &buffer, &length))
+    SDL_AudioSpec audio_spec_desired = audio_spec;
+
+    if (nullptr == SDL_LoadWAV_RW(file, 1, &audio_spec_desired, &buffer, &length))
     {
         throw std::runtime_error(std::string("can't load wav: ") + path.data());
     }
+
+    std::cout << "audio format for: " << path << '\n'
+              << "format: " << get_sound_format_name(audio_spec.format) << '\n'
+              << "channels: " << static_cast<uint32_t>(audio_spec.channels) << '\n'
+              << "frequency: " << audio_spec.freq << '\n' << std::flush;
+
     audio_spec.callback = nullptr;
     audio_spec.userdata = nullptr;
 }
@@ -718,7 +742,7 @@ public:
     sound_buffer* create_sound_buffer(std::string_view path) final
     {
         SDL_LockAudioDevice(audio_device);
-        sound_buffer_impl* s = new sound_buffer_impl(path, audio_device);
+        sound_buffer_impl* s = new sound_buffer_impl(path, audio_device, audio_want_spec);
         sounds.push_back(s);
         SDL_UnlockAudioDevice(audio_device);
         return s;
@@ -1290,18 +1314,25 @@ std::string engine_impl::initialize(std::string_view)
 
     const char* default_audio_device_name = nullptr;
 
-    const int num_devices = SDL_GetNumAudioDevices(SDL_FALSE);
-    if (num_devices > 0) {
+    const int num_audio_devices = SDL_GetNumAudioDevices(SDL_FALSE);
+    if (num_audio_devices > 0) {
         default_audio_device_name = SDL_GetAudioDeviceName(0, SDL_FALSE);
-        for (int i = 0; i < num_devices; ++i) {
+        for (int i = 0; i < num_audio_devices; ++i) {
             std::cout << "audio device #" << i << ": "
                       << SDL_GetAudioDeviceName(i, SDL_FALSE) << '\n';
         }
     }
     std::cout << std::flush;
 
+    const int num_audio_drivers = SDL_GetNumAudioDrivers();
+    for(int i = 0; i < num_audio_drivers; ++i)
+    {
+        std::cout << "audio_driver #:" << i << " " << SDL_GetAudioDriver(i) << '\n';
+    }
+    std::cout << std::flush;
+
     audio_device =
-        SDL_OpenAudioDevice(default_audio_device_name, 0, &audio_want_spec, nullptr/*&audio_obtained_spec*/,
+        SDL_OpenAudioDevice(default_audio_device_name, 0, &audio_want_spec, nullptr,
                             SDL_AUDIO_ALLOW_ANY_CHANGE);
 
     if (audio_device == 0)
@@ -1311,28 +1342,18 @@ std::string engine_impl::initialize(std::string_view)
     }
     else
     {
-        std::map<uint16_t, std::string> format;
-        format[AUDIO_U8]     = "AUDIO_U8";
-        format[AUDIO_S8]     = "AUDIO_S8";
-        format[AUDIO_U16LSB] = "AUDIO_U16LSB";
-        format[AUDIO_S16LSB] = "AUDIO_S16LSB";
-        format[AUDIO_U16MSB] = "AUDIO_U16MSB";
-        format[AUDIO_S16MSB] = "AUDIO_S16MSB";
-        format[AUDIO_S32LSB] = "AUDIO_S32LSB";
-        format[AUDIO_S32MSB] = "AUDIO_S32MSB";
-        format[AUDIO_F32LSB] = "AUDIO_F32LSB";
-        format[AUDIO_F32MSB] = "AUDIO_F32MSB";
+
 
         std::cout << "audio device selected: " << default_audio_device_name << '\n'
                   << "freq: " << audio_want_spec.freq << '\n'
-                  << "format: " << format[audio_want_spec.format] << '\n'
+                  << "format: " << get_sound_format_name(audio_want_spec.format) << '\n'
                   << "channels: "
                   << static_cast<uint32_t>(audio_want_spec.channels) << '\n'
                   << "samples: " << audio_want_spec.samples << '\n'
                   << std::flush;
 
         // unpause device
-        SDL_PauseAudioDevice(audio_device, 0);
+        SDL_PauseAudioDevice(audio_device, SDL_FALSE);
     }
 
     return "";
@@ -1341,18 +1362,29 @@ std::string engine_impl::initialize(std::string_view)
 void engine_impl::audio_callback(void* engine_ptr, uint8_t* stream,
                                  int stream_size)
 {
+    /*
+    for (int i = 0; i < stream_size; ++i)
+    {
+        stream[i] = static_cast<uint8_t>(std::rand());
+    }
+    std::cout << "mix audio for: " << (stream_size / 4.f) / 48000.f << "sec.";
+     */
     // no sound default
-    //std::fill_n(stream, stream_size, 0);
+    std::fill_n(stream, stream_size, 0);
     // TODO fill stream with stream_size bytes of sound samples
     engine_impl* e = static_cast<engine_impl*>(engine_ptr);
+
     for (sound_buffer_impl* snd : e->sounds)
     {
         SDL_MixAudioFormat(
-            stream, snd->buffer, e->audio_want_spec.format,
+            stream,
+            snd->buffer,
+            e->audio_want_spec.format,
             std::min(static_cast<uint32_t>(stream_size), snd->length),
             SDL_MIX_MAXVOLUME);
-        std::cout << "mix audio for: " << (stream_size / (e->audio_want_spec.channels * 2.f)) / 48000.f << "sec.";
+        //std::cout << "mix audio for: " << (stream_size / (e->audio_want_spec.channels * 2.f)) / 48000.f << "sec.";
     }
+
 }
 
 } // end namespace om
