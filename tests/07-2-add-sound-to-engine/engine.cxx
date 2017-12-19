@@ -265,6 +265,7 @@ sound_buffer_impl::sound_buffer_impl(std::string_view  path,
                                  path.data());
     }
 
+    // freq, format, channels, and samples - used by SDL_LoadWAV_RW
     SDL_AudioSpec audio_spec_desired = audio_spec;
 
     if (nullptr == SDL_LoadWAV_RW(file, 1, &audio_spec_desired, &buffer, &length))
@@ -1106,7 +1107,8 @@ std::string engine_impl::initialize(std::string_view)
              << compiled << " " << linked << endl;
     }
 
-    const int init_result = SDL_Init(SDL_INIT_EVERYTHING);
+    const int init_result = SDL_Init(SDL_INIT_TIMER | SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_EVENTS | \
+                SDL_INIT_JOYSTICK | SDL_INIT_HAPTIC | SDL_INIT_GAMECONTROLLER);
     if (init_result != 0)
     {
         const char* err_message = SDL_GetError();
@@ -1310,7 +1312,27 @@ std::string engine_impl::initialize(std::string_view)
     audio_want_spec.callback = engine_impl::audio_callback;
     audio_want_spec.userdata = this;
 
-    //SDL_AudioSpec audio_obtained_spec;
+    const int num_audio_drivers = SDL_GetNumAudioDrivers();
+    for(int i = 0; i < num_audio_drivers; ++i)
+    {
+        std::cout << "audio_driver #:" << i << " " << SDL_GetAudioDriver(i) << '\n';
+    }
+    std::cout << std::flush;
+
+    const char* selected_audio_driver = SDL_GetAudioDriver(1);
+    std::cout << "selected_audio_driver: " << selected_audio_driver << '\n';
+    std::cout << std::flush;
+    if(0 != SDL_AudioInit(selected_audio_driver))
+    {
+        std::cout << "can't init SDL audio\n" << std::flush;
+    }
+
+    /*
+    if(0 != SDL_InitSubSystem(SDL_INIT_AUDIO))
+    {
+        std::cout << "can't init SDL audio subsystem\n" << std::flush;
+    }
+     */
 
     const char* default_audio_device_name = nullptr;
 
@@ -1321,13 +1343,6 @@ std::string engine_impl::initialize(std::string_view)
             std::cout << "audio device #" << i << ": "
                       << SDL_GetAudioDeviceName(i, SDL_FALSE) << '\n';
         }
-    }
-    std::cout << std::flush;
-
-    const int num_audio_drivers = SDL_GetNumAudioDrivers();
-    for(int i = 0; i < num_audio_drivers; ++i)
-    {
-        std::cout << "audio_driver #:" << i << " " << SDL_GetAudioDriver(i) << '\n';
     }
     std::cout << std::flush;
 
@@ -1342,8 +1357,6 @@ std::string engine_impl::initialize(std::string_view)
     }
     else
     {
-
-
         std::cout << "audio device selected: " << default_audio_device_name << '\n'
                   << "freq: " << audio_want_spec.freq << '\n'
                   << "format: " << get_sound_format_name(audio_want_spec.format) << '\n'
