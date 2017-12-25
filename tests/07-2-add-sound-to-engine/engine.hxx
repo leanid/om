@@ -177,7 +177,14 @@ public:
 class OM_DECLSPEC sound_buffer
 {
 public:
+    enum class properties
+    {
+        once,
+        looped
+    };
+
     virtual ~sound_buffer();
+    virtual void play(const properties) = 0;
 };
 
 class OM_DECLSPEC engine
@@ -201,9 +208,6 @@ public:
 
     virtual sound_buffer* create_sound_buffer(std::string_view path) = 0;
     virtual void destroy_sound_buffer(sound_buffer*)                 = 0;
-    virtual void play_sound(sound_buffer*)                           = 0;
-    virtual void play_sound_looped(sound_buffer*)                    = 0;
-    virtual void stop_sound(sound_buffer*)                           = 0;
 
     virtual void render(const tri0&, const color&) = 0;
     virtual void render(const tri1&) = 0;

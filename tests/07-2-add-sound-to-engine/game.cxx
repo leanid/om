@@ -49,7 +49,7 @@ int main(int /*argc*/, char* /*argv*/ [])
         }
     }
 
-    engine->create_sound_buffer("t2_no_problemo.wav");
+    om::sound_buffer* s = engine->create_sound_buffer("t2_no_problemo.wav");
 
     bool continue_loop = true;
 
@@ -72,9 +72,22 @@ int main(int /*argc*/, char* /*argv*/ [])
                         continue_loop = false;
                     }
                     break;
-                default:
-
-                    break;
+                case om::event_type::input_key:
+                {
+                    const auto& key_data = std::get<om::input_data>(event.info);
+                    if (key_data.is_down)
+                    {
+                        if (key_data.key == om::keys::button1)
+                        {
+                            s->play(om::sound_buffer::properties::once);
+                        }
+                        else if (key_data.key == om::keys::button2)
+                        {
+                            s->play(om::sound_buffer::properties::looped);
+                        }
+                    }
+                }
+                break;
             }
         }
 

@@ -9,6 +9,7 @@
 #include <fstream>
 #include <iostream>
 #include <map>
+#include <memory>
 #include <sstream>
 #include <stdexcept>
 #include <string_view>
@@ -210,50 +211,67 @@ private:
     std::vector<tri2> triangles;
 };
 
-    static std::string_view get_sound_format_name(int format_value)
-    {
-        std::map<uint16_t, std::string_view> format;
-        format[AUDIO_U8]     = "AUDIO_U8";
-        format[AUDIO_S8]     = "AUDIO_S8";
-        format[AUDIO_U16LSB] = "AUDIO_U16LSB";
-        format[AUDIO_S16LSB] = "AUDIO_S16LSB";
-        format[AUDIO_U16MSB] = "AUDIO_U16MSB";
-        format[AUDIO_S16MSB] = "AUDIO_S16MSB";
-        format[AUDIO_S32LSB] = "AUDIO_S32LSB";
-        format[AUDIO_S32MSB] = "AUDIO_S32MSB";
-        format[AUDIO_F32LSB] = "AUDIO_F32LSB";
-        format[AUDIO_F32MSB] = "AUDIO_F32MSB";
+static std::string_view get_sound_format_name(uint16_t format_value)
+{
+    static const std::map<uint16_t, std::string_view> format = {
+        { AUDIO_U8, "AUDIO_U8" },         { AUDIO_S8, "AUDIO_S8" },
+        { AUDIO_U16LSB, "AUDIO_U16LSB" }, { AUDIO_S16LSB, "AUDIO_S16LSB" },
+        { AUDIO_U16MSB, "AUDIO_U16MSB" }, { AUDIO_S16MSB, "AUDIO_S16MSB" },
+        { AUDIO_S32LSB, "AUDIO_S32LSB" }, { AUDIO_S32MSB, "AUDIO_S32MSB" },
+        { AUDIO_F32LSB, "AUDIO_F32LSB" }, { AUDIO_F32MSB, "AUDIO_F32MSB" },
+    };
 
-        return format[format_value];
-    }
+    auto it = format.find(format_value);
+    return it->second;
+}
 
-class sound_buffer_impl : public sound_buffer
+static std::size_t get_sound_format_size(uint16_t format_value)
+{
+    static const std::map<uint16_t, std::size_t> format = {
+        { AUDIO_U8, 1 },     { AUDIO_S8, 1 },     { AUDIO_U16LSB, 2 },
+        { AUDIO_S16LSB, 2 }, { AUDIO_U16MSB, 2 }, { AUDIO_S16MSB, 2 },
+        { AUDIO_S32LSB, 4 }, { AUDIO_S32MSB, 4 }, { AUDIO_F32LSB, 4 },
+        { AUDIO_F32MSB, 4 },
+    };
+
+    auto it = format.find(format_value);
+    return it->second;
+}
+
+class sound_buffer_impl final : public sound_buffer
 {
 public:
-    sound_buffer_impl(std::string_view path, SDL_AudioDeviceID device, SDL_AudioSpec audio_spec);
+    sound_buffer_impl(std::string_view path, SDL_AudioDeviceID device,
+                      SDL_AudioSpec audio_spec);
     ~sound_buffer_impl() final;
 
-    void play()
+    void play(const properties prop) final
     {
         // Lock callback function
         SDL_LockAudioDevice(device);
 
-        // TODO here we can change properties
+        // here we can change properties
         // of sound and dont collade with multithreaded playing
+        current_index = 0;
+        is_playing    = true;
+        is_looped     = (prop == properties::looped);
 
         // unlock callback for continue mixing of audio
         SDL_UnlockAudioDevice(device);
     }
 
-    uint8_t* buffer;
-    uint32_t length;
-
-    SDL_AudioDeviceID device;
+    std::unique_ptr<uint8_t[]> tmp_buf;
+    uint8_t*                   buffer;
+    uint32_t                   length;
+    uint32_t                   current_index = 0;
+    SDL_AudioDeviceID          device;
+    bool                       is_playing = false;
+    bool                       is_looped  = false;
 };
 
 sound_buffer_impl::sound_buffer_impl(std::string_view  path,
                                      SDL_AudioDeviceID device_,
-                                     SDL_AudioSpec audio_spec)
+                                     SDL_AudioSpec     device_audio_spec)
     : buffer(nullptr)
     , length(0)
     , device(device_)
@@ -266,20 +284,55 @@ sound_buffer_impl::sound_buffer_impl(std::string_view  path,
     }
 
     // freq, format, channels, and samples - used by SDL_LoadWAV_RW
-    SDL_AudioSpec audio_spec_desired = audio_spec;
+    SDL_AudioSpec file_audio_spec;
 
-    if (nullptr == SDL_LoadWAV_RW(file, 1, &audio_spec_desired, &buffer, &length))
+    if (nullptr == SDL_LoadWAV_RW(file, 1, &file_audio_spec, &buffer, &length))
     {
         throw std::runtime_error(std::string("can't load wav: ") + path.data());
     }
 
     std::cout << "audio format for: " << path << '\n'
-              << "format: " << get_sound_format_name(audio_spec.format) << '\n'
-              << "channels: " << static_cast<uint32_t>(audio_spec.channels) << '\n'
-              << "frequency: " << audio_spec.freq << '\n' << std::flush;
+              << "format: " << get_sound_format_name(file_audio_spec.format)
+              << '\n'
+              << "sample_size: "
+              << get_sound_format_size(file_audio_spec.format) << '\n'
+              << "channels: " << static_cast<uint32_t>(file_audio_spec.channels)
+              << '\n'
+              << "frequency: " << file_audio_spec.freq << '\n'
+              << "length: " << length << '\n'
+              << "time: "
+              << static_cast<double>(length) /
+                     (file_audio_spec.channels * file_audio_spec.freq *
+                      get_sound_format_size(file_audio_spec.format))
+              << "sec" << std::endl;
 
-    audio_spec.callback = nullptr;
-    audio_spec.userdata = nullptr;
+    if (file_audio_spec.channels != device_audio_spec.channels ||
+        file_audio_spec.format != device_audio_spec.format ||
+        file_audio_spec.freq != device_audio_spec.freq)
+    {
+        SDL_AudioCVT cvt;
+        SDL_BuildAudioCVT(&cvt, file_audio_spec.format,
+                          file_audio_spec.channels, file_audio_spec.freq,
+                          device_audio_spec.format, device_audio_spec.channels,
+                          device_audio_spec.freq);
+        SDL_assert(cvt.needed); // obviously, this one is always needed.
+        // read your data into cvt.buf here.
+        cvt.len = length;
+        // we have to make buffer for inplace conversion
+        tmp_buf.reset(new uint8_t[cvt.len * cvt.len_mult]);
+        uint8_t* buf = tmp_buf.get();
+        std::copy_n(buffer, length, buf);
+        cvt.buf = buf;
+        if (0 != SDL_ConvertAudio(&cvt))
+        {
+            std::cout << "failed to convert audio from file: " << path
+                      << " to audio device format" << std::endl;
+        }
+        // cvt.buf has cvt.len_cvt bytes of converted data now.
+        SDL_FreeWAV(buffer);
+        buffer = tmp_buf.get();
+        length = cvt.len_cvt;
+    }
 }
 
 sound_buffer::~sound_buffer()
@@ -288,6 +341,12 @@ sound_buffer::~sound_buffer()
 
 sound_buffer_impl::~sound_buffer_impl()
 {
+    if (!tmp_buf)
+    {
+        SDL_FreeWAV(buffer);
+    }
+    buffer = nullptr;
+    length = 0;
 }
 
 vertex_buffer_impl::~vertex_buffer_impl()
@@ -743,24 +802,13 @@ public:
     sound_buffer* create_sound_buffer(std::string_view path) final
     {
         SDL_LockAudioDevice(audio_device);
-        sound_buffer_impl* s = new sound_buffer_impl(path, audio_device, audio_want_spec);
+        sound_buffer_impl* s =
+            new sound_buffer_impl(path, audio_device, audio_device_spec);
         sounds.push_back(s);
         SDL_UnlockAudioDevice(audio_device);
         return s;
     }
     void destroy_sound_buffer(sound_buffer* sound) final { delete sound; }
-    void                                    play_sound(sound_buffer*) final
-    {
-        // TODO implement it
-    }
-    void play_sound_looped(sound_buffer*) final
-    {
-        // TODO implement it
-    }
-    void stop_sound(sound_buffer*) final
-    {
-        // TODO implement it
-    }
 
     void render(const tri0& t, const color& c) final
     {
@@ -929,7 +977,7 @@ private:
     shader_gl_es20* shader03 = nullptr;
 
     SDL_AudioDeviceID               audio_device;
-    SDL_AudioSpec                   audio_want_spec;
+    SDL_AudioSpec                   audio_device_spec;
     std::vector<sound_buffer_impl*> sounds;
 };
 
@@ -1107,8 +1155,9 @@ std::string engine_impl::initialize(std::string_view)
              << compiled << " " << linked << endl;
     }
 
-    const int init_result = SDL_Init(SDL_INIT_TIMER | SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_EVENTS | \
-                SDL_INIT_JOYSTICK | SDL_INIT_HAPTIC | SDL_INIT_GAMECONTROLLER);
+    const int init_result = SDL_Init(
+        SDL_INIT_TIMER | SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_EVENTS |
+        SDL_INIT_JOYSTICK | SDL_INIT_HAPTIC | SDL_INIT_GAMECONTROLLER);
     if (init_result != 0)
     {
         const char* err_message = SDL_GetError();
@@ -1120,7 +1169,7 @@ std::string engine_impl::initialize(std::string_view)
     if (!cout)
     {
         AllocConsole();
-        std::freopen( "CON", "w", stdout );
+        std::freopen("CON", "w", stdout);
         cout.clear();
         cerr << "test" << std::endl;
         if (!cout)
@@ -1305,41 +1354,39 @@ std::string engine_impl::initialize(std::string_view)
     OM_GL_CHECK();
 
     // initialize audio
-    audio_want_spec.freq     = 48000;
-    audio_want_spec.format   = AUDIO_S16LSB;
-    audio_want_spec.channels = 2;
-    audio_want_spec.samples  = 4096; // must be power of 2
-    audio_want_spec.callback = engine_impl::audio_callback;
-    audio_want_spec.userdata = this;
+    audio_device_spec.freq     = 48000;
+    audio_device_spec.format   = AUDIO_S16LSB;
+    audio_device_spec.channels = 2;
+    audio_device_spec.samples  = 1024; // must be power of 2
+    audio_device_spec.callback = engine_impl::audio_callback;
+    audio_device_spec.userdata = this;
 
     const int num_audio_drivers = SDL_GetNumAudioDrivers();
-    for(int i = 0; i < num_audio_drivers; ++i)
+    for (int i = 0; i < num_audio_drivers; ++i)
     {
-        std::cout << "audio_driver #:" << i << " " << SDL_GetAudioDriver(i) << '\n';
+        std::cout << "audio_driver #:" << i << " " << SDL_GetAudioDriver(i)
+                  << '\n';
     }
     std::cout << std::flush;
 
+    // TODO on windows 10 only directsound - works for me
     const char* selected_audio_driver = SDL_GetAudioDriver(1);
-    std::cout << "selected_audio_driver: " << selected_audio_driver << '\n';
-    std::cout << std::flush;
-    if(0 != SDL_AudioInit(selected_audio_driver))
+    std::cout << "selected_audio_driver: " << selected_audio_driver
+              << std::endl;
+
+    if (0 != SDL_AudioInit(selected_audio_driver))
     {
         std::cout << "can't init SDL audio\n" << std::flush;
     }
 
-    /*
-    if(0 != SDL_InitSubSystem(SDL_INIT_AUDIO))
-    {
-        std::cout << "can't init SDL audio subsystem\n" << std::flush;
-    }
-     */
-
     const char* default_audio_device_name = nullptr;
 
     const int num_audio_devices = SDL_GetNumAudioDevices(SDL_FALSE);
-    if (num_audio_devices > 0) {
+    if (num_audio_devices > 0)
+    {
         default_audio_device_name = SDL_GetAudioDeviceName(0, SDL_FALSE);
-        for (int i = 0; i < num_audio_devices; ++i) {
+        for (int i = 0; i < num_audio_devices; ++i)
+        {
             std::cout << "audio device #" << i << ": "
                       << SDL_GetAudioDeviceName(i, SDL_FALSE) << '\n';
         }
@@ -1347,8 +1394,8 @@ std::string engine_impl::initialize(std::string_view)
     std::cout << std::flush;
 
     audio_device =
-        SDL_OpenAudioDevice(default_audio_device_name, 0, &audio_want_spec, nullptr,
-                            SDL_AUDIO_ALLOW_ANY_CHANGE);
+        SDL_OpenAudioDevice(default_audio_device_name, 0, &audio_device_spec,
+                            nullptr, SDL_AUDIO_ALLOW_ANY_CHANGE);
 
     if (audio_device == 0)
     {
@@ -1357,12 +1404,14 @@ std::string engine_impl::initialize(std::string_view)
     }
     else
     {
-        std::cout << "audio device selected: " << default_audio_device_name << '\n'
-                  << "freq: " << audio_want_spec.freq << '\n'
-                  << "format: " << get_sound_format_name(audio_want_spec.format) << '\n'
+        std::cout << "audio device selected: " << default_audio_device_name
+                  << '\n'
+                  << "freq: " << audio_device_spec.freq << '\n'
+                  << "format: "
+                  << get_sound_format_name(audio_device_spec.format) << '\n'
                   << "channels: "
-                  << static_cast<uint32_t>(audio_want_spec.channels) << '\n'
-                  << "samples: " << audio_want_spec.samples << '\n'
+                  << static_cast<uint32_t>(audio_device_spec.channels) << '\n'
+                  << "samples: " << audio_device_spec.samples << '\n'
                   << std::flush;
 
         // unpause device
@@ -1389,15 +1438,43 @@ void engine_impl::audio_callback(void* engine_ptr, uint8_t* stream,
 
     for (sound_buffer_impl* snd : e->sounds)
     {
-        SDL_MixAudioFormat(
-            stream,
-            snd->buffer,
-            e->audio_want_spec.format,
-            std::min(static_cast<uint32_t>(stream_size), snd->length),
-            SDL_MIX_MAXVOLUME);
-        //std::cout << "mix audio for: " << (stream_size / (e->audio_want_spec.channels * 2.f)) / 48000.f << "sec.";
-    }
+        if (snd->is_playing)
+        {
+            uint32_t rest         = snd->length - snd->current_index;
+            uint8_t* current_buff = &snd->buffer[snd->current_index];
 
+            if (rest <= static_cast<uint32_t>(stream_size))
+            {
+                // copy rest to buffer
+                SDL_MixAudioFormat(stream, current_buff,
+                                   e->audio_device_spec.format, rest,
+                                   SDL_MIX_MAXVOLUME);
+                snd->current_index += rest;
+            }
+            else
+            {
+                SDL_MixAudioFormat(stream, current_buff,
+                                   e->audio_device_spec.format, stream_size,
+                                   SDL_MIX_MAXVOLUME);
+                snd->current_index += static_cast<uint32_t>(stream_size);
+            }
+
+            if (snd->current_index == snd->length)
+            {
+                if (snd->is_looped)
+                {
+                    // start from start
+                    snd->current_index = 0;
+                }
+                else
+                {
+                    snd->is_playing = false;
+                }
+            }
+        }
+        // std::cout << "mix audio for: " << (stream_size /
+        // (e->audio_want_spec.channels * 2.f)) / 48000.f << "sec.";
+    }
 }
 
 } // end namespace om
