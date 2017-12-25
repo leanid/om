@@ -1166,15 +1166,20 @@ std::string engine_impl::initialize(std::string_view)
     }
 
     cout << "initialize om::engine" << std::endl;
-    if (!cout)
+    if (std::string_view("Windows") == SDL_GetPlatform())
     {
-        AllocConsole();
-        std::freopen("CON", "w", stdout);
-        cout.clear();
-        cerr << "test" << std::endl;
         if (!cout)
         {
-            throw std::runtime_error("can't print with std::cout");
+#ifdef _WIN32
+            AllocConsole();
+#endif
+            std::freopen("CON", "w", stdout);
+            cout.clear();
+            cerr << "test" << std::endl;
+            if (!cout)
+            {
+                throw std::runtime_error("can't print with std::cout");
+            }
         }
     }
 
@@ -1370,13 +1375,16 @@ std::string engine_impl::initialize(std::string_view)
     std::cout << std::flush;
 
     // TODO on windows 10 only directsound - works for me
-    const char* selected_audio_driver = SDL_GetAudioDriver(1);
-    std::cout << "selected_audio_driver: " << selected_audio_driver
-              << std::endl;
-
-    if (0 != SDL_AudioInit(selected_audio_driver))
+    if (std::string_view("Windows") == SDL_GetPlatform())
     {
-        std::cout << "can't init SDL audio\n" << std::flush;
+        const char* selected_audio_driver = SDL_GetAudioDriver(1);
+        std::cout << "selected_audio_driver: " << selected_audio_driver
+                  << std::endl;
+
+        if (0 != SDL_AudioInit(selected_audio_driver))
+        {
+            std::cout << "can't init SDL audio\n" << std::flush;
+        }
     }
 
     const char* default_audio_device_name = nullptr;
@@ -1424,16 +1432,9 @@ std::string engine_impl::initialize(std::string_view)
 void engine_impl::audio_callback(void* engine_ptr, uint8_t* stream,
                                  int stream_size)
 {
-    /*
-    for (int i = 0; i < stream_size; ++i)
-    {
-        stream[i] = static_cast<uint8_t>(std::rand());
-    }
-    std::cout << "mix audio for: " << (stream_size / 4.f) / 48000.f << "sec.";
-     */
     // no sound default
     std::fill_n(stream, stream_size, 0);
-    // TODO fill stream with stream_size bytes of sound samples
+
     engine_impl* e = static_cast<engine_impl*>(engine_ptr);
 
     for (sound_buffer_impl* snd : e->sounds)
@@ -1453,9 +1454,9 @@ void engine_impl::audio_callback(void* engine_ptr, uint8_t* stream,
             }
             else
             {
-                SDL_MixAudioFormat(stream, current_buff,
-                                   e->audio_device_spec.format, stream_size,
-                                   SDL_MIX_MAXVOLUME);
+                SDL_MixAudioFormat(
+                    stream, current_buff, e->audio_device_spec.format,
+                    static_cast<uint32_t>(stream_size), SDL_MIX_MAXVOLUME);
                 snd->current_index += static_cast<uint32_t>(stream_size);
             }
 
@@ -1463,7 +1464,7 @@ void engine_impl::audio_callback(void* engine_ptr, uint8_t* stream,
             {
                 if (snd->is_looped)
                 {
-                    // start from start
+                    // start from begining
                     snd->current_index = 0;
                 }
                 else
@@ -1472,8 +1473,6 @@ void engine_impl::audio_callback(void* engine_ptr, uint8_t* stream,
                 }
             }
         }
-        // std::cout << "mix audio for: " << (stream_size /
-        // (e->audio_want_spec.channels * 2.f)) / 48000.f << "sec.";
     }
 }
 
