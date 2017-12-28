@@ -265,7 +265,7 @@ public:
                       SDL_AudioSpec audio_spec);
     ~sound_buffer_impl() final;
 
-    void play(const properties prop) final
+    void play(const effect prop) final
     {
         // Lock callback function
         SDL_LockAudioDevice(device);
@@ -274,7 +274,7 @@ public:
         // of sound and dont collade with multithreaded playing
         current_index = 0;
         is_playing_   = true;
-        is_looped     = (prop == properties::looped);
+        is_looped     = (prop == effect::looped);
 
         SDL_UnlockAudioDevice(device);
     }
@@ -990,6 +990,11 @@ void engine::swap_buffers()
     OM_GL_CHECK();
 }
 
+void engine::exit(int return_code)
+{
+    std::quick_exit(return_code);
+}
+
 static void audio_callback(void*, uint8_t*, int);
 
 engine::engine(std::string_view)
@@ -1478,5 +1483,7 @@ void audio_callback(void*, uint8_t* stream, int stream_size)
         }
     }
 }
+
+lila::~lila() = default;
 
 } // end namespace om

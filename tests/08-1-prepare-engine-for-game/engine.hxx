@@ -179,14 +179,14 @@ public:
 class OM_DECLSPEC sound
 {
 public:
-    enum class properties
+    enum class effect
     {
         once,
         looped
     };
 
     virtual ~sound();
-    virtual void play(const properties) = 0;
+    virtual void play(const effect) = 0;
     virtual bool is_playing() const     = 0;
     virtual void stop()                 = 0;
 };
@@ -222,18 +222,20 @@ public:
     void swap_buffers();
     void uninitialize();
 
+    void exit(int return_code);
+
     std::ostream& log;
 };
 
-} // end namespace om
-
-class lila
+struct lila
 {
-public:
     virtual ~lila();
+    virtual void on_initialize()                                  = 0;
     virtual void on_event(om::event&)                             = 0;
     virtual void on_update(std::chrono::milliseconds frame_delta) = 0;
     virtual void on_render() const                                = 0;
 };
 
-extern std::unique_ptr<lila> om_tat_sat(om::engine&);
+} // end namespace om
+
+extern std::unique_ptr<om::lila> om_tat_sat(om::engine&);
