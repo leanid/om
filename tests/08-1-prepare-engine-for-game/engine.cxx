@@ -993,6 +993,7 @@ void engine::swap_buffers()
 static void audio_callback(void*, uint8_t*, int);
 
 engine::engine(std::string_view)
+    : log(std::cout)
 {
     if (already_exist)
     {

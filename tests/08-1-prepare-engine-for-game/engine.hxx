@@ -1,4 +1,6 @@
+#include <chrono>
 #include <iosfwd>
+#include <memory>
 #include <string>
 #include <string_view>
 #include <variant>
@@ -219,6 +221,19 @@ public:
     void render(const vbo&, texture*, const mat2x3&);
     void swap_buffers();
     void uninitialize();
+
+    std::ostream& log;
 };
 
 } // end namespace om
+
+class lila
+{
+public:
+    virtual ~lila();
+    virtual void on_event(om::event&)                             = 0;
+    virtual void on_update(std::chrono::milliseconds frame_delta) = 0;
+    virtual void on_render() const                                = 0;
+};
+
+extern std::unique_ptr<lila> om_tat_sat(om::engine&);
