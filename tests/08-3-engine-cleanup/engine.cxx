@@ -195,22 +195,19 @@ vbo::~vbo()
 class vertex_buffer_impl final : public vbo
 {
 public:
-    vertex_buffer_impl(const triangle* tri, std::size_t n)
-        : triangles(n)
+    vertex_buffer_impl(const vertex* tri, std::size_t n)
+        : vertexes(n)
     {
         assert(tri != nullptr);
-        for (size_t i = 0; i < n; ++i)
-        {
-            triangles[i] = tri[i];
-        }
+        std::copy_n(tri, n, begin(vertexes));
     }
     ~vertex_buffer_impl() final;
 
-    const vertex*      data() const final { return &triangles.data()->v[0]; }
-    virtual size_t size() const final { return triangles.size() * 3; }
+    const vertex*  data() const final { return vertexes.data(); }
+    virtual size_t size() const final { return vertexes.size(); }
 
 private:
-    std::vector<triangle> triangles;
+    std::vector<vertex> vertexes;
 };
 
 static std::string_view get_sound_format_name(uint16_t format_value)
@@ -441,7 +438,8 @@ public:
         OM_GL_CHECK();
     }
 
-    void set_uniform(std::string_view uniform_name, texture_gl_es20* texture)
+    void set_uniform(std::string_view       uniform_name,
+                     const texture_gl_es20* texture)
     {
         assert(texture != nullptr);
         const int location =
@@ -620,11 +618,6 @@ std::ostream& operator<<(std::ostream& stream, const event e)
     return stream;
 }
 
-triangle::triangle()
-    : v{ vertex(), vertex(), vertex() }
-{
-}
-
 std::ostream& operator<<(std::ostream& out, const SDL_version& v)
 {
     out << static_cast<int>(v.major) << '.';
@@ -669,14 +662,6 @@ std::istream& operator>>(std::istream& is, vertex& v)
     is >> v.pos.y;
     is >> v.uv;
     is >> v.c;
-    return is;
-}
-
-std::istream& operator>>(std::istream& is, triangle& t)
-{
-    is >> t.v[0];
-    is >> t.v[1];
-    is >> t.v[2];
     return is;
 }
 
@@ -783,9 +768,9 @@ void destroy_texture(texture* t)
     delete t;
 }
 
-vbo* create_vbo(const triangle* triangles, std::size_t n)
+vbo* create_vbo(const vertex* vertexes, std::size_t n)
 {
-    return new vertex_buffer_impl(triangles, n);
+    return new vertex_buffer_impl(vertexes, n);
 }
 void destroy_vbo(vbo* buffer)
 {
@@ -806,10 +791,16 @@ void destroy_sound(sound* sound)
     delete sound;
 }
 
-void render(const vbo& buff, texture* tex, const matrix& m)
+static const std::array<GLenum, 6> primitive_types = {
+    { GL_LINES, GL_LINE_STRIP, GL_LINE_LOOP, GL_TRIANGLES, GL_TRIANGLE_STRIP,
+      GL_TRIANGLE_FAN }
+};
+
+void render(const enum primitives primitive_type, const vbo& buff,
+            const texture* tex, const matrix& m)
 {
     shader03->use();
-    texture_gl_es20* texture = static_cast<texture_gl_es20*>(tex);
+    const texture_gl_es20* texture = static_cast<const texture_gl_es20*>(tex);
     texture->bind();
     shader03->set_uniform("s_texture", texture);
     shader03->set_uniform("u_matrix", m);
@@ -821,7 +812,8 @@ void render(const vbo& buff, texture* tex, const matrix& m)
     glEnableVertexAttribArray(0);
     OM_GL_CHECK();
     // colors
-    glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(vertex), &t->c);
+    glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(vertex),
+                          &t->c);
     OM_GL_CHECK();
     glEnableVertexAttribArray(1);
     OM_GL_CHECK();
@@ -833,7 +825,8 @@ void render(const vbo& buff, texture* tex, const matrix& m)
     OM_GL_CHECK();
 
     GLsizei num_of_vertexes = static_cast<GLsizei>(buff.size());
-    glDrawArrays(GL_TRIANGLES, 0, num_of_vertexes);
+    GLenum  priv_type = primitive_types[static_cast<uint32_t>(primitive_type)];
+    glDrawArrays(priv_type, 0, num_of_vertexes);
     OM_GL_CHECK();
 
     glDisableVertexAttribArray(1);

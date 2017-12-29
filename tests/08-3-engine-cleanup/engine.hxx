@@ -104,13 +104,6 @@ struct OM_DECLSPEC vertex
     color c;
 };
 
-/// triangle with positions color and texture coordinate
-struct OM_DECLSPEC triangle
-{
-    triangle();
-    vertex v[3];
-};
-
 std::ostream& OM_DECLSPEC operator<<(std::ostream& stream, const input_data&);
 std::ostream& OM_DECLSPEC operator<<(std::ostream& stream,
                                      const hardware_data&);
@@ -120,7 +113,6 @@ std::istream& OM_DECLSPEC operator>>(std::istream& is, matrix&);
 std::istream& OM_DECLSPEC operator>>(std::istream& is, vec2&);
 std::istream& OM_DECLSPEC operator>>(std::istream& is, color&);
 std::istream& OM_DECLSPEC operator>>(std::istream& is, vertex&);
-std::istream& OM_DECLSPEC operator>>(std::istream& is, triangle&);
 
 class OM_DECLSPEC texture
 {
@@ -158,18 +150,30 @@ public:
 float OM_DECLSPEC get_time_from_init();
 
 bool OM_DECLSPEC pool_event(event& e);
+
 bool OM_DECLSPEC is_key_down(const enum keys);
 
 texture* OM_DECLSPEC create_texture(std::string_view path);
 void OM_DECLSPEC destroy_texture(texture* t);
 
-vbo* OM_DECLSPEC create_vbo(const triangle*, std::size_t);
+vbo* OM_DECLSPEC create_vbo(const vertex*, std::size_t);
 void OM_DECLSPEC destroy_vbo(vbo*);
 
 sound* OM_DECLSPEC create_sound(std::string_view path);
 void OM_DECLSPEC destroy_sound(sound*);
 
-void OM_DECLSPEC render(const vbo&, texture*, const matrix&);
+enum class primitives
+{
+    lines,
+    line_strip,
+    line_loop,
+    triangls,
+    trianglestrip,
+    trianglfan
+};
+
+void OM_DECLSPEC render(const enum primitives, const vbo&, const texture*,
+                        const matrix&);
 
 void OM_DECLSPEC exit(int return_code);
 

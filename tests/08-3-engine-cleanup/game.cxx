@@ -57,9 +57,13 @@ void tanks_game::on_initialize()
     }
     else
     {
-        std::array<om::triangle, 2> tr;
-        file >> tr[0] >> tr[1];
-        vertex_buf = create_vbo(&tr[0], tr.size());
+        std::array<om::vertex, 6> vertexes;
+        for (size_t i = 0; i < vertexes.size(); ++i)
+        {
+            file >> vertexes[i];
+        }
+
+        vertex_buf = create_vbo(vertexes.data(), vertexes.size());
         if (vertex_buf == nullptr)
         {
             om::log << "can't create vertex buffer\n";
@@ -131,5 +135,5 @@ void tanks_game::on_render() const
     om::matrix rot    = om::matrix::rotation(current_tank_direction);
     om::matrix m      = rot * move * aspect;
 
-    om::render(*vertex_buf, texture, m);
+    om::render(om::primitives::triangls, *vertex_buf, texture, m);
 }
