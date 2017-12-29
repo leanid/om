@@ -22,21 +22,21 @@ struct OM_DECLSPEC vec2
 
 vec2 OM_DECLSPEC operator+(const vec2& l, const vec2& r);
 
-struct OM_DECLSPEC mat2x3
+struct OM_DECLSPEC matrix
 {
-    mat2x3();
-    static mat2x3 identiry();
-    static mat2x3 scale(float scale);
-    static mat2x3 scale(float sx, float sy);
-    static mat2x3 rotation(float thetha);
-    static mat2x3 move(const vec2& delta);
+    matrix();
+    static matrix identiry();
+    static matrix scale(float scale);
+    static matrix scale(float sx, float sy);
+    static matrix rotation(float thetha);
+    static matrix move(const vec2& delta);
     vec2 col0;
     vec2 col1;
     vec2 delta;
 };
 
-vec2 OM_DECLSPEC operator*(const vec2& v, const mat2x3& m);
-mat2x3 OM_DECLSPEC operator*(const mat2x3& m1, const mat2x3& m2);
+vec2 OM_DECLSPEC operator*(const vec2& v, const matrix& m);
+matrix OM_DECLSPEC operator*(const matrix& m1, const matrix& m2);
 
 /// Dendy gamepad emulation events
 enum class event_type
@@ -97,7 +97,7 @@ private:
 };
 
 /// vertex position + color + texture coordinate
-struct OM_DECLSPEC v2
+struct OM_DECLSPEC vertex
 {
     vec2  pos;
     vec2  uv;
@@ -105,10 +105,10 @@ struct OM_DECLSPEC v2
 };
 
 /// triangle with positions color and texture coordinate
-struct OM_DECLSPEC tri2
+struct OM_DECLSPEC triangle
 {
-    tri2();
-    v2 v[3];
+    triangle();
+    vertex v[3];
 };
 
 std::ostream& OM_DECLSPEC operator<<(std::ostream& stream, const input_data&);
@@ -116,11 +116,11 @@ std::ostream& OM_DECLSPEC operator<<(std::ostream& stream,
                                      const hardware_data&);
 std::ostream& OM_DECLSPEC operator<<(std::ostream& stream, const event e);
 
-std::istream& OM_DECLSPEC operator>>(std::istream& is, mat2x3&);
+std::istream& OM_DECLSPEC operator>>(std::istream& is, matrix&);
 std::istream& OM_DECLSPEC operator>>(std::istream& is, vec2&);
 std::istream& OM_DECLSPEC operator>>(std::istream& is, color&);
-std::istream& OM_DECLSPEC operator>>(std::istream& is, v2&);
-std::istream& OM_DECLSPEC operator>>(std::istream& is, tri2&);
+std::istream& OM_DECLSPEC operator>>(std::istream& is, vertex&);
+std::istream& OM_DECLSPEC operator>>(std::istream& is, triangle&);
 
 class OM_DECLSPEC texture
 {
@@ -134,7 +134,7 @@ class OM_DECLSPEC vbo
 {
 public:
     virtual ~vbo();
-    virtual const v2* data() const = 0;
+    virtual const vertex* data() const = 0;
     /// count of vertexes
     virtual size_t size() const = 0;
 };
@@ -163,13 +163,13 @@ bool OM_DECLSPEC is_key_down(const enum keys);
 texture* OM_DECLSPEC create_texture(std::string_view path);
 void OM_DECLSPEC destroy_texture(texture* t);
 
-vbo* OM_DECLSPEC create_vbo(const tri2*, std::size_t);
+vbo* OM_DECLSPEC create_vbo(const triangle*, std::size_t);
 void OM_DECLSPEC destroy_vbo(vbo*);
 
 sound* OM_DECLSPEC create_sound(std::string_view path);
 void OM_DECLSPEC destroy_sound(sound*);
 
-void OM_DECLSPEC render(const vbo&, texture*, const mat2x3&);
+void OM_DECLSPEC render(const vbo&, texture*, const matrix&);
 
 void OM_DECLSPEC exit(int return_code);
 

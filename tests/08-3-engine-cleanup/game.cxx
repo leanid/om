@@ -57,7 +57,7 @@ void tanks_game::on_initialize()
     }
     else
     {
-        std::array<om::tri2, 2> tr;
+        std::array<om::triangle, 2> tr;
         file >> tr[0] >> tr[1];
         vertex_buf = create_vbo(&tr[0], tr.size());
         if (vertex_buf == nullptr)
@@ -126,10 +126,10 @@ void tanks_game::on_update(std::chrono::milliseconds /*frame_delta*/)
 
 void tanks_game::on_render() const
 {
-    om::mat2x3 move   = om::mat2x3::move(current_tank_pos);
-    om::mat2x3 aspect = om::mat2x3::scale(1, 640.f / 480.f);
-    om::mat2x3 rot    = om::mat2x3::rotation(current_tank_direction);
-    om::mat2x3 m      = rot * move * aspect;
+    om::matrix move   = om::matrix::move(current_tank_pos);
+    om::matrix aspect = om::matrix::scale(1, 640.f / 480.f);
+    om::matrix rot    = om::matrix::rotation(current_tank_direction);
+    om::matrix m      = rot * move * aspect;
 
     om::render(*vertex_buf, texture, m);
 }

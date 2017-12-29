@@ -113,37 +113,37 @@ vec2 operator+(const vec2& l, const vec2& r)
     return result;
 }
 
-mat2x3::mat2x3()
+matrix::matrix()
     : col0(1.0f, 0.f)
     , col1(0.f, 1.f)
     , delta(0.f, 0.f)
 {
 }
 
-mat2x3 mat2x3::identiry()
+matrix matrix::identiry()
 {
-    return mat2x3::scale(1.f);
+    return matrix::scale(1.f);
 }
 
-mat2x3 mat2x3::scale(float scale)
+matrix matrix::scale(float scale)
 {
-    mat2x3 result;
+    matrix result;
     result.col0.x = scale;
     result.col1.y = scale;
     return result;
 }
 
-mat2x3 mat2x3::scale(float sx, float sy)
+matrix matrix::scale(float sx, float sy)
 {
-    mat2x3 r;
+    matrix r;
     r.col0.x = sx;
     r.col1.y = sy;
     return r;
 }
 
-mat2x3 mat2x3::rotation(float thetha)
+matrix matrix::rotation(float thetha)
 {
-    mat2x3 result;
+    matrix result;
 
     result.col0.x = std::cos(thetha);
     result.col0.y = std::sin(thetha);
@@ -154,14 +154,14 @@ mat2x3 mat2x3::rotation(float thetha)
     return result;
 }
 
-mat2x3 mat2x3::move(const vec2& delta)
+matrix matrix::move(const vec2& delta)
 {
-    mat2x3 r = mat2x3::identiry();
+    matrix r = matrix::identiry();
     r.delta  = delta;
     return r;
 }
 
-vec2 operator*(const vec2& v, const mat2x3& m)
+vec2 operator*(const vec2& v, const matrix& m)
 {
     vec2 result;
     result.x = v.x * m.col0.x + v.y * m.col0.y + m.delta.x;
@@ -169,9 +169,9 @@ vec2 operator*(const vec2& v, const mat2x3& m)
     return result;
 }
 
-mat2x3 operator*(const mat2x3& m1, const mat2x3& m2)
+matrix operator*(const matrix& m1, const matrix& m2)
 {
-    mat2x3 r;
+    matrix r;
 
     r.col0.x = m1.col0.x * m2.col0.x + m1.col1.x * m2.col0.y;
     r.col1.x = m1.col0.x * m2.col1.x + m1.col1.x * m2.col1.y;
@@ -195,7 +195,7 @@ vbo::~vbo()
 class vertex_buffer_impl final : public vbo
 {
 public:
-    vertex_buffer_impl(const tri2* tri, std::size_t n)
+    vertex_buffer_impl(const triangle* tri, std::size_t n)
         : triangles(n)
     {
         assert(tri != nullptr);
@@ -206,11 +206,11 @@ public:
     }
     ~vertex_buffer_impl() final;
 
-    const v2*      data() const final { return &triangles.data()->v[0]; }
+    const vertex*      data() const final { return &triangles.data()->v[0]; }
     virtual size_t size() const final { return triangles.size() * 3; }
 
 private:
-    std::vector<tri2> triangles;
+    std::vector<triangle> triangles;
 };
 
 static std::string_view get_sound_format_name(uint16_t format_value)
@@ -478,7 +478,7 @@ public:
         OM_GL_CHECK();
     }
 
-    void set_uniform(std::string_view uniform_name, const mat2x3& m)
+    void set_uniform(std::string_view uniform_name, const matrix& m)
     {
         const int location =
             glGetUniformLocation(program_id, uniform_name.data());
@@ -620,8 +620,8 @@ std::ostream& operator<<(std::ostream& stream, const event e)
     return stream;
 }
 
-tri2::tri2()
-    : v{ v2(), v2(), v2() }
+triangle::triangle()
+    : v{ vertex(), vertex(), vertex() }
 {
 }
 
@@ -633,7 +633,7 @@ std::ostream& operator<<(std::ostream& out, const SDL_version& v)
     return out;
 }
 
-std::istream& operator>>(std::istream& is, mat2x3& m)
+std::istream& operator>>(std::istream& is, matrix& m)
 {
     is >> m.col0.x;
     is >> m.col1.x;
@@ -663,7 +663,7 @@ std::istream& operator>>(std::istream& is, color& c)
     return is;
 }
 
-std::istream& operator>>(std::istream& is, v2& v)
+std::istream& operator>>(std::istream& is, vertex& v)
 {
     is >> v.pos.x;
     is >> v.pos.y;
@@ -672,7 +672,7 @@ std::istream& operator>>(std::istream& is, v2& v)
     return is;
 }
 
-std::istream& operator>>(std::istream& is, tri2& t)
+std::istream& operator>>(std::istream& is, triangle& t)
 {
     is >> t.v[0];
     is >> t.v[1];
@@ -783,7 +783,7 @@ void destroy_texture(texture* t)
     delete t;
 }
 
-vbo* create_vbo(const tri2* triangles, std::size_t n)
+vbo* create_vbo(const triangle* triangles, std::size_t n)
 {
     return new vertex_buffer_impl(triangles, n);
 }
@@ -806,7 +806,7 @@ void destroy_sound(sound* sound)
     delete sound;
 }
 
-void render(const vbo& buff, texture* tex, const mat2x3& m)
+void render(const vbo& buff, texture* tex, const matrix& m)
 {
     shader03->use();
     texture_gl_es20* texture = static_cast<texture_gl_es20*>(tex);
@@ -814,20 +814,20 @@ void render(const vbo& buff, texture* tex, const mat2x3& m)
     shader03->set_uniform("s_texture", texture);
     shader03->set_uniform("u_matrix", m);
 
-    const v2* t = buff.data();
+    const vertex* t = buff.data();
     // positions
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(v2), &t->pos);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(vertex), &t->pos);
     OM_GL_CHECK();
     glEnableVertexAttribArray(0);
     OM_GL_CHECK();
     // colors
-    glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(v2), &t->c);
+    glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(vertex), &t->c);
     OM_GL_CHECK();
     glEnableVertexAttribArray(1);
     OM_GL_CHECK();
 
     // texture coordinates
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(v2), &t->uv);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(vertex), &t->uv);
     OM_GL_CHECK();
     glEnableVertexAttribArray(2);
     OM_GL_CHECK();
