@@ -114,9 +114,9 @@ vec2 operator+(const vec2& l, const vec2& r)
 }
 
 matrix::matrix()
-    : col0(1.0f, 0.f)
-    , col1(0.f, 1.f)
-    , delta(0.f, 0.f)
+    : row0(1.0f, 0.f)
+    , row1(0.f, 1.f)
+    , row2(0.f, 0.f)
 {
 }
 
@@ -128,16 +128,16 @@ matrix matrix::identiry()
 matrix matrix::scale(float scale)
 {
     matrix result;
-    result.col0.x = scale;
-    result.col1.y = scale;
+    result.row0.x = scale;
+    result.row1.y = scale;
     return result;
 }
 
 matrix matrix::scale(float sx, float sy)
 {
     matrix r;
-    r.col0.x = sx;
-    r.col1.y = sy;
+    r.row0.x = sx;
+    r.row1.y = sy;
     return r;
 }
 
@@ -145,11 +145,11 @@ matrix matrix::rotation(float thetha)
 {
     matrix result;
 
-    result.col0.x = std::cos(thetha);
-    result.col0.y = std::sin(thetha);
+    result.row0.x = std::cos(thetha);
+    result.row0.y = std::sin(thetha);
 
-    result.col1.x = -std::sin(thetha);
-    result.col1.y = std::cos(thetha);
+    result.row1.x = -std::sin(thetha);
+    result.row1.y = std::cos(thetha);
 
     return result;
 }
@@ -157,15 +157,15 @@ matrix matrix::rotation(float thetha)
 matrix matrix::move(const vec2& delta)
 {
     matrix r = matrix::identiry();
-    r.delta  = delta;
+    r.row2   = delta;
     return r;
 }
 
 vec2 operator*(const vec2& v, const matrix& m)
 {
     vec2 result;
-    result.x = v.x * m.col0.x + v.y * m.col0.y + m.delta.x;
-    result.y = v.x * m.col1.x + v.y * m.col1.y + m.delta.y;
+    result.x = v.x * m.row0.x + v.y * m.row0.y + m.row2.x;
+    result.y = v.x * m.row1.x + v.y * m.row1.y + m.row2.y;
     return result;
 }
 
@@ -173,13 +173,13 @@ matrix operator*(const matrix& m1, const matrix& m2)
 {
     matrix r;
 
-    r.col0.x = m1.col0.x * m2.col0.x + m1.col1.x * m2.col0.y;
-    r.col1.x = m1.col0.x * m2.col1.x + m1.col1.x * m2.col1.y;
-    r.col0.y = m1.col0.y * m2.col0.x + m1.col1.y * m2.col0.y;
-    r.col1.y = m1.col0.y * m2.col1.x + m1.col1.y * m2.col1.y;
+    r.row0.x = m1.row0.x * m2.row0.x + m1.row1.x * m2.row0.y;
+    r.row1.x = m1.row0.x * m2.row1.x + m1.row1.x * m2.row1.y;
+    r.row0.y = m1.row0.y * m2.row0.x + m1.row1.y * m2.row0.y;
+    r.row1.y = m1.row0.y * m2.row1.x + m1.row1.y * m2.row1.y;
 
-    r.delta.x = m1.delta.x * m2.col0.x + m1.delta.y * m2.col0.y + m2.delta.x;
-    r.delta.y = m1.delta.x * m2.col1.x + m1.delta.y * m2.col1.y + m2.delta.y;
+    r.row2.x = m1.row2.x * m2.row0.x + m1.row2.y * m2.row0.y + m2.row2.x;
+    r.row2.y = m1.row2.x * m2.row1.x + m1.row2.y * m2.row1.y + m2.row2.y;
 
     return r;
 }
@@ -488,8 +488,8 @@ public:
         }
         // OpenGL wants matrix in column major order
         // clang-format off
-        float values[9] = { m.col0.x,  m.col0.y, m.delta.x,
-                            m.col1.x, m.col1.y, m.delta.y,
+        float values[9] = { m.row0.x,  m.row0.y, m.row2.x,
+                            m.row1.x, m.row1.y, m.row2.y,
                             0.f,      0.f,       1.f };
         // clang-format on
         glUniformMatrix3fv(location, 1, GL_FALSE, &values[0]);
@@ -628,10 +628,10 @@ std::ostream& operator<<(std::ostream& out, const SDL_version& v)
 
 std::istream& operator>>(std::istream& is, matrix& m)
 {
-    is >> m.col0.x;
-    is >> m.col1.x;
-    is >> m.col0.y;
-    is >> m.col1.y;
+    is >> m.row0.x;
+    is >> m.row1.x;
+    is >> m.row0.y;
+    is >> m.row1.y;
     return is;
 }
 
