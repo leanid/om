@@ -6,6 +6,7 @@
 #include <cassert>
 #include <cmath>
 #include <cstddef>
+#include <cstdlib>
 #include <exception>
 #include <fstream>
 #include <iostream>
@@ -992,7 +993,7 @@ void engine::swap_buffers()
 
 void engine::exit(int return_code)
 {
-    std::quick_exit(return_code);
+    std::exit(return_code);
 }
 
 static void audio_callback(void*, uint8_t*, int);

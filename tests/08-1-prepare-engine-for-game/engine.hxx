@@ -187,8 +187,8 @@ public:
 
     virtual ~sound();
     virtual void play(const effect) = 0;
-    virtual bool is_playing() const     = 0;
-    virtual void stop()                 = 0;
+    virtual bool is_playing() const = 0;
+    virtual void stop()             = 0;
 };
 
 class OM_DECLSPEC engine
@@ -227,7 +227,7 @@ public:
     std::ostream& log;
 };
 
-struct lila
+struct OM_DECLSPEC lila
 {
     virtual ~lila();
     virtual void on_initialize()                                  = 0;
