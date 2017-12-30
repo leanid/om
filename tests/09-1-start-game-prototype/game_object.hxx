@@ -1,5 +1,7 @@
 #pragma once
 
+#include <algorithm>
+#include <map>
 #include <sstream>
 #include <string>
 
@@ -66,27 +68,31 @@ std::istream& operator>>(std::istream& stream, game_object& obj)
 
 std::istream& operator>>(std::istream& stream, object_type& type)
 {
+    static const std::map<std::string, object_type> types = {
+        { "level", object_type::level },
+        { "ai_tank", object_type::ai_tank },
+        { "user_tank", object_type::user_tank },
+        { "brick_wall", object_type::brick_wall },
+    };
+
     std::string type_name;
     stream >> type_name;
-    if (type_name == "level")
+
+    auto it = types.find(type_name);
+
+    if (it != end(types))
     {
-        type = object_type::level;
-    }
-    else if (type_name == "ai_tank")
-    {
-        type = object_type::ai_tank;
-    }
-    else if (type_name == "user_tank")
-    {
-        type = object_type::user_tank;
-    }
-    else if (type_name == "brick_wall")
-    {
-        type = object_type::brick_wall;
+        type = it->second;
     }
     else
     {
-        throw std::runtime_error("can't load object with type: " + type_name);
+        std::stringstream ss;
+        ss << "expected one of: ";
+        std::for_each(begin(types), end(types),
+                      [&ss](auto& kv) { ss << kv.first << ", "; });
+        ss << " but got: " << type_name;
+        throw std::runtime_error(ss.str());
     }
+
     return stream;
 }

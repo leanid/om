@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
+#include <iterator>
 #include <memory>
 #include <string_view>
 #include <vector>
@@ -56,12 +57,20 @@ void tanks_game::on_initialize()
 {
     auto level = filter_comments("level_01.txt");
 
-    game_object tmp_object;
-    do
+    std::string num_of_objects;
+    level >> num_of_objects;
+
+    if (num_of_objects != "num_of_objects")
     {
-        level >> tmp_object;
-        objects.push_back(tmp_object);
-    } while (!tmp_object.name.empty());
+        throw std::runtime_error("no num_of_objects in level file");
+    }
+
+    size_t objects_num = 0;
+
+    level >> objects_num;
+
+    std::copy_n(std::istream_iterator<game_object>(level), objects_num,
+                std::back_inserter(objects));
 
     texture = om::create_texture("tank.png");
     if (nullptr == texture)
