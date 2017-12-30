@@ -16,6 +16,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string_view>
+#include <thread>
 #include <tuple>
 #include <vector>
 
@@ -1399,21 +1400,41 @@ int initialize_and_start_main_loop()
         return EXIT_FAILURE;
     }
 
+    using clock_timer = std::chrono::high_resolution_clock;
+    using nano_sec    = std::chrono::nanoseconds;
+    using milli_sec   = std::chrono::milliseconds;
+    using time_point  = std::chrono::time_point<clock_timer, nano_sec>;
+
+    clock_timer timer;
+
+    time_point start = timer.now();
+
     game->on_initialize();
 
     while (true)
     {
-        om::event event;
+        time_point end_last_frame = timer.now();
+        om::event  event;
 
         while (pool_event(event))
         {
             game->on_event(event);
         }
 
-        game->on_update(std::chrono::milliseconds(1));
+        milli_sec frame_delta =
+            std::chrono::duration_cast<milli_sec>(end_last_frame - start);
+
+        if (frame_delta.count() < 15) // 1000 % 60 = 16.666 FPS
+        {
+            std::this_thread::yield(); // too fast, give other apps CPU time
+            continue;                  // wait till more time
+        }
+
+        game->on_update(frame_delta);
         game->on_render();
 
         om::swap_buffers();
+        start = end_last_frame;
     }
 
     return EXIT_SUCCESS;
