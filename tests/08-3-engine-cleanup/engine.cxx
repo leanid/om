@@ -122,7 +122,7 @@ matrix::matrix()
 {
 }
 
-matrix matrix::identiry()
+matrix matrix::identity()
 {
     return matrix::scale(1.f);
 }
@@ -158,7 +158,7 @@ matrix matrix::rotation(float thetha)
 
 matrix matrix::move(const vec2& delta)
 {
-    matrix r = matrix::identiry();
+    matrix r = matrix::identity();
     r.row2   = delta;
     return r;
 }
@@ -852,11 +852,12 @@ void exit(int return_code)
 
 static void audio_callback(void*, uint8_t*, int);
 
-static void initialize(std::string_view)
+static void initialize_internal(std::string_view   title,
+                                const window_mode& desired_window_mode)
 {
     if (already_exist)
     {
-        throw std::runtime_error("engine already exist");
+        throw std::runtime_error("engine already initialized");
     }
 
     {
@@ -905,9 +906,12 @@ static void initialize(std::string_view)
             }
         }
 
-        window = SDL_CreateWindow("title", SDL_WINDOWPOS_CENTERED,
-                                  SDL_WINDOWPOS_CENTERED, 640, 480,
-                                  ::SDL_WINDOW_OPENGL);
+        int window_size_w = static_cast<int>(desired_window_mode.width);
+        int window_size_h = static_cast<int>(desired_window_mode.heigth);
+
+        window = SDL_CreateWindow(title.data(), SDL_WINDOWPOS_CENTERED,
+                                  SDL_WINDOWPOS_CENTERED, window_size_w,
+                                  window_size_h, ::SDL_WINDOW_OPENGL);
 
         if (window == nullptr)
         {
@@ -1082,7 +1086,7 @@ static void initialize(std::string_view)
         glClearColor(0.f, 0.0, 0.f, 0.0f);
         OM_GL_CHECK();
 
-        glViewport(0, 0, 640, 480);
+        glViewport(0, 0, window_size_w, window_size_h);
         OM_GL_CHECK();
 
         // initialize audio
@@ -1338,6 +1342,17 @@ void audio_callback(void*, uint8_t* stream, int stream_size)
     }
 }
 
+void initialize(std::string_view title, const window_mode& desired_window_mode)
+{
+    initialize_internal(title, desired_window_mode);
+}
+
+window_mode get_current_window_mode()
+{
+    // TODO implement me
+    return window_mode{ 0, 0, false };
+}
+
 lila::~lila() = default;
 
 } // end namespace om
@@ -1346,7 +1361,7 @@ int initialize_and_start_main_loop()
 {
     struct start
     {
-        start() { om::initialize(""); }
+        start() {}
         ~start() { om::uninitialize(); }
     } guard;
 

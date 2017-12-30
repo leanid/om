@@ -25,7 +25,7 @@ vec2 OM_DECLSPEC operator+(const vec2& l, const vec2& r);
 struct OM_DECLSPEC matrix
 {
     matrix();
-    static matrix identiry();
+    static matrix identity();
     static matrix scale(float scale);
     static matrix scale(float sx, float sy);
     static matrix rotation(float thetha);
@@ -145,6 +145,18 @@ public:
     virtual bool is_playing() const = 0;
     virtual void stop()             = 0;
 };
+
+struct window_mode
+{
+    size_t width         = 640;
+    size_t heigth        = 480;
+    bool   is_fullscreen = false;
+};
+
+void OM_DECLSPEC initialize(std::string_view   title,
+                            const window_mode& desired_window_mode);
+
+window_mode OM_DECLSPEC get_current_window_mode();
 
 /// return seconds from initialization
 float OM_DECLSPEC get_time_from_init();

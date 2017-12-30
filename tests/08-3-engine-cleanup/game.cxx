@@ -10,6 +10,9 @@
 
 #include "engine.hxx"
 
+static constexpr size_t screen_width  = 960.f;
+static constexpr size_t screen_height = 540.f;
+
 class tanks_game final : public om::lila
 {
 public:
@@ -32,6 +35,11 @@ private:
 
 std::unique_ptr<om::lila> om_tat_sat()
 {
+    om::log << "initialize engine" << std::endl;
+
+    om::window_mode window_mode = { screen_width, screen_height, false };
+    om::initialize("tanks", window_mode);
+
     om::log << "creating main game object..." << std::endl;
     auto game = std::make_unique<tanks_game>();
     om::log << "finish creating main game object" << std::endl;
@@ -130,10 +138,11 @@ void tanks_game::on_update(std::chrono::milliseconds /*frame_delta*/)
 
 void tanks_game::on_render() const
 {
-    om::matrix move   = om::matrix::move(current_tank_pos);
-    om::matrix aspect = om::matrix::scale(1, 640.f / 480.f);
-    om::matrix rot    = om::matrix::rotation(current_tank_direction);
-    om::matrix m      = rot * move * aspect;
+    om::matrix move = om::matrix::move(current_tank_pos);
+    om::matrix aspect =
+        om::matrix::scale(1, static_cast<float>(screen_width) / screen_height);
+    om::matrix rot = om::matrix::rotation(current_tank_direction);
+    om::matrix m   = rot * move * aspect;
 
     om::render(om::primitives::triangls, *vertex_buf, texture, m);
 }
