@@ -1,0 +1,13 @@
+// first triangle
+// tex        position     color
+// uv         pos.xy       color.rgba
+-0.5 0.5      0.0 1.0      1.0 1.0 1.0 1.0 // red green blue alpha
+0.5 0.5       1.0 1.0      1.0 1.0 1.0 1.0
+0.5 -0.5      1.0 0.0      1.0 1.0 1.0 1.0
+
+// second triangle
+// tex        position     color
+
+-0.5 0.5      0.0 1.0      1.0 1.0 1.0 1.0
+0.5 -0.5      1.0 0.0      1.0 1.0 1.0 1.0
+-0.5 -0.5     0.0 0.0      1.0 1.0 1.0 1.0
