@@ -10,6 +10,8 @@
 
 #include "engine.hxx"
 
+#include "configuration_loader.hxx"
+
 static constexpr size_t screen_width  = 960.f;
 static constexpr size_t screen_height = 540.f;
 
@@ -57,7 +59,7 @@ void tanks_game::on_initialize()
 
     vertex_buf = nullptr;
 
-    std::ifstream file("vert_tex_color.txt");
+    std::stringstream file = filter_comments("vert_tex_color.txt");
     if (!file)
     {
         om::log << "can't load vert_tex_color.txt\n";

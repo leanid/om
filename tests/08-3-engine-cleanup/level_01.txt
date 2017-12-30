@@ -1,0 +1,14 @@
+// level 01
+
+object level_01 // game_object 
+level           // type
+0.0 0.0         // position x, y
+100 100         // size width height
+back_ground.png // texture
+
+
+object tank_01 // game_object 
+user_01        // type
+0.0 0.0        // position x, y
+10 10          // size width height
+tank.png       // texture
