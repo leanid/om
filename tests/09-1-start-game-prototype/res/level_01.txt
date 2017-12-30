@@ -7,7 +7,8 @@ level                      // type
 90                         // direction grad
 0.0 0.0                    // world position x, y
 100 100                    // size width height
-model level_background.txt // mesh and texture
+mesh  identity_quad.txt    // mesh
+texture background.png     // texture
 
 
 object tank_01             // game_object 
@@ -15,4 +16,5 @@ user_tank                  // type
 90                         // direction grad
 0.0 0.0                    // position x, y
 10 10                      // size width height
-model user_tank_model.txt  // mesh and texture
+mesh  identity_quad.txt    // mesh
+texture tank.png           // texture

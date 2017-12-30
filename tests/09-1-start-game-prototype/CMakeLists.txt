@@ -33,7 +33,10 @@ elseif(UNIX)
                )
 endif()
 
-add_library(game SHARED game.cxx)
+add_library(game SHARED game/game.cxx 
+                        game/configuration_loader.hxx
+                        game/game_object.hxx)
+target_include_directories(game PRIVATE .)
 target_compile_features(game PUBLIC cxx_std_17)
 
 target_link_libraries(game engine)

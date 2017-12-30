@@ -10,7 +10,7 @@
 #include <string_view>
 #include <vector>
 
-#include "om/engine.hxx"
+#include <om/engine.hxx>
 
 #include "configuration_loader.hxx"
 #include "game_object.hxx"
