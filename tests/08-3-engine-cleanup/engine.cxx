@@ -10,6 +10,7 @@
 #include <exception>
 #include <fstream>
 #include <iostream>
+#include <iterator>
 #include <map>
 #include <memory>
 #include <sstream>
@@ -1348,18 +1349,30 @@ int initialize_and_start_main_loop()
         ~start() { om::uninitialize(); }
     } guard;
 
-    std::string_view game_so_name("libgame.dll");
+    std::vector<const char*> lib_names{ { "libgame.dll" },
+                                        { "libgame.so" },
+                                        { "game.so" },
+                                        { "./build/Debug/libgame.so" } };
 
-    void* so_handle = SDL_LoadObject(game_so_name.data());
+    void* so_handle   = nullptr;
+    auto  lib_name_it = std::find_if(begin(lib_names), end(lib_names),
+                                    [&so_handle](const char* lib_name) {
+                                        so_handle = SDL_LoadObject(lib_name);
+                                        return so_handle != nullptr;
+                                    });
+
     if (so_handle == nullptr)
     {
-        om::log << "can't load " << game_so_name << std::endl;
+        om::log << "can't load: ";
+        std::copy(begin(lib_names), end(lib_names),
+                  std::ostream_iterator<const char*>(om::log, ", "));
+        om::log << std::endl;
         return EXIT_FAILURE;
     }
 
     std::string_view om_tat_sat_func;
 
-#ifdef __MINGW32__
+#if defined(__MINGW32__) || defined(__linux__)
     om_tat_sat_func = "_Z10om_tat_satv";
 #else
 #error "add mangled name for your compiler"
@@ -1370,7 +1383,7 @@ int initialize_and_start_main_loop()
     if (func_addres == nullptr)
     {
         om::log << "can't find " << om_tat_sat_func
-                << " in so: " << game_so_name << std::endl;
+                << " in so: " << *lib_name_it << std::endl;
         return EXIT_FAILURE;
     }
 
