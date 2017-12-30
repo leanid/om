@@ -7,10 +7,12 @@
 #include <iostream>
 #include <memory>
 #include <string_view>
+#include <vector>
 
-#include "engine.hxx"
+#include "om/engine.hxx"
 
 #include "configuration_loader.hxx"
+#include "game_object.hxx"
 
 static constexpr size_t screen_width  = 960.f;
 static constexpr size_t screen_height = 540.f;
@@ -26,6 +28,8 @@ public:
     void on_render() const final;
 
 private:
+    std::vector<game_object> objects;
+
     om::texture* texture    = nullptr;
     om::vbo*     vertex_buf = nullptr;
     om::sound*   snd        = nullptr;
@@ -50,6 +54,15 @@ std::unique_ptr<om::lila> om_tat_sat()
 
 void tanks_game::on_initialize()
 {
+    auto level = filter_comments("level_01.txt");
+
+    game_object tmp_object;
+    do
+    {
+        level >> tmp_object;
+        objects.push_back(tmp_object);
+    } while (!tmp_object.name.empty());
+
     texture = om::create_texture("tank.png");
     if (nullptr == texture)
     {
