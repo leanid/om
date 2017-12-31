@@ -193,7 +193,17 @@ void tanks_game::on_render() const
         { object_type::user_tank }
     };
 
-    const om::vec2 world_size(100, 100);
+    auto it =
+        std::find_if(begin(objects), end(objects), [](const game_object& obj) {
+            return obj.type == object_type::level;
+        });
+
+    if (it == end(objects))
+    {
+        throw std::runtime_error("no level object");
+    }
+
+    const om::vec2 world_size = it->size;
     const float    aspect = static_cast<float>(screen_height) / screen_width;
 
     std::for_each(begin(render_order), end(render_order),
