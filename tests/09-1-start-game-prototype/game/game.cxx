@@ -17,6 +17,7 @@
 
 static constexpr size_t screen_width  = 960.f;
 static constexpr size_t screen_height = 540.f;
+om::texture*            debug_texture = nullptr;
 
 class tanks_game final : public om::lila
 {
@@ -51,6 +52,8 @@ om::vbo* load_mesh_from_file_with_scale(const std::string_view path,
                                         const om::vec2&        scale);
 void tanks_game::on_initialize()
 {
+    debug_texture = om::create_texture("res/debug.png");
+
     auto level = filter_comments("res/level_01.txt");
 
     std::string num_of_objects;
@@ -145,13 +148,17 @@ void tanks_game::on_render() const
 {
     struct draw
     {
-        draw(object_type type)
+        draw(const object_type type, const om::vec2& world_size,
+             const float height_aspect)
             : obj_type(type)
-            , world(om::matrix::scale(0.01f, 0.01f))
+            , world(om::matrix::scale(2 * height_aspect / world_size.x,
+                                      2 * height_aspect / world_size.y))
         {
             // let the world is rectangle 100x100 units with center in (0, 0)
             // build world matrix to map 100x100 X(-50 to 50) Y(-50 to 50)
-            // to NDC X(-1 to 1) Y(-1 to 1)
+            // to NDC X(-1 to 1) Y(-1 to 1) 2x2
+            // but we see rect with aspect and correct by height
+            // so field not 2x2 but aspect_height x aspect_height
         }
         void operator()(const game_object& obj)
         {
@@ -168,6 +175,11 @@ void tanks_game::on_render() const
                 om::texture* texture = obj.texture;
 
                 om::render(om::primitives::triangls, vbo, texture, m);
+                if (debug_texture)
+                {
+                    om::render(om::primitives::line_loop, vbo, debug_texture,
+                               m);
+                }
             }
         }
         const object_type obj_type;
@@ -181,9 +193,13 @@ void tanks_game::on_render() const
         { object_type::user_tank }
     };
 
+    const om::vec2 world_size(100, 100);
+    const float    aspect = static_cast<float>(screen_height) / screen_width;
+
     std::for_each(begin(render_order), end(render_order),
                   [&](object_type type) {
-                      std::for_each(begin(objects), end(objects), draw(type));
+                      std::for_each(begin(objects), end(objects),
+                                    draw(type, world_size, aspect));
                   });
 }
 
