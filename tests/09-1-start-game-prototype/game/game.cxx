@@ -30,14 +30,8 @@ public:
 
 private:
     std::vector<game_object> objects;
-
-    om::texture* texture    = nullptr;
-    om::vbo*     vertex_buf = nullptr;
-    om::sound*   snd        = nullptr;
-
-    om::vec2               current_tank_pos       = om::vec2(0.f, 0.f);
-    float                  current_tank_direction = 0.f;
-    static constexpr float pi                     = 3.1415926f;
+    std::map<std::string, om::vbo*>     meshes;
+    std::map<std::string, om::texture*> textures;
 };
 
 std::unique_ptr<om::lila> om_tat_sat()
@@ -53,9 +47,11 @@ std::unique_ptr<om::lila> om_tat_sat()
     return game;
 }
 
+om::vbo* load_mesh_from_file_with_scale(const std::string_view path,
+                                        const om::vec2&        scale);
 void tanks_game::on_initialize()
 {
-    auto level = filter_comments("level_01.txt");
+    auto level = filter_comments("res/level_01.txt");
 
     std::string num_of_objects;
     level >> num_of_objects;
@@ -72,38 +68,25 @@ void tanks_game::on_initialize()
     std::copy_n(std::istream_iterator<game_object>(level), objects_num,
                 std::back_inserter(objects));
 
-    texture = om::create_texture("tank.png");
-    if (nullptr == texture)
-    {
-        om::log << "failed load texture\n";
-        return;
-    }
-
-    vertex_buf = nullptr;
-
-    std::stringstream file = filter_comments("vert_tex_color.txt");
-    if (!file)
-    {
-        om::log << "can't load vert_tex_color.txt\n";
-        return;
-    }
-    else
-    {
-        std::array<om::vertex, 6> vertexes;
-        for (size_t i = 0; i < vertexes.size(); ++i)
+    std::for_each(begin(objects), end(objects), [&](game_object& obj) {
+        auto it_mesh = meshes.find(obj.path_mesh);
+        if (it_mesh == end(meshes))
         {
-            file >> vertexes[i];
+            om::vbo* mesh =
+                load_mesh_from_file_with_scale(obj.path_mesh, obj.size);
+            it_mesh->second = mesh;
+            assert(mesh);
+            obj.mesh = mesh;
         }
-
-        vertex_buf = create_vbo(vertexes.data(), vertexes.size());
-        if (vertex_buf == nullptr)
+        auto it_tex = textures.find(obj.path_texture);
+        if (it_tex == end(textures))
         {
-            om::log << "can't create vertex buffer\n";
-            return;
+            om::texture* tex = om::create_texture(obj.path_texture);
+            it_tex->second   = tex;
+            assert(tex);
+            obj.texture = tex;
         }
-    }
-
-    snd = om::create_sound("t2_no_problemo.wav");
+    });
 }
 
 void tanks_game::on_event(om::event& event)
@@ -124,11 +107,9 @@ void tanks_game::on_event(om::event& event)
             {
                 if (key_data.key == om::keys::button1)
                 {
-                    snd->play(om::sound::effect::once);
                 }
                 else if (key_data.key == om::keys::button2)
                 {
-                    snd->play(om::sound::effect::looped);
                 }
             }
         }
@@ -140,33 +121,108 @@ void tanks_game::on_update(std::chrono::milliseconds /*frame_delta*/)
 {
     if (om::is_key_down(om::keys::left))
     {
-        current_tank_pos.x -= 0.01f;
-        current_tank_direction = -pi / 2.f;
+        //        current_tank_pos.x -= 0.01f;
+        //        current_tank_direction = -pi / 2.f;
     }
     else if (om::is_key_down(om::keys::right))
     {
-        current_tank_pos.x += 0.01f;
-        current_tank_direction = pi / 2.f;
+        //        current_tank_pos.x += 0.01f;
+        //        current_tank_direction = pi / 2.f;
     }
     else if (om::is_key_down(om::keys::up))
     {
-        current_tank_pos.y += 0.01f;
-        current_tank_direction = 0.f;
+        //        current_tank_pos.y += 0.01f;
+        //        current_tank_direction = 0.f;
     }
     else if (om::is_key_down(om::keys::down))
     {
-        current_tank_pos.y -= 0.01f;
-        current_tank_direction = -pi;
+        //        current_tank_pos.y -= 0.01f;
+        //        current_tank_direction = -pi;
     }
 }
 
 void tanks_game::on_render() const
 {
-    om::matrix move = om::matrix::move(current_tank_pos);
-    om::matrix aspect =
-        om::matrix::scale(1, static_cast<float>(screen_width) / screen_height);
-    om::matrix rot = om::matrix::rotation(current_tank_direction);
-    om::matrix m   = rot * move * aspect;
+    struct draw
+    {
+        draw(object_type type)
+            : obj_type(type)
+            , world(om::matrix::scale(0.01f, 0.01f))
+        {
+            // let the world is rectangle 100x100 units with center in (0, 0)
+            // build world matrix to map 100x100 X(-50 to 50) Y(-50 to 50)
+            // to NDC X(-1 to 1) Y(-1 to 1)
+        }
+        void operator()(const game_object& obj)
+        {
+            if (obj_type == obj.type)
+            {
+                om::matrix aspect = om::matrix::scale(
+                    1, static_cast<float>(screen_width) / screen_height);
 
-    om::render(om::primitives::triangls, *vertex_buf, texture, m);
+                om::matrix move = om::matrix::move(obj.position);
+                om::matrix rot  = om::matrix::rotation(obj.direction);
+                om::matrix m    = rot * move * world * aspect;
+
+                om::vbo&     vbo     = *obj.mesh;
+                om::texture* texture = obj.texture;
+
+                om::render(om::primitives::triangls, vbo, texture, m);
+            }
+        }
+        const object_type obj_type;
+        const om::matrix  world;
+    };
+
+    static const std::vector<object_type> render_order = {
+        { object_type::level },
+        { object_type::brick_wall },
+        { object_type::ai_tank },
+        { object_type::user_tank }
+    };
+
+    std::for_each(begin(render_order), end(render_order),
+                  [&](object_type type) {
+                      std::for_each(begin(objects), end(objects), draw(type));
+                  });
+}
+
+om::vbo* load_mesh_from_file_with_scale(const std::string_view path,
+                                        const om::vec2&        scale)
+{
+    std::stringstream file = filter_comments(path);
+    if (!file)
+    {
+        throw std::runtime_error("can't load vert_tex_color.txt");
+    }
+
+    size_t      num_of_vertexes = 0;
+    std::string num_of_ver;
+
+    file >> num_of_ver;
+
+    if (num_of_ver != "num_of_vertexes")
+    {
+        throw std::runtime_error("no key word: num_of_vertexes");
+    }
+
+    file >> num_of_vertexes;
+
+    std::vector<om::vertex> vertexes;
+
+    vertexes.reserve(num_of_vertexes);
+
+    std::copy_n(std::istream_iterator<om::vertex>(file), num_of_vertexes,
+                std::back_inserter(vertexes));
+
+    om::matrix scale_mat = om::matrix::scale(scale.x, scale.y);
+
+    std::transform(begin(vertexes), end(vertexes), begin(vertexes),
+                   [&scale_mat](om::vertex v) {
+                       v.pos = v.pos * scale_mat;
+                       return v;
+                   });
+
+    om::vbo* vbo = om::create_vbo(vertexes.data(), num_of_vertexes);
+    return vbo;
 }

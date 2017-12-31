@@ -8,6 +8,7 @@
 #include <cstddef>
 #include <cstdlib>
 #include <exception>
+#include <experimental/filesystem>
 #include <fstream>
 #include <iostream>
 #include <iterator>
@@ -23,6 +24,8 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>
 #include <SDL2/SDL_opengl_glext.h>
+
+namespace fs = std::experimental::filesystem;
 
 #include "picopng.hxx"
 
@@ -258,6 +261,9 @@ SDL_AudioSpec     audio_device_spec;
 class sound_buffer_impl;
 
 std::vector<sound_buffer_impl*> sounds;
+
+bool developer_mode = true;
+bool reload_game    = false;
 // no more Globals ////////////////////////////////////////////////////////////
 
 class sound_buffer_impl final : public sound
@@ -734,6 +740,12 @@ bool pool_event(event& e)
         }
         else if (sdl_event.type == SDL_KEYDOWN || sdl_event.type == SDL_KEYUP)
         {
+            if (developer_mode && sdl_event.key.keysym.sym == SDLK_BACKSPACE &&
+                sdl_event.type == SDL_KEYUP)
+            {
+                reload_game = true;
+            }
+
             if (check_input(sdl_event, binding))
             {
                 bool is_down = sdl_event.type == SDL_KEYDOWN;
@@ -857,6 +869,11 @@ static void initialize_internal(std::string_view   title,
 {
     if (already_exist)
     {
+        if (om::developer_mode && om::reload_game)
+        {
+            om::reload_game = false;
+            return;
+        }
         throw std::runtime_error("engine already initialized");
     }
 
@@ -1371,11 +1388,19 @@ int initialize_and_start_main_loop()
                                         { "./build/Debug/libgame.so" } };
 
     void* so_handle   = nullptr;
-    auto  lib_name_it = std::find_if(begin(lib_names), end(lib_names),
-                                    [&so_handle](const char* lib_name) {
-                                        so_handle = SDL_LoadObject(lib_name);
-                                        return so_handle != nullptr;
-                                    });
+    auto  lib_name_it = std::find_if(
+        begin(lib_names), end(lib_names), [&so_handle](const char* lib_name) {
+            if (fs::exists(lib_name))
+            {
+                om::log << "try loading game from: " << lib_name << std::endl;
+                so_handle = SDL_LoadObject(lib_name);
+                if (so_handle == nullptr)
+                {
+                    om::log << SDL_GetError() << std::endl;
+                }
+            }
+            return so_handle != nullptr;
+        });
 
     if (so_handle == nullptr)
     {
@@ -1385,6 +1410,8 @@ int initialize_and_start_main_loop()
         om::log << std::endl;
         return EXIT_FAILURE;
     }
+
+    om::log << "load game from: " << *lib_name_it << std::endl;
 
     std::string_view om_tat_sat_func;
 
@@ -1407,6 +1434,7 @@ int initialize_and_start_main_loop()
     f_om_tat_sat =
         reinterpret_cast<std::unique_ptr<om::lila> (*)()>(func_addres);
 
+start_game_again:
     std::unique_ptr<om::lila> game = f_om_tat_sat();
 
     if (!game)
@@ -1450,6 +1478,11 @@ int initialize_and_start_main_loop()
 
         om::swap_buffers();
         start = end_last_frame;
+
+        if (om::developer_mode && om::reload_game)
+        {
+            goto start_game_again;
+        }
     }
 
     return EXIT_SUCCESS;

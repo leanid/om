@@ -25,11 +25,13 @@ if (MINGW)
                -lSDL2
                -mwindows
                -lopengl32
+               -lstdc++fs
                )
 elseif(UNIX)
     target_link_libraries(engine
                -lSDL2
                -lGL
+               -lstdc++fs
                )
 endif()
 

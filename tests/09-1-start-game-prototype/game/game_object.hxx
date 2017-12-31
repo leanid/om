@@ -15,12 +15,6 @@ enum class object_type
     brick_wall
 };
 
-struct model
-{
-    om::vbo*     vbo     = nullptr;
-    om::texture* texture = nullptr;
-};
-
 struct game_object
 {
     std::string      name;
@@ -28,9 +22,11 @@ struct game_object
     float            direction;
     om::vec2         position;
     om::vec2         size;
-    std::string      model_description_path;
+    std::string      path_mesh;
+    std::string      path_texture;
 
-    model mesh;
+    om::vbo*     mesh    = nullptr;
+    om::texture* texture = nullptr;
 };
 
 inline std::istream& operator>>(std::istream& stream, object_type& type);
@@ -54,15 +50,25 @@ std::istream& operator>>(std::istream& stream, game_object& obj)
     stream >> obj.position;
     stream >> obj.size;
 
-    std::string model_key_word;
-    stream >> model_key_word;
-    if (model_key_word != "model")
+    std::string key_word;
+    stream >> key_word;
+    if (key_word != "mesh")
     {
-        throw std::runtime_error("can't parse game object model got: " +
-                                 model_key_word);
+        throw std::runtime_error("can't parse game object mesh got: " +
+                                 key_word);
     }
 
-    stream >> obj.model_description_path;
+    stream >> obj.path_mesh;
+
+    stream >> key_word;
+    if (key_word != "texture")
+    {
+        throw std::runtime_error("can't parse game object texture got: " +
+                                 key_word);
+    }
+
+    stream >> obj.path_texture;
+
     return stream;
 }
 

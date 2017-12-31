@@ -1,20 +1,19 @@
 // level 01
-
 num_of_objects 2           // how may objects
 
 object level_01            // game_object 
 level                      // type
-90                         // direction grad
-0.0 0.0                    // world position x, y
+0                          // direction grad
+0 0                    // world position x, y
 100 100                    // size width height
-mesh  identity_quad.txt    // mesh
-texture background.png     // texture
+mesh  res/identity_quad.txt    // mesh
+texture res/background.png     // texture
 
 
 object tank_01             // game_object 
 user_tank                  // type
-90                         // direction grad
-0.0 0.0                    // position x, y
+0                          // direction grad
+0 0                    // position x, y
 10 10                      // size width height
-mesh  identity_quad.txt    // mesh
-texture tank.png           // texture
+mesh  res/identity_quad.txt    // mesh
+texture res/tank.png           // texture
