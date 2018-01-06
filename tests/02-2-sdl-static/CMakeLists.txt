@@ -44,19 +44,41 @@ if (MINGW)
                -static-libgcc
                )
 elseif(UNIX)
-    # find out what libraries are needed for staticaly linking with libSDL.a
-    # using default linux compiler
-    #$> sdl2-config --static-libs
-    # -lSDL2 -Wl,--no-undefined -lm -ldl -lpthread -lrt
-    
-    target_link_libraries(${PROJECT_NAME} 
+    if(APPLE)
+      # find out what libraries are needed for staticcaly linking with libSDL.a on MacOS with HOMEBREW (currently clang++ not supported c++17)
+      # $> /usr/local/bin/sdl2-config --static-libs
+      # -L/usr/local/lib -lSDL2 -lm -liconv -Wl,-framework,CoreAudio 
+      # -Wl,-framework,AudioToolbox -Wl,-framework,ForceFeedback -lobjc -Wl,-framework,CoreVideo -Wl,-framework,Cocoa 
+      # -Wl,-framework,Carbon -Wl,-framework,IOKit
+
+      target_link_libraries(${PROJECT_NAME} 
                "${SDL2_LIB}" # full path to libSDL2.a force to staticaly link with it
-               -Wl,--no-undefined
+               -lm 
+               -liconv 
+               -Wl,-framework,CoreAudio 
+               -Wl,-framework,AudioToolbox 
+               -Wl,-framework,ForceFeedback 
+               -lobjc 
+               -Wl,-framework,CoreVideo 
+               -Wl,-framework,Cocoa 
+               -Wl,-framework,Carbon 
+               -Wl,-framework,IOKit
+               )
+    else()
+      # find out what libraries are needed for staticaly linking with libSDL.a on Linux
+      # using default linux compiler
+      # $> sdl2-config --static-libs
+      # -lSDL2 -Wl,--no-undefined -lm -ldl -lpthread -lrt
+    
+      target_link_libraries(${PROJECT_NAME} 
+               "${SDL2_LIB}" # full path to libSDL2.a force to staticaly link with it
+               # -Wl,--no-undefined # not compiled on MacOS
                -lm
                -ldl
                -lpthread
                -lrt
                )
+    endif()
 endif()
 
 

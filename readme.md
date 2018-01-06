@@ -52,6 +52,16 @@ $ cmake -G"Makefiles"
 $ make -j 4
 $ bin/engine --test
 ```
+
+### On Mac OS
+on Mac OS for c++17 compiler you have to install latest gcc from Homebrew and then use it
+```sh
+$ /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+$ brew install gcc@7
+$ brew install SDL2
+$ brew install cmake
+```
+
 ### Generate Docker image
  - write Dockerfile
  - call ```sudo systemctl start docker```
