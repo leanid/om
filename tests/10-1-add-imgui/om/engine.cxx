@@ -21,39 +21,34 @@
 #include <tuple>
 #include <vector>
 
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_opengl.h>
-#include <SDL2/SDL_opengl_glext.h>
-
-namespace fs = std::experimental::filesystem;
-
 #include "picopng.hxx"
 
-// we have to load all extension GL function pointers
-// dynamically from OpenGL library
-// so first declare function pointers for all we need
-static PFNGLCREATESHADERPROC             glCreateShader             = nullptr;
-static PFNGLSHADERSOURCEARBPROC          glShaderSource             = nullptr;
-static PFNGLCOMPILESHADERARBPROC         glCompileShader            = nullptr;
-static PFNGLGETSHADERIVPROC              glGetShaderiv              = nullptr;
-static PFNGLGETSHADERINFOLOGPROC         glGetShaderInfoLog         = nullptr;
-static PFNGLDELETESHADERPROC             glDeleteShader             = nullptr;
-static PFNGLCREATEPROGRAMPROC            glCreateProgram            = nullptr;
-static PFNGLATTACHSHADERPROC             glAttachShader             = nullptr;
-static PFNGLBINDATTRIBLOCATIONPROC       glBindAttribLocation       = nullptr;
-static PFNGLLINKPROGRAMPROC              glLinkProgram              = nullptr;
-static PFNGLGETPROGRAMIVPROC             glGetProgramiv             = nullptr;
-static PFNGLGETPROGRAMINFOLOGPROC        glGetProgramInfoLog        = nullptr;
-static PFNGLDELETEPROGRAMPROC            glDeleteProgram            = nullptr;
-static PFNGLUSEPROGRAMPROC               glUseProgram               = nullptr;
-static PFNGLVERTEXATTRIBPOINTERPROC      glVertexAttribPointer      = nullptr;
-static PFNGLENABLEVERTEXATTRIBARRAYPROC  glEnableVertexAttribArray  = nullptr;
-static PFNGLDISABLEVERTEXATTRIBARRAYPROC glDisableVertexAttribArray = nullptr;
-static PFNGLGETUNIFORMLOCATIONPROC       glGetUniformLocation       = nullptr;
-static PFNGLUNIFORM1IPROC                glUniform1i                = nullptr;
-static PFNGLACTIVETEXTUREPROC            glActiveTexture_           = nullptr;
-static PFNGLUNIFORM4FVPROC               glUniform4fv               = nullptr;
-static PFNGLUNIFORMMATRIX3FVPROC         glUniformMatrix3fv         = nullptr;
+#include <SDL2/SDL.h>
+
+#include "gles20.hxx"
+
+PFNGLCREATESHADERPROC             glCreateShader             = nullptr;
+PFNGLSHADERSOURCEARBPROC          glShaderSource             = nullptr;
+PFNGLCOMPILESHADERARBPROC         glCompileShader            = nullptr;
+PFNGLGETSHADERIVPROC              glGetShaderiv              = nullptr;
+PFNGLGETSHADERINFOLOGPROC         glGetShaderInfoLog         = nullptr;
+PFNGLDELETESHADERPROC             glDeleteShader             = nullptr;
+PFNGLCREATEPROGRAMPROC            glCreateProgram            = nullptr;
+PFNGLATTACHSHADERPROC             glAttachShader             = nullptr;
+PFNGLBINDATTRIBLOCATIONPROC       glBindAttribLocation       = nullptr;
+PFNGLLINKPROGRAMPROC              glLinkProgram              = nullptr;
+PFNGLGETPROGRAMIVPROC             glGetProgramiv             = nullptr;
+PFNGLGETPROGRAMINFOLOGPROC        glGetProgramInfoLog        = nullptr;
+PFNGLDELETEPROGRAMPROC            glDeleteProgram            = nullptr;
+PFNGLUSEPROGRAMPROC               glUseProgram               = nullptr;
+PFNGLVERTEXATTRIBPOINTERPROC      glVertexAttribPointer      = nullptr;
+PFNGLENABLEVERTEXATTRIBARRAYPROC  glEnableVertexAttribArray  = nullptr;
+PFNGLDISABLEVERTEXATTRIBARRAYPROC glDisableVertexAttribArray = nullptr;
+PFNGLGETUNIFORMLOCATIONPROC       glGetUniformLocation       = nullptr;
+PFNGLUNIFORM1IPROC                glUniform1i                = nullptr;
+PFNGLACTIVETEXTUREPROC            glActiveTexture_           = nullptr;
+PFNGLUNIFORM4FVPROC               glUniform4fv               = nullptr;
+PFNGLUNIFORMMATRIX3FVPROC         glUniformMatrix3fv         = nullptr;
 
 template <typename T>
 static void load_gl_func(const char* func_name, T& result)
@@ -98,6 +93,8 @@ static void load_gl_func(const char* func_name, T& result)
 
 namespace om
 {
+
+namespace fs = std::experimental::filesystem;
 
 vec2::vec2()
     : x(0.f)
@@ -1391,7 +1388,7 @@ int initialize_and_start_main_loop()
     void* so_handle   = nullptr;
     auto  lib_name_it = std::find_if(
         begin(lib_names), end(lib_names), [&so_handle](const char* lib_name) {
-            if (fs::exists(lib_name))
+            if (std::experimental::filesystem::exists(lib_name))
             {
                 om::log << "try loading game from: " << lib_name << std::endl;
                 so_handle = SDL_LoadObject(lib_name);

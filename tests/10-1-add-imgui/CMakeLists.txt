@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.9)
-project(09-start-demo)
+project("10-1-integrate-imgui")
 
 if(MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
