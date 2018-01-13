@@ -49,6 +49,15 @@ PFNGLUNIFORM1IPROC                glUniform1i                = nullptr;
 PFNGLACTIVETEXTUREPROC            glActiveTexture_           = nullptr;
 PFNGLUNIFORM4FVPROC               glUniform4fv               = nullptr;
 PFNGLUNIFORMMATRIX3FVPROC         glUniformMatrix3fv         = nullptr;
+PFNGLUNIFORMMATRIX4FVPROC         glUniformMatrix4fv         = nullptr;
+PFNGLBINDBUFFERPROC               glBindBuffer               = nullptr;
+PFNGLBUFFERDATAPROC               glBufferData               = nullptr;
+PFNGLGENBUFFERSPROC               glGenBuffers               = nullptr;
+PFNGLGETATTRIBLOCATIONPROC        glGetAttribLocation        = nullptr;
+PFNGLBLENDFUNCSEPARATEPROC        glBlendFuncSeparate        = nullptr;
+PFNGLBLENDEQUATIONSEPARATEPROC    glBlendEquationSeparate    = nullptr;
+PFNGLDETACHSHADERPROC             glDetachShader             = nullptr;
+PFNGLDELETEBUFFERSPROC            glDeleteBuffers            = nullptr;
 
 template <typename T>
 static void load_gl_func(const char* func_name, T& result)
@@ -988,6 +997,15 @@ static void initialize_internal(std::string_view   title,
             load_gl_func("glActiveTexture", glActiveTexture_);
             load_gl_func("glUniform4fv", glUniform4fv);
             load_gl_func("glUniformMatrix3fv", glUniformMatrix3fv);
+            load_gl_func("glUniformMatrix4fv", glUniformMatrix4fv);
+            load_gl_func("glBindBuffer", glBindBuffer);
+            load_gl_func("glBufferData", glBufferData);
+            load_gl_func("glGenBuffers", glGenBuffers);
+            load_gl_func("glGetAttribLocation", glGetAttribLocation);
+            load_gl_func("glBlendFuncSeparate", glBlendFuncSeparate);
+            load_gl_func("glBlendEquationSeparate", glBlendEquationSeparate);
+            load_gl_func("glDetachShader", glDetachShader);
+            load_gl_func("glDeleteBuffers", glDeleteBuffers);
         }
         catch (std::exception& ex)
         {
@@ -999,14 +1017,14 @@ static void initialize_internal(std::string_view   title,
                                       attribute vec2 a_position;
                                       void main()
                                       {
-                                      gl_Position = vec4(a_position, 0.0, 1.0);
+                                          gl_Position = vec4(a_position, 0.0, 1.0);
                                       }
                                       )",
                                       R"(
                                       uniform vec4 u_color;
                                       void main()
                                       {
-                                      gl_FragColor = u_color;
+                                          gl_FragColor = u_color;
                                       }
                                       )",
                                       { { 0, "a_position" } });

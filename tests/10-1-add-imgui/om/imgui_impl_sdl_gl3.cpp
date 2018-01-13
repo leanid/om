@@ -121,7 +121,7 @@ void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
     glUniformMatrix4fv(g_AttribLocationProjMtx, 1, GL_FALSE,
                        &ortho_projection[0][0]);
     glBindVertexArray(g_VaoHandle);
-    // glBindSampler(0, 0); // Rely on combined texture/sampler state.
+    glBindSampler(0, 0); // Rely on combined texture/sampler state.
 
     for (int n = 0; n < draw_data->CmdListsCount; n++)
     {
@@ -339,8 +339,8 @@ bool ImGui_ImplSdlGL3_CreateDeviceObjects()
     glGenBuffers(1, &g_VboHandle);
     glGenBuffers(1, &g_ElementsHandle);
 
-    glGenVertexArrays(1, &g_VaoHandle);
-    glBindVertexArray(g_VaoHandle);
+    // glGenVertexArrays(1, &g_VaoHandle);
+    // glBindVertexArray(g_VaoHandle);
     glBindBuffer(GL_ARRAY_BUFFER, g_VboHandle);
     glEnableVertexAttribArray(g_AttribLocationPosition);
     glEnableVertexAttribArray(g_AttribLocationUV);
@@ -361,7 +361,7 @@ bool ImGui_ImplSdlGL3_CreateDeviceObjects()
     // Restore modified GL state
     glBindTexture(GL_TEXTURE_2D, last_texture);
     glBindBuffer(GL_ARRAY_BUFFER, last_array_buffer);
-    glBindVertexArray(last_vertex_array);
+    // glBindVertexArray(last_vertex_array);
 
     return true;
 }
