@@ -120,8 +120,9 @@ void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
     glUniform1i(g_AttribLocationTex, 0);
     glUniformMatrix4fv(g_AttribLocationProjMtx, 1, GL_FALSE,
                        &ortho_projection[0][0]);
-    glBindVertexArray(g_VaoHandle);
-    glBindSampler(0, 0); // Rely on combined texture/sampler state.
+
+    // glBindVertexArray(g_VaoHandle);
+    // glBindSampler(0, 0); // Rely on combined texture/sampler state.
 
     for (int n = 0; n < draw_data->CmdListsCount; n++)
     {
@@ -137,6 +138,20 @@ void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
         glBufferData(GL_ELEMENT_ARRAY_BUFFER,
                      (GLsizeiptr)cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx),
                      (const GLvoid*)cmd_list->IdxBuffer.Data, GL_STREAM_DRAW);
+
+        glEnableVertexAttribArray(g_AttribLocationPosition);
+        glEnableVertexAttribArray(g_AttribLocationUV);
+        glEnableVertexAttribArray(g_AttribLocationColor);
+
+        glVertexAttribPointer(g_AttribLocationPosition, 2, GL_FLOAT, GL_FALSE,
+                              sizeof(ImDrawVert),
+                              (GLvoid*)IM_OFFSETOF(ImDrawVert, pos));
+        glVertexAttribPointer(g_AttribLocationUV, 2, GL_FLOAT, GL_FALSE,
+                              sizeof(ImDrawVert),
+                              (GLvoid*)IM_OFFSETOF(ImDrawVert, uv));
+        glVertexAttribPointer(g_AttribLocationColor, 4, GL_UNSIGNED_BYTE,
+                              GL_TRUE, sizeof(ImDrawVert),
+                              (GLvoid*)IM_OFFSETOF(ImDrawVert, col));
 
         for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++)
         {
@@ -164,9 +179,9 @@ void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
     // Restore modified GL state
     glUseProgram(last_program);
     glBindTexture(GL_TEXTURE_2D, last_texture);
-    glBindSampler(0, last_sampler);
+    // glBindSampler(0, last_sampler);
     glActiveTexture(last_active_texture);
-    glBindVertexArray(last_vertex_array);
+    // glBindVertexArray(last_vertex_array);
     glBindBuffer(GL_ARRAY_BUFFER, last_array_buffer);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, last_element_array_buffer);
     glBlendEquationSeparate(last_blend_equation_rgb, last_blend_equation_alpha);
@@ -369,7 +384,9 @@ bool ImGui_ImplSdlGL3_CreateDeviceObjects()
 void ImGui_ImplSdlGL3_InvalidateDeviceObjects()
 {
     if (g_VaoHandle)
-        glDeleteVertexArrays(1, &g_VaoHandle);
+    {
+        //   glDeleteVertexArrays(1, &g_VaoHandle);
+    }
     if (g_VboHandle)
         glDeleteBuffers(1, &g_VboHandle);
     if (g_ElementsHandle)

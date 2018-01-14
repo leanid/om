@@ -8,7 +8,17 @@ else()
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -Werror")
 endif()
 
-add_executable(engine om/engine.cxx om/engine.hxx om/picopng.hxx)
+add_executable(engine om/engine.cxx
+                      om/imgui_impl_sdl_gl3.cpp
+                      om/imgui.cpp
+                      om/imgui_draw.cpp
+                      om/imgui.h
+                      om/imgui_impl_sdl_gl3.h
+                      om/imgui_internal.h
+                      om/imconfig.h
+                      om/gles20.hxx
+                      om/engine.hxx 
+                      om/picopng.hxx)
 set_target_properties(engine PROPERTIES ENABLE_EXPORTS TRUE)
 target_compile_features(engine PRIVATE cxx_std_17)
 
