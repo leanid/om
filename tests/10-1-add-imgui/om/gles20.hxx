@@ -1,5 +1,7 @@
 #pragma once
 
+#include <iostream>
+
 #include <SDL2/SDL_opengl.h>
 #include <SDL2/SDL_opengl_glext.h>
 
@@ -37,3 +39,32 @@ extern PFNGLBLENDFUNCSEPARATEPROC        glBlendFuncSeparate;
 extern PFNGLBLENDEQUATIONSEPARATEPROC    glBlendEquationSeparate;
 extern PFNGLDETACHSHADERPROC             glDetachShader;
 extern PFNGLDELETEBUFFERSPROC            glDeleteBuffers;
+
+#define OM_GL_CHECK()                                                          \
+    {                                                                          \
+        const unsigned int err = glGetError();                                 \
+        if (err != GL_NO_ERROR)                                                \
+        {                                                                      \
+            std::cerr << __FILE__ << '(' << __LINE__ << ") error: ";           \
+            switch (err)                                                       \
+            {                                                                  \
+                case GL_INVALID_ENUM:                                          \
+                    std::cerr << "GL_INVALID_ENUM" << std::endl;               \
+                    break;                                                     \
+                case GL_INVALID_VALUE:                                         \
+                    std::cerr << "GL_INVALID_VALUE" << std::endl;              \
+                    break;                                                     \
+                case GL_INVALID_OPERATION:                                     \
+                    std::cerr << "GL_INVALID_OPERATION" << std::endl;          \
+                    break;                                                     \
+                case GL_INVALID_FRAMEBUFFER_OPERATION:                         \
+                    std::cerr << "GL_INVALID_FRAMEBUFFER_OPERATION"            \
+                              << std::endl;                                    \
+                    break;                                                     \
+                case GL_OUT_OF_MEMORY:                                         \
+                    std::cerr << "GL_OUT_OF_MEMORY" << std::endl;              \
+                    break;                                                     \
+            }                                                                  \
+            assert(false);                                                     \
+        }                                                                      \
+    }
