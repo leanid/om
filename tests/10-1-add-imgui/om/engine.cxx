@@ -27,6 +27,9 @@
 
 #include "gles20.hxx"
 
+#include "imgui.h"
+#include "imgui_impl_sdl_gl3.h"
+
 PFNGLCREATESHADERPROC             glCreateShader             = nullptr;
 PFNGLSHADERSOURCEARBPROC          glShaderSource             = nullptr;
 PFNGLCOMPILESHADERARBPROC         glCompileShader            = nullptr;
@@ -70,35 +73,6 @@ static void load_gl_func(const char* func_name, T& result)
     }
     result = reinterpret_cast<T>(gl_pointer);
 }
-
-#define OM_GL_CHECK()                                                          \
-    {                                                                          \
-        const unsigned int err = glGetError();                                 \
-        if (err != GL_NO_ERROR)                                                \
-        {                                                                      \
-            std::cerr << __FILE__ << '(' << __LINE__ - 1 << ") error: ";       \
-            switch (err)                                                       \
-            {                                                                  \
-                case GL_INVALID_ENUM:                                          \
-                    std::cerr << "GL_INVALID_ENUM" << std::endl;               \
-                    break;                                                     \
-                case GL_INVALID_VALUE:                                         \
-                    std::cerr << "GL_INVALID_VALUE" << std::endl;              \
-                    break;                                                     \
-                case GL_INVALID_OPERATION:                                     \
-                    std::cerr << "GL_INVALID_OPERATION" << std::endl;          \
-                    break;                                                     \
-                case GL_INVALID_FRAMEBUFFER_OPERATION:                         \
-                    std::cerr << "GL_INVALID_FRAMEBUFFER_OPERATION"            \
-                              << std::endl;                                    \
-                    break;                                                     \
-                case GL_OUT_OF_MEMORY:                                         \
-                    std::cerr << "GL_OUT_OF_MEMORY" << std::endl;              \
-                    break;                                                     \
-            }                                                                  \
-            assert(false);                                                     \
-        }                                                                      \
-    }
 
 namespace om
 {
@@ -735,6 +709,8 @@ bool pool_event(event& e)
     SDL_Event sdl_event;
     if (SDL_PollEvent(&sdl_event))
     {
+        /*bool used_with_imgui = */ ImGui_ImplSdlGL3_ProcessEvent(&sdl_event);
+
         const bind* binding = nullptr;
 
         if (sdl_event.type == SDL_QUIT)
@@ -858,7 +834,7 @@ void render(const enum primitives primitive_type, const vbo& buff,
 static void swap_buffers()
 {
     SDL_GL_SwapWindow(window);
-
+    OM_GL_CHECK();
     glClear(GL_COLOR_BUFFER_BIT);
     OM_GL_CHECK();
 }
@@ -929,6 +905,24 @@ static void initialize_internal(std::string_view   title,
             }
         }
 
+        int r = 0;
+        // SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS,
+        //                            SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG);
+        assert(r == 0);
+        r = SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
+                                SDL_GL_CONTEXT_PROFILE_ES);
+        assert(r == 0);
+        r = SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+        assert(r == 0);
+        r = SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+        assert(r == 0);
+        r = SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
+        assert(r == 0);
+        r = SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+        assert(r == 0);
+        r = SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+        assert(r == 0);
+
         int window_size_w = static_cast<int>(desired_window_mode.width);
         int window_size_h = static_cast<int>(desired_window_mode.heigth);
 
@@ -963,7 +957,7 @@ static void initialize_internal(std::string_view   title,
             SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, &gl_minor_ver);
         assert(result == 0);
 
-        if (gl_major_ver <= 2 && gl_minor_ver < 1)
+        if (gl_major_ver < 2)
         {
             serr << "current context opengl version: " << gl_major_ver << '.'
                  << gl_minor_ver << '\n'
@@ -971,6 +965,10 @@ static void initialize_internal(std::string_view   title,
                  << std::flush;
             throw std::runtime_error(serr.str());
         }
+
+        std::cout << "opengl version: " << gl_major_ver << '.' << gl_minor_ver
+                  << std::endl;
+
         try
         {
             load_gl_func("glCreateShader", glCreateShader);
@@ -1014,6 +1012,9 @@ static void initialize_internal(std::string_view   title,
         }
 
         shader00 = new shader_gl_es20(R"(
+                                      #if defined(GL_ES)
+									  precision highp float;
+									  #endif //GL_ES
                                       attribute vec2 a_position;
                                       void main()
                                       {
@@ -1021,6 +1022,9 @@ static void initialize_internal(std::string_view   title,
                                       }
                                       )",
                                       R"(
+                                      #if defined(GL_ES)
+									  precision highp float;
+									  #endif //GL_ES
                                       uniform vec4 u_color;
                                       void main()
                                       {
@@ -1034,28 +1038,37 @@ static void initialize_internal(std::string_view   title,
 
         shader01 = new shader_gl_es20(
             R"(
-                    attribute vec2 a_position;
-                    attribute vec4 a_color;
-                    varying vec4 v_color;
-                    void main()
-                    {
-                    v_color = a_color;
-                    gl_Position = vec4(a_position, 0.0, 1.0);
-                    }
-                    )",
+				#if defined(GL_ES)
+				precision highp float;
+				#endif //GL_ES
+				attribute vec2 a_position;
+				attribute vec4 a_color;
+				varying vec4 v_color;
+				void main()
+				{
+					v_color = a_color;
+					gl_Position = vec4(a_position, 0.0, 1.0);
+				}
+				)",
             R"(
-                    varying vec4 v_color;
-                    void main()
-                    {
-                    gl_FragColor = v_color;
-                    }
-                    )",
+				#if defined(GL_ES)
+				precision highp float;
+				#endif //GL_ES
+				varying vec4 v_color;
+				void main()
+				{
+					gl_FragColor = v_color;
+				}
+				)",
             { { 0, "a_position" }, { 1, "a_color" } });
 
         shader01->use();
 
         shader02 = new shader_gl_es20(
             R"(
+					#if defined(GL_ES)
+					precision highp float;
+					#endif //GL_ES
                     attribute vec2 a_position;
                     attribute vec2 a_tex_coord;
                     attribute vec4 a_color;
@@ -1063,18 +1076,21 @@ static void initialize_internal(std::string_view   title,
                     varying vec2 v_tex_coord;
                     void main()
                     {
-                    v_tex_coord = a_tex_coord;
-                    v_color = a_color;
-                    gl_Position = vec4(a_position, 0.0, 1.0);
+                        v_tex_coord = a_tex_coord;
+                        v_color = a_color;
+                        gl_Position = vec4(a_position, 0.0, 1.0);
                     }
                     )",
             R"(
+                    #if defined(GL_ES)
+				    precision highp float;
+				    #endif //GL_ES
                     varying vec2 v_tex_coord;
                     varying vec4 v_color;
                     uniform sampler2D s_texture;
                     void main()
                     {
-                    gl_FragColor = texture2D(s_texture, v_tex_coord) * v_color;
+                        gl_FragColor = texture2D(s_texture, v_tex_coord) * v_color;
                     }
                     )",
             { { 0, "a_position" }, { 1, "a_color" }, { 2, "a_tex_coord" } });
@@ -1084,6 +1100,9 @@ static void initialize_internal(std::string_view   title,
 
         shader03 = new shader_gl_es20(
             R"(
+                    #if defined(GL_ES)
+				    precision highp float;
+				    #endif //GL_ES
                     uniform mat3 u_matrix;
                     attribute vec2 a_position;
                     attribute vec2 a_tex_coord;
@@ -1099,6 +1118,9 @@ static void initialize_internal(std::string_view   title,
                     }
                     )",
             R"(
+                    #if defined(GL_ES)
+				    precision highp float;
+				    #endif //GL_ES
                     varying vec2 v_tex_coord;
                     varying vec4 v_color;
                     uniform sampler2D s_texture;
@@ -1191,12 +1213,22 @@ static void initialize_internal(std::string_view   title,
         }
     }
 
+    // TODO initialize ImGui
+    if (!ImGui_ImplSdlGL3_Init(window))
+    {
+        log << "can't initialize ImGui" << std::endl;
+        throw std::runtime_error("failed initialize ImGui");
+    }
+
     already_exist = true;
 }
 static void uninitialize()
 {
     if (already_exist)
     {
+        // TODO uninitialize ImGui
+        ImGui_ImplSdlGL3_Shutdown();
+
         SDL_GL_DeleteContext(gl_context);
         SDL_DestroyWindow(window);
         SDL_Quit();
@@ -1489,8 +1521,16 @@ start_game_again:
             continue;                  // wait till more time
         }
 
+        ImGui_ImplSdlGL3_NewFrame(om::window);
+
         game->on_update(frame_delta);
         game->on_render();
+
+        bool show_demo_window = true;
+        ImGui::ShowDemoWindow(&show_demo_window);
+
+        ImGui::Render();
+        OM_GL_CHECK();
 
         om::swap_buffers();
         start = end_last_frame;

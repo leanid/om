@@ -12,6 +12,7 @@ add_executable(engine om/engine.cxx
                       om/imgui_impl_sdl_gl3.cpp
                       om/imgui.cpp
                       om/imgui_draw.cpp
+                      om/imgui_demo.cpp
                       om/imgui.h
                       om/imgui_impl_sdl_gl3.h
                       om/imgui_internal.h
