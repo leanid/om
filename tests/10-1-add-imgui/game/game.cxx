@@ -11,6 +11,7 @@
 #include <vector>
 
 #include <om/engine.hxx>
+#include <om/imgui.h>
 
 #include "configuration_loader.hxx"
 #include "game_object.hxx"
@@ -219,8 +220,15 @@ void tanks_game::on_render() const
                                     draw(type, world_size, aspect));
                   });
 
+    // use default ImGui Demo example
     bool show_demo_window = true;
     ImGui::ShowDemoWindow(&show_demo_window);
+
+    // try something myself
+    bool editor_is_opened = true;
+    ImGui::Begin("Level Map Editor", &editor_is_opened);
+    ImGui::Text("Hello!");
+    ImGui::End();
 }
 
 om::vbo* load_mesh_from_file_with_scale(const std::string_view path,
