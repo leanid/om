@@ -1528,9 +1528,6 @@ start_game_again:
         game->on_update(frame_delta);
         game->on_render();
 
-        bool show_demo_window = true;
-        ImGui::ShowDemoWindow(&show_demo_window);
-
         ImGui::Render();
         OM_GL_CHECK();
 

@@ -144,6 +144,13 @@ void tanks_game::on_update(std::chrono::milliseconds /*frame_delta*/)
     }
 }
 
+// this function implemented in engine
+// example for ImGui usage from game
+namespace ImGui
+{
+void ShowDemoWindow(bool* p_open);
+}
+
 void tanks_game::on_render() const
 {
     struct draw
@@ -211,6 +218,9 @@ void tanks_game::on_render() const
                       std::for_each(begin(objects), end(objects),
                                     draw(type, world_size, aspect));
                   });
+
+    bool show_demo_window = true;
+    ImGui::ShowDemoWindow(&show_demo_window);
 }
 
 om::vbo* load_mesh_from_file_with_scale(const std::string_view path,
