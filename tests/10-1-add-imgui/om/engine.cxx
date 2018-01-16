@@ -61,6 +61,7 @@ PFNGLBLENDFUNCSEPARATEPROC        glBlendFuncSeparate        = nullptr;
 PFNGLBLENDEQUATIONSEPARATEPROC    glBlendEquationSeparate    = nullptr;
 PFNGLDETACHSHADERPROC             glDetachShader             = nullptr;
 PFNGLDELETEBUFFERSPROC            glDeleteBuffers            = nullptr;
+PFNGLBLENDEQUATIONPROC            glBlendEquation_           = nullptr;
 
 template <typename T>
 static void load_gl_func(const char* func_name, T& result)
@@ -1004,6 +1005,7 @@ static void initialize_internal(std::string_view   title,
             load_gl_func("glBlendEquationSeparate", glBlendEquationSeparate);
             load_gl_func("glDetachShader", glDetachShader);
             load_gl_func("glDeleteBuffers", glDeleteBuffers);
+            load_gl_func("glBlendEquation", glBlendEquation_);
         }
         catch (std::exception& ex)
         {

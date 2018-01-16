@@ -64,7 +64,7 @@ void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
     GLenum last_active_texture;
     glGetIntegerv(GL_ACTIVE_TEXTURE, (GLint*)&last_active_texture);
     OM_GL_CHECK();
-    glActiveTexture(GL_TEXTURE0);
+    glActiveTexture_(GL_TEXTURE0);
     OM_GL_CHECK();
     GLint last_program;
     glGetIntegerv(GL_CURRENT_PROGRAM, &last_program);
@@ -123,7 +123,7 @@ void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
     // testing, scissor enabled, polygon fill
     glEnable(GL_BLEND);
     OM_GL_CHECK();
-    glBlendEquation(GL_FUNC_ADD);
+    glBlendEquation_(GL_FUNC_ADD);
     OM_GL_CHECK();
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     OM_GL_CHECK();
@@ -226,7 +226,7 @@ void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
     glBindTexture(GL_TEXTURE_2D, last_texture);
     OM_GL_CHECK();
     // glBindSampler(0, last_sampler);
-    glActiveTexture(last_active_texture);
+    glActiveTexture_(last_active_texture);
     OM_GL_CHECK();
     // glBindVertexArray(last_vertex_array);
     glBindBuffer(GL_ARRAY_BUFFER, last_array_buffer);

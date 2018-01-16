@@ -39,6 +39,7 @@ extern PFNGLBLENDFUNCSEPARATEPROC        glBlendFuncSeparate;
 extern PFNGLBLENDEQUATIONSEPARATEPROC    glBlendEquationSeparate;
 extern PFNGLDETACHSHADERPROC             glDetachShader;
 extern PFNGLDELETEBUFFERSPROC            glDeleteBuffers;
+extern PFNGLBLENDEQUATIONPROC            glBlendEquation_;
 
 #define OM_GL_CHECK()                                                          \
     {                                                                          \
