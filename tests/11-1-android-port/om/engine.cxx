@@ -705,6 +705,37 @@ static bool check_input(const SDL_Event& e, const bind*& result)
     return false;
 }
 
+membuf load_file(std::string_view path)
+{
+    SDL_RWops* io = SDL_RWFromFile(path.data(), "rb");
+    if (nullptr == io)
+    {
+        throw std::runtime_error("can't load file: " + std::string(path));
+    }
+
+    Sint64 file_size = io->size(io);
+    if (-1 == file_size)
+    {
+        throw std::runtime_error("can't determine size of file: " +
+                                 std::string(path));
+    }
+    size_t                  size = static_cast<size_t>(file_size);
+    std::unique_ptr<char[]> mem  = std::make_unique<char[]>(size);
+
+    size_t num_readed_objects = io->read(io, mem.get(), size, 1);
+    if (num_readed_objects != 1)
+    {
+        throw std::runtime_error("can't read all content from file: " +
+                                 std::string(path));
+    }
+
+    if (0 != io->close(io))
+    {
+        throw std::runtime_error("failed close file: " + std::string(path));
+    }
+    return membuf(std::move(mem), size);
+}
+
 /// return seconds from initialization
 float get_time_from_init()
 {
@@ -1337,30 +1368,10 @@ void color::set_a(const float a)
 texture_gl_es20::texture_gl_es20(std::string_view path)
     : file_path(path)
 {
-    std::vector<unsigned char> png_file_in_memory;
-    std::ifstream              ifs(path.data(), std::ios_base::binary);
-    if (!ifs)
-    {
-        throw std::runtime_error("can't load texture");
-    }
-    ifs.seekg(0, std::ios_base::end);
-    std::streamoff pos_in_file = ifs.tellg();
-    png_file_in_memory.resize(static_cast<size_t>(pos_in_file));
-    ifs.seekg(0, std::ios_base::beg);
-    if (!ifs)
-    {
-        throw std::runtime_error("can't load texture");
-    }
-
-    ifs.read(reinterpret_cast<char*>(png_file_in_memory.data()), pos_in_file);
-    if (!ifs.good())
-    {
-        throw std::runtime_error("can't load texture");
-    }
+    membuf membuf = load_file(path);
 
     const om::png_image img = decode_png_file_from_memory(
-        png_file_in_memory, convert_color::to_rgba32,
-        origin_point::bottom_left);
+        membuf, convert_color::to_rgba32, origin_point::bottom_left);
 
     // if there's an error, display it
     if (img.error != 0)

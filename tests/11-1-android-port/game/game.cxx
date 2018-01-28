@@ -3,7 +3,6 @@
 #include <cassert>
 #include <cmath>
 #include <cstdlib>
-#include <fstream>
 #include <iostream>
 #include <iterator>
 #include <memory>
@@ -31,7 +30,7 @@ public:
     void on_render() const final;
 
 private:
-    std::vector<game_object> objects;
+    std::vector<game_object>            objects;
     std::map<std::string, om::vbo*>     meshes;
     std::map<std::string, om::texture*> textures;
 };
@@ -51,7 +50,7 @@ std::unique_ptr<om::lila> om_tat_sat()
 
 om::vbo* load_mesh_from_file_with_scale(const std::string_view path,
                                         const om::vec2&        scale);
-void tanks_game::on_initialize()
+void     tanks_game::on_initialize()
 {
     debug_texture = om::create_texture("res/debug.png");
 

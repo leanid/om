@@ -59,7 +59,8 @@
 //         distribution.
 
 #include <cstdint>
-#include <vector>
+
+#include "engine.hxx"
 
 namespace om
 {
@@ -84,9 +85,9 @@ enum class origin_point
     bottom_left
 };
 
-png_image decode_png_file_from_memory(const std::vector<uint8_t>& png_file,
-                                      const convert_color         convertion,
-                                      const origin_point          origin)
+png_image decode_png_file_from_memory(const om::membuf&   png_file,
+                                      const convert_color convertion,
+                                      const origin_point  origin)
 {
     // picoPNG is a PNG decoder in one C++ function of around 500 lines. Use
     // picoPNG for
@@ -104,10 +105,10 @@ png_image decode_png_file_from_memory(const std::vector<uint8_t>& png_file,
 
     bool convert_to_rgba32 = convert_color::to_rgba32 == convertion;
 
-    const uint8_t* in_png  = png_file.data();
+    const uint8_t* in_png  = reinterpret_cast<uint8_t*>(png_file.begin());
     const size_t   in_size = png_file.size();
 
-    static const uint32_t LENBASE[29] = { 3,   4,   5,   6,   7,  8,  9,  10,
+    static const uint32_t LENBASE[29]  = { 3,   4,   5,   6,   7,  8,  9,  10,
                                           11,  13,  15,  17,  19, 23, 27, 31,
                                           35,  43,  51,  59,  67, 83, 99, 115,
                                           131, 163, 195, 227, 258 };
@@ -514,8 +515,8 @@ png_image decode_png_file_from_memory(const std::vector<uint8_t>& png_file,
                     return;
                 } // error: reading outside of in buffer
                 for (uint32_t n = 0; n < LEN; n++)
-                    out[pos++]  = in[p++]; // read LEN bytes of literal data
-                bp              = p * 8;
+                    out[pos++] = in[p++]; // read LEN bytes of literal data
+                bp = p * 8;
             }
         };
         int decompress(std::vector<uint8_t>&       out,
@@ -635,9 +636,9 @@ png_image decode_png_file_from_memory(const std::vector<uint8_t>& png_file,
                     } // error: palette too big
                     for (size_t i = 0; i < info.palette.size(); i += 4)
                     {
-                        for (size_t j           = 0; j < 3; j++)
+                        for (size_t j = 0; j < 3; j++)
                             info.palette[i + j] = in[pos++]; // RGB
-                        info.palette[i + 3]     = 255;       // alpha
+                        info.palette[i + 3] = 255;           // alpha
                     }
                 }
                 else if (in[pos + 0] == 't' && in[pos + 1] == 'R' &&
@@ -654,7 +655,7 @@ png_image decode_png_file_from_memory(const std::vector<uint8_t>& png_file,
                             return;
                         } // error: more alpha values given than there are
                           // palette entries
-                        for (size_t i               = 0; i < chunkLength; i++)
+                        for (size_t i = 0; i < chunkLength; i++)
                             info.palette[4 * i + 3] = in[pos++];
                     }
                     else if (info.colorType == 0)
@@ -825,9 +826,9 @@ png_image decode_png_file_from_memory(const std::vector<uint8_t>& png_file,
                     0, 4, 0, 2, 0, 1, 0, 0, 0, 4, 0, 2, 0, 1,
                     8, 8, 4, 4, 2, 2, 1, 8, 8, 8, 4, 4, 2, 2
                 }; // values for the adam7 passes
-                for (int i           = 0; i < 6; i++)
-                    passstart[i + 1] = passstart[i] +
-                                       passh[i] * ((passw[i] ? 1 : 0) +
+                for (int i = 0; i < 6; i++)
+                    passstart[i + 1] =
+                        passstart[i] + passh[i] * ((passw[i] ? 1 : 0) +
                                                    (passw[i] * bpp + 7) / 8);
                 std::vector<uint8_t> scanlineo((info.width * bpp + 7) / 8),
                     scanlinen((info.width * bpp + 7) /
@@ -900,37 +901,37 @@ png_image decode_png_file_from_memory(const std::vector<uint8_t>& png_file,
             {
                 case 0:
                     for (size_t i = 0; i < length; i++)
-                        recon[i]  = scanline[i];
+                        recon[i] = scanline[i];
                     break;
                 case 1:
                     for (size_t i = 0; i < bytewidth; i++)
-                        recon[i]  = scanline[i];
+                        recon[i] = scanline[i];
                     for (size_t i = bytewidth; i < length; i++)
-                        recon[i]  = scanline[i] + recon[i - bytewidth];
+                        recon[i] = scanline[i] + recon[i - bytewidth];
                     break;
                 case 2:
                     if (precon)
                         for (size_t i = 0; i < length; i++)
-                            recon[i]  = scanline[i] + precon[i];
+                            recon[i] = scanline[i] + precon[i];
                     else
                         for (size_t i = 0; i < length; i++)
-                            recon[i]  = scanline[i];
+                            recon[i] = scanline[i];
                     break;
                 case 3:
                     if (precon)
                     {
                         for (size_t i = 0; i < bytewidth; i++)
-                            recon[i]  = scanline[i] + precon[i] / 2;
+                            recon[i] = scanline[i] + precon[i] / 2;
                         for (size_t i = bytewidth; i < length; i++)
-                            recon[i]  = scanline[i] +
+                            recon[i] = scanline[i] +
                                        ((recon[i - bytewidth] + precon[i]) / 2);
                     }
                     else
                     {
                         for (size_t i = 0; i < bytewidth; i++)
-                            recon[i]  = scanline[i];
+                            recon[i] = scanline[i];
                         for (size_t i = bytewidth; i < length; i++)
-                            recon[i]  = scanline[i] + recon[i - bytewidth] / 2;
+                            recon[i] = scanline[i] + recon[i - bytewidth] / 2;
                     }
                     break;
                 case 4:
@@ -948,7 +949,7 @@ png_image decode_png_file_from_memory(const std::vector<uint8_t>& png_file,
                     else
                     {
                         for (size_t i = 0; i < bytewidth; i++)
-                            recon[i]  = scanline[i];
+                            recon[i] = scanline[i];
                         for (size_t i = bytewidth; i < length; i++)
                             recon[i] =
                                 scanline[i] +
@@ -1089,9 +1090,9 @@ png_image decode_png_file_from_memory(const std::vector<uint8_t>& png_file,
             else if (infoIn.bitDepth == 8 && infoIn.colorType == 2) // RGB color
                 for (size_t i = 0; i < numpixels; i++)
                 {
-                    for (size_t c       = 0; c < 3; c++)
+                    for (size_t c = 0; c < 3; c++)
                         out_[4 * i + c] = in[3 * i + c];
-                    out_[4 * i + 3]     = (infoIn.key_defined == 1 &&
+                    out_[4 * i + 3] = (infoIn.key_defined == 1 &&
                                        in[3 * i + 0] == infoIn.key_r &&
                                        in[3 * i + 1] == infoIn.key_g &&
                                        in[3 * i + 2] == infoIn.key_b)
@@ -1119,7 +1120,7 @@ png_image decode_png_file_from_memory(const std::vector<uint8_t>& png_file,
                 }
             else if (infoIn.bitDepth == 8 && infoIn.colorType == 6)
                 for (size_t i = 0; i < numpixels; i++)
-                    for (size_t c       = 0; c < 4; c++)
+                    for (size_t c = 0; c < 4; c++)
                         out_[4 * i + c] = in[4 * i + c]; // RGB with alpha
             else if (infoIn.bitDepth == 16 &&
                      infoIn.colorType == 0) // greyscale
@@ -1136,7 +1137,7 @@ png_image decode_png_file_from_memory(const std::vector<uint8_t>& png_file,
                                                                      // color
                 for (size_t i = 0; i < numpixels; i++)
                 {
-                    for (size_t c       = 0; c < 3; c++)
+                    for (size_t c = 0; c < 3; c++)
                         out_[4 * i + c] = in[6 * i + 2 * c];
                     out_[4 * i + 3] =
                         (infoIn.key_defined &&
@@ -1156,7 +1157,7 @@ png_image decode_png_file_from_memory(const std::vector<uint8_t>& png_file,
                 }
             else if (infoIn.bitDepth == 16 && infoIn.colorType == 6)
                 for (size_t i = 0; i < numpixels; i++)
-                    for (size_t c       = 0; c < 4; c++)
+                    for (size_t c = 0; c < 4; c++)
                         out_[4 * i + c] = in[8 * i + 2 * c]; // RGB with alpha
             else if (infoIn.bitDepth < 8 && infoIn.colorType == 0) // greyscale
                 for (size_t i = 0; i < numpixels; i++)
