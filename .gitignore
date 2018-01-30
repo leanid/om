@@ -10,3 +10,8 @@ tests/*/.*
 tests/06-2-shader-multiply-matrix/cmake-*
 tests/*/cmake-*
 tests/build-*
+tests/11-1-android-port/android-project/.idea/*
+tests/11-1-android-port/android-project/.gradle/*
+tests/11-1-android-port/android-project/local.properties
+tests/11-1-android-port/android-project/app/src/main/jni/SDL2
+tests/11-1-android-port/android-project/app/.externalNativeBuild/ndkBuild/release/x86/ndkBuild_build_output.txt
