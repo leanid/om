@@ -25,6 +25,7 @@
 
 #ifdef __ANDROID__
 #include <SDL.h>
+#include <android/log.h>
 #else
 #include <SDL2/SDL.h>
 #endif
@@ -1588,15 +1589,74 @@ start_game_again:
     return EXIT_SUCCESS;
 }
 
+class android_redirected_buf : public std::streambuf
+{
+public:
+    android_redirected_buf() = default;
+
+private:
+    // This android_redirected_buf buffer has no buffer. So every character
+    // "overflows" and can be put directly into the teed buffers.
+    virtual int overflow(int c)
+    {
+        if (c == EOF)
+        {
+            return !EOF;
+        }
+        else
+        {
+            if (c == '\n')
+            {
+#ifdef __ANDROID__
+                // android log function add '\n' on every print itself
+                __android_log_print(ANDROID_LOG_ERROR, "OM", "%s",
+                                    message.c_str());
+#else
+                std::printf("%s\n", message.c_str()); // TODO test only
+#endif
+                message.clear();
+            }
+            else
+            {
+                message.push_back(static_cast<char>(c));
+            }
+            return c;
+        }
+    }
+
+    virtual int sync() { return 0; }
+
+    std::string message;
+};
+
 int main(int /*argc*/, char* /*argv*/ [])
 {
+    auto cout_buf = std::cout.rdbuf();
+    auto cerr_buf = std::cerr.rdbuf();
+    auto clog_buf = std::clog.rdbuf();
+
+    android_redirected_buf logcat;
+
+    std::cout.rdbuf(&logcat);
+    std::cerr.rdbuf(&logcat);
+    std::clog.rdbuf(&logcat);
+
     try
     {
-        return initialize_and_start_main_loop();
+        int result = initialize_and_start_main_loop();
+        // restore default buffer
+        std::cout.rdbuf(cout_buf);
+        std::cerr.rdbuf(cerr_buf);
+        std::clog.rdbuf(clog_buf);
+        return result;
     }
     catch (std::exception& ex)
     {
         std::cerr << ex.what() << std::endl;
     }
+    // restore default buffer
+    std::cout.rdbuf(cout_buf);
+    std::cerr.rdbuf(cerr_buf);
+    std::clog.rdbuf(clog_buf);
     return EXIT_FAILURE;
 }
