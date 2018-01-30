@@ -4,10 +4,6 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE := main
 
-SDL_PATH := ../SDL2
-
-LOCAL_C_INCLUDES := $(LOCAL_PATH)/$(SDL_PATH)/include
-
 # Add your application source files here...
 LOCAL_SRC_FILES := $(LOCAL_PATH)/../../../../../../om/engine.cxx \
                    $(LOCAL_PATH)/../../../../../../om/imgui.cpp \
@@ -18,7 +14,6 @@ LOCAL_SRC_FILES := $(LOCAL_PATH)/../../../../../../om/engine.cxx \
 LOCAL_SHARED_LIBRARIES := SDL2
 LOCAL_LDLIBS := -lGLESv1_CM -lGLESv2 -llog
 include $(BUILD_SHARED_LIBRARY)
-
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := game

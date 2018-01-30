@@ -194,10 +194,8 @@ void tanks_game::on_render() const
     };
 
     static const std::vector<object_type> render_order = {
-        { object_type::level },
-        { object_type::brick_wall },
-        { object_type::ai_tank },
-        { object_type::user_tank }
+        object_type::level, object_type::brick_wall, object_type::ai_tank,
+        object_type::user_tank
     };
 
     auto it =
