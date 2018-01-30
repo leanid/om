@@ -20,8 +20,14 @@
 #include "imgui.h"
 
 // SDL,GL3W
+#ifdef __ANDROID__
+#include <SDL.h>
+#include <SDL_syswm.h>
+#else
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_syswm.h>
+#endif
+
 
 #include "gles20.hxx"
 //#include <GL/gl3w.h>    // This example is using gl3w to access OpenGL
