@@ -1477,7 +1477,8 @@ int initialize_and_start_main_loop()
         ~start() { om::uninitialize(); }
     } guard;
 
-    std::vector<const char*> lib_names{ "libgame.dll", "libgame.so", "game.so",
+    std::vector<const char*> lib_names{ "libgamed.so", "gamed.so", "libgame.dll",
+                                        "libgame.so", "game.so",
                                         "./build/Debug/libgame.so",
                                         "./build/Debug/libgame.dll" };
 
