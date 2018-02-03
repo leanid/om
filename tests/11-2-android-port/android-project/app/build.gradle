@@ -1,0 +1,47 @@
+apply plugin: 'com.android.application'
+android {
+    compileSdkVersion 16
+    buildToolsVersion "27.0.3"
+
+    defaultConfig {
+        applicationId "org.libsdl.app"
+        minSdkVersion 10
+        targetSdkVersion 12
+
+        // This block is different from the one you use to link Gradle
+	    // to your CMake build script.
+	    externalNativeBuild {
+	        cmake {
+	        // Use the following syntax when passing arguments to variables:
+	        // arguments "-DVAR_NAME=ARGUMENT".
+	        // arguments "-DANDROID_ARM_NEON=TRUE",
+	        // If you're passing multiple arguments to a variable, pass them together:
+	        // arguments "-DVAR_NAME=ARG_1 ARG_2"
+	        // The following line passes 'rtti' and 'exceptions' to 'ANDROID_CPP_FEATURES'.
+	            arguments "-DANDROID_CPP_FEATURES=rtti exceptions",
+	                      "-DANDROID_STL=c++_shared"
+	        }
+	    }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+        }
+    }
+    
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    externalNativeBuild {
+        cmake {
+        	version "3.10.1"
+            path '../../CMakeLists.txt'
+        }
+    }
+}
+
+dependencies {
+}
