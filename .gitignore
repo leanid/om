@@ -19,4 +19,5 @@ tests/11-2-android-port/android-project/.gradle/*
 tests/11-2-android-port/android-project/app/.externalNativeBuild/*
 tests/11-2-android-port/android-project/.idea/*
 tests/11-2-android-port/android-project/local.properties
-tests/11-2-android-port/android-project/app/build/generated/source/buildConfig/debug/org/libsdl/app/BuildConfig.java
+tests/11-2-android-port/android-project/app/build/*
+tests/11-2-android-port/android-project/build/android-profile/profile-2018-02-05-21-22-58-236.json
