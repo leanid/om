@@ -1,20 +1,13 @@
 cmake_minimum_required(VERSION 3.6)
 
-# Adds the CMakeLists.txt file located in the specified directory
-# as a build dependency.
+if(SDL2_SRC_DIR)
 add_subdirectory( # Specifies the directory of the CMakeLists.txt file.
-                  /home/leo/tools/SDL2-2.0.7
-
+                  ${SDL2_SRC_DIR}
                   # Specifies the directory for the build outputs.
-                  /home/leo/tools/SDL2-2.0.7_build )
+                  ${SDL2_BUILD_DIR} )  
+endif()
 
-# Adds the output of the additional CMake build as a prebuilt shared
-# library and names it libSDL2.so.
-#add_library( SDL2 SHARED IMPORTED )
-#set_target_properties( SDL2 PROPERTIES IMPORTED_LOCATION
-#                      /home/leo/tools/SDL2-2.0.7_build/${ANDROID_ABI}/libSDL2.so )
-
-project("11-1-android-port" LANGUAGES CXX)
+project("11-2-android-port" LANGUAGES C CXX)
 
 if(MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
@@ -36,9 +29,6 @@ add_library(engine SHARED om/engine.cxx
                       om/engine.hxx 
                       om/picopng.hxx)
 set_target_properties(engine PROPERTIES ENABLE_EXPORTS TRUE)
-target_include_directories( engine PRIVATE /home/leo/tools/SDL2-2.0.7/include )
-target_link_libraries( engine SDL2 SDL2main )
-#target_compile_features(engine PRIVATE cxx_std_17)
 
 if(WIN32)
   target_compile_definitions(engine PRIVATE "-DOM_DECLSPEC=__declspec(dllexport)")
@@ -57,17 +47,21 @@ if (MINGW)
                #-lstdc++fs # no on linux mingw64 crosscompile failed
                )
 elseif(UNIX)
-    #target_link_libraries(engine
-               #-lSDL2
-               #-lGL
+    if(SDL2_SRC_DIR)
+        target_include_directories( engine PRIVATE ${SDL2_SRC_DIR}/include )
+        target_link_libraries( engine SDL2 SDL2main )
+    else()
+        target_link_libraries(engine
+               -lSDL2
+               -lGL
                #-lstdc++fs
-    #           )
+               )
+    endif()
 endif()
 
 add_library(game SHARED game/game.cxx 
                         game/configuration_loader.hxx
                         game/game_object.hxx)
 target_include_directories(game PRIVATE .)
-#target_compile_features(game PRIVATE cxx_std_17)
 
 target_link_libraries(game engine)

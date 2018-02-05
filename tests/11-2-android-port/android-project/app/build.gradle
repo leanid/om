@@ -3,6 +3,11 @@ android {
     compileSdkVersion 16
     buildToolsVersion "27.0.3"
 
+    Properties properties = new Properties()
+    properties.load(project.rootProject.file('local.properties').newDataInputStream())
+    def sdl2SrcDir = properties.getProperty('sdl2_src.dir') ?: "add sdl2_src.dir in local.properties"
+    def sdl2BuildDir = properties.getProperty('sdl2_build.dir') ?: "add sdl2_build.dir in local.properties"
+
     defaultConfig {
         applicationId "org.libsdl.app"
         minSdkVersion 10
@@ -14,6 +19,8 @@ android {
 	        cmake {
 	        // Use the following syntax when passing arguments to variables:
 	        // arguments "-DVAR_NAME=ARGUMENT".
+                arguments "-DSDL2_SRC_DIR=" + sdl2SrcDir
+                arguments "-DSDL2_BUILD_DIR=" + sdl2BuildDir
 	        // arguments "-DANDROID_ARM_NEON=TRUE",
 	        // If you're passing multiple arguments to a variable, pass them together:
 	        // arguments "-DVAR_NAME=ARG_1 ARG_2"
