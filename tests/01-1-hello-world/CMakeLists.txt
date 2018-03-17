@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.9)
-project(01-hello-world)
+project(01-1-hello-world)
 
 if(MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
