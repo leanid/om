@@ -7,18 +7,18 @@ pipelines:
           - cmake -configure tests/01-1-hello-world/
           - cmake -generate tests/01-1-hello-world/
           - make
-          - ./01-hello-world
+          - ./01-1-hello-world
           
           - git clean -df
           - mingw64-cmake -configure tests/01-1-hello-world/
           - mingw64-cmake -generate tests/01-1-hello-world/
           - mingw64-make
-          #- WINEPATH=/usr/x86_64-w64-mingw32/sys-root/mingw/bin wine ./01-hello-world.exe # too long 30 seconds
+          #- WINEPATH=/usr/x86_64-w64-mingw32/sys-root/mingw/bin wine ./01-1-hello-world.exe # too long 30 seconds
           
           - git clean -df
           - CXX=clang++ cmake -configure tests/01-1-hello-world/
           - CXX=clang++ cmake -generate tests/01-1-hello-world/
-          - ./01-hello-world
+          - ./01-1-hello-world
 
           - git clean -df
           - cmake -configure tests/01-2-hello-lib/
