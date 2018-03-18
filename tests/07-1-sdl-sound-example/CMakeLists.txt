@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.9)
-project(07-add-sound)
+project(07-1-add-sound)
 
 if(MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
@@ -10,10 +10,10 @@ endif()
 
 find_library(SDL2_LIB NAMES SDL2)
 
-add_executable(sound_test audio.c test.c audio.h)
+add_executable(sound_test-07-1 audio.c test.c audio.h)
 
 if (MINGW)
-    target_link_libraries(sound_test
+    target_link_libraries(sound_test-07-1
                -lmingw32
                -lSDL2main
                -lSDL2
@@ -21,7 +21,7 @@ if (MINGW)
                -lopengl32
                )
 elseif(UNIX)
-    target_link_libraries(sound_test
+    target_link_libraries(sound_test-07-1
                -lSDL2
                -lGL
                )
