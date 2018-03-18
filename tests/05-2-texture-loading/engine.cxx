@@ -38,6 +38,7 @@ PFNGLVERTEXATTRIBPOINTERPROC     glVertexAttribPointer     = nullptr;
 PFNGLENABLEVERTEXATTRIBARRAYPROC glEnableVertexAttribArray = nullptr;
 PFNGLGETUNIFORMLOCATIONPROC      glGetUniformLocation      = nullptr;
 PFNGLUNIFORM1IPROC               glUniform1i               = nullptr;
+PFNGLACTIVETEXTUREPROC           glActiveTexture_          = nullptr;
 
 template <typename T>
 static void load_gl_func(const char* func_name, T& result)
@@ -274,6 +275,7 @@ public:
                          glEnableVertexAttribArray);
             load_gl_func("glGetUniformLocation", glGetUniformLocation);
             load_gl_func("glUniform1i", glUniform1i);
+            load_gl_func("glActiveTexture", glActiveTexture_);
         }
         catch (std::exception& ex)
         {
@@ -408,7 +410,7 @@ void main()
         OM_GL_CHECK();
         assert(-1 != location);
         int texture_unit = 0;
-        glActiveTexture(GL_TEXTURE0 + texture_unit);
+        glActiveTexture_(GL_TEXTURE0 + texture_unit);
         OM_GL_CHECK();
 
         if (!load_texture("tank.png"))
@@ -591,8 +593,6 @@ void destroy_engine(engine* e)
     delete e;
 }
 
-engine::~engine()
-{
-}
+engine::~engine() {}
 
 } // end namespace om

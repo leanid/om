@@ -8,7 +8,6 @@
 #include <cstddef>
 #include <cstdlib>
 #include <exception>
-#include <experimental/filesystem>
 #include <fstream>
 #include <iostream>
 #include <iterator>
@@ -77,8 +76,6 @@ static void load_gl_func(const char* func_name, T& result)
 
 namespace om
 {
-
-namespace fs = std::experimental::filesystem;
 
 vec2::vec2()
     : x(0.f)
@@ -170,13 +167,9 @@ matrix operator*(const matrix& m1, const matrix& m2)
     return r;
 }
 
-texture::~texture()
-{
-}
+texture::~texture() {}
 
-vbo::~vbo()
-{
-}
+vbo::~vbo() {}
 
 class vertex_buffer_impl final : public vbo
 {
@@ -358,9 +351,7 @@ sound_buffer_impl::sound_buffer_impl(std::string_view  path,
     }
 }
 
-sound::~sound()
-{
-}
+sound::~sound() {}
 
 sound_buffer_impl::~sound_buffer_impl()
 {
@@ -372,9 +363,7 @@ sound_buffer_impl::~sound_buffer_impl()
     length = 0;
 }
 
-vertex_buffer_impl::~vertex_buffer_impl()
-{
-}
+vertex_buffer_impl::~vertex_buffer_impl() {}
 
 class texture_gl_es20 final : public texture
 {
@@ -405,7 +394,7 @@ class shader_gl_es20
 {
 public:
     shader_gl_es20(
-        std::string_view vertex_src, std::string_view         fragment_src,
+        std::string_view vertex_src, std::string_view fragment_src,
         const std::vector<std::tuple<GLuint, const GLchar*>>& attributes)
     {
         vert_shader = compile_shader(GL_VERTEX_SHADER, vertex_src);
@@ -1440,7 +1429,6 @@ int initialize_and_start_main_loop()
     void* so_handle   = nullptr;
     auto  lib_name_it = std::find_if(
         begin(lib_names), end(lib_names), [&so_handle](const char* lib_name) {
-            if (std::experimental::filesystem::exists(lib_name))
             {
                 om::log << "try loading game from: " << lib_name << std::endl;
                 so_handle = SDL_LoadObject(lib_name);
