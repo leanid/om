@@ -79,14 +79,14 @@ namespace om
 {
 
 static std::array<std::string_view, 17> event_names = {
-    /// input events
-    "left_pressed", "left_released", "right_pressed", "right_released",
-    "up_pressed", "up_released", "down_pressed", "down_released",
-    "select_pressed", "select_released", "start_pressed", "start_released",
-    "button1_pressed", "button1_released", "button2_pressed",
-    "button2_released",
-    /// virtual console events
-    "turn_off"
+    { /// input events
+      "left_pressed", "left_released", "right_pressed", "right_released",
+      "up_pressed", "up_released", "down_pressed", "down_released",
+      "select_pressed", "select_released", "start_pressed", "start_released",
+      "button1_pressed", "button1_released", "button2_pressed",
+      "button2_released",
+      /// virtual console events
+      "turn_off" }
 };
 
 std::ostream& operator<<(std::ostream& stream, const event e)
@@ -145,17 +145,16 @@ struct bind
 };
 
 const std::array<bind, 8> keys{
-    bind{ SDLK_w, "up", event::up_pressed, event::up_released },
-    bind{ SDLK_a, "left", event::left_pressed, event::left_released },
-    bind{ SDLK_s, "down", event::down_pressed, event::down_released },
-    bind{ SDLK_d, "right", event::right_pressed, event::right_released },
-    bind{ SDLK_LCTRL, "button1", event::button1_pressed,
-          event::button1_released },
-    bind{ SDLK_SPACE, "button2", event::button2_pressed,
-          event::button2_released },
-    bind{ SDLK_ESCAPE, "select", event::select_pressed,
-          event::select_released },
-    bind{ SDLK_RETURN, "start", event::start_pressed, event::start_released }
+    { { SDLK_w, "up", event::up_pressed, event::up_released },
+      { SDLK_a, "left", event::left_pressed, event::left_released },
+      { SDLK_s, "down", event::down_pressed, event::down_released },
+      { SDLK_d, "right", event::right_pressed, event::right_released },
+      { SDLK_LCTRL, "button1", event::button1_pressed,
+        event::button1_released },
+      { SDLK_SPACE, "button2", event::button2_pressed,
+        event::button2_released },
+      { SDLK_ESCAPE, "select", event::select_pressed, event::select_released },
+      { SDLK_RETURN, "start", event::start_pressed, event::start_released } }
 };
 
 static bool check_input(const SDL_Event& e, const bind*& result)
@@ -318,7 +317,7 @@ void main()
     gl_FragColor = vec4(1.0, 0.0, 1.0, 1.0);
 }
 )";
-        source = fragment_shader_src.data();
+        source                          = fragment_shader_src.data();
         glShaderSource(fragment_shader, 1, &source, nullptr);
         OM_GL_CHECK();
 
@@ -490,8 +489,6 @@ void destroy_engine(engine* e)
     delete e;
 }
 
-engine::~engine()
-{
-}
+engine::~engine() {}
 
 } // end namespace om

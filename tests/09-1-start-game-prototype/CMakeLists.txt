@@ -1,13 +1,6 @@
 cmake_minimum_required(VERSION 3.9)
 project(09-1-start-game-protorype)
 
-if(MSVC)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17")
-else()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -Werror")
-endif()
-
 add_executable(engine-09-1 om/engine.cxx om/engine.hxx om/picopng.hxx)
 set_target_properties(engine-09-1 PROPERTIES ENABLE_EXPORTS TRUE)
 target_compile_features(engine-09-1 PRIVATE cxx_std_17)
@@ -40,3 +33,13 @@ target_include_directories(game-09-1 PRIVATE .)
 target_compile_features(game-09-1 PRIVATE cxx_std_17)
 
 target_link_libraries(game-09-1 engine-09-1)
+
+if(MSVC)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17")
+elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  # using regular Clang or AppleClang
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+else()
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -Werror")
+endif()

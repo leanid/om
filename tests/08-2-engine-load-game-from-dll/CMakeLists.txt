@@ -1,13 +1,6 @@
 cmake_minimum_required(VERSION 3.9)
 project(08-2-engine-load-game-from-dll)
 
-if(MSVC)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17")
-else()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -Werror")
-endif()
-
 add_executable(engine-08-2 engine.cxx engine.hxx picopng.hxx)
 set_target_properties(engine-08-2 PROPERTIES ENABLE_EXPORTS TRUE)
 target_compile_features(engine-08-2 PUBLIC cxx_std_17)
@@ -37,3 +30,13 @@ add_library(game-08-2 SHARED game.cxx)
 target_compile_features(game-08-2 PUBLIC cxx_std_17)
 
 target_link_libraries(game-08-2 engine-08-2)
+
+if(MSVC)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17")
+elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  # using regular Clang or AppleClang
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+else()
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -Werror")
+endif()

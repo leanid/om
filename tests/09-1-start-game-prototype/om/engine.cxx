@@ -1371,11 +1371,9 @@ int initialize_and_start_main_loop()
         ~start() { om::uninitialize(); }
     } guard;
 
-    std::vector<const char*> lib_names{ { "libgame.dll" },
-                                        { "libgame.so" },
-                                        { "game.so" },
-                                        { "./build/Debug/libgame.so" },
-                                        { "./build/Debug/libgame.dll" } };
+    std::vector<const char*> lib_names{ { "libgame.dll", "libgame.so",
+                                          "game.so", "./build/Debug/libgame.so",
+                                          "./build/Debug/libgame.dll" } };
 
     void* so_handle   = nullptr;
     auto  lib_name_it = std::find_if(
