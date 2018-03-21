@@ -10,7 +10,8 @@ endif()
 add_executable(${PROJECT_NAME} main.cxx)
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 
-find_library(SDL2_LIB libSDL2.a)
+find_library(SDL2_LIB libSDL2.a 
+    HINTS "C:/mingw-w64/x86_64-7.2.0-posix-seh-rt_v5-rev1/mingw64/x86_64-w64-mingw32/lib")
 
 if (MINGW)
     # find out what libraries are needed for staticaly linking with libSDL.a
