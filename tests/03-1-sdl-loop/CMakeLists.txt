@@ -10,7 +10,7 @@ endif()
 add_executable(${PROJECT_NAME} main.cxx)
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 
-find_library(SDL2_LIB libSDL2.a 
+find_library(SDL2_LIB NAMES libSDL2.a SDL2.lib SDL2.dll 
     HINTS "C:/mingw-w64/x86_64-7.2.0-posix-seh-rt_v5-rev1/mingw64/x86_64-w64-mingw32/lib")
 
 if (MINGW)
@@ -57,6 +57,9 @@ elseif(UNIX)
                -lpthread
                -lrt
                )
+elseif(MSVC)
+    find_package(sdl2 REQUIRED)
+    target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2 SDL2::SDL2main)
 endif()
 
 

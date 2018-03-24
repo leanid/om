@@ -57,6 +57,9 @@ elseif(UNIX)
                -lpthread
                -lrt
                )
+elseif(MSVC)
+    find_package(sdl2 REQUIRED)
+    target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2 SDL2::SDL2main)
 endif()
 
 
