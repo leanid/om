@@ -76,7 +76,7 @@ $ brew install cmake
 1. install vcpkg from (https://github.com/Microsoft/vcpkg)
 2. install SDL2 in vcpgk: ```vcpkg install sdl2```
 3. make directory build in om/tests. move into it and there:
-```cmake .. -DCMAKE_TOOLCHAIN_FILE=C:/{YOUR_PATH}/vcpkg/triplets/x64-windows.cmake```
+```cmake .. -DCMAKE_TOOLCHAIN_FILE={YOUR_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake```
 4. build all using:
 ```"C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin\MSBuild.exe" all-tests-build.sln```
 
@@ -89,7 +89,7 @@ $ brew install cmake
 Dockerfile content:
 
 ```sh
-FROM fedora:26
+FROM fedora:27
 
 RUN dnf update -y
 RUN dnf upgrade -y
