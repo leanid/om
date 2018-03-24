@@ -32,13 +32,13 @@ enum class event
     turn_off
 };
 
-std::ostream& OM_DECLSPEC operator<<(std::ostream& stream, const event e);
+OM_DECLSPEC std::ostream& operator<<(std::ostream& stream, const event e);
 
 class engine;
 
 /// return not null on success
-engine* OM_DECLSPEC create_engine();
-void OM_DECLSPEC destroy_engine(engine* e);
+OM_DECLSPEC engine* create_engine();
+OM_DECLSPEC void    destroy_engine(engine* e);
 
 struct vertex
 {
@@ -60,8 +60,8 @@ struct OM_DECLSPEC triangle
     vertex v[3];
 };
 
-std::istream& OM_DECLSPEC operator>>(std::istream& is, vertex&);
-std::istream& OM_DECLSPEC operator>>(std::istream& is, triangle&);
+OM_DECLSPEC std::istream& operator>>(std::istream& is, vertex&);
+OM_DECLSPEC std::istream& operator>>(std::istream& is, triangle&);
 
 class OM_DECLSPEC engine
 {
