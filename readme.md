@@ -54,6 +54,7 @@ $ bin/engine --test
 ```
 
 ### On Mac OS
+#### using g++ from Homebrew (need c++17 support)
 on Mac OS for c++17 compiler you have to install latest gcc from Homebrew and then use it
 ```sh
 $ /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
@@ -62,7 +63,24 @@ $ brew install SDL2
 $ brew install cmake
 ```
 
-### Generate Docker image
+### On Windows
+#### for MinGW 
+1. install MinGW-64 from (http://mingw-w64.sourceforge.net/)
+2. download SDL2 from (https://www.libsdl.org/release/SDL2-devel-2.0.8-mingw.tar.gz)
+3. extract SDL2-devel-2.0.8-mingw.tar.gz into your MinGW-64 installation (lib -> lib, include -> include ...etc.)
+4. install cmake from (https://cmake.org/)
+5. ```cmake -G "MinGW Makefiles" om/tests/```
+6. ```mingw32-make```
+
+#### for Visual Studio (2017 with c++17 support)
+1. install vcpkg from (https://github.com/Microsoft/vcpkg)
+2. install SDL2 in vcpgk: ```vcpkg install sdl2```
+3. make directory build in om/tests. move into it and there:
+```cmake .. -DCMAKE_TOOLCHAIN_FILE=C:/{YOUR_PATH}/vcpkg/triplets/x64-windows.cmake```
+4. build all using:
+```"C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin\MSBuild.exe" all-tests-build.sln```
+
+### Generate Docker image (for bitbucket pipelines)
  - write Dockerfile
  - call ```sudo systemctl start docker```
  - call ```sudo docker build -t leanid/fedora26 .```
