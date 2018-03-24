@@ -78,7 +78,7 @@ $ brew install cmake
 3. make directory build in om/tests. move into it and there:
 ```cmake .. -DCMAKE_TOOLCHAIN_FILE=C:/{YOUR_PATH}/vcpkg/triplets/x64-windows.cmake```
 4. build all using:
-```"C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin\MSBuild.exe" all-tests.sln```
+```"C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin\MSBuild.exe" all-tests-build.sln```
 
 ### Generate Docker image (for bitbucket pipelines)
  - write Dockerfile
