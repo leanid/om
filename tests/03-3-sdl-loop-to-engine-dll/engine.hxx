@@ -32,13 +32,13 @@ enum class event
     turn_off
 };
 
-std::ostream& OM_DECLSPEC operator<<(std::ostream& stream, const event e);
+OM_DECLSPEC std::ostream& operator<<(std::ostream& stream, const event e);
 
 class engine;
 
 /// return not null on success
-engine* OM_DECLSPEC create_engine();
-void OM_DECLSPEC destroy_engine(engine* e);
+OM_DECLSPEC engine* create_engine();
+OM_DECLSPEC void destroy_engine(engine* e);
 
 class OM_DECLSPEC engine
 {

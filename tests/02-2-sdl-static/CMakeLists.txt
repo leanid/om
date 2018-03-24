@@ -10,7 +10,9 @@ endif()
 add_executable(${PROJECT_NAME} main.cxx)
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 
-find_library(SDL2_LIB libSDL2.a)
+#find_package(sdl2 REQUIRED)
+find_library(SDL2_LIB libSDL2.a 
+    HINTS "C:/mingw-w64/x86_64-7.2.0-posix-seh-rt_v5-rev1/mingw64/x86_64-w64-mingw32/lib")
 
 if (MINGW)
     # find out what libraries are needed for staticaly linking with libSDL.a
@@ -23,9 +25,11 @@ if (MINGW)
     #-static-libgcc
     
     target_link_libraries(${PROJECT_NAME} 
+               #SDL2::SDL2-static 
+               #SDL2::SDL2main
                -lmingw32 
                -lSDL2main 
-               "${SDL2_LIB}" # full path to libSDL2.a force to staticaly link with it
+               ${SDL2_LIB} # full path to libSDL2.a force to staticaly link with it
                -mwindows
                -Wl,--no-undefined
                -lm
@@ -79,6 +83,9 @@ elseif(UNIX)
                -lrt
                )
     endif()
+elseif(MSVC)
+    find_package(sdl2 REQUIRED)
+    target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2 SDL2::SDL2main)
 endif()
 
 

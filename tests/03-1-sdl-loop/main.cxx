@@ -16,12 +16,6 @@ std::ostream& operator<<(std::ostream& out, const SDL_version& v)
 
 struct bind
 {
-    bind(SDL_Keycode k, std::string_view s)
-        : key(k)
-        , name(s)
-    {
-    }
-
     SDL_Keycode      key;
     std::string_view name;
 };
@@ -30,14 +24,14 @@ void check_input(const SDL_Event& e)
 {
     using namespace std;
 
-    array<bind, 8> keys{ bind{ SDLK_w, "up" },
-                         bind{ SDLK_a, "left" },
-                         bind{ SDLK_s, "down" },
-                         bind{ SDLK_d, "right" },
-                         bind{ SDLK_LCTRL, "button_one" },
-                         bind{ SDLK_SPACE, "button_two" },
-                         bind{ SDLK_ESCAPE, "select" },
-                         bind{ SDLK_RETURN, "start" } };
+    array<bind, 8> keys{ { { SDLK_w, "up" },
+                           { SDLK_a, "left" },
+                           { SDLK_s, "down" },
+                           { SDLK_d, "right" },
+                           { SDLK_LCTRL, "button_one" },
+                           { SDLK_SPACE, "button_two" },
+                           { SDLK_ESCAPE, "select" },
+                           { SDLK_RETURN, "start" } } };
 
     const auto it = find_if(begin(keys), end(keys), [&](const bind& b) {
         return b.key == e.key.keysym.sym;

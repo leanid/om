@@ -1,13 +1,6 @@
 cmake_minimum_required(VERSION 3.9)
 project(10-1-add-imgui)
 
-if(MSVC)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17")
-else()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -Werror")
-endif()
-
 add_executable(engine-10-1 om/engine.cxx
                       om/imgui_impl_sdl_gl3.cpp
                       om/imgui.cpp
@@ -43,6 +36,9 @@ elseif(UNIX)
                SDL2
                GL
                )
+elseif(MSVC)
+    find_package(sdl2 REQUIRED)
+    target_link_libraries(engine-10-1 PRIVATE SDL2::SDL2 SDL2::SDL2main)
 endif()
 
 add_library(game-10-1 SHARED game/game.cxx 
@@ -52,3 +48,13 @@ target_include_directories(game-10-1 PRIVATE .)
 target_compile_features(game-10-1 PRIVATE cxx_std_17)
 
 target_link_libraries(game-10-1 engine-10-1)
+
+if(MSVC)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17")
+elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  # using regular Clang or AppleClang
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+else()
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -Werror")
+endif()

@@ -28,6 +28,9 @@ elseif(UNIX)
     target_link_libraries(engine-03-3
                -lSDL2
                )
+elseif(MSVC)
+    find_package(sdl2 REQUIRED)
+    target_link_libraries(engine-03-3 PRIVATE SDL2::SDL2 SDL2::SDL2main)
 endif()
 
 add_executable(game-03-3 game.cxx)

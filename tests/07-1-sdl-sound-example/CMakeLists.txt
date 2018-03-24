@@ -25,4 +25,7 @@ elseif(UNIX)
                -lSDL2
                -lGL
                )
+elseif(MSVC)
+    find_package(sdl2 REQUIRED)
+    target_link_libraries(sound_test-07-1 PRIVATE SDL2::SDL2 SDL2::SDL2main)
 endif()
