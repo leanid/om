@@ -26,7 +26,8 @@ elseif(UNIX)
                )
 elseif(MSVC)
     find_package(sdl2 REQUIRED)
-    target_link_libraries(engine-09-1 PRIVATE SDL2::SDL2 SDL2::SDL2main)
+    target_link_libraries(engine-09-1 PRIVATE SDL2::SDL2 SDL2::SDL2main
+                          opengl32)
 endif()
 
 add_library(game-09-1 SHARED game/game.cxx 

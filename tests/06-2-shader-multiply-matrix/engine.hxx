@@ -17,7 +17,7 @@ struct OM_DECLSPEC vec2
     float y = 0;
 };
 
-vec2 OM_DECLSPEC operator+(const vec2& l, const vec2& r);
+OM_DECLSPEC vec2 operator+(const vec2& l, const vec2& r);
 
 struct OM_DECLSPEC mat2x3
 {
@@ -26,13 +26,13 @@ struct OM_DECLSPEC mat2x3
     static mat2x3 scale(float scale);
     static mat2x3 rotation(float thetha);
     static mat2x3 move(const vec2& delta);
-    vec2 col0;
-    vec2 col1;
-    vec2 delta;
+    vec2          col0;
+    vec2          col1;
+    vec2          delta;
 };
 
-vec2 OM_DECLSPEC operator*(const vec2& v, const mat2x3& m);
-mat2x3 OM_DECLSPEC operator*(const mat2x3& m1, const mat2x3& m2);
+OM_DECLSPEC vec2 operator*(const vec2& v, const mat2x3& m);
+OM_DECLSPEC mat2x3 operator*(const mat2x3& m1, const mat2x3& m2);
 
 /// dendy gamepad emulation events
 enum class event
@@ -58,13 +58,13 @@ enum class event
     turn_off
 };
 
-std::ostream& OM_DECLSPEC operator<<(std::ostream& stream, const event e);
+OM_DECLSPEC std::ostream& operator<<(std::ostream& stream, const event e);
 
 class engine;
 
 /// return not null on success
-engine* OM_DECLSPEC create_engine();
-void OM_DECLSPEC destroy_engine(engine* e);
+OM_DECLSPEC engine* create_engine();
+OM_DECLSPEC void    destroy_engine(engine* e);
 
 class OM_DECLSPEC color
 {
@@ -129,15 +129,15 @@ struct OM_DECLSPEC tri2
     v2 v[3];
 };
 
-std::istream& OM_DECLSPEC operator>>(std::istream& is, mat2x3&);
-std::istream& OM_DECLSPEC operator>>(std::istream& is, vec2&);
-std::istream& OM_DECLSPEC operator>>(std::istream& is, color&);
-std::istream& OM_DECLSPEC operator>>(std::istream& is, v0&);
-std::istream& OM_DECLSPEC operator>>(std::istream& is, v1&);
-std::istream& OM_DECLSPEC operator>>(std::istream& is, v2&);
-std::istream& OM_DECLSPEC operator>>(std::istream& is, tri0&);
-std::istream& OM_DECLSPEC operator>>(std::istream& is, tri1&);
-std::istream& OM_DECLSPEC operator>>(std::istream& is, tri2&);
+OM_DECLSPEC std::istream& operator>>(std::istream& is, mat2x3&);
+OM_DECLSPEC std::istream& operator>>(std::istream& is, vec2&);
+OM_DECLSPEC std::istream& operator>>(std::istream& is, color&);
+OM_DECLSPEC std::istream& operator>>(std::istream& is, v0&);
+OM_DECLSPEC std::istream& operator>>(std::istream& is, v1&);
+OM_DECLSPEC std::istream& operator>>(std::istream& is, v2&);
+OM_DECLSPEC std::istream& operator>>(std::istream& is, tri0&);
+OM_DECLSPEC std::istream& operator>>(std::istream& is, tri1&);
+OM_DECLSPEC std::istream& operator>>(std::istream& is, tri2&);
 
 class OM_DECLSPEC texture
 {
@@ -158,15 +158,15 @@ public:
     virtual float get_time_from_init() = 0;
     /// pool event from input queue
     /// return true if more events in queue
-    virtual bool read_input(event& e)                      = 0;
-    virtual texture* create_texture(std::string_view path) = 0;
-    virtual void destroy_texture(texture* t)               = 0;
-    virtual void render(const tri0&, const color&) = 0;
-    virtual void render(const tri1&) = 0;
-    virtual void render(const tri2&, texture*) = 0;
-    virtual void render(const tri2&, texture*, const mat2x3& m) = 0;
-    virtual void swap_buffers() = 0;
-    virtual void uninitialize() = 0;
+    virtual bool     read_input(event& e)                           = 0;
+    virtual texture* create_texture(std::string_view path)          = 0;
+    virtual void     destroy_texture(texture* t)                    = 0;
+    virtual void     render(const tri0&, const color&)              = 0;
+    virtual void     render(const tri1&)                            = 0;
+    virtual void     render(const tri2&, texture*)                  = 0;
+    virtual void     render(const tri2&, texture*, const mat2x3& m) = 0;
+    virtual void     swap_buffers()                                 = 0;
+    virtual void     uninitialize()                                 = 0;
 };
 
 } // end namespace om

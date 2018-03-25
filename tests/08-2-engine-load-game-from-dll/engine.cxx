@@ -1498,6 +1498,8 @@ int initialize_and_start_main_loop()
 
 #if defined(__MINGW32__) || defined(__linux__)
     om_tat_sat_func = "_Z10om_tat_satRN2om6engineE";
+#elif defined(_MSC_VER)
+    om_tat_sat_func = "om_tat_sat::om::engine"; // TODO fix it later
 #else
 #error "add mangled name for your compiler"
 #endif
