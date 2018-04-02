@@ -11,7 +11,7 @@
   
 ### Restrictions for Om Developer
 
-  - Use modern c++17 standard and style from: [CppCoreGuidelines]https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md
+  - Use modern c++17 standard and style from: [CppCoreGuidelines](https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md)
   - Write as simple as possible (KISS principle)
   - Every feature starting from it's test
   - Strong distingues *User* code and *Developer* code, make everything for
@@ -25,7 +25,9 @@
 
 ### Restrictions for Om User
 
-  - Use on::engine only in one thread same thread where create_game called
+  - Use on::engine only in one thread same thread where 
+  ```std::unique_ptr<om::game*> create_game(om::engine& om);``` called
+  
   
 ## File System Structure
 
@@ -96,6 +98,6 @@ we know exactly it will be on *main thread only*
 ## Resource System
 
 First subsystem to implement in engine will be Resource System - async file 
-loading and parse as textures, json, sprites, animations etc...
+loading and parse as textures, json, sprites, animations, sounds, music etc...
 
 TODO...
