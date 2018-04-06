@@ -100,4 +100,17 @@ we know exactly it will be on *main thread only*
 First subsystem to implement in engine will be Resource System - async file 
 loading and parse as textures, json, sprites, animations, sounds, music etc...
 
-TODO...
+### Resource System idea
+
+  - Let's take as much as we can from google open project [fplbase](https://opensource.google.com/projects/fplbase)
+  - Structure of files on disc and type of files let's take from Khronos [glTF](https://github.com/KhronosGroup/glTF)
+  - Yes it is for 3D but we can take only what we need to start with 2d and later add other content
+  - image loader better header only open library, same for sounds and etc.
+
+#### Job System
+
+For *Resource System* we have to implement *Job System* because we need to load resources outside from main thread.
+On main thread user see interaction without any freeze.
+
+
+TODO start from TEST and then implement *Job System* for games, screen loaders, texture stream loader in mind.
