@@ -12,7 +12,12 @@ int main(int /*argc*/, char* /*argv*/ [])
     std::unique_ptr<om::engine, void (*)(om::engine*)> engine(
         om::create_engine(), om::destroy_engine);
 
-    engine->initialize("");
+    std::string err = engine->initialize("");
+    if (!err.empty())
+    {
+        std::cerr << err << std::endl;
+        return EXIT_FAILURE;
+    }
 
     bool continue_loop = true;
     while (continue_loop)

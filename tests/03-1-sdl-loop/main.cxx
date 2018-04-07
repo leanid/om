@@ -24,16 +24,16 @@ void check_input(const SDL_Event& e)
 {
     using namespace std;
 
-    array<bind, 8> keys{ { { SDLK_w, "up" },
-                           { SDLK_a, "left" },
-                           { SDLK_s, "down" },
-                           { SDLK_d, "right" },
-                           { SDLK_LCTRL, "button_one" },
-                           { SDLK_SPACE, "button_two" },
-                           { SDLK_ESCAPE, "select" },
-                           { SDLK_RETURN, "start" } } };
+    array<::bind, 8> keys{ { { SDLK_w, "up" },
+                             { SDLK_a, "left" },
+                             { SDLK_s, "down" },
+                             { SDLK_d, "right" },
+                             { SDLK_LCTRL, "button_one" },
+                             { SDLK_SPACE, "button_two" },
+                             { SDLK_ESCAPE, "select" },
+                             { SDLK_RETURN, "start" } } };
 
-    const auto it = find_if(begin(keys), end(keys), [&](const bind& b) {
+    const auto it = find_if(begin(keys), end(keys), [&](const ::bind& b) {
         return b.key == e.key.keysym.sym;
     });
 

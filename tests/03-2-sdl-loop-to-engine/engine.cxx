@@ -132,7 +132,6 @@ public:
         return "";
     }
     /// pool event from input queue
-    /// return true if more events in queue
     bool read_input(event& e) final
     {
         using namespace std;
