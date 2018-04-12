@@ -20,7 +20,7 @@ struct OM_DECLSPEC vec2
     float y = 0;
 };
 
-vec2 OM_DECLSPEC operator+(const vec2& l, const vec2& r);
+OM_DECLSPEC vec2 operator+(const vec2& l, const vec2& r);
 
 struct OM_DECLSPEC matrix
 {
@@ -30,13 +30,13 @@ struct OM_DECLSPEC matrix
     static matrix scale(float sx, float sy);
     static matrix rotation(float thetha);
     static matrix move(const vec2& delta);
-    vec2 row0;
-    vec2 row1;
-    vec2 row2;
+    vec2          row0;
+    vec2          row1;
+    vec2          row2;
 };
 
-vec2 OM_DECLSPEC operator*(const vec2& v, const matrix& m);
-matrix OM_DECLSPEC operator*(const matrix& m1, const matrix& m2);
+OM_DECLSPEC vec2 operator*(const vec2& v, const matrix& m);
+OM_DECLSPEC matrix operator*(const matrix& m1, const matrix& m2);
 
 /// Dendy gamepad emulation events
 enum class event_type
@@ -71,8 +71,8 @@ struct hardware_data
 struct event
 {
     std::variant<input_data, hardware_data> info;
-    double     timestamp;
-    event_type type;
+    double                                  timestamp;
+    event_type                              type;
 };
 
 class OM_DECLSPEC color
@@ -104,15 +104,15 @@ struct OM_DECLSPEC vertex
     color c;
 };
 
-std::ostream& OM_DECLSPEC operator<<(std::ostream& stream, const input_data&);
-std::ostream& OM_DECLSPEC operator<<(std::ostream& stream,
+OM_DECLSPEC std::ostream& operator<<(std::ostream& stream, const input_data&);
+OM_DECLSPEC std::ostream& operator<<(std::ostream& stream,
                                      const hardware_data&);
-std::ostream& OM_DECLSPEC operator<<(std::ostream& stream, const event e);
+OM_DECLSPEC std::ostream& operator<<(std::ostream& stream, const event e);
 
-std::istream& OM_DECLSPEC operator>>(std::istream& is, matrix&);
-std::istream& OM_DECLSPEC operator>>(std::istream& is, vec2&);
-std::istream& OM_DECLSPEC operator>>(std::istream& is, color&);
-std::istream& OM_DECLSPEC operator>>(std::istream& is, vertex&);
+OM_DECLSPEC std::istream& operator>>(std::istream& is, matrix&);
+OM_DECLSPEC std::istream& operator>>(std::istream& is, vec2&);
+OM_DECLSPEC std::istream& operator>>(std::istream& is, color&);
+OM_DECLSPEC std::istream& operator>>(std::istream& is, vertex&);
 
 class OM_DECLSPEC texture
 {
@@ -146,33 +146,33 @@ public:
     virtual void stop()             = 0;
 };
 
-struct window_mode
+struct OM_DECLSPEC window_mode
 {
     size_t width         = 640;
     size_t heigth        = 480;
     bool   is_fullscreen = false;
 };
 
-void OM_DECLSPEC initialize(std::string_view   title,
+OM_DECLSPEC void initialize(std::string_view   title,
                             const window_mode& desired_window_mode);
 
-window_mode OM_DECLSPEC get_current_window_mode();
+OM_DECLSPEC window_mode get_current_window_mode();
 
 /// return seconds from initialization
-float OM_DECLSPEC get_time_from_init();
+OM_DECLSPEC float get_time_from_init();
 
-bool OM_DECLSPEC pool_event(event& e);
+OM_DECLSPEC bool pool_event(event& e);
 
-bool OM_DECLSPEC is_key_down(const enum keys);
+OM_DECLSPEC bool is_key_down(const enum keys);
 
-texture* OM_DECLSPEC create_texture(std::string_view path);
-void OM_DECLSPEC destroy_texture(texture* t);
+OM_DECLSPEC texture* create_texture(std::string_view path);
+OM_DECLSPEC void     destroy_texture(texture* t);
 
-vbo* OM_DECLSPEC create_vbo(const vertex*, std::size_t);
-void OM_DECLSPEC destroy_vbo(vbo*);
+OM_DECLSPEC vbo* create_vbo(const vertex*, std::size_t);
+OM_DECLSPEC void destroy_vbo(vbo*);
 
-sound* OM_DECLSPEC create_sound(std::string_view path);
-void OM_DECLSPEC destroy_sound(sound*);
+OM_DECLSPEC sound* create_sound(std::string_view path);
+OM_DECLSPEC void   destroy_sound(sound*);
 
 enum class primitives
 {
@@ -184,10 +184,10 @@ enum class primitives
     trianglfan
 };
 
-void OM_DECLSPEC render(const enum primitives, const vbo&, const texture*,
+OM_DECLSPEC void render(const primitives, const vbo&, const texture*,
                         const matrix&);
 
-void OM_DECLSPEC exit(int return_code);
+OM_DECLSPEC void exit(int return_code);
 
 extern OM_DECLSPEC std::ostream& log;
 

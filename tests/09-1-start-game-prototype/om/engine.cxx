@@ -799,7 +799,7 @@ static const std::array<GLenum, 6> primitive_types = {
       GL_TRIANGLE_FAN }
 };
 
-void render(const enum primitives primitive_type, const vbo& buff,
+void render(const primitives primitive_type, const vbo& buff,
             const texture* tex, const matrix& m)
 {
     shader03->use();
@@ -1404,6 +1404,8 @@ int initialize_and_start_main_loop()
 
 #if defined(__MINGW32__) || defined(__linux__)
     om_tat_sat_func = "_Z10om_tat_satv";
+#elif defined(_MSC_VER)
+    om_tat_sat_func = "om_tat_sat::om::engine"; // TODO fix it later
 #else
 #error "add mangled name for your compiler"
 #endif

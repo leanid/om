@@ -40,7 +40,7 @@ class engine;
 OM_DECLSPEC engine* create_engine();
 OM_DECLSPEC void    destroy_engine(engine* e);
 
-struct vertex
+struct OM_DECLSPEC vertex
 {
     vertex()
         : x(0.f)
