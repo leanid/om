@@ -10,7 +10,7 @@ FREE=`df -k --output=avail "$PWD" | tail -n1`
 pacman -Suy --noconfirm 
 
 if [[ $FREE -lt 2350000 ]]; then
-     echo -e ${RED}"Not enough free space om current disk. Quitting"${NC}
+     echo -e ${RED}"Not enough free space at current disk. Quitting"${NC}
 	 exit 2
 fi;
 
@@ -25,7 +25,7 @@ do
 done
  
 if [ ! -d ~/om ]; then
-  echo -e ${RED}"Directory ~/om doesn't exists Quitting"${NC}
+  echo -e ${RED}"Directory ~/om doesn't exist. Quitting"${NC}
   exit 3
 fi
   
