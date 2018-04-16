@@ -84,13 +84,13 @@ $ brew install cmake
 #### On Windows
 1. download MSYS2 from (https://www.msys2.org)
 2. set-up and update MSYS2 following the instructions on web-page
-  - set-up in default folder (i.e. C:/msys64)
-  - during update system may note that "msys2-runtime and catgets conflicts", feel free to remove catgets and libcatgets.
-  - on some systems installation may hung up after terminate request. kill the process and restart update.
+ - set-up in default folder (i.e. C:/msys64)
+ - during update system may note that "msys2-runtime and catgets conflicts", feel free to remove catgets and libcatgets.
+ - on some systems installation may hung up after terminate request. kill the process and restart update.
 3. update is a MUST!
 4. close the window and start MSYS MinGw 64-bit from start menu, or C:/msys64/mingw64.exe
 5. install git for MSYS2:
-  - type "pacman -S git --noconfirm --needed" at MSYS2 terminal
+ - type "pacman -S git --noconfirm --needed" at MSYS2 terminal
 6. clone this repo with command "git clone https://bitbucket.org/b_y/om.git"
 7. run bash's script with "~/om/om-build.sh"
 
