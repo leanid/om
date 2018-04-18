@@ -81,18 +81,31 @@ $ brew install cmake
 ```"C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin\MSBuild.exe" all-tests-build.sln```
 
 ### Building
-#### On Windows
-1. download MSYS2 from (https://www.msys2.org)
-2. set-up and update MSYS2 following the instructions on web-page:
+#### On Windows using MSYS2
+1. install cmake from (https://cmake.org/download/), if you haven't done this before.
+    - while installing, check the "add Cmake to the system PATH for all users" option.
+    - make sure that you have ".../Cmake/bin" in your system PATH.
+2. install git from (https://git-scm.com/download/win), if you haven't done this before.
+    - while installing, check the "use git from the windows command prompt" option.
+    - make sure that you have ".../Git/cmd" in your system PATH.
+3. download MSYS2 from (https://www.msys2.org)
+4. set-up and update MSYS2 following the instructions on web-page:
     - set-up in default folder (i.e. C:/msys64)
     - during update system may note that "msys2-runtime and catgets conflicts", feel free to remove catgets and libcatgets.
     - on some systems installation may hung up after terminate request. kill the process and restart update.
-3. update is a MUST!
-4. close the window and start MSYS MinGw 64-bit from start menu, or C:/msys64/mingw64.exe
-5. install git for MSYS2:
-    - type "pacman -S git --noconfirm --needed" at MSYS2 terminal
-6. clone this repo with command "git clone https://bitbucket.org/b_y/om.git"
-7. run bash's script with "~/om/om-build.sh"
+5. update is a MUST!
+6. close all MSYS2 launchers.
+7. add new environment variable names MSYS2_PATH_TYPE with value inherit.
+8. start MSYS MinGw 64-bit from start menu, or C:/msys64/mingw64.exe
+9. clone repo with "git clone https://bitbucket.org/b_y/om.git"
+10-A. build the project with MSYS2 bash's script with "~/om/om-build.sh"
+10-B. build the project manual:
+    - pacman -S base-devel mingw-w64-x86_64-toolchain mingw-w64-x86_64-SDL2
+    - cd ~/om 
+    - mkdir build 
+    - cd build 
+    - cmake ../tests -G "MSYS Makefiles" 
+    - cmake --build .
 
 ### Generate Docker image (for bitbucket pipelines)
  - write Dockerfile

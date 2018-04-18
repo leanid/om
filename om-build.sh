@@ -4,7 +4,7 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
-declare -a arr=("base-devel" "git" "mingw-w64-x86_64-toolchain" "cmake" "mingw-w64-x86_64-SDL2")
+declare -a arr=("base-devel" "mingw-w64-x86_64-toolchain" "mingw-w64-x86_64-SDL2")
 FREE=`df -k --output=avail "$PWD" | tail -n1`
 
 pacman -Suy --noconfirm 
@@ -32,6 +32,6 @@ fi
 cd ~/om 
 mkdir build 
 cd build 
-cmake ../tests -DCMAKE_SYSTEM_NAME="MSYS" 
+cmake ../tests -G "MSYS Makefiles" 
 cmake --build . 
 exit 0 
