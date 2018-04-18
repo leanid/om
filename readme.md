@@ -98,8 +98,9 @@ $ brew install cmake
 7. add new environment variable names MSYS2_PATH_TYPE with value inherit.
 8. start MSYS MinGw 64-bit from start menu, or C:/msys64/mingw64.exe
 9. clone repo with "git clone https://bitbucket.org/b_y/om.git"
-10-A. build the project with MSYS2 bash's script with "~/om/om-build.sh"
-10-B. build the project manual:
+10. build the project:
+    1. with MSYS2 bash's script with "~/om/om-build.sh"
+    2. build the project manual:
     - pacman -S base-devel mingw-w64-x86_64-toolchain mingw-w64-x86_64-SDL2
     - cd ~/om 
     - mkdir build 
