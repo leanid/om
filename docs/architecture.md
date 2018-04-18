@@ -106,6 +106,10 @@ loading and parse as textures, json, sprites, animations, sounds, music etc...
   - Structure of files on disc and type of files let's take from Khronos [glTF](https://github.com/KhronosGroup/glTF)
   - Yes it is for 3D but we can take only what we need to start with 2d and later add other content
   - image loader better header only open library, same for sounds and etc.
+  
+  1. Scanner - filesystem scanner. Build in memory DB with information about every directory and files within `assets` directory during game startup.
+  2. JobsQueue - execute separate jobs outside main thread.
+  3. AsyncLoader - load resources from disc and show percentage of execution
 
 #### Job System
 
