@@ -263,7 +263,7 @@ png_image decode_png_file_from_memory(const std::vector<uint8_t>& png_file,
                 codelengthcodetree; // the code tree for Huffman codes, dist
                                     // codes, and code length codes
             uint32_t huffmanDecodeSymbol(const uint8_t* in, size_t& bp,
-                                         const HuffmanTree& codetree,
+                                         const HuffmanTree& codetree_,
                                          size_t             inlength)
             { // decode a single symbol from given list of bits with given code
                 // tree. return value is the symbol
@@ -276,14 +276,13 @@ png_image decode_png_file_from_memory(const std::vector<uint8_t>& png_file,
                         error = 10;
                         return 0;
                     } // error: end reached without endcode
-                    error = codetree.decode(decoded, ct, treepos,
+                    error = codetree_.decode(decoded, ct, treepos,
                                             readBitFromStream(bp, in));
                     if (error)
                         return 0; // stop, an error happened
                     if (decoded)
                         return ct;
                 }
-                return 0;
             }
             void getTreeInflateDynamic(HuffmanTree& tree, HuffmanTree& treeD,
                                        const uint8_t* in, size_t& bp,
@@ -1060,14 +1059,14 @@ png_image decode_png_file_from_memory(const std::vector<uint8_t>& png_file,
             else
                 return 31; // unexisting color type
         }
-        uint32_t getBpp(const Info& info)
+        uint32_t getBpp(const Info& info_)
         {
-            if (info.colorType == 2)
-                return (3 * info.bitDepth);
-            else if (info.colorType >= 4)
-                return (info.colorType - 2) * info.bitDepth;
+            if (info_.colorType == 2)
+                return (3 * info_.bitDepth);
+            else if (info_.colorType >= 4)
+                return (info_.colorType - 2) * info_.bitDepth;
             else
-                return info.bitDepth;
+                return info_.bitDepth;
         }
         int convert(std::vector<uint8_t>& out, const uint8_t* in, Info& infoIn,
                     uint32_t w, uint32_t h)
