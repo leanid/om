@@ -23,8 +23,8 @@
 // dynamically from OpenGL library
 // so first declare function pointers for all we need
 static PFNGLCREATESHADERPROC             glCreateShader             = nullptr;
-static PFNGLSHADERSOURCEARBPROC          glShaderSource             = nullptr;
-static PFNGLCOMPILESHADERARBPROC         glCompileShader            = nullptr;
+static PFNGLSHADERSOURCEPROC             glShaderSource             = nullptr;
+static PFNGLCOMPILESHADERPROC            glCompileShader            = nullptr;
 static PFNGLGETSHADERIVPROC              glGetShaderiv              = nullptr;
 static PFNGLGETSHADERINFOLOGPROC         glGetShaderInfoLog         = nullptr;
 static PFNGLDELETESHADERPROC             glDeleteShader             = nullptr;
@@ -87,9 +87,7 @@ static void load_gl_func(const char* func_name, T& result)
 namespace om
 {
 
-texture::~texture()
-{
-}
+texture::~texture() {}
 
 class texture_gl_es20 final : public texture
 {
@@ -117,7 +115,7 @@ class shader_gl_es20
 {
 public:
     shader_gl_es20(
-        std::string_view vertex_src, std::string_view         fragment_src,
+        std::string_view vertex_src, std::string_view fragment_src,
         const std::vector<std::tuple<GLuint, const GLchar*>>& attributes)
     {
         vert_shader = compile_shader(GL_VERTEX_SHADER, vertex_src);
@@ -679,9 +677,7 @@ void color::set_a(const float a)
     rgba |= a_ << 24;
 }
 
-engine::~engine()
-{
-}
+engine::~engine() {}
 
 texture_gl_es20::texture_gl_es20(std::string_view path)
     : file_path(path)

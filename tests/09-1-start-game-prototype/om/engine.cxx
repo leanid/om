@@ -30,8 +30,8 @@
 // dynamically from OpenGL library
 // so first declare function pointers for all we need
 static PFNGLCREATESHADERPROC             glCreateShader             = nullptr;
-static PFNGLSHADERSOURCEARBPROC          glShaderSource             = nullptr;
-static PFNGLCOMPILESHADERARBPROC         glCompileShader            = nullptr;
+static PFNGLSHADERSOURCEPROC             glShaderSource             = nullptr;
+static PFNGLCOMPILESHADERPROC            glCompileShader            = nullptr;
 static PFNGLGETSHADERIVPROC              glGetShaderiv              = nullptr;
 static PFNGLGETSHADERINFOLOGPROC         glGetShaderInfoLog         = nullptr;
 static PFNGLDELETESHADERPROC             glDeleteShader             = nullptr;

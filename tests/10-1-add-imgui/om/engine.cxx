@@ -30,8 +30,8 @@
 #include "imgui_impl_sdl_gl3.h"
 
 PFNGLCREATESHADERPROC             glCreateShader             = nullptr;
-PFNGLSHADERSOURCEARBPROC          glShaderSource             = nullptr;
-PFNGLCOMPILESHADERARBPROC         glCompileShader            = nullptr;
+PFNGLSHADERSOURCEPROC             glShaderSource             = nullptr;
+PFNGLCOMPILESHADERPROC            glCompileShader            = nullptr;
 PFNGLGETSHADERIVPROC              glGetShaderiv              = nullptr;
 PFNGLGETSHADERINFOLOGPROC         glGetShaderInfoLog         = nullptr;
 PFNGLDELETESHADERPROC             glDeleteShader             = nullptr;

@@ -24,8 +24,8 @@
 // dynamically from OpenGL library
 // so first declare function pointers for all we need
 static PFNGLCREATESHADERPROC             glCreateShader             = nullptr;
-static PFNGLSHADERSOURCEARBPROC          glShaderSource             = nullptr;
-static PFNGLCOMPILESHADERARBPROC         glCompileShader            = nullptr;
+static PFNGLSHADERSOURCEPROC             glShaderSource             = nullptr;
+static PFNGLCOMPILESHADERPROC            glCompileShader            = nullptr;
 static PFNGLGETSHADERIVPROC              glGetShaderiv              = nullptr;
 static PFNGLGETSHADERINFOLOGPROC         glGetShaderInfoLog         = nullptr;
 static PFNGLDELETESHADERPROC             glDeleteShader             = nullptr;
@@ -179,13 +179,9 @@ mat2x3 operator*(const mat2x3& m1, const mat2x3& m2)
     return r;
 }
 
-texture::~texture()
-{
-}
+texture::~texture() {}
 
-vertex_buffer::~vertex_buffer()
-{
-}
+vertex_buffer::~vertex_buffer() {}
 
 class vertex_buffer_impl final : public vertex_buffer
 {
@@ -208,9 +204,7 @@ private:
     std::vector<tri2> triangles;
 };
 
-vertex_buffer_impl::~vertex_buffer_impl()
-{
-}
+vertex_buffer_impl::~vertex_buffer_impl() {}
 
 class texture_gl_es20 final : public texture
 {
@@ -238,7 +232,7 @@ class shader_gl_es20
 {
 public:
     shader_gl_es20(
-        std::string_view vertex_src, std::string_view         fragment_src,
+        std::string_view vertex_src, std::string_view fragment_src,
         const std::vector<std::tuple<GLuint, const GLchar*>>& attributes)
     {
         vert_shader = compile_shader(GL_VERTEX_SHADER, vertex_src);
@@ -922,9 +916,7 @@ void color::set_a(const float a)
     rgba |= a_ << 24;
 }
 
-engine::~engine()
-{
-}
+engine::~engine() {}
 
 texture_gl_es20::texture_gl_es20(std::string_view path)
     : file_path(path)
