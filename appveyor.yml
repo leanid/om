@@ -16,7 +16,7 @@ before_build:
   - cmake -DCMAKE_TOOLCHAIN_FILE=c:/tools/vcpkg/scripts/buildsystems/vcpkg.cmake -G "Visual Studio 15 2017 Win64" tests
 
 build:
-  project: $(APPVEYOR_BUILD_FOLDER)\tests.sln
+  project: $(APPVEYOR_BUILD_FOLDER)\all-tests-build.sln
 
 test_script:
   - '%APPVEYOR_BUILD_FOLDER%\%CONFIGURATION%\01-1-hello-world.exe'
