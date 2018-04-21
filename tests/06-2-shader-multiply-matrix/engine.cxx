@@ -865,9 +865,9 @@ texture_gl_es20::texture_gl_es20(std::string_view path)
 
     GLint   mipmap_level = 0;
     GLint   border       = 0;
-    GLsizei width        = static_cast<GLsizei>(w);
-    GLsizei height       = static_cast<GLsizei>(h);
-    glTexImage2D(GL_TEXTURE_2D, mipmap_level, GL_RGBA, width, height, border,
+    GLsizei width_        = static_cast<GLsizei>(w);
+    GLsizei height_       = static_cast<GLsizei>(h);
+    glTexImage2D(GL_TEXTURE_2D, mipmap_level, GL_RGBA, width_, height_, border,
                  GL_RGBA, GL_UNSIGNED_BYTE, &image[0]);
     OM_GL_CHECK();
 

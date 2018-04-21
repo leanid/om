@@ -333,7 +333,7 @@ private:
             glGetShaderiv(shader_id, GL_INFO_LOG_LENGTH, &info_len);
             OM_GL_CHECK();
             std::vector<char> info_chars(static_cast<size_t>(info_len));
-            glGetShaderInfoLog(shader_id, info_len, NULL, info_chars.data());
+            glGetShaderInfoLog(shader_id, info_len, nullptr, info_chars.data());
             OM_GL_CHECK();
             glDeleteShader(shader_id);
             OM_GL_CHECK();
@@ -962,9 +962,9 @@ texture_gl_es20::texture_gl_es20(std::string_view path)
 
     GLint   mipmap_level = 0;
     GLint   border       = 0;
-    GLsizei width        = static_cast<GLsizei>(w);
-    GLsizei height       = static_cast<GLsizei>(h);
-    glTexImage2D(GL_TEXTURE_2D, mipmap_level, GL_RGBA, width, height, border,
+    GLsizei width_        = static_cast<GLsizei>(w);
+    GLsizei height_       = static_cast<GLsizei>(h);
+    glTexImage2D(GL_TEXTURE_2D, mipmap_level, GL_RGBA, width_, height_, border,
                  GL_RGBA, GL_UNSIGNED_BYTE, &image[0]);
     OM_GL_CHECK();
 

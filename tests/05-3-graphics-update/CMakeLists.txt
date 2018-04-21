@@ -1,13 +1,6 @@
 cmake_minimum_required(VERSION 3.9)
 project(05-3-texture-loading)
 
-if(MSVC)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17")
-else()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -Werror")
-endif()
-
 add_library(engine-05-3 SHARED engine.cxx)
 target_compile_features(engine-05-3 PUBLIC cxx_std_17)
 
@@ -40,3 +33,9 @@ add_executable(game-05-3 game.cxx)
 target_compile_features(game-05-3 PUBLIC cxx_std_17)
 
 target_link_libraries(game-05-3 engine-05-3)
+
+if(MSVC)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /WX /std:c++17")
+else()
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -Werror")
+endif()
