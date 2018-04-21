@@ -19,6 +19,6 @@ build:
   project: $(APPVEYOR_BUILD_FOLDER)\all-tests-build.sln
 
 test_script:
-  - '%APPVEYOR_BUILD_FOLDER%\%CONFIGURATION%\01-1-hello-world.exe'
+  - '%APPVEYOR_BUILD_FOLDER%\01-1-hello-world\%CONFIGURATION%\01-1-hello-world.exe'
 
 cache: c:\tools\vcpkg\installed\
