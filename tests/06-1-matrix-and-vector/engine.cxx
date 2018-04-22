@@ -24,8 +24,8 @@
 // dynamically from OpenGL library
 // so first declare function pointers for all we need
 static PFNGLCREATESHADERPROC             glCreateShader             = nullptr;
-static PFNGLSHADERSOURCEARBPROC          glShaderSource             = nullptr;
-static PFNGLCOMPILESHADERARBPROC         glCompileShader            = nullptr;
+static PFNGLSHADERSOURCEPROC             glShaderSource             = nullptr;
+static PFNGLCOMPILESHADERPROC            glCompileShader            = nullptr;
 static PFNGLGETSHADERIVPROC              glGetShaderiv              = nullptr;
 static PFNGLGETSHADERINFOLOGPROC         glGetShaderInfoLog         = nullptr;
 static PFNGLDELETESHADERPROC             glDeleteShader             = nullptr;
@@ -159,9 +159,7 @@ mat2 operator*(const mat2& m1, const mat2& m2)
     return r;
 }
 
-texture::~texture()
-{
-}
+texture::~texture() {}
 
 class texture_gl_es20 final : public texture
 {
@@ -189,7 +187,7 @@ class shader_gl_es20
 {
 public:
     shader_gl_es20(
-        std::string_view vertex_src, std::string_view         fragment_src,
+        std::string_view vertex_src, std::string_view fragment_src,
         const std::vector<std::tuple<GLuint, const GLchar*>>& attributes)
     {
         vert_shader = compile_shader(GL_VERTEX_SHADER, vertex_src);
@@ -760,9 +758,7 @@ void color::set_a(const float a)
     rgba |= a_ << 24;
 }
 
-engine::~engine()
-{
-}
+engine::~engine() {}
 
 texture_gl_es20::texture_gl_es20(std::string_view path)
     : file_path(path)
@@ -808,9 +804,9 @@ texture_gl_es20::texture_gl_es20(std::string_view path)
 
     GLint   mipmap_level = 0;
     GLint   border       = 0;
-    GLsizei width        = static_cast<GLsizei>(w);
-    GLsizei height       = static_cast<GLsizei>(h);
-    glTexImage2D(GL_TEXTURE_2D, mipmap_level, GL_RGBA, width, height, border,
+    GLsizei width_        = static_cast<GLsizei>(w);
+    GLsizei height_       = static_cast<GLsizei>(h);
+    glTexImage2D(GL_TEXTURE_2D, mipmap_level, GL_RGBA, width_, height_, border,
                  GL_RGBA, GL_UNSIGNED_BYTE, &image[0]);
     OM_GL_CHECK();
 

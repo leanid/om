@@ -26,8 +26,8 @@
 // dynamically from OpenGL library
 // so first declare function pointers for all we need
 static PFNGLCREATESHADERPROC             glCreateShader             = nullptr;
-static PFNGLSHADERSOURCEARBPROC          glShaderSource             = nullptr;
-static PFNGLCOMPILESHADERARBPROC         glCompileShader            = nullptr;
+static PFNGLSHADERSOURCEPROC             glShaderSource             = nullptr;
+static PFNGLCOMPILESHADERPROC            glCompileShader            = nullptr;
 static PFNGLGETSHADERIVPROC              glGetShaderiv              = nullptr;
 static PFNGLGETSHADERINFOLOGPROC         glGetShaderInfoLog         = nullptr;
 static PFNGLDELETESHADERPROC             glDeleteShader             = nullptr;
@@ -182,13 +182,9 @@ mat2x3 operator*(const mat2x3& m1, const mat2x3& m2)
     return r;
 }
 
-texture::~texture()
-{
-}
+texture::~texture() {}
 
-vertex_buffer::~vertex_buffer()
-{
-}
+vertex_buffer::~vertex_buffer() {}
 
 class vertex_buffer_impl final : public vertex_buffer
 {
@@ -205,7 +201,7 @@ public:
     ~vertex_buffer_impl() final;
 
     const v2*      data() const final { return &triangles.data()->v[0]; }
-    virtual size_t size() const final { return triangles.size() * 3; }
+    size_t size() const final { return triangles.size() * 3; }
 
 private:
     std::vector<tri2> triangles;
@@ -213,7 +209,7 @@ private:
 
 static std::string_view get_sound_format_name(uint16_t format_value)
 {
-    static const std::map<uint16_t, std::string_view> format = {
+    static const std::map<int, std::string_view> format = {
         { AUDIO_U8, "AUDIO_U8" },         { AUDIO_S8, "AUDIO_S8" },
         { AUDIO_U16LSB, "AUDIO_U16LSB" }, { AUDIO_S16LSB, "AUDIO_S16LSB" },
         { AUDIO_U16MSB, "AUDIO_U16MSB" }, { AUDIO_S16MSB, "AUDIO_S16MSB" },
@@ -227,7 +223,7 @@ static std::string_view get_sound_format_name(uint16_t format_value)
 
 static std::size_t get_sound_format_size(uint16_t format_value)
 {
-    static const std::map<uint16_t, std::size_t> format = {
+    static const std::map<int, std::size_t> format = {
         { AUDIO_U8, 1 },     { AUDIO_S8, 1 },     { AUDIO_U16LSB, 2 },
         { AUDIO_S16LSB, 2 }, { AUDIO_U16MSB, 2 }, { AUDIO_S16MSB, 2 },
         { AUDIO_S32LSB, 4 }, { AUDIO_S32MSB, 4 }, { AUDIO_F32LSB, 4 },
@@ -335,9 +331,7 @@ sound_buffer_impl::sound_buffer_impl(std::string_view  path,
     }
 }
 
-sound_buffer::~sound_buffer()
-{
-}
+sound_buffer::~sound_buffer() {}
 
 sound_buffer_impl::~sound_buffer_impl()
 {
@@ -349,9 +343,7 @@ sound_buffer_impl::~sound_buffer_impl()
     length = 0;
 }
 
-vertex_buffer_impl::~vertex_buffer_impl()
-{
-}
+vertex_buffer_impl::~vertex_buffer_impl() {}
 
 class texture_gl_es20 final : public texture
 {
@@ -382,7 +374,7 @@ class shader_gl_es20
 {
 public:
     shader_gl_es20(
-        std::string_view vertex_src, std::string_view         fragment_src,
+        std::string_view vertex_src, std::string_view fragment_src,
         const std::vector<std::tuple<GLuint, const GLchar*>>& attributes)
     {
         vert_shader = compile_shader(GL_VERTEX_SHADER, vertex_src);
@@ -1072,9 +1064,7 @@ void color::set_a(const float a)
     rgba |= a_ << 24;
 }
 
-engine::~engine()
-{
-}
+engine::~engine() {}
 
 texture_gl_es20::texture_gl_es20(std::string_view path)
     : file_path(path)
@@ -1118,9 +1108,9 @@ texture_gl_es20::texture_gl_es20(std::string_view path)
 
     GLint   mipmap_level = 0;
     GLint   border       = 0;
-    GLsizei width        = static_cast<GLsizei>(img.width);
-    GLsizei height       = static_cast<GLsizei>(img.height);
-    glTexImage2D(GL_TEXTURE_2D, mipmap_level, GL_RGBA, width, height, border,
+    GLsizei width_       = static_cast<GLsizei>(img.width);
+    GLsizei height_      = static_cast<GLsizei>(img.height);
+    glTexImage2D(GL_TEXTURE_2D, mipmap_level, GL_RGBA, width_, height_, border,
                  GL_RGBA, GL_UNSIGNED_BYTE, &img.raw_image[0]);
     OM_GL_CHECK();
 
@@ -1433,7 +1423,7 @@ void engine_impl::audio_callback(void* engine_ptr, uint8_t* stream,
                                  int stream_size)
 {
     // no sound default
-    std::fill_n(stream, stream_size, 0);
+    std::fill_n(stream, stream_size, '\0');
 
     engine_impl* e = static_cast<engine_impl*>(engine_ptr);
 

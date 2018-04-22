@@ -21,8 +21,8 @@
 // dynamically from opengl library
 // so first declare function pointers for all we need
 PFNGLCREATESHADERPROC            glCreateShader            = nullptr;
-PFNGLSHADERSOURCEARBPROC         glShaderSource            = nullptr;
-PFNGLCOMPILESHADERARBPROC        glCompileShader           = nullptr;
+PFNGLSHADERSOURCEPROC            glShaderSource            = nullptr;
+PFNGLCOMPILESHADERPROC           glCompileShader           = nullptr;
 PFNGLGETSHADERIVPROC             glGetShaderiv             = nullptr;
 PFNGLGETSHADERINFOLOGPROC        glGetShaderInfoLog        = nullptr;
 PFNGLDELETESHADERPROC            glDeleteShader            = nullptr;
@@ -472,7 +472,7 @@ void main()
             return false;
         }
         ifs.seekg(0, std::ios_base::end);
-        size_t pos_in_file = ifs.tellg();
+        size_t pos_in_file = static_cast<size_t>(ifs.tellg());
         png_file_in_memory.resize(pos_in_file);
         ifs.seekg(0, std::ios_base::beg);
         if (!ifs)

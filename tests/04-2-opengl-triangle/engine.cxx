@@ -18,8 +18,8 @@
 // dynamically from opengl library
 // so first declare function pointers for all we need
 PFNGLCREATESHADERPROC            glCreateShader            = nullptr;
-PFNGLSHADERSOURCEARBPROC         glShaderSource            = nullptr;
-PFNGLCOMPILESHADERARBPROC        glCompileShader           = nullptr;
+PFNGLSHADERSOURCEPROC            glShaderSource            = nullptr;
+PFNGLCOMPILESHADERPROC           glCompileShader           = nullptr;
 PFNGLGETSHADERIVPROC             glGetShaderiv             = nullptr;
 PFNGLGETSHADERINFOLOGPROC        glGetShaderInfoLog        = nullptr;
 PFNGLDELETESHADERPROC            glDeleteShader            = nullptr;

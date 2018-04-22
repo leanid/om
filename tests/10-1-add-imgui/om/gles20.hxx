@@ -9,8 +9,8 @@
 // dynamically from OpenGL library
 // so first declare function pointers for all we need
 extern PFNGLCREATESHADERPROC             glCreateShader;
-extern PFNGLSHADERSOURCEARBPROC          glShaderSource;
-extern PFNGLCOMPILESHADERARBPROC         glCompileShader;
+extern PFNGLSHADERSOURCEPROC             glShaderSource;
+extern PFNGLCOMPILESHADERPROC            glCompileShader;
 extern PFNGLGETSHADERIVPROC              glGetShaderiv;
 extern PFNGLGETSHADERINFOLOGPROC         glGetShaderInfoLog;
 extern PFNGLDELETESHADERPROC             glDeleteShader;
