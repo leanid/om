@@ -147,7 +147,7 @@ struct OM_DECLSPEC tri2
 OM_DECLSPEC std::ostream& operator<<(std::ostream& stream, const input_data&);
 OM_DECLSPEC std::ostream& operator<<(std::ostream& stream,
                                      const hardware_data&);
-OM_DECLSPEC std::ostream& operator<<(std::ostream& stream, const event e);
+OM_DECLSPEC std::ostream& operator<<(std::ostream& stream, const event& e);
 
 OM_DECLSPEC std::istream& operator>>(std::istream& is, mat2x3&);
 OM_DECLSPEC std::istream& operator>>(std::istream& is, vec2&);

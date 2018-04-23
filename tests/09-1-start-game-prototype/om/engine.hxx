@@ -85,7 +85,7 @@ struct OM_DECLSPEC vertex
 OM_DECLSPEC std::ostream& operator<<(std::ostream& stream, const input_data&);
 OM_DECLSPEC std::ostream& operator<<(std::ostream& stream,
                                      const hardware_data&);
-OM_DECLSPEC std::ostream& operator<<(std::ostream& stream, const event e);
+OM_DECLSPEC std::ostream& operator<<(std::ostream& stream, const event& e);
 
 OM_DECLSPEC std::istream& operator>>(std::istream& is, matrix&);
 OM_DECLSPEC std::istream& operator>>(std::istream& is, vec2&);

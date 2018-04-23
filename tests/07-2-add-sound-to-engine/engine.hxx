@@ -28,9 +28,9 @@ struct OM_DECLSPEC mat2x3
     static mat2x3 scale(float sx, float sy);
     static mat2x3 rotation(float thetha);
     static mat2x3 move(const vec2& delta);
-    vec2          col0;
-    vec2          col1;
-    vec2          delta;
+    vec2 col0;
+    vec2 col1;
+    vec2 delta;
 };
 
 OM_DECLSPEC vec2 operator*(const vec2& v, const mat2x3& m);
@@ -69,15 +69,15 @@ struct hardware_data
 struct event
 {
     std::variant<input_data, hardware_data> info;
-    double                                  timestamp;
-    event_type                              type;
+    double     timestamp;
+    event_type type;
 };
 
 class engine;
 
 /// return not null on success
 OM_DECLSPEC engine* create_engine();
-OM_DECLSPEC void    destroy_engine(engine* e);
+OM_DECLSPEC void destroy_engine(engine* e);
 
 class OM_DECLSPEC color
 {
@@ -145,7 +145,7 @@ struct OM_DECLSPEC tri2
 OM_DECLSPEC std::ostream& operator<<(std::ostream& stream, const input_data&);
 OM_DECLSPEC std::ostream& operator<<(std::ostream& stream,
                                      const hardware_data&);
-OM_DECLSPEC std::ostream& operator<<(std::ostream& stream, const event e);
+OM_DECLSPEC std::ostream& operator<<(std::ostream& stream, const event& e);
 
 OM_DECLSPEC std::istream& operator>>(std::istream& is, mat2x3&);
 OM_DECLSPEC std::istream& operator>>(std::istream& is, vec2&);
@@ -201,21 +201,21 @@ public:
     virtual bool is_key_down(const om::keys) = 0;
 
     virtual texture* create_texture(std::string_view path) = 0;
-    virtual void     destroy_texture(texture* t)           = 0;
+    virtual void destroy_texture(texture* t)               = 0;
 
     virtual vertex_buffer* create_vertex_buffer(const tri2*, std::size_t) = 0;
-    virtual void           destroy_vertex_buffer(vertex_buffer*)          = 0;
+    virtual void           destroy_vertex_buffer(vertex_buffer*) = 0;
 
     virtual sound_buffer* create_sound_buffer(std::string_view path) = 0;
-    virtual void          destroy_sound_buffer(sound_buffer*)        = 0;
+    virtual void destroy_sound_buffer(sound_buffer*)                 = 0;
 
-    virtual void render(const tri0&, const color&)                     = 0;
-    virtual void render(const tri1&)                                   = 0;
-    virtual void render(const tri2&, texture*)                         = 0;
+    virtual void render(const tri0&, const color&) = 0;
+    virtual void render(const tri1&) = 0;
+    virtual void render(const tri2&, texture*) = 0;
     virtual void render(const tri2&, texture*, const mat2x3& m)        = 0;
     virtual void render(const vertex_buffer&, texture*, const mat2x3&) = 0;
-    virtual void swap_buffers()                                        = 0;
-    virtual void uninitialize()                                        = 0;
+    virtual void swap_buffers() = 0;
+    virtual void uninitialize() = 0;
 };
 
 } // end namespace om

@@ -598,7 +598,7 @@ std::ostream& operator<<(std::ostream& stream, const hardware_data& h)
     return stream;
 }
 
-std::ostream& operator<<(std::ostream& stream, const event e)
+std::ostream& operator<<(std::ostream& stream, const event& e)
 {
     switch (e.type)
     {
@@ -888,7 +888,11 @@ static void initialize_internal(std::string_view   title,
 #ifdef _WIN32
                 AllocConsole();
 #endif
-                std::freopen("CON", "w", stdout);
+                FILE* f = std::freopen("CON", "w", stdout);
+                if (!f)
+                {
+                    throw std::runtime_error("can't reopen stdout");
+                }
                 cout.clear();
                 cerr << "test" << std::endl;
                 if (!cout)

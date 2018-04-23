@@ -222,8 +222,6 @@ void unpauseAudio(void)
 
 void freeAudio(Audio * audio)
 {
-    Audio * temp;
-
     while(audio != NULL)
     {
         if(audio->free == 1)
@@ -231,7 +229,7 @@ void freeAudio(Audio * audio)
             SDL_FreeWAV(audio->bufferTrue);
         }
 
-        temp = audio;
+        Audio * temp = audio;
         audio = audio->next;
 
         free(temp);
@@ -245,12 +243,14 @@ Audio * createAudio(const char * filename, uint8_t loop, int volume)
     if(new == NULL)
     {
         fprintf(stderr, "[%s: %d]Error: Memory allocation error\n", __FILE__, __LINE__);
+        free(new);
         return NULL;
     }
 
     if(filename == NULL)
     {
-        fprintf(stderr, "[%s: %d]Warning: filename NULL: %s\n", __FILE__, __LINE__, filename);
+        fprintf(stderr, "[%s: %d]Warning: filename NULL:\n", __FILE__, __LINE__);
+        free(new);
         return NULL;
     }
 
