@@ -5,7 +5,8 @@
 
 Build Platform   | Status
 ---------------- | ----------------------
-MSVC 2017 x64    | [![MSVC 2017 Build](https://ci.appveyor.com/api/projects/status/bitbucket/b_y/om)]
+MSVC 2017 x64    | ![MSVC 2017 Build](https://ci.appveyor.com/api/projects/status/bitbucket/b_y/om)
+Linux x64        | ![Linux x64](https://bitbucket.org/b_y/om/addon/pipelines/home#!/badge/branch/<master>?svg=true)
 
 
 
