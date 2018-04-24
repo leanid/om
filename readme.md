@@ -2,7 +2,13 @@
 
 [![Om](https://bitbucket.org/account/user/b_y/projects/OM/avatar/32)](https://bitbucket.org/account/user/b_y/projects/OM)
 
-![status](https://ci.appveyor.com/api/projects/status/bitbucket/b_y/om)
+
+Build Platform   | Status
+---------------- | ----------------------
+MSVC 2017 x64    | ![MSVC 2017 Build](https://ci.appveyor.com/api/projects/status/bitbucket/b_y/om)
+Linux x64        | ![Linux x64](https://img.shields.io/bitbucket/pipelines/leanid/om.svg)
+
+
 
 Om is a nice 2d game engine for multy platform using. Use it and develop it if you like next principals:
 
