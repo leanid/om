@@ -2,12 +2,22 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <thread>
 
 namespace om
 {
 struct engine
 {
+    engine(int, char**) {}
 };
+
+struct event
+{
+};
+
+igame::~igame()
+{
+}
 }
 
 void init_minimal_log_system();
@@ -47,15 +57,6 @@ bool pool_event(om::event&)
     return false;
 }
 
-void proccess_events()
-{
-    om::event event;
-    while (pool_event(event))
-    {
-        game->proccess_event(event);
-    }
-}
-
 void start_game(om::engine& e)
 {
     std::unique_ptr<om::igame> game = create_game(e);
@@ -76,7 +77,15 @@ void start_game(om::engine& e)
 
     game->initialize();
 
-    while (!game->closed())
+    auto proccess_events = [&game]() {
+        om::event event;
+        while (pool_event(event))
+        {
+            game->proccess_input(event);
+        }
+    };
+
+    while (!game->is_closed())
     {
         time_point end_last_frame = timer.now();
 

@@ -20,6 +20,11 @@ std::unique_ptr<om::igame> create_game(om::engine& e)
     return std::make_unique<tic_tac_toe>(e);
 }
 
+tic_tac_toe::tic_tac_toe(om::engine& e_)
+    : e(e_)
+{
+}
+
 void tic_tac_toe::initialize()
 {
 }
@@ -28,7 +33,7 @@ void tic_tac_toe::proccess_input(om::event&)
 {
 }
 
-void tic_tac_toe::update(om::milliseconds frame_delta)
+void tic_tac_toe::update(om::milliseconds)
 {
 }
 
@@ -38,4 +43,5 @@ void tic_tac_toe::draw() const
 
 bool tic_tac_toe::is_closed() const
 {
+    return false;
 }
