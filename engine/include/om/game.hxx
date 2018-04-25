@@ -10,7 +10,7 @@ struct engine;
 
 using milliseconds = std::chrono::milliseconds;
 
-struct igame
+struct game
 {
     virtual void initialize()                     = 0;
     virtual void proccess_input(event& e)         = 0;
@@ -18,9 +18,9 @@ struct igame
     virtual void draw() const                     = 0;
     virtual bool is_closed() const                = 0;
 
-    virtual ~igame();
+    virtual ~game();
 };
 
 } // end namespace om
 
-extern std::unique_ptr<om::igame> create_game(om::engine&);
+extern std::unique_ptr<om::game> create_game(om::engine&);

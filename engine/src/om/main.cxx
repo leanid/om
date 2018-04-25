@@ -1,3 +1,4 @@
+#include "engine_impl.hxx"
 #include "om/game.hxx"
 
 #include <cstdlib>
@@ -6,16 +7,11 @@
 
 namespace om
 {
-struct engine
-{
-    engine(int, char**) {}
-};
-
 struct event
 {
 };
 
-igame::~igame()
+game::~game()
 {
 }
 }
@@ -30,7 +26,7 @@ int main(int argc, char* argv[])
     {
         init_minimal_log_system();
 
-        om::engine engine(argc, argv);
+        om::engine_impl engine(argc, argv);
 
         start_game(engine);
 
@@ -59,7 +55,7 @@ bool pool_event(om::event&)
 
 void start_game(om::engine& e)
 {
-    std::unique_ptr<om::igame> game = create_game(e);
+    std::unique_ptr<om::game> game = create_game(e);
 
     if (!game)
     {

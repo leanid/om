@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.9)
 project(engine LANGUAGES CXX)
-add_library(om STATIC src/om/om.cxx include/om/om.hxx)
+add_library(om STATIC src/om/main.cxx 
+                      src/om/engine_impl.cxx
+                      include/om/engine.hxx
+                      include/om/game.hxx)
 target_include_directories(om PRIVATE include)
 target_compile_features(om PRIVATE cxx_std_17)
 install(TARGETS om
