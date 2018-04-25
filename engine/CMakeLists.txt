@@ -3,13 +3,13 @@ project(engine LANGUAGES CXX)
 
 find_library(SDL2_LIB SDL2)
 
-add_library(om SHARED src/om/main.cxx 
+add_executable(om     src/om/main.cxx 
                       src/om/engine_impl.cxx
                       include/om/engine.hxx
                       include/om/game.hxx)
                       
 target_include_directories(om PRIVATE include)
-target_link_libraries(om PRIVATE ${SDL2LIB})
+target_link_libraries(om PRIVATE ${SDL2_LIB})
 target_compile_features(om PRIVATE cxx_std_17)
 
 install(TARGETS om

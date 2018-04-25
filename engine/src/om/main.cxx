@@ -5,20 +5,21 @@
 #include <iostream>
 #include <thread>
 
+#include <SDL2/SDL_loadso.h>
+
 namespace om
 {
 struct event
 {
 };
 
-game::~game()
-{
-}
+game::~game() {}
 }
 
-void init_minimal_log_system();
-void start_game(om::engine&);
-bool pool_event(om::event&);
+void             init_minimal_log_system();
+void             start_game(om::engine&);
+bool             pool_event(om::event&);
+std::string_view get_cxx_mangled_name();
 
 int main(int argc, char* argv[])
 {
@@ -62,9 +63,49 @@ std::unique_ptr<om::game> call_create_game(om::engine& e)
 #endif
 
 #if !defined(OM_STATIC)
+
+#if defined(__MINGW32__) || defined(__linux__)
+std::string_view get_cxx_mangled_name()
+{
+    return "_Z10create_gameRN2om6engineE";
+}
+#elif defined(_MSC_VER)
+std::string_view get_cxx_mangled_name()
+{
+    return "create_game::om::engine";
+}
+#else
+#error "add mangled name for your compiler"
+#endif
+
 std::unique_ptr<om::game> call_create_game(om::engine& e)
 {
-    std::unique_ptr<om::game> game = create_game(e);
+    using namespace std::string_literals;
+
+    auto  game_so_name = "game"s;
+    void* so_handle    = SDL_LoadObject(game_so_name.c_str());
+    if (nullptr == so_handle)
+    {
+        throw std::runtime_error("can't load: "s + game_so_name);
+    }
+
+    std::string_view func_name = get_cxx_mangled_name();
+
+    void* func_addres = SDL_LoadFunction(so_handle, func_name.data());
+
+    if (nullptr == func_addres)
+    {
+        throw std::runtime_error(
+            "can't find "s +
+            "std::unique_ptr<om::game> create_game(om::engine&) "s +
+            "mangled name: "s + func_name.data() + " in so: " + game_so_name);
+    }
+
+    std::unique_ptr<om::game> (*func_ptr)(om::engine&);
+    func_ptr = reinterpret_cast<std::unique_ptr<om::game> (*)(om::engine&)>(
+        func_addres);
+
+    std::unique_ptr<om::game> game = func_ptr(e);
     return game;
 }
 #endif
