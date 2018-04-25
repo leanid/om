@@ -1,4 +1,4 @@
-#include "om/om.hxx"
+#include "om/game.hxx"
 
 #include <cstdlib>
 #include <iostream>

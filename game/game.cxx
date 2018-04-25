@@ -1,4 +1,4 @@
-#include <om/om.hxx>
+#include <om/game.hxx>
 
 class tic_tac_toe final : public om::igame
 {
