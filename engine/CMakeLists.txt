@@ -1,11 +1,17 @@
 cmake_minimum_required(VERSION 3.9)
 project(engine LANGUAGES CXX)
-add_library(om STATIC src/om/main.cxx 
+
+find_library(SDL2_LIB SDL2)
+
+add_library(om SHARED src/om/main.cxx 
                       src/om/engine_impl.cxx
                       include/om/engine.hxx
                       include/om/game.hxx)
+                      
 target_include_directories(om PRIVATE include)
+target_link_libraries(om PRIVATE ${SDL2LIB})
 target_compile_features(om PRIVATE cxx_std_17)
+
 install(TARGETS om
         RUNTIME DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../bin
         LIBRARY DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../bin

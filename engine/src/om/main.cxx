@@ -53,9 +53,25 @@ bool pool_event(om::event&)
     return false;
 }
 
-void start_game(om::engine& e)
+#if defined(OM_STATIC)
+std::unique_ptr<om::game> call_create_game(om::engine& e)
 {
     std::unique_ptr<om::game> game = create_game(e);
+    return game;
+}
+#endif
+
+#if !defined(OM_STATIC)
+std::unique_ptr<om::game> call_create_game(om::engine& e)
+{
+    std::unique_ptr<om::game> game = create_game(e);
+    return game;
+}
+#endif
+
+void start_game(om::engine& e)
+{
+    std::unique_ptr<om::game> game = call_create_game(e);
 
     if (!game)
     {
