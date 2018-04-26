@@ -8,6 +8,7 @@ add_executable(om     src/om/main.cxx
                       include/om/engine.hxx
                       include/om/game.hxx)
                       
+set_target_properties(om PROPERTIES ENABLE_EXPORTS TRUE)
 target_include_directories(om PRIVATE include)
 target_link_libraries(om PRIVATE ${SDL2_LIB})
 target_compile_features(om PRIVATE cxx_std_17)
