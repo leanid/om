@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 3.9)
 project(game LANGUAGES CXX)
 
-find_library(OM_LIB NAMES om HINTS ${CMAKE_CURRENT_LIST_DIR}/../bin)
+add_executable(OM_LIB IMPORTED)
+set_property(TARGET OM_LIB PROPERTY IMPORTED_LOCATION ${CMAKE_CURRENT_LIST_DIR}/../bin/om)
+#find_library(OM_LIB NAMES om HINTS ${CMAKE_CURRENT_LIST_DIR}/../bin)
 
 add_library(game SHARED game.cxx)
 

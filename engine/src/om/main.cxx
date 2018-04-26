@@ -67,7 +67,7 @@ std::unique_ptr<om::game> call_create_game(om::engine& e)
 #if defined(__MINGW32__) || defined(__linux__)
 std::string_view get_cxx_mangled_name()
 {
-    return "_Z10create_gameRN2om6engineE";
+    return "_Z11create_gameRN2om6engineE";
 }
 #elif defined(_MSC_VER)
 std::string_view get_cxx_mangled_name()
@@ -82,7 +82,7 @@ std::unique_ptr<om::game> call_create_game(om::engine& e)
 {
     using namespace std::string_literals;
 
-    auto  game_so_name = "game"s;
+    auto  game_so_name = "./libgame.so"s;
     void* so_handle    = SDL_LoadObject(game_so_name.c_str());
     if (nullptr == so_handle)
     {
