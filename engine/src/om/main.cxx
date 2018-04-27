@@ -2,6 +2,15 @@
 #include "om/game.hxx"
 
 #include <cstdlib>
+//#if __has_include(<filesystem>)
+//#include <filesystem>
+// namespace fs = std::filesystem;
+//#elif __has_include("experimental/filesystem")
+#include <experimental/filesystem>
+namespace fs = std::experimental::filesystem;
+//#endif
+#include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <thread>
 
@@ -106,11 +115,19 @@ std::unique_ptr<om::game> call_create_game(om::engine& e)
 {
     using namespace std::string_literals;
 
-    auto  game_so_name = get_game_library_path(e);
-    void* so_handle    = SDL_LoadObject(game_so_name.c_str());
+    auto game_so_name = get_game_library_path(e);
+    auto tmp_game_so  = "tmp_" + game_so_name;
+
+    {
+        std::ifstream src_so(game_so_name, std::ios::binary);
+        std::ofstream dst_so(tmp_game_so, std::ios::binary);
+        dst_so << src_so.rdbuf();
+    }
+
+    void* so_handle = SDL_LoadObject(tmp_game_so.c_str());
     if (nullptr == so_handle)
     {
-        throw std::runtime_error("can't load: "s + game_so_name);
+        throw std::runtime_error("can't load: "s + tmp_game_so);
     }
 
     std::string_view func_name = get_cxx_mangled_name();
@@ -122,7 +139,7 @@ std::unique_ptr<om::game> call_create_game(om::engine& e)
         throw std::runtime_error(
             "can't find "s +
             "std::unique_ptr<om::game> create_game(om::engine&) "s +
-            "mangled name: "s + func_name.data() + " in so: " + game_so_name);
+            "mangled name: "s + func_name.data() + " in so: " + tmp_game_so);
     }
 
     std::unique_ptr<om::game> (*func_ptr)(om::engine&);
@@ -161,6 +178,12 @@ void start_game(om::engine& e)
             game->proccess_input(event);
         }
     };
+
+    fs::path           path       = get_game_library_path(e);
+    fs::file_time_type last_write = fs::last_write_time(path);
+
+    std::time_t cftime = fs::file_time_type::clock::to_time_t(last_write);
+    std::cout << std::asctime(std::localtime(&cftime)) << std::endl;
 
     while (!game->is_closed())
     {
