@@ -13,6 +13,10 @@ target_include_directories(om PRIVATE include)
 target_link_libraries(om PRIVATE ${SDL2_LIB})
 target_compile_features(om PRIVATE cxx_std_17)
 
+if(WIN32)
+target_compile_definitions(om PRIVATE "-DOM_EXP=__declspec(dllexport)")
+endif()
+
 install(TARGETS om
         RUNTIME DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../bin
         LIBRARY DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../bin

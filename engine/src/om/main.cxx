@@ -13,7 +13,9 @@ struct event
 {
 };
 
-game::~game() {}
+game::~game()
+{
+}
 }
 
 void             init_minimal_log_system();
@@ -78,11 +80,33 @@ std::string_view get_cxx_mangled_name()
 #error "add mangled name for your compiler"
 #endif
 
+#if defined(_WIN32) && defined(__MINGW32__)
+std::string get_game_library_path(om::engine&)
+{
+    return "libgame.dll";
+}
+#elif defined(_WIN32) && defined(_MSC_VER)
+std::string get_game_library_path(om::engine&)
+{
+    return "game.dll";
+}
+#elif defined(__linux__)
+std::string get_game_library_path(om::engine&)
+{
+    return "./libgame.so";
+}
+#else
+std::string get_game_library_path(om::engine&)
+{
+#error implement it
+}
+#endif
+
 std::unique_ptr<om::game> call_create_game(om::engine& e)
 {
     using namespace std::string_literals;
 
-    auto  game_so_name = "./libgame.so"s;
+    auto  game_so_name = get_game_library_path(e);
     void* so_handle    = SDL_LoadObject(game_so_name.c_str());
     if (nullptr == so_handle)
     {
