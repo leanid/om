@@ -56,6 +56,27 @@ void tic_tac_toe::update(om::milliseconds frame_delta)
     if (fps <= 0)
     {
         std::cout << '\b';
+        std::cout << '\b';
+        std::cout << '\b';
+        std::cout << '\b';
+        std::cout << '\b';
+        std::cout << '\b';
+
+        index = (index + 1) % anim.size();
+        std::cout << anim[index] << std::flush;
+
+        index = (index + 1) % anim.size();
+        std::cout << anim[index] << std::flush;
+
+        index = (index + 1) % anim.size();
+        std::cout << anim[index] << std::flush;
+
+        index = (index + 1) % anim.size();
+        std::cout << anim[index] << std::flush;
+
+        index = (index + 1) % anim.size();
+        std::cout << anim[index] << std::flush;
+
         index = (index + 1) % anim.size();
         std::cout << anim[index] << std::flush;
 
