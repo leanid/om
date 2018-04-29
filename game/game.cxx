@@ -16,11 +16,11 @@ public:
     bool is_closed() const final;
 
 private:
-    om::engine& e;
+    om::engine&         e;
     std::array<char, 5> anim;
-    size_t       index    = 0;
-    const double fps_base = 1.0 / 12;
-    double       fps      = 1.0 / 12;
+    size_t              index    = 0;
+    const double        fps_base = 1.0 / 12;
+    double              fps      = 1.0 / 12;
 };
 
 std::unique_ptr<om::game> create_game(om::engine& e)
@@ -41,13 +41,9 @@ tic_tac_toe::tic_tac_toe(om::engine& e_)
     e.initialize(params);
 }
 
-void tic_tac_toe::initialize()
-{
-}
+void tic_tac_toe::initialize() {}
 
-void tic_tac_toe::proccess_input(om::event&)
-{
-}
+void tic_tac_toe::proccess_input(om::event&) {}
 
 void tic_tac_toe::update(om::milliseconds frame_delta)
 {
@@ -84,9 +80,7 @@ void tic_tac_toe::update(om::milliseconds frame_delta)
     }
 }
 
-void tic_tac_toe::draw() const
-{
-}
+void tic_tac_toe::draw() const {}
 
 bool tic_tac_toe::is_closed() const
 {

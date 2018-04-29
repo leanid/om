@@ -22,9 +22,7 @@ struct event
 {
 };
 
-game::~game()
-{
-}
+game::~game() {}
 }
 
 void             init_minimal_log_system();
@@ -116,18 +114,26 @@ std::unique_ptr<om::game> call_create_game(om::engine_impl& e)
     using namespace std::string_literals;
 
     auto game_so_name = get_game_library_path(e);
-    auto tmp_game_so  = "tmp_" + game_so_name;
+    auto tmp_game     = game_so_name;
+    tmp_game.replace(tmp_game.find("game"), 4, "tmp_game");
 
     {
-        std::ifstream src_so(game_so_name, std::ios::binary);
-        std::ofstream dst_so(tmp_game_so, std::ios::binary);
+        std::ifstream src_so;
+        std::ofstream dst_so;
+
+        src_so.exceptions(std::ios::failbit | std::ios::badbit);
+        dst_so.exceptions(std::ios::failbit | std::ios::badbit);
+
+        src_so.open(game_so_name, std::ios::binary);
+        dst_so.open(tmp_game, std::ios::binary);
         dst_so << src_so.rdbuf();
     }
 
-    void* so_handle = SDL_LoadObject(tmp_game_so.c_str());
+    void* so_handle = SDL_LoadObject(tmp_game.c_str());
     if (nullptr == so_handle)
     {
-        throw std::runtime_error("can't load: "s + tmp_game_so);
+        std::string err_msg = SDL_GetError();
+        throw std::runtime_error("can't load: "s + tmp_game + " " + err_msg);
     }
 
     e.so_handle = so_handle;
@@ -141,7 +147,7 @@ std::unique_ptr<om::game> call_create_game(om::engine_impl& e)
         throw std::runtime_error(
             "can't find "s +
             "std::unique_ptr<om::game> create_game(om::engine&) "s +
-            "mangled name: "s + func_name.data() + " in so: " + tmp_game_so);
+            "mangled name: "s + func_name.data() + " in so: " + tmp_game);
     }
 
     std::unique_ptr<om::game> (*func_ptr)(om::engine&);
