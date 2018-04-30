@@ -885,7 +885,7 @@ static void initialize_internal(std::string_view   title,
 #ifdef _WIN32
                 AllocConsole();
 #endif
-                if(nullptr == std::freopen("CON", "w", stdout))
+                if (nullptr == std::freopen("CON", "w", stdout))
                 {
                     throw std::runtime_error("can't reopen stdout");
                 }
@@ -1423,9 +1423,10 @@ int initialize_and_start_main_loop()
         ~start() { om::uninitialize(); }
     } guard;
 
-    std::vector<const char*> lib_names{ { "libgame.dll", "libgame.so",
-                                          "game.so", "./build/Debug/libgame.so",
-                                          "./build/Debug/libgame.dll" } };
+    std::vector<const char*> lib_names{
+        { "libgame-10-1.dll", "./libgame-10-1.so", "./game-10-1.so",
+          "./build/Debug/libgame-10-1.so", "./build/Debug/libgame-10-1.dll" }
+    };
 
     void* so_handle   = nullptr;
     auto  lib_name_it = std::find_if(

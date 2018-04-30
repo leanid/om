@@ -3,6 +3,12 @@
 #include <chrono>
 #include <memory>
 
+#if !defined(OM_EXP) && defined(_WIN32)
+#define OM_EXP __declspec(dllimport)
+#else
+#define OM_EXP
+#endif
+
 namespace om
 {
 struct event;
@@ -10,7 +16,7 @@ struct engine;
 
 using milliseconds = std::chrono::milliseconds;
 
-struct game
+struct OM_EXP game
 {
     virtual void initialize()                     = 0;
     virtual void proccess_input(event& e)         = 0;

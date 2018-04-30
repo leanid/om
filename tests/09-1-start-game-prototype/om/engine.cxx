@@ -186,9 +186,13 @@ matrix operator*(const matrix& m1, const matrix& m2)
     return r;
 }
 
-texture::~texture() {}
+texture::~texture()
+{
+}
 
-vbo::~vbo() {}
+vbo::~vbo()
+{
+}
 
 class vertex_buffer_impl final : public vbo
 {
@@ -370,7 +374,9 @@ sound_buffer_impl::sound_buffer_impl(std::string_view  path,
     }
 }
 
-sound::~sound() {}
+sound::~sound()
+{
+}
 
 sound_buffer_impl::~sound_buffer_impl()
 {
@@ -382,7 +388,9 @@ sound_buffer_impl::~sound_buffer_impl()
     length = 0;
 }
 
-vertex_buffer_impl::~vertex_buffer_impl() {}
+vertex_buffer_impl::~vertex_buffer_impl()
+{
+}
 
 class texture_gl_es20 final : public texture
 {
@@ -413,7 +421,7 @@ class shader_gl_es20
 {
 public:
     shader_gl_es20(
-        std::string_view vertex_src, std::string_view fragment_src,
+        std::string_view vertex_src, std::string_view         fragment_src,
         const std::vector<std::tuple<GLuint, const GLchar*>>& attributes)
     {
         vert_shader = compile_shader(GL_VERTEX_SHADER, vertex_src);
@@ -902,7 +910,7 @@ static void initialize_internal(std::string_view   title,
 #ifdef _WIN32
                 AllocConsole();
 #endif
-                if(nullptr == std::freopen("CON", "w", stdout))
+                if (nullptr == std::freopen("CON", "w", stdout))
                 {
                     throw std::runtime_error("can't reopen stdout");
                 }
@@ -1374,9 +1382,10 @@ int initialize_and_start_main_loop()
         ~start() { om::uninitialize(); }
     } guard;
 
-    std::vector<const char*> lib_names{ { "libgame.dll", "libgame.so",
-                                          "game.so", "./build/Debug/libgame.so",
-                                          "./build/Debug/libgame.dll" } };
+    std::vector<const char*> lib_names{
+        { "libgame-09-1.dll", "libgame-09-1.so", "game-09-1.so",
+          "./build/Debug/libgame-09-1.so", "./build/Debug/libgame-09-1.dll" }
+    };
 
     void* so_handle   = nullptr;
     auto  lib_name_it = std::find_if(

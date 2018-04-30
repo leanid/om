@@ -1,15 +1,17 @@
 cmake_minimum_required(VERSION 3.9)
 project(game LANGUAGES CXX)
 
-find_library(OM_LIB NAMES om HINTS ${CMAKE_CURRENT_LIST_DIR}/../bin)
+add_executable(OM_LIB IMPORTED)
+set_property(TARGET OM_LIB 
+             PROPERTY IMPORTED_LOCATION ${CMAKE_CURRENT_LIST_DIR}/../bin/om)
 
-add_executable(tic_tac_toe game.cxx)
+add_library(game SHARED game.cxx)
 
-target_include_directories(tic_tac_toe PRIVATE ../engine/include)
-target_compile_features(tic_tac_toe PRIVATE cxx_std_17)
-target_link_libraries(tic_tac_toe PRIVATE ${OM_LIB})
+target_include_directories(game PRIVATE ../engine/include)
+target_compile_features(game PRIVATE cxx_std_17)
+target_link_libraries(game PRIVATE ${OM_LIB})
 
-install(TARGETS tic_tac_toe
+install(TARGETS game
         RUNTIME DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../bin
         LIBRARY DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../bin
         ARCHIVE DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../bin)

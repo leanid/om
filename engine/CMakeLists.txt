@@ -3,14 +3,20 @@ project(engine LANGUAGES CXX)
 
 find_library(SDL2_LIB SDL2)
 
-add_library(om SHARED src/om/main.cxx 
+add_executable(om     src/om/main.cxx 
                       src/om/engine_impl.cxx
                       include/om/engine.hxx
                       include/om/game.hxx)
                       
+set_target_properties(om PROPERTIES ENABLE_EXPORTS TRUE)
 target_include_directories(om PRIVATE include)
-target_link_libraries(om PRIVATE ${SDL2LIB})
+target_link_libraries(om PRIVATE ${SDL2_LIB}
+                                  stdc++fs)
 target_compile_features(om PRIVATE cxx_std_17)
+
+if(WIN32)
+target_compile_definitions(om PRIVATE "-DOM_EXP=__declspec(dllexport)")
+endif()
 
 install(TARGETS om
         RUNTIME DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../bin
