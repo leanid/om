@@ -34,7 +34,7 @@ private:
     static constexpr float pi                     = 3.1415926f;
 };
 
-std::unique_ptr<om::lila> om_tat_sat(om::engine& e)
+std::unique_ptr<om::lila> OM_GAME om_tat_sat(om::engine& e)
 {
     e.log << "creating main game object..." << std::endl;
     auto game = std::make_unique<tanks_game>(e);

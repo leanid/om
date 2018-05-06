@@ -7,6 +7,7 @@ target_compile_features(engine-08-2 PUBLIC cxx_std_17)
 
 if(WIN32)
   target_compile_definitions(engine-08-2 PRIVATE "-DOM_DECLSPEC=__declspec(dllexport)")
+  target_compile_definitions(engine-08-2 PRIVATE "-DOM_GAME=__declspec(dllimport)")  # for om_tat_sat import
 endif(WIN32)
 
 find_library(SDL2_LIB NAMES SDL2)
@@ -36,6 +37,10 @@ target_compile_features(game-08-2 PUBLIC cxx_std_17)
 target_link_libraries(game-08-2 engine-08-2)
 
 if(MSVC)
+  # for all engine functions
+  target_compile_definitions(game-08-2 PRIVATE "-DOM_DECLSPEC=__declspec(dllimport)")
+  # for om_tat_sat export
+  target_compile_definitions(game-08-2 PRIVATE "-DOM_GAME=__declspec(dllexport)")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17")
 elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
