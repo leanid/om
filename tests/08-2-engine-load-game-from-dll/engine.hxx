@@ -9,6 +9,10 @@
 #define OM_DECLSPEC
 #endif
 
+#ifndef OM_GAME
+#define OM_GAME
+#endif
+
 namespace om
 {
 
@@ -238,4 +242,4 @@ struct OM_DECLSPEC lila
 
 } // end namespace om
 
-extern std::unique_ptr<om::lila> om_tat_sat(om::engine&);
+std::unique_ptr<om::lila> OM_GAME om_tat_sat(om::engine&);

@@ -1488,7 +1488,7 @@ int initialize_and_start_main_loop()
 {
     om::engine engine("");
 
-    std::string_view game_so_name("libgame.dll");
+    std::string_view game_so_name("game-08-2.dll");
 
     void* so_handle = SDL_LoadObject(game_so_name.data());
     if (so_handle == nullptr)
@@ -1502,7 +1502,7 @@ int initialize_and_start_main_loop()
 #if defined(__MINGW32__) || defined(__linux__)
     om_tat_sat_func = "_Z10om_tat_satRN2om6engineE";
 #elif defined(_MSC_VER)
-    om_tat_sat_func = "om_tat_sat::om::engine"; // TODO fix it later
+    om_tat_sat_func = "?om_tat_sat@@YA?AV?$unique_ptr@Ulila@om@@U?$default_delete@Ulila@om@@@std@@@std@@AAVengine@om@@@Z"; // TODO fix it later
 #else
 #error "add mangled name for your compiler"
 #endif

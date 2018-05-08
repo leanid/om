@@ -3,10 +3,10 @@
 [![Om](https://bitbucket.org/account/user/b_y/projects/OM/avatar/32)](https://bitbucket.org/account/user/b_y/projects/OM)
 
 
-Build Platform   | Status
+Build Platform   | Status (tests only)
 ---------------- | ----------------------
 MSVC 2017 x64    | ![MSVC 2017 Build](https://ci.appveyor.com/api/projects/status/bitbucket/b_y/om)
-Linux x64        | ![Linux x64](https://img.shields.io/bitbucket/pipelines/leanid/om.svg)
+Linux x64        | ![Linux x64](https://img.shields.io/bitbucket/pipelines/b_y/om.svg)
 
 
 
