@@ -78,18 +78,25 @@ void     tanks_game::on_initialize()
         {
             om::vbo* mesh =
                 load_mesh_from_file_with_scale(obj.path_mesh, obj.size);
-            it_mesh->second = mesh;
             assert(mesh);
-            obj.mesh = mesh;
+
+            meshes[obj.path_mesh] = mesh;
+            it_mesh               = meshes.find(obj.path_mesh);
+            assert(it_mesh != end(meshes));
         }
+        obj.mesh = it_mesh->second;
+
         auto it_tex = textures.find(obj.path_texture);
         if (it_tex == end(textures))
         {
             om::texture* tex = om::create_texture(obj.path_texture);
-            it_tex->second   = tex;
             assert(tex);
-            obj.texture = tex;
+
+            textures[obj.path_texture] = tex;
+            it_tex                     = textures.find(obj.path_texture);
+            assert(it_tex != end(textures));
         }
+        obj.texture = it_tex->second;
     });
 }
 
@@ -179,6 +186,8 @@ void tanks_game::on_render() const
                 om::matrix rot  = om::matrix::rotation(obj.direction);
                 om::matrix m    = rot * move * world * aspect;
 
+                assert(obj.mesh);
+
                 om::vbo&     vbo     = *obj.mesh;
                 om::texture* texture = obj.texture;
 
@@ -266,5 +275,6 @@ om::vbo* load_mesh_from_file_with_scale(const std::string_view path,
                    });
 
     om::vbo* vbo = om::create_vbo(vertexes.data(), num_of_vertexes);
+    assert(vbo);
     return vbo;
 }

@@ -2,6 +2,7 @@ import subprocess
 import os
 
 cwd = os.getcwd()
+os.environ['LD_LIBRARY_PATH'] = cwd
 
 programs = [
 'hello-bin',
@@ -28,10 +29,12 @@ programs = [
 ]
 
 for programm_name in programs:
-    completed_proc: CompletedProcess = subprocess.run(['./' + programm_name]
-                                ,stdout=subprocess.PIPE)
-    if (completed_proc.)
+    dir = cwd + "/../../tests/" + programm_name
+    print("starting: ", programm_name, " in dir: ", dir)
 
+    result = subprocess.run([cwd + '/' + programm_name], stdout=subprocess.PIPE, cwd=cwd)
+    if result.returncode != 0:
+        print("error: \nargs: ", result.args, "\nstdout: ", result.stdout, "\nreturncode: {}", result.returncode)
+        break
 
-print(completed_proc)
 
