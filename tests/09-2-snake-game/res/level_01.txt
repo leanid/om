@@ -1,43 +1,10 @@
 // level 01
-num_of_objects 5             // how may objects
+num_of_objects 1             // how may objects
 
-object level_01              // game_object 
+object field                 // game_object 
 level                        // type
 0                            // direction grad
 0 0                          // world position x, y
 100 100                      // size width height
 mesh  res/identity_quad.txt  // mesh
-texture res/background.png   // texture
-
-
-object tank_01               // game_object 
-user_tank                    // type
-0                            // direction grad
-0 0                          // position x, y
-10 10                        // size width height
-mesh  res/identity_quad.txt  // mesh
-texture res/tank.png         // texture
-
-object brick_01              // game_object 
-brick_wall                   // type
-0                            // direction grad
--40 -30                      // position x, y
-10 10                        // size width height
-mesh  res/identity_quad.txt  // mesh
-texture res/brick.png        // texture
-
-object brick_02              // game_object 
-brick_wall                   // type
-0                            // direction grad
-20 30                        // position x, y
-10 10                        // size width height
-mesh  res/identity_quad.txt  // mesh
-texture res/brick.png        // texture
-
-object brick_03              // game_object 
-brick_wall                   // type
-0                            // direction grad
-30 30                        // position x, y
-10 10                        // size width height
-mesh  res/identity_quad.txt  // mesh
-texture res/brick.png        // texture
+texture res/background_cells.png   // texture

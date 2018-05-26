@@ -31,6 +31,9 @@ struct game_object
 
 inline std::istream& operator>>(std::istream& stream, object_type& type);
 
+om::vbo* load_mesh_from_file_with_scale(const std::string_view path,
+                                        const om::vec2&        scale);
+
 std::istream& operator>>(std::istream& stream, game_object& obj)
 {
     std::string start_word;
@@ -60,6 +63,10 @@ std::istream& operator>>(std::istream& stream, game_object& obj)
 
     stream >> obj.path_mesh;
 
+    om::vbo* mesh = load_mesh_from_file_with_scale(obj.path_mesh, obj.size);
+    assert(mesh != nullptr);
+    obj.mesh = mesh;
+
     stream >> key_word;
     if (key_word != "texture")
     {
@@ -68,6 +75,10 @@ std::istream& operator>>(std::istream& stream, game_object& obj)
     }
 
     stream >> obj.path_texture;
+
+    om::texture* tex = om::create_texture(obj.path_texture);
+    assert(tex != nullptr);
+    obj.texture = tex;
 
     return stream;
 }

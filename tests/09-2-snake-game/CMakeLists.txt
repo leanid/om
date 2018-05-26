@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.9)
 project(09-2-start-game-protorype)
 
-add_executable(engine-09-2 om/engine.cxx om/engine.hxx om/picopng.hxx)
+add_executable(engine-09-2 om/engine.cxx om/engine.hxx om/stb_image.h)
 set_target_properties(engine-09-2 PROPERTIES ENABLE_EXPORTS TRUE)
 target_compile_features(engine-09-2 PRIVATE cxx_std_17)
 

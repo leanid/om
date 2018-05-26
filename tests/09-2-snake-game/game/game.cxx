@@ -19,10 +19,10 @@ static constexpr size_t screen_width  = 960.f;
 static constexpr size_t screen_height = 540.f;
 om::texture*            debug_texture = nullptr;
 
-class tanks_game final : public om::lila
+class snake_game final : public om::lila
 {
 public:
-    tanks_game() = default;
+    snake_game() = default;
 
     void on_initialize() final;
     void on_event(om::event&) final;
@@ -43,14 +43,14 @@ std::unique_ptr<om::lila> om_tat_sat()
     om::initialize("tanks", window_mode);
 
     om::log << "creating main game object..." << std::endl;
-    auto game = std::make_unique<tanks_game>();
+    auto game = std::make_unique<snake_game>();
     om::log << "finish creating main game object" << std::endl;
     return game;
 }
 
 om::vbo* load_mesh_from_file_with_scale(const std::string_view path,
                                         const om::vec2&        scale);
-void     tanks_game::on_initialize()
+void     snake_game::on_initialize()
 {
     debug_texture = om::create_texture("res/debug.png");
 
@@ -70,29 +70,9 @@ void     tanks_game::on_initialize()
 
     std::copy_n(std::istream_iterator<game_object>(level), objects_num,
                 std::back_inserter(objects));
-
-    std::for_each(begin(objects), end(objects), [&](game_object& obj) {
-        auto it_mesh = meshes.find(obj.path_mesh);
-        if (it_mesh == end(meshes))
-        {
-            om::vbo* mesh =
-                load_mesh_from_file_with_scale(obj.path_mesh, obj.size);
-            it_mesh->second = mesh;
-            assert(mesh);
-            obj.mesh = mesh;
-        }
-        auto it_tex = textures.find(obj.path_texture);
-        if (it_tex == end(textures))
-        {
-            om::texture* tex = om::create_texture(obj.path_texture);
-            it_tex->second   = tex;
-            assert(tex);
-            obj.texture = tex;
-        }
-    });
 }
 
-void tanks_game::on_event(om::event& event)
+void snake_game::on_event(om::event& event)
 {
     std::cout << event << std::endl;
     switch (event.type)
@@ -120,7 +100,7 @@ void tanks_game::on_event(om::event& event)
     }
 }
 
-void tanks_game::on_update(std::chrono::milliseconds /*frame_delta*/)
+void snake_game::on_update(std::chrono::milliseconds /*frame_delta*/)
 {
     if (om::is_key_down(om::keys::left))
     {
@@ -144,7 +124,7 @@ void tanks_game::on_update(std::chrono::milliseconds /*frame_delta*/)
     }
 }
 
-void tanks_game::on_render() const
+void snake_game::on_render() const
 {
     struct draw
     {

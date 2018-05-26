@@ -24,7 +24,15 @@
 #include <SDL2/SDL_opengl.h>
 #include <SDL2/SDL_opengl_glext.h>
 
-#include "picopng.hxx"
+//#include "picopng.hxx"
+
+#define STB_IMAGE_IMPLEMENTATION
+#pragma GCC diagnostic push
+
+// turn off the specific warning. Can also use "-Wall"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#include "stb_image.h"
+#pragma GCC diagnostic pop
 
 // we have to load all extension GL function pointers
 // dynamically from OpenGL library
@@ -1250,35 +1258,42 @@ void color::set_a(const float a)
 texture_gl_es20::texture_gl_es20(std::string_view path)
     : file_path(path)
 {
-    std::vector<unsigned char> png_file_in_memory;
-    std::ifstream              ifs(path.data(), std::ios_base::binary);
-    if (!ifs)
-    {
-        throw std::runtime_error("can't load texture");
-    }
-    ifs.seekg(0, std::ios_base::end);
-    std::streamoff pos_in_file = ifs.tellg();
-    png_file_in_memory.resize(static_cast<size_t>(pos_in_file));
-    ifs.seekg(0, std::ios_base::beg);
-    if (!ifs)
-    {
-        throw std::runtime_error("can't load texture");
-    }
+    //    std::vector<unsigned char> png_file_in_memory;
+    //    std::ifstream              ifs(path.data(), std::ios_base::binary);
+    //    if (!ifs)
+    //    {
+    //        throw std::runtime_error("can't load texture");
+    //    }
+    //    ifs.seekg(0, std::ios_base::end);
+    //    std::streamoff pos_in_file = ifs.tellg();
+    //    png_file_in_memory.resize(static_cast<size_t>(pos_in_file));
+    //    ifs.seekg(0, std::ios_base::beg);
+    //    if (!ifs)
+    //    {
+    //        throw std::runtime_error("can't load texture");
+    //    }
+    //
+    //    ifs.read(reinterpret_cast<char*>(png_file_in_memory.data()),
+    //    pos_in_file); if (!ifs.good())
+    //    {
+    //        throw std::runtime_error("can't load texture");
+    //    }
 
-    ifs.read(reinterpret_cast<char*>(png_file_in_memory.data()), pos_in_file);
-    if (!ifs.good())
-    {
-        throw std::runtime_error("can't load texture");
-    }
+    //    const om::png_image img = decode_png_file_from_memory(
+    //        png_file_in_memory, convert_color::to_rgba32,
+    //        origin_point::bottom_left);
 
-    const om::png_image img = decode_png_file_from_memory(
-        png_file_in_memory, convert_color::to_rgba32,
-        origin_point::bottom_left);
+    stbi_set_flip_vertically_on_load(true);
+    int            width      = 0;
+    int            height     = 0;
+    int            components = 0;
+    unsigned char* decoded_img =
+        stbi_load(path.data(), &width, &height, &components, 4);
 
     // if there's an error, display it
-    if (img.error != 0)
+    if (decoded_img == nullptr)
     {
-        std::cerr << "error: " << img.error << std::endl;
+        std::cerr << "error: can't load file: " << path << std::endl;
         throw std::runtime_error("can't load texture");
     }
 
@@ -1287,12 +1302,10 @@ texture_gl_es20::texture_gl_es20(std::string_view path)
     glBindTexture(GL_TEXTURE_2D, tex_handl);
     OM_GL_CHECK();
 
-    GLint   mipmap_level = 0;
-    GLint   border       = 0;
-    GLsizei width        = static_cast<GLsizei>(img.width);
-    GLsizei height       = static_cast<GLsizei>(img.height);
+    GLint mipmap_level = 0;
+    GLint border       = 0;
     glTexImage2D(GL_TEXTURE_2D, mipmap_level, GL_RGBA, width, height, border,
-                 GL_RGBA, GL_UNSIGNED_BYTE, &img.raw_image[0]);
+                 GL_RGBA, GL_UNSIGNED_BYTE, decoded_img);
     OM_GL_CHECK();
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
