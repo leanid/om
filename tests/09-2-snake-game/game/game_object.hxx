@@ -10,7 +10,7 @@
 enum class object_type
 {
     level,
-    ai_tank,
+    fruit,
     user_tank,
     brick_wall
 };
@@ -87,7 +87,7 @@ std::istream& operator>>(std::istream& stream, object_type& type)
 {
     static const std::map<std::string, object_type> types = {
         { "level", object_type::level },
-        { "ai_tank", object_type::ai_tank },
+        { "fruit", object_type::fruit },
         { "user_tank", object_type::user_tank },
         { "brick_wall", object_type::brick_wall },
     };

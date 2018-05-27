@@ -1,5 +1,5 @@
 // level 01
-num_of_objects 1             // how may objects
+num_of_objects 2             // how may objects
 
 object field                 // game_object 
 level                        // type
@@ -8,3 +8,11 @@ level                        // type
 280 280                      // size width height (28 cells in background)
 mesh  res/identity_quad.txt  // mesh
 texture res/background_cells.png   // texture
+
+object apple                 // game_object 
+fruit                        // type
+0                            // direction grad
+0 0                          // world position x, y
+10 10                      // size width height (28 cells in background)
+mesh  res/identity_quad.txt  // mesh
+texture res/apple.png   // texture
