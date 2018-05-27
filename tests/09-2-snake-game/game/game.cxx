@@ -40,7 +40,7 @@ std::unique_ptr<om::lila> om_tat_sat()
     om::log << "initialize engine" << std::endl;
 
     om::window_mode window_mode = { screen_width, screen_height, false };
-    om::initialize("tanks", window_mode);
+    om::initialize("snake", window_mode);
 
     om::log << "creating main game object..." << std::endl;
     auto game = std::make_unique<snake_game>();
@@ -128,28 +128,25 @@ void snake_game::on_render() const
 {
     struct draw
     {
-        draw(const object_type type, const om::vec2& world_size,
-             const float height_aspect)
+        draw(const object_type type, const om::vec2& world_size)
             : obj_type(type)
-            , world(om::matrix::scale(2 * height_aspect / world_size.x,
-                                      2 * height_aspect / world_size.y))
+            , world(om::matrix::scale(2.f / world_size.x, 2.f / world_size.y))
         {
             // let the world is rectangle 100x100 units with center in (0, 0)
             // build world matrix to map 100x100 X(-50 to 50) Y(-50 to 50)
             // to NDC X(-1 to 1) Y(-1 to 1) 2x2
-            // but we see rect with aspect and correct by height
-            // so field not 2x2 but aspect_height x aspect_height
         }
         void operator()(const game_object& obj)
         {
             if (obj_type == obj.type)
             {
                 om::matrix aspect = om::matrix::scale(
-                    1, static_cast<float>(screen_width) / screen_height);
+                    static_cast<float>(screen_height) / screen_width, 1);
 
                 om::matrix move = om::matrix::move(obj.position);
                 om::matrix rot  = om::matrix::rotation(obj.direction);
-                om::matrix m    = rot * move * world * aspect;
+                om::matrix tmp  = rot * move * world;
+                om::matrix m    = tmp * aspect;
 
                 om::vbo&     vbo     = *obj.mesh;
                 om::texture* texture = obj.texture;
@@ -182,13 +179,11 @@ void snake_game::on_render() const
     }
 
     const om::vec2 world_size = it->size;
-    const float    aspect = static_cast<float>(screen_height) / screen_width;
 
-    std::for_each(begin(render_order), end(render_order),
-                  [&](object_type type) {
-                      std::for_each(begin(objects), end(objects),
-                                    draw(type, world_size, aspect));
-                  });
+    std::for_each(
+        begin(render_order), end(render_order), [&](object_type type) {
+            std::for_each(begin(objects), end(objects), draw(type, world_size));
+        });
 }
 
 om::vbo* load_mesh_from_file_with_scale(const std::string_view path,
