@@ -164,7 +164,7 @@ void snake_game::on_render() const
     };
 
     static const std::vector<object_type> render_order = {
-        { object_type::level, object_type::fruit }
+        { object_type::level, object_type::fruit, object_type::snake_part }
     };
 
     auto it =
