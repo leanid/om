@@ -115,6 +115,13 @@ vec2::vec2(float x_, float y_)
 {
 }
 
+vec2& vec2::operator+=(const vec2& l)
+{
+    x += l.x;
+    y += l.y;
+    return *this;
+}
+
 vec2 operator+(const vec2& l, const vec2& r)
 {
     vec2 result;

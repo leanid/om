@@ -99,6 +99,14 @@ void snake_game::on_event(om::event& event)
                 else if (key_data.key == om::keys::button2)
                 {
                 }
+                else if (key_data.key == om::keys::left)
+                {
+                    snake_->set_user_direction(snake::user_direction::left);
+                }
+                else if (key_data.key == om::keys::right)
+                {
+                    snake_->set_user_direction(snake::user_direction::right);
+                }
             }
         }
         break;

@@ -47,6 +47,7 @@ struct snake
     bool is_alive() const;
 
 private:
-    direction    get_next_direction(game_object& head);
-    om::texture* select_texture_for_neck(const snake_part& neck);
+    direction get_next_direction(const snake_part& head);
+    void      select_texture_for_neck(snake_part& neck);
+    void      erase_prev_tail_part();
 };
