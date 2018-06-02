@@ -163,7 +163,7 @@ void snake_game::on_render() const
                     static_cast<float>(screen_height) / screen_width, 1);
 
                 om::matrix move = om::matrix::move(obj.position);
-                om::matrix rot  = om::matrix::rotation(obj.direction);
+                om::matrix rot  = om::matrix::rotation(obj.rotation);
                 om::matrix tmp  = rot * move * world;
                 om::matrix m    = tmp * aspect;
 

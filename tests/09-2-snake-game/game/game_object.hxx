@@ -20,7 +20,7 @@ struct game_object
 {
     std::string      name;
     enum object_type type;
-    float            direction;
+    float            rotation;
     om::vec2         position;
     om::vec2         size;
     std::string      path_mesh;

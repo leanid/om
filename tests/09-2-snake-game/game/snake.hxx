@@ -49,5 +49,7 @@ struct snake
 private:
     direction get_next_direction(const snake_part& head);
     void      select_texture_for_neck(snake_part& neck);
-    void      erase_prev_tail_part();
+    void      remove_old_tail();
+	void add_new_head();
+	void move_snake();
 };

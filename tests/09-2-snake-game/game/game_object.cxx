@@ -14,7 +14,7 @@ std::istream& operator>>(std::istream& stream, game_object& obj)
 
     float direction_in_grad = 0.0f;
     stream >> direction_in_grad;
-    obj.direction = direction_in_grad * (3.1415926f / 180.f);
+    obj.rotation = direction_in_grad * (3.1415926f / 180.f);
 
     stream >> obj.position;
     stream >> obj.size;

@@ -19,29 +19,30 @@ constexpr std::array<snake::direction, 4> next_right{ snake::direction::up,
 constexpr float                pi = 3.14159f;
 constexpr std::array<float, 4> angles{ pi, -pi / 2.0f, 0, -3.f * pi / 2.f };
 
-snake::snake(om::vec2 pos, snake::direction head_direction,
+snake::snake(om::vec2 pos, snake::direction direction,
              const std::vector<game_object>& sprites)
     : sprites_(sprites)
 {
-    snake_part head;
-    head.dir           = head_direction;
-    game_object sprite = sprites_.at(8);
-    sprite.position    = pos;
-    head.game_obj      = sprite;
+    // indexes from res/level_01.txt file
+    constexpr unsigned head_index = 8;
+    constexpr unsigned body_index = 3;
+    constexpr unsigned tail_index = 2;
+
+    auto gen_part = [&](unsigned game_object_index, om::vec2 pos) {
+        snake_part part;
+        part.dir               = direction;
+        part.game_obj          = sprites_.at(game_object_index);
+        part.game_obj.position = pos;
+        return part;
+    };
+
+    snake_part head = gen_part(head_index, pos);
     parts.push_back(head);
 
-    snake_part body;
-    body.dir        = head_direction;
-    sprite          = sprites_.at(3);
-    sprite.position = pos + om::vec2(-10, 0);
-    body.game_obj   = sprite;
+    snake_part body = gen_part(body_index, pos + om::vec2(-10, 0));
     parts.push_back(body);
 
-    snake_part tail;
-    tail.dir        = head_direction;
-    sprite          = sprites_.at(2);
-    sprite.position = pos + om::vec2(-20, 0);
-    tail.game_obj   = sprite;
+    snake_part tail = gen_part(tail_index, pos + om::vec2(-20, 0));
     parts.push_back(tail);
 
     render_list_.reserve(28 * 28);
@@ -99,24 +100,45 @@ void snake::select_texture_for_neck(snake_part& neck)
     neck.game_obj.texture = sprites_.at(index).texture;
     if (index != body)
     {
-        neck.game_obj.direction = 0.f;
+        neck.game_obj.rotation = 0.f;
     }
 }
 
-void snake::erase_prev_tail_part()
+void snake::remove_old_tail()
 {
-    constexpr float pi = 3.14159f;
-    // move tail forward
-    snake_part& tail          = *parts.rbegin();
-    snake_part& new_tail      = *(++parts.rbegin());
+    constexpr float pi        = 3.14159f;
+    snake_part&     tail      = *parts.rbegin();
+    snake_part&     new_tail  = *(++parts.rbegin());
     new_tail.game_obj.texture = tail.game_obj.texture;
     auto it                   = parts.rbegin();
     std::advance(it, 2);
     snake_part&                    before_new_tail = *it;
     constexpr std::array<float, 4> tail_angles{ pi, -pi / 2.0f, 0, pi / 2.f };
-    new_tail.game_obj.direction =
+    new_tail.game_obj.rotation =
         tail_angles[static_cast<unsigned>(before_new_tail.dir)];
     parts.pop_back();
+}
+
+void snake::add_new_head()
+{
+    snake_part& head           = parts.front();
+    direction   next_dir       = get_next_direction(head);
+    om::vec2    step           = steps[static_cast<unsigned>(next_dir)];
+    snake_part  new_head       = parts.front();
+    new_head.game_obj.rotation = angles[static_cast<unsigned>(next_dir)];
+    new_head.game_obj.position = head.game_obj.position + step;
+    new_head.dir               = next_dir;
+    parts.push_front(new_head);
+}
+
+void snake::move_snake()
+{
+    add_new_head();
+    // TODO show refactoring on done:
+    // replace previous head sprite with body sprite
+    snake_part& neck = *(++(parts.begin()));
+    select_texture_for_neck(neck);
+    remove_old_tail();
 }
 
 void snake::update(float dt)
@@ -127,31 +149,7 @@ void snake::update(float dt)
     {
         step_timer = step_level + step_timer;
 
-        // TODO move snake
-        auto get_next_step = [](direction dir) {
-            return steps[static_cast<unsigned>(dir)];
-        };
-
-        snake_part& head           = parts.front();
-        direction   next_direction = get_next_direction(head);
-
-        om::vec2 step          = get_next_step(next_direction);
-        om::vec2 next_head_pos = head.game_obj.position;
-        next_head_pos += step;
-
-        snake_part new_head = parts.front();
-
-        new_head.game_obj.direction =
-            angles[static_cast<unsigned>(next_direction)];
-        new_head.game_obj.position = next_head_pos;
-        new_head.dir               = next_direction;
-        parts.push_front(new_head);
-
-        // replace previous head sprite with body sprite
-        snake_part& neck = *(++(parts.begin()));
-        select_texture_for_neck(neck);
-
-        erase_prev_tail_part();
+        move_snake();
         // reset next turn
         next_head_direction = user_direction::none;
     }
