@@ -14,6 +14,7 @@
 
 #include "configuration_loader.hxx"
 #include "game_object.hxx"
+#include "snake.hxx"
 
 static constexpr size_t screen_width  = 960.f;
 static constexpr size_t screen_height = 540.f;
@@ -33,6 +34,7 @@ private:
     std::vector<game_object>            objects;
     std::map<std::string, om::vbo*>     meshes;
     std::map<std::string, om::texture*> textures;
+    std::unique_ptr<snake>              snake_;
 };
 
 std::unique_ptr<om::lila> om_tat_sat()
@@ -70,6 +72,9 @@ void     snake_game::on_initialize()
 
     std::copy_n(std::istream_iterator<game_object>(level), objects_num,
                 std::back_inserter(objects));
+
+    snake_.reset(
+        new ::snake(om::vec2(35, 5), snake::direction::right, objects));
 }
 
 void snake_game::on_event(om::event& event)
@@ -100,7 +105,7 @@ void snake_game::on_event(om::event& event)
     }
 }
 
-void snake_game::on_update(std::chrono::milliseconds /*frame_delta*/)
+void snake_game::on_update(std::chrono::milliseconds frame_delta)
 {
     if (om::is_key_down(om::keys::left))
     {
@@ -121,6 +126,12 @@ void snake_game::on_update(std::chrono::milliseconds /*frame_delta*/)
     {
         //        current_tank_pos.y -= 0.01f;
         //        current_tank_direction = -pi;
+    }
+
+    if (snake_)
+    {
+        float dt = frame_delta.count() * 0.001f;
+        snake_->update(dt);
     }
 }
 
@@ -164,7 +175,7 @@ void snake_game::on_render() const
     };
 
     static const std::vector<object_type> render_order = {
-        { object_type::level, object_type::fruit, object_type::snake_part }
+        { object_type::level, object_type::fruit }
     };
 
     auto it =
@@ -183,6 +194,16 @@ void snake_game::on_render() const
         begin(render_order), end(render_order), [&](object_type type) {
             std::for_each(begin(objects), end(objects), draw(type, world_size));
         });
+
+    if (snake_)
+    {
+        const std::vector<game_object*>& render_list = snake_->render_list();
+        for (game_object* obj : render_list)
+        {
+            draw renderer(object_type::snake_part, world_size);
+            renderer(*obj);
+        }
+    }
 }
 
 om::vbo* load_mesh_from_file_with_scale(const std::string_view path,

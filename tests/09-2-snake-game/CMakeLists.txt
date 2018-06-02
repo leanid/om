@@ -31,6 +31,8 @@ elseif(MSVC)
 endif()
 
 add_library(game-09-2 SHARED game/game.cxx 
+                        game/game_object.cxx
+                        game/snake.cxx
                         game/configuration_loader.hxx
                         game/game_object.hxx)
 target_include_directories(game-09-2 PRIVATE .)

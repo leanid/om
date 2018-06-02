@@ -1,11 +1,12 @@
 #pragma once
 
 #include <algorithm>
+#include <cassert>
 #include <map>
 #include <sstream>
 #include <string>
 
-#include "om/math.hxx"
+#include <om/engine.hxx>
 
 enum class object_type
 {
@@ -34,54 +35,7 @@ inline std::istream& operator>>(std::istream& stream, object_type& type);
 om::vbo* load_mesh_from_file_with_scale(const std::string_view path,
                                         const om::vec2&        scale);
 
-std::istream& operator>>(std::istream& stream, game_object& obj)
-{
-    std::string start_word;
-    stream >> start_word;
-    if (start_word != "object")
-    {
-        throw std::runtime_error("can't parse game object got: " + start_word);
-    }
-
-    stream >> obj.name;
-    stream >> obj.type;
-
-    float direction_in_grad = 0.0f;
-    stream >> direction_in_grad;
-    obj.direction = direction_in_grad * (3.1415926f / 180.f);
-
-    stream >> obj.position;
-    stream >> obj.size;
-
-    std::string key_word;
-    stream >> key_word;
-    if (key_word != "mesh")
-    {
-        throw std::runtime_error("can't parse game object mesh got: " +
-                                 key_word);
-    }
-
-    stream >> obj.path_mesh;
-
-    om::vbo* mesh = load_mesh_from_file_with_scale(obj.path_mesh, obj.size);
-    assert(mesh != nullptr);
-    obj.mesh = mesh;
-
-    stream >> key_word;
-    if (key_word != "texture")
-    {
-        throw std::runtime_error("can't parse game object texture got: " +
-                                 key_word);
-    }
-
-    stream >> obj.path_texture;
-
-    om::texture* tex = om::create_texture(obj.path_texture);
-    assert(tex != nullptr);
-    obj.texture = tex;
-
-    return stream;
-}
+std::istream& operator>>(std::istream& stream, game_object& obj);
 
 std::istream& operator>>(std::istream& stream, object_type& type)
 {
