@@ -25,41 +25,41 @@ snake_part                        // type
 mesh  res/identity_quad.txt  // mesh
 texture res/snake_tail.png   // texture
 
-object snake_body                 // game_object 
-snake_part                        // type
-0                            // direction grad
+object snake_body              // game_object // index 3
+snake_part                     // type
+0                              // direction grad
 65 55                          // world position x, y
-10 10                      // size width height (28 cells in background)
-mesh  res/identity_quad.txt  // mesh
-texture res/snake_body.png   // texturev
+10 10                          // size width height (28 cells in background)
+mesh  res/identity_quad.txt    // mesh
+texture res/snake_body.png     // texturev
 
-object snake_bottom_left_bend                 // game_object 
+object snake_bottom_left_bend     // game_object // index 4 
 snake_part                        // type
-0                            // direction grad
-75 55                          // world position x, y
-10 10                      // size width height (28 cells in background)
+0                                 // direction grad
+75 55                             // world position x, y
+10 10                        // size width height (28 cells in background)
 mesh  res/identity_quad.txt  // mesh
 texture res/snake_bottom_left_bend.png   // texture
 
-object snake_top_left_bend                 // game_object 
+object snake_top_left_bend        // game_object // index 5 
 snake_part                        // type
-0                            // direction grad
-85 55                          // world position x, y
-10 10                      // size width height (28 cells in background)
+0                                 // direction grad
+85 55                             // world position x, y
+10 10                        // size width height (28 cells in background)
 mesh  res/identity_quad.txt  // mesh
 texture res/snake_top_left_bend.png   // texture
 
-object snake_top_right_bend                 // game_object 
+object snake_top_right_bend       // game_object // index 6
 snake_part                        // type
-0                            // direction grad
-95 55                          // world position x, y
-10 10                      // size width height (28 cells in background)
+0                                 // direction grad
+95 55                             // world position x, y
+10 10                        // size width height (28 cells in background)
 mesh  res/identity_quad.txt  // mesh
 texture res/snake_top_right_bend.png   // texture
 
-object snake_bottom_right_bend                 // game_object 
+object snake_bottom_right_bend    // game_object // index 7
 snake_part                        // type
-0                            // direction grad
+0                                 // direction grad
 105 55                          // world position x, y
 10 10                      // size width height (28 cells in background)
 mesh  res/identity_quad.txt  // mesh

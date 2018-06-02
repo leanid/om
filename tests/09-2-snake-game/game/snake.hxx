@@ -45,4 +45,8 @@ struct snake
     const std::vector<game_object*>& render_list() const;
     void set_user_direction(user_direction next_head_direction);
     bool is_alive() const;
+
+private:
+    direction    get_next_direction(game_object& head);
+    om::texture* select_texture_for_neck(const snake_part& neck);
 };
