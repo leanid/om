@@ -11,10 +11,10 @@ struct snake
 {
     enum class direction
     {
-        left,
-        up,
-        right,
-        down
+        left,  // 0
+        up,    // 1
+        right, // 2
+        down   // 3
     };
 
     struct snake_part
@@ -32,10 +32,11 @@ struct snake
         left,
         right
     };
-    user_direction next_head_direction = user_direction::none;
-    float          step_level          = 1.0f;
-    float          step_timer          = 1.0f; // seconds
-    bool           is_alive_           = true;
+    const std::vector<game_object>& sprites_;
+    user_direction                  next_head_direction = user_direction::none;
+    float                           step_level          = 1.0f;
+    float                           step_timer          = 1.0f; // seconds
+    bool                            is_alive_           = true;
 
     snake(om::vec2 pos, snake::direction head_direction,
           const std::vector<game_object>& sprites);
