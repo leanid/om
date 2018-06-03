@@ -147,8 +147,15 @@ void snake::move_snake()
 {
     add_new_head();
     update_old_head();
-    update_new_tail();
-    remove_old_tail();
+    if (eat_fruit_)
+    {
+        eat_fruit_ = false;
+    }
+    else
+    {
+        update_new_tail();
+        remove_old_tail();
+    }
 }
 
 void snake::update(float dt)
@@ -196,4 +203,9 @@ void snake::fill_cells(std::vector<bool>& all_field) const
         uint32_t index       = static_cast<uint32_t>(index_float);
         all_field.at(index)  = true;
     }
+}
+
+void snake::eat_fruit()
+{
+    eat_fruit_ = true;
 }

@@ -180,6 +180,8 @@ void snake_game::on_update(std::chrono::milliseconds frame_delta)
             // TODO generate next fruit position
             update_free_cells();
             fruit_->generate_next_position(free_cells);
+
+            snake_->eat_fruit();
         }
         // 4. if same - add one snake_part
 

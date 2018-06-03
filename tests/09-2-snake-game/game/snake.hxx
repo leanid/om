@@ -48,6 +48,8 @@ struct snake
 
     void fill_cells(std::vector<bool>& all_field) const;
 
+    void eat_fruit();
+
 private:
     direction get_next_direction(const snake_part& head);
     void      select_texture_for_neck(snake_part& neck);
@@ -56,4 +58,6 @@ private:
     void      move_snake();
     void      update_old_head();
     void      remove_old_tail();
+
+    bool eat_fruit_ = false;
 };
