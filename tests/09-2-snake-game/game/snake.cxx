@@ -150,6 +150,7 @@ void snake::move_snake()
     if (eat_fruit_)
     {
         eat_fruit_ = false;
+        step_level = step_level * 0.9;
     }
     else
     {
