@@ -106,6 +106,11 @@ void snake::select_texture_for_neck(snake_part& neck)
 
 void snake::remove_old_tail()
 {
+    parts.pop_back();
+}
+
+void snake::update_new_tail()
+{
     constexpr float pi        = 3.14159f;
     snake_part&     tail      = *parts.rbegin();
     snake_part&     new_tail  = *(++parts.rbegin());
@@ -116,7 +121,6 @@ void snake::remove_old_tail()
     constexpr std::array<float, 4> tail_angles{ pi, -pi / 2.0f, 0, pi / 2.f };
     new_tail.game_obj.rotation =
         tail_angles[static_cast<unsigned>(before_new_tail.dir)];
-    parts.pop_back();
 }
 
 void snake::add_new_head()
@@ -131,13 +135,19 @@ void snake::add_new_head()
     parts.push_front(new_head);
 }
 
-void snake::move_snake()
+void snake::update_old_head()
 {
-    add_new_head();
     // TODO show refactoring on done:
     // replace previous head sprite with body sprite
     snake_part& neck = *(++(parts.begin()));
     select_texture_for_neck(neck);
+}
+
+void snake::move_snake()
+{
+    add_new_head();
+    update_old_head();
+    update_new_tail();
     remove_old_tail();
 }
 
