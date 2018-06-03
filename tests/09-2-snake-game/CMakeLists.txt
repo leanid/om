@@ -33,8 +33,11 @@ endif()
 add_library(game-09-2 SHARED game/game.cxx 
                         game/game_object.cxx
                         game/snake.cxx
+                        game/fruit.cxx
                         game/configuration_loader.hxx
-                        game/game_object.hxx)
+                        game/game_object.hxx
+                        game/snake.hxx
+                        game/fruit.hxx)
 target_include_directories(game-09-2 PRIVATE .)
 target_compile_features(game-09-2 PRIVATE cxx_std_17)
 

@@ -183,3 +183,17 @@ bool snake::is_alive() const
 {
     return is_alive_;
 }
+
+void snake::fill_cells(std::vector<bool>& all_field) const
+{
+    for (const snake_part& part : parts)
+    {
+        float    x           = part.game_obj.position.x;
+        float    y           = part.game_obj.position.y;
+        float    cell_mod_28 = (x + 140 - 5) / 10;
+        float    cell_div_28 = (y + 140 - 5) / 10;
+        float    index_float = cell_mod_28 + cell_div_28 * 28;
+        uint32_t index       = static_cast<uint32_t>(index_float);
+        all_field.at(index)  = true;
+    }
+}

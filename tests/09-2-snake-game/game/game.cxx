@@ -13,6 +13,7 @@
 #include <om/engine.hxx>
 
 #include "configuration_loader.hxx"
+#include "fruit.hxx"
 #include "game_object.hxx"
 #include "snake.hxx"
 
@@ -35,6 +36,9 @@ private:
     std::map<std::string, om::vbo*>     meshes;
     std::map<std::string, om::texture*> textures;
     std::unique_ptr<snake>              snake_;
+    std::unique_ptr<fruit>              fruit_;
+    std::vector<uint32_t>               free_cells;
+    std::vector<bool>                   cell_state;
 };
 
 std::unique_ptr<om::lila> om_tat_sat()
@@ -54,6 +58,8 @@ om::vbo* load_mesh_from_file_with_scale(const std::string_view path,
                                         const om::vec2&        scale);
 void     snake_game::on_initialize()
 {
+    free_cells.reserve(28 * 28);
+
     debug_texture = om::create_texture("res/debug.png");
 
     auto level = filter_comments("res/level_01.txt");
@@ -75,6 +81,24 @@ void     snake_game::on_initialize()
 
     snake_.reset(
         new ::snake(om::vec2(35, 5), snake::direction::right, objects));
+
+    fruit_.reset(new fruit());
+    fruit_->sprite = objects.at(1);
+
+    cell_state.clear();
+    cell_state.resize(28 * 28);
+
+    snake_->fill_cells(cell_state);
+
+    for (uint32_t i = 0; i < 28 * 28; ++i)
+    {
+        if (!cell_state.at(i))
+        {
+            free_cells.push_back(i);
+        }
+    }
+
+    fruit_->generate_next_position(free_cells);
 }
 
 void snake_game::on_event(om::event& event)
@@ -138,6 +162,12 @@ void snake_game::on_update(std::chrono::milliseconds frame_delta)
 
     if (snake_)
     {
+        // TODO check collision snake with apple
+        // 1. get apple position
+        // 2. get snake head position
+        // 3. compare cell positions
+        // 4. if same - add one snake_part
+
         float dt = frame_delta.count() * 0.001f;
         snake_->update(dt);
     }
@@ -183,7 +213,7 @@ void snake_game::on_render() const
     };
 
     static const std::vector<object_type> render_order = {
-        { object_type::level, object_type::fruit }
+        { object_type::level }
     };
 
     auto it =
@@ -202,6 +232,12 @@ void snake_game::on_render() const
         begin(render_order), end(render_order), [&](object_type type) {
             std::for_each(begin(objects), end(objects), draw(type, world_size));
         });
+
+    if (fruit_)
+    {
+        draw renderer(object_type::fruit, world_size);
+        renderer(fruit_->sprite);
+    }
 
     if (snake_)
     {

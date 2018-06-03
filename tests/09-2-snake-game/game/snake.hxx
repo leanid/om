@@ -46,12 +46,14 @@ struct snake
     void set_user_direction(user_direction next_head_direction);
     bool is_alive() const;
 
+    void fill_cells(std::vector<bool>& all_field) const;
+
 private:
     direction get_next_direction(const snake_part& head);
     void      select_texture_for_neck(snake_part& neck);
     void      update_new_tail();
-	void add_new_head();
-	void move_snake();
-	void update_old_head();
-	void remove_old_tail();
+    void      add_new_head();
+    void      move_snake();
+    void      update_old_head();
+    void      remove_old_tail();
 };
