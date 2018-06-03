@@ -122,11 +122,24 @@ vec2& vec2::operator+=(const vec2& l)
     return *this;
 }
 
+float vec2::length() const
+{
+    return std::sqrt(x * x + y * y);
+}
+
 vec2 operator+(const vec2& l, const vec2& r)
 {
     vec2 result;
     result.x = l.x + r.x;
     result.y = l.y + r.y;
+    return result;
+}
+
+vec2 operator-(const vec2& l, const vec2& r)
+{
+    vec2 result;
+    result.x = l.x - r.x;
+    result.y = l.y - r.y;
     return result;
 }
 

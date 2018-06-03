@@ -14,9 +14,11 @@ struct OM_DECLSPEC vec2
     float x = 0;
     float y = 0;
     vec2& operator+=(const vec2& l);
+    float length() const;
 };
 
 vec2 OM_DECLSPEC operator+(const vec2& l, const vec2& r);
+vec2 OM_DECLSPEC operator-(const vec2& l, const vec2& r);
 
 struct OM_DECLSPEC matrix
 {
