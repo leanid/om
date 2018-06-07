@@ -3,10 +3,12 @@
 #include <chrono>
 #include <memory>
 
-#if !defined(OM_EXP) && defined(_WIN32)
+#if !defined(OM_EXP)
+#if defined(_WIN32)
 #define OM_EXP __declspec(dllimport)
 #else
 #define OM_EXP
+#endif
 #endif
 
 namespace om
