@@ -1,5 +1,7 @@
 #include "graphics_basic.hxx"
 
+#include <algorithm>
+
 std::array<color, buffer_size> image;
 
 render::~render() {}
@@ -23,12 +25,13 @@ void basic_render::set_pixel(position p, color c)
     col        = c;
 }
 
-void basic_render::draw_line(position start, position end, color c)
+line basic_render::line_positions(position start, position end)
 {
-    int x0 = start.x;
-    int y0 = start.y;
-    int x1 = end.x;
-    int y1 = end.y;
+    line result;
+    int  x0 = start.x;
+    int  y0 = start.y;
+    int  x1 = end.x;
+    int  y1 = end.y;
 
     auto plot_line_low = [&](int x0, int y0, int x1, int y1) {
         int dx = x1 - x0;
@@ -44,7 +47,7 @@ void basic_render::draw_line(position start, position end, color c)
 
         for (int x = x0; x <= x1; ++x)
         {
-            set_pixel(position{ x, y }, c);
+            result.push_back(position{ x, y });
             if (D > 0)
             {
                 y += yi;
@@ -68,7 +71,7 @@ void basic_render::draw_line(position start, position end, color c)
 
         for (int y = y0; y <= y1; ++y)
         {
-            set_pixel(position{ x, y }, c);
+            result.push_back(position{ x, y });
             if (D > 0)
             {
                 x += xi;
@@ -100,6 +103,34 @@ void basic_render::draw_line(position start, position end, color c)
             plot_line_high(x0, y0, x1, y1);
         }
     }
+    return result;
+}
+
+void basic_render::draw_line(position start, position end, color c)
+{
+    line l = line_positions(start, end);
+    std::for_each(l.begin(), l.end(), [&](auto& pos) { set_pixel(pos, c); });
+}
+
+triangle_render::triangle_render(std::array<color, buffer_size>& buffer,
+                                 size_t width, size_t height)
+    : basic_render(buffer, width, height)
+{
+}
+
+void triangle_render::draw_triangles(std::vector<position>& vertexes,
+                                     size_t num_vertexes, color c)
+{
+    for (size_t i = 0; i < num_vertexes / 3; ++i)
+    {
+        position v0 = vertexes.at(i * 3 + 0);
+        position v1 = vertexes.at(i * 3 + 1);
+        position v2 = vertexes.at(i * 3 + 2);
+
+        draw_line(v0, v1, c);
+        draw_line(v1, v2, c);
+        draw_line(v2, v0, c);
+    }
 }
 
 int main(int, char**)
@@ -130,6 +161,52 @@ int main(int, char**)
         render.draw_line(start, end, color);
     }
 
-    save_image("image_lines.ppm", image);
+    save_image("lines.ppm", image);
+
+    triangle_render render_tri(image, width, height);
+    render_tri.clear(black);
+
+    std::vector<position> triangle;
+    triangle.push_back(position(0, 0));
+    triangle.push_back(position(width - 1, height - 1));
+    triangle.push_back(position(0, height - 1));
+
+    render_tri.draw_triangles(triangle, 3, green);
+
+    save_image("triangle.ppm", image);
+
+    render_tri.clear(black);
+
+    size_t max_x = 10;
+    size_t max_y = 10;
+
+    std::vector<position> triangles;
+
+    for (size_t i = 0; i < max_x; ++i)
+    {
+        for (size_t j = 0; j < max_y; ++j)
+        {
+            int32_t step_x = (width - 1) / max_x;
+            int32_t step_y = (height - 1) / max_y;
+
+            position v0(0 + i * step_x, 0 + j * step_y);
+            position v1(v0.x + step_x, v0.y + step_y);
+            position v2(v0.x, v0.y + step_y);
+            position v3(v0.x + step_x, v0.y);
+
+            triangles.push_back(v0);
+            triangles.push_back(v1);
+            triangles.push_back(v2);
+
+            triangles.push_back(v0);
+            triangles.push_back(v3);
+            triangles.push_back(v1);
+        }
+    }
+
+    render_tri.draw_triangles(triangles, triangles.size(), green);
+
+    save_image("triangles.ppm", image);
+
     return 0;
 }

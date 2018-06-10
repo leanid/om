@@ -3,8 +3,7 @@
 #include <array>
 #include <cstddef>
 #include <fstream>
-
-// TODO add render functions
+#include <vector>
 
 constexpr size_t width  = 320;
 constexpr size_t height = 240;
@@ -40,15 +39,23 @@ void save_image(const std::string& file_name, const std::array<color, N>& image)
 
 struct position
 {
-    int32_t x;
-    int32_t y;
+    position() = default;
+    position(int32_t x_, int32_t y_)
+        : x(x_)
+        , y(y_)
+    {
+    }
+    int32_t x = 0;
+    int32_t y = 0;
 };
+
+using line = std::vector<position>;
 
 struct render
 {
-    virtual void clear(color)                                   = 0;
-    virtual void set_pixel(position, color)                     = 0;
-    virtual void draw_line(position start, position end, color) = 0;
+    virtual void clear(color)                                 = 0;
+    virtual void set_pixel(position, color)                   = 0;
+    virtual line line_positions(position start, position end) = 0;
 
     virtual ~render();
 };
@@ -60,10 +67,20 @@ struct basic_render : render
 
     void clear(color) override;
     void set_pixel(position, color) override;
-    void draw_line(position start, position end, color) override;
+    line line_positions(position start, position end) override;
+    void draw_line(position start, position end, color);
 
 private:
     std::array<color, buffer_size>& buffer;
     const size_t                    w;
     const size_t                    h;
+};
+
+struct triangle_render : basic_render
+{
+    triangle_render(std::array<color, buffer_size>& buffer, size_t width,
+                    size_t height);
+
+    void draw_triangles(std::vector<position>& vertexes, size_t num_vertexes,
+                        color);
 };
