@@ -114,10 +114,11 @@ std::unique_ptr<om::game> call_create_game(om::engine_impl& e)
     using namespace std::string_literals;
 
     auto game_so_name = get_game_library_path(e);
+    std::clog << "base game dll: " << game_so_name << std::endl;
     auto tmp_game     = game_so_name;
     tmp_game.replace(tmp_game.find("game"), 4, "tmp_game");
 
-    {
+    try{
         std::ifstream src_so;
         std::ofstream dst_so;
 
@@ -127,6 +128,10 @@ std::unique_ptr<om::game> call_create_game(om::engine_impl& e)
         src_so.open(game_so_name, std::ios::binary);
         dst_so.open(tmp_game, std::ios::binary);
         dst_so << src_so.rdbuf();
+    }catch(std::exception& ex)
+    {
+    	std::clog << "can't copy dll: " << ex.what();
+    	throw;
     }
 
     void* so_handle = SDL_LoadObject(tmp_game.c_str());
