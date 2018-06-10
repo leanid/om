@@ -40,8 +40,8 @@ void save_image(const std::string& file_name, const std::array<color, N>& image)
 
 struct position
 {
-    size_t x;
-    size_t y;
+    int32_t x;
+    int32_t y;
 };
 
 struct render
