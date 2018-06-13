@@ -3,11 +3,18 @@ project(engine LANGUAGES CXX)
 
 find_library(SDL2_LIB SDL2)
 
+add_library(scanner SHARED src/scanner.hxx
+							src/scanner.cxx)
+target_link_libraries(scanner stdc++fs)							
+
+add_executable(scanner_test src/scanner_unit_test.cxx)
+target_link_libraries(scanner_test scanner)
+
 add_executable(om     src/om/main.cxx 
                       src/om/engine_impl.cxx
                       include/om/engine.hxx
                       include/om/game.hxx)
-                      
+                                                 
 set_target_properties(om PROPERTIES ENABLE_EXPORTS TRUE)
 target_include_directories(om PRIVATE include)
 target_link_libraries(om PRIVATE ${SDL2_LIB}

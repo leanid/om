@@ -6,13 +6,10 @@ int main()
     // using https://github.com/catchorg/Catch2
 
     om::scanner scanner;
-
-    om::directory_info dir_info = scanner.scan("assets");
-
-    om::file_info file_info = dir_info.tree.get_file_info("file.txt");
-
-    file_info.exist == true;
-    file_info.size == ("Hello World"s).size();
+    scanner.init("C:/Users/codelimit/git/om");
+    scanner.scan();
+    scanner.tell_directory_info("jni");
+    scanner.tell_directory_info("04-0-render-basic");
 
     return EXIT_FAILURE;
 }
