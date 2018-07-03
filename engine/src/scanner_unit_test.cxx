@@ -10,35 +10,35 @@ using Catch::Matchers::Contains;
 
 TEST_CASE("scanner test")
 {
-    fs::create_directories("om/engine/src/om");
-    fs::create_directories("om/engine/src/scanner");
-    fs::create_directories("om/game");
+    fs::create_directories("test-folder/engine/src/om");
+    fs::create_directories("test-folder/engine/src/scanner");
+    fs::create_directories("test-folder/game");
 
-    std::ofstream fout("om/appveyor.yml");
+    std::ofstream fout("test-folder/appveyor.yml");
     fout << "The quick brown fox jumps over the lazy dog";
     fout.close();
-    fout.open("om/game/game.cxx");
+    fout.open("test-folder/game/game.cxx");
     fout << "Who packed five dozen old quart jugs in my box?";
     fout.close();
-    fout.open("om/engine/src/scanner.hxx");
+    fout.open("test-folder/engine/src/scanner.hxx");
     fout << "Grumpy wizards make a toxic brew for the jovial queen";
     fout.close();
-    fout.open("om/engine/src/one.cxx");
+    fout.open("test-folder/engine/src/one.cxx");
     fout.close();
-    fout.open("om/engine/src/one.hxx");
+    fout.open("test-folder/engine/src/one.hxx");
     fout.close();
-    fout.open("om/engine/src/two.cxx");
+    fout.open("test-folder/engine/src/two.cxx");
     fout << "Hello World";
     fout.close();
-    fout.open("om/readme.md");
+    fout.open("test-folder/readme.md");
     fout << "Few black taxis drive up major roads on quiet hazy nights";
     fout.close();
 
     SECTION("scanner initialization test")
     {
 
-        om::scanner        first_scanner("om");
-        om::scanner        second_scanner("om/engine");
+        om::scanner        first_scanner("test-folder");
+        om::scanner        second_scanner("test-folder/engine");
         om::scanner_report first_scanner_report  = first_scanner.getReport();
         om::scanner_report second_scanner_report = second_scanner.getReport();
 
@@ -55,7 +55,7 @@ TEST_CASE("scanner test")
 
     SECTION("get_file_size test")
     {
-        om::scanner scnr("om");
+        om::scanner scnr("test-folder");
 
         SECTION("valid request")
         {
@@ -81,7 +81,7 @@ TEST_CASE("scanner test")
 
     SECTION("is_file_exists test")
     {
-        om::scanner scnr("om");
+        om::scanner scnr("test-folder");
 
         SECTION("valid request")
         {
@@ -105,7 +105,7 @@ TEST_CASE("scanner test")
 
     SECTION("get_all_files_with_extension test")
     {
-        om::scanner scnr("om");
+        om::scanner scnr("test-folder");
 
         SECTION("valid request")
         {
@@ -120,6 +120,8 @@ TEST_CASE("scanner test")
             inf = scnr.get_all_files_with_extension("yml", "");
             REQUIRE(inf.size() == 1);
             REQUIRE_FALSE(inf.empty());
+            inf = scnr.get_all_files_with_extension("", "engine/src");
+            REQUIRE(inf.size() == 0);
         }
         SECTION("invalid request")
         {
@@ -132,15 +134,12 @@ TEST_CASE("scanner test")
             inf = scnr.get_all_files_with_extension("cxx", "engine/no_dir");
             REQUIRE(inf.size() == 0);
             // path not found
-            inf = scnr.get_all_files_with_extension("", "engine/src");
-            REQUIRE(inf.size() == 0);
-            //  no extension present
         }
     }
 
     SECTION("get_all_files_with_name test")
     {
-        om::scanner scnr("om");
+        om::scanner scnr("test-folder");
 
         SECTION("valid request")
         {
@@ -175,5 +174,5 @@ TEST_CASE("scanner test")
         }
     }
 
-    fs::remove_all("om");
+    fs::remove_all("test-folder");
 }
