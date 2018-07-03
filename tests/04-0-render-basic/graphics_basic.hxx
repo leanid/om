@@ -49,13 +49,13 @@ struct position
     int32_t y = 0;
 };
 
-using line = std::vector<position>;
+using pixels = std::vector<position>;
 
 struct render
 {
-    virtual void clear(color)                                 = 0;
-    virtual void set_pixel(position, color)                   = 0;
-    virtual line line_positions(position start, position end) = 0;
+    virtual void   clear(color)                                   = 0;
+    virtual void   set_pixel(position, color)                     = 0;
+    virtual pixels pixels_positions(position start, position end) = 0;
 
     virtual ~render();
 };
@@ -65,10 +65,10 @@ struct basic_render : render
     basic_render(std::array<color, buffer_size>& buffer, size_t width,
                  size_t height);
 
-    void clear(color) override;
-    void set_pixel(position, color) override;
-    line line_positions(position start, position end) override;
-    void draw_line(position start, position end, color);
+    void   clear(color) override;
+    void   set_pixel(position, color) override;
+    pixels pixels_positions(position start, position end) override;
+    void   draw_line(position start, position end, color);
 
 private:
     std::array<color, buffer_size>& buffer;
@@ -81,6 +81,16 @@ struct triangle_render : basic_render
     triangle_render(std::array<color, buffer_size>& buffer, size_t width,
                     size_t height);
 
+    virtual pixels pixels_positions(position v0, position v1, position v2);
     void draw_triangles(std::vector<position>& vertexes, size_t num_vertexes,
-                        color);
+                        color c);
+};
+
+struct triangle_indexed_render : triangle_render
+{
+    triangle_indexed_render(std::array<color, buffer_size>& buffer,
+                            size_t width, size_t height);
+
+    void draw_triangles(std::vector<position>& vertexes,
+                        std::vector<uint8_t>& indexes, color c);
 };
