@@ -1,68 +1,70 @@
-#include <chrono>
-#include <cstddef>
-#include <list>
-#include <map>
-#include <string>
-#include <string_view>
-#include <vector>
+#pragma once
 
-// TODO finish this header
+#include <string>
 
 namespace om
 {
 
-using milliseconds = std::chrono::milliseconds;
-
-class file;
-
-class directory
+struct file_info
 {
-public:
-    directory(std::string);
-    directory(){};
-    std::list<directory*> child_folders{};
-    std::list<file*>      child_files{};
-    directory*            parent = nullptr;
-    std::string           name{};
-
-private:
+    std::string  full_path = "";
+    unsigned int size      = 0;
 };
 
-class file
+class file_list
 {
 public:
-    size_t      get_size();
-    size_t      size = 0;
-    std::string name;
-    directory*  parent = nullptr;
+    unsigned int size();
+    bool         empty();
+    void         push();
+    void         clear();
+
+    class iterator;
+    iterator begin();
+    iterator end();
 
 private:
+    class impl;
+    impl* pImpl;
+};
+
+struct scanner_report
+{
+    unsigned int scan_time      = 0;
+    unsigned int total_files    = 0;
+    unsigned int total_folders  = 0;
+    bool         is_initialized = false;
+    bool         scan_perfomed  = false;
 };
 
 class scanner
 {
 public:
-    scanner(){};
-    void init();
-    void init(std::string);
-    void tell_directory_info(std::string);
-    void scan();
+    explicit scanner(const std::string& path);
+    scanner(const scanner&);
+    scanner& operator=(const scanner&);
+    scanner(scanner&&);
+    scanner& operator=(scanner&&);
 
-protected:
+    file_info get_file_info(std::string name);
+
+    unsigned int get_file_size(std::string name);
+
+    bool is_file_exists(std::string name);
+
+    const std::string get_file_path(std::string name);
+
+    file_list get_all_files_with_extension(std::string extn, std::string path);
+
+    file_list get_all_files_with_name(std::string name, std::string path);
+
+    scanner_report getReport();
+
+    ~scanner();
+
 private:
-    om::directory               root;
-    std::vector<om::directory*> dirs;
-    std::vector<om::file*>      files;
-    bool                        single_folder_scan(om::directory*);
-    bool single_folder_scan(om::directory*, std::vector<om::directory*>&,
-                            std::vector<om::file*>&); // for futher use
-    bool is_initialized{ false };
-    bool root_scanned{ false };
-
-    void         scan(std::string);
-    size_t       total_files_count{ 0 };
-    size_t       total_files_size{ 0 };
-    milliseconds scan_time{ 0 };
+    class impl;
+    impl* pImpl;
 };
 
-} // end namespace om
+} // namespace om
