@@ -39,8 +39,8 @@ TEST_CASE("scanner test")
 
         om::scanner        first_scanner("test-folder");
         om::scanner        second_scanner("test-folder/engine");
-        om::scanner_report first_scanner_report  = first_scanner.getReport();
-        om::scanner_report second_scanner_report = second_scanner.getReport();
+        om::scanner_report first_scanner_report  = first_scanner.get_report();
+        om::scanner_report second_scanner_report = second_scanner.get_report();
 
         REQUIRE(first_scanner_report.is_initialized == true);
         REQUIRE(first_scanner_report.scan_perfomed == true);
@@ -149,7 +149,7 @@ TEST_CASE("scanner test")
             REQUIRE(inf.size() == 0);
             REQUIRE(inf.empty());
             inf = scnr.get_all_files_with_name("one", "engine/src");
-            REQUIRE(inf.size() == 1);
+            REQUIRE(inf.size() == 2);
             REQUIRE_FALSE(inf.empty());
             inf = scnr.get_all_files_with_name("", "engine/src");
             REQUIRE(inf.size() == 4);

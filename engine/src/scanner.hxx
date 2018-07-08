@@ -7,25 +7,35 @@ namespace om
 
 struct file_info
 {
-    std::string  full_path = "";
-    unsigned int size      = 0;
+    file_info()
+        : abs_path("")
+        , size(0){};
+    file_info(const char* _path, unsigned int _size)
+        : abs_path(_path)
+        , size(_size){};
+    std::string  abs_path;
+    unsigned int size;
 };
 
-class file_list
+class file_list final
 {
 public:
-    unsigned int size();
-    bool         empty();
-    void         push();
-    void         clear();
+    // TODO Add all the constructors and assignment operators
+    file_list();
+    ~file_list();
 
-    class iterator;
-    iterator begin();
-    iterator end();
+    unsigned int size() const { return sz; }
+    void         push(const file_info&);
+    file_info&   at(unsigned int) const;
+    bool         empty() const;
+
+    file_info* begin() const { return data; }
+    file_info* end() const { return (data + sz); }
 
 private:
-    class impl;
-    impl* pImpl;
+    file_info*   data;
+    unsigned int sz;
+    unsigned int space;
 };
 
 struct scanner_report
@@ -37,16 +47,18 @@ struct scanner_report
     bool         scan_perfomed  = false;
 };
 
-class scanner
+class scanner final
 {
 public:
+    // TODO Implement all the constructors
     explicit scanner(const std::string& path);
     scanner(const scanner&);
     scanner& operator=(const scanner&);
     scanner(scanner&&);
     scanner& operator=(scanner&&);
 
-    unsigned int get_file_size(std::string name); // may be replace with size_t?
+    int get_file_size(
+        const std::string& name) const; // may be replace with size_t?
     /**
      * Function return file size in bytes, if file exists. Otherwise -1.
      * Null is a valid return value. An input argument is a relative path
@@ -55,7 +67,7 @@ public:
      * in actual file) will also return -1;
      */
 
-    bool is_file_exists(std::string name);
+    bool is_file_exists(const std::string& name) const;
 
     /**
      * Function return true if file is exists on a given path. Invalid
@@ -63,15 +75,8 @@ public:
      * (if present in actual file) will return false;
      */
 
-    const std::string get_file_path(std::string name);
-    /**
-     * Function return absolute path if file is exists on a given path.
-     * Invalid requests such like path with empty string or without file
-     * extension (if present in actual file) will return empty string. If
-     * file couldn't be found the return value will be empty string too;
-     */
-
-    file_list get_all_files_with_extension(std::string extn, std::string path);
+    file_list get_all_files_with_extension(std::string        extn,
+                                           const std::string& path) const;
     /**
      * Function return a file_list container, which holds file_info structures
      * for given requirements. Empty string is valid as input parameter
@@ -81,7 +86,8 @@ public:
      * non-empty container if path will contain files w/o extension.
      */
 
-    file_list get_all_files_with_name(std::string name, std::string path);
+    file_list get_all_files_with_name(const std::string& name,
+                                      const std::string& path) const;
     /**
      * Function return a file_list container, which holds file_info structures
      * for given requirements. Empty string is valid as input parameter
@@ -91,7 +97,7 @@ public:
      * for all files on given path.
      */
 
-    scanner_report getReport();
+    scanner_report get_report() const;
     /**
      * Function return a scanner_report structure, which contains information
      * about scanner internal values and states.
