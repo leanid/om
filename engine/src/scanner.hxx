@@ -20,9 +20,12 @@ struct file_info
 class file_list final
 {
 public:
-    // TODO Add all the constructors and assignment operators
     file_list();
     ~file_list();
+    file_list(const file_list&);
+    file_list& operator=(const file_list&);
+    file_list(file_list&&);
+    file_list& operator=(file_list&&);
 
     unsigned int size() const { return sz; }
     void         push(const file_info&);
@@ -51,11 +54,13 @@ class scanner final
 {
 public:
     // TODO Implement all the constructors
+    scanner()               = delete;
+    scanner(const scanner&) = delete;
+    scanner& operator=(const scanner&) = delete;
+    scanner(scanner&&)                 = delete;
+    scanner& operator=(scanner&&) = delete;
+
     explicit scanner(const std::string& path);
-    scanner(const scanner&);
-    scanner& operator=(const scanner&);
-    scanner(scanner&&);
-    scanner& operator=(scanner&&);
 
     int get_file_size(
         const std::string& name) const; // may be replace with size_t?

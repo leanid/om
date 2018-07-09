@@ -13,24 +13,73 @@
  * fs::directory_options::skip_permission_denied option scanner tries to
  * iterate over it and throws iterator error.
  */
-/* TODO Add scanner's destructor that will free all pointers (directories,
+/* TODO Add scanner's impl destructor that will free all pointers (directories,
  * files, etc.)
  */
 /* TODO No exceprions, nor assert!
  */
-
-namespace fs = std::experimental::filesystem;
+constexpr unsigned int initial_file_list_size = 8;
+namespace fs                                  = std::experimental::filesystem;
 
 namespace om
 {
-
-constexpr unsigned int initial_file_list_size = 8;
 
 om::file_list::file_list()
     : data(nullptr)
     , sz(0)
     , space(0)
 {
+}
+
+file_list::file_list(const file_list& lst)
+    : data{ new file_info[lst.space] }
+    , sz{ lst.sz }
+    , space{ lst.space }
+{
+    std::copy(lst.data, lst.data + lst.sz, data);
+}
+
+file_list& file_list::operator=(const file_list& lst)
+{
+    if (this == &lst)
+    {
+        return *this;
+    }
+    if (lst.sz <= space)
+    {
+        std::copy(lst.data, lst.data + lst.sz, data);
+        sz = lst.sz;
+        return *this;
+    }
+    file_info* ptr = new file_info[lst.space];
+    std::copy(lst.data, lst.data + lst.sz, ptr);
+    delete[] data;
+    data  = ptr;
+    space = lst.space;
+    sz    = lst.sz;
+    return *this;
+}
+
+file_list::file_list(file_list&& lst)
+    : data{ lst.data }
+    , sz{ lst.sz }
+    , space{ lst.space }
+{
+    lst.data  = nullptr;
+    lst.sz    = 0;
+    lst.space = 0;
+}
+
+file_list& file_list::operator=(file_list&& lst)
+{
+    delete[] data;
+    data      = lst.data;
+    sz        = lst.sz;
+    space     = lst.space;
+    lst.data  = nullptr;
+    lst.sz    = 0;
+    lst.space = 0;
+    return *this;
 }
 
 void om::file_list::push(const file_info& inf)
@@ -106,100 +155,49 @@ std::string file::get_full_name() const
 class scanner::impl
 {
 public:
-    std::vector<om::directory*> dirs;
-    std::vector<om::file*>      files;
-    om::directory               root;
+    impl();
+    ~impl();
 
     void        scan();
     bool        single_folder_scan(directory*);
     directory*  find_directory_ptr(const std::string&);
     file*       find_file_ptr(const std::string&);
+    std::string get_directory_path(const directory*);
     std::string get_file_path(const file*);
 
-    bool                      is_initialized{ false };
-    bool                      root_scanned{ false };
-    size_t                    total_files_count{ 0 };
-    size_t                    total_files_size{ 0 };
-    std::chrono::milliseconds scan_time{ 0 };
+    std::vector<om::directory*> dirs;
+    std::vector<om::file*>      files;
+    om::directory               root;
+
+    bool                      is_initialized;
+    bool                      root_scanned;
+    size_t                    total_files_count;
+    size_t                    total_files_size;
+    std::chrono::milliseconds scan_time;
 };
 
-scanner::scanner(const std::string& path_)
-    : pImpl(new scanner::impl())
+scanner::impl::impl()
+    : dirs{}
+    , files{}
+    , root{}
+    , is_initialized{ false }
+    , root_scanned{ false }
+    , total_files_count{ 0 }
+    , total_files_size{ 0 }
+    , scan_time{ 0 }
 {
-    if (path_.empty())
-    {
-        pImpl->root.name = fs::current_path().string();
-    }
-    else
-    {
-        fs::path path(path_);
-        assert(fs::exists(path)); // FIXME no assert?
-        if (path.is_absolute())
-        {
-            pImpl->root.name = path.string();
-        }
-        else
-        {
-            pImpl->root.name = (fs::current_path() / path).string();
-        }
-    }
-    pImpl->is_initialized = true;
-    pImpl->scan();
-}
-scanner::~scanner()
-{
-    delete pImpl;
-    pImpl = nullptr;
 }
 
-scanner_report scanner::get_report() const
+scanner::impl::~impl()
 {
-    scanner_report result;
-    result.scan_time      = pImpl->scan_time.count();
-    result.total_files    = pImpl->files.size();
-    result.total_folders  = pImpl->dirs.size();
-    result.is_initialized = pImpl->is_initialized;
-    result.scan_perfomed  = pImpl->root_scanned;
-    return result;
-}
-
-fs::path get_path_from_dir(const directory* dir)
-{
-    fs::path path;
-    while (dir->parent != nullptr)
+    for (auto p : dirs)
     {
-        path = dir->name / path;
-        dir  = dir->parent;
+        delete p;
     }
-    return path;
-}
-
-bool scanner::impl::single_folder_scan(om::directory* dir)
-{
-    fs::path path = root.name / get_path_from_dir(dir);
-    for (auto& p : fs::directory_iterator(
-             path, fs::directory_options::skip_permission_denied))
+    for (auto p : files)
     {
-        if (fs::is_directory(p))
-        {
-            om::directory* tmp = new om::directory;
-            tmp->name          = p.path().filename().string();
-            tmp->parent        = dir;
-            dir->child_folders.push_back(tmp);
-            dirs.push_back(tmp);
-        }
-        else if (fs::is_regular_file(p))
-        {
-            file* tmp      = new file;
-            tmp->name      = p.path().stem();
-            tmp->parent    = dir;
-            tmp->extension = p.path().extension();
-            tmp->size      = fs::file_size(p);
-            dir->child_files.push_back(tmp);
-            files.push_back(tmp);
-        }
+        delete p;
     }
-    return true;
 }
 
 void scanner::impl::scan()
@@ -235,6 +233,54 @@ void scanner::impl::scan()
     return;
 }
 
+bool scanner::impl::single_folder_scan(om::directory* dir)
+{
+    fs::path path(get_directory_path(dir));
+    // path /= get_directory_path(dir);
+    for (auto& p : fs::directory_iterator(
+             path, fs::directory_options::skip_permission_denied))
+    {
+        if (fs::is_directory(p))
+        {
+            om::directory* tmp = new om::directory;
+            tmp->name          = p.path().filename().string();
+            tmp->parent        = dir;
+            dir->child_folders.push_back(tmp);
+            dirs.push_back(tmp);
+        }
+        else if (fs::is_regular_file(p))
+        {
+            file* tmp      = new file;
+            tmp->name      = p.path().stem();
+            tmp->parent    = dir;
+            tmp->extension = p.path().extension();
+            tmp->size      = fs::file_size(p);
+            dir->child_files.push_back(tmp);
+            files.push_back(tmp);
+        }
+    }
+    return true;
+}
+
+directory* scanner::impl::find_directory_ptr(const std::string& _path)
+{
+    directory* result = &root;
+    fs::path   path(_path);
+
+    for (auto p : path)
+    {
+        auto it = std::find_if(
+            result->child_folders.begin(), result->child_folders.end(),
+            [&p](const directory* dir) { return dir->name == p; });
+        if (it == result->child_folders.end())
+        {
+            return nullptr;
+        }
+        result = *it;
+    }
+    return result;
+}
+
 file* scanner::impl::find_file_ptr(const std::string& _path)
 {
     file*      result = nullptr;
@@ -253,6 +299,58 @@ file* scanner::impl::find_file_ptr(const std::string& _path)
     return result;
 }
 
+std::string scanner::impl::get_directory_path(const directory* dir)
+{
+    fs::path result;
+    for (directory* ptr = dir->parent; ptr; ptr = ptr->parent)
+    {
+        result = ptr->name / result;
+    }
+    result /= dir->name;
+    return result;
+}
+
+std::string scanner::impl::get_file_path(const file* fl)
+{
+    fs::path result;
+    for (directory* ptr = fl->parent; ptr; ptr = ptr->parent)
+    {
+        result = ptr->name / result;
+    }
+    result /= (fl->get_full_name());
+    return result;
+}
+
+scanner::scanner(const std::string& path_)
+    : pImpl(new scanner::impl)
+{
+    if (path_.empty())
+    {
+        pImpl->root.name = fs::current_path().string();
+    }
+    else
+    {
+        fs::path path(path_);
+        assert(fs::exists(path)); // FIXME no assert?
+        if (path.is_absolute())
+        {
+            pImpl->root.name = path.string();
+        }
+        else
+        {
+            pImpl->root.name = (fs::current_path() / path).string();
+        }
+    }
+    pImpl->is_initialized = true;
+    pImpl->scan();
+}
+
+scanner::~scanner()
+{
+    delete pImpl;
+    pImpl = nullptr;
+}
+
 int scanner::get_file_size(const std::string& name) const
 {
     int   result = -1;
@@ -266,17 +364,6 @@ bool scanner::is_file_exists(const std::string& name) const
 {
     file* fl = pImpl->find_file_ptr(name);
     return fl ? true : false;
-}
-
-std::string scanner::impl::get_file_path(const file* fl)
-{
-    fs::path result;
-    for (directory* ptr = fl->parent; ptr; ptr = ptr->parent)
-    {
-        result = ptr->name / result;
-    }
-    result /= (fl->get_full_name());
-    return result;
 }
 
 file_list scanner::get_all_files_with_extension(std::string        extn,
@@ -336,22 +423,14 @@ file_list scanner::get_all_files_with_name(const std::string& name,
     return result;
 }
 
-directory* scanner::impl::find_directory_ptr(const std::string& _path)
+scanner_report scanner::get_report() const
 {
-    directory* result = &root;
-    fs::path   path(_path);
-
-    for (auto p : path)
-    {
-        auto it = std::find_if(
-            result->child_folders.begin(), result->child_folders.end(),
-            [&p](const directory* dir) { return dir->name == p; });
-        if (it == result->child_folders.end())
-        {
-            return nullptr;
-        }
-        result = *it;
-    }
+    scanner_report result;
+    result.scan_time      = pImpl->scan_time.count();
+    result.total_files    = pImpl->files.size();
+    result.total_folders  = pImpl->dirs.size();
+    result.is_initialized = pImpl->is_initialized;
+    result.scan_perfomed  = pImpl->root_scanned;
     return result;
 }
 
