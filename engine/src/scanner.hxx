@@ -1,5 +1,11 @@
 #pragma once
 
+#ifdef _WIN32
+#define SCNR_EXP __declspec(dllexport)
+#else
+#define SCNR_EXP
+#endif
+
 #include <string>
 
 namespace om
@@ -17,7 +23,7 @@ struct file_info
     unsigned int size;
 };
 
-class file_list final
+class SCNR_EXP file_list final
 {
 public:
     file_list();
@@ -50,7 +56,7 @@ struct scanner_report
     bool         scan_perfomed  = false;
 };
 
-class scanner final
+class SCNR_EXP scanner final
 {
 public:
     // TODO Implement all the constructors

@@ -237,8 +237,7 @@ bool scanner::impl::single_folder_scan(om::directory* dir)
 {
     fs::path path(get_directory_path(dir));
     // path /= get_directory_path(dir);
-    for (auto& p : fs::directory_iterator(
-             path, fs::directory_options::skip_permission_denied))
+    for (auto& p : fs::directory_iterator(path))
     {
         if (fs::is_directory(p))
         {
@@ -251,9 +250,9 @@ bool scanner::impl::single_folder_scan(om::directory* dir)
         else if (fs::is_regular_file(p))
         {
             file* tmp      = new file;
-            tmp->name      = p.path().stem();
+            tmp->name      = p.path().stem().string();
             tmp->parent    = dir;
-            tmp->extension = p.path().extension();
+            tmp->extension = p.path().extension().string();
             tmp->size      = fs::file_size(p);
             dir->child_files.push_back(tmp);
             files.push_back(tmp);
@@ -285,7 +284,7 @@ file* scanner::impl::find_file_ptr(const std::string& _path)
 {
     file*      result = nullptr;
     fs::path   path(_path);
-    directory* dir = find_directory_ptr(path.parent_path());
+    directory* dir = find_directory_ptr(path.parent_path().string());
     if (dir)
     {
         for (auto p : dir->child_files)
@@ -307,7 +306,7 @@ std::string scanner::impl::get_directory_path(const directory* dir)
         result = ptr->name / result;
     }
     result /= dir->name;
-    return result;
+    return result.string();
 }
 
 std::string scanner::impl::get_file_path(const file* fl)
@@ -318,7 +317,7 @@ std::string scanner::impl::get_file_path(const file* fl)
         result = ptr->name / result;
     }
     result /= (fl->get_full_name());
-    return result;
+    return result.string();
 }
 
 scanner::scanner(const std::string& path_)
@@ -369,9 +368,11 @@ bool scanner::is_file_exists(const std::string& name) const
 file_list scanner::get_all_files_with_extension(std::string        extn,
                                                 const std::string& path) const
 {
+    file_list  result;
+    if (extn.empty())
+        return result;
     if (extn.front() != '.')
         extn.insert(extn.begin(), '.');
-    file_list  result;
     directory* dir = pImpl->find_directory_ptr(path);
     if (dir)
     {
