@@ -389,7 +389,7 @@ public:
     void bind() const
     {
         GLboolean is_texture = glIsTexture(tex_handl);
-        assert(is_texture);
+        SDL_assert(is_texture);
         OM_GL_CHECK();
         glBindTexture(GL_TEXTURE_2D, tex_handl);
         OM_GL_CHECK();
@@ -1072,7 +1072,7 @@ engine::engine(std::string_view)
         int gl_major_ver = 0;
         int result =
             SDL_GL_GetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, &gl_major_ver);
-        assert(result == 0);
+        SDL_assert(result == 0);
         int gl_minor_ver = 0;
         result =
             SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, &gl_minor_ver);
@@ -1502,7 +1502,9 @@ int initialize_and_start_main_loop()
 #if defined(__MINGW32__) || defined(__linux__)
     om_tat_sat_func = "_Z10om_tat_satRN2om6engineE";
 #elif defined(_MSC_VER)
-    om_tat_sat_func = "?om_tat_sat@@YA?AV?$unique_ptr@Ulila@om@@U?$default_delete@Ulila@om@@@std@@@std@@AAVengine@om@@@Z"; // TODO fix it later
+    om_tat_sat_func =
+        "?om_tat_sat@@YA?AV?$unique_ptr@Ulila@om@@U?$default_delete@Ulila@om@@@"
+        "std@@@std@@AAVengine@om@@@Z"; // TODO fix it later
 #else
 #error "add mangled name for your compiler"
 #endif

@@ -200,8 +200,8 @@ public:
     }
     ~vertex_buffer_impl() final;
 
-    const v2*      data() const final { return &triangles.data()->v[0]; }
-    size_t size() const final { return triangles.size() * 3; }
+    const v2* data() const final { return &triangles.data()->v[0]; }
+    size_t    size() const final { return triangles.size() * 3; }
 
 private:
     std::vector<tri2> triangles;
@@ -354,7 +354,7 @@ public:
     void bind() const
     {
         GLboolean is_texture = glIsTexture(tex_handl);
-        assert(is_texture);
+        SDL_assert(is_texture);
         OM_GL_CHECK();
         glBindTexture(GL_TEXTURE_2D, tex_handl);
         OM_GL_CHECK();
@@ -1201,10 +1201,10 @@ std::string engine_impl::initialize(std::string_view)
     int gl_major_ver = 0;
     int result =
         SDL_GL_GetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, &gl_major_ver);
-    assert(result == 0);
+    SDL_assert(result == 0);
     int gl_minor_ver = 0;
     result = SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, &gl_minor_ver);
-    assert(result == 0);
+    SDL_assert(result == 0);
 
     if (gl_major_ver <= 2 && gl_minor_ver < 1)
     {

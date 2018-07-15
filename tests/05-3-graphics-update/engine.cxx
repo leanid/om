@@ -723,8 +723,8 @@ texture_gl_es20::texture_gl_es20(std::string_view path)
 
     GLint   mipmap_level = 0;
     GLint   border       = 0;
-    GLsizei width_        = static_cast<GLsizei>(w);
-    GLsizei height_       = static_cast<GLsizei>(h);
+    GLsizei width_       = static_cast<GLsizei>(w);
+    GLsizei height_      = static_cast<GLsizei>(h);
     glTexImage2D(GL_TEXTURE_2D, mipmap_level, GL_RGBA, width_, height_, border,
                  GL_RGBA, GL_UNSIGNED_BYTE, &image[0]);
     OM_GL_CHECK();
@@ -792,10 +792,10 @@ std::string engine_impl::initialize(std::string_view)
     int gl_major_ver = 0;
     int result =
         SDL_GL_GetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, &gl_major_ver);
-    assert(result == 0);
+    SDL_assert(result == 0);
     int gl_minor_ver = 0;
     result = SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, &gl_minor_ver);
-    assert(result == 0);
+    SDL_assert(result == 0);
 
     if (gl_major_ver <= 2 && gl_minor_ver < 1)
     {

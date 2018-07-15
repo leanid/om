@@ -186,13 +186,9 @@ matrix operator*(const matrix& m1, const matrix& m2)
     return r;
 }
 
-texture::~texture()
-{
-}
+texture::~texture() {}
 
-vbo::~vbo()
-{
-}
+vbo::~vbo() {}
 
 class vertex_buffer_impl final : public vbo
 {
@@ -374,9 +370,7 @@ sound_buffer_impl::sound_buffer_impl(std::string_view  path,
     }
 }
 
-sound::~sound()
-{
-}
+sound::~sound() {}
 
 sound_buffer_impl::~sound_buffer_impl()
 {
@@ -388,9 +382,7 @@ sound_buffer_impl::~sound_buffer_impl()
     length = 0;
 }
 
-vertex_buffer_impl::~vertex_buffer_impl()
-{
-}
+vertex_buffer_impl::~vertex_buffer_impl() {}
 
 class texture_gl_es20 final : public texture
 {
@@ -401,7 +393,7 @@ public:
     void bind() const
     {
         GLboolean is_texture = glIsTexture(tex_handl);
-        assert(is_texture);
+        SDL_assert(is_texture);
         OM_GL_CHECK();
         glBindTexture(GL_TEXTURE_2D, tex_handl);
         OM_GL_CHECK();
@@ -421,7 +413,7 @@ class shader_gl_es20
 {
 public:
     shader_gl_es20(
-        std::string_view vertex_src, std::string_view         fragment_src,
+        std::string_view vertex_src, std::string_view fragment_src,
         const std::vector<std::tuple<GLuint, const GLchar*>>& attributes)
     {
         vert_shader = compile_shader(GL_VERTEX_SHADER, vertex_src);
@@ -951,11 +943,11 @@ static void initialize_internal(std::string_view   title,
         int gl_major_ver = 0;
         int result =
             SDL_GL_GetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, &gl_major_ver);
-        assert(result == 0);
+        SDL_assert(result == 0);
         int gl_minor_ver = 0;
         result =
             SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, &gl_minor_ver);
-        assert(result == 0);
+        SDL_assert(result == 0);
 
         if (gl_major_ver <= 2 && gl_minor_ver < 1)
         {

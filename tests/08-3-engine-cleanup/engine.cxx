@@ -390,7 +390,7 @@ public:
     void bind() const
     {
         GLboolean is_texture = glIsTexture(tex_handl);
-        assert(is_texture);
+        SDL_assert(is_texture);
         OM_GL_CHECK();
         glBindTexture(GL_TEXTURE_2D, tex_handl);
         OM_GL_CHECK();
@@ -930,7 +930,7 @@ static void initialize_internal(std::string_view   title,
         int gl_major_ver = 0;
         int result =
             SDL_GL_GetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, &gl_major_ver);
-        assert(result == 0);
+        SDL_assert(result == 0);
         int gl_minor_ver = 0;
         result =
             SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, &gl_minor_ver);
