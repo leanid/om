@@ -1,10 +1,14 @@
 #include "scanner.hxx"
 #include <algorithm>
 #include <assert.h>
+#include <boost/pool/object_pool.hpp>
+#include <boost/pool/pool.hpp>
+#include <boost/pool/pool_alloc.hpp>
 #include <experimental/filesystem>
 #include <iostream>
+#include <queue>
+#include <utility>
 #include <vector>
-
 /* TODO Locale dependency. We have to use std::wstring, std::wcout
  * to handle paths with russian names. Otherwise scanner won't find
  * any entries;
@@ -159,106 +163,77 @@ public:
     ~impl();
 
     void        scan();
-    bool        single_folder_scan(directory*);
     directory*  find_directory_ptr(const std::string&);
     file*       find_file_ptr(const std::string&);
     std::string get_directory_path(const directory*);
     std::string get_file_path(const file*);
 
-    std::vector<om::directory*> dirs;
-    std::vector<om::file*>      files;
-    om::directory               root;
+    om::directory                     root;
+    boost::object_pool<om::directory> directory_pool;
+    boost::object_pool<om::file>      file_pool;
 
     bool                      is_initialized;
-    bool                      root_scanned;
-    size_t                    total_files_count;
-    size_t                    total_files_size;
+    size_t                    total_files;
+    size_t                    total_folders;
     std::chrono::milliseconds scan_time;
 };
 
 scanner::impl::impl()
-    : dirs{}
-    , files{}
-    , root{}
+    : root{}
     , is_initialized{ false }
-    , root_scanned{ false }
-    , total_files_count{ 0 }
-    , total_files_size{ 0 }
+    , total_files{ 0 }
+    , total_folders{ 0 }
     , scan_time{ 0 }
 {
+    // directory_pool.set_next_size(512);
+    // file_pool.set_next_size(512);
 }
 
-scanner::impl::~impl()
-{
-    for (auto p : dirs)
-    {
-        delete p;
-    }
-    for (auto p : files)
-    {
-        delete p;
-    }
-}
+scanner::impl::~impl() {}
 
 void scanner::impl::scan()
 {
-    assert(is_initialized); // FIXME no assert?
-    std::chrono::time_point<std::chrono::system_clock> start, finish;
+    std::chrono::time_point<std::chrono::high_resolution_clock> start, finish;
     start = std::chrono::system_clock::now();
-    single_folder_scan(&root);
-
-    unsigned int index_offset       = 0;
-    unsigned int index_last_element = dirs.size();
-    while (1)
+    std::queue<std::pair<fs::path, om::directory*>> recursion_queue;
+    fs::path                                        path(root.name);
+    recursion_queue.push(std::make_pair(path, &root));
+    while (!recursion_queue.empty())
     {
-        for (unsigned int i = index_offset; i < index_last_element; ++i)
+        auto pair = recursion_queue.front();
+        recursion_queue.pop();
+        for (auto p : fs::directory_iterator(pair.first))
         {
-            single_folder_scan(dirs[i]);
+            if (fs::is_directory(p))
+            {
+                om::directory* const tmp = directory_pool.construct();
+                // om::directory* tmp = new om::directory;
+                tmp->name   = p.path().filename().string();
+                tmp->parent = pair.second;
+                pair.second->child_folders.push_back(tmp);
+                recursion_queue.push(std::make_pair(p, tmp));
+                ++total_folders;
+            }
+            else if (fs::is_regular_file(p))
+            {
+                file* const tmp = file_pool.construct();
+                // file* tmp      = new om::file;
+                tmp->name      = p.path().stem().string();
+                tmp->parent    = pair.second;
+                tmp->extension = p.path().extension().string();
+                tmp->size      = fs::file_size(p);
+                pair.second->child_files.push_back(tmp);
+                ++total_files;
+            }
         }
-        if (index_last_element == dirs.size())
-            break;
-        index_offset       = index_last_element;
-        index_last_element = dirs.size();
     }
     finish = std::chrono::system_clock::now();
     scan_time =
         std::chrono::duration_cast<std::chrono::milliseconds>(finish - start);
-    // May be won't need it
-    /*   std::sort(dirs.begin(), dirs.end(), [](om::directory* a, om::directory*
-       b) { return a->name < b->name;
-       });
-       std::sort(files.begin(), files.end(),
-                 [](file* a, file* b) { return a->name < b->name; });*/
-    root_scanned = true;
+    is_initialized = true;
+    //  std::cout << "next sizes " << file_pool.get_next_size() << " "
+    //            << directory_pool.get_next_size() << std::endl;
     return;
-}
-
-bool scanner::impl::single_folder_scan(om::directory* dir)
-{
-    fs::path path(get_directory_path(dir));
-    // path /= get_directory_path(dir);
-    for (auto& p : fs::directory_iterator(path))
-    {
-        if (fs::is_directory(p))
-        {
-            om::directory* tmp = new om::directory;
-            tmp->name          = p.path().filename().string();
-            tmp->parent        = dir;
-            dir->child_folders.push_back(tmp);
-            dirs.push_back(tmp);
-        }
-        else if (fs::is_regular_file(p))
-        {
-            file* tmp      = new file;
-            tmp->name      = p.path().stem().string();
-            tmp->parent    = dir;
-            tmp->extension = p.path().extension().string();
-            tmp->size      = fs::file_size(p);
-            dir->child_files.push_back(tmp);
-            files.push_back(tmp);
-        }
-    }
-    return true;
 }
 
 directory* scanner::impl::find_directory_ptr(const std::string& _path)
@@ -323,24 +298,15 @@ std::string scanner::impl::get_file_path(const file* fl)
 scanner::scanner(const std::string& path_)
     : pImpl(new scanner::impl)
 {
-    if (path_.empty())
+    fs::path path(path_);
+
+    if (path.is_relative())
     {
-        pImpl->root.name = fs::current_path().string();
+        path = (fs::current_path() / path).string();
     }
-    else
-    {
-        fs::path path(path_);
-        assert(fs::exists(path)); // FIXME no assert?
-        if (path.is_absolute())
-        {
-            pImpl->root.name = path.string();
-        }
-        else
-        {
-            pImpl->root.name = (fs::current_path() / path).string();
-        }
-    }
-    pImpl->is_initialized = true;
+    if (!fs::exists(path))
+        return;
+    pImpl->root.name = path.string();
     pImpl->scan();
 }
 
@@ -352,8 +318,9 @@ scanner::~scanner()
 
 int scanner::get_file_size(const std::string& name) const
 {
-    int   result = -1;
-    file* fl     = pImpl->find_file_ptr(name);
+    int result = -1;
+
+    file* fl = pImpl->find_file_ptr(name);
     if (fl)
         result = fl->size;
     return result;
@@ -368,7 +335,7 @@ bool scanner::is_file_exists(const std::string& name) const
 file_list scanner::get_all_files_with_extension(std::string        extn,
                                                 const std::string& path) const
 {
-    file_list  result;
+    file_list result;
     if (extn.empty())
         return result;
     if (extn.front() != '.')
@@ -427,11 +394,10 @@ file_list scanner::get_all_files_with_name(const std::string& name,
 scanner_report scanner::get_report() const
 {
     scanner_report result;
-    result.scan_time      = pImpl->scan_time.count();
-    result.total_files    = pImpl->files.size();
-    result.total_folders  = pImpl->dirs.size();
-    result.is_initialized = pImpl->is_initialized;
-    result.scan_perfomed  = pImpl->root_scanned;
+    result.scan_time     = pImpl->scan_time.count();
+    result.initialized   = pImpl->is_initialized;
+    result.total_files   = pImpl->total_files;
+    result.total_folders = pImpl->total_folders;
     return result;
 }
 

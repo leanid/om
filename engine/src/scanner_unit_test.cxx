@@ -42,13 +42,11 @@ TEST_CASE("scanner test")
         om::scanner_report first_scanner_report  = first_scanner.get_report();
         om::scanner_report second_scanner_report = second_scanner.get_report();
 
-        REQUIRE(first_scanner_report.is_initialized == true);
-        REQUIRE(first_scanner_report.scan_perfomed == true);
+        REQUIRE(first_scanner_report.initialized == true);
         REQUIRE(first_scanner_report.total_files == 7);
         REQUIRE(first_scanner_report.total_folders == 5);
 
-        REQUIRE(second_scanner_report.is_initialized == true);
-        REQUIRE(second_scanner_report.scan_perfomed == true);
+        REQUIRE(second_scanner_report.initialized == true);
         REQUIRE(second_scanner_report.total_files == 4);
         REQUIRE(second_scanner_report.total_folders == 3);
     }

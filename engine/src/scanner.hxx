@@ -49,11 +49,10 @@ private:
 
 struct scanner_report
 {
-    unsigned int scan_time      = 0;
-    unsigned int total_files    = 0;
-    unsigned int total_folders  = 0;
-    bool         is_initialized = false;
-    bool         scan_perfomed  = false;
+    unsigned int scan_time     = 0;
+    unsigned int total_files   = 0;
+    unsigned int total_folders = 0;
+    bool         initialized   = false;
 };
 
 class SCNR_EXP scanner final
