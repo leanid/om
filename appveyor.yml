@@ -13,7 +13,7 @@ configuration:
   - Debug
 
 before_build:
-  - cmake -DCMAKE_TOOLCHAIN_FILE=c:/tools/vcpkg/scripts/buildsystems/vcpkg.cmake -G "Visual Studio 15 2017 Win64" tests
+  - cmake -DCMAKE_TOOLCHAIN_FILE=c:/tools/vcpkg/scripts/buildsystems/vcpkg.cmake -G "Visual Studio 15 2017 Win64" class-01-basic-game-dev
 
 build:
   project: $(APPVEYOR_BUILD_FOLDER)\all-tests-build.sln
