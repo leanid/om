@@ -32,6 +32,6 @@ fi
 cd ~/om 
 mkdir build 
 cd build 
-cmake ../tests -G "MSYS Makefiles" 
+cmake ../class-01-basic-game-dev -G "MSYS Makefiles" 
 cmake --build . 
 exit 0 

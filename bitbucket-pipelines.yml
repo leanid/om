@@ -4,98 +4,98 @@ pipelines:
     - step:
         script:
           - git clean -df
-          - cmake -configure tests/01-1-hello-world/
-          - cmake -generate tests/01-1-hello-world/
+          - cmake -configure class-01-basic-game-dev/01-1-hello-world/
+          - cmake -generate class-01-basic-game-dev/01-1-hello-world/
           - make
           - ./01-1-hello-world
           
           - git clean -df
-          - mingw64-cmake -configure tests/01-1-hello-world/
-          - mingw64-cmake -generate tests/01-1-hello-world/
+          - mingw64-cmake -configure class-01-basic-game-dev/01-1-hello-world/
+          - mingw64-cmake -generate class-01-basic-game-dev/01-1-hello-world/
           - mingw64-make
           #- WINEPATH=/usr/x86_64-w64-mingw32/sys-root/mingw/bin wine ./01-1-hello-world.exe # too long 30 seconds
           
           - git clean -df
-          - CXX=clang++ cmake -configure tests/01-1-hello-world/
-          - CXX=clang++ cmake -generate tests/01-1-hello-world/
+          - CXX=clang++ cmake -configure class-01-basic-game-dev/01-1-hello-world/
+          - CXX=clang++ cmake -generate class-01-basic-game-dev/01-1-hello-world/
           - make
           - ./01-1-hello-world
 
           - git clean -df
-          - cmake -configure tests/01-2-hello-lib/
-          - cmake -generate tests/01-2-hello-lib/
+          - cmake -configure class-01-basic-game-dev/01-2-hello-lib/
+          - cmake -generate class-01-basic-game-dev/01-2-hello-lib/
           - make
           - hello_bin/hello-bin
           
           - git clean -df
-          - mingw64-cmake -configure tests/01-2-hello-lib/
-          - mingw64-cmake -generate tests/01-2-hello-lib/
+          - mingw64-cmake -configure class-01-basic-game-dev/01-2-hello-lib/
+          - mingw64-cmake -generate class-01-basic-game-dev/01-2-hello-lib/
           - mingw64-make
           #- WINEPATH=/usr/x86_64-w64-mingw32/sys-root/mingw/bin wine hello_bin/hello-bin # too long 30 seconds
           
           - git clean -df
-          - CXX=clang++ cmake -configure tests/01-2-hello-lib/
-          - CXX=clang++ cmake -generate tests/01-2-hello-lib/
+          - CXX=clang++ cmake -configure class-01-basic-game-dev/01-2-hello-lib/
+          - CXX=clang++ cmake -generate class-01-basic-game-dev/01-2-hello-lib/
           - make
           - hello_bin/hello-bin
 
           - git clean -df
-          - cmake -configure tests/02-1-sdl-dynamic/
-          - cmake -generate tests/02-1-sdl-dynamic/
+          - cmake -configure class-01-basic-game-dev/02-1-sdl-dynamic/
+          - cmake -generate class-01-basic-game-dev/02-1-sdl-dynamic/
           - make
           - ./02-sdl-dynamic
 
           - git clean -df
-          - cmake -configure tests/02-2-sdl-static/
-          - cmake -generate tests/02-2-sdl-static/
+          - cmake -configure class-01-basic-game-dev/02-2-sdl-static/
+          - cmake -generate class-01-basic-game-dev/02-2-sdl-static/
           - make
           - ./02-sdl-static
 
           - git clean -df
-          - mingw64-cmake -configure tests/02-1-sdl-dynamic/
-          - mingw64-cmake -generate tests/02-1-sdl-dynamic/
+          - mingw64-cmake -configure class-01-basic-game-dev/02-1-sdl-dynamic/
+          - mingw64-cmake -generate class-01-basic-game-dev/02-1-sdl-dynamic/
           - mingw64-make
           #- WINEPATH=/usr/x86_64-w64-mingw32/sys-root/mingw/bin wine ./02-sdl-dynamic.exe # too long 30 seconds
 
           - git clean -df
-          - mingw64-cmake -configure tests/02-2-sdl-static/
-          - mingw64-cmake -generate tests/02-2-sdl-static/
+          - mingw64-cmake -configure class-01-basic-game-dev/02-2-sdl-static/
+          - mingw64-cmake -generate class-01-basic-game-dev/02-2-sdl-static/
           - mingw64-make
           #- WINEPATH=/usr/x86_64-w64-mingw32/sys-root/mingw/bin wine ./02-sdl-static.exe # too long 30 seconds
          
           - git clean -df
-          - cmake -configure tests/03-1-sdl-loop/
-          - cmake -generate tests/03-1-sdl-loop/
+          - cmake -configure class-01-basic-game-dev/03-1-sdl-loop/
+          - cmake -generate class-01-basic-game-dev/03-1-sdl-loop/
           - make
 
           - git clean -df
-          - cmake -configure tests/03-2-sdl-loop-to-engine/
-          - cmake -generate tests/03-2-sdl-loop-to-engine/
+          - cmake -configure class-01-basic-game-dev/03-2-sdl-loop-to-engine/
+          - cmake -generate class-01-basic-game-dev/03-2-sdl-loop-to-engine/
           - make
 
           - git clean -df
-          - cmake -configure tests/03-3-sdl-loop-to-engine-dll/
-          - cmake -generate tests/03-3-sdl-loop-to-engine-dll/
+          - cmake -configure class-01-basic-game-dev/03-3-sdl-loop-to-engine-dll/
+          - cmake -generate class-01-basic-game-dev/03-3-sdl-loop-to-engine-dll/
           - make
 
           - git clean -df
-          - mingw64-cmake -configure tests/04-1-opengl-minimal/
-          - mingw64-cmake -generate tests/04-1-opengl-minimal/
+          - mingw64-cmake -configure class-01-basic-game-dev/04-1-opengl-minimal/
+          - mingw64-cmake -generate class-01-basic-game-dev/04-1-opengl-minimal/
           - mingw64-make
           #- WINEPATH=/usr/x86_64-w64-mingw32/sys-root/mingw/bin wine ./game.exe # run opengl minimal on linux with wine (works)
 
           - git clean -df
-          - cmake -configure tests/04-2-opengl-triangle/
-          - cmake -generate tests/04-2-opengl-triangle/
+          - cmake -configure class-01-basic-game-dev/04-2-opengl-triangle/
+          - cmake -generate class-01-basic-game-dev/04-2-opengl-triangle/
           - make
 
           - git clean -df
-          - cmake -configure tests/05-1-vertex-morphing/
-          - cmake -generate tests/05-1-vertex-morphing/
+          - cmake -configure class-01-basic-game-dev/05-1-vertex-morphing/
+          - cmake -generate class-01-basic-game-dev/05-1-vertex-morphing/
           - make
 
           - git clean -df
-          - cmake -configure tests/05-2-texture-loading/
-          - cmake -generate tests/05-2-texture-loading/
+          - cmake -configure class-01-basic-game-dev/05-2-texture-loading/
+          - cmake -generate class-01-basic-game-dev/05-2-texture-loading/
           - make
 
