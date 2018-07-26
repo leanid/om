@@ -1,10 +1,30 @@
+//#define USE_DIRENT
+#define USE_STD_FILESYSTEM
+// XXX #define USE_BOOST
+
+#ifdef USE_DIRENT
+#include <dirent.h>
+#include <sstream>
+#include <stdio.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#endif
+
+#ifdef USE_STD_FILESYSTEM
+#include <filesystem>
+namespace fs = std::filesystem;
+#endif
+
+#ifdef USE_BOOST
+#include <boost/filesystem.hpp>
+#include <boost/pool/object_pool.hpp>
+#endif
+
 #include "scanner.hxx"
 #include <algorithm>
 #include <assert.h>
-#include <boost/pool/object_pool.hpp>
-#include <boost/pool/pool.hpp>
-#include <boost/pool/pool_alloc.hpp>
-#include <experimental/filesystem>
+#include <chrono>
 #include <iostream>
 #include <queue>
 #include <utility>
@@ -22,8 +42,8 @@
  */
 /* TODO No exceprions, nor assert!
  */
+
 constexpr unsigned int initial_file_list_size = 8;
-namespace fs                                  = std::experimental::filesystem;
 
 namespace om
 {
@@ -152,7 +172,11 @@ public:
 std::string file::get_full_name() const
 {
     std::string result = name;
-    result += extension;
+    if (!extension.empty())
+    {
+        result += '.';
+        result += extension;
+    }
     return result;
 }
 
@@ -168,10 +192,15 @@ public:
     std::string get_directory_path(const directory*);
     std::string get_file_path(const file*);
 
-    om::directory                     root;
-    boost::object_pool<om::directory> directory_pool;
-    boost::object_pool<om::file>      file_pool;
-
+#if defined USE_DIRENT || defined USE_STD_FILESYSTEM
+    std::vector<directory*> folders;
+    std::vector<file*>      files;
+#endif
+#ifdef USE_BOOST
+    boost::object_pool<directory> folders;
+    boost::object_pool<file>      files;
+#endif
+    om::directory             root;
     bool                      is_initialized;
     size_t                    total_files;
     size_t                    total_folders;
@@ -189,8 +218,21 @@ scanner::impl::impl()
     // file_pool.set_next_size(512);
 }
 
-scanner::impl::~impl() {}
+scanner::impl::~impl()
+{
+#if defined USE_DIRENT || defined USE_STD_FILESYSTEM
+    for (auto p : folders)
+    {
+        delete p;
+    }
+    for (auto p : files)
+    {
+        delete p;
+    }
+#endif
+}
 
+#ifdef USE_STD_FILESYSTEM
 void scanner::impl::scan()
 {
     std::chrono::time_point<std::chrono::high_resolution_clock> start, finish;
@@ -206,8 +248,8 @@ void scanner::impl::scan()
         {
             if (fs::is_directory(p))
             {
-                om::directory* const tmp = directory_pool.construct();
-                // om::directory* tmp = new om::directory;
+                om::directory* tmp = new om::directory;
+                folders.push_back(tmp);
                 tmp->name   = p.path().filename().string();
                 tmp->parent = pair.second;
                 pair.second->child_folders.push_back(tmp);
@@ -216,12 +258,20 @@ void scanner::impl::scan()
             }
             else if (fs::is_regular_file(p))
             {
-                file* const tmp = file_pool.construct();
-                // file* tmp      = new om::file;
-                tmp->name      = p.path().stem().string();
-                tmp->parent    = pair.second;
+                file* tmp = new om::file;
+                files.push_back(tmp);
                 tmp->extension = p.path().extension().string();
-                tmp->size      = fs::file_size(p);
+                tmp->name      = p.path().stem().string();
+                if (!tmp->extension.empty())
+                {
+                    if (tmp->extension == ".")
+                        tmp->name += '.';
+                    tmp->extension.erase(0, 1);
+                }
+
+                tmp->parent = pair.second;
+
+                tmp->size = fs::file_size(p);
                 pair.second->child_files.push_back(tmp);
                 ++total_files;
             }
@@ -309,6 +359,176 @@ scanner::scanner(const std::string& path_)
     pImpl->root.name = path.string();
     pImpl->scan();
 }
+#endif
+#ifdef USE_DIRENT
+
+void scanner::impl::scan()
+{
+    std::chrono::time_point<std::chrono::high_resolution_clock> start, finish;
+    start = std::chrono::system_clock::now();
+
+    std::queue<om::directory*> recursion_queue;
+    recursion_queue.push(&root);
+    while (!recursion_queue.empty())
+    {
+        om::directory* tmp = recursion_queue.front();
+        recursion_queue.pop();
+        DIR*           dir;
+        struct dirent* entry;
+
+        if (!(dir = opendir(get_directory_path(tmp).c_str())))
+        {
+            return;
+        }
+        while (nullptr != (entry = readdir(dir)))
+        {
+            if (DT_DIR == entry->d_type)
+            {
+                if (strcmp(entry->d_name, ".") == 0 ||
+                    strcmp(entry->d_name, "..") == 0)
+                    continue;
+                om::directory* dir = new om::directory;
+                folders.push_back(dir);
+                dir->name   = entry->d_name;
+                dir->parent = tmp;
+                tmp->child_folders.push_back(dir);
+                recursion_queue.push(dir);
+                ++total_folders;
+            }
+            else if (DT_REG == entry->d_type)
+            {
+                file* fl = new om::file;
+                files.push_back(fl);
+                fl->name      = entry->d_name;
+                int split_pos = fl->name.find_last_of('.');
+                if (split_pos > 0 && (split_pos != int(fl->name.length() - 1)))
+                {
+                    fl->extension =
+                        fl->name.substr(split_pos + 1, fl->name.length());
+                    fl->name.resize(split_pos);
+                }
+                fl->parent = tmp;
+                struct stat statbuf;
+                std::string t = get_file_path(fl);
+                if (0 == stat(t.c_str(), &statbuf))
+                    fl->size = statbuf.st_size;
+                tmp->child_files.push_back(fl);
+                ++total_files;
+            }
+        }
+        closedir(dir);
+    }
+
+    finish = std::chrono::system_clock::now();
+    scan_time =
+        std::chrono::duration_cast<std::chrono::milliseconds>(finish - start);
+    is_initialized = true;
+    //  std::cout << "next sizes " << file_pool.get_next_size() << " "
+    //            << directory_pool.get_next_size() << std::endl;
+    return;
+}
+
+directory* scanner::impl::find_directory_ptr(const std::string& _path)
+{
+
+    directory* result = &root;
+    if (_path.empty())
+        return result;
+    std::stringstream ss(_path);
+    std::string       tmp_str;
+
+    while (getline(ss, tmp_str, '/'))
+    {
+        auto it = std::find_if(
+            result->child_folders.begin(), result->child_folders.end(),
+            [&tmp_str](const directory* dir) { return dir->name == tmp_str; });
+        if (it == result->child_folders.end())
+        {
+            return nullptr;
+        }
+        result = *it;
+    }
+    return result;
+}
+
+file* scanner::impl::find_file_ptr(const std::string& _path)
+{
+    file*       result   = nullptr;
+    std::string filename = _path;
+    std::string path     = "";
+
+    int split_pos = _path.find_last_of('/');
+    if (split_pos >= 0)
+    {
+        filename = _path.substr(split_pos + 1, _path.length());
+        path     = _path.substr(0, split_pos);
+    }
+
+    directory* dir = find_directory_ptr(path);
+    if (dir)
+    {
+        for (auto p : dir->child_files)
+        {
+            if (p->get_full_name() == filename)
+            {
+                result = p;
+            }
+        }
+    }
+    return result;
+}
+
+std::string scanner::impl::get_directory_path(const directory* dir)
+{
+    std::vector<std::string> dir_list;
+    while (dir)
+    {
+        dir_list.push_back(dir->name);
+        dir = dir->parent;
+    }
+    std::string result;
+    for (int i = dir_list.size() - 1; i > 0; --i)
+    {
+        result += dir_list.at(i);
+        result += '/';
+    }
+    result += dir_list.at(0);
+    return result;
+}
+
+std::string scanner::impl::get_file_path(const file* fl)
+{
+    std::string result;
+    for (directory* ptr = fl->parent; ptr; ptr = ptr->parent)
+    {
+        result.insert(0, ptr->name);
+        if (result.front() != '/')
+            result.insert(0, "/");
+    }
+    return (result + "/" + fl->get_full_name());
+}
+
+scanner::scanner(const std::string& path_)
+    : pImpl(new scanner::impl)
+{
+    if (path_.front() != '/')
+    {
+        char        cwd[PATH_MAX];
+        const char* path = getcwd(cwd, sizeof(cwd));
+        if (!path)
+            return;
+        std::string current_dir(path);
+        pImpl->root.name = current_dir + "/" + path_;
+    }
+    else
+    {
+        pImpl->root.name = path_;
+    }
+
+    pImpl->scan();
+}
+
+#endif
 
 scanner::~scanner()
 {
@@ -336,10 +556,8 @@ file_list scanner::get_all_files_with_extension(std::string        extn,
                                                 const std::string& path) const
 {
     file_list result;
-    if (extn.empty())
-        return result;
-    if (extn.front() != '.')
-        extn.insert(extn.begin(), '.');
+    if (extn.front() == '.')
+        extn.erase(0, 1);
     directory* dir = pImpl->find_directory_ptr(path);
     if (dir)
     {
