@@ -14,15 +14,15 @@ int main(int /*argc*/, char* /*argv*/ [])
 
     {
         const char* err_message = SDL_GetError();
-        std::clog << "error: failed call SDL_Init: " << err_message << endl;
+        clog << "error: failed call SDL_Init: " << err_message << endl;
         return -1;
     }
     else
     {
-        std::atexit(SDL_Quit);
+        atexit(SDL_Quit);
     }
 
-    std::unique_ptr<SDL_Window, void (*)(SDL_Window*)> window(
+    unique_ptr<SDL_Window, void (*)(SDL_Window*)> window(
         SDL_CreateWindow("title", SDL_WINDOWPOS_CENTERED,
                          SDL_WINDOWPOS_CENTERED, 640, 480, ::SDL_WINDOW_OPENGL),
         SDL_DestroyWindow);
@@ -30,8 +30,7 @@ int main(int /*argc*/, char* /*argv*/ [])
     if (window == nullptr)
     {
         const char* err_message = SDL_GetError();
-        std::clog << "error: failed call SDL_CreateWindow: " << err_message
-                  << endl;
+        clog << "error: failed call SDL_CreateWindow: " << err_message << endl;
         SDL_Quit();
         return -1;
     }
@@ -45,12 +44,11 @@ int main(int /*argc*/, char* /*argv*/ [])
     r = SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
     SDL_assert_always(r == 0);
 
-    std::unique_ptr<void, void (*)(void*)> gl_context(
+    unique_ptr<void, void (*)(void*)> gl_context(
         SDL_GL_CreateContext(window.get()), SDL_GL_DeleteContext);
     if (nullptr == gl_context)
     {
-        std::clog << "Failed to create OpenGL ES 3.0 context: "
-                  << SDL_GetError();
+        clog << "Failed to create OpenGL ES 3.0 context: " << SDL_GetError();
         return -1;
     }
 
@@ -62,9 +60,8 @@ int main(int /*argc*/, char* /*argv*/ [])
     result = SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, &gl_minor_ver);
     SDL_assert_always(result == 0);
 
-    std::clog << "Ask for OpenGL ES 3.0" << std::endl;
-    std::clog << "Receive OpenGL ES " << gl_major_ver << '.' << gl_minor_ver
-              << std::endl;
+    clog << "Ask for OpenGL ES 3.0" << endl;
+    clog << "Receive OpenGL ES " << gl_major_ver << '.' << gl_minor_ver << endl;
 
     bool continue_loop = true;
     while (continue_loop)
