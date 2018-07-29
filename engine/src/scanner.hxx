@@ -6,7 +6,7 @@
 #define SCNR_EXP
 #endif
 
-#include <string>
+#include <string_view>
 
 namespace om
 {
@@ -68,7 +68,7 @@ public:
     explicit scanner(const std::string& path);
 
     int get_file_size(
-        const std::string& name) const; // may be replace with size_t?
+        const std::string_view&  name) const; // may be replace with size_t?
     /**
      * Function return file size in bytes, if file exists. Otherwise -1.
      * Null is a valid return value. An input argument is a relative path
@@ -77,7 +77,7 @@ public:
      * in actual file) will also return -1;
      */
 
-    bool is_file_exists(const std::string& name) const;
+    bool is_file_exists(const std::string_view& name) const;
 
     /**
      * Function return true if file is exists on a given path. Invalid
@@ -85,8 +85,8 @@ public:
      * (if present in actual file) will return false;
      */
 
-    file_list get_all_files_with_extension(std::string        extn,
-                                           const std::string& path) const;
+    file_list get_all_files_with_extension(std::string_view        extn,
+                                           const std::string_view& path) const;
     /**
      * Function return a file_list container, which holds file_info structures
      * for given requirements. Empty string is valid as input parameter
@@ -96,8 +96,8 @@ public:
      * non-empty container if path will contain files w/o extension.
      */
 
-    file_list get_all_files_with_name(const std::string& name,
-                                      const std::string& path) const;
+    file_list get_all_files_with_name(const std::string_view& name,
+                                      const std::string_view& path) const;
     /**
      * Function return a file_list container, which holds file_info structures
      * for given requirements. Empty string is valid as input parameter

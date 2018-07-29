@@ -1,14 +1,16 @@
-//#define USE_DIRENT
-#define USE_STD_FILESYSTEM
+#define USE_DIRENT
+//#define USE_STD_FILESYSTEM
 // XXX #define USE_BOOST
 
 #ifdef USE_DIRENT
-#include <dirent.h>
+#include "dirent.h"
+#include <direct.h>
 #include <sstream>
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <unistd.h>
+#include <string_view>
+//#include <unistd.h>
 #endif
 
 #ifdef USE_STD_FILESYSTEM
@@ -25,10 +27,13 @@ namespace fs = std::filesystem;
 #include <algorithm>
 #include <assert.h>
 #include <chrono>
+#include <codecvt>
 #include <iostream>
 #include <queue>
 #include <utility>
 #include <vector>
+#include <string_view>
+
 /* TODO Locale dependency. We have to use std::wstring, std::wcout
  * to handle paths with russian names. Otherwise scanner won't find
  * any entries;
@@ -186,15 +191,15 @@ public:
     impl();
     ~impl();
 
-    void        scan();
-    directory*  find_directory_ptr(const std::string&);
-    file*       find_file_ptr(const std::string&);
-    std::string get_directory_path(const directory*);
-    std::string get_file_path(const file*);
+    void scan();
 
 #if defined USE_DIRENT || defined USE_STD_FILESYSTEM
     std::vector<directory*> folders;
     std::vector<file*>      files;
+    std::string             get_directory_path(const directory*);
+    std::string             get_file_path(const file*);
+    directory*              find_directory_ptr(const std::string_view&);
+    file*                   find_file_ptr(const std::string_view&);
 #endif
 #ifdef USE_BOOST
     boost::object_pool<directory> folders;
@@ -235,8 +240,7 @@ scanner::impl::~impl()
 #ifdef USE_STD_FILESYSTEM
 void scanner::impl::scan()
 {
-    std::chrono::time_point<std::chrono::high_resolution_clock> start, finish;
-    start = std::chrono::system_clock::now();
+    auto start = std::chrono::system_clock::now();
     std::queue<std::pair<fs::path, om::directory*>> recursion_queue;
     fs::path                                        path(root.name);
     recursion_queue.push(std::make_pair(path, &root));
@@ -250,7 +254,7 @@ void scanner::impl::scan()
             {
                 om::directory* tmp = new om::directory;
                 folders.push_back(tmp);
-                tmp->name   = p.path().filename().string();
+                tmp->name   = p.path().filename().u8string();
                 tmp->parent = pair.second;
                 pair.second->child_folders.push_back(tmp);
                 recursion_queue.push(std::make_pair(p, tmp));
@@ -260,8 +264,8 @@ void scanner::impl::scan()
             {
                 file* tmp = new om::file;
                 files.push_back(tmp);
-                tmp->extension = p.path().extension().string();
-                tmp->name      = p.path().stem().string();
+                tmp->extension = p.path().extension().u8string();
+                tmp->name      = p.path().stem().u8string();
                 if (!tmp->extension.empty())
                 {
                     if (tmp->extension == ".")
@@ -270,14 +274,13 @@ void scanner::impl::scan()
                 }
 
                 tmp->parent = pair.second;
-
-                tmp->size = fs::file_size(p);
+                tmp->size   = fs::file_size(p);
                 pair.second->child_files.push_back(tmp);
                 ++total_files;
             }
         }
     }
-    finish = std::chrono::system_clock::now();
+    auto finish = std::chrono::system_clock::now();
     scan_time =
         std::chrono::duration_cast<std::chrono::milliseconds>(finish - start);
     is_initialized = true;
@@ -286,11 +289,10 @@ void scanner::impl::scan()
     return;
 }
 
-directory* scanner::impl::find_directory_ptr(const std::string& _path)
+directory* scanner::impl::find_directory_ptr(const std::string_view& _path)
 {
     directory* result = &root;
     fs::path   path(_path);
-
     for (auto p : path)
     {
         auto it = std::find_if(
@@ -305,16 +307,16 @@ directory* scanner::impl::find_directory_ptr(const std::string& _path)
     return result;
 }
 
-file* scanner::impl::find_file_ptr(const std::string& _path)
+file* scanner::impl::find_file_ptr(const std::string_view& _path)
 {
     file*      result = nullptr;
     fs::path   path(_path);
-    directory* dir = find_directory_ptr(path.parent_path().string());
+    directory* dir    = find_directory_ptr(path.parent_path().string());
     if (dir)
     {
         for (auto p : dir->child_files)
         {
-            if (p->get_full_name() == path.filename())
+            if (p->get_full_name() == path.filename().string())
             {
                 result = p;
             }
@@ -352,11 +354,11 @@ scanner::scanner(const std::string& path_)
 
     if (path.is_relative())
     {
-        path = (fs::current_path() / path).string();
+        path = (fs::current_path() / path).u8string();
     }
     if (!fs::exists(path))
         return;
-    pImpl->root.name = path.string();
+    pImpl->root.name = path.u8string();
     pImpl->scan();
 }
 #endif
@@ -364,8 +366,7 @@ scanner::scanner(const std::string& path_)
 
 void scanner::impl::scan()
 {
-    std::chrono::time_point<std::chrono::high_resolution_clock> start, finish;
-    start = std::chrono::system_clock::now();
+    auto start = std::chrono::system_clock::now();
 
     std::queue<om::directory*> recursion_queue;
     recursion_queue.push(&root);
@@ -408,10 +409,16 @@ void scanner::impl::scan()
                     fl->name.resize(split_pos);
                 }
                 fl->parent = tmp;
+#ifdef _WIN32
+                fl->size = entry->d_file_size;
+#endif
+#ifdef __unix__
+
                 struct stat statbuf;
                 std::string t = get_file_path(fl);
                 if (0 == stat(t.c_str(), &statbuf))
                     fl->size = statbuf.st_size;
+#endif
                 tmp->child_files.push_back(fl);
                 ++total_files;
             }
@@ -419,7 +426,7 @@ void scanner::impl::scan()
         closedir(dir);
     }
 
-    finish = std::chrono::system_clock::now();
+    auto finish = std::chrono::system_clock::now();
     scan_time =
         std::chrono::duration_cast<std::chrono::milliseconds>(finish - start);
     is_initialized = true;
@@ -428,14 +435,14 @@ void scanner::impl::scan()
     return;
 }
 
-directory* scanner::impl::find_directory_ptr(const std::string& _path)
+directory* scanner::impl::find_directory_ptr(const std::string_view& _path)
 {
 
     directory* result = &root;
     if (_path.empty())
         return result;
-    std::stringstream ss(_path);
-    std::string       tmp_str;
+    std::string       tmp_str(_path);
+    std::stringstream ss(tmp_str);
 
     while (getline(ss, tmp_str, '/'))
     {
@@ -451,11 +458,11 @@ directory* scanner::impl::find_directory_ptr(const std::string& _path)
     return result;
 }
 
-file* scanner::impl::find_file_ptr(const std::string& _path)
+file* scanner::impl::find_file_ptr(const std::string_view& _path)
 {
     file*       result   = nullptr;
-    std::string filename = _path;
-    std::string path     = "";
+    std::string filename(_path);
+    std::string path;
 
     int split_pos = _path.find_last_of('/');
     if (split_pos >= 0)
@@ -514,7 +521,7 @@ scanner::scanner(const std::string& path_)
     if (path_.front() != '/')
     {
         char        cwd[PATH_MAX];
-        const char* path = getcwd(cwd, sizeof(cwd));
+        const char* path = _getcwd(cwd, sizeof(cwd));
         if (!path)
             return;
         std::string current_dir(path);
@@ -536,28 +543,28 @@ scanner::~scanner()
     pImpl = nullptr;
 }
 
-int scanner::get_file_size(const std::string& name) const
+int scanner::get_file_size(const std::string_view& name) const
 {
-    int result = -1;
-
-    file* fl = pImpl->find_file_ptr(name);
+    int      result = -1;
+    file*    fl = pImpl->find_file_ptr(name);
     if (fl)
         result = fl->size;
     return result;
 }
 
-bool scanner::is_file_exists(const std::string& name) const
+bool scanner::is_file_exists(const std::string_view& path) const
 {
-    file* fl = pImpl->find_file_ptr(name);
+    file*    fl = pImpl->find_file_ptr(path);
     return fl ? true : false;
 }
 
-file_list scanner::get_all_files_with_extension(std::string        extn,
-                                                const std::string& path) const
+file_list scanner::get_all_files_with_extension(
+    std::string_view extn, const std::string_view& path) const
 {
     file_list result;
-    if (extn.front() == '.')
-        extn.erase(0, 1);
+    // if (extn.front() == '.')  was supposed for user request like ".cxx"
+    // with dot forward
+    //    extn.erase(0, 1);
     directory* dir = pImpl->find_directory_ptr(path);
     if (dir)
     {
@@ -575,8 +582,8 @@ file_list scanner::get_all_files_with_extension(std::string        extn,
     return result;
 }
 
-file_list scanner::get_all_files_with_name(const std::string& name,
-                                           const std::string& path) const
+file_list scanner::get_all_files_with_name(const std::string_view& name,
+                                           const std::string_view& path) const
 {
     file_list  result;
     directory* dir = pImpl->find_directory_ptr(path);

@@ -4,16 +4,18 @@
 #include "experimental/filesystem"
 #include "scanner.hxx"
 #include <fstream>
+#include<locale.h>
 
 namespace fs = std::experimental::filesystem;
 using Catch::Matchers::Contains;
 
 TEST_CASE("scanner test")
 {
+    setlocale(LC_ALL, "ru_RU.UTF-8");
     fs::create_directories("test-folder/engine/src/om");
     fs::create_directories("test-folder/engine/src/scanner/~.scanner");
     fs::create_directories("test-folder/game/game.bkp");
-    fs::create_directories("test-folder/русский");
+    fs::create_directories(L"test-folder/русский");
 
     std::ofstream fout("test-folder/appveyor.yml");
     fout << "The quick brown fox jumps over the lazy dog";
@@ -46,7 +48,7 @@ TEST_CASE("scanner test")
             "from highest to lowest (within one level of precedence, the last "
             "matching pattern decides the outcome)";
     fout.close();
-    fout.open("test-folder/русский/файл.");
+    fout.open(L"test-folder/русский/файл");
     fout << "Именованная область данных на носителе информации.";
     fout.close();
 
@@ -74,7 +76,7 @@ TEST_CASE("scanner test")
         {
             REQUIRE(scnr.get_file_size("game/game.cxx") == 47);
             REQUIRE(scnr.get_file_size("appveyor.yml") == 43);
-            REQUIRE(scnr.get_file_size("русский/файл.") == 94);
+            REQUIRE(scnr.get_file_size("русский/файл") == 94);
             REQUIRE(scnr.get_file_size(
                         "engine/src/scanner/~.scanner/.gitignore") == 295);
             REQUIRE(scnr.get_file_size("game/game.bkp/c++") == 183);
@@ -108,7 +110,7 @@ TEST_CASE("scanner test")
             REQUIRE(scnr.is_file_exists("main.cxx") == false);
             REQUIRE(scnr.is_file_exists(
                         "engine/src/scanner/~.scanner/.gitignore") == true);
-            REQUIRE(scnr.is_file_exists("русский/файл.") == true);
+            REQUIRE(scnr.is_file_exists("русский/файл") == true);
         }
         SECTION("invalid request")
         {
@@ -200,10 +202,10 @@ TEST_CASE("scanner test")
             inf = scnr.get_all_files_with_name(".gitignore",
                                                "engine/src/scanner/~.scanner");
             REQUIRE(inf.size() == 1);
-            inf = scnr.get_all_files_with_name("файл.", "русский");
-            REQUIRE(inf.size() == 1);
             inf = scnr.get_all_files_with_name("файл", "русский");
-            REQUIRE(inf.size() == 0);
+            REQUIRE(inf.size() == 1);
+            //inf = scnr.get_all_files_with_name("файл", "русский");
+            //REQUIRE(inf.size() == 0);
         }
         SECTION("invalid request")
         {
