@@ -1,21 +1,29 @@
 #define CATCH_CONFIG_MAIN
 
 #include "catch.hpp"
-#include "experimental/filesystem"
 #include "scanner.hxx"
+#include <filesystem>
 #include <fstream>
-#include<locale.h>
+#include <locale.h>
 
-namespace fs = std::experimental::filesystem;
+namespace fs = std::filesystem;
 using Catch::Matchers::Contains;
 
 TEST_CASE("scanner test")
 {
     setlocale(LC_ALL, "ru_RU.UTF-8");
-    fs::create_directories("test-folder/engine/src/om");
-    fs::create_directories("test-folder/engine/src/scanner/~.scanner");
-    fs::create_directories("test-folder/game/game.bkp");
-    fs::create_directories(L"test-folder/русский");
+    fs::path p1("test-folder/engine/src/om");
+    fs::path p2("test-folder/engine/src/scanner/~.scanner");
+    fs::path p3("test-folder/game/game.bkp");
+#ifdef _WIN32
+    fs::path p4(L"test-folder/русский");
+#elif defined __unix__
+    fs::path p4("test-folder/русский");
+#endif
+    fs::create_directories(p1);
+    fs::create_directories(p2);
+    fs::create_directories(p3);
+    fs::create_directories(p4);
 
     std::ofstream fout("test-folder/appveyor.yml");
     fout << "The quick brown fox jumps over the lazy dog";
@@ -48,7 +56,11 @@ TEST_CASE("scanner test")
             "from highest to lowest (within one level of precedence, the last "
             "matching pattern decides the outcome)";
     fout.close();
+#ifdef _WIN32
     fout.open(L"test-folder/русский/файл");
+#elif defined __unix__
+    fout.open("test-folder/русский/файл");
+#endif
     fout << "Именованная область данных на носителе информации.";
     fout.close();
 
@@ -133,41 +145,40 @@ TEST_CASE("scanner test")
         {
             om::file_list inf;
 
-            inf = scnr.get_all_files_with_extension("wtf", "engine/src");
-            REQUIRE(inf.size() == 0);
+            inf = scnr.get_files_with_extension("engine/src", "wtf");
+            REQUIRE(inf.get_size() == 0);
             REQUIRE(inf.empty());
-            inf = scnr.get_all_files_with_extension("cxx", "engine/src");
-            REQUIRE(inf.size() == 2);
+            inf = scnr.get_files_with_extension("engine/src", "cxx");
+            REQUIRE(inf.get_size() == 2);
             REQUIRE_FALSE(inf.empty());
-            inf = scnr.get_all_files_with_extension("yml", "");
-            REQUIRE(inf.size() == 1);
+            inf = scnr.get_files_with_extension("", "yml");
+            REQUIRE(inf.get_size() == 1);
             REQUIRE_FALSE(inf.empty());
-            inf = scnr.get_all_files_with_extension("", "engine/src");
-            REQUIRE(inf.size() == 0);
-            inf = scnr.get_all_files_with_extension("", "русский");
-            REQUIRE(inf.size() == 1);
-            inf = scnr.get_all_files_with_extension("bkp", "game");
-            REQUIRE(inf.size() == 0);
-            inf = scnr.get_all_files_with_extension(
-                "gitignore", "engine/src/scanner/~.scanner");
-            REQUIRE(inf.size() == 0);
-            inf = scnr.get_all_files_with_extension("", "game/game.bkp");
-            REQUIRE(inf.size() == 1);
+            inf = scnr.get_files_with_extension("engine/src", "");
+            REQUIRE(inf.get_size() == 0);
+            inf = scnr.get_files_with_extension("русский", "");
+            REQUIRE(inf.get_size() == 1);
+            inf = scnr.get_files_with_extension("game", "bkp");
+            REQUIRE(inf.get_size() == 0);
+            inf = scnr.get_files_with_extension("engine/src/scanner/~.scanner",
+                                                "gitignore");
+            REQUIRE(inf.get_size() == 0);
+            inf = scnr.get_files_with_extension("game/game.bkp", "");
+            REQUIRE(inf.get_size() == 1);
         }
         SECTION("invalid request")
         {
             om::file_list inf;
 
-            inf =
-                scnr.get_all_files_with_extension("cxx", "engine/src/one.cxx");
-            REQUIRE(inf.size() == 0);
+            inf = scnr.get_files_with_extension("engine/src/one.cxx", "cxx");
+            REQUIRE(inf.get_size() == 0);
             // incorrect path, one.cxx is interpreted as a path's part.
-            inf = scnr.get_all_files_with_extension("cxx", "engine/no_dir");
-            REQUIRE(inf.size() == 0);
+            inf = scnr.get_files_with_extension("engine/no_dir", "cxx");
+            REQUIRE(inf.get_size() == 0);
             // path not exists
 
             /* XXX
-             * inf = scnr.get_all_files_with_extension("cxx","engine//src");
+             * inf = scnr.get_all_files_with_extension("engine//src","cxx");
              * REQUIRE(inf.size() == 0);
              * double "/" - This has implementation-dependent behavior.
              * std::filesystem and boost::filesystem can resolve "//" as
@@ -184,41 +195,63 @@ TEST_CASE("scanner test")
         {
 
             om::file_list inf;
-            inf = scnr.get_all_files_with_name("wtf", "engine/src");
-            REQUIRE(inf.size() == 0);
+            inf = scnr.get_files_with_name("engine/src", "wtf");
+            REQUIRE(inf.get_size() == 0);
             REQUIRE(inf.empty());
-            inf = scnr.get_all_files_with_name("one", "engine/src");
-            REQUIRE(inf.size() == 2);
+            inf = scnr.get_files_with_name("engine/src", "one");
+            REQUIRE(inf.get_size() == 2);
             REQUIRE_FALSE(inf.empty());
-            inf = scnr.get_all_files_with_name("", "engine/src");
-            REQUIRE(inf.size() == 4);
+            inf = scnr.get_files_with_name("", "appveyor");
+            REQUIRE(inf.get_size() == 1);
             REQUIRE_FALSE(inf.empty());
-            inf = scnr.get_all_files_with_name("appveyor", "");
-            REQUIRE(inf.size() == 1);
-            REQUIRE_FALSE(inf.empty());
-            inf = scnr.get_all_files_with_name("", "");
-            REQUIRE(inf.size() == 2);
-            REQUIRE_FALSE(inf.empty());
-            inf = scnr.get_all_files_with_name(".gitignore",
-                                               "engine/src/scanner/~.scanner");
-            REQUIRE(inf.size() == 1);
-            inf = scnr.get_all_files_with_name("файл", "русский");
-            REQUIRE(inf.size() == 1);
-            //inf = scnr.get_all_files_with_name("файл", "русский");
-            //REQUIRE(inf.size() == 0);
+            inf = scnr.get_files_with_name("engine/src/scanner/~.scanner",
+                                           ".gitignore");
+            REQUIRE(inf.get_size() == 1);
+            inf = scnr.get_files_with_name("русский", "файл");
+            REQUIRE(inf.get_size() == 1);
         }
         SECTION("invalid request")
         {
             om::file_list inf;
-            inf = scnr.get_all_files_with_name("readme",
-                                               "engine/src/scanner.hxx");
-            REQUIRE(inf.size() == 0);
+            inf = scnr.get_files_with_name("engine/src/scanner.hxx", "readme");
+            REQUIRE(inf.get_size() == 0);
             // incorrect path, scanner.hxx interpreted as a path's part
-            inf = scnr.get_all_files_with_name("readme", "engine/no_dir");
+            inf = scnr.get_files_with_name("engine/no_dir", "readme");
             // path not exists
-            REQUIRE(inf.size() == 0);
+            REQUIRE(inf.get_size() == 0);
+            inf = scnr.get_files_with_name("engine/src", "");
+            // empty name. All the files DO have names. ".gitignore" - is name!
+            REQUIRE(inf.get_size() == 0);
+            inf = scnr.get_files_with_name("", "");
+            REQUIRE(inf.get_size() == 0);
         }
     }
 
-    fs::remove_all("test-folder");
+    SECTION("get_all_files test")
+    {
+        om::scanner scnr("test-folder");
+
+        SECTION("valid request")
+        {
+            om::file_list inf;
+            inf = scnr.get_all_files("engine/src");
+            REQUIRE(inf.get_size() == 4);
+            inf = scnr.get_all_files("");
+            REQUIRE(inf.get_size() == 2);
+            inf = scnr.get_all_files("engine");
+            REQUIRE(inf.get_size() == 0);
+        }
+        SECTION("invalid request")
+        {
+            om::file_list inf;
+            inf = scnr.get_all_files("//\nqwerty~=30 l,.-0k3///asd");
+            REQUIRE(inf.get_size() == 0);
+            // invalid input
+            inf = scnr.get_all_files("engine/no_dir");
+            // path not exists
+            REQUIRE(inf.get_size() == 0);
+        }
+    }
+
+    // fs::remove_all("test-folder");
 }

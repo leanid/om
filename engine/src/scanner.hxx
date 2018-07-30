@@ -6,6 +6,7 @@
 #define SCNR_EXP
 #endif
 
+#include <string>
 #include <string_view>
 
 namespace om
@@ -13,38 +14,36 @@ namespace om
 
 struct file_info
 {
-    file_info()
-        : abs_path("")
-        , size(0){};
-    file_info(const char* _path, unsigned int _size)
+    file_info() = default;
+    file_info(const char* _path, size_t _size)
         : abs_path(_path)
         , size(_size){};
-    std::string  abs_path;
-    unsigned int size;
+    std::string abs_path;
+    size_t      size = 0;
 };
 
 class SCNR_EXP file_list final
 {
 public:
-    file_list();
+    file_list() = default;
     ~file_list();
     file_list(const file_list&);
     file_list& operator=(const file_list&);
     file_list(file_list&&);
     file_list& operator=(file_list&&);
 
-    unsigned int size() const { return sz; }
-    void         push(const file_info&);
-    file_info&   at(unsigned int) const;
-    bool         empty() const;
+    size_t     get_size() const { return size; }
+    void       push(const file_info&);
+    file_info& at(size_t) const;
+    bool       empty() const;
 
     file_info* begin() const { return data; }
-    file_info* end() const { return (data + sz); }
+    file_info* end() const { return (data + size); }
 
 private:
-    file_info*   data;
-    unsigned int sz;
-    unsigned int space;
+    file_info* data  = nullptr;
+    size_t     size  = 0;
+    size_t     space = 0;
 };
 
 struct scanner_report
@@ -58,60 +57,59 @@ struct scanner_report
 class SCNR_EXP scanner final
 {
 public:
-    // TODO Implement all the constructors
     scanner()               = delete;
     scanner(const scanner&) = delete;
     scanner& operator=(const scanner&) = delete;
-    scanner(scanner&&)                 = delete;
-    scanner& operator=(scanner&&) = delete;
 
-    explicit scanner(const std::string& path);
+    scanner(scanner&&);
+    scanner& operator=(scanner&&);
 
-    int get_file_size(
-        const std::string_view&  name) const; // may be replace with size_t?
-    /**
-     * Function return file size in bytes, if file exists. Otherwise -1.
-     * Null is a valid return value. An input argument is a relative path
-     * to the directory, where scanner was launched from. Invalid requests
-     * such like path with empty string or without file extension (if present
-     * in actual file) will also return -1;
-     */
+    explicit scanner(std::string_view path);
 
-    bool is_file_exists(const std::string_view& name) const;
+    size_t get_file_size(std::string_view name) const;
 
-    /**
-     * Function return true if file is exists on a given path. Invalid
-     * requests such like path with empty string or without file extension
-     * (if present in actual file) will return false;
-     */
+    // Function return file size in bytes, if file exists. Otherwise -1.
+    // Null is a valid return value. The "name" parameter must be
+    // a relative path, where scanner was launched from, with
+    // and extension if presents. Invalid requests like empty string
+    // or incorrect (non-exist) path will also return -1;
 
-    file_list get_all_files_with_extension(std::string_view        extn,
-                                           const std::string_view& path) const;
-    /**
-     * Function return a file_list container, which holds file_info structures
-     * for given requirements. Empty string is valid as input parameter
-     * and produce search in scanner's root directory. If one would specify
-     * incorrect path (i.e. not valid or absent),function will return an empty
-     * container. Empty string as file's extension argument will return a
-     * non-empty container if path will contain files w/o extension.
-     */
+    bool is_file_exists(std::string_view name) const;
 
-    file_list get_all_files_with_name(const std::string_view& name,
-                                      const std::string_view& path) const;
-    /**
-     * Function return a file_list container, which holds file_info structures
-     * for given requirements. Empty string is valid as input parameter
-     * and produce search in scanner's root directory. If one would specify
-     * incorrect path (i.e. not valid or absent),function will return an empty
-     * container. Empty string for file's extension argument will produce search
-     * for all files on given path.
-     */
+    // Function returns true if file exists on a given path. Invalid
+    // requests like empty or incorrect path or name will return false;
+
+    file_list get_files_with_extension(std::string_view path,
+                                       std::string_view extn) const;
+
+    // Function return a file_list container, which holds file_info
+    // structures for given requirements. List will be empty if
+    // nothing was found. Empty path produces search in scanner's
+    // root directory.  Empty extension makes search for files
+    // w/o extension. Incorrect parameters (i.e. invalid path
+    // or incorrect extension) will return an empty container.
+
+    file_list get_files_with_name(std::string_view path,
+                                  std::string_view name) const;
+
+    // Function return a file_list container, which holds file_info
+    // structures for given requirements. List will be empty if
+    // nothing was found. Empty path produces search in scanner's
+    // root directory.  Empty name is an incorrect value.
+    // Incorrect parameters will return an empty container.
+
+    file_list get_all_files(std::string_view path) const;
+
+    // Function return a file_list container, which holds file_info
+    // structure for all files in a  given path. List will be empty
+    // if given path's directory doesn't contain any files.
+    // Empty path produces search in scanner's root directory.
+    // Non-exist path will return an empty container.
 
     scanner_report get_report() const;
-    /**
-     * Function return a scanner_report structure, which contains information
-     * about scanner internal values and states.
-     */
+
+    // Function return a scanner_report structure, which contains
+    // information about scanner internal values and states.
 
     ~scanner();
 
