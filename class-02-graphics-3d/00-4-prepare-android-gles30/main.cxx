@@ -6,9 +6,58 @@
 #define GL_GLEXT_PROTOTYPES 1
 #include <SDL_opengles2.h>
 
+#include <android/log.h>
+
+class android_redirected_buf : public std::streambuf
+{
+public:
+    android_redirected_buf() = default;
+
+private:
+    // This android_redirected_buf buffer has no buffer. So every character
+    // "overflows" and can be put directly into the teed buffers.
+    virtual int overflow(int c)
+    {
+        if (c == EOF)
+        {
+            return !EOF;
+        }
+        else
+        {
+            if (c == '\n')
+            {
+#ifdef __ANDROID__
+                // android log function add '\n' on every print itself
+                __android_log_print(ANDROID_LOG_ERROR, "OM", "%s",
+                                    message.c_str());
+#else
+                std::printf("%s\n", message.c_str()); // TODO test only
+#endif
+                message.clear();
+            }
+            else
+            {
+                message.push_back(static_cast<char>(c));
+            }
+            return c;
+        }
+    }
+
+    virtual int sync() { return 0; }
+
+    std::string message;
+};
+
+
 int main(int /*argc*/, char* /*argv*/ [])
 {
     using namespace std;
+
+    auto clog_buf = clog.rdbuf();
+
+    android_redirected_buf logcat;
+
+    clog.rdbuf(&logcat);
 
     const int init_result = SDL_Init(SDL_INIT_EVERYTHING);
     if (init_result != 0)
@@ -17,10 +66,6 @@ int main(int /*argc*/, char* /*argv*/ [])
         const char* err_message = SDL_GetError();
         clog << "error: failed call SDL_Init: " << err_message << endl;
         return -1;
-    }
-    else
-    {
-        atexit(SDL_Quit);
     }
 
     unique_ptr<SDL_Window, void (*)(SDL_Window*)> window(
@@ -38,19 +83,20 @@ int main(int /*argc*/, char* /*argv*/ [])
 
     // we want ONLY OpenGL 3.3 context or more
     int r = SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
-                                SDL_GL_CONTEXT_PROFILE_CORE);
+                                SDL_GL_CONTEXT_PROFILE_ES);
     SDL_assert_always(r == 0);
     r = SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
     SDL_assert_always(r == 0);
-    r = SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+    r = SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
     SDL_assert_always(r == 0);
 
     unique_ptr<void, void (*)(void*)> gl_context(
         SDL_GL_CreateContext(window.get()), SDL_GL_DeleteContext);
     if (nullptr == gl_context)
     {
-        clog << "Failed to create OpenGL Core 3.3 context: " << SDL_GetError()
+        clog << "Failed to create OpenGL ES 3.0 context: " << SDL_GetError()
              << endl;
+        SDL_Quit();
         return -1;
     }
 
@@ -62,8 +108,8 @@ int main(int /*argc*/, char* /*argv*/ [])
     result = SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, &gl_minor_ver);
     SDL_assert_always(result == 0);
 
-    clog << "Ask for OpenGL Core 3.3" << endl;
-    clog << "Receive OpenGL Core " << gl_major_ver << '.' << gl_minor_ver
+    clog << "Ask for OpenGL ES 3.0" << endl;
+    clog << "Receive OpenGL ES " << gl_major_ver << '.' << gl_minor_ver
          << endl;
 
     bool continue_loop = true;
@@ -72,7 +118,7 @@ int main(int /*argc*/, char* /*argv*/ [])
         SDL_Event event;
         while (SDL_PollEvent(&event))
         {
-            if (SDL_QUIT == event.type)
+            if (SDL_FINGERDOWN == event.type)
             {
                 continue_loop = false;
                 break;
@@ -90,6 +136,10 @@ int main(int /*argc*/, char* /*argv*/ [])
 
         SDL_GL_SwapWindow(window.get());
     }
+
+    clog.rdbuf(clog_buf);
+
+    SDL_Quit();
 
     return 0;
 }

@@ -2,9 +2,13 @@
 .cproject
 .idea
 .settings
-*.user
-*.a
-*.lib
+.user
+.a
+.lib
+*.iml
+.externalNativeBuild
+.gradle/
+local.properties
 
 build/
 tests/11-1-android-port/android-project/.*
