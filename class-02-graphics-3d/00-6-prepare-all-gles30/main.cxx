@@ -1,13 +1,15 @@
 #include <cstdlib>
 #include <iostream>
 #include <memory>
+#include <string>
+
+#ifdef __ANDROID__
+#include <android/log.h>
 
 #include <SDL.h>
 #define GL_GLEXT_PROTOTYPES 1
 #include <SDL_opengles2.h>
 
-#ifdef __ANDROID__
-#include <android/log.h>
 
 class android_redirected_buf : public std::streambuf
 {
@@ -45,6 +47,9 @@ private:
 
     std::string message;
 };
+#else
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_opengles2.h>
 #endif
 
 struct context_parameters
@@ -97,6 +102,8 @@ int main(int /*argc*/, char* /*argv*/ [])
 
     int r;
     context_parameters ask_context;
+
+    using namespace std::string_literals;
     
     const char* platform_name = SDL_GetPlatform();
     if (platform_name == "Windows"s ||
@@ -128,7 +135,7 @@ int main(int /*argc*/, char* /*argv*/ [])
         SDL_GL_CreateContext(window.get()), SDL_GL_DeleteContext);
     if (nullptr == gl_context)
     {
-        clog << "Failed to create: " << ask_context.name << " error: " << SDL_GetError()
+        clog << "Failed to create: " << ask_context << " error: " << SDL_GetError()
              << endl;
         SDL_Quit();
         return -1;
@@ -136,12 +143,10 @@ int main(int /*argc*/, char* /*argv*/ [])
 
     context_parameters got_context = ask_context;
 
-    int gl_major_ver = 0;
     int result =
-        SDL_GL_GetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, &got_context.gl_major_ver);
+        SDL_GL_GetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, &got_context.major_version);
     SDL_assert_always(result == 0);
-    int gl_minor_ver = 0;
-    result = SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, &got_context.gl_minor_ver);
+    result = SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, &got_context.minor_version);
     SDL_assert_always(result == 0);
 
     clog << "Ask for " << ask_context << endl;
@@ -157,6 +162,9 @@ int main(int /*argc*/, char* /*argv*/ [])
             {
                 continue_loop = false;
                 break;
+            }else if (SDL_QUIT == event.type)
+            {
+		continue_loop = false;
             }
         }
 
