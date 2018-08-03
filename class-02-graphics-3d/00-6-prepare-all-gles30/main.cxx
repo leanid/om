@@ -10,12 +10,10 @@
 #define GL_GLEXT_PROTOTYPES 1
 #include <SDL_opengles2.h>
 
-
 class android_redirected_buf : public std::streambuf
 {
 public:
     android_redirected_buf() = default;
-
 private:
     // This android_redirected_buf buffer has no buffer. So every character
     // "overflows" and can be put directly into the teed buffers.
@@ -29,7 +27,6 @@ private:
         {
             if (c == '\n')
             {
-
                 // android log function add '\n' on every print itself
                 __android_log_print(ANDROID_LOG_ERROR, "OM", "%s",
                                     message.c_str());
@@ -47,6 +44,25 @@ private:
 
     std::string message;
 };
+
+struct global_redirect_handler
+{
+   android_redirected_buf logcat;
+   std::streambuf* clog_buf = nullptr;
+
+   global_redirect_handler()
+   {
+       using namespace std;
+
+       clog_buf = clog.rdbuf();
+       clog.rdbuf(&logcat);
+   }
+   ~global_redirect_handler()
+   {
+       using namespace std;
+       clog.rdbuf(clog_buf);
+   }
+} global_var;
 #else
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengles2.h>
@@ -69,15 +85,6 @@ std::ostream& operator<<(std::ostream& out, const context_parameters& params)
 int main(int /*argc*/, char* /*argv*/ [])
 {
     using namespace std;
-
-#ifdef __ANDROID__
-    auto clog_buf = clog.rdbuf();
-
-    android_redirected_buf logcat;
-
-    clog.rdbuf(&logcat);
-#endif
-
     const int init_result = SDL_Init(SDL_INIT_EVERYTHING);
     if (init_result != 0)
 
@@ -106,21 +113,21 @@ int main(int /*argc*/, char* /*argv*/ [])
     using namespace std::string_literals;
     
     const char* platform_name = SDL_GetPlatform();
-    if (platform_name == "Windows"s ||
-	platform_name == "Mac OS X"s)
+    if (platform_name == "Windows"s || platform_name == "Mac OS X"s)
     {
         // we want OpenGL Core 3.3 context
         ask_context.name = "OpenGL Core";
-	ask_context.major_version = 3;
-	ask_context.minor_version = 3;
-	ask_context.profile_type = SDL_GL_CONTEXT_PROFILE_CORE;
-    } else
+	    ask_context.major_version = 3;
+	    ask_context.minor_version = 3;
+	    ask_context.profile_type = SDL_GL_CONTEXT_PROFILE_CORE;
+    }
+    else
     {
-        // we want OpenGL ES 3.0 context or more
+        // we want OpenGL ES 3.0 context
         ask_context.name = "OpenGL ES";
-	ask_context.major_version = 3;
-	ask_context.minor_version = 0;
-	ask_context.profile_type = SDL_GL_CONTEXT_PROFILE_ES;
+	    ask_context.major_version = 3;
+	    ask_context.minor_version = 0;
+	    ask_context.profile_type = SDL_GL_CONTEXT_PROFILE_ES;
     }
 
     r = SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
@@ -136,7 +143,7 @@ int main(int /*argc*/, char* /*argv*/ [])
     if (nullptr == gl_context)
     {
         clog << "Failed to create: " << ask_context << " error: " << SDL_GetError()
-             << endl;
+        << endl;
         SDL_Quit();
         return -1;
     }
@@ -164,7 +171,8 @@ int main(int /*argc*/, char* /*argv*/ [])
                 break;
             }else if (SDL_QUIT == event.type)
             {
-		continue_loop = false;
+		        continue_loop = false;
+		        break;
             }
         }
 
@@ -179,10 +187,6 @@ int main(int /*argc*/, char* /*argv*/ [])
 
         SDL_GL_SwapWindow(window.get());
     }
-
-#ifdef __ANDROID__
-    clog.rdbuf(clog_buf);
-#endif
     
     SDL_Quit();
 
