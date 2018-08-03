@@ -11,6 +11,7 @@ ndk.dir=/home/leo/Android/Sdk/ndk-bundle
 sdk.dir=/home/leo/Android/Sdk
 # If you set this property, Gradle no longer uses PATH to find CMake.
 #cmake.dir=/home/leo/tools/cmake-3.12.0-Linux-x86_64
+cmake.dir=C\:\\Program Files\\CMake
 sdl2_src.dir=/home/leo/SDL2-2.0.8
 sdl2_build.dir=/home/leo/SDL2-2.0.8_build
 ```
@@ -31,3 +32,7 @@ sdl2_build.dir=/home/leo/SDL2-2.0.8_build
 	                      "-DANDROID_STL=c++_shared"
 	        }
 ```
+
+9. To enable OpenGL ES 3.0 support for android emulator your hardware should support OpenGL 4.2
+or better. You can also force enable GLES3 in this case by issuing
+`echo "GLESDynamicVersion = on" >> ~/.android/advancedFeatures.ini`
