@@ -107,7 +107,7 @@ int main(int /*argc*/, char* /*argv*/ [])
     
     const char* platform_name = SDL_GetPlatform();
     if (platform_name == "Windows"s ||
-	platform_name == "MacOS"s)
+	platform_name == "Mac OS X"s)
     {
         // we want OpenGL Core 3.3 context
         ask_context.name = "OpenGL Core";
