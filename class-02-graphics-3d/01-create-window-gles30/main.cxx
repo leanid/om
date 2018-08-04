@@ -3,71 +3,7 @@
 #include <memory>
 #include <string>
 
-#ifdef __ANDROID__
-#include <android/log.h>
-
-#include <SDL.h>
-#define GL_GLEXT_PROTOTYPES 1
-#include <SDL_opengles2.h>
-
-class android_redirected_buf : public std::streambuf
-{
-public:
-    android_redirected_buf() = default;
-
-private:
-    // This android_redirected_buf buffer has no buffer. So every character
-    // "overflows" and can be put directly into the teed buffers.
-    virtual int overflow(int c)
-    {
-        if (c == EOF)
-        {
-            return !EOF;
-        }
-        else
-        {
-            if (c == '\n')
-            {
-                // android log function add '\n' on every print itself
-                __android_log_print(ANDROID_LOG_ERROR, "OM", "%s",
-                                    message.c_str());
-                message.clear();
-            }
-            else
-            {
-                message.push_back(static_cast<char>(c));
-            }
-            return c;
-        }
-    }
-
-    virtual int sync() { return 0; }
-
-    std::string message;
-};
-
-struct global_redirect_handler
-{
-    android_redirected_buf logcat;
-    std::streambuf*        clog_buf = nullptr;
-
-    global_redirect_handler()
-    {
-        using namespace std;
-
-        clog_buf = clog.rdbuf();
-        clog.rdbuf(&logcat);
-    }
-    ~global_redirect_handler()
-    {
-        using namespace std;
-        clog.rdbuf(clog_buf);
-    }
-} global_var;
-#else
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_opengles2.h>
-#endif
+#include "opengles30.hxx"
 
 struct context_parameters
 {
@@ -90,6 +26,7 @@ void print_view_port()
 
     GLint view_port[4];
     glGetIntegerv(GL_VIEWPORT, view_port);
+    gl_check();
     clog << "view port is: x=" << view_port[0] << " y=" << view_port[1]
          << " w=" << view_port[2] << " h=" << view_port[3] << endl;
 }
@@ -178,6 +115,160 @@ int main(int /*argc*/, char* /*argv*/ [])
     clog << "default ";
     print_view_port();
 
+    const char* vertex_shader_src =
+        "#version 300 es\n"
+        "layout (location = 0) in vec4 a_position;\n"
+        "void main()\n"
+        "{\n"
+        "    gl_Position = vec4(a_position.x, a_position.y, \n"
+        "a_position.z, 1.0);\n"
+        "}\n";
+
+    // create OpenGL object id for vertex shader object
+    uint32_t vertex_shader;
+    vertex_shader = glCreateShader(GL_VERTEX_SHADER);
+    gl_check();
+
+    // load vertex shader source code into vertex_shader
+    glShaderSource(vertex_shader, 1, &vertex_shader_src, nullptr);
+    gl_check();
+
+    // compile vertex shader
+    glCompileShader(vertex_shader);
+    gl_check();
+
+    // check compilation status of our shader
+    int  success;
+    char info_log[1024] = { 0 };
+    glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &success);
+    gl_check();
+
+    if (0 == success)
+    {
+        glGetShaderInfoLog(vertex_shader, sizeof(info_log), nullptr, info_log);
+        gl_check();
+
+        clog << "error: in vertex shader: " << info_log << endl;
+        exit(-1);
+    }
+
+    const char* fragment_shader_src =
+        "#version 300 es\n"
+        "precision mediump float;\n"
+        "out vec4 frag_color;\n"
+        "void main()\n"
+        "{\n"
+        "    frag_color = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+        "}\n";
+
+    // generate new id for shader object
+    uint32_t fragment_shader;
+    fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
+    gl_check();
+    // load fragment shader source code
+    glShaderSource(fragment_shader, 1, &fragment_shader_src, nullptr);
+    gl_check();
+
+    glCompileShader(fragment_shader);
+    gl_check();
+
+    // check compilation status of our shader
+    glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &success);
+    gl_check();
+
+    if (0 == success)
+    {
+        glGetShaderInfoLog(fragment_shader, sizeof(info_log), nullptr,
+                           info_log);
+        gl_check();
+
+        clog << "error: in fragment shader: " << info_log << endl;
+        exit(-1);
+    }
+
+    // create complete shader program and reseive id (vertex + geometry +
+    // fragment) geometry shader - will have default value
+    uint32_t shader_program;
+    shader_program = glCreateProgram();
+    gl_check();
+
+    glAttachShader(shader_program, vertex_shader);
+    gl_check();
+
+    glAttachShader(shader_program, fragment_shader);
+    gl_check();
+
+    // no link program like in c/c++ object files
+    glLinkProgram(shader_program);
+    gl_check();
+
+    glGetProgramiv(shader_program, GL_LINK_STATUS, &success);
+    gl_check();
+
+    if (0 == success)
+    {
+        glGetProgramInfoLog(shader_program, sizeof(info_log), nullptr,
+                            info_log);
+        gl_check();
+
+        clog << "error: linking: " << info_log << endl;
+        exit(-1);
+    }
+
+    // after linking shader program we don't need object parts of it
+    // so we can free OpenGL memory and delete vertex and fragment parts
+    glDeleteShader(vertex_shader);
+    gl_check();
+    glDeleteShader(fragment_shader);
+    gl_check();
+
+    float vertices[] = {
+        -0.5f, -0.5f, 0.0f, 0.5f, -0.5f, 0.0f, 0.0f, 0.5f, 0.0f
+    };
+
+    // generate OpenGL object id for future VertexBufferObject
+    uint32_t VBO;
+    glGenBuffers(1, &VBO);
+    gl_check();
+
+    // Generate VAO VertexArrayState object to remember current VBO
+    // with all attributes parameters stored in one object called VAO
+    // think it is current VBO + attributes state in one object
+    uint32_t VAO;
+    glGenVertexArrays(1, &VAO);
+    gl_check();
+
+    // GL_ARRAY_BUFFER - is VertexBufferObject type
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    gl_check();
+
+    // copy vertex data into GPU memory
+    // Using newly created VBO
+    //
+    // GL_STATIC_DRAW: the data will most likely not change at all or
+    //    very rarely.
+    // GL_DYNAMIC_DRAW: the data is likely to change a lot.
+    // GL_STREAM_DRAW: the data will change every time it is drawn.
+
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    gl_check();
+
+    // now tell OpenGL how to interpret data from VBO
+    int location_of_vertex_attribute = 0;
+    int size_of_attribute            = 3; // 3 float values (x, y, z)
+    int type_of_data   = GL_FLOAT;        // all values in vec{2,3,4} of float
+    int normalize_data = GL_FALSE;        // OpenGL can normalize values
+    // to [0, 1] - for unsigned and to [-1, 1] for signed values
+    int stride = 3 * sizeof(float); // step in bytes from one attribute to next
+    void* start_of_data_offset = nullptr; // we start from begin of buffer
+    glVertexAttribPointer(location_of_vertex_attribute, size_of_attribute,
+                          type_of_data, normalize_data, stride,
+                          start_of_data_offset);
+    gl_check();
+
+    glEnableVertexAttribArray(0);
+    gl_check();
+
     bool continue_loop = true;
     while (continue_loop)
     {
@@ -215,6 +306,17 @@ int main(int /*argc*/, char* /*argv*/ [])
         glClearColor(red, green, blue, alpha);
 
         glClear(GL_COLOR_BUFFER_BIT);
+
+        // enable new shader program
+        glUseProgram(shader_program);
+        gl_check();
+
+        // one call select VBO and all attributes like we setup before
+        glBindVertexArray(VAO);
+        gl_check();
+
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+        gl_check();
 
         SDL_GL_SwapWindow(window.get());
     }
