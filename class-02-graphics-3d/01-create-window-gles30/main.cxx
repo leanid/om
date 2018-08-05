@@ -222,7 +222,9 @@ int main(int /*argc*/, char* /*argv*/ [])
     gl_check();
 
     float vertices[] = {
-        -0.5f, -0.5f, 0.0f, 0.5f, -0.5f, 0.0f, 0.0f, 0.5f, 0.0f
+        -0.5f, -0.5f, 0.0f, // left
+        0.5f,  -0.5f, 0.0f, // fight
+        0.0f,  0.5f,  0.0f  // top
     };
 
     // generate OpenGL object id for future VertexBufferObject
@@ -294,6 +296,10 @@ int main(int /*argc*/, char* /*argv*/ [])
                     case ::SDL_WindowEventID::SDL_WINDOWEVENT_RESIZED:
                         clog << "windows resized: " << event.window.data1 << ' '
                              << event.window.data2 << ' ';
+                        // play with it to understand OpenGL origin point
+                        glViewport(0, 0, event.window.data1,
+                                   event.window.data2);
+                        gl_check();
                         print_view_port();
                         break;
                 }
