@@ -43,9 +43,9 @@ int main(int /*argc*/, char* /*argv*/ [])
     }
 
     unique_ptr<SDL_Window, void (*)(SDL_Window*)> window(
-        SDL_CreateWindow("title", SDL_WINDOWPOS_CENTERED,
-                         SDL_WINDOWPOS_CENTERED, 640, 480,
-                         ::SDL_WINDOW_OPENGL | ::SDL_WINDOW_RESIZABLE),
+        SDL_CreateWindow("1-triangles, 2-lines, 3-line-strip, 4-line-loop",
+                         SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640,
+                         480, ::SDL_WINDOW_OPENGL | ::SDL_WINDOW_RESIZABLE),
         SDL_DestroyWindow);
 
     if (window == nullptr)
@@ -222,9 +222,15 @@ int main(int /*argc*/, char* /*argv*/ [])
     gl_check();
 
     float vertices[] = {
-        -0.5f, -0.5f, 0.0f, // left
-        0.5f,  -0.5f, 0.0f, // fight
-        0.0f,  0.5f,  0.0f  // top
+        0.5f,  0.5f,  0.0f, // top right
+        0.5f,  -0.5f, 0.0f, // bottom right
+        -0.5f, -0.5f, 0.0f, // bottom left
+        -0.5f, 0.5f,  0.0f  // top left
+    };
+
+    uint32_t indices[] = {
+        0, 1, 3, // first triangle
+        1, 2, 3  // second triangle
     };
 
     // generate OpenGL object id for future VertexBufferObject
@@ -232,9 +238,9 @@ int main(int /*argc*/, char* /*argv*/ [])
     glGenBuffers(1, &VBO);
     gl_check();
 
-    // Generate VAO VertexArrayState object to remember current VBO
-    // with all attributes parameters stored in one object called VAO
-    // think it is current VBO + attributes state in one object
+    // Generate VAO VertexArrayState object to remember current VBO and EBO(if
+    // any) with all attributes parameters stored in one object called VAO think
+    // it is current VBO + EBO + attributes state in one object
     uint32_t VAO;
     glGenVertexArrays(1, &VAO);
     gl_check();
@@ -253,8 +259,21 @@ int main(int /*argc*/, char* /*argv*/ [])
     //    very rarely.
     // GL_DYNAMIC_DRAW: the data is likely to change a lot.
     // GL_STREAM_DRAW: the data will change every time it is drawn.
-
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    gl_check();
+
+    uint32_t EBO; // ElementBufferObject - indices buffer
+    glGenBuffers(1, &EBO);
+    gl_check();
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    gl_check();
+
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices,
+                 GL_STATIC_DRAW);
+    gl_check();
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     gl_check();
 
     // now tell OpenGL how to interpret data from VBO
@@ -273,6 +292,8 @@ int main(int /*argc*/, char* /*argv*/ [])
     glEnableVertexAttribArray(0);
     gl_check();
 
+    int primitive_render_mode = GL_TRIANGLES;
+
     bool continue_loop = true;
     while (continue_loop)
     {
@@ -289,6 +310,27 @@ int main(int /*argc*/, char* /*argv*/ [])
                 continue_loop = false;
                 break;
             }
+            else if (SDL_KEYUP == event.type)
+            {
+                // OpenGL ES 3.0 did't have glPolygonMode
+                // so we try to emulate it with next render primitive types
+                if (event.key.keysym.sym == SDLK_1)
+                {
+                    primitive_render_mode = GL_TRIANGLES;
+                }
+                else if (event.key.keysym.sym == SDLK_2)
+                {
+                    primitive_render_mode = GL_LINES;
+                }
+                else if (event.key.keysym.sym == SDLK_3)
+                {
+                    primitive_render_mode = GL_LINE_STRIP;
+                }
+                else if (event.key.keysym.sym == SDLK_4)
+                {
+                    primitive_render_mode = GL_LINE_LOOP;
+                }
+            }
             else if (SDL_WINDOWEVENT == event.type)
             {
                 switch (event.window.event)
@@ -297,6 +339,7 @@ int main(int /*argc*/, char* /*argv*/ [])
                         clog << "windows resized: " << event.window.data1 << ' '
                              << event.window.data2 << ' ';
                         // play with it to understand OpenGL origin point
+                        // for window screen coordinate system
                         glViewport(0, 0, event.window.data1,
                                    event.window.data2);
                         gl_check();
@@ -323,7 +366,7 @@ int main(int /*argc*/, char* /*argv*/ [])
         glBindVertexArray(VAO);
         gl_check();
 
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        glDrawElements(primitive_render_mode, 6, GL_UNSIGNED_INT, 0);
         gl_check();
 
         SDL_GL_SwapWindow(window.get());
