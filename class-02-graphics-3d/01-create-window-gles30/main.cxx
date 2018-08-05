@@ -36,7 +36,6 @@ int main(int /*argc*/, char* /*argv*/ [])
     using namespace std;
     const int init_result = SDL_Init(SDL_INIT_EVERYTHING);
     if (init_result != 0)
-
     {
         const char* err_message = SDL_GetError();
         clog << "error: failed call SDL_Init: " << err_message << endl;
@@ -236,6 +235,9 @@ int main(int /*argc*/, char* /*argv*/ [])
     // think it is current VBO + attributes state in one object
     uint32_t VAO;
     glGenVertexArrays(1, &VAO);
+    gl_check();
+
+    glBindVertexArray(VAO);
     gl_check();
 
     // GL_ARRAY_BUFFER - is VertexBufferObject type
