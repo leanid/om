@@ -105,7 +105,7 @@ public class SDLActivity extends Activity {
             // "SDL2_mixer",
             // "SDL2_net",
             // "SDL2_ttf",
-            "00-6-prepare-all-gles30"
+            "02-01-shader-uniform"
         };
     }
 
