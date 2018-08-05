@@ -105,7 +105,7 @@ public class SDLActivity extends Activity {
             // "SDL2_mixer",
             // "SDL2_net",
             // "SDL2_ttf",
-            "01-01-window-with-triangle"
+            "00-6-prepare-all-gles30"
         };
     }
 

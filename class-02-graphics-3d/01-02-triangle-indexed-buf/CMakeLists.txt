@@ -7,7 +7,7 @@ if(SDL2_SRC_DIR)  # Android build directly from source
                       ${SDL2_BUILD_DIR} )  
 endif()
 
-project(01-01-window-with-triangle CXX)
+project(01-02-triangle-indexed-buf CXX)
 
 if (SDL2_SRC_DIR) # Android
     add_library(${PROJECT_NAME} SHARED main.cxx)
