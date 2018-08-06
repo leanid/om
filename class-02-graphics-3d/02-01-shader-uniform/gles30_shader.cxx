@@ -14,18 +14,18 @@ shader::shader(std::string_view vertex_shader_src,
 {
     // TODO
 }
-shader::shader(shader&& other)
+shader::shader(shader&& other) noexcept
     : program_id(other.program_id)
 {
     other.program_id = 0;
 }
 
-shader& shader::operator=(shader&& other)
+shader& shader::operator=(shader&& other) noexcept
 {
     shader tmp(std::move(other));
 
-    std::swap<uint32_t>(tmp.program_id, program_id);
-    return this;
+    std::swap(tmp.program_id, program_id);
+    return *this;
 }
 shader::~shader()
 {
