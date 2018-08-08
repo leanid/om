@@ -253,5 +253,5 @@ TEST_CASE("scanner test")
         }
     }
 
-    // fs::remove_all("test-folder");
+    fs::remove_all("test-folder");
 }

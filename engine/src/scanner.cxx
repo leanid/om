@@ -21,22 +21,39 @@
  * 	heap usage: 171,666 allocs, 171,666 frees, 55,982,738 bytes alloc;
  *
  * 	- dirent.h:
- * 	heap usage: 10,813 allocs, 10,813 frees, 22,954,887 bytes alloc
+ * 	heap usage: 10,813 allocs, 10,813 frees, 22,954 kbytes alloc
  *
  *	 Total items (files+folders) processed == 3441
+ *	
  *
+ *	2) Windows 7, test app scanning eclipse folder, MSVC 17:
+ *
+ *	- std::filesystem:
+ *	heap: (13,056 scanner itself) allocs, 55,982 kbytes alloc;
+ *	files: 2849
+ *	folders: 635
+ *	time: 2676 non-cached, 1261 cached
+ *
+ *	-  dirent.h:
+ *	heap: 18,962 (13,679 scanner itself) allocs,  1,124 kbytes alloc;
+ *	files: 2849
+ *	folders: 635
+ *	time: 1542 non-cached, 1490 cached
  */
 
 //#define USE_DIRENT
 #define USE_STD_FILESYSTEM
 
 #ifdef USE_DIRENT
-//#include <direct.h> //for win32
 #include <dirent.h>
 #include <sstream>
 #include <string.h>
 #include <sys/stat.h>
-#include <unistd.h>
+#if defined(__unix__)
+#include < unistd.h > //for getcwd()
+#elif defined(WIN32)
+#include <direct.h> //for getcwd()
+#endif
 #endif
 
 #ifdef USE_STD_FILESYSTEM
@@ -48,10 +65,8 @@ namespace fs = std::filesystem;
 #include "scanner.hxx"
 #include <assert.h>
 #include <chrono>
-//#include <codecvt> //for win32
-#include <functional>
+#include <algorithm>
 #include <string_view>
-#include <utility>
 #include <vector>
 
 /* TODO On Windows failed skip directories with access denied. Even with
@@ -76,7 +91,7 @@ namespace fs = std::filesystem;
  * 3) use of std::stringstream. As there is the only
  * one place where it used.
  *
- * 4)
+ * 4) ...
  */
 constexpr unsigned int initial_file_list_size = 8;
 
@@ -415,15 +430,9 @@ void scanner::impl::scan()
                         fl->name.resize(split_pos);
                     }
                     fl->parent = tmp;
-#ifdef _WIN32
-                    fl->size = entry->d_file_size;
-#endif
-#ifdef __unix__
-
                     struct stat statbuf;
                     if (0 == stat(get_file_path(fl).c_str(), &statbuf))
                         fl->size = statbuf.st_size;
-#endif
                     tmp->child_files.push_back(fl);
                     ++total_files;
                 }
@@ -561,7 +570,7 @@ std::string scanner::impl::get_file_path(const file* fl)
 scanner::scanner(std::string_view sv_path)
     : pImpl(new scanner::impl)
 {
-    if (sv_path.front() != '/')
+    if (sv_path.front() != '/' && sv_path.front() != 'C')
     {
         char        cwd[PATH_MAX];
         const char* path = getcwd(cwd, sizeof(cwd));
@@ -606,8 +615,8 @@ scanner::~scanner()
 
 size_t scanner::get_file_size(std::string_view name) const
 {
-    int   result = -1;
-    file* fl     = pImpl->find_file_ptr(name);
+    size_t result = -1;
+    file*  fl     = pImpl->find_file_ptr(name);
     if (fl)
         result = fl->size;
     return result;
