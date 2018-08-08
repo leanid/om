@@ -98,13 +98,18 @@ public:
     // root directory.  Empty name is an incorrect value.
     // Incorrect parameters will return an empty container.
 
-    file_list get_all_files(std::string_view path) const;
+    file_list get_files(std::string_view path) const;
 
     // Function return a file_list container, which holds file_info
     // structure for all files in a  given path. List will be empty
     // if given path's directory doesn't contain any files.
     // Empty path produces search in scanner's root directory.
     // Non-exist path will return an empty container.
+
+    file_list get_all_files() const;
+
+    // Function return a file_list container, which holds file_info
+    // structure for all files that scanner found in all directories.
 
     scanner_report get_report() const;
 

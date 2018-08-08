@@ -234,20 +234,20 @@ TEST_CASE("scanner test")
         SECTION("valid request")
         {
             om::file_list inf;
-            inf = scnr.get_all_files("engine/src");
+            inf = scnr.get_files("engine/src");
             REQUIRE(inf.get_size() == 4);
-            inf = scnr.get_all_files("");
+            inf = scnr.get_files("");
             REQUIRE(inf.get_size() == 2);
-            inf = scnr.get_all_files("engine");
+            inf = scnr.get_files("engine");
             REQUIRE(inf.get_size() == 0);
         }
         SECTION("invalid request")
         {
             om::file_list inf;
-            inf = scnr.get_all_files("//\nqwerty~=30 l,.-0k3///asd");
+            inf = scnr.get_files("//\nqwerty~=30 l,.-0k3///asd");
             REQUIRE(inf.get_size() == 0);
             // invalid input
-            inf = scnr.get_all_files("engine/no_dir");
+            inf = scnr.get_files("engine/no_dir");
             // path not exists
             REQUIRE(inf.get_size() == 0);
         }
