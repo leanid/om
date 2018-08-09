@@ -3,6 +3,7 @@
 #include <memory>
 #include <string>
 
+#include "gles30_shader.hxx"
 #include "opengles30.hxx"
 
 struct context_parameters
@@ -123,34 +124,6 @@ int main(int /*argc*/, char* /*argv*/ [])
         "a_position.z, 1.0);\n"
         "}\n";
 
-    // create OpenGL object id for vertex shader object
-    uint32_t vertex_shader;
-    vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-    gl_check();
-
-    // load vertex shader source code into vertex_shader
-    glShaderSource(vertex_shader, 1, &vertex_shader_src, nullptr);
-    gl_check();
-
-    // compile vertex shader
-    glCompileShader(vertex_shader);
-    gl_check();
-
-    // check compilation status of our shader
-    int  success;
-    char info_log[1024] = { 0 };
-    glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &success);
-    gl_check();
-
-    if (0 == success)
-    {
-        glGetShaderInfoLog(vertex_shader, sizeof(info_log), nullptr, info_log);
-        gl_check();
-
-        clog << "error: in vertex shader: " << info_log << endl;
-        exit(-1);
-    }
-
     const char* fragment_shader_src =
         "#version 300 es\n"
         "precision mediump float;\n"
@@ -160,66 +133,7 @@ int main(int /*argc*/, char* /*argv*/ [])
         "    frag_color = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
         "}\n";
 
-    // generate new id for shader object
-    uint32_t fragment_shader;
-    fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-    gl_check();
-    // load fragment shader source code
-    glShaderSource(fragment_shader, 1, &fragment_shader_src, nullptr);
-    gl_check();
-
-    glCompileShader(fragment_shader);
-    gl_check();
-
-    // check compilation status of our shader
-    glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &success);
-    gl_check();
-
-    if (0 == success)
-    {
-        glGetShaderInfoLog(fragment_shader, sizeof(info_log), nullptr,
-                           info_log);
-        gl_check();
-
-        clog << "error: in fragment shader: " << info_log << endl;
-        exit(-1);
-    }
-
-    // create complete shader program and reseive id (vertex + geometry +
-    // fragment) geometry shader - will have default value
-    uint32_t shader_program;
-    shader_program = glCreateProgram();
-    gl_check();
-
-    glAttachShader(shader_program, vertex_shader);
-    gl_check();
-
-    glAttachShader(shader_program, fragment_shader);
-    gl_check();
-
-    // no link program like in c/c++ object files
-    glLinkProgram(shader_program);
-    gl_check();
-
-    glGetProgramiv(shader_program, GL_LINK_STATUS, &success);
-    gl_check();
-
-    if (0 == success)
-    {
-        glGetProgramInfoLog(shader_program, sizeof(info_log), nullptr,
-                            info_log);
-        gl_check();
-
-        clog << "error: linking: " << info_log << endl;
-        exit(-1);
-    }
-
-    // after linking shader program we don't need object parts of it
-    // so we can free OpenGL memory and delete vertex and fragment parts
-    glDeleteShader(vertex_shader);
-    gl_check();
-    glDeleteShader(fragment_shader);
-    gl_check();
+    gles30::shader shader(vertex_shader_src, fragment_shader_src);
 
     float vertices[] = {
         0.5f,  0.5f,  0.0f, // top right
@@ -359,12 +273,20 @@ int main(int /*argc*/, char* /*argv*/ [])
         glClear(GL_COLOR_BUFFER_BIT);
 
         // enable new shader program
-        glUseProgram(shader_program);
-        gl_check();
+        shader.use();
 
         // one call select VBO and all attributes like we setup before
         glBindVertexArray(VAO);
         gl_check();
+
+        try
+        {
+            shader.validate();
+        }
+        catch (const std::exception& ex)
+        {
+            clog << ex.what() << endl;
+        }
 
         glDrawElements(primitive_render_mode, 6, GL_UNSIGNED_INT, 0);
         gl_check();
