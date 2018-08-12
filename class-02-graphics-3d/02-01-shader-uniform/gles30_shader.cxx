@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cstdint>
+#include <fstream>
 #include <sstream>
 #include <utility>
 
@@ -54,7 +55,7 @@ shader::shader(std::string_view vertex_shader_src,
     gl_check();
     // load fragment shader source code
     array_of_pointers_to_strings_with_src[0] = fragment_shader_src.data();
-    array_of_string_lengths[0]               = fragment_shader_src.size();
+    array_of_string_lengths[0] = static_cast<GLint>(fragment_shader_src.size());
     glShaderSource(fragment_shader, 1, array_of_pointers_to_strings_with_src,
                    array_of_string_lengths);
     gl_check();
@@ -79,27 +80,25 @@ shader::shader(std::string_view vertex_shader_src,
 
     // create complete shader program and reseive id (vertex + geometry +
     // fragment) geometry shader - will have default value
-    uint32_t shader_program;
-    shader_program = glCreateProgram();
+    program_id = glCreateProgram();
     gl_check();
 
-    glAttachShader(shader_program, vertex_shader);
+    glAttachShader(program_id, vertex_shader);
     gl_check();
 
-    glAttachShader(shader_program, fragment_shader);
+    glAttachShader(program_id, fragment_shader);
     gl_check();
 
     // no link program like in c/c++ object files
-    glLinkProgram(shader_program);
+    glLinkProgram(program_id);
     gl_check();
 
-    glGetProgramiv(shader_program, GL_LINK_STATUS, &success);
+    glGetProgramiv(program_id, GL_LINK_STATUS, &success);
     gl_check();
 
     if (0 == success)
     {
-        glGetProgramInfoLog(shader_program, sizeof(info_log), nullptr,
-                            info_log);
+        glGetProgramInfoLog(program_id, sizeof(info_log), nullptr, info_log);
         gl_check();
 
         std::stringstream ss;
@@ -114,6 +113,45 @@ shader::shader(std::string_view vertex_shader_src,
     glDeleteShader(fragment_shader);
     gl_check();
 }
+
+shader::shader(
+    const std::filesystem::path& vertex_shader_path,
+    const std::filesystem::path& fragment_shader_path) noexcept(false)
+{
+    std::ifstream vertex_stream;
+    std::ifstream fragmen_stream;
+    vertex_stream.exceptions(std::ifstream::badbit | std::ifstream::failbit);
+    fragmen_stream.exceptions(std::ifstream::badbit | std::ifstream::failbit);
+
+    try
+    {
+        vertex_stream.open(vertex_shader_path);
+        fragmen_stream.open(fragment_shader_path);
+
+        std::stringstream vertex_src;
+        vertex_src << vertex_stream.rdbuf();
+        std::stringstream fragment_src;
+        fragment_src << fragmen_stream.rdbuf();
+
+        std::string v_src{ vertex_src.str() };
+        std::string f_src{ fragment_src.str() };
+
+        std::string_view v{ v_src };
+        std::string_view f{ f_src };
+
+        // placement new operator (call other contructor at existing memory)
+        new (this) shader(v, f);
+    }
+    catch (const std::exception& e)
+    {
+        std::clog << e.what() << std::endl;
+
+        throw std::runtime_error(
+            "can't create shader from: " + vertex_shader_path.u8string() + " " +
+            fragment_shader_path.u8string() + " cause: " + e.what());
+    }
+}
+
 shader::shader(shader&& other) noexcept
     : program_id(other.program_id)
 {
@@ -127,7 +165,7 @@ shader& shader::operator=(shader&& other) noexcept
     std::swap(tmp.program_id, program_id);
     return *this;
 }
-shader::~shader()
+shader::~shader() noexcept
 {
     glDeleteProgram(program_id); // 0 will be silently ignored
     gl_check();
@@ -135,6 +173,7 @@ shader::~shader()
 
 void shader::use()
 {
+    assert(GL_TRUE == glIsProgram(program_id));
     glUseProgram(program_id);
     gl_check();
 }
@@ -167,7 +206,7 @@ void shader::set_uniform(std::string_view name, float value)
     gl_check();
 }
 
-void shader::validate() noexcept(false)
+std::string shader::validate() noexcept(false)
 {
     // validate current OpenGL state
     glValidateProgram(program_id);
@@ -177,7 +216,7 @@ void shader::validate() noexcept(false)
     glGetProgramiv(program_id, GL_VALIDATE_STATUS, &success);
     gl_check();
 
-    if (0 == success)
+    if (1 == success)
     {
         char info_log[4096] = { 0 };
         glGetProgramInfoLog(program_id, sizeof(info_log), nullptr, info_log);
@@ -185,12 +224,13 @@ void shader::validate() noexcept(false)
 
         if (strlen(info_log) > 0)
         {
-            throw std::runtime_error(info_log);
+            return { info_log };
         }
     }
     else
     {
         throw std::runtime_error("can't get validation status");
     }
+    return {};
 }
 } // namespace gles30

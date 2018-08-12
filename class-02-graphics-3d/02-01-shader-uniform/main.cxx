@@ -1,3 +1,4 @@
+#include <chrono>
 #include <cstdlib>
 #include <iostream>
 #include <memory>
@@ -6,6 +7,7 @@
 #include "gles30_shader.hxx"
 #include "opengles30.hxx"
 
+#pragma pack(push, 4)
 struct context_parameters
 {
     const char* name          = nullptr;
@@ -13,6 +15,7 @@ struct context_parameters
     int32_t     minor_version = 0;
     int32_t     profile_type  = 0;
 };
+#pragma pack(pop)
 
 std::ostream& operator<<(std::ostream& out, const context_parameters& params)
 {
@@ -35,6 +38,10 @@ void print_view_port()
 int main(int /*argc*/, char* /*argv*/ [])
 {
     using namespace std;
+    using namespace std::chrono;
+
+    auto start_time = high_resolution_clock::now();
+
     const int init_result = SDL_Init(SDL_INIT_EVERYTHING);
     if (init_result != 0)
     {
@@ -115,25 +122,10 @@ int main(int /*argc*/, char* /*argv*/ [])
     clog << "default ";
     print_view_port();
 
-    const char* vertex_shader_src =
-        "#version 300 es\n"
-        "layout (location = 0) in vec4 a_position;\n"
-        "void main()\n"
-        "{\n"
-        "    gl_Position = vec4(a_position.x, a_position.y, \n"
-        "a_position.z, 1.0);\n"
-        "}\n";
+    std::filesystem::path vertex_path{ "./res/basic.vsh" };
+    std::filesystem::path fragment_path{ "./res/basic.fsh" };
 
-    const char* fragment_shader_src =
-        "#version 300 es\n"
-        "precision mediump float;\n"
-        "out vec4 frag_color;\n"
-        "void main()\n"
-        "{\n"
-        "    frag_color = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
-        "}\n";
-
-    gles30::shader shader(vertex_shader_src, fragment_shader_src);
+    gles30::shader shader(vertex_path, fragment_path);
 
     float vertices[] = {
         0.5f,  0.5f,  0.0f, // top right
@@ -191,10 +183,10 @@ int main(int /*argc*/, char* /*argv*/ [])
     gl_check();
 
     // now tell OpenGL how to interpret data from VBO
-    int location_of_vertex_attribute = 0;
-    int size_of_attribute            = 3; // 3 float values (x, y, z)
-    int type_of_data   = GL_FLOAT;        // all values in vec{2,3,4} of float
-    int normalize_data = GL_FALSE;        // OpenGL can normalize values
+    GLuint    location_of_vertex_attribute = 0;
+    int       size_of_attribute            = 3; // 3 float values (x, y, z)
+    GLenum    type_of_data   = GL_FLOAT; // all values in vec{2,3,4} of float
+    GLboolean normalize_data = GL_FALSE; // OpenGL can normalize values
     // to [0, 1] - for unsigned and to [-1, 1] for signed values
     int stride = 3 * sizeof(float); // step in bytes from one attribute to next
     void* start_of_data_offset = nullptr; // we start from begin of buffer
@@ -206,7 +198,7 @@ int main(int /*argc*/, char* /*argv*/ [])
     glEnableVertexAttribArray(0);
     gl_check();
 
-    int primitive_render_mode = GL_TRIANGLES;
+    GLenum primitive_render_mode = GL_TRIANGLES;
 
     bool continue_loop = true;
     while (continue_loop)
@@ -275,20 +267,30 @@ int main(int /*argc*/, char* /*argv*/ [])
         // enable new shader program
         shader.use();
 
+        auto current_time = high_resolution_clock::now();
+
+        milliseconds now{ duration_cast<milliseconds>(current_time -
+                                                      start_time) };
+
+        float sin_value = (std::sin(now.count() * 0.001f) * 0.5f) + 0.5f;
+        std::stringstream ss;
+        ss << sin_value;
+        std::string str = ss.str();
+
+        SDL_SetWindowTitle(window.get(), str.c_str());
+
+        shader.set_uniform("sin_value", sin_value);
+
         // one call select VBO and all attributes like we setup before
         glBindVertexArray(VAO);
         gl_check();
 
-        try
+        if (std::string log = shader.validate(); !log.empty())
         {
-            shader.validate();
-        }
-        catch (const std::exception& ex)
-        {
-            clog << ex.what() << endl;
+            clog << log << endl;
         }
 
-        glDrawElements(primitive_render_mode, 6, GL_UNSIGNED_INT, 0);
+        glDrawElements(primitive_render_mode, 6, GL_UNSIGNED_INT, nullptr);
         gl_check();
 
         SDL_GL_SwapWindow(window.get());

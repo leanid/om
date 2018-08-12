@@ -4,7 +4,7 @@ if(SDL2_SRC_DIR)  # Android build directly from source
     add_subdirectory( # Specifies the directory of the CMakeLists.txt file.
                       ${SDL2_SRC_DIR}
                       # Specifies the directory for the build outputs.
-                      ${SDL2_BUILD_DIR} )  
+                      ${SDL2_BUILD_DIR} )
 endif()
 
 project(02-01-shader-uniform CXX)
@@ -33,18 +33,18 @@ elseif(APPLE)
 elseif(UNIX)
     add_executable(${PROJECT_NAME})
     find_package(SDL2 REQUIRED)
-    target_link_libraries(${PROJECT_NAME} SDL2 GL)
+    target_link_libraries(${PROJECT_NAME} SDL2 GL stdc++fs)
 elseif(MSVC)
     add_executable(${PROJECT_NAME})
     find_package(SDL2 CONFIG REQUIRED)
     target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2main
                                                   SDL2::SDL2
                                                   opengl32
-                                                  )    
+                                                  )
 endif()
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
-target_sources(${PROJECT_NAME} PRIVATE main.cxx 
+target_sources(${PROJECT_NAME} PRIVATE main.cxx
                                        gles30_shader.cxx
                                        opengles30.cxx
                                        opengles30.hxx
