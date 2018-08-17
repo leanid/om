@@ -5,6 +5,7 @@
 #include <string>
 
 #include "gles30_shader.hxx"
+#include "gles30_texture.hxx"
 #include "opengles30.hxx"
 
 #pragma pack(push, 4)
@@ -40,7 +41,7 @@ int main(int /*argc*/, char* /*argv*/ [])
     using namespace std;
     using namespace std::chrono;
 
-    auto start_time = high_resolution_clock::now();
+    // auto start_time = high_resolution_clock::now();
 
     const int init_result = SDL_Init(SDL_INIT_EVERYTHING);
     if (init_result != 0)
@@ -125,13 +126,16 @@ int main(int /*argc*/, char* /*argv*/ [])
     std::filesystem::path vertex_path{ "./res/basic.vsh" };
     std::filesystem::path fragment_path{ "./res/basic.fsh" };
 
-    gles30::shader shader(vertex_path, fragment_path);
+    gles30::shader  shader(vertex_path, fragment_path);
+    gles30::texture texture0(std::filesystem::path("./res/1.jpg"));
+    gles30::texture texture1(std::filesystem::path("./res/2.jpg"));
 
     float vertices[] = {
-        0.5f,  0.5f,  0.0f, // top right
-        0.5f,  -0.5f, 0.0f, // bottom right
-        -0.5f, -0.5f, 0.0f, // bottom left
-        -0.5f, 0.5f,  0.0f  // top left
+        // pos              // color       // tex coord
+        0.5f,  0.5f,  0.0f, 1.f, 1.f, 1.f, 1.f, 1.f, // top right
+        0.5f,  -0.5f, 0.0f, 1.f, 1.f, 1.f, 1.f, 0.f, // bottom right
+        -0.5f, -0.5f, 0.0f, 1.f, 1.f, 1.f, 0.f, 0.f, // bottom left
+        -0.5f, 0.5f,  0.0f, 1.f, 1.f, 1.f, 0.f, 1.f  // top left
     };
 
     uint32_t indices[] = {
@@ -183,12 +187,13 @@ int main(int /*argc*/, char* /*argv*/ [])
     gl_check();
 
     // now tell OpenGL how to interpret data from VBO
-    GLuint    location_of_vertex_attribute = 0;
+    GLuint    location_of_vertex_attribute = 0; // position
     int       size_of_attribute            = 3; // 3 float values (x, y, z)
     GLenum    type_of_data   = GL_FLOAT; // all values in vec{2,3,4} of float
     GLboolean normalize_data = GL_FALSE; // OpenGL can normalize values
     // to [0, 1] - for unsigned and to [-1, 1] for signed values
-    int stride = 3 * sizeof(float); // step in bytes from one attribute to next
+    int stride =
+        (3 + 3 + 2) * sizeof(float); // step in bytes from one attribute to next
     void* start_of_data_offset = nullptr; // we start from begin of buffer
     glVertexAttribPointer(location_of_vertex_attribute, size_of_attribute,
                           type_of_data, normalize_data, stride,
@@ -196,6 +201,32 @@ int main(int /*argc*/, char* /*argv*/ [])
     gl_check();
 
     glEnableVertexAttribArray(0);
+    gl_check();
+
+    location_of_vertex_attribute = 1; // color
+    size_of_attribute            = 3; // r + g + b
+    type_of_data                 = GL_FLOAT;
+    normalize_data               = GL_FALSE;
+    start_of_data_offset         = reinterpret_cast<void*>(3 * sizeof(float));
+    glVertexAttribPointer(location_of_vertex_attribute, size_of_attribute,
+                          type_of_data, normalize_data, stride,
+                          start_of_data_offset);
+    gl_check();
+
+    glEnableVertexAttribArray(1);
+    gl_check();
+
+    location_of_vertex_attribute = 2; // tex coord
+    size_of_attribute            = 2; // u + v (s + t)
+    type_of_data                 = GL_FLOAT;
+    normalize_data               = GL_FALSE;
+    start_of_data_offset         = reinterpret_cast<void*>(6 * sizeof(float));
+    glVertexAttribPointer(location_of_vertex_attribute, size_of_attribute,
+                          type_of_data, normalize_data, stride,
+                          start_of_data_offset);
+    gl_check();
+
+    glEnableVertexAttribArray(2);
     gl_check();
 
     GLenum primitive_render_mode = GL_TRIANGLES;
@@ -267,19 +298,10 @@ int main(int /*argc*/, char* /*argv*/ [])
         // enable new shader program
         shader.use();
 
-        auto current_time = high_resolution_clock::now();
+        shader.set_uniform("texture0", texture0, 0);
+        shader.set_uniform("texture1", texture1, 1);
 
-        milliseconds now{ duration_cast<milliseconds>(current_time -
-                                                      start_time) };
-
-        float sin_value = (std::sin(now.count() * 0.001f) * 0.5f) + 0.5f;
-        std::stringstream ss;
-        ss << sin_value;
-        std::string str = ss.str();
-
-        SDL_SetWindowTitle(window.get(), str.c_str());
-
-        shader.set_uniform("sin_value", sin_value);
+        // auto current_time = high_resolution_clock::now();
 
         // one call select VBO and all attributes like we setup before
         glBindVertexArray(VAO);

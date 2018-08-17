@@ -4,8 +4,14 @@
 #include <string>
 #include <string_view>
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 namespace gles30
 {
+class texture;
+
 class shader
 {
 public:
@@ -19,6 +25,9 @@ public:
     void set_uniform(std::string_view name, bool value);
     void set_uniform(std::string_view name, std::int32_t value);
     void set_uniform(std::string_view name, float value);
+    void set_uniform(std::string_view name, texture& tex, std::uint32_t index);
+    void set_uniform(std::string_view name, const glm::mat4&);
+    void set_uniform(std::string_view name, const glm::mat3&);
 
     /// just for debug purposes you can validate current state before
     /// render geometry

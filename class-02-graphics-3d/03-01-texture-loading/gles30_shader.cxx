@@ -7,6 +7,7 @@
 #include <sstream>
 #include <utility>
 
+#include "gles30_texture.hxx"
 #include "opengles30.hxx"
 
 namespace gles30
@@ -183,7 +184,10 @@ GLint get_uniform_index(std::string_view name, uint32_t program_id)
     assert(*(name.data() + name.size()) == '\0'); // null terminated string
     GLint uniform_index = glGetUniformLocation(program_id, name.data());
     gl_check();
-    assert(uniform_index != -1);
+    if (uniform_index == -1)
+    {
+        throw std::runtime_error("can't find uniform: " + std::string(name));
+    }
     return uniform_index;
 }
 
@@ -203,6 +207,16 @@ void shader::set_uniform(std::string_view name, float value)
 {
     GLint uniform_index = get_uniform_index(name, program_id);
     glUniform1f(uniform_index, value);
+    gl_check();
+}
+void shader::set_uniform(std::string_view name, texture& tex,
+                         std::uint32_t index)
+{
+    GLint uniform_index = get_uniform_index(name, program_id);
+    glActiveTexture(GL_TEXTURE0 + index);
+    gl_check();
+    tex.bind();
+    glUniform1i(uniform_index, static_cast<int32_t>(index));
     gl_check();
 }
 

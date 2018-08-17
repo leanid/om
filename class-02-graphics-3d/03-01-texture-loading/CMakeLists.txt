@@ -7,7 +7,7 @@ if(SDL2_SRC_DIR)  # Android build directly from source
                       ${SDL2_BUILD_DIR} )
 endif()
 
-project(02-01-shader-uniform CXX)
+project(03-01-texture-loading CXX)
 
 if (SDL2_SRC_DIR) # Android
     add_library(${PROJECT_NAME} SHARED)
@@ -47,8 +47,11 @@ target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 target_sources(${PROJECT_NAME} PRIVATE main.cxx
                                        gles30_shader.cxx
                                        opengles30.cxx
+                                       gles30_texture.cxx
                                        opengles30.hxx
-                                       gles30_shader.hxx)
+                                       gles30_shader.hxx
+                                       gles30_texture.hxx
+                                       stb_image.h)
 
 
 if(MSVC)

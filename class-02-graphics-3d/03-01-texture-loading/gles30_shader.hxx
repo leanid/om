@@ -6,6 +6,8 @@
 
 namespace gles30
 {
+class texture;
+
 class shader
 {
 public:
@@ -19,6 +21,7 @@ public:
     void set_uniform(std::string_view name, bool value);
     void set_uniform(std::string_view name, std::int32_t value);
     void set_uniform(std::string_view name, float value);
+    void set_uniform(std::string_view name, texture& tex, std::uint32_t index);
 
     /// just for debug purposes you can validate current state before
     /// render geometry
