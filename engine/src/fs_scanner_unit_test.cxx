@@ -60,10 +60,22 @@ TEST_CASE("scanner test")
 
     SECTION("scanner initialization test")
     {
-        om::scanner        first_scanner("test-folder");
-        om::scanner        second_scanner("test-folder/engine");
+        fs::path current_path = fs::current_path();
+        size_t   counter      = 0;
+        for (auto p : fs::recursive_directory_iterator(current_path))
+        {
+            ++counter;
+        }
+        om::scanner first_scanner("test-folder");
+        om::scanner second_scanner("test-folder/engine");
+        // full path recognize check
+        om::scanner third_scanner(current_path.u8string());
+        // empty path recognize check
+        om::scanner        forth_scanner("");
         om::scanner_report first_scanner_report  = first_scanner.get_report();
         om::scanner_report second_scanner_report = second_scanner.get_report();
+        om::scanner_report third_scanner_report  = third_scanner.get_report();
+        om::scanner_report forth_scanner_report  = forth_scanner.get_report();
 
         REQUIRE(first_scanner_report.initialized == true);
         REQUIRE(first_scanner_report.total_files == 10);
@@ -72,6 +84,14 @@ TEST_CASE("scanner test")
         REQUIRE(second_scanner_report.initialized == true);
         REQUIRE(second_scanner_report.total_files == 5);
         REQUIRE(second_scanner_report.total_folders == 4);
+
+        REQUIRE(third_scanner_report.initialized == true);
+        REQUIRE((third_scanner_report.total_folders +
+                 third_scanner_report.total_files) == counter);
+
+        REQUIRE(forth_scanner_report.initialized == true);
+        REQUIRE((forth_scanner_report.total_folders +
+                 forth_scanner_report.total_files) == counter);
     }
 
     SECTION("get_file_size test")

@@ -478,15 +478,37 @@ std::string scanner::impl::get_file_path(const file* fl)
 scanner::scanner(std::string_view sv_path)
     : pImpl(new scanner::impl)
 {
-    if (sv_path.front() != '/' && sv_path.front() != 'C')
+    bool absolute = false;
+#if defined(__unix__)
+    if (sv_path.size() > 1)
+    {
+        if (sv_path.front() == '/')
+        {
+            absolute = true;
+        }
+    }
+#elif defined(WIN32)
+    if (sv_path.size() > 2)
+    {
+        if ((sv_path.at(2) == '/') && (sv_path.at(1) == ':') &&
+            isupper(sv_path.at(0)) && isalpha(sv_path.at(0)))
+        {
+            absolute = true;
+        }
+    }
+#endif
+    if (!absolute)
     {
         char        cwd[PATH_MAX];
         const char* path = getcwd(cwd, sizeof(cwd));
         if (!path)
             return;
         pImpl->root.name = path;
-        pImpl->root.name += "/";
-        pImpl->root.name += sv_path;
+        if (!sv_path.empty())
+        {
+            pImpl->root.name += "/";
+            pImpl->root.name += sv_path;
+        }
     }
     else
     {
