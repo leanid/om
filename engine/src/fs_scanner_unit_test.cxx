@@ -16,11 +16,8 @@ TEST_CASE("scanner test")
     fs::path p1("test-folder/engine/src/om");
     fs::path p2("test-folder/engine/src/scanner/~.scanner");
     fs::path p3("test-folder/game/game.bkp");
-#ifdef _WIN32
-    fs::path p4(L"test-folder/русский");
-#elif defined __unix__
     fs::path p4("test-folder/русский");
-#endif
+
     fs::create_directories(p1);
     fs::create_directories(p2);
     fs::create_directories(p3);
@@ -57,11 +54,7 @@ TEST_CASE("scanner test")
             "from highest to lowest (within one level of precedence, the last "
             "matching pattern decides the outcome)";
     fout.close();
-#ifdef _WIN32
-    fout.open(L"test-folder/русский/файл");
-#elif defined __unix__
     fout.open("test-folder/русский/файл");
-#endif
     fout << "Именованная область данных на носителе информации.";
     fout.close();
 
