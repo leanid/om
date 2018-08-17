@@ -1,7 +1,8 @@
+
 #define CATCH_CONFIG_MAIN
 
 #include "catch.hpp"
-#include "scanner.hxx"
+#include "fs_scanner.hxx"
 #include <filesystem>
 #include <fstream>
 #include <locale.h>
@@ -143,38 +144,38 @@ TEST_CASE("scanner test")
 
         SECTION("valid request")
         {
-            om::file_list inf;
+            std::vector<om::file_info> inf;
 
             inf = scnr.get_files_with_extension("engine/src", "wtf");
-            REQUIRE(inf.get_size() == 0);
+            REQUIRE(inf.size() == 0);
             REQUIRE(inf.empty());
             inf = scnr.get_files_with_extension("engine/src", "cxx");
-            REQUIRE(inf.get_size() == 2);
+            REQUIRE(inf.size() == 2);
             REQUIRE_FALSE(inf.empty());
             inf = scnr.get_files_with_extension("", "yml");
-            REQUIRE(inf.get_size() == 1);
+            REQUIRE(inf.size() == 1);
             REQUIRE_FALSE(inf.empty());
             inf = scnr.get_files_with_extension("engine/src", "");
-            REQUIRE(inf.get_size() == 0);
+            REQUIRE(inf.size() == 0);
             inf = scnr.get_files_with_extension("русский", "");
-            REQUIRE(inf.get_size() == 1);
+            REQUIRE(inf.size() == 1);
             inf = scnr.get_files_with_extension("game", "bkp");
-            REQUIRE(inf.get_size() == 0);
+            REQUIRE(inf.size() == 0);
             inf = scnr.get_files_with_extension("engine/src/scanner/~.scanner",
                                                 "gitignore");
-            REQUIRE(inf.get_size() == 0);
+            REQUIRE(inf.size() == 0);
             inf = scnr.get_files_with_extension("game/game.bkp", "");
-            REQUIRE(inf.get_size() == 1);
+            REQUIRE(inf.size() == 1);
         }
         SECTION("invalid request")
         {
-            om::file_list inf;
+            std::vector<om::file_info> inf;
 
             inf = scnr.get_files_with_extension("engine/src/one.cxx", "cxx");
-            REQUIRE(inf.get_size() == 0);
+            REQUIRE(inf.size() == 0);
             // incorrect path, one.cxx is interpreted as a path's part.
             inf = scnr.get_files_with_extension("engine/no_dir", "cxx");
-            REQUIRE(inf.get_size() == 0);
+            REQUIRE(inf.size() == 0);
             // path not exists
 
             /* XXX
@@ -194,36 +195,36 @@ TEST_CASE("scanner test")
         SECTION("valid request")
         {
 
-            om::file_list inf;
+            std::vector<om::file_info> inf;
             inf = scnr.get_files_with_name("engine/src", "wtf");
-            REQUIRE(inf.get_size() == 0);
+            REQUIRE(inf.size() == 0);
             REQUIRE(inf.empty());
             inf = scnr.get_files_with_name("engine/src", "one");
-            REQUIRE(inf.get_size() == 2);
+            REQUIRE(inf.size() == 2);
             REQUIRE_FALSE(inf.empty());
             inf = scnr.get_files_with_name("", "appveyor");
-            REQUIRE(inf.get_size() == 1);
+            REQUIRE(inf.size() == 1);
             REQUIRE_FALSE(inf.empty());
             inf = scnr.get_files_with_name("engine/src/scanner/~.scanner",
                                            ".gitignore");
-            REQUIRE(inf.get_size() == 1);
+            REQUIRE(inf.size() == 1);
             inf = scnr.get_files_with_name("русский", "файл");
-            REQUIRE(inf.get_size() == 1);
+            REQUIRE(inf.size() == 1);
         }
         SECTION("invalid request")
         {
-            om::file_list inf;
+            std::vector<om::file_info> inf;
             inf = scnr.get_files_with_name("engine/src/scanner.hxx", "readme");
-            REQUIRE(inf.get_size() == 0);
+            REQUIRE(inf.size() == 0);
             // incorrect path, scanner.hxx interpreted as a path's part
             inf = scnr.get_files_with_name("engine/no_dir", "readme");
             // path not exists
-            REQUIRE(inf.get_size() == 0);
+            REQUIRE(inf.size() == 0);
             inf = scnr.get_files_with_name("engine/src", "");
             // empty name. All the files DO have names. ".gitignore" - is name!
-            REQUIRE(inf.get_size() == 0);
+            REQUIRE(inf.size() == 0);
             inf = scnr.get_files_with_name("", "");
-            REQUIRE(inf.get_size() == 0);
+            REQUIRE(inf.size() == 0);
         }
     }
 
@@ -233,23 +234,23 @@ TEST_CASE("scanner test")
 
         SECTION("valid request")
         {
-            om::file_list inf;
+            std::vector<om::file_info> inf;
             inf = scnr.get_files("engine/src");
-            REQUIRE(inf.get_size() == 4);
+            REQUIRE(inf.size() == 4);
             inf = scnr.get_files("");
-            REQUIRE(inf.get_size() == 2);
+            REQUIRE(inf.size() == 2);
             inf = scnr.get_files("engine");
-            REQUIRE(inf.get_size() == 0);
+            REQUIRE(inf.size() == 0);
         }
         SECTION("invalid request")
         {
-            om::file_list inf;
+            std::vector<om::file_info> inf;
             inf = scnr.get_files("//\nqwerty~=30 l,.-0k3///asd");
-            REQUIRE(inf.get_size() == 0);
+            REQUIRE(inf.size() == 0);
             // invalid input
             inf = scnr.get_files("engine/no_dir");
             // path not exists
-            REQUIRE(inf.get_size() == 0);
+            REQUIRE(inf.size() == 0);
         }
     }
 

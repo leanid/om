@@ -3,12 +3,14 @@ project(engine LANGUAGES CXX)
 
 find_library(SDL2_LIB SDL2)
 
-add_library(scanner SHARED src/scanner.hxx
-							src/scanner.cxx)
-target_link_libraries(scanner stdc++fs)							
+add_library(scanner SHARED src/fs_scanner.hxx
+							src/fs_scanner.cxx)
+target_link_libraries(scanner stdc++fs)
+set_property(TARGET scanner PROPERTY CXX_STANDARD 17)							
 
-add_executable(scanner_test src/scanner_unit_test.cxx)
-target_link_libraries(scanner_test scanner)
+add_executable(scanner_test src/fs_scanner_unit_test.cxx)
+target_link_libraries(scanner_test scanner stdc++fs)
+set_property(TARGET scanner_test PROPERTY CXX_STANDARD 17)
 
 add_executable(om     src/om/main.cxx 
                       src/om/engine_impl.cxx
