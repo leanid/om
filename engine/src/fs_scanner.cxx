@@ -145,11 +145,11 @@ public:
 
 scanner::impl::~impl()
 {
-    for (auto p : folders)
+    for (auto& p : folders)
     {
         delete p;
     }
-    for (auto p : files)
+    for (auto& p : files)
     {
         delete p;
     }
@@ -166,7 +166,7 @@ void scanner::impl::scan()
     {
         auto pair = recursion_queue.front();
         recursion_queue.pop();
-        for (auto p : fs::directory_iterator(pair.first))
+        for (auto& p : fs::directory_iterator(pair.first))
         {
             if (fs::is_directory(p))
             {
@@ -232,7 +232,7 @@ file* scanner::impl::find_file_ptr(std::string_view s_path)
     directory* dir = find_directory_ptr(fs_path.parent_path().string());
     if (dir)
     {
-        for (auto p : dir->child_files)
+        for (auto& p : dir->child_files)
         {
             if (p->get_full_name() == fs_path.filename().string())
             {
@@ -360,48 +360,56 @@ directory* scanner::impl::find_directory_ptr(std::string_view sv_path)
     directory* result = &root;
     if (sv_path.empty())
         return result;
-    int pos_front = 0;
-    int pos_end   = 0;
+    int begin_index = 0;
+    int seek_pos    = 0;
+    int count       = 0;
 
-    while (pos_end >= 0)
+    while (seek_pos >= 0)
     {
-        pos_end = sv_path.find_first_of('/', pos_front);
-        std::string tmp;
-        if (pos_end < 0)
-            tmp = sv_path.substr(pos_front, sv_path.length() - pos_front);
-        else
-            tmp = sv_path.substr(pos_front, pos_end - pos_front);
+        seek_pos = sv_path.find_first_of('/', begin_index);
 
-        auto it = std::find_if(
+        if (seek_pos < 0)
+            count = sv_path.length() - begin_index;
+        else
+            count = seek_pos - begin_index;
+
+        std::string_view tmp(sv_path.data() + begin_index, count);
+        auto             it = std::find_if(
             result->child_folders.begin(), result->child_folders.end(),
             [&tmp](const directory* dir) { return dir->name == tmp; });
         if (it == result->child_folders.end())
         {
             return nullptr;
         }
-        result    = *it;
-        pos_front = pos_end + 1;
+        result      = *it;
+        begin_index = seek_pos + 1;
     }
     return result;
 }
 
 file* scanner::impl::find_file_ptr(std::string_view sv_path)
 {
-    file*       result = nullptr;
-    std::string filename(sv_path);
-    std::string path;
+    file* result = nullptr;
 
-    int split_pos = sv_path.find_last_of('/');
-    if (split_pos >= 0)
+    int filename_starts_from = 0;
+    int pathname_ends_at     = 0;
+    int seek_pos             = sv_path.find_last_of('/');
+    if (seek_pos > 0)
+    // at least 3 characters needed to specify
+    // relative file path ("c/a"), so seek_pos
+    // must be at least 1 (not 0);
     {
-        filename = sv_path.substr(split_pos + 1, sv_path.length());
-        path     = sv_path.substr(0, split_pos);
+        filename_starts_from = seek_pos + 1;
+        pathname_ends_at     = seek_pos;
     }
 
-    directory* dir = find_directory_ptr(path);
+    std::string_view filename(sv_path.data() + filename_starts_from,
+                              sv_path.length() - filename_starts_from);
+    std::string_view path(sv_path.data(), pathname_ends_at);
+    directory*       dir = find_directory_ptr(path);
     if (dir)
     {
-        for (auto p : dir->child_files)
+        for (auto& p : dir->child_files)
         {
             if (p->get_full_name() == filename)
             {
@@ -568,7 +576,7 @@ std::vector<file_info> scanner::get_files_with_extension(
     directory* dir = pImpl->find_directory_ptr(path);
     if (dir)
     {
-        for (auto p : dir->child_files)
+        for (auto& p : dir->child_files)
         {
             if (extn == p->extension)
             {
@@ -591,7 +599,7 @@ std::vector<file_info> scanner::get_files_with_name(std::string_view path,
     directory* dir = pImpl->find_directory_ptr(path);
     if (dir)
     {
-        for (auto p : dir->child_files)
+        for (auto& p : dir->child_files)
         {
             if (name == p->name)
             {
@@ -611,7 +619,7 @@ std::vector<file_info> scanner::get_files(std::string_view path) const
     directory*             dir = pImpl->find_directory_ptr(path);
     if (dir)
     {
-        for (auto p : dir->child_files)
+        for (auto& p : dir->child_files)
         {
             file_info tmp;
             tmp.size     = p->size;
@@ -625,7 +633,7 @@ std::vector<file_info> scanner::get_files(std::string_view path) const
 std::vector<file_info> scanner::get_all_files() const
 {
     std::vector<file_info> result;
-    for (auto p : pImpl->files)
+    for (auto& p : pImpl->files)
     {
         file_info tmp;
         tmp.size     = p->size;
