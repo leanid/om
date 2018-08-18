@@ -69,7 +69,7 @@ TEST_CASE("scanner test")
         om::scanner first_scanner("test-folder");
         om::scanner second_scanner("test-folder/engine");
         // full path recognize check
-        om::scanner third_scanner(current_path.u8string());
+        om::scanner third_scanner(current_path.generic_u8string());
         // empty path recognize check
         om::scanner        forth_scanner("");
         om::scanner_report first_scanner_report  = first_scanner.get_report();
