@@ -12,23 +12,23 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wpadded"
 
+enum class token_type : uint8_t
+{
+    none = 0,
+    type_key_word,
+    prop_name,
+    assign,
+    int_value,
+    float_value,
+    string_value
+};
+
 struct properties_lexer
 {
 
-    enum class type : uint8_t
-    {
-        none = 0,
-        type_key_word,
-        prop_name,
-        assign,
-        int_value,
-        float_value,
-        string_value
-    };
-
     struct token
     {
-        type             t = type::none;
+        token_type       t = token_type::none;
         std::string_view value;
         std::regex*      regex_ptr = nullptr;
     };
@@ -38,13 +38,13 @@ struct properties_lexer
 
     struct token_regex
     {
-        token_regex(properties_lexer::type t_, const char* r_)
+        token_regex(token_type t_, const char* r_)
             : type{ t_ }
             , regex{ r_ }
         {
         }
-        properties_lexer::type type;
-        std::regex             regex;
+        token_type type;
+        std::regex regex;
     };
 
     std::vector<token_regex> token_bind;
@@ -53,15 +53,18 @@ struct properties_lexer
         : content{ std::move(content_) }
     {
         token_bind.reserve(10);
-        token_bind.emplace_back(type::type_key_word, R"(^(float))");
-        token_bind.emplace_back(type::assign, R"(^=)");
-        token_bind.emplace_back(type::prop_name, R"(^[a-zA-Z_][a-zA-Z0-9_]*)");
-        token_bind.emplace_back(type::int_value, R"(^[1-9]\d*)");
-        token_bind.emplace_back(type::float_value,
+        token_bind.emplace_back(token_type::type_key_word,
+                                R"(^(float)|(string)|(int))");
+        token_bind.emplace_back(token_type::assign, R"(^=)");
+        token_bind.emplace_back(token_type::prop_name,
+                                R"(^[a-zA-Z_][a-zA-Z0-9_]*)");
+        token_bind.emplace_back(token_type::int_value, R"(^[1-9]\d*)");
+        token_bind.emplace_back(token_type::float_value,
                                 R"(^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)f)");
         // original from internet: /"([^"\\]|\\.)*"/
-        token_bind.emplace_back(type::string_value, R"(^"([^"\\]|\\.)*")");
-        token_bind.emplace_back(type::none, R"(^ |;|\n|\t)");
+        token_bind.emplace_back(token_type::string_value,
+                                R"(^"([^"\\]|\\.)*")");
+        token_bind.emplace_back(token_type::none, R"(^ |;|\n|\t)");
 
         std::string_view rest_content{ content };
         bool             cant_find_match = false;
@@ -98,7 +101,7 @@ struct properties_lexer
 
                 rest_content = rest_content.substr(tok.value.size());
 
-                if (best_token_regex->type == type::none)
+                if (best_token_regex->type == token_type::none)
                 {
                     continue;
                 }
@@ -121,29 +124,29 @@ struct properties_lexer
     }
 };
 
-std::ostream& operator<<(std::ostream& stream, const properties_lexer::type t)
+std::ostream& operator<<(std::ostream& stream, const token_type t)
 {
     switch (t)
     {
-        case (properties_lexer::type::assign):
+        case (token_type::assign):
             stream << "assign";
             break;
-        case (properties_lexer::type::float_value):
+        case (token_type::float_value):
             stream << "float";
             break;
-        case (properties_lexer::type::int_value):
+        case (token_type::int_value):
             stream << "int";
             break;
-        case (properties_lexer::type::prop_name):
+        case (token_type::prop_name):
             stream << "prop_name";
             break;
-        case (properties_lexer::type::string_value):
+        case (token_type::string_value):
             stream << "string";
             break;
-        case (properties_lexer::type::type_key_word):
+        case (token_type::type_key_word):
             stream << "type_name";
             break;
-        case (properties_lexer::type::none):
+        case (token_type::none):
             stream << "ws";
             break;
     }
@@ -167,72 +170,111 @@ struct properties_parser
         std::vector<assing_command> commands;
     } program;
 
-    properties_parser(properties_lexer& lexer)
+    properties_lexer& lexer;
+
+    properties_parser(properties_lexer& lexer_)
+        : lexer{ lexer_ }
     {
         for (auto it = begin(lexer.token_list), end_it = end(lexer.token_list);
              it != end_it;)
         {
-            program_structure::assing_command cmd =
-                parse_assing_command(it, end_it);
+            program_structure::assing_command cmd = parse_assing_command(it);
             program.commands.push_back(cmd);
         }
     }
 
+    std::string print_position_of_token(const properties_lexer::token& token)
+    {
+        std::string_view from_start_to_token(
+            lexer.content.data(),
+            static_cast<size_t>(token.value.data() - lexer.content.data()) +
+                token.value.length());
+        std::stringstream ss;
+        ss << '\n' << from_start_to_token << '\n';
+        size_t last_line_length = 0;
+        for (auto back_char = &from_start_to_token.back();
+             *back_char != '\0' && *back_char != '\n'; --back_char)
+        {
+            ++last_line_length;
+        }
+        last_line_length -= token.value.length();
+        ss << std::string(last_line_length, ' ') << '^';
+        return ss.str();
+    }
+
+    properties_lexer::token* expected(
+        const std::vector<properties_lexer::token>::iterator& it,
+        const token_type                                      type)
+    {
+        if (it == end(lexer.token_list))
+        {
+            std::stringstream ss;
+            ss << "error: expected " << type << " but got: EOF";
+            throw std::runtime_error(ss.str());
+        }
+        if (it->t != type)
+        {
+            std::stringstream ss;
+            ss << "error: expected " << type << " but got: " << it->t;
+            ss << print_position_of_token(*it);
+            throw std::runtime_error(ss.str());
+        }
+        return &(*it);
+    }
+
+    properties_lexer::token* expected_one_of(
+        const std::vector<properties_lexer::token>::iterator& it,
+        const std::initializer_list<token_type>&              types)
+    {
+        if (it == end(lexer.token_list))
+        {
+            std::stringstream ss;
+            ss << "error: expected one of: ";
+            for (auto type : types)
+            {
+                ss << type << ", ";
+            }
+            ss << " but got: EOF";
+            throw std::runtime_error(ss.str());
+        }
+        auto type_it = std::find(begin(types), end(types), it->t);
+        if (type_it == end(types))
+        {
+            std::stringstream ss;
+            ss << "error: expected ";
+            for (auto type : types)
+            {
+                ss << type << ", ";
+            }
+            ss << "but got: " << it->t;
+            ss << print_position_of_token(*it);
+            throw std::runtime_error(ss.str());
+        }
+        return &(*it);
+    }
+
     program_structure::assing_command parse_assing_command(
-        std::vector<properties_lexer::token>::iterator&       it,
-        const std::vector<properties_lexer::token>::iterator& end_it)
+        std::vector<properties_lexer::token>::iterator& it)
     {
         program_structure::assing_command cmd;
-        if (it == end_it)
-        {
-            throw std::runtime_error("error: expected TYPE{int, string, falot} "
-                                     "but got: nothing EOF");
-        }
-        cmd.type_name = &(*it);
-        if (cmd.type_name->t != properties_lexer::type::type_key_word)
-        {
-            throw std::runtime_error(
-                "error: expected TYPE{int, string, float} but got: " +
-                std::string(cmd.type_name->value));
-        }
-        ++it; // next token
-        if (it == end_it)
-        {
-            throw std::runtime_error(
-                "error: expected \"=\" but got: nothing EOF");
-        }
-        if (it->t != properties_lexer::type::assign)
-        {
-            throw std::runtime_error("error: expected \"=\" but got: " +
-                                     std::string(cmd.type_name->value));
-        }
-        ++it; // next token
-        if (it == end_it)
-        {
-            throw std::runtime_error(
-                "error: expected property_name but got: nothing EOF");
-        }
-        cmd.variable_name = &(*it);
-        if (cmd.variable_name->t != properties_lexer::type::prop_name)
-        {
-            throw std::runtime_error("error: expected property_name but got: " +
-                                     std::string(cmd.variable_name->value));
-        }
-        ++it; // next token
-        if (it == end_it)
-        {
-            throw std::runtime_error(
-                "error: expected property_value but got: nothing EOF");
-        }
 
-        cmd.value           = &(*it);
+        cmd.type_name = expected(it, token_type::type_key_word);
+
+        cmd.variable_name = expected(++it, token_type::prop_name);
+
+        expected(++it, token_type::assign);
+
+        cmd.value = expected_one_of(++it, { token_type::float_value,
+                                            token_type::int_value,
+                                            token_type::string_value });
+
         auto        str     = cmd.value->value;
         const char* ptr     = &str.front();
         const char* end_ptr = ptr + str.length();
 
         switch (cmd.value->t)
         {
-            case (properties_lexer::type::float_value):
+            case (token_type::float_value):
             {
                 float result;
 
@@ -242,21 +284,18 @@ struct properties_parser
                 cmd.real_value = result;
             }
             break;
-            case (properties_lexer::type::int_value):
+            case (token_type::int_value):
             {
                 std::int32_t result;
                 std::from_chars(ptr, end_ptr, result);
                 cmd.real_value = result;
             }
             break;
-            case (properties_lexer::type::string_value):
+            case (token_type::string_value):
                 cmd.real_value = std::string(cmd.value->value);
                 break;
             default:
-                throw std::runtime_error(
-                    std::string("error: expected value of type: ") +
-                    std::string(cmd.value->value) +
-                    " but got: " + std::string(cmd.value->value));
+                break;
         };
         ++it; // go to next token
 
