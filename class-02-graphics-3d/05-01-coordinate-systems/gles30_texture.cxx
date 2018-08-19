@@ -10,7 +10,7 @@
 
 namespace gles30
 {
-texture::texture(const std::filesystem::path& path)
+texture::texture(const fs::path& path)
     : texture_id{ 0 }
 {
     stbi_set_flip_vertically_on_load(1);

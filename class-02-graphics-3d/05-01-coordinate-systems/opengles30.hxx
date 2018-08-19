@@ -10,6 +10,7 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengles2.h>
 
+#define GL_GLEXT_PROTOTYPES 1
 #include <GLES3/gl3.h> // TODO need for glGenVertexArrays
 #endif
 

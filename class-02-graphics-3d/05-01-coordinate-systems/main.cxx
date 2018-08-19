@@ -126,12 +126,12 @@ int main(int /*argc*/, char* /*argv*/ [])
     clog << "default ";
     print_view_port();
 
-    std::filesystem::path vertex_path{ "./res/basic.vsh" };
-    std::filesystem::path fragment_path{ "./res/basic.fsh" };
+    fs::path vertex_path{ "./res/basic.vsh" };
+    fs::path fragment_path{ "./res/basic.fsh" };
 
     gles30::shader  shader(vertex_path, fragment_path);
-    gles30::texture texture0(std::filesystem::path("./res/1.jpg"));
-    gles30::texture texture1(std::filesystem::path("./res/2.jpg"));
+    gles30::texture texture0(fs::path("./res/1.jpg"));
+    gles30::texture texture1(fs::path("./res/2.jpg"));
 
     float vertices[] = {
         // pos              // color       // tex coord

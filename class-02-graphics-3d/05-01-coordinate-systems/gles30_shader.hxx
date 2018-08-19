@@ -10,6 +10,9 @@
 
 namespace gles30
 {
+
+namespace fs = std::experimental::filesystem;
+
 class texture;
 
 class shader
@@ -17,8 +20,8 @@ class shader
 public:
     shader(std::string_view vertex_shader_src,
            std::string_view fragment_shader_src) noexcept(false);
-    shader(const std::filesystem::path& vertex_shader_path,
-           const std::filesystem::path& fragment_shader_path) noexcept(false);
+    shader(const fs::path& vertex_shader_path,
+           const fs::path& fragment_shader_path) noexcept(false);
 
     void use();
 

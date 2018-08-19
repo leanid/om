@@ -5,6 +5,8 @@
 namespace gles30
 {
 
+namespace fs = std::experimental::filesystem;
+
 enum class filter
 {
     liner,
@@ -25,7 +27,7 @@ enum class wrap
 class texture
 {
 public:
-    explicit texture(const std::filesystem::path& path);
+    explicit texture(const fs::path& path);
 
     void bind();
 

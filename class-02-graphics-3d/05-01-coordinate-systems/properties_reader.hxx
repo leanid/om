@@ -4,10 +4,12 @@
 #include <memory>
 #include <string_view>
 
+namespace fs = std::experimental::filesystem;
+
 class properties_reader
 {
 public:
-    explicit properties_reader(const std::filesystem::path& path);
+    explicit properties_reader(const fs::path& path);
 
     void update_changes();
 

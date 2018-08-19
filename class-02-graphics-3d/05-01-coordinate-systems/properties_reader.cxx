@@ -1,9 +1,10 @@
 #include "properties_reader.hxx"
 
-#include <charconv>
+//#include <charconv> // not found on Visual Studio 2017.7
 #include <fstream>
 #include <iostream>
 #include <regex>
+#include <sstream>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -76,7 +77,9 @@ struct properties_lexer
             for (token_regex& tok_regex : token_bind)
             {
                 std::cmatch token_match;
-                if (std::regex_search(begin(rest_content), end(rest_content),
+                if (std::regex_search(rest_content.data(),
+                                      rest_content.data() +
+                                          rest_content.length(),
                                       token_match, tok_regex.regex))
                 {
                     auto& first = *token_match.cbegin();
@@ -287,7 +290,9 @@ struct properties_parser
             case (token_type::int_value):
             {
                 std::int32_t result;
-                std::from_chars(ptr, end_ptr, result);
+                // std::from_chars(ptr, end_ptr, result); // not working with
+                // msvc 2017.7
+                result         = stoi(std::string(ptr, end_ptr));
                 cmd.real_value = result;
             }
             break;
@@ -342,7 +347,7 @@ struct properties_interpretator
 class properties_reader::impl
 {
 public:
-    impl(const std::filesystem::path& path_)
+    impl(const fs::path& path_)
         : path{ path_ }
     {
         // TODO parse file
@@ -364,11 +369,11 @@ public:
     }
 
 private:
-    std::filesystem::path                       path;
+    fs::path                                    path;
     std::unordered_map<std::string, value_type> key_values;
 };
 
-properties_reader::properties_reader(const std::filesystem::path& path)
+properties_reader::properties_reader(const fs::path& path)
     : ptr(new impl(path))
 {
 }

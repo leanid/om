@@ -37,7 +37,9 @@ elseif(UNIX)
 elseif(MSVC)
     add_executable(${PROJECT_NAME})
     find_package(SDL2 CONFIG REQUIRED)
-    target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2main
+    find_package(glm CONFIG REQUIRED)
+    target_link_libraries(${PROJECT_NAME} PRIVATE glm
+                                                  SDL2::SDL2main
                                                   SDL2::SDL2
                                                   opengl32
                                                   )
@@ -57,7 +59,7 @@ target_sources(${PROJECT_NAME} PRIVATE main.cxx
 
 
 if(MSVC)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /WX /utf-8")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4  /utf-8 ") # /WX
 else()
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -Werror -Wno-unknown-pragmas")
 endif()
