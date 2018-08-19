@@ -24,7 +24,7 @@
  * 	heap usage: 10,813 allocs, 10,813 frees, 22,954 kbytes alloc
  *
  *	 Total items (files+folders) processed == 3441
- *	
+ *
  *
  *	2) Windows 7, test app scanning eclipse folder, MSVC 17:
  *
@@ -41,8 +41,8 @@
  *	time: 1542 non-cached, 1490 cached
  */
 
-//#define USE_DIRENT
-#define USE_STD_FILESYSTEM
+#define USE_DIRENT
+//#define USE_STD_FILESYSTEM
 
 #ifdef USE_DIRENT
 #include <dirent.h>
@@ -50,7 +50,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #if defined(__unix__)
-#include < unistd.h > //for getcwd()
+#include <unistd.h> //for getcwd()
 #elif defined(WIN32)
 #include <direct.h> //for getcwd()
 #endif
@@ -62,10 +62,10 @@
 namespace fs = std::filesystem;
 #endif
 
-#include "scanner.hxx"
+#include "fs_scanner.hxx"
+#include <algorithm>
 #include <assert.h>
 #include <chrono>
-#include <algorithm>
 #include <string_view>
 #include <vector>
 
@@ -79,116 +79,16 @@ namespace fs = std::filesystem;
 /** FIXME
  * I don't like:
  *
- * 1) file_list container. It's pretty useless, as
- * it acts exactly like std::vector. So there is no
- * real reason to have it here because we use
- * std::vector in many places.
- *
- * 2) std::vector<directory*> and std::vector<file*>
+ * 1) std::vector<directory*> and std::vector<file*>
  * as scanner private members. The only use is for
  * memory dealocation and get_all_files list.
  *
- * 3) use of std::stringstream. As there is the only
- * one place where it used.
- *
- * 4) ...
+ * 2) ...
  */
 constexpr unsigned int initial_file_list_size = 8;
 
 namespace om
 {
-
-file_list::file_list(const file_list& lst)
-    : data{ new file_info[lst.space] }
-    , size{ lst.size }
-    , space{ lst.space }
-{
-    std::copy(lst.data, lst.data + lst.size, data);
-}
-
-file_list& file_list::operator=(const file_list& lst)
-{
-    if (this == &lst)
-    {
-        return *this;
-    }
-    if (lst.size <= space)
-    {
-        std::copy(lst.data, lst.data + lst.size, data);
-        size = lst.size;
-        return *this;
-    }
-    file_info* ptr = new file_info[lst.space];
-    std::copy(lst.data, lst.data + lst.size, ptr);
-    delete[] data;
-    data  = ptr;
-    space = lst.space;
-    size  = lst.size;
-    return *this;
-}
-
-file_list::file_list(file_list&& lst)
-    : data{ lst.data }
-    , size{ lst.size }
-    , space{ lst.space }
-{
-    lst.data  = nullptr;
-    lst.size  = 0;
-    lst.space = 0;
-}
-
-file_list& file_list::operator=(file_list&& lst)
-{
-    delete[] data;
-    data      = lst.data;
-    size      = lst.size;
-    space     = lst.space;
-    lst.data  = nullptr;
-    lst.size  = 0;
-    lst.space = 0;
-    return *this;
-}
-
-void om::file_list::push(const file_info& inf)
-{
-    if (space == size)
-    {
-        unsigned int newalloc = space * 2;
-        if (!space)
-            newalloc = initial_file_list_size;
-
-        file_info* tmp = new file_info[newalloc];
-        if (size)
-        {
-            for (unsigned int i = 0; i < size; ++i)
-            {
-                tmp[i] = data[i];
-            }
-        }
-        delete[] data;
-        data  = tmp;
-        space = newalloc;
-    }
-    data[size] = inf;
-    ++size;
-}
-
-om::file_info& om::file_list::at(size_t pos) const
-{
-    if (pos >= size)
-        throw; // FIXME no throw?
-    return data[pos];
-}
-
-bool om::file_list::empty() const
-{
-    return size ? false : true;
-}
-
-om::file_list::~file_list()
-{
-    delete[] data;
-}
 
 struct file;
 
@@ -245,11 +145,11 @@ public:
 
 scanner::impl::~impl()
 {
-    for (auto p : folders)
+    for (auto& p : folders)
     {
         delete p;
     }
-    for (auto p : files)
+    for (auto& p : files)
     {
         delete p;
     }
@@ -266,7 +166,7 @@ void scanner::impl::scan()
     {
         auto pair = recursion_queue.front();
         recursion_queue.pop();
-        for (auto p : fs::directory_iterator(pair.first))
+        for (auto& p : fs::directory_iterator(pair.first))
         {
             if (fs::is_directory(p))
             {
@@ -307,11 +207,11 @@ void scanner::impl::scan()
     return;
 }
 
-directory* scanner::impl::find_directory_ptr(std::string_view s_path)
+directory* scanner::impl::find_directory_ptr(std::string_view sv_path)
 {
     directory* result = &root;
-    fs::path   fs_path(s_path);
-    for (auto p : fs_path)
+    fs::path   fs_path(sv_path);
+    for (auto& p : fs_path)
     {
         auto it = std::find_if(
             result->child_folders.begin(), result->child_folders.end(),
@@ -332,7 +232,7 @@ file* scanner::impl::find_file_ptr(std::string_view s_path)
     directory* dir = find_directory_ptr(fs_path.parent_path().string());
     if (dir)
     {
-        for (auto p : dir->child_files)
+        for (auto& p : dir->child_files)
         {
             if (p->get_full_name() == fs_path.filename().string())
             {
@@ -460,40 +360,56 @@ directory* scanner::impl::find_directory_ptr(std::string_view sv_path)
     directory* result = &root;
     if (sv_path.empty())
         return result;
-    std::string       tmp_str;
-    std::stringstream ss(sv_path.data());
+    int begin_index = 0;
+    int seek_pos    = 0;
+    int count       = 0;
 
-    while (getline(ss, tmp_str, '/'))
+    while (seek_pos >= 0)
     {
-        auto it = std::find_if(
+        seek_pos = sv_path.find_first_of('/', begin_index);
+
+        if (seek_pos < 0)
+            count = sv_path.length() - begin_index;
+        else
+            count = seek_pos - begin_index;
+
+        std::string_view tmp(sv_path.data() + begin_index, count);
+        auto             it = std::find_if(
             result->child_folders.begin(), result->child_folders.end(),
-            [&tmp_str](const directory* dir) { return dir->name == tmp_str; });
+            [&tmp](const directory* dir) { return dir->name == tmp; });
         if (it == result->child_folders.end())
         {
             return nullptr;
         }
-        result = *it;
+        result      = *it;
+        begin_index = seek_pos + 1;
     }
     return result;
 }
 
 file* scanner::impl::find_file_ptr(std::string_view sv_path)
 {
-    file*       result = nullptr;
-    std::string filename(sv_path);
-    std::string path;
+    file* result = nullptr;
 
-    int split_pos = sv_path.find_last_of('/');
-    if (split_pos >= 0)
+    int filename_starts_from = 0;
+    int pathname_ends_at     = 0;
+    int seek_pos             = sv_path.find_last_of('/');
+    if (seek_pos > 0)
+    // at least 3 characters needed to specify
+    // relative file path ("c/a"), so seek_pos
+    // must be at least 1 (not 0);
     {
-        filename = sv_path.substr(split_pos + 1, sv_path.length());
-        path     = sv_path.substr(0, split_pos);
+        filename_starts_from = seek_pos + 1;
+        pathname_ends_at     = seek_pos;
     }
 
-    directory* dir = find_directory_ptr(path);
+    std::string_view filename(sv_path.data() + filename_starts_from,
+                              sv_path.length() - filename_starts_from);
+    std::string_view path(sv_path.data(), pathname_ends_at);
+    directory*       dir = find_directory_ptr(path);
     if (dir)
     {
-        for (auto p : dir->child_files)
+        for (auto& p : dir->child_files)
         {
             if (p->get_full_name() == filename)
             {
@@ -570,15 +486,37 @@ std::string scanner::impl::get_file_path(const file* fl)
 scanner::scanner(std::string_view sv_path)
     : pImpl(new scanner::impl)
 {
-    if (sv_path.front() != '/' && sv_path.front() != 'C')
+    bool absolute = false;
+#if defined(__unix__)
+    if (sv_path.size() > 1)
+    {
+        if (sv_path.front() == '/')
+        {
+            absolute = true;
+        }
+    }
+#elif defined(WIN32)
+    if (sv_path.size() > 2)
+    {
+        if ((sv_path.at(2) == '/') && (sv_path.at(1) == ':') &&
+            isupper(sv_path.at(0)) && isalpha(sv_path.at(0)))
+        {
+            absolute = true;
+        }
+    }
+#endif
+    if (!absolute)
     {
         char        cwd[PATH_MAX];
         const char* path = getcwd(cwd, sizeof(cwd));
         if (!path)
             return;
         pImpl->root.name = path;
-        pImpl->root.name += "/";
-        pImpl->root.name += sv_path;
+        if (!sv_path.empty())
+        {
+            pImpl->root.name += "/";
+            pImpl->root.name += sv_path;
+        }
     }
     else
     {
@@ -628,79 +566,79 @@ bool scanner::is_file_exists(std::string_view path) const
     return fl ? true : false;
 }
 
-file_list scanner::get_files_with_extension(std::string_view path,
-                                            std::string_view extn) const
+std::vector<file_info> scanner::get_files_with_extension(
+    std::string_view path, std::string_view extn) const
 {
-    file_list result;
+    std::vector<file_info> result;
     // if (extn.front() == '.')  was supposed for user request like ".cxx"
     // with dot forward
     //    extn.erase(0, 1);
     directory* dir = pImpl->find_directory_ptr(path);
     if (dir)
     {
-        for (auto p : dir->child_files)
+        for (auto& p : dir->child_files)
         {
             if (extn == p->extension)
             {
                 file_info tmp;
                 tmp.size     = p->size;
                 tmp.abs_path = pImpl->get_file_path(p);
-                result.push(tmp);
+                result.push_back(tmp);
             }
         }
     }
     return result;
 }
 
-file_list scanner::get_files_with_name(std::string_view path,
-                                       std::string_view name) const
+std::vector<file_info> scanner::get_files_with_name(std::string_view path,
+                                                    std::string_view name) const
 {
-    file_list result;
+    std::vector<file_info> result;
     if (name.empty())
         return result;
     directory* dir = pImpl->find_directory_ptr(path);
     if (dir)
     {
-        for (auto p : dir->child_files)
+        for (auto& p : dir->child_files)
         {
             if (name == p->name)
             {
                 file_info tmp;
                 tmp.size     = p->size;
                 tmp.abs_path = pImpl->get_file_path(p);
-                result.push(tmp);
+                result.push_back(tmp);
             }
         }
     }
     return result;
 }
 
-file_list scanner::get_files(std::string_view path) const
+std::vector<file_info> scanner::get_files(std::string_view path) const
 {
-    file_list  result;
-    directory* dir = pImpl->find_directory_ptr(path);
+    std::vector<file_info> result;
+    directory*             dir = pImpl->find_directory_ptr(path);
     if (dir)
     {
-        for (auto p : dir->child_files)
+        for (auto& p : dir->child_files)
         {
             file_info tmp;
             tmp.size     = p->size;
             tmp.abs_path = pImpl->get_file_path(p);
-            result.push(tmp);
+            result.push_back(tmp);
         }
     }
     return result;
 }
 
-file_list scanner::get_all_files() const
+std::vector<file_info> scanner::get_all_files() const
 {
-    file_list result;
-    for (auto p : pImpl->files)
+    std::vector<file_info> result;
+    for (auto& p : pImpl->files)
     {
         file_info tmp;
         tmp.size     = p->size;
         tmp.abs_path = pImpl->get_file_path(p);
-        result.push(tmp);
+        result.push_back(tmp);
     }
     return result;
 }
