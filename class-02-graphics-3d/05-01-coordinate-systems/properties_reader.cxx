@@ -15,7 +15,7 @@
 
 enum class token_type : uint8_t
 {
-    none = 0,
+    none,
     type_name,
     prop_name,
     assign,
@@ -24,15 +24,14 @@ enum class token_type : uint8_t
     string_value
 };
 
+struct token
+{
+    token_type       type = token_type::none;
+    std::string_view value;
+};
+
 struct properties_lexer
 {
-
-    struct token
-    {
-        token_type       t = token_type::none;
-        std::string_view value;
-        std::regex*      regex_ptr = nullptr;
-    };
 
     std::vector<token> token_list;
     std::string        content;
@@ -96,8 +95,7 @@ struct properties_lexer
             if (!token_best_match.empty())
             {
                 token tok;
-                tok.t                      = best_token_regex->type;
-                tok.regex_ptr              = &best_token_regex->regex;
+                tok.type                   = best_token_regex->type;
                 auto&       first_match    = token_best_match[0];
                 const char* first_char_ptr = first_match.first;
                 size_t      length = static_cast<size_t>(first_match.length());
@@ -163,12 +161,35 @@ struct properties_parser
 {
     struct program_structure
     {
+        struct var
+        {
+            token* variable_name = nullptr;
+        };
+
+        struct constant
+        {
+            token* str_value = nullptr;
+        };
+
+        struct operation
+        {
+            token* op = nullptr;
+        };
+
+        using operand = std::variant<var, constant>;
+        struct expression
+        {
+            operand                            left_operand;
+            operation                          op;
+            std::variant<expression*, operand> right_part;
+        };
+
         struct assing_command
         {
-            properties_lexer::token* type_name     = nullptr;
-            properties_lexer::token* variable_name = nullptr;
-            properties_lexer::token* value         = nullptr;
-            value_type               real_value;
+            token*     type_name     = nullptr;
+            token*     variable_name = nullptr;
+            token*     value         = nullptr;
+            value_type real_value;
         };
 
         std::vector<assing_command> commands;
@@ -182,7 +203,7 @@ struct properties_parser
         std::clog << "--------start tokens" << std::endl;
         for (auto& token : lexer.token_list)
         {
-            std::clog << token.t << ":{" << token.value << "}" << std::endl;
+            std::clog << token.type << ":{" << token.value << "}" << std::endl;
         }
         std::clog << "--------end tokens" << std::endl;
 
@@ -194,7 +215,7 @@ struct properties_parser
         }
     }
 
-    std::string print_position_of_token(const properties_lexer::token& token)
+    std::string print_position_of_token(const token& token)
     {
         std::string_view from_start_to_token(
             lexer.content.data(),
@@ -213,9 +234,8 @@ struct properties_parser
         return ss.str();
     }
 
-    properties_lexer::token* expected(
-        const std::vector<properties_lexer::token>::iterator& it,
-        const token_type                                      type)
+    token* expected(const std::vector<token>::iterator& it,
+                    const token_type                    type)
     {
         if (it == end(lexer.token_list))
         {
@@ -223,7 +243,7 @@ struct properties_parser
             ss << "error: expected " << type << " but got: EOF";
             throw std::runtime_error(ss.str());
         }
-        if (it->t != type)
+        if (it->type != type)
         {
             std::stringstream ss;
             ss << "error: expected " << type << " but got: " << it->value;
@@ -233,9 +253,8 @@ struct properties_parser
         return &(*it);
     }
 
-    properties_lexer::token* expected_one_of(
-        const std::vector<properties_lexer::token>::iterator& it,
-        const std::initializer_list<token_type>&              types)
+    token* expected_one_of(const std::vector<token>::iterator&      it,
+                           const std::initializer_list<token_type>& types)
     {
         if (it == end(lexer.token_list))
         {
@@ -248,7 +267,7 @@ struct properties_parser
             ss << " but got: EOF";
             throw std::runtime_error(ss.str());
         }
-        auto type_it = std::find(begin(types), end(types), it->t);
+        auto type_it = std::find(begin(types), end(types), it->type);
         if (type_it == end(types))
         {
             std::stringstream ss;
@@ -257,7 +276,7 @@ struct properties_parser
             {
                 ss << type << ", ";
             }
-            ss << "but got: " << it->t;
+            ss << "but got: " << it->type;
             ss << print_position_of_token(*it);
             throw std::runtime_error(ss.str());
         }
@@ -265,7 +284,7 @@ struct properties_parser
     }
 
     program_structure::assing_command parse_assing_command(
-        std::vector<properties_lexer::token>::iterator& it)
+        std::vector<token>::iterator& it)
     {
         program_structure::assing_command cmd;
 
@@ -283,7 +302,7 @@ struct properties_parser
         const char* ptr     = &str.front();
         const char* end_ptr = ptr + str.length();
 
-        switch (cmd.value->t)
+        switch (cmd.value->type)
         {
             case (token_type::float_value):
             {
