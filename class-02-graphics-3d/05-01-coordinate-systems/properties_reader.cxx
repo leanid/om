@@ -16,7 +16,7 @@
 enum class token_type : uint8_t
 {
     none = 0,
-    type_key_word,
+    type_name,
     prop_name,
     assign,
     int_value,
@@ -54,18 +54,18 @@ struct properties_lexer
         : content{ std::move(content_) }
     {
         token_bind.reserve(10);
-        token_bind.emplace_back(token_type::type_key_word,
-                                R"(^(float)|(string)|(int))");
+        token_bind.emplace_back(token_type::type_name,
+                                R"(float|string|int)");
         token_bind.emplace_back(token_type::assign, R"(^=)");
         token_bind.emplace_back(token_type::prop_name,
-                                R"(^[a-zA-Z_][a-zA-Z0-9_]*)");
+                                R"([a-zA-Z_][a-zA-Z0-9_]*)");
         token_bind.emplace_back(token_type::int_value, R"(^[1-9]\d*)");
         token_bind.emplace_back(token_type::float_value,
-                                R"(^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)f)");
+                                R"([+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)f)");
         // original from internet: /"([^"\\]|\\.)*"/
         token_bind.emplace_back(token_type::string_value,
-                                R"(^"([^"\\]|\\.)*")");
-        token_bind.emplace_back(token_type::none, R"(^ |;|\n|\t)");
+                                R"("([^"\\]|\\.)*")");
+        token_bind.emplace_back(token_type::none, R"( |;|\n|\t)");
 
         std::string_view rest_content{ content };
         bool             cant_find_match = false;
@@ -80,7 +80,8 @@ struct properties_lexer
                 if (std::regex_search(rest_content.data(),
                                       rest_content.data() +
                                           rest_content.length(),
-                                      token_match, tok_regex.regex))
+                                      token_match, tok_regex.regex,
+                                      std::regex_constants::match_continuous))
                 {
                     auto& first = *token_match.cbegin();
                     if (token_best_match.empty() ||
@@ -146,7 +147,7 @@ std::ostream& operator<<(std::ostream& stream, const token_type t)
         case (token_type::string_value):
             stream << "string";
             break;
-        case (token_type::type_key_word):
+        case (token_type::type_name):
             stream << "type_name";
             break;
         case (token_type::none):
@@ -178,6 +179,13 @@ struct properties_parser
     properties_parser(properties_lexer& lexer_)
         : lexer{ lexer_ }
     {
+        std::clog << "--------start tokens" << std::endl;
+        for (auto& token : lexer.token_list)
+        {
+            std::clog << token.t << ":{" << token.value << "}" << std::endl;
+        }
+        std::clog << "--------end tokens" << std::endl;
+
         for (auto it = begin(lexer.token_list), end_it = end(lexer.token_list);
              it != end_it;)
         {
@@ -218,7 +226,7 @@ struct properties_parser
         if (it->t != type)
         {
             std::stringstream ss;
-            ss << "error: expected " << type << " but got: " << it->t;
+            ss << "error: expected " << type << " but got: " << it->value;
             ss << print_position_of_token(*it);
             throw std::runtime_error(ss.str());
         }
@@ -261,7 +269,7 @@ struct properties_parser
     {
         program_structure::assing_command cmd;
 
-        cmd.type_name = expected(it, token_type::type_key_word);
+        cmd.type_name = expected(it, token_type::type_name);
 
         cmd.variable_name = expected(++it, token_type::prop_name);
 
