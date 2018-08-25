@@ -21,7 +21,8 @@ enum class token_type : uint8_t
     assign,
     int_value,
     float_value,
-    string_value
+    string_value,
+    end_of_expr
 };
 
 struct token
@@ -64,7 +65,8 @@ struct properties_lexer
         // original from internet: /"([^"\\]|\\.)*"/
         token_bind.emplace_back(token_type::string_value,
                                 R"("([^"\\]|\\.)*")");
-        token_bind.emplace_back(token_type::none, R"( |;|\n|\t)");
+        token_bind.emplace_back(token_type::end_of_expr, R"(;)");
+        token_bind.emplace_back(token_type::none, R"( |\n|\t)");
 
         std::string_view rest_content{ content };
         bool             cant_find_match = false;
@@ -130,45 +132,60 @@ std::ostream& operator<<(std::ostream& stream, const token_type t)
 {
     switch (t)
     {
-        case (token_type::assign):
-            stream << "assign";
+        case token_type::assign:
+            stream << "=";
             break;
-        case (token_type::float_value):
+        case token_type::float_value:
             stream << "float";
             break;
-        case (token_type::int_value):
+        case token_type::int_value:
             stream << "int";
             break;
-        case (token_type::prop_name):
-            stream << "prop_name";
-            break;
-        case (token_type::string_value):
+        case token_type::string_value:
             stream << "string";
             break;
-        case (token_type::type_name):
+        case token_type::prop_name:
+            stream << "prop_name";
+            break;
+        case token_type::type_name:
             stream << "type_name";
             break;
-        case (token_type::none):
+        case token_type::none:
             stream << "ws";
+            break;
+        case token_type::end_of_expr:
+            stream << ";";
             break;
     }
     return stream;
 }
 
-using value_type = std::variant<std::string, std::int32_t, float>;
+using value_t = std::variant<std::string, std::int32_t, float>;
 
 struct properties_parser
 {
     struct program_structure
     {
-        struct var
+
+        struct lvalue
         {
-            token* variable_name = nullptr;
+            token* name = nullptr;
+        };
+
+        struct declaration
+        {
+            token* type = nullptr;
+            lvalue var;
+        };
+
+        struct variable
+        {
+            std::variant<declaration, lvalue> name;
         };
 
         struct constant
         {
-            token* str_value = nullptr;
+            token* value = nullptr;
         };
 
         struct operation
@@ -176,26 +193,32 @@ struct properties_parser
             token* op = nullptr;
         };
 
-        using operand = std::variant<var, constant>;
+        using operand = std::variant<variable, constant>;
+
         struct expression
         {
             operand                            left_operand;
             operation                          op;
-            std::variant<expression*, operand> right_part;
+            std::variant<expression*, operand> right_operand;
         };
 
-        struct assing_command
-        {
-            token*     type_name     = nullptr;
-            token*     variable_name = nullptr;
-            token*     value         = nullptr;
-            value_type real_value;
-        };
-
-        std::vector<assing_command> commands;
+        std::vector<expression>                  commands;
+        std::unordered_map<std::string, value_t> variables;
     } program;
 
     properties_lexer& lexer;
+
+    expression parse_expression(const std::vector<token>::iterator& token_it)
+    {
+        operand   left_operand = parse_operand(token_it);
+        operation op           = parse_operation(token_it);
+        std::variant<expression*, operand> right_operand =
+            parse_operand_or_expression(token_it);
+
+        parse_end_of_expression(token_it);
+
+        return { left_operand, op, right_operand };
+    }
 
     properties_parser(properties_lexer& lexer_)
         : lexer{ lexer_ }
@@ -207,11 +230,11 @@ struct properties_parser
         }
         std::clog << "--------end tokens" << std::endl;
 
-        for (auto it = begin(lexer.token_list), end_it = end(lexer.token_list);
-             it != end_it;)
+        for (auto token_iter = begin(lexer.token_list),
+                  end_it     = end(lexer.token_list);
+             token_iter != end_it;)
         {
-            program_structure::assing_command cmd = parse_assing_command(it);
-            program.commands.push_back(cmd);
+            parse_expression(token_iter);
         }
     }
 
@@ -342,13 +365,9 @@ struct properties_interpretator
         : parser{ parser_ }
     {
     }
-    void generate(std::unordered_map<std::string, value_type>& key_values)
+    void generate(std::unordered_map<std::string, value_t>& key_values)
     {
-        for (const auto& command : parser.program.commands)
-        {
-            key_values.insert(std::make_pair(command.variable_name->value,
-                                             command.real_value));
-        }
+        key_values = std::move(parser.program.variables);
 
         // debug
         for (auto it : key_values)
@@ -396,8 +415,8 @@ public:
     }
 
 private:
-    fs::path                                    path;
-    std::unordered_map<std::string, value_type> key_values;
+    fs::path                                 path;
+    std::unordered_map<std::string, value_t> key_values;
 };
 
 properties_reader::properties_reader(const fs::path& path)
