@@ -109,9 +109,7 @@ std::uint32_t window::get_flags() const
 
 void window::set_title(const char* title)
 {
-    if (title)
-        SDL_SetWindowTitle(data->window, title);
-    return;
+    SDL_SetWindowTitle(data->window, title);
 }
 
 std::string_view window::get_title() const
@@ -129,16 +127,12 @@ std::string_view window::get_title() const
 
 void* window::set_data(const char* name, void* userdata)
 {
-    if (name)
-        return SDL_SetWindowData(data->window, name, userdata);
-    return nullptr;
+    return SDL_SetWindowData(data->window, name, userdata);
 }
 
 void* window::get_data(const char* name) const
 {
-    if (name)
-        return SDL_GetWindowData(data->window, name);
-    return nullptr;
+    return SDL_GetWindowData(data->window, name);
 }
 
 void window::set_position(const position& pos)
@@ -155,8 +149,6 @@ om::window::position window::get_position() const
 
 void window::set_size(const size& s)
 {
-    if (s.h == 0 || s.w == 0)
-        return;
     SDL_SetWindowSize(data->window, s.w, s.h);
 }
 
@@ -261,10 +253,7 @@ void window::set_grabbed(bool value)
 
 bool window::get_grabbed() const
 {
-    if (SDL_GetWindowGrab(data->window))
-        return true;
-    else
-        return false;
+    return SDL_GetWindowGrab(data->window);
 }
 
 bool window::set_brightness(const float& brightness)
@@ -382,16 +371,12 @@ bool window::get_gamma_ramp(
 
 bool window::size::operator==(const size& right) const
 {
-    if (this->h == right.h && this->w == right.w)
-        return true;
-    return false;
+    return (this->h == right.h && this->w == right.w);
 }
 
 bool window::position::operator==(const position& right) const
 {
-    if (this->x == right.x && this->y == right.y)
-        return true;
-    return false;
+    return (this->x == right.x && this->y == right.y);
 }
 
 std::vector<std::string_view> video::get_drivers()
@@ -406,19 +391,15 @@ std::vector<std::string_view> video::get_drivers()
     return result;
 }
 
-void video::init(std::string_view driver_name)
+void video::init(const char* driver_name)
 {
-    const char* sz_driver_name = nullptr;
-    if (!driver_name.empty())
-    {
-        sz_driver_name = driver_name.data();
-    }
-    if (int error = SDL_VideoInit(sz_driver_name); 0 != error)
+    if (int error = SDL_VideoInit(driver_name); 0 != error)
     {
         throw std::runtime_error(SDL_GetError());
     }
     return;
 }
+
 void video::quit()
 {
     SDL_VideoQuit();

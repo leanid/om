@@ -247,7 +247,7 @@ enum class gl_swap_interval
 struct video
 {
     static std::vector<std::string_view> get_drivers();
-    void                                 init(std::string_view driver_name);
+    void                                 init(const char* driver_name);
     void                                 quit();
     std::string_view                     get_current_driver() const;
 
