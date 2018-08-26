@@ -42,7 +42,7 @@ int main(int /*argc*/, char* /*argv*/ [])
     using namespace std;
     using namespace std::chrono;
 
-    properties_reader properties("./res/runtime.properties");
+    properties_reader properties("./res/runtime.properties.hxx");
 
     auto start_time = high_resolution_clock::now();
 

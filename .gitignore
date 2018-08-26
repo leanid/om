@@ -9,6 +9,7 @@
 .externalNativeBuild
 .gradle/
 local.properties
+*.user
 
 build/
 tests/11-1-android-port/android-project/.*
