@@ -3,9 +3,8 @@
 #include <any>
 #include <array>
 #include <cstdint>
+#include <memory>
 #include <optional>
-#include <string_view>
-#include <tuple>
 #include <vector>
 
 namespace om
@@ -36,11 +35,14 @@ struct display_mode
 
 struct display
 {
-    display_mode                    mode;
-    char                            name[256];
-    std::tuple<float, float, float> dpi;
-    rect                            bounds;
-    rect                            usable_bounds;
+    // TODO Implement me
+    display_mode mode;
+    char         name[256];
+    float        ddpi;
+    float        vdpi;
+    float        hdpi;
+    rect         bounds;
+    rect         usable_bounds;
 
     std::string_view          get_name() const;
     rect                      get_bounds() const;
@@ -85,29 +87,23 @@ hittest_result hit_test(window& win, const point& p, std::any);
 class window
 {
 public:
+    // FIXME The flags below are hardcoded
     enum flags : uint32_t
     {
-        OM_WINDOW_FULLSCREEN         = 0x00000001,
-        OM_WINDOW_OPENGL             = 0x00000002,
-        OM_WINDOW_SHOWN              = 0x00000004,
-        OM_WINDOW_HIDDEN             = 0x00000008,
-        OM_WINDOW_BORDERLESS         = 0x00000010,
-        OM_WINDOW_RESIZABLE          = 0x00000020,
-        OM_WINDOW_MINIMIZED          = 0x00000040,
-        OM_WINDOW_MAXIMIZED          = 0x00000080,
-        OM_WINDOW_INPUT_GRABBED      = 0x00000100,
-        OM_WINDOW_INPUT_FOCUS        = 0x00000200,
-        OM_WINDOW_MOUSE_FOCUS        = 0x00000400,
-        OM_WINDOW_FULLSCREEN_DESKTOP = (OM_WINDOW_FULLSCREEN | 0x00001000),
-        OM_WINDOW_FOREIGN            = 0x00000800,
-        OM_WINDOW_ALLOW_HIGHDPI      = 0x00002000,
-        OM_WINDOW_MOUSE_CAPTURE      = 0x00004000,
-        OM_WINDOW_ALWAYS_ON_TOP      = 0x00008000,
-        OM_WINDOW_SKIP_TASKBAR       = 0x00010000,
-        OM_WINDOW_UTILITY            = 0x00020000,
-        OM_WINDOW_TOOLTIP            = 0x00040000,
-        OM_WINDOW_POPUP_MENU         = 0x00080000,
-        OM_WINDOW_VULKAN             = 0x10000000
+        fullscreen         = 0x00000001,
+        opengl             = 0x00000002,
+        shown              = 0x00000004,
+        hidden             = 0x00000008,
+        borderless         = 0x00000010,
+        resizeable         = 0x00000020,
+        minimized          = 0x00000040,
+        maximized          = 0x00000080,
+        input_grabbed      = 0x00000100,
+        input_focus        = 0x00000200,
+        mouse_focus        = 0x00000400,
+        fullscreen_desktop = (fullscreen | 0x00001000),
+        mouse_captured     = 0x00004000,
+        always_on_top      = 0x00008000,
     };
 
     static const std::int32_t centered;  // TODO
@@ -140,20 +136,27 @@ public:
     };
 
 public:
-    explicit window(std::string_view, size, std::optional<position> = {},
-                    std::optional<uint32_t> = {});
-    ~window();
+    window()              = delete;
+    window(const window&) = delete;
+    window& operator=(const window&) = delete;
+    window& operator=(window&&) = delete;
+
+    window(const char* title, size window_size,
+           std::optional<position> window_position = {},
+           std::optional<uint32_t> window_flags    = {});
+
+    window(window&&);
 
     bool                 set_display_mode(const display_mode&);
     display_mode         get_display_mode() const;
     std::uint32_t        get_pixel_format() const;
     std::uint32_t        get_id() const;
     std::uint32_t        get_flags() const;
-    void                 set_title(std::string_view title);
+    void                 set_title(const char* title);
     std::string_view     get_title() const;
     void                 set_icon(const surface& icon);
-    void*                set_data(std::string_view name, void* userdata);
-    void*                get_data(std::string_view name) const;
+    void*                set_data(const char* name, void* userdata);
+    void*                get_data(const char* name) const;
     void                 set_position(const position&);
     position             get_position() const;
     void                 set_size(const size&);
@@ -191,9 +194,12 @@ public:
                         std::optional<std::array<std::uint16_t, 256>*> green,
                         std::optional<std::array<std::uint16_t, 256>*> blue);
     // bool set_hit_test(hit_test callback, std::any);
+
+    virtual ~window();
+
 private:
     class impl;
-    impl* pImpl = nullptr;
+    std::unique_ptr<impl> data;
 };
 
 enum class gl_attribute

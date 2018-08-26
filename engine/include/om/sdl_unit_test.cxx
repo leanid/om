@@ -3,8 +3,9 @@
 
 #include "../../src/catch.hpp"
 #include "sdl.hxx"
+#include <clocale>
+
 #include <SDL2/SDL.h>
-#include <locale.h>
 
 using Catch::Matchers::Contains;
 
@@ -12,10 +13,10 @@ TEST_CASE("sdl wrapper test") // LEVEL 0
 {
     setlocale(LC_ALL, "ru_RU.UTF-8");
     SDL_Init(SDL_INIT_VIDEO);
-    std::string_view test_window_name = "test window";
-    auto       test_window_flags = (om::window::flags::OM_WINDOW_RESIZABLE |
-                              om::window::flags::OM_WINDOW_OPENGL);
-    om::window w(test_window_name, { 640, 480 }, {}, test_window_flags);
+    std::string test_window_name = "test window";
+    auto        test_window_flags =
+        (om::window::flags::resizeable | om::window::flags::opengl);
+    om::window w(test_window_name.c_str(), { 640, 480 }, {}, test_window_flags);
 
     SECTION("video test section") // LEVEL 1
     {
@@ -60,86 +61,79 @@ TEST_CASE("sdl wrapper test") // LEVEL 0
             SECTION("flags and control test section") // LEVEL 3
             {
                 auto flags = w.get_flags();
-                REQUIRE(flags == (test_window_flags |
-                                  om::window::flags::OM_WINDOW_SHOWN));
+                REQUIRE(flags ==
+                        (test_window_flags | om::window::flags::shown));
 
-                REQUIRE(w.set_fullscreen(
-                            om::window::flags::OM_WINDOW_FULLSCREEN) == true);
+                REQUIRE(w.set_fullscreen(om::window::flags::fullscreen) ==
+                        true);
                 flags = w.get_flags();
-                REQUIRE(flags == (test_window_flags |
-                                  om::window::flags::OM_WINDOW_SHOWN |
-                                  om::window::flags::OM_WINDOW_FULLSCREEN));
+                REQUIRE(flags == (test_window_flags | om::window::flags::shown |
+                                  om::window::flags::fullscreen));
                 REQUIRE(w.set_fullscreen(0) == true);
                 flags = w.get_flags();
-                REQUIRE(flags == (test_window_flags |
-                                  om::window::flags::OM_WINDOW_SHOWN));
+                REQUIRE(flags ==
+                        (test_window_flags | om::window::flags::shown));
 
                 w.set_grabbed(true);
                 flags = w.get_flags();
-                REQUIRE(flags == (test_window_flags |
-                                  om::window::flags::OM_WINDOW_SHOWN |
-                                  om::window::flags::OM_WINDOW_INPUT_GRABBED));
+                REQUIRE(flags == (test_window_flags | om::window::flags::shown |
+                                  om::window::flags::input_grabbed));
                 // REQUIRE(w.get_grabbed() == true); FIXME this fails on linux.
                 w.set_grabbed(false);
                 flags = w.get_flags();
-                REQUIRE(flags == (test_window_flags |
-                                  om::window::flags::OM_WINDOW_SHOWN));
+                REQUIRE(flags ==
+                        (test_window_flags | om::window::flags::shown));
                 REQUIRE(w.get_grabbed() == false);
                 //                set_modal_for(window & parent);
                 REQUIRE(w.set_input_focus() == true);
                 flags = w.get_flags();
-                REQUIRE(flags ==
-                        (test_window_flags |
-                         om::window::flags::OM_WINDOW_SHOWN)); // why???
+                REQUIRE(flags == (test_window_flags |
+                                  om::window::flags::shown)); // why???
 
                 w.hide();
                 flags = w.get_flags();
-                REQUIRE(flags == (test_window_flags |
-                                  om::window::flags::OM_WINDOW_HIDDEN));
+                REQUIRE(flags ==
+                        (test_window_flags | om::window::flags::hidden));
                 w.show();
                 flags = w.get_flags();
-                REQUIRE(flags == (test_window_flags |
-                                  om::window::flags::OM_WINDOW_SHOWN));
+                REQUIRE(flags ==
+                        (test_window_flags | om::window::flags::shown));
                 w.raise();
                 flags = w.get_flags();
-                REQUIRE(flags ==
-                        (test_window_flags |
-                         om::window::flags::OM_WINDOW_SHOWN)); // why???
+                REQUIRE(flags == (test_window_flags |
+                                  om::window::flags::shown)); // why???
                 w.maximize();
                 flags = w.get_flags();
-                REQUIRE(flags == (test_window_flags |
-                                  om::window::flags::OM_WINDOW_SHOWN |
-                                  om::window::flags::OM_WINDOW_MAXIMIZED));
+                REQUIRE(flags == (test_window_flags | om::window::flags::shown |
+                                  om::window::flags::maximized));
                 w.restore();
-                flags = w.get_flags();
-                REQUIRE(flags == (test_window_flags |
-                                  om::window::flags::OM_WINDOW_SHOWN));
-                w.minimize();
                 flags = w.get_flags();
                 REQUIRE(flags ==
-                        (test_window_flags |
-                         om::window::flags::OM_WINDOW_SHOWN)); // why???
+                        (test_window_flags | om::window::flags::shown));
+                w.minimize();
+                flags = w.get_flags();
+                REQUIRE(flags == (test_window_flags |
+                                  om::window::flags::shown)); // why???
                 w.restore();
                 flags = w.get_flags();
-                REQUIRE(flags == (test_window_flags |
-                                  om::window::flags::OM_WINDOW_SHOWN));
+                REQUIRE(flags ==
+                        (test_window_flags | om::window::flags::shown));
                 w.set_bordered(false);
                 flags = w.get_flags();
-                REQUIRE(flags == (test_window_flags |
-                                  om::window::flags::OM_WINDOW_SHOWN |
-                                  om::window::flags::OM_WINDOW_BORDERLESS));
+                REQUIRE(flags == (test_window_flags | om::window::flags::shown |
+                                  om::window::flags::borderless));
                 w.set_bordered(true);
                 flags = w.get_flags();
-                REQUIRE(flags == (test_window_flags |
-                                  om::window::flags::OM_WINDOW_SHOWN));
+                REQUIRE(flags ==
+                        (test_window_flags | om::window::flags::shown));
                 w.set_resizable(false);
                 flags = w.get_flags();
-                REQUIRE(flags == (om::window::flags::OM_WINDOW_OPENGL |
-                                  om::window::flags::OM_WINDOW_SHOWN));
+                REQUIRE(flags ==
+                        (om::window::flags::opengl | om::window::flags::shown));
                 w.set_resizable(true);
                 flags = w.get_flags();
-                REQUIRE(flags == (test_window_flags |
-                                  om::window::flags::OM_WINDOW_SHOWN));
+                REQUIRE(flags ==
+                        (test_window_flags | om::window::flags::shown));
             }
             SECTION("window's video parameters test section") // LEVEL 3
             {

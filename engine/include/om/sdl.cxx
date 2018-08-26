@@ -1,8 +1,12 @@
 #include "sdl.hxx"
+
+#include <array>
+#include <iostream>
+#include <memory>
+#include <stdexcept>
+
 #include <SDL2/SDL_surface.h>
 #include <SDL2/SDL_video.h>
-#include <iostream>
-#include <stdexcept>
 
 namespace om
 {
@@ -10,17 +14,29 @@ namespace om
 class window::impl
 {
 public:
-    SDL_Window* pwindow = nullptr;
+    SDL_Window* window = nullptr;
+    ~impl();
 };
 
-window::window(std::string_view title, size size, std::optional<position> pos,
-               std::optional<uint32_t> om_flags)
+window::impl::~impl()
 {
-    pImpl = new window::impl;
-    if (title.empty())
+    if (window)
     {
-        title = "noname window";
+        SDL_DestroyWindow(window);
     }
+}
+
+window::window(window&& w)
+    : data(std::move(w.data))
+// TODO Implement this
+{
+    throw std::runtime_error("Not implemented yet");
+}
+
+window::window(const char* title, size size, std::optional<position> pos,
+               std::optional<uint32_t> om_flags)
+    : data(std::make_unique<impl>())
+{
     uint32_t sdl_flags = 0;
     if (om_flags)
     {
@@ -33,29 +49,14 @@ window::window(std::string_view title, size size, std::optional<position> pos,
         x = pos->x;
         y = pos->y;
     }
-    SDL_Window* tmp =
-        SDL_CreateWindow(title.data(), x, y, size.w, size.h, sdl_flags);
-    if (tmp)
-        pImpl->pwindow = tmp;
-    else
+    data->window = SDL_CreateWindow(title, x, y, size.w, size.h, sdl_flags);
+    if (!data->window)
     {
-        delete pImpl;
-        pImpl = nullptr;
+        throw std::runtime_error(SDL_GetError());
     }
 }
 
-window::~window()
-{
-    if (pImpl)
-    {
-        // Internal SDL_Window pointer is not checked here.
-        // It's supposed that if pImpl is not nullptr then
-        // there is no way SDL_Window == nullptr;
-        SDL_DestroyWindow(pImpl->pwindow);
-        delete pImpl;
-        pImpl = nullptr;
-    }
-}
+window::~window() {}
 
 bool window::set_display_mode(const display_mode& om_display_mode)
 {
@@ -66,11 +67,9 @@ bool window::set_display_mode(const display_mode& om_display_mode)
     sdl_display_mode.refresh_rate = om_display_mode.refresh_rate;
     sdl_display_mode.driverdata   = nullptr;
 
-    if (SDL_SetWindowDisplayMode(pImpl->pwindow, &sdl_display_mode))
+    if (SDL_SetWindowDisplayMode(data->window, &sdl_display_mode))
     {
         throw std::runtime_error(SDL_GetError());
-        SDL_ClearError();
-        return false;
     }
     return true;
 }
@@ -79,11 +78,9 @@ display_mode window::get_display_mode() const
 {
     SDL_DisplayMode sdl_display_mode;
 
-    if (SDL_GetWindowDisplayMode(pImpl->pwindow, &sdl_display_mode))
+    if (SDL_GetWindowDisplayMode(data->window, &sdl_display_mode))
     {
         throw std::runtime_error(SDL_GetError());
-        SDL_ClearError();
-        return {};
     }
     display_mode om_display_mode;
     om_display_mode.h            = sdl_display_mode.h;
@@ -95,12 +92,10 @@ display_mode window::get_display_mode() const
 
 std::uint32_t window::get_pixel_format() const
 {
-    std::uint32_t result = SDL_GetWindowPixelFormat(pImpl->pwindow);
+    std::uint32_t result = SDL_GetWindowPixelFormat(data->window);
     if (result == SDL_PIXELFORMAT_UNKNOWN)
     {
         throw std::runtime_error(SDL_GetError());
-        SDL_ClearError();
-        return {};
     }
     return result;
 }
@@ -109,22 +104,22 @@ std::uint32_t window::get_pixel_format() const
 
 std::uint32_t window::get_flags() const
 {
-    return SDL_GetWindowFlags(pImpl->pwindow);
+    return SDL_GetWindowFlags(data->window);
 }
 
-void window::set_title(std::string_view title)
+void window::set_title(const char* title)
 {
-    if (title.empty())
-        return;
-    SDL_SetWindowTitle(pImpl->pwindow, title.data());
+    if (title)
+        SDL_SetWindowTitle(data->window, title);
     return;
 }
 
 std::string_view window::get_title() const
 {
-    const char* title = SDL_GetWindowTitle(pImpl->pwindow);
+    const char* title = SDL_GetWindowTitle(data->window);
     if (title)
     {
+        // Make sure it's not temporary.
         return { title };
     }
     return {};
@@ -132,31 +127,29 @@ std::string_view window::get_title() const
 
 // void window::set_icon(const surface& icon) {}  TODO Implement om::surface
 
-void* window::set_data(std::string_view name, void* userdata)
+void* window::set_data(const char* name, void* userdata)
 {
-    if (name.empty())
-    {
-        return nullptr; // Is empty string invalid value?
-    }
-    return SDL_SetWindowData(pImpl->pwindow, name.data(), userdata);
+    if (name)
+        return SDL_SetWindowData(data->window, name, userdata);
+    return nullptr;
 }
 
-void* window::get_data(std::string_view name) const
+void* window::get_data(const char* name) const
 {
-    if (name.empty())
-        return nullptr;
-    return SDL_GetWindowData(pImpl->pwindow, name.data());
+    if (name)
+        return SDL_GetWindowData(data->window, name);
+    return nullptr;
 }
 
 void window::set_position(const position& pos)
 {
-    SDL_SetWindowPosition(pImpl->pwindow, pos.x, pos.y);
+    SDL_SetWindowPosition(data->window, pos.x, pos.y);
 }
 
 om::window::position window::get_position() const
 {
     position result;
-    SDL_GetWindowPosition(pImpl->pwindow, &result.x, &result.y);
+    SDL_GetWindowPosition(data->window, &result.x, &result.y);
     return result;
 }
 
@@ -164,13 +157,13 @@ void window::set_size(const size& s)
 {
     if (s.h == 0 || s.w == 0)
         return;
-    SDL_SetWindowSize(pImpl->pwindow, s.w, s.h);
+    SDL_SetWindowSize(data->window, s.w, s.h);
 }
 
 om::window::size window::get_size() const
 {
     int w, h;
-    SDL_GetWindowSize(pImpl->pwindow, &w, &h);
+    SDL_GetWindowSize(data->window, &w, &h);
     return size(w, h);
 }
 
@@ -178,98 +171,81 @@ std::optional<rect> window::get_border_size() const
 {
     // supposed x,y - left upper corner coords
     int top, left, bottom, right;
-    if (SDL_GetWindowBordersSize(pImpl->pwindow, &top, &left, &bottom, &right))
+    if (SDL_GetWindowBordersSize(data->window, &top, &left, &bottom, &right))
     {
-        std::string_view error(SDL_GetError());
-        if (error.empty())
-            return {};
-        else
-        {
-            throw std::runtime_error(error.data());
-            SDL_ClearError();
-            return {};
-        }
+        return {};
     }
-    rect result(left, top, right - left, bottom - top);
-    return result;
+    return { rect(left, top, right - left, bottom - top) };
 }
 
 void window::set_minimal_size(const size& s)
 {
-    SDL_SetWindowMinimumSize(pImpl->pwindow, s.w, s.h);
+    SDL_SetWindowMinimumSize(data->window, s.w, s.h);
 }
 
 window::size window::get_minimal_size() const
 {
     int w, h;
-    SDL_GetWindowMinimumSize(pImpl->pwindow, &w, &h);
+    SDL_GetWindowMinimumSize(data->window, &w, &h);
     return size(w, h);
 }
 
 void window::set_maximum_size(const size& s)
 {
-    SDL_SetWindowMaximumSize(pImpl->pwindow, s.w, s.h);
+    SDL_SetWindowMaximumSize(data->window, s.w, s.h);
 }
 
 window::size window::get_maximum_size() const
 {
     int w, h;
-    SDL_GetWindowMaximumSize(pImpl->pwindow, &w, &h);
+    SDL_GetWindowMaximumSize(data->window, &w, &h);
     return size(w, h);
 }
 
-void window::set_bordered(bool state)
+void window::set_bordered(bool value)
 {
-    if (state)
-        SDL_SetWindowBordered(pImpl->pwindow, SDL_TRUE);
-    else
-        SDL_SetWindowBordered(pImpl->pwindow, SDL_FALSE);
+    SDL_SetWindowBordered(data->window, SDL_bool(value));
 }
 
-void window::set_resizable(bool state)
+void window::set_resizable(bool value)
 {
-    if (state)
-        SDL_SetWindowResizable(pImpl->pwindow, SDL_TRUE);
-    else
-        SDL_SetWindowResizable(pImpl->pwindow, SDL_FALSE);
+    SDL_SetWindowResizable(data->window, SDL_bool(value));
 }
 
 void window::show()
 {
-    SDL_ShowWindow(pImpl->pwindow);
+    SDL_ShowWindow(data->window);
 }
 
 void window::hide()
 {
-    SDL_HideWindow(pImpl->pwindow);
+    SDL_HideWindow(data->window);
 }
 
 void window::raise()
 {
-    SDL_RaiseWindow(pImpl->pwindow);
+    SDL_RaiseWindow(data->window);
 }
 void window::maximize()
 {
-    SDL_MaximizeWindow(pImpl->pwindow);
+    SDL_MaximizeWindow(data->window);
 }
 
 void window::minimize()
 {
-    SDL_MinimizeWindow(pImpl->pwindow);
+    SDL_MinimizeWindow(data->window);
 }
 
 void window::restore()
 {
-    SDL_RestoreWindow(pImpl->pwindow);
+    SDL_RestoreWindow(data->window);
 }
 
 bool window::set_fullscreen(const uint32_t& fl)
 {
-    if (SDL_SetWindowFullscreen(pImpl->pwindow, static_cast<uint32_t>(fl)))
+    if (SDL_SetWindowFullscreen(data->window, static_cast<uint32_t>(fl)))
     {
         throw std::runtime_error(SDL_GetError());
-        SDL_ClearError();
-        return false;
     }
     return true;
 }
@@ -278,17 +254,14 @@ bool window::set_fullscreen(const uint32_t& fl)
 // bool                 update_surface(const surface&);
 // bool                 update_surface_rects(const std::vector<rect>& rects);
 
-void window::set_grabbed(bool state)
+void window::set_grabbed(bool value)
 {
-    if (state)
-        SDL_SetWindowGrab(pImpl->pwindow, SDL_TRUE);
-    else
-        SDL_SetWindowGrab(pImpl->pwindow, SDL_FALSE);
+    SDL_SetWindowGrab(data->window, SDL_bool(value));
 }
 
 bool window::get_grabbed() const
 {
-    if (SDL_GetWindowGrab(pImpl->pwindow))
+    if (SDL_GetWindowGrab(data->window))
         return true;
     else
         return false;
@@ -298,18 +271,16 @@ bool window::set_brightness(const float& brightness)
 {
     // Do we need to check range of input parameter?
     // value to set where 0.0 is completely dark and 1.0 is normal brightness
-    if (SDL_SetWindowBrightness(pImpl->pwindow, brightness))
+    if (SDL_SetWindowBrightness(data->window, brightness))
     {
         throw std::runtime_error(SDL_GetError());
-        SDL_ClearError();
-        return false;
     }
     return true;
 }
 
 float window::get_brightness() const
 {
-    return { SDL_GetWindowBrightness(pImpl->pwindow) };
+    return { SDL_GetWindowBrightness(data->window) };
 }
 
 bool window::set_opacity(const float& opacity)
@@ -317,44 +288,36 @@ bool window::set_opacity(const float& opacity)
     // Do we need to check range of input parameter?
     // the opacity value (0.0f - transparent, 1.0f -
     // opaque)
-    if (SDL_SetWindowOpacity(pImpl->pwindow, opacity))
+    if (SDL_SetWindowOpacity(data->window, opacity))
     {
         throw std::runtime_error(SDL_GetError());
-        SDL_ClearError();
-        return false;
     }
     return true;
 }
 std::optional<float> window::get_opacity() const
 {
-    float result = 1.f;
-    if (SDL_GetWindowOpacity(pImpl->pwindow, &result))
+    float result;
+    if (SDL_GetWindowOpacity(data->window, &result))
     {
         throw std::runtime_error(SDL_GetError());
-        SDL_ClearError();
-        return {};
     }
     return { result };
 }
 
 bool window::set_modal_for(window& parent)
 {
-    if (SDL_SetWindowModalFor(pImpl->pwindow, parent.pImpl->pwindow))
+    if (SDL_SetWindowModalFor(data->window, parent.data->window))
     {
         throw std::runtime_error(SDL_GetError());
-        SDL_ClearError();
-        return false;
     }
     return true;
 }
 
 bool window::set_input_focus()
 {
-    if (SDL_SetWindowInputFocus(pImpl->pwindow))
+    if (SDL_SetWindowInputFocus(data->window))
     {
         throw std::runtime_error(SDL_GetError());
-        SDL_ClearError();
-        return false;
     };
     // FIXME AS SDL2 docs says You almost certainly want
     // SDL_RaiseWindow() instead of this function. Use this with
@@ -382,11 +345,9 @@ bool window::set_gamma_ramp(
     {
         b = blue.value()->data();
     }
-    if (SDL_SetWindowGammaRamp(pImpl->pwindow, r, g, b))
+    if (SDL_SetWindowGammaRamp(data->window, r, g, b))
     {
         throw std::runtime_error(SDL_GetError());
-        SDL_ClearError();
-        return false;
     }
     return true;
 }
@@ -412,11 +373,9 @@ bool window::get_gamma_ramp(
         b = blue.value()->data();
     }
 
-    if (SDL_GetWindowGammaRamp(pImpl->pwindow, r, g, b))
+    if (SDL_GetWindowGammaRamp(data->window, r, g, b))
     {
         throw std::runtime_error(SDL_GetError());
-        SDL_ClearError();
-        return false;
     }
     return true;
 }
@@ -457,7 +416,6 @@ void video::init(std::string_view driver_name)
     if (int error = SDL_VideoInit(sz_driver_name); 0 != error)
     {
         throw std::runtime_error(SDL_GetError());
-        SDL_ClearError();
     }
     return;
 }
