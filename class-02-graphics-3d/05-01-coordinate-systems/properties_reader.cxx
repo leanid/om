@@ -193,9 +193,21 @@ struct operation
     const token* op = nullptr;
 };
 
-using operand = std::variant<std::monostate, variable, constant>;
+struct operand
+{
+    std::variant<std::monostate, variable, constant> value;
+    const token*                                     first_token    = nullptr;
+    const token*                                     past_end_token = nullptr;
+};
+
 struct expression;
-using expr_or_operand = std::variant<std::monostate, expression*, operand>;
+
+struct expr_or_operand
+{
+    std::variant<std::monostate, expression*, operand> value;
+    const token*                                       first_token    = nullptr;
+    const token*                                       past_end_token = nullptr;
+};
 
 struct expression
 {
@@ -323,8 +335,12 @@ program_structure::expression properties_parser::parse_expression(
     operand         lvalue = parse_operand(token_it);
     operation       op     = parse_operation(token_it);
     expr_or_operand rvalue = parse_expr_or_operand(token_it);
-    expected(token_it, token_type::end_of_expr);
-    ++token_it;
+
+    if (std::holds_alternative<operand>(rvalue.value))
+    {
+        expected(token_it, token_type::end_of_expr);
+        ++token_it;
+    }
 
     return { lvalue, op, rvalue };
 }
@@ -345,19 +361,25 @@ program_structure::operand properties_parser::parse_operand(
     {
         declaration decl = parse_declaration(token_it);
         variable    var{ decl };
-        result = var;
+        result.value          = var;
+        result.first_token    = &first_token;
+        result.past_end_token = &(*token_it);
     }
     else if (first_token.type == token_type::prop_name)
     {
-        variable var = parse_variable_name(token_it);
-        result       = var;
+        variable var          = parse_variable_name(token_it);
+        result.value          = var;
+        result.first_token    = &first_token;
+        result.past_end_token = &(*token_it);
     }
     else if (std::any_of(
                  begin(value_types), end(value_types),
                  [&first_token](auto& v) { return v == first_token.type; }))
     {
-        constant const_value = parse_constant(token_it);
-        result               = const_value;
+        constant const_value  = parse_constant(token_it);
+        result.value          = const_value;
+        result.first_token    = &first_token;
+        result.past_end_token = &(*token_it);
     }
 
     return result;
@@ -396,6 +418,9 @@ program_structure::variable properties_parser::parse_variable_name(
     decl.var.name = &(*token_it);
     variable var;
     var.name = decl;
+
+    ++token_it;
+
     return var;
 }
 
@@ -430,11 +455,14 @@ program_structure::expr_or_operand properties_parser::parse_expr_or_operand(
 {
     using namespace program_structure;
 
+    const token* first_token = &(*token_it);
+
     operand first_operand = parse_operand(token_it);
 
     if (token_it->type == token_type::end_of_expr)
     {
-        return { first_operand };
+        const token* past_end_token = &(*token_it);
+        return { first_operand, first_token, past_end_token };
     }
     else
     {
@@ -450,9 +478,77 @@ struct properties_interpretator
         : parser{ parser_ }
     {
     }
-    void generate(std::unordered_map<std::string, value_t>& key_values)
+
+    void execute(const program_structure::expression&      command,
+                 std::unordered_map<std::string, value_t>& key_values)
+    {
+        using namespace program_structure;
+
+        if (std::holds_alternative<variable>(command.left_operand.value))
+        {
+            variable var = std::get<variable>(command.left_operand.value);
+
+            declaration decl = std::get<declaration>(var.name);
+
+            std::string key(decl.var.name->value);
+
+            operand right_value =
+                std::get<operand>(command.right_operand.value);
+
+            if (command.op.op->value != "=")
+            {
+                throw std::runtime_error(
+                    "expected operator =\n" +
+                    parser.print_position_of_token(*command.op.op));
+            }
+
+            if (decl.type->value == "std::string")
+            {
+                if (!std::holds_alternative<constant>(right_value.value))
+                {
+                    throw std::runtime_error("expected std::string constant: " +
+                                             parser.print_position_of_token(
+                                                 *right_value.first_token));
+                }
+
+                std::string value(
+                    std::get<constant>(right_value.value).value->value);
+
+                key_values[key] = value;
+            }
+            else if (decl.type->value == "int")
+            {
+                // TODO
+            }
+            else if (decl.type->value == "float")
+            {
+                if (!std::holds_alternative<constant>(right_value.value))
+                {
+                    throw std::runtime_error("expected float constant: " +
+                                             parser.print_position_of_token(
+                                                 *right_value.first_token));
+                }
+
+                std::string value_str(
+                    std::get<constant>(right_value.value).value->value);
+                float value     = stof(value_str);
+                key_values[key] = value;
+            }
+        }
+        else
+        {
+            // TODO
+        }
+    }
+
+    void run(std::unordered_map<std::string, value_t>& key_values)
     {
         // TODO interpret program and fill key_values map
+
+        for (const auto& command : parser.commands)
+        {
+            execute(command, key_values);
+        }
 
         // debug
         for (auto it : key_values)
@@ -496,8 +592,10 @@ public:
         properties_parser        parser(lexer);
         properties_interpretator generator(parser);
 
-        generator.generate(key_values);
+        generator.run(key_values);
     }
+
+    std::unordered_map<std::string, value_t>& get_map() { return key_values; }
 
 private:
     fs::path                                 path;
@@ -511,19 +609,19 @@ properties_reader::properties_reader(const fs::path& path)
 
 void properties_reader::update_changes() {}
 
-std::string_view properties_reader::get_string(std::string_view) const
+std::string_view properties_reader::get_string(std::string_view key) const
 {
-    return {};
+    return std::get<std::string>(ptr->get_map()[std::string(key)]);
 }
 
-int32_t properties_reader::get_int(std::string_view) const
+int32_t properties_reader::get_int(std::string_view key) const
 {
-    return {};
+    return std::get<int32_t>(ptr->get_map()[std::string(key)]);
 }
 
-float properties_reader::get_float(std::string_view) const
+float properties_reader::get_float(std::string_view key) const
 {
-    return {};
+    return std::get<float>(ptr->get_map()[std::string(key)]);
 }
 
 properties_reader::~properties_reader() {}
