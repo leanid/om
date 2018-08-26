@@ -241,9 +241,9 @@ void window::restore()
     SDL_RestoreWindow(data->window);
 }
 
-bool window::set_fullscreen(const uint32_t& fl)
+bool window::set_fullscreen(const uint32_t& flags)
 {
-    if (SDL_SetWindowFullscreen(data->window, static_cast<uint32_t>(fl)))
+    if (SDL_SetWindowFullscreen(data->window, static_cast<uint32_t>(flags)))
     {
         throw std::runtime_error(SDL_GetError());
     }
