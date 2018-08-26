@@ -1,6 +1,7 @@
 #include "properties_reader.hxx"
 
 //#include <charconv> // not found on Visual Studio 2017.7
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <regex>
@@ -18,7 +19,7 @@ enum class token_type : uint8_t
     none,
     type_name,
     prop_name,
-    assign,
+    operator_name,
     int_value,
     float_value,
     string_value,
@@ -55,18 +56,19 @@ struct properties_lexer
     {
         token_bind.reserve(10);
         token_bind.emplace_back(token_type::type_name,
-                                R"(float|string|int)");
-        token_bind.emplace_back(token_type::assign, R"(^=)");
+                                R"(float|std::string|int)");
+        token_bind.emplace_back(token_type::operator_name, R"(=|\+|-|\*|\/)");
         token_bind.emplace_back(token_type::prop_name,
                                 R"([a-zA-Z_][a-zA-Z0-9_]*)");
-        token_bind.emplace_back(token_type::int_value, R"(^[1-9]\d*)");
+        token_bind.emplace_back(token_type::int_value, R"([1-9]\d*)");
         token_bind.emplace_back(token_type::float_value,
                                 R"([+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)f)");
         // original from internet: /"([^"\\]|\\.)*"/
         token_bind.emplace_back(token_type::string_value,
                                 R"("([^"\\]|\\.)*")");
         token_bind.emplace_back(token_type::end_of_expr, R"(;)");
-        token_bind.emplace_back(token_type::none, R"( |\n|\t)");
+        token_bind.emplace_back(token_type::none,
+                                R"(#.*\n|//.*\n| |\n|\t)");
 
         std::string_view rest_content{ content };
         bool             cant_find_match = false;
@@ -132,8 +134,8 @@ std::ostream& operator<<(std::ostream& stream, const token_type t)
 {
     switch (t)
     {
-        case token_type::assign:
-            stream << "=";
+        case token_type::operator_name:
+            stream << "operator";
             break;
         case token_type::float_value:
             stream << "float";
@@ -145,7 +147,7 @@ std::ostream& operator<<(std::ostream& stream, const token_type t)
             stream << "string";
             break;
         case token_type::prop_name:
-            stream << "prop_name";
+            stream << "variable_name";
             break;
         case token_type::type_name:
             stream << "type_name";
@@ -154,7 +156,7 @@ std::ostream& operator<<(std::ostream& stream, const token_type t)
             stream << "ws";
             break;
         case token_type::end_of_expr:
-            stream << ";";
+            stream << "end_of_expr";
             break;
     }
     return stream;
@@ -162,67 +164,73 @@ std::ostream& operator<<(std::ostream& stream, const token_type t)
 
 using value_t = std::variant<std::string, std::int32_t, float>;
 
+namespace program_structure
+{
+
+struct lvalue
+{
+    const token* name = nullptr;
+};
+
+struct declaration
+{
+    const token* type = nullptr;
+    lvalue       var;
+};
+
+struct variable
+{
+    std::variant<std::monostate, declaration, lvalue> name;
+};
+
+struct constant
+{
+    const token* value = nullptr;
+};
+
+struct operation
+{
+    const token* op = nullptr;
+};
+
+using operand = std::variant<std::monostate, variable, constant>;
+struct expression;
+using expr_or_operand = std::variant<std::monostate, expression*, operand>;
+
+struct expression
+{
+    operand         left_operand;
+    operation       op;
+    expr_or_operand right_operand;
+};
+} // end namespace program_structure
+
 struct properties_parser
 {
-    struct program_structure
-    {
+    std::vector<program_structure::expression> commands;
 
-        struct lvalue
-        {
-            token* name = nullptr;
-        };
-
-        struct declaration
-        {
-            token* type = nullptr;
-            lvalue var;
-        };
-
-        struct variable
-        {
-            std::variant<declaration, lvalue> name;
-        };
-
-        struct constant
-        {
-            token* value = nullptr;
-        };
-
-        struct operation
-        {
-            token* op = nullptr;
-        };
-
-        using operand = std::variant<variable, constant>;
-
-        struct expression
-        {
-            operand                            left_operand;
-            operation                          op;
-            std::variant<expression*, operand> right_operand;
-        };
-
-        std::vector<expression>                  commands;
-        std::unordered_map<std::string, value_t> variables;
-    } program;
+    program_structure::expression parse_expression(
+        std::vector<token>::iterator& token_it);
+    program_structure::operand parse_operand(
+        std::vector<token>::iterator& token_it);
+    program_structure::declaration parse_declaration(
+        std::vector<token>::iterator& token_it);
+    program_structure::variable parse_variable_name(
+        std::vector<token>::iterator& token_it);
+    program_structure::constant parse_constant(
+        std::vector<token>::iterator& token_it);
+    program_structure::operation parse_operation(
+        std::vector<token>::iterator& token_it);
+    program_structure::expr_or_operand parse_expr_or_operand(
+        std::vector<token>::iterator& token_it);
 
     properties_lexer& lexer;
-
-    expression parse_expression(const std::vector<token>::iterator& token_it)
-    {
-        operand   left_operand = parse_operand(token_it);
-        operation op           = parse_operation(token_it);
-        std::variant<expression*, operand> right_operand =
-            parse_operand_or_expression(token_it);
-
-        parse_end_of_expression(token_it);
-
-        return { left_operand, op, right_operand };
-    }
 
     properties_parser(properties_lexer& lexer_)
         : lexer{ lexer_ }
     {
+        using namespace program_structure;
+
         std::clog << "--------start tokens" << std::endl;
         for (auto& token : lexer.token_list)
         {
@@ -230,11 +238,11 @@ struct properties_parser
         }
         std::clog << "--------end tokens" << std::endl;
 
-        for (auto token_iter = begin(lexer.token_list),
-                  end_it     = end(lexer.token_list);
-             token_iter != end_it;)
+        for (auto token_iter = begin(lexer.token_list);
+             token_iter != end(lexer.token_list);)
         {
-            parse_expression(token_iter);
+            expression expr = parse_expression(token_iter);
+            commands.push_back(expr);
         }
     }
 
@@ -305,58 +313,135 @@ struct properties_parser
         }
         return &(*it);
     }
-
-    program_structure::assing_command parse_assing_command(
-        std::vector<token>::iterator& it)
-    {
-        program_structure::assing_command cmd;
-
-        cmd.type_name = expected(it, token_type::type_name);
-
-        cmd.variable_name = expected(++it, token_type::prop_name);
-
-        expected(++it, token_type::assign);
-
-        cmd.value = expected_one_of(++it, { token_type::float_value,
-                                            token_type::int_value,
-                                            token_type::string_value });
-
-        auto        str     = cmd.value->value;
-        const char* ptr     = &str.front();
-        const char* end_ptr = ptr + str.length();
-
-        switch (cmd.value->type)
-        {
-            case (token_type::float_value):
-            {
-                float result;
-
-                // std::from_chars(ptr, end_ptr, result); // not compile ???
-                result = std::stof(std::string(cmd.value->value).c_str());
-
-                cmd.real_value = result;
-            }
-            break;
-            case (token_type::int_value):
-            {
-                std::int32_t result;
-                // std::from_chars(ptr, end_ptr, result); // not working with
-                // msvc 2017.7
-                result         = stoi(std::string(ptr, end_ptr));
-                cmd.real_value = result;
-            }
-            break;
-            case (token_type::string_value):
-                cmd.real_value = std::string(cmd.value->value);
-                break;
-            default:
-                break;
-        };
-        ++it; // go to next token
-
-        return cmd;
-    }
 };
+
+program_structure::expression properties_parser::parse_expression(
+    std::vector<token>::iterator& token_it)
+{
+    using namespace program_structure;
+
+    operand         lvalue = parse_operand(token_it);
+    operation       op     = parse_operation(token_it);
+    expr_or_operand rvalue = parse_expr_or_operand(token_it);
+    expected(token_it, token_type::end_of_expr);
+    ++token_it;
+
+    return { lvalue, op, rvalue };
+}
+
+program_structure::operand properties_parser::parse_operand(
+    std::vector<token>::iterator& token_it)
+{
+    using namespace program_structure;
+
+    operand result;
+
+    const auto value_types = { token_type::int_value, token_type::float_value,
+                               token_type::string_value };
+
+    // operand can be: declaration, var_name, constant
+    const token& first_token = *token_it;
+    if (first_token.type == token_type::type_name)
+    {
+        declaration decl = parse_declaration(token_it);
+        variable    var{ decl };
+        result = var;
+    }
+    else if (first_token.type == token_type::prop_name)
+    {
+        variable var = parse_variable_name(token_it);
+        result       = var;
+    }
+    else if (std::any_of(
+                 begin(value_types), end(value_types),
+                 [&first_token](auto& v) { return v == first_token.type; }))
+    {
+        constant const_value = parse_constant(token_it);
+        result               = const_value;
+    }
+
+    return result;
+}
+
+program_structure::declaration properties_parser::parse_declaration(
+    std::vector<token>::iterator& token_it)
+{
+    using namespace program_structure;
+
+    expected(token_it, token_type::type_name);
+
+    const token& first_token = *token_it;
+    ++token_it;
+
+    expected(token_it, token_type::prop_name);
+    const token& second_token = *token_it;
+
+    declaration decl;
+    decl.type     = &first_token;
+    decl.var.name = &second_token;
+
+    ++token_it;
+
+    return decl;
+}
+
+program_structure::variable properties_parser::parse_variable_name(
+    std::vector<token>::iterator& token_it)
+{
+    using namespace program_structure;
+
+    expected(token_it, token_type::prop_name);
+
+    declaration decl;
+    decl.var.name = &(*token_it);
+    variable var;
+    var.name = decl;
+    return var;
+}
+
+program_structure::constant properties_parser::parse_constant(
+    std::vector<token>::iterator& token_it)
+{
+    using namespace program_structure;
+
+    expected_one_of(token_it, { token_type::int_value, token_type::float_value,
+                                token_type::string_value });
+
+    const token* t = &(*token_it);
+
+    ++token_it;
+    return { t };
+}
+
+program_structure::operation properties_parser::parse_operation(
+    std::vector<token>::iterator& token_it)
+{
+    using namespace program_structure;
+
+    expected(token_it, token_type::operator_name);
+    const token* t = &(*token_it);
+
+    ++token_it;
+    return { t };
+}
+
+program_structure::expr_or_operand properties_parser::parse_expr_or_operand(
+    std::vector<token>::iterator& token_it)
+{
+    using namespace program_structure;
+
+    operand first_operand = parse_operand(token_it);
+
+    if (token_it->type == token_type::end_of_expr)
+    {
+        return { first_operand };
+    }
+    else
+    {
+        expression expr = parse_expression(token_it);
+        return { new expression(expr) };
+    }
+}
 
 struct properties_interpretator
 {
@@ -367,7 +452,7 @@ struct properties_interpretator
     }
     void generate(std::unordered_map<std::string, value_t>& key_values)
     {
-        key_values = std::move(parser.program.variables);
+        // TODO interpret program and fill key_values map
 
         // debug
         for (auto it : key_values)
