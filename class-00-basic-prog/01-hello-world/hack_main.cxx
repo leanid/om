@@ -4,7 +4,7 @@
 int print(const char* message, int size)
 {
     int exit_code = 0;
-    syscall(SYS_write, 1, "hello world\n", size);
+    syscall(SYS_write, 1, message, size);
     return exit_code;
 }
 
