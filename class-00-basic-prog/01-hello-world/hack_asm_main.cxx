@@ -1,11 +1,12 @@
-#include <sys/syscall.h>
-#include <unistd.h>
+extern "C" long syscall(long call_index, ...);
+
+constexpr long SYS_write = 1; // from <sys/syscall.h>
+constexpr long SYS_exit  = 60; // from <sys/syscall.h>
 
 int print(const char* message, int size)
 {
-    int exit_code = 0;
-    syscall(SYS_write, 1, message, size);
-    return exit_code;
+    long exit_code = syscall(SYS_write, 1, message, size);
+    return static_cast<int>(exit_code);
 }
 
 int main(int /*argc*/, char* /*argv*/ [])
