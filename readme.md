@@ -58,6 +58,25 @@ $ cmake -G"Makefiles"
 $ make -j 4
 $ bin/engine --test
 ```
+##### hints on Fedora
+1. To search package
+```sh
+# search by package name
+$ dnf search SDL2
+# search by file in package
+$ dnf provides /usr/lib/libSDL2.so
+```
+2. To list package contents (files list)
+```sh
+$ dnf repoquery -l SDL2
+$ rpm -ql SDL2
+```
+3. To show compile/link/version of installed version
+```sh
+$ sdl2-config --version
+$ sdl2-config --libs
+$ sdl2-config --static-libs
+```
 
 ### On Mac OS
 #### using g++ from Homebrew (need c++17 support)
