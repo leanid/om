@@ -14,24 +14,26 @@ std::ostream& operator<<(std::ostream& out, const SDL_version& v)
     return out;
 }
 
+#pragma pack(push, 4)
 struct bind
 {
     SDL_Keycode      key;
     std::string_view name;
 };
+#pragma pack(pop)
 
 void check_input(const SDL_Event& e)
 {
     using namespace std;
 
-    array<::bind, 8> keys{ { { SDLK_w, "up" },
-                             { SDLK_a, "left" },
-                             { SDLK_s, "down" },
-                             { SDLK_d, "right" },
-                             { SDLK_LCTRL, "button_one" },
-                             { SDLK_SPACE, "button_two" },
-                             { SDLK_ESCAPE, "select" },
-                             { SDLK_RETURN, "start" } } };
+    const array<::bind, 8> keys{ { { SDLK_w, "up" },
+                                   { SDLK_a, "left" },
+                                   { SDLK_s, "down" },
+                                   { SDLK_d, "right" },
+                                   { SDLK_LCTRL, "button_one" },
+                                   { SDLK_SPACE, "button_two" },
+                                   { SDLK_ESCAPE, "select" },
+                                   { SDLK_RETURN, "start" } } };
 
     const auto it = find_if(begin(keys), end(keys), [&](const ::bind& b) {
         return b.key == e.key.keysym.sym;
@@ -42,11 +44,11 @@ void check_input(const SDL_Event& e)
         cout << it->name << ' ';
         if (e.type == SDL_KEYDOWN)
         {
-            cout << "is pressed\n";
+            cout << "is pressed" << endl;
         }
         else
         {
-            cout << "is released\n";
+            cout << "is released" << endl;
         }
     }
 }
