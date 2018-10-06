@@ -114,9 +114,30 @@ float interpolate(const float f0, const float f1, const float t)
     return f0 + (f1 - f0) * t;
 }
 
+vertex interpolate(const vertex& v0, const vertex& v1, const float t)
+{
+    return { interpolate(v0.f0, v1.f0, t), interpolate(v0.f4, v1.f4, t),
+             interpolate(v0.f1, v1.f1, t), interpolate(v0.f5, v1.f5, t),
+             interpolate(v0.f2, v1.f2, t), interpolate(v0.f6, v1.f6, t),
+             interpolate(v0.f3, v1.f3, t), interpolate(v0.f7, v1.f7, t) };
+}
+
+struct uniforms
+{
+    float f0 = 0.f;
+    float f1 = 0.f;
+    float f2 = 0.f;
+    float f3 = 0.f;
+    float f4 = 0.f;
+    float f5 = 0.f;
+    float f6 = 0.f;
+    float f7 = 0.f;
+};
+
 struct gfx_program
 {
     virtual ~gfx_program()                             = default;
+    virtual void   set_uniforms(const uniforms&)       = 0;
     virtual vertex vertex_shader(const vertex& v_in)   = 0;
     virtual color  fragment_shader(const vertex& v_in) = 0;
 };
@@ -125,12 +146,10 @@ struct triangle_interpolated : triangle_indexed_render
 {
     triangle_interpolated(std::array<color, buffer_size>& buffer, size_t width,
                           size_t height);
-    void draw_triangles(std::vector<position>& vertexes,
-                        std::vector<uint8_t>& indexes, color c);
-};
+    void set_gfx_program(gfx_program& program) { program_ = &program; }
+    void draw_triangles(std::vector<vertex>&  vertexes,
+                        std::vector<uint8_t>& indexes);
 
-struct triangle_shaded : triangle_indexed_render
-{
-    triangle_shaded(std::array<color, buffer_size>& buffer, size_t width,
-                    size_t height);
+private:
+    gfx_program* program_ = nullptr;
 };

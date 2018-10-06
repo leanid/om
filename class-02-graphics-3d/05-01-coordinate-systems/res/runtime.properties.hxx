@@ -10,4 +10,4 @@ std::string hello         = "Hi";
 float       fovy          = 45.f;
 float       screen_width  = 640.f;
 float       screen_height = 480.f;
-// float       screen_aspect = screen_height / screen_width;
+float       screen_aspect = screen_height / screen_width;
