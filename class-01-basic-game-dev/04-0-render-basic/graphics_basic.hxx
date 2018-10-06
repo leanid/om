@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <cassert>
 #include <cstddef>
 #include <fstream>
 #include <vector>
@@ -11,9 +12,9 @@ constexpr size_t height = 240;
 #pragma pack(push, 1)
 struct color
 {
-    uint8_t r;
-    uint8_t g;
-    uint8_t b;
+    uint8_t r = 0;
+    uint8_t g = 0;
+    uint8_t b = 0;
 };
 #pragma pack(pop)
 
@@ -30,9 +31,7 @@ void save_image(const std::string& file_name, const std::array<color, N>& image)
 {
     std::ofstream out_file;
     out_file.exceptions(std::ios_base::failbit);
-
     out_file.open(file_name, std::ios_base::binary);
-
     out_file << "P6\n" << width << ' ' << height << ' ' << 255 << '\n';
     out_file.write(reinterpret_cast<const char*>(&image), sizeof(color) * N);
 }
@@ -81,7 +80,8 @@ struct triangle_render : basic_render
     triangle_render(std::array<color, buffer_size>& buffer, size_t width,
                     size_t height);
 
-    virtual pixels pixels_positions(position v0, position v1, position v2);
+    virtual pixels pixels_positions_triangle(position v0, position v1,
+                                             position v2);
     void draw_triangles(std::vector<position>& vertexes, size_t num_vertexes,
                         color c);
 };
@@ -93,4 +93,44 @@ struct triangle_indexed_render : triangle_render
 
     void draw_triangles(std::vector<position>& vertexes,
                         std::vector<uint8_t>& indexes, color c);
+};
+
+struct vertex
+{
+    float f0 = 0.f; /// x
+    float f1 = 0.f; /// y
+    float f2 = 0.f; /// r
+    float f3 = 0.f; /// g
+    float f4 = 0.f; /// b
+    float f5 = 0.f; /// ?
+    float f6 = 0.f; /// ?
+    float f7 = 0.f; /// ?
+};
+
+float interpolate(const float f0, const float f1, const float t)
+{
+    assert(t >= 0.f);
+    assert(t <= 1.f);
+    return f0 + (f1 - f0) * t;
+}
+
+struct gfx_program
+{
+    virtual ~gfx_program()                             = default;
+    virtual vertex vertex_shader(const vertex& v_in)   = 0;
+    virtual color  fragment_shader(const vertex& v_in) = 0;
+};
+
+struct triangle_interpolated : triangle_indexed_render
+{
+    triangle_interpolated(std::array<color, buffer_size>& buffer, size_t width,
+                          size_t height);
+    void draw_triangles(std::vector<position>& vertexes,
+                        std::vector<uint8_t>& indexes, color c);
+};
+
+struct triangle_shaded : triangle_indexed_render
+{
+    triangle_shaded(std::array<color, buffer_size>& buffer, size_t width,
+                    size_t height);
 };

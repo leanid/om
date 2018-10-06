@@ -119,7 +119,8 @@ triangle_render::triangle_render(std::array<color, buffer_size>& buffer,
 {
 }
 
-pixels triangle_render::pixels_positions(position v0, position v1, position v2)
+pixels triangle_render::pixels_positions_triangle(position v0, position v1,
+                                                  position v2)
 {
     using namespace std;
     pixels pixels_pos;
@@ -146,7 +147,7 @@ void triangle_render::draw_triangles(std::vector<position>& vertexes,
         position v1 = vertexes.at(i * 3 + 1);
         position v2 = vertexes.at(i * 3 + 2);
 
-        for (auto pixel_pos : pixels_positions(v0, v1, v2))
+        for (auto pixel_pos : pixels_positions_triangle(v0, v1, v2))
         {
             triangles_edge_pixels.push_back(pixel_pos);
         }
@@ -181,7 +182,7 @@ void triangle_indexed_render::draw_triangles(std::vector<position>& vertexes,
         position v1 = vertexes.at(index1);
         position v2 = vertexes.at(index2);
 
-        for (auto pixel_pos : pixels_positions(v0, v1, v2))
+        for (auto pixel_pos : pixels_positions_triangle(v0, v1, v2))
         {
             triangles_edge_pixels.push_back(pixel_pos);
         }

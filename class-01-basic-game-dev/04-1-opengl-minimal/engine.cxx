@@ -179,20 +179,26 @@ public:
             SDL_Quit();
             return serr.str();
         }
+        int gl_major_ver = 2;
+        int gl_minor_ver = 0;
+
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
+                            SDL_GL_CONTEXT_PROFILE_CORE);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, gl_major_ver);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, gl_minor_ver);
 
         SDL_GLContext gl_context = SDL_GL_CreateContext(window);
         SDL_assert(gl_context != nullptr);
 
-        int gl_major_ver = 0;
         int result =
             SDL_GL_GetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, &gl_major_ver);
         SDL_assert(result == 0);
-        int gl_minor_ver = 0;
+
         result =
             SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, &gl_minor_ver);
         SDL_assert(result == 0);
 
-        if (gl_major_ver <= 2 && gl_minor_ver < 1)
+        if (gl_major_ver < 2)
         {
             std::clog << "current context opengl version: " << gl_major_ver
                       << '.' << gl_minor_ver << '\n'
