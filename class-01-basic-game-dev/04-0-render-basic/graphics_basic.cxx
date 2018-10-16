@@ -119,7 +119,8 @@ triangle_render::triangle_render(std::array<color, buffer_size>& buffer,
 {
 }
 
-pixels triangle_render::pixels_positions(position v0, position v1, position v2)
+pixels triangle_render::pixels_positions_triangle(position v0, position v1,
+                                                  position v2)
 {
     using namespace std;
     pixels pixels_pos;
@@ -146,7 +147,7 @@ void triangle_render::draw_triangles(std::vector<position>& vertexes,
         position v1 = vertexes.at(i * 3 + 1);
         position v2 = vertexes.at(i * 3 + 2);
 
-        for (auto pixel_pos : pixels_positions(v0, v1, v2))
+        for (auto pixel_pos : pixels_positions_triangle(v0, v1, v2))
         {
             triangles_edge_pixels.push_back(pixel_pos);
         }
@@ -181,7 +182,7 @@ void triangle_indexed_render::draw_triangles(std::vector<position>& vertexes,
         position v1 = vertexes.at(index1);
         position v2 = vertexes.at(index2);
 
-        for (auto pixel_pos : pixels_positions(v0, v1, v2))
+        for (auto pixel_pos : pixels_positions_triangle(v0, v1, v2))
         {
             triangles_edge_pixels.push_back(pixel_pos);
         }
@@ -191,6 +192,41 @@ void triangle_indexed_render::draw_triangles(std::vector<position>& vertexes,
     for (auto pos : triangles_edge_pixels)
     {
         set_pixel(pos, c);
+    }
+}
+
+triangle_interpolated::triangle_interpolated(
+    std::array<color, buffer_size>& buffer, size_t width, size_t height)
+    : triangle_indexed_render(buffer, width, height)
+{
+}
+
+void triangle_interpolated::draw_triangles(std::vector<vertex>&  vertexes,
+                                           std::vector<uint8_t>& indexes)
+{
+    for (size_t index = 0; index < indexes.size(); index += 3)
+    {
+        const uint8_t index0 = indexes.at(index + 0);
+        const uint8_t index1 = indexes.at(index + 1);
+        const uint8_t index2 = indexes.at(index + 2);
+
+        const vertex& v0 = vertexes.at(index0);
+        const vertex& v1 = vertexes.at(index1);
+        const vertex& v2 = vertexes.at(index2);
+
+        const vertex v0_ = program_->vertex_shader(v0);
+        const vertex v1_ = program_->vertex_shader(v1);
+        const vertex v2_ = program_->vertex_shader(v2);
+
+        const std::vector<vertex> interpoleted{ rasterize_triangle(v0_, v1_,
+                                                                   v2_) };
+        for (const vertex& interpolated_vertex : interpoleted)
+        {
+            const color    c = program_->fragment_shader(interpolated_vertex);
+            const position pos{ static_cast<int32_t>(interpolated_vertex.f0),
+                                static_cast<int32_t>(interpolated_vertex.f1) };
+            set_pixel(pos, c);
+        }
     }
 }
 

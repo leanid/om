@@ -42,13 +42,9 @@ OM_DECLSPEC void    destroy_engine(engine* e);
 
 struct OM_DECLSPEC vertex
 {
-    vertex()
-        : x(0.f)
-        , y(0.f)
-    {
-    }
-    float x;
-    float y;
+    float x = 0.f;
+    float y = 0.f;
+    float z = 0.f;
 };
 
 struct OM_DECLSPEC triangle
