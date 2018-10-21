@@ -5,6 +5,7 @@
 #include <memory>
 #include <stdexcept>
 
+#include <SDL2/SDL.h>
 #include <SDL2/SDL_surface.h>
 #include <SDL2/SDL_video.h>
 
@@ -23,6 +24,7 @@ window::impl::~impl()
     if (window)
     {
         SDL_DestroyWindow(window);
+        window = nullptr;
     }
 }
 
@@ -33,27 +35,27 @@ window::window(window&& w)
     throw std::runtime_error("Not implemented yet");
 }
 
-window::window(const char* title, size size, std::optional<position> pos,
-               std::optional<uint32_t> om_flags)
+window::window(const char* title, size size, position pos, mode mod)
     : data(std::make_unique<impl>())
 {
-    uint32_t sdl_flags = 0;
-    if (om_flags)
+    uint32_t flags = 0;
+    switch (mod)
     {
-        sdl_flags = static_cast<uint32_t>(om_flags.value());
+        case window::mode::opengl:
+            flags |= SDL_WINDOW_OPENGL;
+            break;
+        case window::mode::vulkan:
+            flags |= SDL_WINDOW_VULKAN;
+            break;
+        default:
+            break;
     }
-    int x = SDL_WINDOWPOS_UNDEFINED;
-    int y = SDL_WINDOWPOS_UNDEFINED;
-    if (pos)
-    {
-        x = pos->x;
-        y = pos->y;
-    }
-    data->window = SDL_CreateWindow(title, x, y, size.w, size.h, sdl_flags);
+    data->window = SDL_CreateWindow(title, pos.x, pos.y, size.w, size.h, flags);
     if (!data->window)
     {
         throw std::runtime_error(SDL_GetError());
     }
+    valid = true;
 }
 
 window::~window() {}
@@ -100,7 +102,11 @@ std::uint32_t window::get_pixel_format() const
     return result;
 }
 
-// std::uint32_t        get_id() const; DO WE NEED IT?
+std::uint32_t window::get_id() const
+{
+    return SDL_GetWindowID(data->window);
+    // DO WE NEED IT?
+}
 
 std::uint32_t window::get_flags() const
 {
@@ -199,9 +205,21 @@ void window::set_bordered(bool value)
     SDL_SetWindowBordered(data->window, SDL_bool(value));
 }
 
+bool window::bordered() const
+{
+    uint32_t flags = SDL_GetWindowFlags(data->window);
+    return !(flags & SDL_WINDOW_BORDERLESS);
+}
+
 void window::set_resizable(bool value)
 {
     SDL_SetWindowResizable(data->window, SDL_bool(value));
+}
+
+bool window::resizeable() const
+{
+    uint32_t flags = SDL_GetWindowFlags(data->window);
+    return (flags & SDL_WINDOW_RESIZABLE);
 }
 
 void window::show()
@@ -209,9 +227,21 @@ void window::show()
     SDL_ShowWindow(data->window);
 }
 
+bool window::shown() const
+{
+    uint32_t flags = SDL_GetWindowFlags(data->window);
+    return (flags & SDL_WINDOW_SHOWN);
+}
+
 void window::hide()
 {
     SDL_HideWindow(data->window);
+}
+
+bool window::hidden() const
+{
+    uint32_t flags = SDL_GetWindowFlags(data->window);
+    return (flags & SDL_WINDOW_HIDDEN);
 }
 
 void window::raise()
@@ -223,9 +253,21 @@ void window::maximize()
     SDL_MaximizeWindow(data->window);
 }
 
+bool window::maximized() const
+{
+    uint32_t flags = SDL_GetWindowFlags(data->window);
+    return (flags & SDL_WINDOW_MAXIMIZED);
+}
+
 void window::minimize()
 {
     SDL_MinimizeWindow(data->window);
+}
+
+bool window::minimized() const
+{
+    uint32_t flags = SDL_GetWindowFlags(data->window);
+    return (flags & SDL_WINDOW_MINIMIZED);
 }
 
 void window::restore()
@@ -233,25 +275,56 @@ void window::restore()
     SDL_RestoreWindow(data->window);
 }
 
-bool window::set_fullscreen(const uint32_t& flags)
+void window::set_fullscreen(bool value)
 {
-    if (SDL_SetWindowFullscreen(data->window, static_cast<uint32_t>(flags)))
+    uint32_t flag = SDL_WINDOW_FULLSCREEN;
+    if (!value)
+    {
+        flag = 0;
+    }
+    if (SDL_SetWindowFullscreen(data->window, flag))
     {
         throw std::runtime_error(SDL_GetError());
     }
-    return true;
+    return;
+}
+
+bool window::fullscreen() const
+{
+    uint32_t flags = SDL_GetWindowFlags(data->window);
+    return (flags & SDL_WINDOW_FULLSCREEN);
+}
+
+void window::set_fullscreen_desktop(bool value)
+{
+    uint32_t flag = SDL_WINDOW_FULLSCREEN_DESKTOP;
+    if (!value)
+    {
+        flag = 0;
+    }
+    if (SDL_SetWindowFullscreen(data->window, flag))
+    {
+        throw std::runtime_error(SDL_GetError());
+    }
+    return;
+}
+
+bool window::fullscreen_desktop() const
+{
+    uint32_t flags = SDL_GetWindowFlags(data->window);
+    return (flags & SDL_WINDOW_FULLSCREEN_DESKTOP);
 }
 
 // surface              get_surface() const;  TODO Implement om::surface
 // bool                 update_surface(const surface&);
 // bool                 update_surface_rects(const std::vector<rect>& rects);
 
-void window::set_grabbed(bool value)
+void window::grab_input(bool value)
 {
     SDL_SetWindowGrab(data->window, SDL_bool(value));
 }
 
-bool window::get_grabbed() const
+bool window::input_grabbed() const
 {
     return SDL_GetWindowGrab(data->window);
 }
@@ -302,7 +375,7 @@ bool window::set_modal_for(window& parent)
     return true;
 }
 
-bool window::set_input_focus()
+void window::set_input_focus()
 {
     if (SDL_SetWindowInputFocus(data->window))
     {
@@ -312,8 +385,33 @@ bool window::set_input_focus()
     // SDL_RaiseWindow() instead of this function. Use this with
     // caution, as you might give focus to a window that is
     // completely obscured by other windows.
-    return true;
+    return;
 }
+
+bool window::has_input_focus() const
+{
+    uint32_t flags = SDL_GetWindowFlags(data->window);
+    return (flags & SDL_WINDOW_INPUT_FOCUS);
+}
+
+bool window::has_mouse_focus() const
+{
+    uint32_t flags = SDL_GetWindowFlags(data->window);
+    return (flags & SDL_WINDOW_MOUSE_FOCUS);
+}
+
+bool window::has_mouse_captured() const
+{
+    uint32_t flags = SDL_GetWindowFlags(data->window);
+    return (flags & SDL_WINDOW_MOUSE_CAPTURE);
+}
+
+bool window::is_always_ontop() const
+{
+    uint32_t flags = SDL_GetWindowFlags(data->window);
+    return (flags & SDL_WINDOW_ALWAYS_ON_TOP);
+}
+
 bool window::set_gamma_ramp(
     const std::optional<std::array<std::uint16_t, 256>*> red,
     const std::optional<std::array<std::uint16_t, 256>*> green,
@@ -369,6 +467,15 @@ bool window::get_gamma_ramp(
     return true;
 }
 
+void window::close()
+{
+    if (data)
+    {
+        SDL_DestroyWindow(data->window);
+        valid = false;
+    }
+}
+
 bool window::size::operator==(const size& right) const
 {
     return (this->h == right.h && this->w == right.w);
@@ -377,6 +484,31 @@ bool window::size::operator==(const size& right) const
 bool window::position::operator==(const position& right) const
 {
     return (this->x == right.x && this->y == right.y);
+}
+
+class gl_context::impl
+{
+public:
+    SDL_GLContext context = nullptr;
+    ~impl(){};
+};
+
+gl_context::gl_context()
+{
+    data = new impl;
+}
+
+gl_context::gl_context(gl_context&& ctx)
+    : data(std::move(ctx.data))
+// TODO Implement this
+{
+    throw std::runtime_error("Not implemented yet");
+}
+
+gl_context::~gl_context()
+{
+    if (data)
+        delete data;
 }
 
 std::vector<std::string_view> video::get_drivers()
@@ -404,6 +536,61 @@ void video::quit()
 {
     SDL_VideoQuit();
     return;
+}
+
+window video::create_window(
+    const char* title, const window::size window_size,
+    std::optional<window::position> window_position = {},
+    std::optional<window::mode>     window_mode     = {})
+{
+    int x = SDL_WINDOWPOS_UNDEFINED;
+    int y = SDL_WINDOWPOS_UNDEFINED;
+    if (window_position)
+    {
+        x = window_position->x;
+        y = window_position->y;
+    }
+    window::mode mode_ = window::mode::undefined;
+    if (window_mode)
+        mode_ = window_mode.value();
+    window result(title, window_size, { x, y }, mode_);
+    return result;
+}
+
+gl_context video::gl_create_context(const window& window_)
+{
+    gl_context result;
+    result.data->context = SDL_GL_CreateContext(window_.data->window);
+    if (!result.data->context)
+    {
+        throw std::runtime_error(SDL_GetError());
+    }
+    return result;
+}
+
+void video::gl_delete_context(const gl_context& context)
+{
+    SDL_GL_DeleteContext(context.data->context);
+    return;
+}
+
+void video::gl_swap_window(const window& window)
+{
+    SDL_GL_SwapWindow(window.data->window);
+}
+
+bool video::gl_make_current(const window& window, const gl_context& context)
+{
+    if (SDL_GL_MakeCurrent(window.data->window, context.data->context))
+        return true;
+    return false;
+}
+
+window::size video::gl_get_drawable_size(const window& window)
+{
+    int h, w = 0;
+    SDL_GL_GetDrawableSize(window.data->window, &w, &h);
+    return { (size_t)w, (size_t)h };
 }
 
 } // namespace om
