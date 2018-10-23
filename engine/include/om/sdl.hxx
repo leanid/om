@@ -88,22 +88,11 @@ class window
 {
 public:
     // FIXME The flags below are hardcoded
-    enum flags : uint32_t
+    enum class mode
     {
-        fullscreen         = 0x00000001,
-        opengl             = 0x00000002,
-        shown              = 0x00000004,
-        hidden             = 0x00000008,
-        borderless         = 0x00000010,
-        resizeable         = 0x00000020,
-        minimized          = 0x00000040,
-        maximized          = 0x00000080,
-        input_grabbed      = 0x00000100,
-        input_focus        = 0x00000200,
-        mouse_focus        = 0x00000400,
-        fullscreen_desktop = (fullscreen | 0x00001000),
-        mouse_captured     = 0x00004000,
-        always_on_top      = 0x00008000,
+        undefined,
+        opengl,
+        vulkan
     };
 
     static const std::int32_t centered;  // TODO
@@ -141,17 +130,11 @@ public:
     window& operator=(const window&) = delete;
     window& operator=(window&&) = delete;
 
-    window(const char* title, size window_size,
-           std::optional<position> window_position = {},
-           std::optional<uint32_t> window_flags    = {});
-
     window(window&&);
 
     bool                 set_display_mode(const display_mode&);
     display_mode         get_display_mode() const;
     std::uint32_t        get_pixel_format() const;
-    std::uint32_t        get_id() const;
-    std::uint32_t        get_flags() const;
     void                 set_title(const char* title);
     std::string_view     get_title() const;
     void                 set_icon(const surface& icon);
@@ -167,25 +150,40 @@ public:
     void                 set_maximum_size(const size&);
     size                 get_maximum_size() const;
     void                 set_bordered(bool);
+    bool                 is_bordered() const;
     void                 set_resizable(bool);
+    bool                 is_resizeable() const;
     void                 show();
+    bool                 is_shown() const;
     void                 hide();
+    bool                 is_hidden() const;
     void                 raise();
     void                 maximize();
+    bool                 is_maximized() const;
     void                 minimize();
+    bool                 is_minimized() const;
     void                 restore();
-    bool                 set_fullscreen(const uint32_t&);
+    void                 set_fullscreen();
+    bool                 is_fullscreen() const;
+    void                 set_fullscreen_desktop();
+    bool                 is_fullscreen_desktop() const;
+    void                 set_windowed();
+    bool                 is_windowed() const;
     surface              get_surface() const;
     bool                 update_surface(const surface&);
     bool                 update_surface_rects(const std::vector<rect>& rects);
-    void                 set_grabbed(bool);
-    bool                 get_grabbed() const;
+    void                 grab_input(bool);
+    bool                 has_input_grabbed() const;
     bool                 set_brightness(const float&);
     float                get_brightness() const;
     bool                 set_opacity(const float&);
     std::optional<float> get_opacity() const;
     bool                 set_modal_for(window& parent);
-    bool                 set_input_focus();
+    void                 set_input_focus();
+    bool                 has_input_focus() const;
+    bool                 has_mouse_focus() const;
+    bool                 has_mouse_captured() const;
+    bool                 is_always_ontop() const;
     bool                 set_gamma_ramp(
                         const std::optional<std::array<std::uint16_t, 256>*> red,
                         const std::optional<std::array<std::uint16_t, 256>*> green,
@@ -194,12 +192,16 @@ public:
                         std::optional<std::array<std::uint16_t, 256>*> green,
                         std::optional<std::array<std::uint16_t, 256>*> blue);
     // bool set_hit_test(hit_test callback, std::any);
-
+    void close();
     virtual ~window();
 
 private:
+    window(const char* title, size window_size, position window_position,
+           mode window_mode);
     class impl;
     std::unique_ptr<impl> data;
+
+    friend class video;
 };
 
 enum class gl_attribute
@@ -233,8 +235,22 @@ enum class gl_attribute
     gl_context_no_error
 };
 
-struct gl_context
+class gl_context
 {
+public:
+    gl_context(const gl_context&) = delete;
+    gl_context& operator=(const gl_context&) = delete;
+    gl_context& operator=(gl_context&&) = delete;
+
+    gl_context(gl_context&&);
+    ~gl_context();
+
+private:
+    gl_context();
+    class impl;
+    impl* data = nullptr;
+
+    friend class video;
 };
 
 enum class gl_swap_interval
@@ -249,12 +265,16 @@ struct video
     static std::vector<std::string_view> get_drivers();
     void                                 init(const char* driver_name);
     void                                 quit();
-    std::string_view                     get_current_driver() const;
 
+    window     create_window(const char* title, const window::size window_size,
+                             std::optional<window::position> window_position,
+                             std::optional<window::mode>     window_mode);
+    gl_context gl_create_context(const window&);
+
+    std::string_view      get_current_driver() const;
     std::vector<display>  get_displays() const;
     display               get_display_for_window(const window&) const;
     window                create_window_from(const void* native_handle);
-    void                  destroy_window(window&);
     window                get_window_fromID(std::uint32_t id) const;
     std::optional<window> get_grabbed_window() const;
     bool                  is_screen_saver_enabled() const;
@@ -268,14 +288,13 @@ struct video
     void         gl_reset_attributes();
     bool         gl_set_attribute(gl_attribute attr, std::int32_t value);
     std::int32_t gl_get_attribute(gl_attribute attr);
-    gl_context   gl_create_context();
-    bool         gl_make_current(gl_context context);
-    window       gl_get_current_window();
-    gl_context   gl_get_current_context();
-    // window::size gl_get_drawable_size(window) const;
-    bool gl_set_swap_interval(gl_swap_interval);
-    void gl_swap_window(window wnd);
-    void gl_delete_context(gl_context);
+    bool       gl_make_current(const window& window, const gl_context& context);
+    window     gl_get_current_window();
+    gl_context gl_get_current_context();
+    window::size gl_get_drawable_size(const window&);
+    bool         gl_set_swap_interval(gl_swap_interval);
+    void         gl_swap_window(const window&);
+    void         gl_delete_context(const gl_context&);
 };
 
 struct sdlxx
