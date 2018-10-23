@@ -15,6 +15,12 @@ namespace om
 class window::impl
 {
 public:
+    impl()            = default;
+    impl(const impl&) = delete;
+    impl& operator=(const impl&) = delete;
+    impl& operator=(impl&&) = delete;
+    impl(impl&&)            = delete;
+
     SDL_Window* window = nullptr;
     ~impl();
 };
@@ -55,7 +61,6 @@ window::window(const char* title, size size, position pos, mode mod)
     {
         throw std::runtime_error(SDL_GetError());
     }
-    valid = true;
 }
 
 window::~window() {}
@@ -78,6 +83,11 @@ bool window::set_display_mode(const display_mode& om_display_mode)
 
 display_mode window::get_display_mode() const
 {
+    if (!data)
+    {
+        throw std::runtime_error(
+            "Window is not valid. It might had already been closed");
+    }
     SDL_DisplayMode sdl_display_mode;
 
     if (SDL_GetWindowDisplayMode(data->window, &sdl_display_mode))
@@ -94,6 +104,11 @@ display_mode window::get_display_mode() const
 
 std::uint32_t window::get_pixel_format() const
 {
+    if (!data)
+    {
+        throw std::runtime_error(
+            "Window is not valid. It might had already been closed");
+    }
     std::uint32_t result = SDL_GetWindowPixelFormat(data->window);
     if (result == SDL_PIXELFORMAT_UNKNOWN)
     {
@@ -102,24 +117,23 @@ std::uint32_t window::get_pixel_format() const
     return result;
 }
 
-std::uint32_t window::get_id() const
-{
-    return SDL_GetWindowID(data->window);
-    // DO WE NEED IT?
-}
-
-std::uint32_t window::get_flags() const
-{
-    return SDL_GetWindowFlags(data->window);
-}
-
 void window::set_title(const char* title)
 {
+    if (!data)
+    {
+        throw std::runtime_error(
+            "Window is not valid. It might had already been closed");
+    }
     SDL_SetWindowTitle(data->window, title);
 }
 
 std::string_view window::get_title() const
 {
+    if (!data)
+    {
+        throw std::runtime_error(
+            "Window is not valid. It might had already been closed");
+    }
     const char* title = SDL_GetWindowTitle(data->window);
     if (title)
     {
@@ -133,21 +147,41 @@ std::string_view window::get_title() const
 
 void* window::set_data(const char* name, void* userdata)
 {
+    if (!data)
+    {
+        throw std::runtime_error(
+            "Window is not valid. It might had already been closed");
+    }
     return SDL_SetWindowData(data->window, name, userdata);
 }
 
 void* window::get_data(const char* name) const
 {
+    if (!data)
+    {
+        throw std::runtime_error(
+            "Window is not valid. It might had already been closed");
+    }
     return SDL_GetWindowData(data->window, name);
 }
 
 void window::set_position(const position& pos)
 {
+    if (!data)
+    {
+        throw std::runtime_error(
+            "Window is not valid. It might had already been closed");
+    }
     SDL_SetWindowPosition(data->window, pos.x, pos.y);
 }
 
 om::window::position window::get_position() const
 {
+    if (!data)
+    {
+        throw std::runtime_error(
+            "Window is not valid. It might had already been closed");
+    }
     position result;
     SDL_GetWindowPosition(data->window, &result.x, &result.y);
     return result;
@@ -155,11 +189,21 @@ om::window::position window::get_position() const
 
 void window::set_size(const size& s)
 {
+    if (!data)
+    {
+        throw std::runtime_error(
+            "Window is not valid. It might had already been closed");
+    }
     SDL_SetWindowSize(data->window, s.w, s.h);
 }
 
 om::window::size window::get_size() const
 {
+    if (!data)
+    {
+        throw std::runtime_error(
+            "Window is not valid. It might had already been closed");
+    }
     int w, h;
     SDL_GetWindowSize(data->window, &w, &h);
     return size(w, h);
@@ -167,6 +211,11 @@ om::window::size window::get_size() const
 
 std::optional<rect> window::get_border_size() const
 {
+    if (!data)
+    {
+        throw std::runtime_error(
+            "Window is not valid. It might had already been closed");
+    }
     // supposed x,y - left upper corner coords
     int top, left, bottom, right;
     if (SDL_GetWindowBordersSize(data->window, &top, &left, &bottom, &right))
@@ -178,11 +227,21 @@ std::optional<rect> window::get_border_size() const
 
 void window::set_minimal_size(const size& s)
 {
+    if (!data)
+    {
+        throw std::runtime_error(
+            "Window is not valid. It might had already been closed");
+    }
     SDL_SetWindowMinimumSize(data->window, s.w, s.h);
 }
 
 window::size window::get_minimal_size() const
 {
+    if (!data)
+    {
+        throw std::runtime_error(
+            "Window is not valid. It might had already been closed");
+    }
     int w, h;
     SDL_GetWindowMinimumSize(data->window, &w, &h);
     return size(w, h);
@@ -190,11 +249,21 @@ window::size window::get_minimal_size() const
 
 void window::set_maximum_size(const size& s)
 {
+    if (!data)
+    {
+        throw std::runtime_error(
+            "Window is not valid. It might had already been closed");
+    }
     SDL_SetWindowMaximumSize(data->window, s.w, s.h);
 }
 
 window::size window::get_maximum_size() const
 {
+    if (!data)
+    {
+        throw std::runtime_error(
+            "Window is not valid. It might had already been closed");
+    }
     int w, h;
     SDL_GetWindowMaximumSize(data->window, &w, &h);
     return size(w, h);
@@ -202,117 +271,221 @@ window::size window::get_maximum_size() const
 
 void window::set_bordered(bool value)
 {
+    if (!data)
+    {
+        throw std::runtime_error(
+            "Window is not valid. It might had already been closed");
+    }
     SDL_SetWindowBordered(data->window, SDL_bool(value));
 }
 
-bool window::bordered() const
+bool window::is_bordered() const
 {
+    if (!data)
+    {
+        throw std::runtime_error(
+            "Window is not valid. It might had already been closed");
+    }
     uint32_t flags = SDL_GetWindowFlags(data->window);
     return !(flags & SDL_WINDOW_BORDERLESS);
 }
 
 void window::set_resizable(bool value)
 {
+    if (!data)
+    {
+        throw std::runtime_error(
+            "Window is not valid. It might had already been closed");
+    }
     SDL_SetWindowResizable(data->window, SDL_bool(value));
 }
 
-bool window::resizeable() const
+bool window::is_resizeable() const
 {
+    if (!data)
+    {
+        throw std::runtime_error(
+            "Window is not valid. It might had already been closed");
+    }
     uint32_t flags = SDL_GetWindowFlags(data->window);
     return (flags & SDL_WINDOW_RESIZABLE);
 }
 
 void window::show()
 {
+    if (!data)
+    {
+        throw std::runtime_error(
+            "Window is not valid. It might had already been closed");
+    }
     SDL_ShowWindow(data->window);
 }
 
-bool window::shown() const
+bool window::is_shown() const
 {
+    if (!data)
+    {
+        throw std::runtime_error(
+            "Window is not valid. It might had already been closed");
+    }
     uint32_t flags = SDL_GetWindowFlags(data->window);
     return (flags & SDL_WINDOW_SHOWN);
 }
 
 void window::hide()
 {
+    if (!data)
+    {
+        throw std::runtime_error(
+            "Window is not valid. It might had already been closed");
+    }
     SDL_HideWindow(data->window);
 }
 
-bool window::hidden() const
+bool window::is_hidden() const
 {
+    if (!data)
+    {
+        throw std::runtime_error(
+            "Window is not valid. It might had already been closed");
+    }
     uint32_t flags = SDL_GetWindowFlags(data->window);
     return (flags & SDL_WINDOW_HIDDEN);
 }
 
 void window::raise()
 {
+    if (!data)
+    {
+        throw std::runtime_error(
+            "Window is not valid. It might had already been closed");
+    }
     SDL_RaiseWindow(data->window);
 }
 void window::maximize()
 {
+    if (!data)
+    {
+        throw std::runtime_error(
+            "Window is not valid. It might had already been closed");
+    }
     SDL_MaximizeWindow(data->window);
 }
 
-bool window::maximized() const
+bool window::is_maximized() const
 {
+    if (!data)
+    {
+        throw std::runtime_error(
+            "Window is not valid. It might had already been closed");
+    }
     uint32_t flags = SDL_GetWindowFlags(data->window);
     return (flags & SDL_WINDOW_MAXIMIZED);
 }
 
 void window::minimize()
 {
+    if (!data)
+    {
+        throw std::runtime_error(
+            "Window is not valid. It might had already been closed");
+    }
     SDL_MinimizeWindow(data->window);
 }
 
-bool window::minimized() const
+bool window::is_minimized() const
 {
+    if (!data)
+    {
+        throw std::runtime_error(
+            "Window is not valid. It might had already been closed");
+    }
     uint32_t flags = SDL_GetWindowFlags(data->window);
     return (flags & SDL_WINDOW_MINIMIZED);
 }
 
 void window::restore()
 {
+    if (!data)
+    {
+        throw std::runtime_error(
+            "Window is not valid. It might had already been closed");
+    }
     SDL_RestoreWindow(data->window);
 }
 
-void window::set_fullscreen(bool value)
+void window::set_fullscreen()
 {
-    uint32_t flag = SDL_WINDOW_FULLSCREEN;
-    if (!value)
+    if (!data)
     {
-        flag = 0;
+        throw std::runtime_error(
+            "Window is not valid. It might had already been closed");
     }
-    if (SDL_SetWindowFullscreen(data->window, flag))
+    if (SDL_SetWindowFullscreen(data->window, SDL_WINDOW_FULLSCREEN))
     {
         throw std::runtime_error(SDL_GetError());
     }
     return;
 }
 
-bool window::fullscreen() const
+bool window::is_fullscreen() const
 {
+    if (!data)
+    {
+        throw std::runtime_error(
+            "Window is not valid. It might had already been closed");
+    }
     uint32_t flags = SDL_GetWindowFlags(data->window);
     return (flags & SDL_WINDOW_FULLSCREEN);
 }
 
-void window::set_fullscreen_desktop(bool value)
+void window::set_fullscreen_desktop()
 {
-    uint32_t flag = SDL_WINDOW_FULLSCREEN_DESKTOP;
-    if (!value)
+    if (!data)
     {
-        flag = 0;
+        throw std::runtime_error(
+            "Window is not valid. It might had already been closed");
     }
-    if (SDL_SetWindowFullscreen(data->window, flag))
+    if (SDL_SetWindowFullscreen(data->window, SDL_WINDOW_FULLSCREEN_DESKTOP))
     {
         throw std::runtime_error(SDL_GetError());
     }
     return;
 }
 
-bool window::fullscreen_desktop() const
+bool window::is_fullscreen_desktop() const
 {
+    if (!data)
+    {
+        throw std::runtime_error(
+            "Window is not valid. It might had already been closed");
+    }
     uint32_t flags = SDL_GetWindowFlags(data->window);
     return (flags & SDL_WINDOW_FULLSCREEN_DESKTOP);
+}
+
+void window::set_windowed()
+{
+    if (!data)
+    {
+        throw std::runtime_error(
+            "Window is not valid. It might had already been closed");
+    }
+    if (SDL_SetWindowFullscreen(data->window, 0))
+    {
+        throw std::runtime_error(SDL_GetError());
+    }
+    return;
+}
+
+bool window::is_windowed() const
+{
+    if (!data)
+    {
+        throw std::runtime_error(
+            "Window is not valid. It might had already been closed");
+    }
+    return (!is_fullscreen_desktop());
 }
 
 // surface              get_surface() const;  TODO Implement om::surface
@@ -321,16 +494,31 @@ bool window::fullscreen_desktop() const
 
 void window::grab_input(bool value)
 {
+    if (!data)
+    {
+        throw std::runtime_error(
+            "Window is not valid. It might had already been closed");
+    }
     SDL_SetWindowGrab(data->window, SDL_bool(value));
 }
 
-bool window::input_grabbed() const
+bool window::has_input_grabbed() const
 {
+    if (!data)
+    {
+        throw std::runtime_error(
+            "Window is not valid. It might had already been closed");
+    }
     return SDL_GetWindowGrab(data->window);
 }
 
 bool window::set_brightness(const float& brightness)
 {
+    if (!data)
+    {
+        throw std::runtime_error(
+            "Window is not valid. It might had already been closed");
+    }
     // Do we need to check range of input parameter?
     // value to set where 0.0 is completely dark and 1.0 is normal brightness
     if (SDL_SetWindowBrightness(data->window, brightness))
@@ -342,11 +530,21 @@ bool window::set_brightness(const float& brightness)
 
 float window::get_brightness() const
 {
+    if (!data)
+    {
+        throw std::runtime_error(
+            "Window is not valid. It might had already been closed");
+    }
     return { SDL_GetWindowBrightness(data->window) };
 }
 
 bool window::set_opacity(const float& opacity)
 {
+    if (!data)
+    {
+        throw std::runtime_error(
+            "Window is not valid. It might had already been closed");
+    }
     // Do we need to check range of input parameter?
     // the opacity value (0.0f - transparent, 1.0f -
     // opaque)
@@ -358,6 +556,11 @@ bool window::set_opacity(const float& opacity)
 }
 std::optional<float> window::get_opacity() const
 {
+    if (!data)
+    {
+        throw std::runtime_error(
+            "Window is not valid. It might had already been closed");
+    }
     float result;
     if (SDL_GetWindowOpacity(data->window, &result))
     {
@@ -368,6 +571,11 @@ std::optional<float> window::get_opacity() const
 
 bool window::set_modal_for(window& parent)
 {
+    if (!data)
+    {
+        throw std::runtime_error(
+            "Window is not valid. It might had already been closed");
+    }
     if (SDL_SetWindowModalFor(data->window, parent.data->window))
     {
         throw std::runtime_error(SDL_GetError());
@@ -377,6 +585,11 @@ bool window::set_modal_for(window& parent)
 
 void window::set_input_focus()
 {
+    if (!data)
+    {
+        throw std::runtime_error(
+            "Window is not valid. It might had already been closed");
+    }
     if (SDL_SetWindowInputFocus(data->window))
     {
         throw std::runtime_error(SDL_GetError());
@@ -390,24 +603,44 @@ void window::set_input_focus()
 
 bool window::has_input_focus() const
 {
+    if (!data)
+    {
+        throw std::runtime_error(
+            "Window is not valid. It might had already been closed");
+    }
     uint32_t flags = SDL_GetWindowFlags(data->window);
     return (flags & SDL_WINDOW_INPUT_FOCUS);
 }
 
 bool window::has_mouse_focus() const
 {
+    if (!data)
+    {
+        throw std::runtime_error(
+            "Window is not valid. It might had already been closed");
+    }
     uint32_t flags = SDL_GetWindowFlags(data->window);
     return (flags & SDL_WINDOW_MOUSE_FOCUS);
 }
 
 bool window::has_mouse_captured() const
 {
+    if (!data)
+    {
+        throw std::runtime_error(
+            "Window is not valid. It might had already been closed");
+    }
     uint32_t flags = SDL_GetWindowFlags(data->window);
     return (flags & SDL_WINDOW_MOUSE_CAPTURE);
 }
 
 bool window::is_always_ontop() const
 {
+    if (!data)
+    {
+        throw std::runtime_error(
+            "Window is not valid. It might had already been closed");
+    }
     uint32_t flags = SDL_GetWindowFlags(data->window);
     return (flags & SDL_WINDOW_ALWAYS_ON_TOP);
 }
@@ -417,6 +650,11 @@ bool window::set_gamma_ramp(
     const std::optional<std::array<std::uint16_t, 256>*> green,
     const std::optional<std::array<std::uint16_t, 256>*> blue)
 {
+    if (!data)
+    {
+        throw std::runtime_error(
+            "Window is not valid. It might had already been closed");
+    }
     const uint16_t* r = nullptr;
     const uint16_t* g = nullptr;
     const uint16_t* b = nullptr;
@@ -444,6 +682,11 @@ bool window::get_gamma_ramp(
     std::optional<std::array<std::uint16_t, 256>*> green,
     std::optional<std::array<std::uint16_t, 256>*> blue)
 {
+    if (!data)
+    {
+        throw std::runtime_error(
+            "Window is not valid. It might had already been closed");
+    }
     uint16_t* r = nullptr;
     uint16_t* g = nullptr;
     uint16_t* b = nullptr;
@@ -469,11 +712,12 @@ bool window::get_gamma_ramp(
 
 void window::close()
 {
-    if (data)
+    if (!data)
     {
-        SDL_DestroyWindow(data->window);
-        valid = false;
+        throw std::runtime_error(
+            "Window is not valid. It might had already been closed");
     }
+    data.reset();
 }
 
 bool window::size::operator==(const size& right) const
@@ -552,15 +796,22 @@ window video::create_window(
     }
     window::mode mode_ = window::mode::undefined;
     if (window_mode)
+    {
         mode_ = window_mode.value();
+    }
     window result(title, window_size, { x, y }, mode_);
     return result;
 }
 
-gl_context video::gl_create_context(const window& window_)
+gl_context video::gl_create_context(const window& window)
 {
+    if (!window.data)
+    {
+        throw std::runtime_error(
+            "Window is not valid. It might had already been closed");
+    }
     gl_context result;
-    result.data->context = SDL_GL_CreateContext(window_.data->window);
+    result.data->context = SDL_GL_CreateContext(window.data->window);
     if (!result.data->context)
     {
         throw std::runtime_error(SDL_GetError());
@@ -576,11 +827,21 @@ void video::gl_delete_context(const gl_context& context)
 
 void video::gl_swap_window(const window& window)
 {
+    if (!window.data)
+    {
+        throw std::runtime_error(
+            "Window is not valid. It might had already been closed");
+    }
     SDL_GL_SwapWindow(window.data->window);
 }
 
 bool video::gl_make_current(const window& window, const gl_context& context)
 {
+    if (!window.data)
+    {
+        throw std::runtime_error(
+            "Window is not valid. It might had already been closed");
+    }
     if (SDL_GL_MakeCurrent(window.data->window, context.data->context))
         return true;
     return false;
@@ -588,6 +849,11 @@ bool video::gl_make_current(const window& window, const gl_context& context)
 
 window::size video::gl_get_drawable_size(const window& window)
 {
+    if (!window.data)
+    {
+        throw std::runtime_error(
+            "Window is not valid. It might had already been closed");
+    }
     int h, w = 0;
     SDL_GL_GetDrawableSize(window.data->window, &w, &h);
     return { (size_t)w, (size_t)h };

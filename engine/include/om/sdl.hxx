@@ -135,8 +135,6 @@ public:
     bool                 set_display_mode(const display_mode&);
     display_mode         get_display_mode() const;
     std::uint32_t        get_pixel_format() const;
-    std::uint32_t        get_id() const;
-    std::uint32_t        get_flags() const;
     void                 set_title(const char* title);
     std::string_view     get_title() const;
     void                 set_icon(const surface& icon);
@@ -152,28 +150,30 @@ public:
     void                 set_maximum_size(const size&);
     size                 get_maximum_size() const;
     void                 set_bordered(bool);
-    bool                 bordered() const;
+    bool                 is_bordered() const;
     void                 set_resizable(bool);
-    bool                 resizeable() const;
+    bool                 is_resizeable() const;
     void                 show();
-    bool                 shown() const;
+    bool                 is_shown() const;
     void                 hide();
-    bool                 hidden() const;
+    bool                 is_hidden() const;
     void                 raise();
     void                 maximize();
-    bool                 maximized() const;
+    bool                 is_maximized() const;
     void                 minimize();
-    bool                 minimized() const;
+    bool                 is_minimized() const;
     void                 restore();
-    void                 set_fullscreen(bool);
-    bool                 fullscreen() const;
-    void                 set_fullscreen_desktop(bool);
-    bool                 fullscreen_desktop() const;
+    void                 set_fullscreen();
+    bool                 is_fullscreen() const;
+    void                 set_fullscreen_desktop();
+    bool                 is_fullscreen_desktop() const;
+    void                 set_windowed();
+    bool                 is_windowed() const;
     surface              get_surface() const;
     bool                 update_surface(const surface&);
     bool                 update_surface_rects(const std::vector<rect>& rects);
     void                 grab_input(bool);
-    bool                 input_grabbed() const;
+    bool                 has_input_grabbed() const;
     bool                 set_brightness(const float&);
     float                get_brightness() const;
     bool                 set_opacity(const float&);
@@ -198,7 +198,6 @@ public:
 private:
     window(const char* title, size window_size, position window_position,
            mode window_mode);
-    bool valid = false;
     class impl;
     std::unique_ptr<impl> data;
 

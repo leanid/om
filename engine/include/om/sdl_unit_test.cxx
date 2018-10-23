@@ -60,53 +60,55 @@ TEST_CASE("sdl wrapper test") // LEVEL 0
             }
             SECTION("flags and control test section") // LEVEL 3
             {
-                w.set_fullscreen(true);
-                REQUIRE(w.fullscreen());
+                w.set_fullscreen();
+                REQUIRE(w.is_fullscreen());
 
-                w.set_fullscreen(false);
-                REQUIRE(!w.fullscreen());
+                w.set_windowed();
+                REQUIRE(!w.is_fullscreen());
 
                 w.grab_input(true);
-                REQUIRE(w.input_grabbed());
+                REQUIRE(w.has_input_grabbed());
 
                 w.grab_input(false);
-                REQUIRE(!w.input_grabbed());
-                //                set_modal_for(window & parent);
+                REQUIRE(!w.has_input_grabbed());
+
+                // w.set_modal_for(window & parent);
+
                 w.set_input_focus();
                 REQUIRE(w.has_input_focus());
 
                 w.hide();
-                REQUIRE(!w.hidden());
+                REQUIRE(!w.is_hidden());
 
                 w.show();
-                REQUIRE(!w.shown());
+                REQUIRE(!w.is_shown());
 
                 w.raise();
                 // TODO: REQUIRE
 
                 w.maximize();
-                REQUIRE(!w.maximized());
+                REQUIRE(!w.is_maximized());
 
                 w.restore();
                 // TODO: REQUIRE
 
                 w.minimize();
-                REQUIRE(!w.minimized());
+                REQUIRE(!w.is_minimized());
 
                 w.restore();
                 // TODO: REQUIRE
 
                 w.set_bordered(false);
-                REQUIRE(!w.bordered());
+                REQUIRE(!w.is_bordered());
 
                 w.set_bordered(true);
-                REQUIRE(w.bordered());
+                REQUIRE(w.is_bordered());
 
                 w.set_resizable(false);
-                REQUIRE(!w.resizeable());
+                REQUIRE(!w.is_resizeable());
 
                 w.set_resizable(true);
-                REQUIRE(w.resizeable());
+                REQUIRE(w.is_resizeable());
             }
             SECTION("window's video parameters test section") // LEVEL 3
             {
