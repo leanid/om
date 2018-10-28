@@ -793,14 +793,18 @@ public:
 
     sound_buffer* create_sound_buffer(std::string_view path) final
     {
-        SDL_LockAudioDevice(audio_device);
+        SDL_LockAudioDevice(audio_device); // TODO fix lock only push_back
         sound_buffer_impl* s =
             new sound_buffer_impl(path, audio_device, audio_device_spec);
         sounds.push_back(s);
         SDL_UnlockAudioDevice(audio_device);
         return s;
     }
-    void destroy_sound_buffer(sound_buffer* sound) final { delete sound; }
+    void destroy_sound_buffer(sound_buffer* sound) final
+    {
+        // TODO FIXME first remove from sounds collection
+        delete sound;
+    }
 
     void render(const tri0& t, const color& c) final
     {

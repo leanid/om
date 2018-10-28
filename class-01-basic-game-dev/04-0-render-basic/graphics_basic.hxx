@@ -2,6 +2,7 @@
 
 #include <array>
 #include <cassert>
+#include <cmath>
 #include <cstddef>
 #include <fstream>
 #include <vector>
@@ -44,9 +45,15 @@ struct position
         , y(y_)
     {
     }
+    float   length() { return std::sqrt(x * x + y * y); }
     int32_t x = 0;
     int32_t y = 0;
 };
+
+position operator-(const position& left, const position& right)
+{
+    return { left.x - right.x, left.y - right.y };
+}
 
 using pixels = std::vector<position>;
 
@@ -151,5 +158,11 @@ struct triangle_interpolated : triangle_indexed_render
                         std::vector<uint8_t>& indexes);
 
 private:
+    std::vector<vertex> rasterize_triangle(const vertex& v0, const vertex& v1,
+                                           const vertex& v2);
+    std::vector<vertex> raster_horizontal_triangle(const vertex& single,
+                                                   const vertex& left,
+                                                   const vertex& right);
+
     gfx_program* program_ = nullptr;
 };

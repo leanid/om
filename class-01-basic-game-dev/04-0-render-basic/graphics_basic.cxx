@@ -201,6 +201,95 @@ triangle_interpolated::triangle_interpolated(
 {
 }
 
+std::vector<vertex> triangle_interpolated::raster_horizontal_triangle(
+    const vertex& single, const vertex& left, const vertex& right)
+{
+    std::vector<vertex> out;
+
+    // 1. get first left and right points and draw horizontal line
+    // 2. step to next left and right points and draw next horizontal line
+    // 3. do the same till last single point
+
+    size_t num_of_hlines = static_cast<size_t>(std::abs(single.f1 - left.f1));
+    bool   direction     = single.f0 > left.f0; // up or down
+
+    for (size_t i = 0; i <= num_of_hlines; ++i)
+    {
+        float  t_vertical   = static_cast<float>(i) / num_of_hlines;
+        vertex left_vertex  = interpolate(left, single, t_vertical);
+        vertex right_vertex = interpolate(right, single, t_vertical);
+
+        size_t num_of_pixels_in_line =
+            static_cast<size_t>(std::abs(left_vertex.f0 - right_vertex.f0));
+        for (size_t p = 0; p <= num_of_pixels_in_line; ++p)
+        {
+            float  t_pixel = static_cast<float>(p) / num_of_pixels_in_line;
+            vertex pixel   = interpolate(left_vertex, right_vertex, t_pixel);
+
+            out.push_back(pixel);
+        }
+    }
+
+    return out;
+}
+
+std::vector<vertex> triangle_interpolated::rasterize_triangle(const vertex& v0,
+                                                              const vertex& v1,
+                                                              const vertex& v2)
+{
+    std::vector<vertex> out;
+
+    // common idea:
+    // 1. sort input vertexes in order top to bottom
+    // 2. build two horizontal triangles from first two vertexes and one middle
+    // 3. interpolate two horizontal triangles with horizontal lines
+
+    // sort by Y position input triangles:
+    std::array<const vertex*, 3> in_vertexes{ &v0, &v1, &v2 };
+    std::sort(begin(in_vertexes), end(in_vertexes),
+              [](const vertex* left, const vertex* right) {
+                  return left->f1 < left->f1;
+              });
+
+    const vertex& top    = *in_vertexes.at(0);
+    const vertex& middle = *in_vertexes.at(1);
+    const vertex& bottom = *in_vertexes.at(2);
+
+    // first and last vertex will be longest triangle side
+    // we need to find middle point on longest triangle side with same Y
+    // coordinate like in middle vertex after sort
+    position start{ static_cast<int32_t>(top.f0),
+                    static_cast<int32_t>(top.f1) };
+    position end{ static_cast<int32_t>(bottom.f0),
+                  static_cast<int32_t>(bottom.f1) };
+
+    std::vector<position> longest_side_line = pixels_positions(start, end);
+
+    auto it_middle =
+        std::find_if(begin(longest_side_line), end(longest_side_line),
+                     [&](const position& pos) {
+                         return pos.y == static_cast<int32_t>(middle.f1);
+                     });
+    assert(it_middle != end(longest_side_line));
+    position second_middle = *it_middle;
+
+    // interpolate second_middle position to get 4 vertex
+    float  t = (second_middle - start).length() / (end - start).length();
+    vertex second_middle_vertex = interpolate(top, bottom, t);
+
+    // now render two horizontal triangles with horizontal lines
+    // top triangle
+    std::vector<vertex> top_triangle =
+        raster_horizontal_triangle(top, middle, second_middle_vertex);
+    std::vector<vertex> bottom_triangle =
+        raster_horizontal_triangle(bottom, middle, second_middle_vertex);
+
+    out.insert(end(out), begin(top_triangle), end(top_triangle));
+    out.insert(end(out), begin(bottom_triangle), end(bottom_triangle));
+
+    return out;
+}
+
 void triangle_interpolated::draw_triangles(std::vector<vertex>&  vertexes,
                                            std::vector<uint8_t>& indexes)
 {

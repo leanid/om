@@ -45,6 +45,10 @@ static PFNGLUNIFORM1IPROC                glUniform1i                = nullptr;
 static PFNGLACTIVETEXTUREPROC            glActiveTexture_           = nullptr;
 static PFNGLUNIFORM4FVPROC               glUniform4fv               = nullptr;
 static PFNGLUNIFORMMATRIX3FVPROC         glUniformMatrix3fv         = nullptr;
+static PFNGLGENBUFFERSPROC               glGenBuffers               = nullptr;
+static PFNGLBINDBUFFERPROC               glBindBuffer               = nullptr;
+static PFNGLBUFFERDATAPROC               glBufferData               = nullptr;
+static PFNGLBUFFERSUBDATAPROC            glBufferSubData            = nullptr;
 
 template <typename T>
 static void load_gl_func(const char* func_name, T& result)
@@ -773,21 +777,35 @@ public:
         shader03->set_uniform("s_texture", texture);
         shader03->set_uniform("u_matrix", m);
 
-        const v2* t = buff.data();
-        // positions
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(v2), &t->pos);
+        assert(gl_default_vbo != 0);
+
+        glBindBuffer(GL_ARRAY_BUFFER, gl_default_vbo);
         OM_GL_CHECK();
+
+        const v2* t = buff.data();
+        uint32_t  data_size_in_bytes =
+            static_cast<uint32_t>(buff.size() * sizeof(v2));
+        glBufferData(GL_ARRAY_BUFFER, data_size_in_bytes, t, GL_DYNAMIC_DRAW);
+        OM_GL_CHECK();
+        glBufferSubData(GL_ARRAY_BUFFER, 0, data_size_in_bytes, t);
+        OM_GL_CHECK();
+
+        // positions
         glEnableVertexAttribArray(0);
         OM_GL_CHECK();
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(v2), nullptr);
+        OM_GL_CHECK();
         // colors
-        glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(v2),
-                              &t->c);
+        glVertexAttribPointer(
+            1, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(v2),
+            reinterpret_cast<void*>(sizeof(v2::pos) + sizeof(v2::uv)));
         OM_GL_CHECK();
         glEnableVertexAttribArray(1);
         OM_GL_CHECK();
 
         // texture coordinates
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(v2), &t->uv);
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(v2),
+                              reinterpret_cast<void*>(sizeof(v2::pos)));
         OM_GL_CHECK();
         glEnableVertexAttribArray(2);
         OM_GL_CHECK();
@@ -819,10 +837,11 @@ private:
     SDL_Window*   window     = nullptr;
     SDL_GLContext gl_context = nullptr;
 
-    shader_gl_es20* shader00 = nullptr;
-    shader_gl_es20* shader01 = nullptr;
-    shader_gl_es20* shader02 = nullptr;
-    shader_gl_es20* shader03 = nullptr;
+    shader_gl_es20* shader00       = nullptr;
+    shader_gl_es20* shader01       = nullptr;
+    shader_gl_es20* shader02       = nullptr;
+    shader_gl_es20* shader03       = nullptr;
+    uint32_t        gl_default_vbo = 0;
 };
 
 static bool already_exist = false;
@@ -1009,7 +1028,7 @@ std::string engine_impl::initialize(std::string_view)
 
     window =
         SDL_CreateWindow("title", SDL_WINDOWPOS_CENTERED,
-                         SDL_WINDOWPOS_CENTERED, 640, 480, ::SDL_WINDOW_OPENGL);
+                         SDL_WINDOWPOS_CENTERED, 800, 600, ::SDL_WINDOW_OPENGL);
 
     if (window == nullptr)
     {
@@ -1018,6 +1037,10 @@ std::string engine_impl::initialize(std::string_view)
         SDL_Quit();
         return serr.str();
     }
+
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
 
     gl_context = SDL_GL_CreateContext(window);
     if (gl_context == nullptr)
@@ -1036,7 +1059,7 @@ std::string engine_impl::initialize(std::string_view)
     result = SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, &gl_minor_ver);
     SDL_assert(result == 0);
 
-    if (gl_major_ver <= 2 && gl_minor_ver < 1)
+    if (gl_major_ver < 2)
     {
         serr << "current context opengl version: " << gl_major_ver << '.'
              << gl_minor_ver << '\n'
@@ -1068,24 +1091,39 @@ std::string engine_impl::initialize(std::string_view)
         load_gl_func("glActiveTexture", glActiveTexture_);
         load_gl_func("glUniform4fv", glUniform4fv);
         load_gl_func("glUniformMatrix3fv", glUniformMatrix3fv);
+        load_gl_func("glGenBuffers", glGenBuffers);
+        load_gl_func("glBindBuffer", glBindBuffer);
+        load_gl_func("glBufferData", glBufferData);
+        load_gl_func("glBufferSubDataF", glBufferSubData);
     }
     catch (std::exception& ex)
     {
         return ex.what();
     }
 
+    glGenBuffers(1, &gl_default_vbo);
+    OM_GL_CHECK();
+    glBindBuffer(GL_ARRAY_BUFFER, gl_default_vbo);
+    OM_GL_CHECK();
+    uint32_t data_size_in_bytes = 0;
+    glBufferData(GL_ARRAY_BUFFER, data_size_in_bytes, nullptr, GL_STATIC_DRAW);
+    OM_GL_CHECK();
+    glBufferSubData(GL_ARRAY_BUFFER, 0, data_size_in_bytes, nullptr);
+    OM_GL_CHECK();
+
     shader00 = new shader_gl_es20(R"(
                                   attribute vec2 a_position;
                                   void main()
                                   {
-                                  gl_Position = vec4(a_position, 0.0, 1.0);
+                                      gl_Position = vec4(a_position, 0.0, 1.0);
                                   }
                                   )",
                                   R"(
+                                  precision mediump float;
                                   uniform vec4 u_color;
                                   void main()
                                   {
-                                  gl_FragColor = u_color;
+                                      gl_FragColor = u_color;
                                   }
                                   )",
                                   { { 0, "a_position" } });
@@ -1105,6 +1143,7 @@ std::string engine_impl::initialize(std::string_view)
                 }
                 )",
         R"(
+                precision mediump float;
                 varying vec4 v_color;
                 void main()
                 {
@@ -1130,6 +1169,7 @@ std::string engine_impl::initialize(std::string_view)
                 }
                 )",
         R"(
+                precision mediump float;
                 varying vec2 v_tex_coord;
                 varying vec4 v_color;
                 uniform sampler2D s_texture;
@@ -1160,6 +1200,7 @@ std::string engine_impl::initialize(std::string_view)
                 }
                 )",
         R"(
+                precision mediump float;
                 varying vec2 v_tex_coord;
                 varying vec4 v_color;
                 uniform sampler2D s_texture;
@@ -1179,7 +1220,7 @@ std::string engine_impl::initialize(std::string_view)
     glClearColor(0.f, 0.0, 0.f, 0.0f);
     OM_GL_CHECK();
 
-    glViewport(0, 0, 640, 480);
+    glViewport(0, 0, 800, 600);
     OM_GL_CHECK();
 
     return "";
