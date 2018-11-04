@@ -5,6 +5,7 @@
 #include <cmath>
 #include <cstddef>
 #include <fstream>
+#include <iomanip>
 #include <vector>
 
 constexpr size_t width  = 320;
@@ -18,6 +19,11 @@ struct color
     uint8_t b = 0;
 };
 #pragma pack(pop)
+
+bool operator==(const color& l, const color& r)
+{
+    return l.r == r.r && l.g == r.g && l.b == r.b;
+}
 
 constexpr size_t color_size = sizeof(color);
 
@@ -35,6 +41,25 @@ void save_image(const std::string& file_name, const std::array<color, N>& image)
     out_file.open(file_name, std::ios_base::binary);
     out_file << "P6\n" << width << ' ' << height << ' ' << 255 << '\n';
     out_file.write(reinterpret_cast<const char*>(&image), sizeof(color) * N);
+}
+
+template <size_t N>
+void load_image(const std::string& file_name, std::array<color, N>& image)
+{
+    std::ifstream in_file;
+    in_file.exceptions(std::ios_base::failbit);
+    in_file.open(file_name, std::ios_base::binary);
+    std::string header;
+    size_t      image_width  = 0;
+    size_t      image_height = 0;
+    std::string color_format;
+    in_file >> header >> image_width >> image_height >> color_format >> std::ws;
+    if (N != image_height * image_width)
+    {
+        throw std::runtime_error("image size not match");
+    }
+
+    in_file.read(reinterpret_cast<char*>(&image), sizeof(color) * N);
 }
 
 struct position
@@ -109,8 +134,8 @@ struct vertex
     double f2 = 0; /// r
     double f3 = 0; /// g
     double f4 = 0; /// b
-    double f5 = 0; /// ?
-    double f6 = 0; /// ?
+    double f5 = 0; /// u (texture coordinate)
+    double f6 = 0; /// v (texture coordinate)
     double f7 = 0; /// ?
 };
 
@@ -118,7 +143,7 @@ double interpolate(const double f0, const double f1, const double t)
 {
     assert(t >= 0.0);
     assert(t <= 1.0);
-    return static_cast<double>(f0 + (f1 - f0) * t);
+    return f0 + (f1 - f0) * t;
 }
 
 vertex interpolate(const vertex& v0, const vertex& v1, const double t)
