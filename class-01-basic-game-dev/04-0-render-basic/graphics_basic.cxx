@@ -22,7 +22,9 @@ void basic_render::clear(color c)
 
 void basic_render::set_pixel(position p, color c)
 {
-    color& col = buffer.at(p.y * w + p.x);
+    const size_t i =
+        static_cast<unsigned>(p.y) * w + static_cast<unsigned>(p.x);
+    color& col = buffer.at(i);
     col        = c;
 }
 
@@ -211,19 +213,18 @@ std::vector<vertex> triangle_interpolated::raster_horizontal_triangle(
     // 3. do the same till last single point
 
     size_t num_of_hlines = static_cast<size_t>(std::abs(single.f1 - left.f1));
-    bool   direction     = single.f0 > left.f0; // up or down
 
-    for (size_t i = 0; i <= num_of_hlines; ++i)
+    for (size_t i = 0; i < num_of_hlines; ++i)
     {
-        float  t_vertical   = static_cast<float>(i) / num_of_hlines;
+        double t_vertical   = static_cast<double>(i) / num_of_hlines;
         vertex left_vertex  = interpolate(left, single, t_vertical);
         vertex right_vertex = interpolate(right, single, t_vertical);
 
         size_t num_of_pixels_in_line =
             static_cast<size_t>(std::abs(left_vertex.f0 - right_vertex.f0));
-        for (size_t p = 0; p <= num_of_pixels_in_line; ++p)
+        for (size_t p = 0; p < num_of_pixels_in_line; ++p)
         {
-            float  t_pixel = static_cast<float>(p) / num_of_pixels_in_line;
+            double t_pixel = static_cast<double>(p) / num_of_pixels_in_line;
             vertex pixel   = interpolate(left_vertex, right_vertex, t_pixel);
 
             out.push_back(pixel);
@@ -248,7 +249,7 @@ std::vector<vertex> triangle_interpolated::rasterize_triangle(const vertex& v0,
     std::array<const vertex*, 3> in_vertexes{ &v0, &v1, &v2 };
     std::sort(begin(in_vertexes), end(in_vertexes),
               [](const vertex* left, const vertex* right) {
-                  return left->f1 < left->f1;
+                  return left->f1 < right->f1;
               });
 
     const vertex& top    = *in_vertexes.at(0);
@@ -266,11 +267,11 @@ std::vector<vertex> triangle_interpolated::rasterize_triangle(const vertex& v0,
     std::vector<position> longest_side_line = pixels_positions(start, end);
 
     auto it_middle =
-        std::find_if(begin(longest_side_line), end(longest_side_line),
+        std::find_if(begin(longest_side_line), std::end(longest_side_line),
                      [&](const position& pos) {
                          return pos.y == static_cast<int32_t>(middle.f1);
                      });
-    assert(it_middle != end(longest_side_line));
+    assert(it_middle != std::end(longest_side_line));
     position second_middle = *it_middle;
 
     // interpolate second_middle position to get 4 vertex
@@ -284,8 +285,9 @@ std::vector<vertex> triangle_interpolated::rasterize_triangle(const vertex& v0,
     std::vector<vertex> bottom_triangle =
         raster_horizontal_triangle(bottom, middle, second_middle_vertex);
 
-    out.insert(end(out), begin(top_triangle), end(top_triangle));
-    out.insert(end(out), begin(bottom_triangle), end(bottom_triangle));
+    out.insert(std::end(out), begin(top_triangle), std::end(top_triangle));
+    out.insert(std::end(out), begin(bottom_triangle),
+               std::end(bottom_triangle));
 
     return out;
 }
@@ -337,10 +339,10 @@ int main(int, char**)
 
     for (size_t i = 0; i < 100; ++i)
     {
-        position start{ static_cast<int>(rand() % width),
-                        static_cast<int>(rand() % height) };
-        position end{ static_cast<int>(rand() % width),
-                      static_cast<int>(rand() % height) };
+        position start{ rand() % static_cast<int>(width),
+                        rand() % static_cast<int>(height) };
+        position end{ rand() % static_cast<int>(width),
+                      rand() % static_cast<int>(height) };
         color    color{ static_cast<uint8_t>(rand() % 256),
                      static_cast<uint8_t>(rand() % 256),
                      static_cast<uint8_t>(rand() % 256) };
@@ -375,7 +377,8 @@ int main(int, char**)
             int32_t step_x = (width - 1) / max_x;
             int32_t step_y = (height - 1) / max_y;
 
-            position v0(0 + i * step_x, 0 + j * step_y);
+            position v0(0 + static_cast<int>(i) * step_x,
+                        0 + static_cast<int>(j) * step_y);
             position v1(v0.x + step_x, v0.y + step_y);
             position v2(v0.x, v0.y + step_y);
             position v3(v0.x + step_x, v0.y);
@@ -403,7 +406,8 @@ int main(int, char**)
     {
         for (size_t j = 0; j <= max_x; ++j)
         {
-            position v(j * step_x, i * step_y);
+            position v(static_cast<int>(j) * step_x,
+                       static_cast<int>(i) * step_y);
 
             triangles_for_index.push_back(v);
         }
@@ -417,8 +421,8 @@ int main(int, char**)
     {
         for (size_t y = 0; y < max_y; ++y)
         {
-            uint8_t index0 = y * (max_y + 1) + x;
-            uint8_t index1 = index0 + (max_y + 1) + 1;
+            uint8_t index0 = static_cast<uint8_t>(y * (max_y + 1) + x);
+            uint8_t index1 = static_cast<uint8_t>(index0 + (max_y + 1) + 1);
             uint8_t index2 = index1 - 1;
             uint8_t index3 = index0 + 1;
 
@@ -438,6 +442,47 @@ int main(int, char**)
     indexed_render.draw_triangles(triangles_for_index, indexes, green);
 
     save_image("04_triangles_indexes.ppm", image);
+
+    triangle_interpolated interpolated_render(image, width, height);
+
+    struct program : gfx_program
+    {
+        void   set_uniforms(const uniforms&) override {}
+        vertex vertex_shader(const vertex& v_in) override
+        {
+            vertex out = v_in;
+            out.f0 *= 0.5f;
+            out.f1 *= 0.5f;
+            out.f0 += 50.f;
+            out.f1 += 70.f;
+            return out;
+        }
+        color fragment_shader(const vertex& v_in) override
+        {
+            color out;
+            out.r = static_cast<uint8_t>(v_in.f2 * 255);
+            out.g = static_cast<uint8_t>(v_in.f3 * 255);
+            out.b = static_cast<uint8_t>(v_in.f4 * 255);
+            return out;
+        }
+    } program01;
+
+    interpolated_render.clear(black);
+    interpolated_render.set_gfx_program(program01);
+
+    std::vector<vertex> triangle_v{
+        { float(triangle.at(0).x), float(triangle.at(0).y), 1.f, 0.f, 0.f, 0.f,
+          0.f, 0.f },
+        { float(triangle.at(1).x), float(triangle.at(1).y), 0.f, 1.f, 0.f, 0.f,
+          0.f, 0.f },
+        { float(triangle.at(2).x), float(triangle.at(2).y) + 60, 0.f, 0.f, 1.f,
+          0.f, 0.f, 0.f }
+    };
+    std::vector<uint8_t> indexes_v{ 0, 1, 2 };
+
+    interpolated_render.draw_triangles(triangle_v, indexes_v);
+
+    save_image("05_interpolated.ppm", image);
 
     return 0;
 }

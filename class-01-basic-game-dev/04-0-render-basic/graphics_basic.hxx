@@ -45,7 +45,7 @@ struct position
         , y(y_)
     {
     }
-    float   length() { return std::sqrt(x * x + y * y); }
+    float   length() { return static_cast<float>(std::sqrt(x * x + y * y)); }
     int32_t x = 0;
     int32_t y = 0;
 };
@@ -114,19 +114,19 @@ struct vertex
     float f7 = 0.f; /// ?
 };
 
-float interpolate(const float f0, const float f1, const float t)
+float interpolate(const float f0, const float f1, const double t)
 {
-    assert(t >= 0.f);
-    assert(t <= 1.f);
-    return f0 + (f1 - f0) * t;
+    assert(t >= 0.0);
+    assert(t <= 1.0);
+    return static_cast<float>(f0 + (f1 - f0) * t);
 }
 
-vertex interpolate(const vertex& v0, const vertex& v1, const float t)
+vertex interpolate(const vertex& v0, const vertex& v1, const double t)
 {
-    return { interpolate(v0.f0, v1.f0, t), interpolate(v0.f4, v1.f4, t),
-             interpolate(v0.f1, v1.f1, t), interpolate(v0.f5, v1.f5, t),
-             interpolate(v0.f2, v1.f2, t), interpolate(v0.f6, v1.f6, t),
-             interpolate(v0.f3, v1.f3, t), interpolate(v0.f7, v1.f7, t) };
+    return { interpolate(v0.f0, v1.f0, t), interpolate(v0.f1, v1.f1, t),
+             interpolate(v0.f2, v1.f2, t), interpolate(v0.f3, v1.f3, t),
+             interpolate(v0.f4, v1.f4, t), interpolate(v0.f5, v1.f5, t),
+             interpolate(v0.f6, v1.f6, t), interpolate(v0.f7, v1.f7, t) };
 }
 
 struct uniforms
