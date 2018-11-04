@@ -211,11 +211,11 @@ void triangle_interpolated::raster_one_horizontal_line(
         std::round(std::abs(left_vertex.f0 - right_vertex.f0)));
     if (num_of_pixels_in_line > 0)
     {
-        // use x2 pixels to garantee no empry black pixels
-        for (size_t p = 0; p <= num_of_pixels_in_line * 2; ++p)
+        // use +1 pixels to garantee no empty black pixels
+        for (size_t p = 0; p <= num_of_pixels_in_line + 1; ++p)
         {
             double t_pixel =
-                static_cast<double>(p) / (num_of_pixels_in_line * 2);
+                static_cast<double>(p) / (num_of_pixels_in_line + 1);
             vertex pixel = interpolate(left_vertex, right_vertex, t_pixel);
 
             out.push_back(pixel);
