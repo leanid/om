@@ -45,7 +45,7 @@ struct position
         , y(y_)
     {
     }
-    float   length() { return static_cast<float>(std::sqrt(x * x + y * y)); }
+    double  length() { return std::sqrt(x * x + y * y); }
     int32_t x = 0;
     int32_t y = 0;
 };
@@ -104,21 +104,21 @@ struct triangle_indexed_render : triangle_render
 
 struct vertex
 {
-    float f0 = 0.f; /// x
-    float f1 = 0.f; /// y
-    float f2 = 0.f; /// r
-    float f3 = 0.f; /// g
-    float f4 = 0.f; /// b
-    float f5 = 0.f; /// ?
-    float f6 = 0.f; /// ?
-    float f7 = 0.f; /// ?
+    double f0 = 0; /// x
+    double f1 = 0; /// y
+    double f2 = 0; /// r
+    double f3 = 0; /// g
+    double f4 = 0; /// b
+    double f5 = 0; /// ?
+    double f6 = 0; /// ?
+    double f7 = 0; /// ?
 };
 
-float interpolate(const float f0, const float f1, const double t)
+double interpolate(const double f0, const double f1, const double t)
 {
     assert(t >= 0.0);
     assert(t <= 1.0);
-    return static_cast<float>(f0 + (f1 - f0) * t);
+    return static_cast<double>(f0 + (f1 - f0) * t);
 }
 
 vertex interpolate(const vertex& v0, const vertex& v1, const double t)
@@ -131,14 +131,14 @@ vertex interpolate(const vertex& v0, const vertex& v1, const double t)
 
 struct uniforms
 {
-    float f0 = 0.f;
-    float f1 = 0.f;
-    float f2 = 0.f;
-    float f3 = 0.f;
-    float f4 = 0.f;
-    float f5 = 0.f;
-    float f6 = 0.f;
-    float f7 = 0.f;
+    double f0 = 0;
+    double f1 = 0;
+    double f2 = 0;
+    double f3 = 0;
+    double f4 = 0;
+    double f5 = 0;
+    double f6 = 0;
+    double f7 = 0;
 };
 
 struct gfx_program
@@ -163,6 +163,10 @@ private:
     std::vector<vertex> raster_horizontal_triangle(const vertex& single,
                                                    const vertex& left,
                                                    const vertex& right);
+
+    void raster_one_horizontal_line(const vertex&        left_vertex,
+                                    const vertex&        right_vertex,
+                                    std::vector<vertex>& out);
 
     gfx_program* program_ = nullptr;
 };
