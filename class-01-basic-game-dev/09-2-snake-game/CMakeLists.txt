@@ -45,6 +45,7 @@ target_link_libraries(game-09-2 engine-09-2)
 
 if(MSVC)
   target_compile_definitions(game-09-2 PRIVATE "-DOM_DECLSPEC=__declspec(dllimport)")
+  target_compile_definitions(game-09-2 PRIVATE "-DOM_EXPORT=__declspec(dllexport)")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17")
 elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
