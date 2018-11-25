@@ -988,11 +988,11 @@ static void initialize_internal(std::string_view   title,
             SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, &gl_minor_ver);
         assert(result == 0);
 
-        if (gl_major_ver <= 2 && gl_minor_ver < 1)
+        if (gl_major_ver != 2)
         {
             serr << "current context opengl version: " << gl_major_ver << '.'
                  << gl_minor_ver << '\n'
-                 << "need opengl version at least: 2.1\n"
+                 << "need opengl version at least: 2.0\n"
                  << std::flush;
             throw std::runtime_error(serr.str());
         }
@@ -1040,6 +1040,7 @@ static void initialize_internal(std::string_view   title,
                                       }
                                       )",
                                       R"(
+                                      precision mediump float;
                                       uniform vec4 u_color;
                                       void main()
                                       {
@@ -1063,6 +1064,7 @@ static void initialize_internal(std::string_view   title,
                     }
                     )",
             R"(
+                    precision mediump float;
                     varying vec4 v_color;
                     void main()
                     {
@@ -1088,6 +1090,7 @@ static void initialize_internal(std::string_view   title,
                     }
                     )",
             R"(
+                    precision mediump float;
                     varying vec2 v_tex_coord;
                     varying vec4 v_color;
                     uniform sampler2D s_texture;
@@ -1118,6 +1121,7 @@ static void initialize_internal(std::string_view   title,
                     }
                     )",
             R"(
+                    precision mediump float;
                     varying vec2 v_tex_coord;
                     varying vec4 v_color;
                     uniform sampler2D s_texture;
