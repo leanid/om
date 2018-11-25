@@ -20,9 +20,17 @@
 #include <tuple>
 #include <vector>
 
+#ifdef __ANDROID__
+#include <SDL.h>
+#include <android/log.h>
+#define GL_GLES_PROTOTYPES 1
+#include <GLES2/gl2.h>
+#define glActiveTexture_ glActiveTexture
+#else
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>
 #include <SDL2/SDL_opengl_glext.h>
+#endif
 
 //#include "picopng.hxx"
 
@@ -37,6 +45,7 @@
 // we have to load all extension GL function pointers
 // dynamically from OpenGL library
 // so first declare function pointers for all we need
+#ifndef __ANDROID__
 static PFNGLCREATESHADERPROC             glCreateShader             = nullptr;
 static PFNGLSHADERSOURCEPROC             glShaderSource             = nullptr;
 static PFNGLCOMPILESHADERPROC            glCompileShader            = nullptr;
@@ -59,6 +68,8 @@ static PFNGLUNIFORM1IPROC                glUniform1i                = nullptr;
 static PFNGLACTIVETEXTUREPROC            glActiveTexture_           = nullptr;
 static PFNGLUNIFORM4FVPROC               glUniform4fv               = nullptr;
 static PFNGLUNIFORMMATRIX3FVPROC         glUniformMatrix3fv         = nullptr;
+static PFNGLGETERRORPROC                 glGetError = nullptr;
+#endif
 
 template <typename T>
 static void load_gl_func(const char* func_name, T& result)
@@ -987,6 +998,8 @@ static void initialize_internal(std::string_view   title,
         }
         try
         {
+#ifndef __ANDROID__
+            load_gl_func("glGetError", glGetError);
             load_gl_func("glCreateShader", glCreateShader);
             load_gl_func("glShaderSource", glShaderSource);
             load_gl_func("glCompileShader", glCompileShader);
@@ -1011,6 +1024,7 @@ static void initialize_internal(std::string_view   title,
             load_gl_func("glActiveTexture", glActiveTexture_);
             load_gl_func("glUniform4fv", glUniform4fv);
             load_gl_func("glUniformMatrix3fv", glUniformMatrix3fv);
+#endif
         }
         catch (std::exception& ex)
         {
@@ -1514,15 +1528,74 @@ start_game_again:
     return EXIT_SUCCESS;
 }
 
+class android_redirected_buf : public std::streambuf
+{
+public:
+    android_redirected_buf() = default;
+
+private:
+    // This android_redirected_buf buffer has no buffer. So every character
+    // "overflows" and can be put directly into the teed buffers.
+    virtual int overflow(int c)
+    {
+        if (c == EOF)
+        {
+            return !EOF;
+        }
+        else
+        {
+            if (c == '\n')
+            {
+#ifdef __ANDROID__
+                // android log function add '\n' on every print itself
+                __android_log_print(ANDROID_LOG_ERROR, "OM", "%s",
+                                    message.c_str());
+#else
+                std::printf("%s\n", message.c_str()); // TODO test only
+#endif
+                message.clear();
+            }
+            else
+            {
+                message.push_back(static_cast<char>(c));
+            }
+            return c;
+        }
+    }
+
+    virtual int sync() { return 0; }
+
+    std::string message;
+};
+
 int main(int /*argc*/, char* /*argv*/ [])
 {
+    auto cout_buf = std::cout.rdbuf();
+    auto cerr_buf = std::cerr.rdbuf();
+    auto clog_buf = std::clog.rdbuf();
+
+    android_redirected_buf logcat;
+
+    std::cout.rdbuf(&logcat);
+    std::cerr.rdbuf(&logcat);
+    std::clog.rdbuf(&logcat);
+    
     try
     {
-        return initialize_and_start_main_loop();
+        int result = initialize_and_start_main_loop();
+        // restore default buffer
+        std::cout.rdbuf(cout_buf);
+        std::cerr.rdbuf(cerr_buf);
+        std::clog.rdbuf(clog_buf);
+        return result;
     }
     catch (std::exception& ex)
     {
         std::cerr << ex.what() << std::endl;
     }
+    // restore default buffer
+    std::cout.rdbuf(cout_buf);
+    std::cerr.rdbuf(cerr_buf);
+    std::clog.rdbuf(clog_buf);
     return EXIT_FAILURE;
 }
