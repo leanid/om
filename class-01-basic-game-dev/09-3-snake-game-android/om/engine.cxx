@@ -1293,6 +1293,37 @@ void color::set_a(const float a)
     rgba |= a_ << 24;
 }
 
+    membuf load_file(std::string_view path)
+    {
+        SDL_RWops* io = SDL_RWFromFile(path.data(), "rb");
+        if (nullptr == io)
+        {
+            throw std::runtime_error("can't load file: " + std::string(path));
+        }
+
+        Sint64 file_size = io->size(io);
+        if (-1 == file_size)
+        {
+            throw std::runtime_error("can't determine size of file: " +
+                                     std::string(path));
+        }
+        size_t                  size = static_cast<size_t>(file_size);
+        std::unique_ptr<char[]> mem  = std::make_unique<char[]>(size);
+
+        size_t num_readed_objects = io->read(io, mem.get(), size, 1);
+        if (num_readed_objects != 1)
+        {
+            throw std::runtime_error("can't read all content from file: " +
+                                     std::string(path));
+        }
+
+        if (0 != io->close(io))
+        {
+            throw std::runtime_error("failed close file: " + std::string(path));
+        }
+        return membuf(std::move(mem), size);
+    }
+
 texture_gl_es20::texture_gl_es20(std::string_view path)
     : file_path(path)
 {
@@ -1321,12 +1352,18 @@ texture_gl_es20::texture_gl_es20(std::string_view path)
     //        png_file_in_memory, convert_color::to_rgba32,
     //        origin_point::bottom_left);
 
+    // TODO load file into memmory
+
+    membuf file_contents = load_file(path);
+
     stbi_set_flip_vertically_on_load(true);
     int            width      = 0;
     int            height     = 0;
     int            components = 0;
     unsigned char* decoded_img =
-        stbi_load(path.data(), &width, &height, &components, 4);
+    //    stbi_load(path.data(), &width, &height, &components, 4);
+
+     stbi_load_from_memory(reinterpret_cast<unsigned char*>(file_contents.begin()), file_contents.size(), &width, &height, &components, 4);
 
     // if there's an error, display it
     if (decoded_img == nullptr)
@@ -1540,7 +1577,7 @@ public:
 private:
     // This android_redirected_buf buffer has no buffer. So every character
     // "overflows" and can be put directly into the teed buffers.
-    virtual int overflow(int c)
+    int overflow(int c) override
     {
         if (c == EOF)
         {
@@ -1567,7 +1604,7 @@ private:
         }
     }
 
-    virtual int sync() { return 0; }
+    int sync() override { return 0; }
 
     std::string message;
 };
