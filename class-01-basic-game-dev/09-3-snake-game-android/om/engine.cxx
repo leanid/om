@@ -68,7 +68,9 @@ static PFNGLUNIFORM1IPROC                glUniform1i                = nullptr;
 static PFNGLACTIVETEXTUREPROC            glActiveTexture_           = nullptr;
 static PFNGLUNIFORM4FVPROC               glUniform4fv               = nullptr;
 static PFNGLUNIFORMMATRIX3FVPROC         glUniformMatrix3fv         = nullptr;
+#if defined(PFNGLGETERRORPROC)
 static PFNGLGETERRORPROC                 glGetError = nullptr;
+#endif
 #endif
 
 template <typename T>
@@ -782,6 +784,19 @@ bool pool_event(event& e)
                 e.type       = om::event_type::input_key;
                 return true;
             }
+        } else if (sdl_event.type == SDL_MOUSEBUTTONDOWN || sdl_event.type == SDL_MOUSEBUTTONUP)
+        {
+            int w = 0;
+            int h = 0;
+            SDL_GetWindowSize(window, &w, &h);
+
+            enum keys key = sdl_event.button.x < (w / 2) ? keys::left : keys::right;
+            bool is_down = SDL_MOUSEBUTTONDOWN == sdl_event.type;
+
+            e.info = om::input_data{key, is_down};
+            e.timestamp = sdl_event.common.timestamp * 0.001;
+            e.type = om::event_type::input_key;
+            return true;
         }
     }
     return false;
@@ -831,6 +846,17 @@ sound* create_sound(std::string_view path)
 void destroy_sound(sound* sound)
 {
     delete sound;
+}
+
+void get_window_size(size_t& width, size_t& height)
+{
+    int w = 0;
+    int h = 0;
+
+    SDL_GetWindowSize(window, &w, &h);
+
+    width = static_cast<size_t>(w);
+    height = static_cast<size_t>(h);
 }
 
 static const std::array<GLenum, 6> primitive_types = {
@@ -957,6 +983,15 @@ static void initialize_internal(std::string_view   title,
         int window_size_w = static_cast<int>(desired_window_mode.width);
         int window_size_h = static_cast<int>(desired_window_mode.heigth);
 
+#if defined(__ANDROID__)
+        {
+            SDL_DisplayMode dispale_mode;
+            SDL_GetCurrentDisplayMode(0, &dispale_mode);
+            window_size_w = dispale_mode.w;
+            window_size_h = dispale_mode.h;
+        }
+#endif
+
         window = SDL_CreateWindow(title.data(), SDL_WINDOWPOS_CENTERED,
                                   SDL_WINDOWPOS_CENTERED, window_size_w,
                                   window_size_h, ::SDL_WINDOW_OPENGL);
@@ -969,6 +1004,10 @@ static void initialize_internal(std::string_view   title,
             SDL_Quit();
             throw std::runtime_error(serr.str());
         }
+
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
 
         gl_context = SDL_GL_CreateContext(window);
         if (gl_context == nullptr)
@@ -999,7 +1038,9 @@ static void initialize_internal(std::string_view   title,
         try
         {
 #ifndef __ANDROID__
+#if defined(PFNGLGETERRORPROC)
             load_gl_func("glGetError", glGetError);
+#endif
             load_gl_func("glCreateShader", glCreateShader);
             load_gl_func("glShaderSource", glShaderSource);
             load_gl_func("glCompileShader", glCompileShader);

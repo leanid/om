@@ -153,6 +153,8 @@ OM_DECLSPEC void destroy_vbo(vbo*);
 OM_DECLSPEC sound* create_sound(std::string_view path);
 OM_DECLSPEC void   destroy_sound(sound*);
 
+OM_DECLSPEC void get_window_size(size_t& width, size_t& height);
+
 enum class primitives
 {
     lines,

@@ -10,7 +10,11 @@ endif()
 
 project(09-3-start-game-protorype)
 
-add_library(engine-09-3 SHARED om/engine.cxx om/engine.hxx om/stb_image.h)
+if (SDL2_SRC_DIR)
+    add_library(engine-09-3 SHARED om/engine.cxx om/engine.hxx om/stb_image.h)
+else()
+    add_executable(engine-09-3 om/engine.cxx om/engine.hxx om/stb_image.h)
+endif()
 set_target_properties(engine-09-3 PROPERTIES ENABLE_EXPORTS TRUE)
 target_compile_features(engine-09-3 PRIVATE cxx_std_17)
 
