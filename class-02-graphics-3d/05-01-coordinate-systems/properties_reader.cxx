@@ -584,7 +584,18 @@ private:
     value_t calculate_expression(program_structure::expression* expr, const std::unordered_map<std::string, value_t>& key_values)
     {
         value_t first_value = get_value(expr->left_operand, key_values);
-
+        std::string_view op = expr->op.op->value;
+        if (std::holds_alternative<program_structure::expression*>(expr->right_operand.value))
+        {
+            auto next_exp = std::get<program_structure::expression*>(expr->right_operand.value);
+            // TODO do recursive call
+            value_t next = calculate_expression(next_exp, key_values);
+            return apply(op, first_value, next);
+        } else {
+            // TODO get last value
+            value_t next = std::get<program_structure::operand>(expr->right_operand.value);
+            return apply(op, first_value, )
+        }
     }
     value_t get_value(const program_structure::operand& op, const std::unordered_map<std::string, value_t>& key_values)
     {
