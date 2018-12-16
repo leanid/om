@@ -9,6 +9,13 @@
 #include <SDL2/SDL_surface.h>
 #include <SDL2/SDL_video.h>
 
+#define FUNC_CHECK()                                                           \
+    {                                                                          \
+        std::string error(__FUNCTION__);                                       \
+        error += "() is not implemented";                                      \
+        throw std::runtime_error(error);                                       \
+    }
+
 namespace om
 {
 
@@ -746,7 +753,7 @@ gl_context::gl_context(gl_context&& ctx)
     : data(std::move(ctx.data))
 // TODO Implement this
 {
-    throw std::runtime_error("Not implemented yet");
+    FUNC_CHECK();
 }
 
 gl_context::~gl_context()
@@ -857,6 +864,658 @@ window::size video::gl_get_drawable_size(const window& window)
     int h, w = 0;
     SDL_GL_GetDrawableSize(window.data->window, &w, &h);
     return { (size_t)w, (size_t)h };
+}
+
+std::string_view video::get_current_driver() const
+{
+    FUNC_CHECK();
+}
+
+std::vector<display> video::get_displays() const
+{
+    FUNC_CHECK();
+}
+
+display video::get_display_for_window(const window&) const
+{
+    FUNC_CHECK();
+}
+
+window video::create_window_from(const void* native_handle)
+{
+    FUNC_CHECK();
+}
+
+window video::get_window_fromID(std::uint32_t id) const
+{
+    FUNC_CHECK();
+}
+
+std::optional<window> video::get_grabbed_window() const
+{
+    FUNC_CHECK();
+}
+
+bool video::is_screen_saver_enabled() const
+{
+    FUNC_CHECK();
+}
+
+void video::enable_screen_saver()
+{
+    FUNC_CHECK();
+}
+
+void video::disable_screen_saver()
+{
+    FUNC_CHECK();
+}
+
+bool video::gl_load_library(std::string_view path)
+{
+    FUNC_CHECK();
+}
+
+void* video::gl_get_proc_address(std::string_view proc)
+{
+    FUNC_CHECK();
+}
+
+void video::gl_unload_library()
+{
+    FUNC_CHECK()
+}
+
+bool video::gl_extension_supported(std::string_view extension)
+{
+    FUNC_CHECK();
+}
+
+void video::gl_reset_attributes(){ FUNC_CHECK() }
+
+window video::gl_get_current_window(){ FUNC_CHECK() }
+
+gl_context video::gl_get_current_context()
+{
+    FUNC_CHECK()
+}
+
+bool video::gl_set_swap_interval(gl_swap_interval mode)
+{
+    int result = 0;
+    switch (mode)
+    {
+        case gl_swap_interval::immediate:
+            result = SDL_GL_SetSwapInterval(0);
+            break;
+        case gl_swap_interval::adaptive:
+            result = SDL_GL_SetSwapInterval(-1);
+            break;
+        case gl_swap_interval::synchronized:
+            result = SDL_GL_SetSwapInterval(1);
+            break;
+        default:
+            break;
+    }
+    if (result)
+    {
+        return false;
+    }
+    return true;
+}
+
+void video::gl_attribute::red_size(int val)
+{
+    if (0 != SDL_GL_SetAttribute(SDL_GL_RED_SIZE, val))
+    {
+        throw std::runtime_error(SDL_GetError());
+    }
+    return;
+}
+
+int video::gl_attribute::red_size()
+{
+    int result{};
+    if (0 != SDL_GL_GetAttribute(SDL_GL_RED_SIZE, &result))
+    {
+        throw std::runtime_error(SDL_GetError());
+    }
+    return result;
+}
+
+void video::gl_attribute::blue_size(int val)
+{
+    if (0 != SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, val))
+    {
+        throw std::runtime_error(SDL_GetError());
+    }
+    return;
+}
+
+int video::gl_attribute::blue_size()
+{
+    int result{};
+    if (0 != SDL_GL_GetAttribute(SDL_GL_BLUE_SIZE, &result))
+    {
+        throw std::runtime_error(SDL_GetError());
+    }
+    return result;
+}
+
+void video::gl_attribute::green_size(int val)
+{
+    if (0 != SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, val))
+    {
+        throw std::runtime_error(SDL_GetError());
+    }
+    return;
+}
+
+int video::gl_attribute::green_size()
+{
+    int result{};
+    if (0 != SDL_GL_GetAttribute(SDL_GL_GREEN_SIZE, &result))
+    {
+        throw std::runtime_error(SDL_GetError());
+    }
+    return result;
+}
+
+void video::gl_attribute::alpha_size(int val)
+{
+    if (0 != SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, val))
+    {
+        throw std::runtime_error(SDL_GetError());
+    }
+    return;
+}
+
+int video::gl_attribute::alpha_size()
+{
+    int result{};
+    if (0 != SDL_GL_GetAttribute(SDL_GL_ALPHA_SIZE, &result))
+    {
+        throw std::runtime_error(SDL_GetError());
+    }
+    return result;
+}
+
+void video::gl_attribute::buffer_size(int val)
+{
+    if (0 != SDL_GL_SetAttribute(SDL_GL_BUFFER_SIZE, val))
+    {
+        throw std::runtime_error(SDL_GetError());
+    }
+    return;
+}
+
+int video::gl_attribute::buffer_size()
+{
+    int result{};
+    if (0 != SDL_GL_GetAttribute(SDL_GL_BUFFER_SIZE, &result))
+    {
+        throw std::runtime_error(SDL_GetError());
+    }
+    return result;
+}
+
+void video::gl_attribute::doublebuffer(bool val)
+{
+    if (0 != SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, val))
+    {
+        throw std::runtime_error(SDL_GetError());
+    }
+    return;
+}
+
+bool video::gl_attribute::doublebuffer()
+{
+    int result{};
+    if (0 != SDL_GL_GetAttribute(SDL_GL_DOUBLEBUFFER, &result))
+    {
+        throw std::runtime_error(SDL_GetError());
+    }
+    return result;
+}
+
+void video::gl_attribute::depth_size(int val)
+{
+    if (0 != SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, val))
+    {
+        throw std::runtime_error(SDL_GetError());
+    }
+    return;
+}
+
+int video::gl_attribute::depth_size()
+{
+    int result{};
+    if (0 != SDL_GL_GetAttribute(SDL_GL_DEPTH_SIZE, &result))
+    {
+        throw std::runtime_error(SDL_GetError());
+    }
+    return result;
+}
+
+void video::gl_attribute::stencil_size(int val)
+{
+    if (0 != SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, val))
+    {
+        throw std::runtime_error(SDL_GetError());
+    }
+    return;
+}
+
+int video::gl_attribute::stencil_size()
+{
+    int result{};
+    if (0 != SDL_GL_GetAttribute(SDL_GL_STENCIL_SIZE, &result))
+    {
+        throw std::runtime_error(SDL_GetError());
+    }
+    return result;
+}
+
+void video::gl_attribute::accum_red_size(int val)
+{
+    if (0 != SDL_GL_SetAttribute(SDL_GL_ACCUM_RED_SIZE, val))
+    {
+        throw std::runtime_error(SDL_GetError());
+    }
+    return;
+}
+
+int video::gl_attribute::accum_red_size()
+{
+    int result{};
+    if (0 != SDL_GL_GetAttribute(SDL_GL_ACCUM_RED_SIZE, &result))
+    {
+        throw std::runtime_error(SDL_GetError());
+    }
+    return result;
+}
+
+void video::gl_attribute::accum_green_size(int val)
+{
+    if (0 != SDL_GL_SetAttribute(SDL_GL_ACCUM_GREEN_SIZE, val))
+    {
+        throw std::runtime_error(SDL_GetError());
+    }
+    return;
+}
+
+int video::gl_attribute::accum_green_size()
+{
+    int result{};
+    if (0 != SDL_GL_GetAttribute(SDL_GL_ACCUM_GREEN_SIZE, &result))
+    {
+        throw std::runtime_error(SDL_GetError());
+    }
+    return result;
+}
+
+void video::gl_attribute::accum_blue_size(int val)
+{
+    if (0 != SDL_GL_SetAttribute(SDL_GL_ACCUM_BLUE_SIZE, val))
+    {
+        throw std::runtime_error(SDL_GetError());
+    }
+    return;
+}
+
+int video::gl_attribute::accum_blue_size()
+{
+    int result{};
+    if (0 != SDL_GL_GetAttribute(SDL_GL_ACCUM_BLUE_SIZE, &result))
+    {
+        throw std::runtime_error(SDL_GetError());
+    }
+    return result;
+}
+
+void video::gl_attribute::accum_alpha_size(int val)
+{
+    if (0 != SDL_GL_SetAttribute(SDL_GL_ACCUM_ALPHA_SIZE, val))
+    {
+        throw std::runtime_error(SDL_GetError());
+    }
+    return;
+}
+
+int video::gl_attribute::accum_alpha_size()
+{
+    int result{};
+    if (0 != SDL_GL_GetAttribute(SDL_GL_ACCUM_ALPHA_SIZE, &result))
+    {
+        throw std::runtime_error(SDL_GetError());
+    }
+    return result;
+}
+
+void video::gl_attribute::stereo(bool val)
+{
+    if (0 != SDL_GL_SetAttribute(SDL_GL_STEREO, val))
+    {
+        throw std::runtime_error(SDL_GetError());
+    }
+    return;
+}
+
+bool video::gl_attribute::stereo()
+{
+    int result{};
+    if (0 != SDL_GL_GetAttribute(SDL_GL_STEREO, &result))
+    {
+        throw std::runtime_error(SDL_GetError());
+    }
+    return result;
+}
+
+void video::gl_attribute::multisamplebuffers(int val)
+{
+    if (0 != SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, val))
+    {
+        throw std::runtime_error(SDL_GetError());
+    }
+    return;
+}
+
+int video::gl_attribute::multisamplebuffers()
+{
+    int result{};
+    if (0 != SDL_GL_GetAttribute(SDL_GL_MULTISAMPLEBUFFERS, &result))
+    {
+        throw std::runtime_error(SDL_GetError());
+    }
+    return result;
+}
+
+void video::gl_attribute::multisamplesamples(int val)
+{
+    if (0 != SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, val))
+    {
+        throw std::runtime_error(SDL_GetError());
+    }
+    return;
+}
+
+int video::gl_attribute::multisamplesamples()
+{
+    int result{};
+    if (0 != SDL_GL_GetAttribute(SDL_GL_MULTISAMPLESAMPLES, &result))
+    {
+        throw std::runtime_error(SDL_GetError());
+    }
+    return result;
+}
+
+void video::gl_attribute::accelerated_visual(bool val)
+{
+    if (0 != SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, val))
+    {
+        throw std::runtime_error(SDL_GetError());
+    }
+    return;
+}
+
+bool video::gl_attribute::accelerated_visual()
+{
+    int result{};
+    if (0 != SDL_GL_GetAttribute(SDL_GL_ACCELERATED_VISUAL, &result))
+    {
+        throw std::runtime_error(SDL_GetError());
+    }
+    return result;
+}
+
+void video::gl_attribute::context_major_version(int val)
+{
+    if (0 != SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, val))
+    {
+        throw std::runtime_error(SDL_GetError());
+    }
+    return;
+}
+
+int video::gl_attribute::context_major_version()
+{
+    int result{};
+    if (0 != SDL_GL_GetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, &result))
+    {
+        throw std::runtime_error(SDL_GetError());
+    }
+    return result;
+}
+
+void video::gl_attribute::context_minor_version(int val)
+{
+    if (0 != SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, val))
+    {
+        throw std::runtime_error(SDL_GetError());
+    }
+    return;
+}
+
+int video::gl_attribute::context_minor_version()
+{
+    int result{};
+    if (0 != SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, &result))
+    {
+        throw std::runtime_error(SDL_GetError());
+    }
+    return result;
+}
+
+void video::gl_attribute::context_flag(gl_context_flag om_flag, bool state)
+{
+    int current_flags{};
+    if (0 != SDL_GL_GetAttribute(SDL_GL_CONTEXT_FLAGS, &current_flags))
+    {
+        throw std::runtime_error(SDL_GetError());
+    }
+    SDL_GLcontextFlag sdl_flag;
+    switch (om_flag)
+    {
+        case video::gl_context_flag::debug:
+            sdl_flag = SDL_GL_CONTEXT_DEBUG_FLAG;
+            break;
+        case video::gl_context_flag::forward_compatible_mode:
+            sdl_flag = SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG;
+            break;
+        case video::gl_context_flag::robust_access_mode:
+            sdl_flag = SDL_GL_CONTEXT_ROBUST_ACCESS_FLAG;
+            break;
+        case video::gl_context_flag::reset_isolation_mode:
+            sdl_flag = SDL_GL_CONTEXT_RESET_ISOLATION_FLAG;
+            break;
+        default:
+            throw std::runtime_error("Never supposed to be here");
+            break;
+    }
+
+    if (state)
+    {
+        current_flags |= sdl_flag; // turn on
+    }
+    else
+    {
+        current_flags &= ~(sdl_flag); // turn off
+    }
+
+    if (0 != SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, current_flags))
+    {
+        throw std::runtime_error(SDL_GetError());
+    }
+    return;
+}
+
+bool video::gl_attribute::context_flag(gl_context_flag om_flag)
+{
+    int current_flags{};
+    if (0 != SDL_GL_GetAttribute(SDL_GL_CONTEXT_FLAGS, &current_flags))
+    {
+        throw std::runtime_error(SDL_GetError());
+    }
+    int sdl_flag;
+    switch (om_flag)
+    {
+        case video::gl_context_flag::debug:
+            sdl_flag = SDL_GL_CONTEXT_DEBUG_FLAG;
+            break;
+        case video::gl_context_flag::forward_compatible_mode:
+            sdl_flag = SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG;
+            break;
+        case video::gl_context_flag::robust_access_mode:
+            sdl_flag = SDL_GL_CONTEXT_ROBUST_ACCESS_FLAG;
+            break;
+        case video::gl_context_flag::reset_isolation_mode:
+            sdl_flag = SDL_GL_CONTEXT_RESET_ISOLATION_FLAG;
+            break;
+        default:
+            throw std::runtime_error("Never supposed to be here");
+            break;
+    }
+    return current_flags & sdl_flag;
+}
+
+void video::gl_attribute::context_profile_mask(gl_context_profile profile)
+{
+    int sdl_profile{};
+    switch (profile)
+    {
+        case video::gl_context_profile::automatic:
+            sdl_profile = 0;
+            break;
+        case video::gl_context_profile::compatibility:
+            sdl_profile = SDL_GL_CONTEXT_PROFILE_COMPATIBILITY;
+            break;
+        case video::gl_context_profile::core:
+            sdl_profile = SDL_GL_CONTEXT_PROFILE_CORE;
+            break;
+        case video::gl_context_profile::es:
+            sdl_profile = SDL_GL_CONTEXT_PROFILE_ES;
+            break;
+        default:
+            throw std::runtime_error("Never supposed to be here");
+            break;
+    }
+    if (0 != SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, sdl_profile))
+    {
+        throw std::runtime_error(SDL_GetError());
+    }
+    return;
+}
+
+video::gl_context_profile video::gl_attribute::context_profile_mask()
+{
+    video::gl_context_profile om_profile;
+    int                       sdl_profile{};
+    if (0 != SDL_GL_GetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, &sdl_profile))
+    {
+        throw std::runtime_error(SDL_GetError());
+    }
+    switch (sdl_profile)
+    {
+        case 0:
+            om_profile = video::gl_context_profile::automatic;
+            break;
+        case SDL_GL_CONTEXT_PROFILE_COMPATIBILITY:
+            om_profile = video::gl_context_profile::compatibility;
+            break;
+        case SDL_GL_CONTEXT_PROFILE_CORE:
+            om_profile = video::gl_context_profile::core;
+
+            break;
+        case SDL_GL_CONTEXT_PROFILE_ES:
+            om_profile = video::gl_context_profile::es;
+            break;
+        default:
+            throw std::runtime_error("Never supposed to be here");
+            break;
+    }
+
+    return om_profile;
+}
+
+void video::gl_attribute::share_with_curent_context(bool val)
+{
+    if (0 != SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, val))
+    {
+        throw std::runtime_error(SDL_GetError());
+    }
+    return;
+}
+
+bool video::gl_attribute::share_with_curent_context()
+{
+    int result{};
+    if (0 != SDL_GL_GetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, &result))
+    {
+        throw std::runtime_error(SDL_GetError());
+    }
+    return result;
+}
+
+void video::gl_attribute::gl_framebuffer_srgb_capable(bool val)
+{
+    if (0 != SDL_GL_SetAttribute(SDL_GL_FRAMEBUFFER_SRGB_CAPABLE, val))
+    {
+        throw std::runtime_error(SDL_GetError());
+    }
+    return;
+}
+
+bool video::gl_attribute::gl_framebuffer_srgb_capable()
+{
+    int result{};
+    if (0 != SDL_GL_GetAttribute(SDL_GL_FRAMEBUFFER_SRGB_CAPABLE, &result))
+    {
+        throw std::runtime_error(SDL_GetError());
+    }
+    return result;
+}
+
+void video::gl_attribute::context_release_behavior(gl_context_release_flag flag)
+{
+    int sdl_flag{};
+    switch (flag)
+    {
+        case video::gl_context_release_flag::flush:
+            sdl_flag = SDL_GL_CONTEXT_RELEASE_BEHAVIOR_FLUSH;
+            break;
+        case video::gl_context_release_flag::none:
+            sdl_flag = SDL_GL_CONTEXT_RELEASE_BEHAVIOR_NONE;
+            break;
+        default:
+            throw std::runtime_error("Never supposed to be here");
+            break;
+    }
+    if (0 != SDL_GL_SetAttribute(SDL_GL_CONTEXT_RELEASE_BEHAVIOR, sdl_flag))
+    {
+        throw std::runtime_error(SDL_GetError());
+    }
+    return;
+}
+
+video::gl_context_release_flag video::gl_attribute::context_release_behavior()
+{
+    int sdl_flag{};
+    if (0 != SDL_GL_GetAttribute(SDL_GL_CONTEXT_RELEASE_BEHAVIOR, &sdl_flag))
+    {
+        throw std::runtime_error(SDL_GetError());
+    }
+    switch (sdl_flag)
+    {
+        case SDL_GL_CONTEXT_RELEASE_BEHAVIOR_FLUSH:
+            return video::gl_context_release_flag::flush;
+            break;
+        case SDL_GL_CONTEXT_RELEASE_BEHAVIOR_NONE:
+            return video::gl_context_release_flag::none;
+            break;
+        default:
+            throw std::runtime_error("Never supposed to be here");
+            break;
+    }
 }
 
 } // namespace om
