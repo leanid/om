@@ -17,8 +17,8 @@
 #include "game_object.hxx"
 #include "snake.hxx"
 
-static constexpr size_t screen_width  = 960.f;
-static constexpr size_t screen_height = 540.f;
+size_t screen_width  = 960.f;
+size_t screen_height = 540.f;
 om::texture*            debug_texture = nullptr;
 
 class snake_game final : public om::lila
@@ -76,6 +76,7 @@ void snake_game::update_free_cells()
 
 void snake_game::on_initialize()
 {
+    om::get_window_size(screen_width, screen_height);
     free_cells.reserve(28 * 28);
 
     debug_texture = om::create_texture("res/debug.png");

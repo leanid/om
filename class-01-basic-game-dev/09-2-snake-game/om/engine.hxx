@@ -180,4 +180,4 @@ struct OM_DECLSPEC lila
 
 } // end namespace om
 
-extern std::unique_ptr<om::lila> om_tat_sat();
+// implement in your game dll: std::unique_ptr<om::lila> om_tat_sat();

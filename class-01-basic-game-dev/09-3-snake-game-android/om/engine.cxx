@@ -20,9 +20,17 @@
 #include <tuple>
 #include <vector>
 
+#ifdef __ANDROID__
+#include <SDL.h>
+#include <android/log.h>
+#define GL_GLES_PROTOTYPES 1
+#include <GLES2/gl2.h>
+#define glActiveTexture_ glActiveTexture
+#else
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>
 #include <SDL2/SDL_opengl_glext.h>
+#endif
 
 //#include "picopng.hxx"
 
@@ -37,6 +45,7 @@
 // we have to load all extension GL function pointers
 // dynamically from OpenGL library
 // so first declare function pointers for all we need
+#ifndef __ANDROID__
 static PFNGLCREATESHADERPROC             glCreateShader             = nullptr;
 static PFNGLSHADERSOURCEPROC             glShaderSource             = nullptr;
 static PFNGLCOMPILESHADERPROC            glCompileShader            = nullptr;
@@ -59,6 +68,10 @@ static PFNGLUNIFORM1IPROC                glUniform1i                = nullptr;
 static PFNGLACTIVETEXTUREPROC            glActiveTexture_           = nullptr;
 static PFNGLUNIFORM4FVPROC               glUniform4fv               = nullptr;
 static PFNGLUNIFORMMATRIX3FVPROC         glUniformMatrix3fv         = nullptr;
+#if defined(PFNGLGETERRORPROC)
+static PFNGLGETERRORPROC                 glGetError = nullptr;
+#endif
+#endif
 
 template <typename T>
 static void load_gl_func(const char* func_name, T& result)
@@ -771,6 +784,19 @@ bool pool_event(event& e)
                 e.type       = om::event_type::input_key;
                 return true;
             }
+        } else if (sdl_event.type == SDL_MOUSEBUTTONDOWN || sdl_event.type == SDL_MOUSEBUTTONUP)
+        {
+            int w = 0;
+            int h = 0;
+            SDL_GetWindowSize(window, &w, &h);
+
+            enum keys key = sdl_event.button.x < (w / 2) ? keys::left : keys::right;
+            bool is_down = SDL_MOUSEBUTTONDOWN == sdl_event.type;
+
+            e.info = om::input_data{key, is_down};
+            e.timestamp = sdl_event.common.timestamp * 0.001;
+            e.type = om::event_type::input_key;
+            return true;
         }
     }
     return false;
@@ -820,6 +846,17 @@ sound* create_sound(std::string_view path)
 void destroy_sound(sound* sound)
 {
     delete sound;
+}
+
+void get_window_size(size_t& width, size_t& height)
+{
+    int w = 0;
+    int h = 0;
+
+    SDL_GetWindowSize(window, &w, &h);
+
+    width = static_cast<size_t>(w);
+    height = static_cast<size_t>(h);
 }
 
 static const std::array<GLenum, 6> primitive_types = {
@@ -946,6 +983,15 @@ static void initialize_internal(std::string_view   title,
         int window_size_w = static_cast<int>(desired_window_mode.width);
         int window_size_h = static_cast<int>(desired_window_mode.heigth);
 
+#if defined(__ANDROID__)
+        {
+            SDL_DisplayMode dispale_mode;
+            SDL_GetCurrentDisplayMode(0, &dispale_mode);
+            window_size_w = dispale_mode.w;
+            window_size_h = dispale_mode.h;
+        }
+#endif
+
         window = SDL_CreateWindow(title.data(), SDL_WINDOWPOS_CENTERED,
                                   SDL_WINDOWPOS_CENTERED, window_size_w,
                                   window_size_h, ::SDL_WINDOW_OPENGL);
@@ -958,6 +1004,10 @@ static void initialize_internal(std::string_view   title,
             SDL_Quit();
             throw std::runtime_error(serr.str());
         }
+
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
 
         gl_context = SDL_GL_CreateContext(window);
         if (gl_context == nullptr)
@@ -977,16 +1027,20 @@ static void initialize_internal(std::string_view   title,
             SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, &gl_minor_ver);
         assert(result == 0);
 
-        if (gl_major_ver <= 2 && gl_minor_ver < 1)
+        if (gl_major_ver != 2)
         {
             serr << "current context opengl version: " << gl_major_ver << '.'
                  << gl_minor_ver << '\n'
-                 << "need opengl version at least: 2.1\n"
+                 << "need opengl version at least: 2.0\n"
                  << std::flush;
             throw std::runtime_error(serr.str());
         }
         try
         {
+#ifndef __ANDROID__
+#if defined(PFNGLGETERRORPROC)
+            load_gl_func("glGetError", glGetError);
+#endif
             load_gl_func("glCreateShader", glCreateShader);
             load_gl_func("glShaderSource", glShaderSource);
             load_gl_func("glCompileShader", glCompileShader);
@@ -1011,6 +1065,7 @@ static void initialize_internal(std::string_view   title,
             load_gl_func("glActiveTexture", glActiveTexture_);
             load_gl_func("glUniform4fv", glUniform4fv);
             load_gl_func("glUniformMatrix3fv", glUniformMatrix3fv);
+#endif
         }
         catch (std::exception& ex)
         {
@@ -1026,6 +1081,7 @@ static void initialize_internal(std::string_view   title,
                                       }
                                       )",
                                       R"(
+                                      precision mediump float;
                                       uniform vec4 u_color;
                                       void main()
                                       {
@@ -1049,6 +1105,7 @@ static void initialize_internal(std::string_view   title,
                     }
                     )",
             R"(
+                    precision mediump float;
                     varying vec4 v_color;
                     void main()
                     {
@@ -1074,6 +1131,7 @@ static void initialize_internal(std::string_view   title,
                     }
                     )",
             R"(
+                    precision mediump float;
                     varying vec2 v_tex_coord;
                     varying vec4 v_color;
                     uniform sampler2D s_texture;
@@ -1104,6 +1162,7 @@ static void initialize_internal(std::string_view   title,
                     }
                     )",
             R"(
+                    precision mediump float;
                     varying vec2 v_tex_coord;
                     varying vec4 v_color;
                     uniform sampler2D s_texture;
@@ -1275,6 +1334,37 @@ void color::set_a(const float a)
     rgba |= a_ << 24;
 }
 
+    membuf load_file(std::string_view path)
+    {
+        SDL_RWops* io = SDL_RWFromFile(path.data(), "rb");
+        if (nullptr == io)
+        {
+            throw std::runtime_error("can't load file: " + std::string(path));
+        }
+
+        Sint64 file_size = io->size(io);
+        if (-1 == file_size)
+        {
+            throw std::runtime_error("can't determine size of file: " +
+                                     std::string(path));
+        }
+        size_t                  size = static_cast<size_t>(file_size);
+        std::unique_ptr<char[]> mem  = std::make_unique<char[]>(size);
+
+        size_t num_readed_objects = io->read(io, mem.get(), size, 1);
+        if (num_readed_objects != 1)
+        {
+            throw std::runtime_error("can't read all content from file: " +
+                                     std::string(path));
+        }
+
+        if (0 != io->close(io))
+        {
+            throw std::runtime_error("failed close file: " + std::string(path));
+        }
+        return membuf(std::move(mem), size);
+    }
+
 texture_gl_es20::texture_gl_es20(std::string_view path)
     : file_path(path)
 {
@@ -1303,12 +1393,18 @@ texture_gl_es20::texture_gl_es20(std::string_view path)
     //        png_file_in_memory, convert_color::to_rgba32,
     //        origin_point::bottom_left);
 
+    // TODO load file into memmory
+
+    membuf file_contents = load_file(path);
+
     stbi_set_flip_vertically_on_load(true);
     int            width      = 0;
     int            height     = 0;
     int            components = 0;
     unsigned char* decoded_img =
-        stbi_load(path.data(), &width, &height, &components, 4);
+    //    stbi_load(path.data(), &width, &height, &components, 4);
+
+     stbi_load_from_memory(reinterpret_cast<unsigned char*>(file_contents.begin()), file_contents.size(), &width, &height, &components, 4);
 
     // if there's an error, display it
     if (decoded_img == nullptr)
@@ -1408,8 +1504,8 @@ int initialize_and_start_main_loop()
     } guard;
 
     std::vector<const char*> lib_names{
-        { "libgame-09-2.dll", "./libgame-09-2.so", "./game-09-2.so",
-          "./build/Debug/libgame-09-2.so", "./build/Debug/libgame-09-2.dll" }
+        { "libgame-09-3.so", "game-09-3", "libgame-09-3.dll", "./libgame-09-3.so", "./game-09-3.so",
+          "./build/Debug/libgame-09-3.so", "./build/Debug/libgame-09-3.dll" }
     };
 
     void* so_handle   = nullptr;
@@ -1514,15 +1610,74 @@ start_game_again:
     return EXIT_SUCCESS;
 }
 
+class android_redirected_buf : public std::streambuf
+{
+public:
+    android_redirected_buf() = default;
+
+private:
+    // This android_redirected_buf buffer has no buffer. So every character
+    // "overflows" and can be put directly into the teed buffers.
+    int overflow(int c) override
+    {
+        if (c == EOF)
+        {
+            return !EOF;
+        }
+        else
+        {
+            if (c == '\n')
+            {
+#ifdef __ANDROID__
+                // android log function add '\n' on every print itself
+                __android_log_print(ANDROID_LOG_ERROR, "OM", "%s",
+                                    message.c_str());
+#else
+                std::printf("%s\n", message.c_str()); // TODO test only
+#endif
+                message.clear();
+            }
+            else
+            {
+                message.push_back(static_cast<char>(c));
+            }
+            return c;
+        }
+    }
+
+    int sync() override { return 0; }
+
+    std::string message;
+};
+
 int main(int /*argc*/, char* /*argv*/ [])
 {
+    auto cout_buf = std::cout.rdbuf();
+    auto cerr_buf = std::cerr.rdbuf();
+    auto clog_buf = std::clog.rdbuf();
+
+    android_redirected_buf logcat;
+
+    std::cout.rdbuf(&logcat);
+    std::cerr.rdbuf(&logcat);
+    std::clog.rdbuf(&logcat);
+    
     try
     {
-        return initialize_and_start_main_loop();
+        int result = initialize_and_start_main_loop();
+        // restore default buffer
+        std::cout.rdbuf(cout_buf);
+        std::cerr.rdbuf(cerr_buf);
+        std::clog.rdbuf(clog_buf);
+        return result;
     }
     catch (std::exception& ex)
     {
         std::cerr << ex.what() << std::endl;
     }
+    // restore default buffer
+    std::cout.rdbuf(cout_buf);
+    std::cerr.rdbuf(cerr_buf);
+    std::clog.rdbuf(clog_buf);
     return EXIT_FAILURE;
 }

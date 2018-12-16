@@ -20,9 +20,15 @@
 #include <tuple>
 #include <vector>
 
+#ifdef WIN32
+#include <SDL.h>
+#include <SDL_opengl.h>
+#include <SDL_opengl_glext.h>
+#else
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>
 #include <SDL2/SDL_opengl_glext.h>
+#endif // WIN32
 
 //#include "picopng.hxx"
 
@@ -33,6 +39,8 @@
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #include "stb_image.h"
 #pragma GCC diagnostic pop
+
+//extern std::unique_ptr<om::lila> om_tat_sat();
 
 // we have to load all extension GL function pointers
 // dynamically from OpenGL library
@@ -1408,7 +1416,7 @@ int initialize_and_start_main_loop()
     } guard;
 
     std::vector<const char*> lib_names{
-        { "libgame-09-2.dll", "./libgame-09-2.so", "./game-09-2.so",
+				       { "libgame-09-2.dll", "game-09-2.dll", "./libgame-09-2.so", "./game-09-2.so",
           "./build/Debug/libgame-09-2.so", "./build/Debug/libgame-09-2.dll" }
     };
 
@@ -1442,7 +1450,7 @@ int initialize_and_start_main_loop()
 #if defined(__MINGW32__) || defined(__linux__)
     om_tat_sat_func = "_Z10om_tat_satv";
 #elif defined(_MSC_VER)
-    om_tat_sat_func = "om_tat_sat::om::engine"; // TODO fix it later
+    om_tat_sat_func = "?om_tat_sat@@YA?AV?$unique_ptr@Ulila@om@@U?$default_delete@Ulila@om@@@std@@@std@@XZ";
 #else
 #error "add mangled name for your compiler"
 #endif

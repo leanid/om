@@ -17,6 +17,10 @@
 #include "game_object.hxx"
 #include "snake.hxx"
 
+#ifndef OM_EXPORT
+#define OM_EXPORT
+#endif
+
 static constexpr size_t screen_width  = 960.f;
 static constexpr size_t screen_height = 540.f;
 om::texture*            debug_texture = nullptr;
@@ -43,7 +47,7 @@ private:
     void update_free_cells();
 };
 
-std::unique_ptr<om::lila> om_tat_sat()
+OM_EXPORT std::unique_ptr<om::lila> om_tat_sat()
 {
     om::log << "initialize engine" << std::endl;
 

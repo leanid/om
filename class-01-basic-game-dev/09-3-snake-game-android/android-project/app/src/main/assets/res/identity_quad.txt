@@ -1,0 +1,16 @@
+num_of_vertexes 6
+
+// first triangle
+// position   tex          color
+// pos.xy     uv           color.rgba
+-0.5 0.5      0.0 1.0      1.0 1.0 1.0 1.0 // red green blue alpha
+0.5 0.5       1.0 1.0      1.0 1.0 1.0 1.0
+0.5 -0.5      1.0 0.0      1.0 1.0 1.0 1.0
+
+// second triangle
+// position   tex          color
+// pos.xy     uv           color.rgba
+
+-0.5 0.5      0.0 1.0      1.0 1.0 1.0 1.0
+0.5 -0.5      1.0 0.0      1.0 1.0 1.0 1.0
+-0.5 -0.5     0.0 0.0      1.0 1.0 1.0 1.0

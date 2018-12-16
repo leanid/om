@@ -1,7 +1,20 @@
 cmake_minimum_required(VERSION 3.9)
+
+if(SDL2_SRC_DIR)
+add_subdirectory( # Specifies the directory of the CMakeLists.txt file.
+                  ${SDL2_SRC_DIR}
+                  # Specifies the directory for the build outputs.
+                  ${SDL2_BUILD_DIR} )  
+endif()
+
+
 project(09-3-start-game-protorype)
 
-add_executable(engine-09-3 om/engine.cxx om/engine.hxx om/stb_image.h)
+if (SDL2_SRC_DIR)
+    add_library(engine-09-3 SHARED om/engine.cxx om/engine.hxx om/stb_image.h)
+else()
+    add_executable(engine-09-3 om/engine.cxx om/engine.hxx om/stb_image.h)
+endif()
 set_target_properties(engine-09-3 PROPERTIES ENABLE_EXPORTS TRUE)
 target_compile_features(engine-09-3 PRIVATE cxx_std_17)
 
@@ -20,10 +33,16 @@ if (MINGW)
                opengl32
                )
 elseif(UNIX)
-    target_link_libraries(engine-09-3
-               SDL2
-               GL
-               )
+    if(SDL2_SRC_DIR)
+        #target_include_directories( engine-09-3 PRIVATE ${SDL2_SRC_DIR}/include )
+        target_link_libraries( engine-09-3 SDL2 SDL2main )
+    else()
+        target_link_libraries(engine-09-3
+                SDL2
+                GL
+                #-lstdc++fs
+                )
+    endif()
 elseif(MSVC)
     find_package(sdl2 REQUIRED)
     target_link_libraries(engine-09-3 PRIVATE SDL2::SDL2 SDL2::SDL2main

@@ -492,47 +492,57 @@ struct properties_interpretator
 
             std::string key(decl.var.name->value);
 
-            operand right_value =
-                std::get<operand>(command.right_operand.value);
-
-            if (command.op.op->value != "=")
+            if (std::holds_alternative<expression*>(command.right_operand.value))
             {
-                throw std::runtime_error(
-                    "expected operator =\n" +
-                    parser.print_position_of_token(*command.op.op));
-            }
-
-            if (decl.type->value == "std::string")
+                // TODO calculate expression
+                std::clog << "do expression!" << std::endl;
+                expression* expr = std::get<expression*>(command.right_operand.value);
+                value_t value = calculate_expression(expr, key_values);
+            } else
             {
-                if (!std::holds_alternative<constant>(right_value.value))
+                operand right_value =
+                    std::get<operand>(command.right_operand.value);
+
+                if (command.op.op->value != "=")
                 {
-                    throw std::runtime_error("expected std::string constant: " +
-                                             parser.print_position_of_token(
-                                                 *right_value.first_token));
+                    throw std::runtime_error(
+                        "expected operator =\n" +
+                        parser.print_position_of_token(*command.op.op));
                 }
 
-                std::string value(
-                    std::get<constant>(right_value.value).value->value);
-
-                key_values[key] = value;
-            }
-            else if (decl.type->value == "int")
-            {
-                // TODO
-            }
-            else if (decl.type->value == "float")
-            {
-                if (!std::holds_alternative<constant>(right_value.value))
+                if (decl.type->value == "std::string")
                 {
-                    throw std::runtime_error("expected float constant: " +
-                                             parser.print_position_of_token(
-                                                 *right_value.first_token));
-                }
+                    if (!std::holds_alternative<constant>(right_value.value))
+                    {
+                        throw std::runtime_error("expected std::string constant: " +
+                                                 parser.print_position_of_token(
+                                                     *right_value.first_token));
+                    }
 
-                std::string value_str(
-                    std::get<constant>(right_value.value).value->value);
-                float value     = stof(value_str);
-                key_values[key] = value;
+                    std::string value(
+                        std::get<constant>(right_value.value).value->value);
+
+                    key_values[key] = value;
+                }
+                else if (decl.type->value == "int")
+                {
+                    // TODO
+                    throw std::runtime_error("implement me");
+                }
+                else if (decl.type->value == "float")
+                {
+                    if (!std::holds_alternative<constant>(right_value.value))
+                    {
+                        throw std::runtime_error("expected float constant: " +
+                                                 parser.print_position_of_token(
+                                                     *right_value.first_token));
+                    }
+
+                    std::string value_str(
+                        std::get<constant>(right_value.value).value->value);
+                    float value     = stof(value_str);
+                    key_values[key] = value;
+                }
             }
         }
         else
@@ -567,6 +577,50 @@ struct properties_interpretator
                 std::clog << std::get<float>(it.second);
             }
             std::clog << std::endl;
+        }
+    }
+
+private:
+    value_t calculate_expression(program_structure::expression* expr, const std::unordered_map<std::string, value_t>& key_values)
+    {
+        value_t first_value = get_value(expr->left_operand, key_values);
+        std::string_view op = expr->op.op->value;
+        if (std::holds_alternative<program_structure::expression*>(expr->right_operand.value))
+        {
+            auto next_exp = std::get<program_structure::expression*>(expr->right_operand.value);
+            // TODO do recursive call
+            value_t next = calculate_expression(next_exp, key_values);
+            return apply(op, first_value, next);
+        } else {
+            // TODO get last value
+            value_t next = std::get<program_structure::operand>(expr->right_operand.value);
+            return apply(op, first_value, )
+        }
+    }
+    value_t get_value(const program_structure::operand& op, const std::unordered_map<std::string, value_t>& key_values)
+    {
+        using namespace program_structure;
+        // it can be
+        // 1. constant {int, float, string}
+        // 2. variable {int, float, string}
+
+        if (std::holds_alternative<variable>(op.value))
+        {
+            variable var = std::get<variable>(op.value);
+            if (std::holds_alternative<lvalue>(var.name))
+            {
+                lvalue lv = std::get<lvalue>(var.name);
+                // TODO get value_t by lvalue name
+                std::string var_name(lv.name->value);
+                auto it = key_values.find(var_name);
+                if (it == std::end(key_values))
+                {
+                    throw std::runtime_error("can't find lvalue with name: " + var_name + parser.print_position_of_token(*lv.name) );
+                }
+            } else
+            {
+                throw std::runtime_error("expected lvalue not declaration");
+            }
         }
     }
 };
