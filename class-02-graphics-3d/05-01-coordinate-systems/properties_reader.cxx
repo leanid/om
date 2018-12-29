@@ -2,6 +2,7 @@
 
 //#include <charconv> // not found on Visual Studio 2017.7
 #include <algorithm>
+#include <charconv>
 #include <fstream>
 #include <iostream>
 #include <regex>
@@ -687,12 +688,41 @@ private:
                         "can't find lvalue with name: " + var_name +
                         parser.print_position_of_token(*lv.name));
                 }
+                return it->second;
             }
             else
             {
                 throw std::runtime_error("expected lvalue not declaration");
             }
         }
+        else if (std::holds_alternative<constant>(op.value))
+        {
+            constant val = std::get<constant>(op.value);
+            if (val.value->type == token_type::string_value)
+            {
+                return { std::string(val.value->value) };
+            }
+            else if (val.value->type == token_type::int_value)
+            {
+                int32_t                result;
+                auto                   s = val.value->value;
+                std::from_chars_result r =
+                    std::from_chars(begin(s), end(s), result);
+                if (r.ec == std::errc())
+                {
+                    return { result };
+                }
+                throw std::runtime_error("can't convert to int value: " +
+                                         std::string(s));
+            }
+            else if (val.value->type == token_type::float_value)
+            {
+                float result = std::stof(std::string(val.value->value));
+                return { result };
+            }
+            throw std::runtime_error("constant not (int, float, string)");
+        }
+        throw std::runtime_error("expected operant be constant or variable");
     }
 };
 
