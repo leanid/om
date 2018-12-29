@@ -64,11 +64,9 @@ struct properties_lexer
         token_bind.emplace_back(token_type::float_value,
                                 R"([+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)f)");
         // original from internet: /"([^"\\]|\\.)*"/
-        token_bind.emplace_back(token_type::string_value,
-                                R"("([^"\\]|\\.)*")");
+        token_bind.emplace_back(token_type::string_value, R"("([^"\\]|\\.)*")");
         token_bind.emplace_back(token_type::end_of_expr, R"(;)");
-        token_bind.emplace_back(token_type::none,
-                                R"(#.*\n|//.*\n| |\n|\t)");
+        token_bind.emplace_back(token_type::none, R"(#.*\n|//.*\n| |\n|\t)");
 
         std::string_view rest_content{ content };
         bool             cant_find_match = false;
@@ -492,13 +490,16 @@ struct properties_interpretator
 
             std::string key(decl.var.name->value);
 
-            if (std::holds_alternative<expression*>(command.right_operand.value))
+            if (std::holds_alternative<expression*>(
+                    command.right_operand.value))
             {
                 // TODO calculate expression
                 std::clog << "do expression!" << std::endl;
-                expression* expr = std::get<expression*>(command.right_operand.value);
+                expression* expr =
+                    std::get<expression*>(command.right_operand.value);
                 value_t value = calculate_expression(expr, key_values);
-            } else
+            }
+            else
             {
                 operand right_value =
                     std::get<operand>(command.right_operand.value);
@@ -514,9 +515,10 @@ struct properties_interpretator
                 {
                     if (!std::holds_alternative<constant>(right_value.value))
                     {
-                        throw std::runtime_error("expected std::string constant: " +
-                                                 parser.print_position_of_token(
-                                                     *right_value.first_token));
+                        throw std::runtime_error(
+                            "expected std::string constant: " +
+                            parser.print_position_of_token(
+                                *right_value.first_token));
                     }
 
                     std::string value(
@@ -581,23 +583,89 @@ struct properties_interpretator
     }
 
 private:
-    value_t calculate_expression(program_structure::expression* expr, const std::unordered_map<std::string, value_t>& key_values)
+    value_t apply(std::string_view operator_literal, const value_t& left,
+                  const value_t& right)
+    {
+        if (std::holds_alternative<std::string>(left))
+        {
+            const std::string& str0 = std::get<std::string>(left);
+            const std::string& str1 = std::get<std::string>(right);
+            if (operator_literal == "+")
+            {
+                return { str0 + str1 };
+            }
+            throw std::runtime_error("expected + operator for strings");
+        }
+        else if (std::holds_alternative<int32_t>(left))
+        {
+            int32_t i0 = std::get<int32_t>(left);
+            int32_t i1 = std::get<int32_t>(right);
+            if (operator_literal == "+")
+            {
+                return { i0 + i1 };
+            }
+            else if (operator_literal == "-")
+            {
+                return { i0 - i1 };
+            }
+            else if (operator_literal == "*")
+            {
+                return { i0 * i1 };
+            }
+            else if (operator_literal == "/")
+            {
+                return { i0 / i1 };
+            }
+        }
+        else if (std::holds_alternative<float>(left))
+        {
+            float f0 = std::get<float>(left);
+            float f1 = std::get<float>(right);
+            if (operator_literal == "+")
+            {
+                return { f0 + f1 };
+            }
+            else if (operator_literal == "-")
+            {
+                return { f0 - f1 };
+            }
+            else if (operator_literal == "*")
+            {
+                return { f0 * f1 };
+            }
+            else if (operator_literal == "/")
+            {
+                return { f0 / f1 };
+            }
+        }
+        throw std::runtime_error("value_t !(string, int32_t, float)");
+    }
+    value_t calculate_expression(
+        program_structure::expression*                  expr,
+        const std::unordered_map<std::string, value_t>& key_values)
     {
         value_t first_value = get_value(expr->left_operand, key_values);
         std::string_view op = expr->op.op->value;
-        if (std::holds_alternative<program_structure::expression*>(expr->right_operand.value))
+        if (std::holds_alternative<program_structure::expression*>(
+                expr->right_operand.value))
         {
-            auto next_exp = std::get<program_structure::expression*>(expr->right_operand.value);
-            // TODO do recursive call
+            auto next_exp = std::get<program_structure::expression*>(
+                expr->right_operand.value);
+
             value_t next = calculate_expression(next_exp, key_values);
             return apply(op, first_value, next);
-        } else {
-            // TODO get last value
-            value_t next = std::get<program_structure::operand>(expr->right_operand.value);
-            return apply(op, first_value, )
+        }
+        else
+        {
+            program_structure::operand operand =
+                std::get<program_structure::operand>(expr->right_operand.value);
+            value_t next = get_value(operand, key_values);
+            return apply(op, first_value, next);
         }
     }
-    value_t get_value(const program_structure::operand& op, const std::unordered_map<std::string, value_t>& key_values)
+    value_t get_value(
+        const program_structure::operand&               op,
+        const std::unordered_map<std::string, value_t>& key_values)
     {
         using namespace program_structure;
         // it can be
@@ -612,12 +680,15 @@ private:
                 lvalue lv = std::get<lvalue>(var.name);
                 // TODO get value_t by lvalue name
                 std::string var_name(lv.name->value);
-                auto it = key_values.find(var_name);
+                auto        it = key_values.find(var_name);
                 if (it == std::end(key_values))
                 {
-                    throw std::runtime_error("can't find lvalue with name: " + var_name + parser.print_position_of_token(*lv.name) );
+                    throw std::runtime_error(
+                        "can't find lvalue with name: " + var_name +
+                        parser.print_position_of_token(*lv.name));
                 }
-            } else
+            }
+            else
             {
                 throw std::runtime_error("expected lvalue not declaration");
             }
