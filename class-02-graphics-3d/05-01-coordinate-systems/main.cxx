@@ -37,7 +37,7 @@ void print_view_port()
          << " w=" << view_port[2] << " h=" << view_port[3] << endl;
 }
 
-int main(int /*argc*/, char* /*argv*/ [])
+int main(int /*argc*/, char* /*argv*/[])
 {
     using namespace std;
     using namespace std::chrono;
@@ -54,10 +54,12 @@ int main(int /*argc*/, char* /*argv*/ [])
         return -1;
     }
 
+    const std::string title = properties.get_string("title");
+
     unique_ptr<SDL_Window, void (*)(SDL_Window*)> window(
-        SDL_CreateWindow("1-triangles, 2-lines, 3-line-strip, 4-line-loop",
-                         SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640,
-                         480, ::SDL_WINDOW_OPENGL | ::SDL_WINDOW_RESIZABLE),
+        SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_CENTERED,
+                         SDL_WINDOWPOS_CENTERED, 640, 480,
+                         ::SDL_WINDOW_OPENGL | ::SDL_WINDOW_RESIZABLE),
         SDL_DestroyWindow);
 
     if (window == nullptr)
@@ -237,6 +239,8 @@ int main(int /*argc*/, char* /*argv*/ [])
     bool continue_loop = true;
     while (continue_loop)
     {
+        properties.update_changes();
+
         SDL_Event event;
         while (SDL_PollEvent(&event))
         {
@@ -296,10 +300,10 @@ int main(int /*argc*/, char* /*argv*/ [])
         glm::mat4 view(1.f);
         view = glm::translate(view, glm::vec3(0.f, 0.f, -3.f));
 
-        float     fovy   = glm::radians(45.f);
-        float     aspect = 640.f / 480.f;
-        float     z_near = 3.f;
-        float     z_far  = 100.f;
+        float     fovy   = glm::radians(properties.get_float("fovy"));
+        float     aspect = properties.get_float("aspect");
+        float     z_near = properties.get_float("z_near"); // 3.f;
+        float     z_far  = properties.get_float("z_far");  // 100.f;
         glm::mat4 projection;
         projection = glm::perspective(fovy, aspect, z_near, z_far);
 

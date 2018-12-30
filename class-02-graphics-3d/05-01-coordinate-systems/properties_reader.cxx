@@ -106,6 +106,12 @@ struct properties_lexer
 
                 rest_content = rest_content.substr(tok.value.size());
 
+                if (tok.type == token_type::string_value)
+                {
+                    // skip "" - charecters in string literal
+                    tok.value = tok.value.substr(1, tok.value.size() - 2);
+                }
+
                 if (best_token_regex->type == token_type::none)
                 {
                     continue;
@@ -241,13 +247,6 @@ struct properties_parser
         : lexer{ lexer_ }
     {
         using namespace program_structure;
-
-        std::clog << "--------start tokens" << std::endl;
-        for (auto& token : lexer.token_list)
-        {
-            std::clog << token.type << ":{" << token.value << "}" << std::endl;
-        }
-        std::clog << "--------end tokens" << std::endl;
 
         for (auto token_iter = begin(lexer.token_list);
              token_iter != end(lexer.token_list);)
@@ -562,30 +561,10 @@ struct properties_interpretator
 
     void run(std::unordered_map<std::string, value_t>& key_values)
     {
-        // TODO interpret program and fill key_values map
-
+        // interpret program and fill key_values map
         for (const auto& command : parser.commands)
         {
             execute(command, key_values);
-        }
-
-        // debug
-        for (auto it : key_values)
-        {
-            std::clog << "key: " << it.first << " value: ";
-            if (std::holds_alternative<std::string>(it.second))
-            {
-                std::clog << std::get<std::string>(it.second);
-            }
-            else if (std::holds_alternative<std::int32_t>(it.second))
-            {
-                std::clog << std::get<std::int32_t>(it.second);
-            }
-            else if (std::holds_alternative<float>(it.second))
-            {
-                std::clog << std::get<float>(it.second);
-            }
-            std::clog << std::endl;
         }
     }
 
@@ -737,8 +716,26 @@ class properties_reader::impl
 public:
     impl(const fs::path& path_)
         : path{ path_ }
+        , last_update_time{ fs::last_write_time(path) }
     {
-        // TODO parse file
+        load_and_parse();
+    }
+
+    std::unordered_map<std::string, value_t>& get_map() { return key_values; }
+
+    void update_changes()
+    {
+        fs::file_time_type new_time = fs::last_write_time(path);
+        if (new_time != last_update_time)
+        {
+            last_update_time = new_time;
+            load_and_parse();
+        }
+    }
+
+private:
+    void load_and_parse()
+    {
         std::ifstream file;
         file.exceptions(std::ifstream::badbit | std::ifstream::failbit);
 
@@ -756,11 +753,9 @@ public:
         generator.run(key_values);
     }
 
-    std::unordered_map<std::string, value_t>& get_map() { return key_values; }
-
-private:
-    fs::path                                 path;
     std::unordered_map<std::string, value_t> key_values;
+    fs::path                                 path;
+    fs::file_time_type                       last_update_time;
 };
 
 properties_reader::properties_reader(const fs::path& path)
@@ -768,9 +763,12 @@ properties_reader::properties_reader(const fs::path& path)
 {
 }
 
-void properties_reader::update_changes() {}
+void properties_reader::update_changes()
+{
+    ptr->update_changes();
+}
 
-std::string_view properties_reader::get_string(std::string_view key) const
+const std::string& properties_reader::get_string(std::string_view key) const
 {
     return std::get<std::string>(ptr->get_map()[std::string(key)]);
 }

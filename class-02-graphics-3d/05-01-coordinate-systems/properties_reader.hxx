@@ -17,9 +17,9 @@ public:
 
     void update_changes();
 
-    std::string_view get_string(std::string_view name) const noexcept(false);
-    std::int32_t     get_int(std::string_view name) const noexcept(false);
-    float            get_float(std::string_view name) const noexcept(false);
+    const std::string& get_string(std::string_view name) const noexcept(false);
+    std::int32_t       get_int(std::string_view name) const noexcept(false);
+    float              get_float(std::string_view name) const noexcept(false);
 
     properties_reader(const properties_reader&) = delete;
     properties_reader& operator=(const properties_reader&) = delete;
