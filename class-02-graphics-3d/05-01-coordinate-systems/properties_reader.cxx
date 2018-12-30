@@ -413,10 +413,11 @@ program_structure::variable properties_parser::parse_variable_name(
 
     expected(token_it, token_type::prop_name);
 
-    declaration decl;
-    decl.var.name = &(*token_it);
+    lvalue var_name;
+    var_name.name = &(*token_it);
+
     variable var;
-    var.name = decl;
+    var.name = var_name;
 
     ++token_it;
 
@@ -454,6 +455,8 @@ program_structure::expr_or_operand properties_parser::parse_expr_or_operand(
 {
     using namespace program_structure;
 
+    std::vector<token>::iterator token_it_copy = token_it;
+
     const token* first_token = &(*token_it);
 
     operand first_operand = parse_operand(token_it);
@@ -465,8 +468,12 @@ program_structure::expr_or_operand properties_parser::parse_expr_or_operand(
     }
     else
     {
-        expression expr = parse_expression(token_it);
-        return { new expression(expr) };
+        expression   expr           = parse_expression(token_it_copy);
+        const token* past_end_token = &(*token_it_copy);
+        // restore iterator to current state
+        token_it = token_it_copy;
+        // FIXME memory leak
+        return { new expression(expr), first_token, past_end_token };
     }
 }
 
@@ -494,11 +501,10 @@ struct properties_interpretator
             if (std::holds_alternative<expression*>(
                     command.right_operand.value))
             {
-                // TODO calculate expression
-                std::clog << "do expression!" << std::endl;
                 expression* expr =
                     std::get<expression*>(command.right_operand.value);
-                value_t value = calculate_expression(expr, key_values);
+                value_t value   = calculate_expression(expr, key_values);
+                key_values[key] = value;
             }
             else
             {
