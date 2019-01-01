@@ -4,6 +4,8 @@
 #include <memory>
 #include <string_view>
 
+#include <glm/vec3.hpp>
+
 #ifdef _MSC_VER
 namespace fs = std::experimental::filesystem;
 #else
@@ -14,17 +16,15 @@ class properties_reader
 {
 public:
     explicit properties_reader(const fs::path& path);
+    properties_reader(const properties_reader&) = delete;
+    properties_reader& operator=(const properties_reader&) = delete;
+    ~properties_reader();
 
     void update_changes();
 
     const std::string& get_string(std::string_view name) const noexcept(false);
-    std::int32_t       get_int(std::string_view name) const noexcept(false);
     float              get_float(std::string_view name) const noexcept(false);
-
-    properties_reader(const properties_reader&) = delete;
-    properties_reader& operator=(const properties_reader&) = delete;
-
-    ~properties_reader();
+    const glm::vec3&   get_vec3(std::string_view name) const noexcept(false);
 
 private:
     class impl;

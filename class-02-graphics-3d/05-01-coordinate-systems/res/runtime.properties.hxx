@@ -1,3 +1,4 @@
+#include <glm/vec3.hpp>
 #include <string>
 
 // you can use this header file directly in your build
@@ -11,3 +12,6 @@ float       fovy          = 45.f;
 float       screen_width  = 640.f;
 float       screen_height = 480.f;
 float       aspect        = screen_height / screen_width;
+float       angle         = -45.f;
+glm::vec3   rotate_axis_x = { 1.f, 0.f, 0.f };
+// glm::vec3   move_camera   = { 0.f, 0.f, -3.f };

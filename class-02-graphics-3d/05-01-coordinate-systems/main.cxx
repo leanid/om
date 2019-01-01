@@ -9,6 +9,8 @@
 #include "opengles30.hxx"
 #include "properties_reader.hxx"
 
+#include "res/runtime.properties.hxx"
+
 #pragma pack(push, 4)
 struct context_parameters
 {
@@ -76,7 +78,8 @@ int main(int /*argc*/, char* /*argv*/[])
     using namespace std::string_literals;
 
     const char* platform_name = SDL_GetPlatform();
-    if (platform_name == "Windows"s || platform_name == "Mac OS X"s)
+    if (platform_name == "Windows"s || platform_name == "Mac OS X"s ||
+        platform_name == "Linux"s)
     {
         // we want OpenGL Core 3.3 context
         ask_context.name          = "OpenGL Core";
@@ -294,16 +297,16 @@ int main(int /*argc*/, char* /*argv*/[])
         }
 
         glm::mat4 model;
-        model = glm::rotate(model, glm::radians(-55.0f),
+        model = glm::rotate(model, glm::radians(properties.get_float("angle")),
                             glm::vec3(1.0f, 0.0f, 0.0f));
 
         glm::mat4 view(1.f);
         view = glm::translate(view, glm::vec3(0.f, 0.f, -3.f));
 
-        float     fovy   = glm::radians(properties.get_float("fovy"));
-        float     aspect = properties.get_float("aspect");
-        float     z_near = properties.get_float("z_near"); // 3.f;
-        float     z_far  = properties.get_float("z_far");  // 100.f;
+        fovy   = glm::radians(properties.get_float("fovy"));
+        aspect = properties.get_float("aspect");
+        z_near = properties.get_float("z_near"); // 3.f;
+        z_far  = properties.get_float("z_far");  // 100.f;
         glm::mat4 projection;
         projection = glm::perspective(fovy, aspect, z_near, z_far);
 
