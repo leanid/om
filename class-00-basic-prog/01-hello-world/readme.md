@@ -1,6 +1,5 @@
 # install static version of standard libraries
-sudo dnf install libstdc++-static
-sudo dnf search glibc-static
+sudo dnf install libstdc++-static glibc-static
 # then g++ -static main.cxx
 # should see a.out
 ldd a.out
