@@ -1,8 +1,8 @@
 #include <algorithm>
-#include <iostream>
-#include <vector>
-#include <sstream>
 #include <cstring>
+#include <iostream>
+#include <sstream>
+#include <vector>
 
 void* operator new(size_t n) noexcept(false)
 {
@@ -25,13 +25,16 @@ void operator delete(void* p, std::size_t n) noexcept(true)
 
 int main(int argc, char* argv[])
 {
-    std::cout << "-main-start------------------------------------------------------\n" << std::flush;
+    std::cout
+        << "-main-start------------------------------------------------------\n"
+        << std::flush;
     {
         std::cout << "next line will not allocate any memory\n" << std::flush;
         std::cout << "hello world " << argc << ' ' << 3.14159 << ' '
-              << argv[argc - 1] << '\n';
-        std::string str("next line allocate memory for string some long string not "
-                    "fit into 16 bytes optimization");
+                  << argv[argc - 1] << '\n';
+        std::string str(
+            "next line allocate memory for string some long string not "
+            "fit into 16 bytes optimization");
         std::cout << "length of str is " << std::size(str) << '\n';
         std::vector<char> vec;
         std::cout << "prepare for 16Mb allocation!" << std::endl;
@@ -41,15 +44,28 @@ int main(int argc, char* argv[])
         std::cout << std::flush;
     }
     {
-        std::cout << "-play-with-string-stream-------------------------------------------------\n" << std::flush;
+        std::cout << "-play-with-string-stream---------------------------------"
+                     "----------------\n"
+                  << std::flush;
         std::stringstream ss;
         ss << "hello world\n";
-        const char* s = "asdfasdfasdfasfdasdfasfdasdfasfdasdfasfdsdfasdfasfdafdsfasfdasdfasdfasfdfsadfafsdasfdasfdafdsasfdasfd";
+        const char* s = "asdfasdfasdfasfdasdfasfdasdfasfdasdfasfdsdfasdfasfdafd"
+                        "sfasfdasdfasdfasfdfsadfafsdasfdasfdafdsasfdasfd";
         const size_t len = strlen(s);
         ss << s << " " << len << '\n';
         std::cout << ss.str() << std::flush;
-        
     }
-    std::cout << "-main-finish------------------------------------------------------\n" << std::flush;
+    {
+        std::cout
+            << "-play-with-array------------------------------------------\n";
+        size_t arr_size = 128;
+        char*  array    = new char[arr_size];
+        delete[] array;
+        std::cout
+            << "-finish-with-array----------------------------------------\n";
+    }
+    std::cout << "-main-finish-------------------------------------------------"
+                 "-----\n"
+              << std::flush;
     return 0;
 }
