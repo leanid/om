@@ -183,7 +183,7 @@ public:
         int gl_minor_ver = 0;
 
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
-                            SDL_GL_CONTEXT_PROFILE_CORE);
+                            SDL_GL_CONTEXT_PROFILE_ES);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, gl_major_ver);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, gl_minor_ver);
 
@@ -246,7 +246,7 @@ public:
     }
     void render_triangle(const triangle&) final
     {
-        glClearColor(0.f, 1.0, 0.f, 0.0f);
+        glClearColor(0.f, 1.0, 1.f, 0.0f);
         OM_GL_CHECK();
         glClear(GL_COLOR_BUFFER_BIT);
         OM_GL_CHECK();
