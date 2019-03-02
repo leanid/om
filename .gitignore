@@ -12,6 +12,7 @@ local.properties
 *.user
 
 build/
+build-Debug/
 tests/11-1-android-port/android-project/.*
 tests/11-1-android-port/android-project/local.properties
 tests/11-1-android-port/android-project/app/src/main/jni/SDL2

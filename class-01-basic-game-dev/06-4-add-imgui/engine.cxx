@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <array>
 #include <cassert>
+#include <cmath>
 #include <cstddef>
 #include <exception>
 #include <fstream>
@@ -41,8 +42,13 @@ static PFNGLENABLEVERTEXATTRIBARRAYPROC  glEnableVertexAttribArray  = nullptr;
 static PFNGLDISABLEVERTEXATTRIBARRAYPROC glDisableVertexAttribArray = nullptr;
 static PFNGLGETUNIFORMLOCATIONPROC       glGetUniformLocation       = nullptr;
 static PFNGLUNIFORM1IPROC                glUniform1i                = nullptr;
-static PFNGLACTIVETEXTUREPROC            glActiveTextureMY          = nullptr;
+static PFNGLACTIVETEXTUREPROC            glActiveTexture_           = nullptr;
 static PFNGLUNIFORM4FVPROC               glUniform4fv               = nullptr;
+static PFNGLUNIFORMMATRIX3FVPROC         glUniformMatrix3fv         = nullptr;
+static PFNGLGENBUFFERSPROC               glGenBuffers               = nullptr;
+static PFNGLBINDBUFFERPROC               glBindBuffer               = nullptr;
+static PFNGLBUFFERDATAPROC               glBufferData               = nullptr;
+static PFNGLBUFFERSUBDATAPROC            glBufferSubData            = nullptr;
 
 template <typename T>
 static void load_gl_func(const char* func_name, T& result)
@@ -87,7 +93,122 @@ static void load_gl_func(const char* func_name, T& result)
 namespace om
 {
 
+vec2::vec2()
+    : x(0.f)
+    , y(0.f)
+{
+}
+vec2::vec2(float x_, float y_)
+    : x(x_)
+    , y(y_)
+{
+}
+
+vec2 operator+(const vec2& l, const vec2& r)
+{
+    vec2 result;
+    result.x = l.x + r.x;
+    result.y = l.y + r.y;
+    return result;
+}
+
+mat2x3::mat2x3()
+    : col0(1.0f, 0.f)
+    , col1(0.f, 1.f)
+    , delta(0.f, 0.f)
+{
+}
+
+mat2x3 mat2x3::identiry()
+{
+    return mat2x3::scale(1.f);
+}
+
+mat2x3 mat2x3::scale(float scale)
+{
+    mat2x3 result;
+    result.col0.x = scale;
+    result.col1.y = scale;
+    return result;
+}
+
+mat2x3 mat2x3::scale(float sx, float sy)
+{
+    mat2x3 r;
+    r.col0.x = sx;
+    r.col1.y = sy;
+    return r;
+}
+
+mat2x3 mat2x3::rotation(float thetha)
+{
+    mat2x3 result;
+
+    result.col0.x = std::cos(thetha);
+    result.col0.y = std::sin(thetha);
+
+    result.col1.x = -std::sin(thetha);
+    result.col1.y = std::cos(thetha);
+
+    return result;
+}
+
+mat2x3 mat2x3::move(const vec2& delta)
+{
+    mat2x3 r = mat2x3::identiry();
+    r.delta  = delta;
+    return r;
+}
+
+vec2 operator*(const vec2& v, const mat2x3& m)
+{
+    vec2 result;
+    result.x = v.x * m.col0.x + v.y * m.col0.y + m.delta.x;
+    result.y = v.x * m.col1.x + v.y * m.col1.y + m.delta.y;
+    return result;
+}
+
+mat2x3 operator*(const mat2x3& m1, const mat2x3& m2)
+{
+    mat2x3 r;
+
+    r.col0.x = m1.col0.x * m2.col0.x + m1.col1.x * m2.col0.y;
+    r.col1.x = m1.col0.x * m2.col1.x + m1.col1.x * m2.col1.y;
+    r.col0.y = m1.col0.y * m2.col0.x + m1.col1.y * m2.col0.y;
+    r.col1.y = m1.col0.y * m2.col1.x + m1.col1.y * m2.col1.y;
+
+    r.delta.x = m1.delta.x * m2.col0.x + m1.delta.y * m2.col0.y + m2.delta.x;
+    r.delta.y = m1.delta.x * m2.col1.x + m1.delta.y * m2.col1.y + m2.delta.y;
+
+    return r;
+}
+
 texture::~texture() {}
+
+vertex_buffer::~vertex_buffer() {}
+
+class vertex_buffer_impl final : public vertex_buffer
+{
+public:
+    vertex_buffer_impl(const tri2* tri, std::size_t n)
+        : triangles(n)
+    {
+        assert(tri != nullptr);
+        for (size_t i = 0; i < n; ++i)
+        {
+            triangles[i] = tri[i];
+        }
+    }
+    ~vertex_buffer_impl() final;
+
+    const v2*      data() const final { return &triangles.data()->v[0]; }
+    virtual size_t size() const final { return triangles.size() * 3; }
+
+private:
+    std::vector<tri2> triangles;
+};
+
+vertex_buffer_impl::~vertex_buffer_impl() {}
 
 class texture_gl_es20 final : public texture
 {
@@ -149,7 +270,7 @@ public:
             throw std::runtime_error("can't get uniform location");
         }
         unsigned int texture_unit = 0;
-        glActiveTextureMY(GL_TEXTURE0 + texture_unit);
+        glActiveTexture_(GL_TEXTURE0 + texture_unit);
         OM_GL_CHECK();
 
         texture->bind();
@@ -171,6 +292,26 @@ public:
         }
         float values[4] = { c.get_r(), c.get_g(), c.get_b(), c.get_a() };
         glUniform4fv(location, 1, &values[0]);
+        OM_GL_CHECK();
+    }
+
+    void set_uniform(std::string_view uniform_name, const mat2x3& m)
+    {
+        const int location =
+            glGetUniformLocation(program_id, uniform_name.data());
+        OM_GL_CHECK();
+        if (location == -1)
+        {
+            std::cerr << "can't get uniform location from shader\n";
+            throw std::runtime_error("can't get uniform location");
+        }
+        // OpenGL wants matrix in column major order
+        // clang-format off
+        float values[9] = { m.col0.x,  m.col0.y, m.delta.x,
+                            m.col1.x, m.col1.y, m.delta.y,
+                            0.f,      0.f,       1.f };
+        // clang-format on
+        glUniformMatrix3fv(location, 1, GL_FALSE, &values[0]);
         OM_GL_CHECK();
     }
 
@@ -196,7 +337,7 @@ private:
             glGetShaderiv(shader_id, GL_INFO_LOG_LENGTH, &info_len);
             OM_GL_CHECK();
             std::vector<char> info_chars(static_cast<size_t>(info_len));
-            glGetShaderInfoLog(shader_id, info_len, NULL, info_chars.data());
+            glGetShaderInfoLog(shader_id, info_len, nullptr, info_chars.data());
             OM_GL_CHECK();
             glDeleteShader(shader_id);
             OM_GL_CHECK();
@@ -313,10 +454,19 @@ std::ostream& operator<<(std::ostream& out, const SDL_version& v)
     return out;
 }
 
-std::istream& operator>>(std::istream& is, uv_pos& uv)
+std::istream& operator>>(std::istream& is, mat2x3& m)
 {
-    is >> uv.u;
-    is >> uv.v;
+    is >> m.col0.x;
+    is >> m.col1.x;
+    is >> m.col0.y;
+    is >> m.col1.y;
+    return is;
+}
+
+std::istream& operator>>(std::istream& is, vec2& v)
+{
+    is >> v.x;
+    is >> v.y;
     return is;
 }
 
@@ -336,24 +486,24 @@ std::istream& operator>>(std::istream& is, color& c)
 
 std::istream& operator>>(std::istream& is, v0& v)
 {
-    is >> v.p.x;
-    is >> v.p.y;
+    is >> v.pos.x;
+    is >> v.pos.y;
 
     return is;
 }
 
 std::istream& operator>>(std::istream& is, v1& v)
 {
-    is >> v.p.x;
-    is >> v.p.y;
+    is >> v.pos.x;
+    is >> v.pos.y;
     is >> v.c;
     return is;
 }
 
 std::istream& operator>>(std::istream& is, v2& v)
 {
-    is >> v.p.x;
-    is >> v.p.y;
+    is >> v.pos.x;
+    is >> v.pos.y;
     is >> v.uv;
     is >> v.c;
     return is;
@@ -385,11 +535,13 @@ std::istream& operator>>(std::istream& is, tri2& t)
 
 struct bind
 {
-    bind(std::string_view s, SDL_Keycode k, event pressed, event released)
+    bind(std::string_view s, SDL_Keycode k, event pressed, event released,
+         keys om_k)
         : name(s)
         , key(k)
         , event_pressed(pressed)
         , event_released(released)
+        , om_key(om_k)
     {
     }
 
@@ -398,21 +550,26 @@ struct bind
 
     event event_pressed;
     event event_released;
+
+    om::keys om_key;
 };
 
 const std::array<bind, 8> keys{
-    { bind{ "up", SDLK_w, event::up_pressed, event::up_released },
-      bind{ "left", SDLK_a, event::left_pressed, event::left_released },
-      bind{ "down", SDLK_s, event::down_pressed, event::down_released },
-      bind{ "right", SDLK_d, event::right_pressed, event::right_released },
+    { bind{ "up", SDLK_w, event::up_pressed, event::up_released, keys::up },
+      bind{ "left", SDLK_a, event::left_pressed, event::left_released,
+            keys::left },
+      bind{ "down", SDLK_s, event::down_pressed, event::down_released,
+            keys::down },
+      bind{ "right", SDLK_d, event::right_pressed, event::right_released,
+            keys::right },
       bind{ "button1", SDLK_LCTRL, event::button1_pressed,
-            event::button1_released },
+            event::button1_released, keys::button1 },
       bind{ "button2", SDLK_SPACE, event::button2_pressed,
-            event::button2_released },
+            event::button2_released, keys::button2 },
       bind{ "select", SDLK_ESCAPE, event::select_pressed,
-            event::select_released },
-      bind{ "start", SDLK_RETURN, event::start_pressed,
-            event::start_released } }
+            event::select_released, keys::select },
+      bind{ "start", SDLK_RETURN, event::start_pressed, event::start_released,
+            keys::start } }
 };
 
 static bool check_input(const SDL_Event& e, const bind*& result)
@@ -446,7 +603,7 @@ public:
     }
     /// pool event from input queue
     /// return true if more events in queue
-    bool read_input(event& e) final
+    bool read_event(event& e) final
     {
         using namespace std;
         // collect all events from SDL
@@ -480,11 +637,32 @@ public:
         return false;
     }
 
+    bool is_key_down(const enum keys key) final
+    {
+        const auto it =
+            std::find_if(begin(keys), end(keys),
+                         [&](const bind& b) { return b.om_key == key; });
+
+        if (it != end(keys))
+        {
+            const std::uint8_t* state         = SDL_GetKeyboardState(nullptr);
+            int                 sdl_scan_code = SDL_GetScancodeFromKey(it->key);
+            return state[sdl_scan_code];
+        }
+        return false;
+    }
+
     texture* create_texture(std::string_view path) final
     {
         return new texture_gl_es20(path);
     }
     void destroy_texture(texture* t) final { delete t; }
+
+    vertex_buffer* create_vertex_buffer(const tri2* triangles, std::size_t n)
+    {
+        return new vertex_buffer_impl(triangles, n);
+    }
+    void destroy_vertex_buffer(vertex_buffer* buffer) { delete buffer; }
 
     void render(const tri0& t, const color& c) final
     {
@@ -492,17 +670,10 @@ public:
         shader00->set_uniform("u_color", c);
         // vertex coordinates
         glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(v0),
-                              &t.v[0].p.x);
+                              &t.v[0].pos.x);
         OM_GL_CHECK();
         glEnableVertexAttribArray(0);
         OM_GL_CHECK();
-
-        // texture coordinates
-        // glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(v0),
-        // &t.v[0].tx);
-        // OM_GL_CHECK();
-        // glEnableVertexAttribArray(1);
-        // OM_GL_CHECK();
 
         glDrawArrays(GL_TRIANGLES, 0, 3);
         OM_GL_CHECK();
@@ -512,7 +683,7 @@ public:
         shader01->use();
         // positions
         glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(t.v[0]),
-                              &t.v[0].p);
+                              &t.v[0].pos);
         OM_GL_CHECK();
         glEnableVertexAttribArray(0);
         OM_GL_CHECK();
@@ -537,7 +708,7 @@ public:
         shader02->set_uniform("s_texture", texture);
         // positions
         glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(t.v[0]),
-                              &t.v[0].p);
+                              &t.v[0].pos);
         OM_GL_CHECK();
         glEnableVertexAttribArray(0);
         OM_GL_CHECK();
@@ -563,6 +734,91 @@ public:
         glDisableVertexAttribArray(2);
         OM_GL_CHECK();
     }
+    void render(const tri2& t, texture* tex, const mat2x3& m) final
+    {
+        shader03->use();
+        texture_gl_es20* texture = static_cast<texture_gl_es20*>(tex);
+        texture->bind();
+        shader03->set_uniform("s_texture", texture);
+        shader03->set_uniform("u_matrix", m);
+        // positions
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(t.v[0]),
+                              &t.v[0].pos);
+        OM_GL_CHECK();
+        glEnableVertexAttribArray(0);
+        OM_GL_CHECK();
+        // colors
+        glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(t.v[0]),
+                              &t.v[0].c);
+        OM_GL_CHECK();
+        glEnableVertexAttribArray(1);
+        OM_GL_CHECK();
+
+        // texture coordinates
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(t.v[0]),
+                              &t.v[0].uv);
+        OM_GL_CHECK();
+        glEnableVertexAttribArray(2);
+        OM_GL_CHECK();
+
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+        OM_GL_CHECK();
+
+        glDisableVertexAttribArray(1);
+        OM_GL_CHECK();
+        glDisableVertexAttribArray(2);
+        OM_GL_CHECK();
+    }
+    void render(const vertex_buffer& buff, texture* tex, const mat2x3& m) final
+    {
+        shader03->use();
+        texture_gl_es20* texture = static_cast<texture_gl_es20*>(tex);
+        texture->bind();
+        shader03->set_uniform("s_texture", texture);
+        shader03->set_uniform("u_matrix", m);
+
+        assert(gl_default_vbo != 0);
+
+        glBindBuffer(GL_ARRAY_BUFFER, gl_default_vbo);
+        OM_GL_CHECK();
+
+        const v2* t = buff.data();
+        uint32_t  data_size_in_bytes =
+            static_cast<uint32_t>(buff.size() * sizeof(v2));
+        glBufferData(GL_ARRAY_BUFFER, data_size_in_bytes, t, GL_DYNAMIC_DRAW);
+        OM_GL_CHECK();
+        glBufferSubData(GL_ARRAY_BUFFER, 0, data_size_in_bytes, t);
+        OM_GL_CHECK();
+
+        // positions
+        glEnableVertexAttribArray(0);
+        OM_GL_CHECK();
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(v2), nullptr);
+        OM_GL_CHECK();
+        // colors
+        glVertexAttribPointer(
+            1, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(v2),
+            reinterpret_cast<void*>(sizeof(v2::pos) + sizeof(v2::uv)));
+        OM_GL_CHECK();
+        glEnableVertexAttribArray(1);
+        OM_GL_CHECK();
+
+        // texture coordinates
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(v2),
+                              reinterpret_cast<void*>(sizeof(v2::pos)));
+        OM_GL_CHECK();
+        glEnableVertexAttribArray(2);
+        OM_GL_CHECK();
+
+        GLsizei num_of_vertexes = static_cast<GLsizei>(buff.size());
+        glDrawArrays(GL_TRIANGLES, 0, num_of_vertexes);
+        OM_GL_CHECK();
+
+        glDisableVertexAttribArray(1);
+        OM_GL_CHECK();
+        glDisableVertexAttribArray(2);
+        OM_GL_CHECK();
+    }
     void swap_buffers() final
     {
         SDL_GL_SwapWindow(window);
@@ -581,9 +837,11 @@ private:
     SDL_Window*   window     = nullptr;
     SDL_GLContext gl_context = nullptr;
 
-    shader_gl_es20* shader00 = nullptr;
-    shader_gl_es20* shader01 = nullptr;
-    shader_gl_es20* shader02 = nullptr;
+    shader_gl_es20* shader00       = nullptr;
+    shader_gl_es20* shader01       = nullptr;
+    shader_gl_es20* shader02       = nullptr;
+    shader_gl_es20* shader03       = nullptr;
+    uint32_t        gl_default_vbo = 0;
 };
 
 static bool already_exist = false;
@@ -770,7 +1028,7 @@ std::string engine_impl::initialize(std::string_view)
 
     window =
         SDL_CreateWindow("title", SDL_WINDOWPOS_CENTERED,
-                         SDL_WINDOWPOS_CENTERED, 640, 480, ::SDL_WINDOW_OPENGL);
+                         SDL_WINDOWPOS_CENTERED, 800, 600, ::SDL_WINDOW_OPENGL);
 
     if (window == nullptr)
     {
@@ -779,6 +1037,10 @@ std::string engine_impl::initialize(std::string_view)
         SDL_Quit();
         return serr.str();
     }
+
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
 
     gl_context = SDL_GL_CreateContext(window);
     if (gl_context == nullptr)
@@ -797,7 +1059,7 @@ std::string engine_impl::initialize(std::string_view)
     result = SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, &gl_minor_ver);
     SDL_assert(result == 0);
 
-    if (gl_major_ver <= 2 && gl_minor_ver < 1)
+    if (gl_major_ver < 2)
     {
         serr << "current context opengl version: " << gl_major_ver << '.'
              << gl_minor_ver << '\n'
@@ -826,13 +1088,28 @@ std::string engine_impl::initialize(std::string_view)
         load_gl_func("glDisableVertexAttribArray", glDisableVertexAttribArray);
         load_gl_func("glGetUniformLocation", glGetUniformLocation);
         load_gl_func("glUniform1i", glUniform1i);
-        load_gl_func("glActiveTexture", glActiveTextureMY);
+        load_gl_func("glActiveTexture", glActiveTexture_);
         load_gl_func("glUniform4fv", glUniform4fv);
+        load_gl_func("glUniformMatrix3fv", glUniformMatrix3fv);
+        load_gl_func("glGenBuffers", glGenBuffers);
+        load_gl_func("glBindBuffer", glBindBuffer);
+        load_gl_func("glBufferData", glBufferData);
+        load_gl_func("glBufferSubDataF", glBufferSubData);
     }
     catch (std::exception& ex)
     {
         return ex.what();
     }
+
+    glGenBuffers(1, &gl_default_vbo);
+    OM_GL_CHECK();
+    glBindBuffer(GL_ARRAY_BUFFER, gl_default_vbo);
+    OM_GL_CHECK();
+    uint32_t data_size_in_bytes = 0;
+    glBufferData(GL_ARRAY_BUFFER, data_size_in_bytes, nullptr, GL_STATIC_DRAW);
+    OM_GL_CHECK();
+    glBufferSubData(GL_ARRAY_BUFFER, 0, data_size_in_bytes, nullptr);
+    OM_GL_CHECK();
 
     shader00 = new shader_gl_es20(R"(
                                   attribute vec2 a_position;
@@ -842,6 +1119,7 @@ std::string engine_impl::initialize(std::string_view)
                                   }
                                   )",
                                   R"(
+                                  precision mediump float;
                                   uniform vec4 u_color;
                                   void main()
                                   {
@@ -860,15 +1138,16 @@ std::string engine_impl::initialize(std::string_view)
                 varying vec4 v_color;
                 void main()
                 {
-                    v_color = a_color;
-                    gl_Position = vec4(a_position, 0.0, 1.0);
+                v_color = a_color;
+                gl_Position = vec4(a_position, 0.0, 1.0);
                 }
                 )",
         R"(
+                precision mediump float;
                 varying vec4 v_color;
                 void main()
                 {
-                     gl_FragColor = v_color;
+                gl_FragColor = v_color;
                 }
                 )",
         { { 0, "a_position" }, { 1, "a_color" } });
@@ -884,18 +1163,19 @@ std::string engine_impl::initialize(std::string_view)
                 varying vec2 v_tex_coord;
                 void main()
                 {
-                    v_tex_coord = a_tex_coord;
-                    v_color = a_color;
-                    gl_Position = vec4(a_position, 0.0, 1.0);
+                v_tex_coord = a_tex_coord;
+                v_color = a_color;
+                gl_Position = vec4(a_position, 0.0, 1.0);
                 }
                 )",
         R"(
+                precision mediump float;
                 varying vec2 v_tex_coord;
                 varying vec4 v_color;
                 uniform sampler2D s_texture;
                 void main()
                 {
-                     gl_FragColor = texture2D(s_texture, v_tex_coord) * v_color;
+                gl_FragColor = texture2D(s_texture, v_tex_coord) * v_color;
                 }
                 )",
         { { 0, "a_position" }, { 1, "a_color" }, { 2, "a_tex_coord" } });
@@ -903,12 +1183,44 @@ std::string engine_impl::initialize(std::string_view)
     // turn on rendering with just created shader program
     shader02->use();
 
+    shader03 = new shader_gl_es20(
+        R"(
+                uniform mat3 u_matrix;
+                attribute vec2 a_position;
+                attribute vec2 a_tex_coord;
+                attribute vec4 a_color;
+                varying vec4 v_color;
+                varying vec2 v_tex_coord;
+                void main()
+                {
+                v_tex_coord = a_tex_coord;
+                v_color = a_color;
+                vec3 pos = vec3(a_position, 1.0) * u_matrix;
+                gl_Position = vec4(pos, 1.0);
+                }
+                )",
+        R"(
+                precision mediump float;
+                varying vec2 v_tex_coord;
+                varying vec4 v_color;
+                uniform sampler2D s_texture;
+                void main()
+                {
+                gl_FragColor = texture2D(s_texture, v_tex_coord) * v_color;
+                }
+                )",
+        { { 0, "a_position" }, { 1, "a_color" }, { 2, "a_tex_coord" } });
+    shader03->use();
+
     glEnable(GL_BLEND);
     OM_GL_CHECK();
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     OM_GL_CHECK();
 
     glClearColor(0.f, 0.0, 0.f, 0.0f);
+    OM_GL_CHECK();
+
+    glViewport(0, 0, 800, 600);
     OM_GL_CHECK();
 
     return "";
