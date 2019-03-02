@@ -4,7 +4,10 @@ project(06-4-add-imgui)
 add_library(engine-06-4 SHARED engine.cxx)
 target_compile_features(engine-06-4 PUBLIC cxx_std_17)
 
-if(WIN32)   
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/imgui-src)
+target_link_libraries(engine-06-4 imgui)
+
+if(WIN32)
   target_compile_definitions(engine-06-4 PRIVATE "-DOM_DECLSPEC=__declspec(dllexport)")
 endif(WIN32)
 
@@ -12,8 +15,8 @@ find_library(SDL2_LIB NAMES SDL2)
 
 if (MINGW)
     target_link_libraries(engine-06-4
-               -lmingw32 
-               -lSDL2main 
+               -lmingw32
+               -lSDL2main
                -lSDL2
                -mwindows
                -lopengl32
