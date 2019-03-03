@@ -217,7 +217,10 @@ public:
 
         bind();
 
-        glBufferData(GL_ARRAY_BUFFER, n * 3, &tri->v[0], GL_STREAM_DRAW);
+        GLsizeiptr size_in_bytes = n * 3 * sizeof(v2);
+
+        glBufferData(GL_ARRAY_BUFFER, size_in_bytes, &tri->v[0],
+                     GL_STATIC_DRAW);
         OM_GL_CHECK();
     }
     vertex_buffer_impl(const v2* vert, std::size_t n)
@@ -228,7 +231,9 @@ public:
 
         bind();
 
-        glBufferData(GL_ARRAY_BUFFER, n, vert, GL_STREAM_DRAW);
+        GLsizeiptr size_in_bytes = n * sizeof(v2);
+
+        glBufferData(GL_ARRAY_BUFFER, size_in_bytes, vert, GL_STATIC_DRAW);
         OM_GL_CHECK();
     }
     ~vertex_buffer_impl() final
@@ -238,7 +243,7 @@ public:
 
         glDeleteBuffers(1, &gl_handle);
         OM_GL_CHECK();
-    };
+    }
 
     void bind() const
     {
@@ -264,7 +269,9 @@ public:
 
         bind();
 
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, count, i, GL_STREAM_DRAW);
+        GLsizeiptr size_in_bytes = n * sizeof(std::uint16_t);
+
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, size_in_bytes, i, GL_STATIC_DRAW);
         OM_GL_CHECK();
     }
     ~index_buffer_impl()
@@ -882,11 +889,6 @@ public:
         shader03->set_uniform("s_texture", texture);
         shader03->set_uniform("u_matrix", m);
 
-        assert(gl_default_vbo != 0);
-
-        glBindBuffer(GL_ARRAY_BUFFER, gl_default_vbo);
-        OM_GL_CHECK();
-
         buff.bind();
 
         // positions
@@ -936,10 +938,10 @@ public:
         glEnableVertexAttribArray(2); // g_AttribLocationColor
         OM_GL_CHECK();
 
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert),
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(v2),
                               reinterpret_cast<void*>(0));
         OM_GL_CHECK();
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert),
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(v2),
                               reinterpret_cast<void*>(2 * sizeof(float)));
         OM_GL_CHECK();
         glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(v2),
@@ -952,8 +954,7 @@ public:
         OM_GL_CHECK();
     }
 
-    std::string edit_buff;
-    void        swap_buffers() final
+    void swap_buffers() final
     {
         // TODO draw future game editor
         ImGui_ImplSdlGL3_NewFrame(window);
@@ -970,10 +971,6 @@ public:
         {
             std::cout << "try move tank" << std::endl;
         }
-
-        ImGui::Text("some text");
-        edit_buff.reserve(200);
-        ImGui::InputText("my input", edit_buff.data(), edit_buff.capacity());
 
         // Rendering
         ImGui::Render();
