@@ -26,7 +26,7 @@
 bool ImGui_ImplSdlGL3_Init(SDL_Window* window);
 void ImGui_ImplSdlGL3_Shutdown();
 void ImGui_ImplSdlGL3_NewFrame(SDL_Window* window);
-bool ImGui_ImplSdlGL3_ProcessEvent(SDL_Event* event);
+bool ImGui_ImplSdlGL3_ProcessEvent(const SDL_Event* event);
 
 // Use if you want to reset your rendering device without losing ImGui state.
 void ImGui_ImplSdlGL3_InvalidateDeviceObjects();
@@ -631,6 +631,8 @@ public:
         SDL_Event sdl_event;
         if (SDL_PollEvent(&sdl_event))
         {
+            ImGui_ImplSdlGL3_ProcessEvent(&sdl_event);
+
             const bind* binding = nullptr;
 
             if (sdl_event.type == SDL_QUIT)
@@ -842,6 +844,21 @@ public:
     }
     void swap_buffers() final
     {
+        // TODO draw future game editor
+        ImGui_ImplSdlGL3_NewFrame(window);
+        // 1. Show the big demo window (Most of the sample code is in
+        // ImGui::ShowDemoWindow()! You can browse its code to learn more about
+        // Dear ImGui!).
+
+        if (show_demo_window)
+        {
+            ImGui::ShowDemoWindow(&show_demo_window);
+        }
+
+        // Rendering
+        ImGui::Render();
+        // ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
         SDL_GL_SwapWindow(window);
 
         glClear(GL_COLOR_BUFFER_BIT);
@@ -863,6 +880,7 @@ private:
     shader_gl_es20* shader02       = nullptr;
     shader_gl_es20* shader03       = nullptr;
     uint32_t        gl_default_vbo = 0;
+    bool            show_demo_window{ true };
 };
 #pragma pack(pop)
 
@@ -1251,6 +1269,11 @@ std::string engine_impl::initialize(std::string_view)
     glViewport(0, 0, 800, 600);
     OM_GL_CHECK();
 
+    if (!ImGui_ImplSdlGL3_Init(window))
+    {
+        return "error: failed to init ImGui";
+    }
+
     return "";
 }
 
@@ -1284,7 +1307,7 @@ std::string engine_impl::initialize(std::string_view)
 // already works for you.
 
 // Data
-static double g_Time            = 0.0;
+static float  g_Time            = 0.0;
 static bool   g_MousePressed[3] = { false, false, false };
 static float  g_MouseWheel      = 0.0f;
 static GLuint g_FontTexture     = 0;
@@ -1458,8 +1481,8 @@ void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
             }
             else
             {
-                GLuint texture_id =
-                    *reinterpret_cast<const GLuint*>(pcmd->TextureId);
+                GLuint texture_id = static_cast<GLuint>(
+                    reinterpret_cast<ptrdiff_t>(pcmd->TextureId));
                 glBindTexture(GL_TEXTURE_2D, texture_id);
                 OM_GL_CHECK();
                 glScissor(int(pcmd->ClipRect.x),
@@ -1543,7 +1566,7 @@ static void ImGui_ImplSdlGL3_SetClipboardText(void*, const char* text)
 // your main application.
 // Generally you may always pass all inputs to dear imgui, and hide them from
 // your application based on those two flags.
-bool ImGui_ImplSdlGL3_ProcessEvent(SDL_Event* event)
+bool ImGui_ImplSdlGL3_ProcessEvent(const SDL_Event* event)
 {
     ImGuiIO& io = ImGui::GetIO();
     switch (event->type)
@@ -1778,10 +1801,38 @@ void ImGui_ImplSdlGL3_InvalidateDeviceObjects()
 
 bool ImGui_ImplSdlGL3_Init(SDL_Window* window)
 {
-    ImGuiIO& io             = ImGui::GetIO();
-    io.KeyMap[ImGuiKey_Tab] = SDLK_TAB; // Keyboard mapping. ImGui will use
-                                        // those indices to peek into the
-                                        // io.KeyDown[] array.
+    // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    // io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard
+    // Controls
+
+    // Setup Dear ImGui style
+    ImGui::StyleColorsDark();
+    // ImGui::StyleColorsClassic();
+
+    // Setup Platform/Renderer bindings
+    // ImGui_ImplSDL2_InitForOpenGL(window, gl_context);
+    // ImGui_ImplOpenGL3_Init(glsl_version);
+
+    ImGuiIO& io = ImGui::GetIO();
+    // g_Window    = window;
+
+    // Setup back-end capabilities flags
+    //    io.BackendFlags |=
+    //        ImGuiBackendFlags_HasMouseCursors; // We can honor
+    //        GetMouseCursor()
+    //                                           // values (optional)
+    //    io.BackendFlags |=
+    //        ImGuiBackendFlags_HasSetMousePos; // We can honor
+    //        io.WantSetMousePos
+    //                                          // requests (optional, rarely
+    //                                          used)
+    io.BackendPlatformName = "imgui_impl_sdl";
+
+    // Keyboard mapping. ImGui will use those indices to peek into the
+    // io.KeysDown[] array.
+    io.KeyMap[ImGuiKey_Tab]        = SDL_SCANCODE_TAB;
     io.KeyMap[ImGuiKey_LeftArrow]  = SDL_SCANCODE_LEFT;
     io.KeyMap[ImGuiKey_RightArrow] = SDL_SCANCODE_RIGHT;
     io.KeyMap[ImGuiKey_UpArrow]    = SDL_SCANCODE_UP;
@@ -1790,17 +1841,44 @@ bool ImGui_ImplSdlGL3_Init(SDL_Window* window)
     io.KeyMap[ImGuiKey_PageDown]   = SDL_SCANCODE_PAGEDOWN;
     io.KeyMap[ImGuiKey_Home]       = SDL_SCANCODE_HOME;
     io.KeyMap[ImGuiKey_End]        = SDL_SCANCODE_END;
-    io.KeyMap[ImGuiKey_Insert]     = SDLK_INSERT;
-    io.KeyMap[ImGuiKey_Delete]     = SDLK_DELETE;
-    io.KeyMap[ImGuiKey_Backspace]  = SDLK_BACKSPACE;
-    io.KeyMap[ImGuiKey_Enter]      = SDLK_RETURN;
-    io.KeyMap[ImGuiKey_Escape]     = SDLK_ESCAPE;
-    io.KeyMap[ImGuiKey_A]          = SDLK_a;
-    io.KeyMap[ImGuiKey_C]          = SDLK_c;
-    io.KeyMap[ImGuiKey_V]          = SDLK_v;
-    io.KeyMap[ImGuiKey_X]          = SDLK_x;
-    io.KeyMap[ImGuiKey_Y]          = SDLK_y;
-    io.KeyMap[ImGuiKey_Z]          = SDLK_z;
+    io.KeyMap[ImGuiKey_Insert]     = SDL_SCANCODE_INSERT;
+    io.KeyMap[ImGuiKey_Delete]     = SDL_SCANCODE_DELETE;
+    io.KeyMap[ImGuiKey_Backspace]  = SDL_SCANCODE_BACKSPACE;
+    io.KeyMap[ImGuiKey_Space]      = SDL_SCANCODE_SPACE;
+    io.KeyMap[ImGuiKey_Enter]      = SDL_SCANCODE_RETURN;
+    io.KeyMap[ImGuiKey_Escape]     = SDL_SCANCODE_ESCAPE;
+    io.KeyMap[ImGuiKey_A]          = SDL_SCANCODE_A;
+    io.KeyMap[ImGuiKey_C]          = SDL_SCANCODE_C;
+    io.KeyMap[ImGuiKey_V]          = SDL_SCANCODE_V;
+    io.KeyMap[ImGuiKey_X]          = SDL_SCANCODE_X;
+    io.KeyMap[ImGuiKey_Y]          = SDL_SCANCODE_Y;
+    io.KeyMap[ImGuiKey_Z]          = SDL_SCANCODE_Z;
+/*
+    g_MouseCursors[ImGuiMouseCursor_Arrow] =
+        SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW);
+    g_MouseCursors[ImGuiMouseCursor_TextInput] =
+        SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_IBEAM);
+    g_MouseCursors[ImGuiMouseCursor_ResizeAll] =
+        SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZEALL);
+    g_MouseCursors[ImGuiMouseCursor_ResizeNS] =
+        SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZENS);
+    g_MouseCursors[ImGuiMouseCursor_ResizeEW] =
+        SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZEWE);
+    g_MouseCursors[ImGuiMouseCursor_ResizeNESW] =
+        SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZENESW);
+    g_MouseCursors[ImGuiMouseCursor_ResizeNWSE] =
+        SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZENWSE);
+    g_MouseCursors[ImGuiMouseCursor_Hand] =
+        SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_HAND);
+*/
+#ifdef _WIN32
+    SDL_SysWMinfo wmInfo;
+    SDL_VERSION(&wmInfo.version);
+    SDL_GetWindowWMInfo(window, &wmInfo);
+    io.ImeWindowHandle = wmInfo.info.win.window;
+#else
+    (void)window;
+#endif
 
     io.RenderDrawListsFn =
         ImGui_ImplSdlGL3_RenderDrawLists; // Alternatively you can set this to
@@ -1820,13 +1898,15 @@ bool ImGui_ImplSdlGL3_Init(SDL_Window* window)
     (void)window;
 #endif
 
+    g_Time = SDL_GetTicks() / 1000.f;
+
     return true;
 }
 
 void ImGui_ImplSdlGL3_Shutdown()
 {
     ImGui_ImplSdlGL3_InvalidateDeviceObjects();
-    // ImGui::Shutdown();
+    ImGui::DestroyContext();
 }
 
 void ImGui_ImplSdlGL3_NewFrame(SDL_Window* window)
@@ -1847,9 +1927,13 @@ void ImGui_ImplSdlGL3_NewFrame(SDL_Window* window)
 
     // Setup time step
     Uint32 time         = SDL_GetTicks();
-    double current_time = time / 1000.0;
-    io.DeltaTime = g_Time > 0.0 ? float(current_time - g_Time) : (1.0f / 60.0f);
-    g_Time       = current_time;
+    float  current_time = time / 1000.0f;
+    io.DeltaTime        = current_time - g_Time; // (1.0f / 60.0f);
+    if (io.DeltaTime <= 0)
+    {
+        io.DeltaTime = 0.00001f;
+    }
+    g_Time = current_time;
 
     // Setup inputs
     // (we already got mouse wheel, keyboard keys & characters from
