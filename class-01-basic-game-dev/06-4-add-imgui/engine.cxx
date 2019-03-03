@@ -210,7 +210,7 @@ class vertex_buffer_impl final : public vertex_buffer
 {
 public:
     vertex_buffer_impl(const tri2* tri, std::size_t n)
-        : count(static_cast<std::uint32_t>(n))
+        : count(static_cast<std::uint32_t>(n * 3))
     {
         glGenBuffers(1, &gl_handle);
         OM_GL_CHECK();
@@ -959,7 +959,8 @@ public:
         // TODO draw future game editor
         ImGui_ImplSdlGL3_NewFrame(window);
         // 1. Show the big demo window (Most of the sample code is in
-        // ImGui::ShowDemoWindow()! You can browse its code to learn more about
+        // ImGui::ShowDemoWindow()! You can browse its code to learn
+        // more about
         // Dear ImGui!).
 
         if (show_demo_window)
@@ -1469,83 +1470,8 @@ void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
         return;
     draw_data->ScaleClipRects(io.DisplayFramebufferScale);
 
-    OM_GL_CHECK();
-    // Backup GL state
-    GLint last_active_texture{};
-    glGetIntegerv(GL_ACTIVE_TEXTURE, &last_active_texture);
-    OM_GL_CHECK();
-    glActiveTexture_(GL_TEXTURE0);
-    OM_GL_CHECK();
-    GLint last_program;
-    glGetIntegerv(GL_CURRENT_PROGRAM, &last_program);
-    OM_GL_CHECK();
-    GLint last_texture;
-    glGetIntegerv(GL_TEXTURE_BINDING_2D, &last_texture);
-    OM_GL_CHECK();
-    GLint last_sampler;
-    glGetIntegerv(GL_SAMPLER_BINDING, &last_sampler);
-    OM_GL_CHECK();
-    GLint last_array_buffer;
-    glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &last_array_buffer);
-    OM_GL_CHECK();
-    GLint last_element_array_buffer;
-    glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER_BINDING, &last_element_array_buffer);
-    OM_GL_CHECK();
-    GLint last_vertex_array;
-    glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &last_vertex_array);
-    OM_GL_CHECK();
-    // GLint last_polygon_mode[2]; open gl 4?
-    // glGetIntegerv(GL_POLYGON_MODE, last_polygon_mode);
-    OM_GL_CHECK();
-    GLint last_viewport[4];
-    glGetIntegerv(GL_VIEWPORT, last_viewport);
-    OM_GL_CHECK();
     GLint last_scissor_box[4];
     glGetIntegerv(GL_SCISSOR_BOX, last_scissor_box);
-    OM_GL_CHECK();
-    GLint last_blend_src_rgb;
-    glGetIntegerv(GL_BLEND_SRC_RGB, &last_blend_src_rgb);
-    OM_GL_CHECK();
-    GLint last_blend_dst_rgb;
-    glGetIntegerv(GL_BLEND_DST_RGB, &last_blend_dst_rgb);
-    OM_GL_CHECK();
-    GLint last_blend_src_alpha;
-    glGetIntegerv(GL_BLEND_SRC_ALPHA, &last_blend_src_alpha);
-    OM_GL_CHECK();
-    GLint last_blend_dst_alpha;
-    glGetIntegerv(GL_BLEND_DST_ALPHA, &last_blend_dst_alpha);
-    OM_GL_CHECK();
-    GLint last_blend_equation_rgb;
-    glGetIntegerv(GL_BLEND_EQUATION_RGB, &last_blend_equation_rgb);
-    OM_GL_CHECK();
-    GLint last_blend_equation_alpha;
-    glGetIntegerv(GL_BLEND_EQUATION_ALPHA, &last_blend_equation_alpha);
-    OM_GL_CHECK();
-    GLboolean last_enable_blend = glIsEnabled(GL_BLEND);
-    OM_GL_CHECK();
-    GLboolean last_enable_cull_face = glIsEnabled(GL_CULL_FACE);
-    OM_GL_CHECK();
-    GLboolean last_enable_depth_test = glIsEnabled(GL_DEPTH_TEST);
-    OM_GL_CHECK();
-    GLboolean last_enable_scissor_test = glIsEnabled(GL_SCISSOR_TEST);
-    OM_GL_CHECK();
-    // Setup render state: alpha-blending enabled, no face culling, no depth
-    // testing, scissor enabled, polygon fill
-    glEnable(GL_BLEND);
-    OM_GL_CHECK();
-    // glBlendEquation_(GL_FUNC_ADD);
-    OM_GL_CHECK();
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    OM_GL_CHECK();
-    glDisable(GL_CULL_FACE);
-    OM_GL_CHECK();
-    glDisable(GL_DEPTH_TEST);
-    OM_GL_CHECK();
-    glEnable(GL_SCISSOR_TEST);
-    OM_GL_CHECK();
-    // no in opengl es 2.0
-    // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    OM_GL_CHECK();
 
     // Setup viewport, orthographic projection matrix
     glViewport(0, 0, GLsizei(fb_width), GLsizei(fb_height));
@@ -1561,9 +1487,6 @@ void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
                        &ortho_projection[0][0]);
 
     OM_GL_CHECK();
-
-    // glBindVertexArray(g_VaoHandle);
-    // glBindSampler(0, 0); // Rely on combined texture/sampler state.
 
     for (int n = 0; n < draw_data->CmdListsCount; n++)
     {
@@ -1617,49 +1540,6 @@ void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
         om::g_engine->destroy_index_buffer(index_buff);
     } // end for n
 
-    // Restore modified GL state
-    glUseProgram(static_cast<GLuint>(last_program));
-    OM_GL_CHECK();
-    glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(last_texture));
-    OM_GL_CHECK();
-    // glBindSampler(0, last_sampler);
-    glActiveTexture_(static_cast<GLenum>(last_active_texture));
-    OM_GL_CHECK();
-    // glBindVertexArray(last_vertex_array);
-    glBindBuffer(GL_ARRAY_BUFFER, static_cast<GLuint>(last_array_buffer));
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,
-                 static_cast<GLuint>(last_element_array_buffer));
-    glBlendEquationSeparate(static_cast<GLenum>(last_blend_equation_rgb),
-                            static_cast<GLenum>(last_blend_equation_alpha));
-    glBlendFuncSeparate(static_cast<GLenum>(last_blend_src_rgb),
-                        static_cast<GLenum>(last_blend_dst_rgb),
-                        static_cast<GLenum>(last_blend_src_alpha),
-                        static_cast<GLenum>(last_blend_dst_alpha));
-    OM_GL_CHECK();
-    if (last_enable_blend)
-        glEnable(GL_BLEND);
-    else
-        glDisable(GL_BLEND);
-    if (last_enable_cull_face)
-        glEnable(GL_CULL_FACE);
-    else
-        glDisable(GL_CULL_FACE);
-    if (last_enable_depth_test)
-        glEnable(GL_DEPTH_TEST);
-    else
-        glDisable(GL_DEPTH_TEST);
-    if (last_enable_scissor_test)
-        glEnable(GL_SCISSOR_TEST);
-    else
-        glDisable(GL_SCISSOR_TEST);
-
-    OM_GL_CHECK();
-    // no in opengl es 2.0
-    // glPolygonMode(GL_FRONT_AND_BACK, last_polygon_mode[0]);
-    OM_GL_CHECK();
-    glViewport(last_viewport[0], last_viewport[1], GLsizei(last_viewport[2]),
-               GLsizei(last_viewport[3]));
-    OM_GL_CHECK();
     glScissor(last_scissor_box[0], last_scissor_box[1],
               GLsizei(last_scissor_box[2]), GLsizei(last_scissor_box[3]));
     OM_GL_CHECK();
