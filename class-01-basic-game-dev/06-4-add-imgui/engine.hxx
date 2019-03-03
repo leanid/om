@@ -156,6 +156,7 @@ class OM_DECLSPEC texture
 {
 public:
     virtual ~texture();
+    virtual void          bind() const       = 0;
     virtual std::uint32_t get_width() const  = 0;
     virtual std::uint32_t get_height() const = 0;
 };
@@ -182,8 +183,11 @@ public:
     virtual bool read_event(event& e)    = 0;
     virtual bool is_key_down(const keys) = 0;
 
-    virtual texture* create_texture(std::string_view path) = 0;
-    virtual void     destroy_texture(texture* t)           = 0;
+    virtual texture* create_texture(std::string_view path)      = 0;
+    virtual texture* create_texture_rgba32(const void*  pixels,
+                                           const size_t width,
+                                           const size_t height) = 0;
+    virtual void     destroy_texture(texture* t)                = 0;
 
     virtual vertex_buffer* create_vertex_buffer(const tri2*, std::size_t) = 0;
     virtual void           destroy_vertex_buffer(vertex_buffer*)          = 0;

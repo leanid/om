@@ -233,9 +233,11 @@ class texture_gl_es20 final : public texture
 {
 public:
     explicit texture_gl_es20(std::string_view path);
+    texture_gl_es20(const void* pixels, const size_t width,
+                    const size_t height);
     ~texture_gl_es20() override;
 
-    void bind() const
+    void bind() const override
     {
         glBindTexture(GL_TEXTURE_2D, tex_handl);
         OM_GL_CHECK();
@@ -245,6 +247,9 @@ public:
     std::uint32_t get_height() const final { return height; }
 
 private:
+    void gen_texture_from_pixels(const void* pixels, const size_t width,
+                                 const size_t height);
+
     std::string   file_path;
     GLuint        tex_handl = 0;
     std::uint32_t width     = 0;
@@ -608,7 +613,7 @@ static bool check_input(const SDL_Event& e, const bind*& result)
     return false;
 }
 
-#pragma pack(push, 4)
+#pragma pack(push, 1)
 class engine_impl final : public engine
 {
 public:
@@ -678,6 +683,11 @@ public:
     texture* create_texture(std::string_view path) final
     {
         return new texture_gl_es20(path);
+    }
+    texture* create_texture_rgba32(const void* pixels, const size_t width,
+                                   const size_t height)
+    {
+        return new texture_gl_es20(pixels, width, height);
     }
     void destroy_texture(texture* t) final { delete t; }
 
@@ -842,7 +852,8 @@ public:
         glDisableVertexAttribArray(2);
         OM_GL_CHECK();
     }
-    void swap_buffers() final
+    std::string edit_buff;
+    void        swap_buffers() final
     {
         // TODO draw future game editor
         ImGui_ImplSdlGL3_NewFrame(window);
@@ -854,6 +865,15 @@ public:
         {
             ImGui::ShowDemoWindow(&show_demo_window);
         }
+
+        if (ImGui::Button("Copy move tank to right"))
+        {
+            std::cout << "try move tank" << std::endl;
+        }
+
+        ImGui::Text("some text");
+        edit_buff.reserve(200);
+        ImGui::InputText("my input", edit_buff.data(), edit_buff.capacity());
 
         // Rendering
         ImGui::Render();
@@ -880,11 +900,12 @@ private:
     shader_gl_es20* shader02       = nullptr;
     shader_gl_es20* shader03       = nullptr;
     uint32_t        gl_default_vbo = 0;
-    bool            show_demo_window{ true };
+    bool            show_demo_window{ false };
 };
 #pragma pack(pop)
 
-static bool already_exist = false;
+static bool    already_exist = false;
+static engine* g_engine      = nullptr;
 
 engine* create_engine()
 {
@@ -893,6 +914,7 @@ engine* create_engine()
         throw std::runtime_error("engine already exist");
     }
     engine* result = new engine_impl();
+    g_engine       = result;
     already_exist  = true;
     return result;
 }
@@ -1014,6 +1036,12 @@ texture_gl_es20::texture_gl_es20(std::string_view path)
         throw std::runtime_error("can't load texture");
     }
 
+    gen_texture_from_pixels(image.data(), w, h);
+}
+
+void texture_gl_es20::gen_texture_from_pixels(const void*  pixels,
+                                              const size_t w, const size_t h)
+{
     glGenTextures(1, &tex_handl);
     OM_GL_CHECK();
     glBindTexture(GL_TEXTURE_2D, tex_handl);
@@ -1024,13 +1052,23 @@ texture_gl_es20::texture_gl_es20(std::string_view path)
     GLsizei width_       = static_cast<GLsizei>(w);
     GLsizei height_      = static_cast<GLsizei>(h);
     glTexImage2D(GL_TEXTURE_2D, mipmap_level, GL_RGBA, width_, height_, border,
-                 GL_RGBA, GL_UNSIGNED_BYTE, &image[0]);
+                 GL_RGBA, GL_UNSIGNED_BYTE, pixels);
     OM_GL_CHECK();
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     OM_GL_CHECK();
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     OM_GL_CHECK();
+}
+
+texture_gl_es20::texture_gl_es20(const void* pixels, const size_t w,
+                                 const size_t h)
+{
+    gen_texture_from_pixels(pixels, w, h);
+    if (file_path.empty())
+    {
+        file_path = "::memory::";
+    }
 }
 
 texture_gl_es20::~texture_gl_es20()
@@ -1298,8 +1336,6 @@ std::string engine_impl::initialize(std::string_view)
 // https://github.com/ocornut/imgui
 
 // SDL,GL3W
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_syswm.h>
 
 //#include <GL/gl3w.h>    // This example is using gl3w to access OpenGL
 // functions (because it is small). You may use glew/glad/glLoadGen/etc.
@@ -1307,10 +1343,10 @@ std::string engine_impl::initialize(std::string_view)
 // already works for you.
 
 // Data
-static float  g_Time            = 0.0;
-static bool   g_MousePressed[3] = { false, false, false };
-static float  g_MouseWheel      = 0.0f;
-static GLuint g_FontTexture     = 0;
+static float g_Time            = 0.0;
+static bool  g_MousePressed[3] = { false, false, false };
+static float g_MouseWheel      = 0.0f;
+// static GLuint g_FontTexture     = 0;
 static GLuint g_ShaderHandle = 0, g_VertHandle = 0, g_FragHandle = 0;
 static int    g_AttribLocationTex = 0, g_AttribLocationProjMtx = 0;
 static GLuint g_AttribLocationPosition = 0, g_AttribLocationUV = 0,
@@ -1481,10 +1517,10 @@ void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
             }
             else
             {
-                GLuint texture_id = static_cast<GLuint>(
-                    reinterpret_cast<ptrdiff_t>(pcmd->TextureId));
-                glBindTexture(GL_TEXTURE_2D, texture_id);
-                OM_GL_CHECK();
+                void*        ptr     = pcmd->TextureId;
+                om::texture* texture = reinterpret_cast<om::texture*>(ptr);
+                texture->bind();
+
                 glScissor(int(pcmd->ClipRect.x),
                           int(fb_height - pcmd->ClipRect.w),
                           int(pcmd->ClipRect.z - pcmd->ClipRect.x),
@@ -1621,29 +1657,30 @@ void ImGui_ImplSdlGL3_CreateFontsTexture()
                                    // with user's existing shader.
 
     // Upload texture to graphics system
-    GLint last_texture;
-    glGetIntegerv(GL_TEXTURE_BINDING_2D, &last_texture);
-    OM_GL_CHECK();
-    glGenTextures(1, &g_FontTexture);
-    OM_GL_CHECK();
-    glBindTexture(GL_TEXTURE_2D, g_FontTexture);
-    OM_GL_CHECK();
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    OM_GL_CHECK();
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    OM_GL_CHECK();
-    glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-    OM_GL_CHECK();
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA,
-                 GL_UNSIGNED_BYTE, pixels);
-    OM_GL_CHECK();
+    //    GLint last_texture;
+    //    glGetIntegerv(GL_TEXTURE_BINDING_2D, &last_texture);
+    //    OM_GL_CHECK();
+    //    glGenTextures(1, &g_FontTexture);
+    //    OM_GL_CHECK();
+    //    glBindTexture(GL_TEXTURE_2D, g_FontTexture);
+    //    OM_GL_CHECK();
+    //    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    //    OM_GL_CHECK();
+    //    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    //    OM_GL_CHECK();
+    //    glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+    //    OM_GL_CHECK();
+    //    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA,
+    //                 GL_UNSIGNED_BYTE, pixels);
+    //    OM_GL_CHECK();
 
     // Store our identifier
-    io.Fonts->TexID =
-        reinterpret_cast<void*>(static_cast<intptr_t>(g_FontTexture));
+    io.Fonts->TexID = om::g_engine->create_texture_rgba32(
+        pixels, static_cast<size_t>(width), static_cast<size_t>(height));
+    // reinterpret_cast<void*>(static_cast<intptr_t>(g_FontTexture));
 
     // Restore state
-    glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(last_texture));
+    // glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(last_texture));
     OM_GL_CHECK();
 }
 
@@ -1791,12 +1828,9 @@ void ImGui_ImplSdlGL3_InvalidateDeviceObjects()
         glDeleteProgram(g_ShaderHandle);
     g_ShaderHandle = 0;
 
-    if (g_FontTexture)
-    {
-        glDeleteTextures(1, &g_FontTexture);
-        ImGui::GetIO().Fonts->TexID = nullptr;
-        g_FontTexture               = 0;
-    }
+    void*        ptr     = ImGui::GetIO().Fonts->TexID;
+    om::texture* texture = reinterpret_cast<om::texture*>(ptr);
+    om::g_engine->destroy_texture(texture);
 }
 
 bool ImGui_ImplSdlGL3_Init(SDL_Window* window)
@@ -1911,10 +1945,12 @@ void ImGui_ImplSdlGL3_Shutdown()
 
 void ImGui_ImplSdlGL3_NewFrame(SDL_Window* window)
 {
-    if (!g_FontTexture)
-        ImGui_ImplSdlGL3_CreateDeviceObjects();
-
     ImGuiIO& io = ImGui::GetIO();
+
+    if (io.Fonts->TexID == nullptr)
+    {
+        ImGui_ImplSdlGL3_CreateDeviceObjects();
+    }
 
     // Setup display size (every frame to accommodate for window resizing)
     int w, h;
