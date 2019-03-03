@@ -165,9 +165,16 @@ class OM_DECLSPEC vertex_buffer
 {
 public:
     virtual ~vertex_buffer();
-    virtual const v2* data() const = 0;
-    /// count of vertexes
-    virtual size_t size() const = 0;
+    virtual void          bind() const = 0;
+    virtual std::uint32_t size() const = 0;
+};
+
+class OM_DECLSPEC index_buffer
+{
+public:
+    virtual ~index_buffer();
+    virtual void          bind() const = 0;
+    virtual std::uint32_t size() const = 0;
 };
 
 class OM_DECLSPEC engine
@@ -190,13 +197,21 @@ public:
     virtual void     destroy_texture(texture* t)                = 0;
 
     virtual vertex_buffer* create_vertex_buffer(const tri2*, std::size_t) = 0;
+    virtual vertex_buffer* create_vertex_buffer(const v2*, std::size_t)   = 0;
     virtual void           destroy_vertex_buffer(vertex_buffer*)          = 0;
+    virtual index_buffer*  create_index_buffer(const std::uint16_t*,
+                                               std::size_t)               = 0;
+    virtual void           destroy_index_buffer(index_buffer*)            = 0;
 
     virtual void render(const tri0&, const color&)                     = 0;
     virtual void render(const tri1&)                                   = 0;
     virtual void render(const tri2&, texture*)                         = 0;
     virtual void render(const tri2&, texture*, const mat2x3& m)        = 0;
     virtual void render(const vertex_buffer&, texture*, const mat2x3&) = 0;
+    virtual void render(const vertex_buffer* buff, const index_buffer* indexes,
+                        const texture*       tex,
+                        const std::uint16_t* start_vertex_index,
+                        size_t               num_vertexes)                           = 0;
     virtual void swap_buffers()                                        = 0;
     virtual void uninitialize()                                        = 0;
 };

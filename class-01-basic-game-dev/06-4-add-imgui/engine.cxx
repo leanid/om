@@ -204,29 +204,88 @@ mat2x3 operator*(const mat2x3& m1, const mat2x3& m2)
 texture::~texture() {}
 
 vertex_buffer::~vertex_buffer() {}
+index_buffer::~index_buffer() {}
 
 class vertex_buffer_impl final : public vertex_buffer
 {
 public:
     vertex_buffer_impl(const tri2* tri, std::size_t n)
-        : triangles(n)
+        : count(static_cast<std::uint32_t>(n))
     {
-        assert(tri != nullptr);
-        for (size_t i = 0; i < n; ++i)
-        {
-            triangles[i] = tri[i];
-        }
-    }
-    ~vertex_buffer_impl() final;
+        glGenBuffers(1, &gl_handle);
+        OM_GL_CHECK();
 
-    const v2*      data() const final { return &triangles.data()->v[0]; }
-    virtual size_t size() const final { return triangles.size() * 3; }
+        bind();
+
+        glBufferData(GL_ARRAY_BUFFER, n * 3, &tri->v[0], GL_STREAM_DRAW);
+        OM_GL_CHECK();
+    }
+    vertex_buffer_impl(const v2* vert, std::size_t n)
+        : count(static_cast<std::uint32_t>(n))
+    {
+        glGenBuffers(1, &gl_handle);
+        OM_GL_CHECK();
+
+        bind();
+
+        glBufferData(GL_ARRAY_BUFFER, n, vert, GL_STREAM_DRAW);
+        OM_GL_CHECK();
+    }
+    ~vertex_buffer_impl() final
+    {
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        OM_GL_CHECK();
+
+        glDeleteBuffers(1, &gl_handle);
+        OM_GL_CHECK();
+    };
+
+    void bind() const
+    {
+        glBindBuffer(GL_ARRAY_BUFFER, gl_handle);
+        OM_GL_CHECK();
+    }
+
+    std::uint32_t size() const { return count; }
 
 private:
-    std::vector<tri2> triangles;
+    std::uint32_t gl_handle{ 0 };
+    std::uint32_t count{ 0 };
 };
 
-vertex_buffer_impl::~vertex_buffer_impl() {}
+class index_buffer_impl final : public index_buffer
+{
+public:
+    index_buffer_impl(const std::uint16_t* i, size_t n)
+        : count(static_cast<std::uint32_t>(n))
+    {
+        glGenBuffers(1, &gl_handle);
+        OM_GL_CHECK();
+
+        bind();
+
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, count, i, GL_STREAM_DRAW);
+        OM_GL_CHECK();
+    }
+    ~index_buffer_impl()
+    {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+        OM_GL_CHECK();
+        glDeleteBuffers(1, &gl_handle);
+        OM_GL_CHECK();
+    }
+    void bind() const
+    {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl_handle);
+        OM_GL_CHECK();
+    }
+
+    std::uint32_t size() const { return count; }
+
+private:
+    std::uint32_t gl_handle{ 0 };
+    std::uint32_t count{ 0 };
+};
 
 #pragma pack(push, 4)
 class texture_gl_es20 final : public texture
@@ -693,9 +752,22 @@ public:
 
     vertex_buffer* create_vertex_buffer(const tri2* triangles, std::size_t n)
     {
+        assert(triangles != nullptr);
         return new vertex_buffer_impl(triangles, n);
     }
+    vertex_buffer* create_vertex_buffer(const v2* vert, std::size_t count)
+    {
+        assert(vert != nullptr);
+        return new vertex_buffer_impl(vert, count);
+    }
     void destroy_vertex_buffer(vertex_buffer* buffer) { delete buffer; }
+
+    index_buffer* create_index_buffer(const std::uint16_t* indexes,
+                                      std::size_t          count)
+    {
+        return new index_buffer_impl(indexes, count);
+    }
+    void destroy_index_buffer(index_buffer* buffer) { delete buffer; }
 
     void render(const tri0& t, const color& c) final
     {
@@ -815,13 +887,7 @@ public:
         glBindBuffer(GL_ARRAY_BUFFER, gl_default_vbo);
         OM_GL_CHECK();
 
-        const v2* t = buff.data();
-        uint32_t  data_size_in_bytes =
-            static_cast<uint32_t>(buff.size() * sizeof(v2));
-        glBufferData(GL_ARRAY_BUFFER, data_size_in_bytes, t, GL_DYNAMIC_DRAW);
-        OM_GL_CHECK();
-        glBufferSubData(GL_ARRAY_BUFFER, 0, data_size_in_bytes, t);
-        OM_GL_CHECK();
+        buff.bind();
 
         // positions
         glEnableVertexAttribArray(0);
@@ -852,6 +918,40 @@ public:
         glDisableVertexAttribArray(2);
         OM_GL_CHECK();
     }
+
+    void render(const vertex_buffer* buff, const index_buffer* indexes,
+                const texture* tex, const std::uint16_t* start_vertex_index,
+                size_t num_vertexes)
+    {
+        tex->bind();
+
+        buff->bind();
+
+        indexes->bind();
+
+        glEnableVertexAttribArray(0); // g_AttribLocationPosition
+        OM_GL_CHECK();
+        glEnableVertexAttribArray(1); // g_AttribLocationUV
+        OM_GL_CHECK();
+        glEnableVertexAttribArray(2); // g_AttribLocationColor
+        OM_GL_CHECK();
+
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert),
+                              reinterpret_cast<void*>(0));
+        OM_GL_CHECK();
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert),
+                              reinterpret_cast<void*>(2 * sizeof(float)));
+        OM_GL_CHECK();
+        glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(v2),
+                              reinterpret_cast<void*>(4 * sizeof(float)));
+        OM_GL_CHECK();
+
+        glDrawElements(GL_TRIANGLES, num_vertexes, GL_UNSIGNED_SHORT,
+                       start_vertex_index);
+
+        OM_GL_CHECK();
+    }
+
     std::string edit_buff;
     void        swap_buffers() final
     {
@@ -1459,7 +1559,7 @@ void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
         { -1.0f, 1.0f, 0.0f, 1.0f },
     };
     glUseProgram(g_ShaderHandle);
-    glUniform1i(g_AttribLocationTex, 0);
+    // glUniform1i(g_AttribLocationTex, 0);
     glUniformMatrix4fv(g_AttribLocationProjMtx, 1, GL_FALSE,
                        &ortho_projection[0][0]);
 
@@ -1473,40 +1573,25 @@ void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
         const ImDrawList* cmd_list          = draw_data->CmdLists[n];
         const ImDrawIdx*  idx_buffer_offset = nullptr;
 
-        glBindBuffer(GL_ARRAY_BUFFER, g_VboHandle);
-        OM_GL_CHECK();
-        glBufferData(
-            GL_ARRAY_BUFFER,
-            GLsizeiptr(size_t(cmd_list->VtxBuffer.Size) * sizeof(ImDrawVert)),
-            cmd_list->VtxBuffer.Data, GL_STREAM_DRAW);
-        OM_GL_CHECK();
+        // om engine vertex format completely the same, prof:
+        static_assert(sizeof(om::v2) == sizeof(ImDrawVert), "");
+        static_assert(sizeof(om::v2::pos) == sizeof(ImDrawVert::pos), "");
+        static_assert(sizeof(om::v2::uv) == sizeof(ImDrawVert::uv), "");
+        static_assert(offsetof(om::v2, pos) == offsetof(ImDrawVert, pos), "");
+        static_assert(offsetof(om::v2, uv) == offsetof(ImDrawVert, uv), "");
 
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_ElementsHandle);
-        OM_GL_CHECK();
-        glBufferData(
-            GL_ELEMENT_ARRAY_BUFFER,
-            GLsizeiptr(size_t(cmd_list->IdxBuffer.Size) * sizeof(ImDrawIdx)),
-            cmd_list->IdxBuffer.Data, GL_STREAM_DRAW);
-        OM_GL_CHECK();
+        const om::v2* vertex_data =
+            reinterpret_cast<const om::v2*>(cmd_list->VtxBuffer.Data);
+        size_t vert_count = static_cast<size_t>(cmd_list->VtxBuffer.size());
 
-        glEnableVertexAttribArray(g_AttribLocationPosition);
-        OM_GL_CHECK();
-        glEnableVertexAttribArray(g_AttribLocationUV);
-        OM_GL_CHECK();
-        glEnableVertexAttribArray(g_AttribLocationColor);
-        OM_GL_CHECK();
+        om::vertex_buffer* vertex_buff =
+            om::g_engine->create_vertex_buffer(vertex_data, vert_count);
 
-        glVertexAttribPointer(g_AttribLocationPosition, 2, GL_FLOAT, GL_FALSE,
-                              sizeof(ImDrawVert), reinterpret_cast<void*>(0));
-        OM_GL_CHECK();
-        glVertexAttribPointer(g_AttribLocationUV, 2, GL_FLOAT, GL_FALSE,
-                              sizeof(ImDrawVert),
-                              reinterpret_cast<void*>(2 * sizeof(float)));
-        OM_GL_CHECK();
-        glVertexAttribPointer(g_AttribLocationColor, 4, GL_UNSIGNED_BYTE,
-                              GL_TRUE, sizeof(ImDrawVert),
-                              reinterpret_cast<void*>(4 * sizeof(float)));
-        OM_GL_CHECK();
+        const std::uint16_t* indexes = cmd_list->IdxBuffer.Data;
+        size_t index_count = static_cast<size_t>(cmd_list->IdxBuffer.size());
+
+        om::index_buffer* index_buff =
+            om::g_engine->create_index_buffer(indexes, index_count);
 
         for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++)
         {
@@ -1517,24 +1602,23 @@ void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
             }
             else
             {
-                void*        ptr     = pcmd->TextureId;
-                om::texture* texture = reinterpret_cast<om::texture*>(ptr);
-                texture->bind();
+                om::texture* texture =
+                    reinterpret_cast<om::texture*>(pcmd->TextureId);
 
                 glScissor(int(pcmd->ClipRect.x),
                           int(fb_height - pcmd->ClipRect.w),
                           int(pcmd->ClipRect.z - pcmd->ClipRect.x),
                           int(pcmd->ClipRect.w - pcmd->ClipRect.y));
                 OM_GL_CHECK();
-                glDrawElements(GL_TRIANGLES, GLsizei(pcmd->ElemCount),
-                               sizeof(ImDrawIdx) == 2 ? GL_UNSIGNED_SHORT
-                                                      : GL_UNSIGNED_INT,
-                               idx_buffer_offset);
-                OM_GL_CHECK();
+
+                om::g_engine->render(vertex_buff, index_buff, texture,
+                                     idx_buffer_offset, pcmd->ElemCount);
             }
             idx_buffer_offset += pcmd->ElemCount;
-        }
-    }
+        } // end for cmd_i
+        om::g_engine->destroy_vertex_buffer(vertex_buff);
+        om::g_engine->destroy_index_buffer(index_buff);
+    } // end for n
 
     // Restore modified GL state
     glUseProgram(static_cast<GLuint>(last_program));
