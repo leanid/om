@@ -22,7 +22,7 @@ OM_DECLSPEC vec2 operator+(const vec2& l, const vec2& r);
 struct OM_DECLSPEC mat2x3
 {
     mat2x3();
-    static mat2x3 identiry();
+    static mat2x3 identity();
     static mat2x3 scale(float scale);
     static mat2x3 scale(float sx, float sy);
     static mat2x3 rotation(float thetha);

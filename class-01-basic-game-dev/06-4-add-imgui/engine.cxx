@@ -137,7 +137,7 @@ mat2x3::mat2x3()
 {
 }
 
-mat2x3 mat2x3::identiry()
+mat2x3 mat2x3::identity()
 {
     return mat2x3::scale(1.f);
 }
@@ -173,7 +173,7 @@ mat2x3 mat2x3::rotation(float thetha)
 
 mat2x3 mat2x3::move(const vec2& delta)
 {
-    mat2x3 r = mat2x3::identiry();
+    mat2x3 r = mat2x3::identity();
     r.delta  = delta;
     return r;
 }
@@ -405,6 +405,8 @@ public:
         glUniformMatrix3fv(location, 1, GL_FALSE, &values[0]);
         OM_GL_CHECK();
     }
+
+    GLuint get_program_id() const { return program_id; }
 
 private:
     GLuint compile_shader(GLenum shader_type, std::string_view src)
@@ -1445,11 +1447,13 @@ static float g_Time            = 0.0;
 static bool  g_MousePressed[3] = { false, false, false };
 static float g_MouseWheel      = 0.0f;
 // static GLuint g_FontTexture     = 0;
-static GLuint g_ShaderHandle = 0, g_VertHandle = 0, g_FragHandle = 0;
-static int    g_AttribLocationTex = 0, g_AttribLocationProjMtx = 0;
-static GLuint g_AttribLocationPosition = 0, g_AttribLocationUV = 0,
-              g_AttribLocationColor = 0;
-static unsigned int g_VboHandle = 0, g_VaoHandle = 0, g_ElementsHandle = 0;
+// static GLuint g_ShaderHandle = 0, g_VertHandle = 0, g_FragHandle = 0;
+// static int    g_AttribLocationTex = 0, g_AttribLocationProjMtx = 0;
+// static GLuint g_AttribLocationPosition = 0, g_AttribLocationUV = 0,
+//              g_AttribLocationColor = 0;
+// static unsigned int g_VboHandle = 0, g_VaoHandle = 0, g_ElementsHandle = 0;
+
+static om::shader_gl_es20* g_im_gui_shader = nullptr;
 
 // This is the main rendering function that you have to implement and provide to
 // ImGui (via setting up 'RenderDrawListsFn' in the ImGuiIO structure)
@@ -1467,7 +1471,9 @@ void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
     int      fb_width  = int(io.DisplaySize.x * io.DisplayFramebufferScale.x);
     int      fb_height = int(io.DisplaySize.y * io.DisplayFramebufferScale.y);
     if (fb_width == 0 || fb_height == 0)
+    {
         return;
+    }
     draw_data->ScaleClipRects(io.DisplayFramebufferScale);
 
     GLint last_scissor_box[4];
@@ -1481,10 +1487,19 @@ void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
         { 0.0f, 0.0f, -1.0f, 0.0f },
         { -1.0f, 1.0f, 0.0f, 1.0f },
     };
-    glUseProgram(g_ShaderHandle);
+
+    om::texture_gl_es20* texture =
+        reinterpret_cast<om::texture_gl_es20*>(io.Fonts->TexID);
+    assert(texture != nullptr);
+
+    g_im_gui_shader->use();
+    g_im_gui_shader->set_uniform("Texture", texture);
+    // g_im_gui_shader->set_uniform("ProjMtx", ortho_projection);
+
+    // glUseProgram(g_ShaderHandle);
     // glUniform1i(g_AttribLocationTex, 0);
-    glUniformMatrix4fv(g_AttribLocationProjMtx, 1, GL_FALSE,
-                       &ortho_projection[0][0]);
+    // g_AttribLocationProjMtx == 0 or 1
+    glUniformMatrix4fv(0, 1, GL_FALSE, &ortho_projection[0][0]);
 
     OM_GL_CHECK();
 
@@ -1516,24 +1531,19 @@ void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
         for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++)
         {
             const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
-            if (pcmd->UserCallback)
-            {
-                pcmd->UserCallback(cmd_list, pcmd);
-            }
-            else
-            {
-                om::texture* texture =
-                    reinterpret_cast<om::texture*>(pcmd->TextureId);
+            assert(pcmd->UserCallback == nullptr); // we not use it
 
-                glScissor(int(pcmd->ClipRect.x),
-                          int(fb_height - pcmd->ClipRect.w),
-                          int(pcmd->ClipRect.z - pcmd->ClipRect.x),
-                          int(pcmd->ClipRect.w - pcmd->ClipRect.y));
-                OM_GL_CHECK();
+            om::texture* texture =
+                reinterpret_cast<om::texture*>(pcmd->TextureId);
 
-                om::g_engine->render(vertex_buff, index_buff, texture,
-                                     idx_buffer_offset, pcmd->ElemCount);
-            }
+            glScissor(int(pcmd->ClipRect.x), int(fb_height - pcmd->ClipRect.w),
+                      int(pcmd->ClipRect.z - pcmd->ClipRect.x),
+                      int(pcmd->ClipRect.w - pcmd->ClipRect.y));
+            OM_GL_CHECK();
+
+            om::g_engine->render(vertex_buff, index_buff, texture,
+                                 idx_buffer_offset, pcmd->ElemCount);
+
             idx_buffer_offset += pcmd->ElemCount;
         } // end for cmd_i
         om::g_engine->destroy_vertex_buffer(vertex_buff);
@@ -1609,53 +1619,19 @@ bool ImGui_ImplSdlGL3_ProcessEvent(const SDL_Event* event)
 void ImGui_ImplSdlGL3_CreateFontsTexture()
 {
     // Build texture atlas
-    ImGuiIO&       io = ImGui::GetIO();
-    unsigned char* pixels;
-    int            width, height;
-    io.Fonts->GetTexDataAsRGBA32(
-        &pixels, &width, &height); // Load as RGBA 32-bits for OpenGL3 demo
-                                   // because it is more likely to be compatible
-                                   // with user's existing shader.
-
-    // Upload texture to graphics system
-    //    GLint last_texture;
-    //    glGetIntegerv(GL_TEXTURE_BINDING_2D, &last_texture);
-    //    OM_GL_CHECK();
-    //    glGenTextures(1, &g_FontTexture);
-    //    OM_GL_CHECK();
-    //    glBindTexture(GL_TEXTURE_2D, g_FontTexture);
-    //    OM_GL_CHECK();
-    //    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    //    OM_GL_CHECK();
-    //    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    //    OM_GL_CHECK();
-    //    glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-    //    OM_GL_CHECK();
-    //    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA,
-    //                 GL_UNSIGNED_BYTE, pixels);
-    //    OM_GL_CHECK();
+    ImGuiIO&       io     = ImGui::GetIO();
+    unsigned char* pixels = nullptr;
+    int            width  = 0;
+    int            height = 0;
+    io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
 
     // Store our identifier
     io.Fonts->TexID = om::g_engine->create_texture_rgba32(
         pixels, static_cast<size_t>(width), static_cast<size_t>(height));
-    // reinterpret_cast<void*>(static_cast<intptr_t>(g_FontTexture));
-
-    // Restore state
-    // glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(last_texture));
-    OM_GL_CHECK();
 }
 
 bool ImGui_ImplSdlGL3_CreateDeviceObjects()
 {
-    // Backup GL state
-    GLint last_texture, last_array_buffer, last_vertex_array;
-    glGetIntegerv(GL_TEXTURE_BINDING_2D, &last_texture);
-    OM_GL_CHECK();
-    glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &last_array_buffer);
-    OM_GL_CHECK();
-    glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &last_vertex_array);
-    OM_GL_CHECK();
-
     const GLchar* vertex_shader =
         //"#version 150\n"
         "#if defined(GL_ES)\n"
@@ -1688,110 +1664,23 @@ bool ImGui_ImplSdlGL3_CreateDeviceObjects()
         "	gl_FragColor = Frag_Color * texture2D( Texture, Frag_UV);\n"
         "}\n";
 
-    g_ShaderHandle = glCreateProgram();
-    OM_GL_CHECK();
-    g_VertHandle = glCreateShader(GL_VERTEX_SHADER);
-    OM_GL_CHECK();
-    g_FragHandle = glCreateShader(GL_FRAGMENT_SHADER);
-    OM_GL_CHECK();
-    glShaderSource(g_VertHandle, 1, &vertex_shader, nullptr);
-    OM_GL_CHECK();
-    glShaderSource(g_FragHandle, 1, &fragment_shader, nullptr);
-    OM_GL_CHECK();
-    glCompileShader(g_VertHandle);
-    OM_GL_CHECK();
-    glCompileShader(g_FragHandle);
-    OM_GL_CHECK();
-    glAttachShader(g_ShaderHandle, g_VertHandle);
-    OM_GL_CHECK();
-    glAttachShader(g_ShaderHandle, g_FragHandle);
-    OM_GL_CHECK();
-    glLinkProgram(g_ShaderHandle);
-    OM_GL_CHECK();
-
-    g_AttribLocationTex     = glGetUniformLocation(g_ShaderHandle, "Texture");
-    g_AttribLocationProjMtx = glGetUniformLocation(g_ShaderHandle, "ProjMtx");
-    g_AttribLocationPosition =
-        static_cast<GLuint>(glGetAttribLocation(g_ShaderHandle, "Position"));
-    g_AttribLocationUV =
-        static_cast<GLuint>(glGetAttribLocation(g_ShaderHandle, "UV"));
-    g_AttribLocationColor =
-        static_cast<GLuint>(glGetAttribLocation(g_ShaderHandle, "Color"));
-
-    OM_GL_CHECK();
-
-    glGenBuffers(1, &g_VboHandle);
-    OM_GL_CHECK();
-    glGenBuffers(1, &g_ElementsHandle);
-    OM_GL_CHECK();
-
-    // glGenVertexArrays(1, &g_VaoHandle);
-    // glBindVertexArray(g_VaoHandle);
-    glBindBuffer(GL_ARRAY_BUFFER, g_VboHandle);
-    OM_GL_CHECK();
-
-    glEnableVertexAttribArray(g_AttribLocationPosition);
-    OM_GL_CHECK();
-    glEnableVertexAttribArray(g_AttribLocationUV);
-    OM_GL_CHECK();
-    glEnableVertexAttribArray(g_AttribLocationColor);
-    OM_GL_CHECK();
-
-    glVertexAttribPointer(g_AttribLocationPosition, 2, GL_FLOAT, GL_FALSE,
-                          sizeof(ImDrawVert), nullptr);
-    OM_GL_CHECK();
-    glVertexAttribPointer(g_AttribLocationUV, 2, GL_FLOAT, GL_FALSE,
-                          sizeof(ImDrawVert),
-                          reinterpret_cast<void*>(2 * sizeof(float)));
-    OM_GL_CHECK();
-    glVertexAttribPointer(g_AttribLocationColor, 4, GL_UNSIGNED_BYTE, GL_TRUE,
-                          sizeof(ImDrawVert),
-                          reinterpret_cast<void*>(4 * sizeof(float)));
-    OM_GL_CHECK();
+    g_im_gui_shader = new om::shader_gl_es20(
+        vertex_shader, fragment_shader,
+        { { 0, "Position" }, { 1, "UV" }, { 2, "Color" } });
 
     ImGui_ImplSdlGL3_CreateFontsTexture();
-
-    // Restore modified GL state
-    glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(last_texture));
-    OM_GL_CHECK();
-    glBindBuffer(GL_ARRAY_BUFFER, static_cast<GLuint>(last_array_buffer));
-    OM_GL_CHECK();
-    // glBindVertexArray(last_vertex_array);
 
     return true;
 }
 
 void ImGui_ImplSdlGL3_InvalidateDeviceObjects()
 {
-    if (g_VaoHandle)
-    {
-        //   glDeleteVertexArrays(1, &g_VaoHandle);
-    }
-    if (g_VboHandle)
-        glDeleteBuffers(1, &g_VboHandle);
-    if (g_ElementsHandle)
-        glDeleteBuffers(1, &g_ElementsHandle);
-    g_VaoHandle = g_VboHandle = g_ElementsHandle = 0;
-
-    if (g_ShaderHandle && g_VertHandle)
-        glDetachShader(g_ShaderHandle, g_VertHandle);
-    if (g_VertHandle)
-        glDeleteShader(g_VertHandle);
-    g_VertHandle = 0;
-
-    if (g_ShaderHandle && g_FragHandle)
-        glDetachShader(g_ShaderHandle, g_FragHandle);
-    if (g_FragHandle)
-        glDeleteShader(g_FragHandle);
-    g_FragHandle = 0;
-
-    if (g_ShaderHandle)
-        glDeleteProgram(g_ShaderHandle);
-    g_ShaderHandle = 0;
-
     void*        ptr     = ImGui::GetIO().Fonts->TexID;
     om::texture* texture = reinterpret_cast<om::texture*>(ptr);
     om::g_engine->destroy_texture(texture);
+
+    delete g_im_gui_shader;
+    g_im_gui_shader = nullptr;
 }
 
 bool ImGui_ImplSdlGL3_Init(SDL_Window* window)
