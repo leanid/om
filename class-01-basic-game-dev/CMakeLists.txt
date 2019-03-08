@@ -22,6 +22,7 @@ add_subdirectory(05-3-graphics-update)
 add_subdirectory(06-1-matrix-and-vector)
 add_subdirectory(06-2-shader-multiply-matrix)
 add_subdirectory(06-3-move-tank)
+add_subdirectory(06-4-add-imgui)
 
 add_subdirectory(07-1-sdl-sound-example)
 add_subdirectory(07-2-add-sound-to-engine)
