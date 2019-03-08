@@ -398,9 +398,9 @@ public:
         }
         // OpenGL wants matrix in column major order
         // clang-format off
-        float values[9] = { m.col0.x,  m.col0.y, m.delta.x,
-                            m.col1.x, m.col1.y, m.delta.y,
-                            0.f,      0.f,       1.f };
+        float values[9] = { m.col0.x,  m.col0.y,  0.f,
+                            m.col1.x,  m.col1.y,  0.f,
+                            m.delta.x, m.delta.y, 1.f };
         // clang-format on
         glUniformMatrix3fv(location, 1, GL_FALSE, &values[0]);
         OM_GL_CHECK();
@@ -1417,43 +1417,13 @@ std::string engine_impl::initialize(std::string_view)
 
 } // end namespace om
 
-// ImGui SDL2 binding with OpenGL3
-// In this binding, ImTextureID is used to store an OpenGL 'GLuint' texture
-// identifier. Read the FAQ about ImTextureID in imgui.cpp.
-// (SDL is a cross-platform general purpose library for handling windows,
-// inputs, OpenGL/Vulkan graphics context creation, etc.)
-// (GL3W is a helper library to access OpenGL functions since there is no
-// standard header to access modern OpenGL functions easily. Alternatives are
-// GLEW, Glad, etc.)
-
-// You can copy and use unmodified imgui_impl_* files in your project. See
-// main.cpp for an example of using this.
-// If you use this binding you'll need to call 4 functions:
-// ImGui_ImplXXXX_Init(), ImGui_ImplXXXX_NewFrame(), ImGui::Render() and
-// ImGui_ImplXXXX_Shutdown().
-// If you are new to ImGui, see examples/README.txt and documentation at the top
-// of imgui.cpp.
-// https://github.com/ocornut/imgui
-
-// SDL,GL3W
-
-//#include <GL/gl3w.h>    // This example is using gl3w to access OpenGL
-// functions (because it is small). You may use glew/glad/glLoadGen/etc.
-// whatever
-// already works for you.
-
+// ImGui SDL2 binding with our custom engine fuctions (no optimization,
+// just study)
 // Data
-static float g_Time            = 0.0;
-static bool  g_MousePressed[3] = { false, false, false };
-static float g_MouseWheel      = 0.0f;
-// static GLuint g_FontTexture     = 0;
-// static GLuint g_ShaderHandle = 0, g_VertHandle = 0, g_FragHandle = 0;
-// static int    g_AttribLocationTex = 0, g_AttribLocationProjMtx = 0;
-// static GLuint g_AttribLocationPosition = 0, g_AttribLocationUV = 0,
-//              g_AttribLocationColor = 0;
-// static unsigned int g_VboHandle = 0, g_VaoHandle = 0, g_ElementsHandle = 0;
-
-static om::shader_gl_es20* g_im_gui_shader = nullptr;
+static float               g_Time            = 0.0;
+static bool                g_MousePressed[3] = { false, false, false };
+static float               g_MouseWheel      = 0.0f;
+static om::shader_gl_es20* g_im_gui_shader   = nullptr;
 
 // This is the main rendering function that you have to implement and provide to
 // ImGui (via setting up 'RenderDrawListsFn' in the ImGuiIO structure)
@@ -1476,32 +1446,17 @@ void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
     }
     draw_data->ScaleClipRects(io.DisplayFramebufferScale);
 
-    GLint last_scissor_box[4];
-    glGetIntegerv(GL_SCISSOR_BOX, last_scissor_box);
-
-    // Setup viewport, orthographic projection matrix
-    glViewport(0, 0, GLsizei(fb_width), GLsizei(fb_height));
-    const float ortho_projection[4][4] = {
-        { 2.0f / io.DisplaySize.x, 0.0f, 0.0f, 0.0f },
-        { 0.0f, 2.0f / -io.DisplaySize.y, 0.0f, 0.0f },
-        { 0.0f, 0.0f, -1.0f, 0.0f },
-        { -1.0f, 1.0f, 0.0f, 1.0f },
-    };
-
     om::texture_gl_es20* texture =
         reinterpret_cast<om::texture_gl_es20*>(io.Fonts->TexID);
     assert(texture != nullptr);
 
+    om::mat2x3 orto_matrix =
+        om::mat2x3::scale(2.0f / io.DisplaySize.x, -2.0f / io.DisplaySize.y) *
+        om::mat2x3::move(om::vec2(-1.0f, 1.0f));
+
     g_im_gui_shader->use();
     g_im_gui_shader->set_uniform("Texture", texture);
-    // g_im_gui_shader->set_uniform("ProjMtx", ortho_projection);
-
-    // glUseProgram(g_ShaderHandle);
-    // glUniform1i(g_AttribLocationTex, 0);
-    // g_AttribLocationProjMtx == 0 or 1
-    glUniformMatrix4fv(0, 1, GL_FALSE, &ortho_projection[0][0]);
-
-    OM_GL_CHECK();
+    g_im_gui_shader->set_uniform("ProjMtx", orto_matrix);
 
     for (int n = 0; n < draw_data->CmdListsCount; n++)
     {
@@ -1536,11 +1491,6 @@ void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
             om::texture* texture =
                 reinterpret_cast<om::texture*>(pcmd->TextureId);
 
-            glScissor(int(pcmd->ClipRect.x), int(fb_height - pcmd->ClipRect.w),
-                      int(pcmd->ClipRect.z - pcmd->ClipRect.x),
-                      int(pcmd->ClipRect.w - pcmd->ClipRect.y));
-            OM_GL_CHECK();
-
             om::g_engine->render(vertex_buff, index_buff, texture,
                                  idx_buffer_offset, pcmd->ElemCount);
 
@@ -1549,10 +1499,6 @@ void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
         om::g_engine->destroy_vertex_buffer(vertex_buff);
         om::g_engine->destroy_index_buffer(index_buff);
     } // end for n
-
-    glScissor(last_scissor_box[0], last_scissor_box[1],
-              GLsizei(last_scissor_box[2]), GLsizei(last_scissor_box[3]));
-    OM_GL_CHECK();
 }
 
 static const char* ImGui_ImplSdlGL3_GetClipboardText(void*)
@@ -1637,7 +1583,7 @@ bool ImGui_ImplSdlGL3_CreateDeviceObjects()
         "#if defined(GL_ES)\n"
         "precision highp float;\n"
         "#endif //GL_ES\n"
-        "uniform mat4 ProjMtx;\n"
+        "uniform mat3 ProjMtx;\n"
         "attribute vec2 Position;\n"
         "attribute vec2 UV;\n"
         "attribute vec4 Color;\n"
@@ -1647,7 +1593,7 @@ bool ImGui_ImplSdlGL3_CreateDeviceObjects()
         "{\n"
         "	Frag_UV = UV;\n"
         "	Frag_Color = Color;\n"
-        "	gl_Position = ProjMtx * vec4(Position.xy,0,1);\n"
+        "	gl_Position = vec4(ProjMtx * vec3(Position.xy,1), 1);\n"
         "}\n";
 
     const GLchar* fragment_shader =
