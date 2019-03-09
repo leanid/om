@@ -21,8 +21,9 @@ struct audio_buff
 
 std::ostream& operator<<(std::ostream& o, const SDL_AudioSpec& spec);
 
-static auto start  = std::chrono::high_resolution_clock::now();
-static auto finish = start;
+static auto start         = std::chrono::high_resolution_clock::now();
+static auto finish        = start;
+int32_t     default_delay = 0;
 
 int main(int /*argc*/, char* /*argv*/[])
 {
@@ -131,6 +132,8 @@ int main(int /*argc*/, char* /*argv*/[])
              << "4. print device buffer play length\n"
              << "5. experimental device buffer play length(time between "
                 "callbacks)\n"
+             << "6. set default delay for audio callback(current val: "
+             << default_delay << " ms)\n"
              << ">" << flush;
 
         int choise = 0;
@@ -180,6 +183,12 @@ int main(int /*argc*/, char* /*argv*/[])
                      << elapsed_seconds << " seconds" << endl;
                 break;
             }
+            case 6:
+            {
+                clog << "input delay in milliseconds:>" << flush;
+                cin >> default_delay;
+                break;
+            }
             default:
                 break;
         }
@@ -208,6 +217,9 @@ static void audio_callback(void* userdata, uint8_t* stream, int len)
         std::clog << "start audio_callback!" << std::endl;
         first_time = false;
     }
+
+    // simulate long calculation (just test)
+    SDL_Delay(default_delay);
 
     // experimental check two continius callback delta time
     start  = finish;
