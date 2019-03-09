@@ -1094,7 +1094,7 @@ std::string engine_impl::initialize(std::string_view)
         load_gl_func("glGenBuffers", glGenBuffers);
         load_gl_func("glBindBuffer", glBindBuffer);
         load_gl_func("glBufferData", glBufferData);
-        load_gl_func("glBufferSubDataF", glBufferSubData);
+        load_gl_func("glBufferSubData", glBufferSubData);
     }
     catch (std::exception& ex)
     {
