@@ -1,9 +1,10 @@
 cmake_minimum_required(VERSION 3.9)
-project(07-1-add-sound)
+project(07-1-add-sound CXX)
 
 find_library(SDL2_LIB NAMES SDL2)
 
-add_executable(sound_test-07-1 audio.c test.c audio.h)
+add_executable(sound_test-07-1 sound_test.cxx)
+target_compile_features(sound_test-07-1 PUBLIC cxx_std_20)
 
 if (MINGW)
     target_link_libraries(sound_test-07-1
