@@ -12,18 +12,27 @@ constexpr int32_t AUDIO_FORMAT = AUDIO_S16LSB;
 
 static void audio_callback(void* userdata, uint8_t* stream, int len);
 
+#pragma pack(push, 1)
 struct audio_buff
 {
     uint8_t* start       = nullptr;
     size_t   size        = 0;
     size_t   current_pos = 0;
+
+    struct
+    {
+        size_t frequncy = 0;
+        double time     = 0.0;
+        bool   use_note = false;
+    } note;
 };
+#pragma pack(pop)
 
 std::ostream& operator<<(std::ostream& o, const SDL_AudioSpec& spec);
 
-static auto start         = std::chrono::high_resolution_clock::now();
-static auto finish        = start;
-int32_t     default_delay = 0;
+static auto    start         = std::chrono::high_resolution_clock::now();
+static auto    finish        = start;
+static int32_t default_delay = 0;
 
 int main(int /*argc*/, char* /*argv*/[])
 {
@@ -72,7 +81,12 @@ int main(int /*argc*/, char* /*argv*/[])
     {
         .start = sample_buffer_from_file,
         .size = sample_buffer_len_from_file,
-        .current_pos = 0
+        .current_pos = 0,
+        .note = {
+         .frequncy = 0,
+         .time = 0,
+         .use_note = false
+        }
     };
     // clang-format on
 
@@ -134,6 +148,8 @@ int main(int /*argc*/, char* /*argv*/[])
                 "callbacks)\n"
              << "6. set default delay for audio callback(current val: "
              << default_delay << " ms)\n"
+             << "7. play note(current val: " << loaded_audio_buff.note.frequncy
+             << ")\n"
              << ">" << flush;
 
         int choise = 0;
@@ -189,6 +205,12 @@ int main(int /*argc*/, char* /*argv*/[])
                 cin >> default_delay;
                 break;
             }
+            case 7:
+            {
+                clog << "input note frequncy: " << flush;
+                cin >> loaded_audio_buff.note.frequncy;
+            }
+            break;
             default:
                 break;
         }
@@ -232,30 +254,56 @@ static void audio_callback(void* userdata, uint8_t* stream, int len)
     audio_buff* audio_buff_data = reinterpret_cast<audio_buff*>(userdata);
     assert(audio_buff_data != nullptr);
 
-    while (stream_len > 0)
+    if (audio_buff_data->note.frequncy != 0)
     {
-        // copy data from loaded buffer into output stream
-        const uint8_t* current_sound_pos =
-            audio_buff_data->start + audio_buff_data->current_pos;
+        size_t num_samples = stream_len / 2 / 2;
+        double dt          = 1.0 / 48000.0;
 
-        const size_t left_in_buffer =
-            audio_buff_data->size - audio_buff_data->current_pos;
+        int16_t* output = reinterpret_cast<int16_t*>(stream);
 
-        if (left_in_buffer > stream_len)
+        for (size_t sample = 0; sample < num_samples; ++sample)
         {
-            SDL_MixAudioFormat(stream, current_sound_pos, AUDIO_FORMAT, len,
-                               128);
-            audio_buff_data->current_pos += stream_len;
-            break;
+            double omega_t = audio_buff_data->note.time * 2.0 * 3.1415926 *
+                             audio_buff_data->note.frequncy;
+            double curr_sample =
+                std::numeric_limits<int16_t>::max() * sin(omega_t);
+            int16_t curr_val = static_cast<int16_t>(curr_sample);
+
+            *output = curr_val;
+            output++;
+            *output = curr_val;
+            output++;
+
+            audio_buff_data->note.time += dt;
         }
-        else
+    }
+    else
+    {
+        while (stream_len > 0)
         {
-            // first copy rest from buffer and repeat sound from begining
-            SDL_MixAudioFormat(stream, current_sound_pos, AUDIO_FORMAT,
-                               left_in_buffer, 128);
-            // start buffer from begining
-            audio_buff_data->current_pos = 0;
-            stream_len -= left_in_buffer;
+            // copy data from loaded buffer into output stream
+            const uint8_t* current_sound_pos =
+                audio_buff_data->start + audio_buff_data->current_pos;
+
+            const size_t left_in_buffer =
+                audio_buff_data->size - audio_buff_data->current_pos;
+
+            if (left_in_buffer > stream_len)
+            {
+                SDL_MixAudioFormat(stream, current_sound_pos, AUDIO_FORMAT, len,
+                                   128);
+                audio_buff_data->current_pos += stream_len;
+                break;
+            }
+            else
+            {
+                // first copy rest from buffer and repeat sound from begining
+                SDL_MixAudioFormat(stream, current_sound_pos, AUDIO_FORMAT,
+                                   left_in_buffer, 128);
+                // start buffer from begining
+                audio_buff_data->current_pos = 0;
+                stream_len -= left_in_buffer;
+            }
         }
     }
 }
