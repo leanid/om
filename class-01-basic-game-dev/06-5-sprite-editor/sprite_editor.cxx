@@ -59,7 +59,10 @@ int main(int /*argc*/, char* /*argv*/[])
 
     std::string texture_path;
     texture_path.reserve(1024);
-    om::texture* loaded_tex = nullptr;
+    om::texture* loaded_tex        = nullptr;
+    int32_t      spr_rect[4]       = {};
+    float        spr_center_pos[2] = {};
+    float        spr_size[2]       = {};
 
     while (continue_loop)
     {
@@ -112,7 +115,7 @@ int main(int /*argc*/, char* /*argv*/[])
         // not) to your application.
         ImGui::NewFrame();
 
-        bool show_demo_window = true;
+        bool show_demo_window = false;
         if (show_demo_window)
         {
             ImGui::ShowDemoWindow(&show_demo_window);
@@ -135,6 +138,10 @@ int main(int /*argc*/, char* /*argv*/[])
             ImGui::Image(texture,
                          ImVec2(texture->get_width(), texture->get_height()));
         }
+
+        ImGui::InputInt4("rect on texture", spr_rect);
+        ImGui::InputFloat2("center pos", spr_center_pos);
+        ImGui::InputFloat2("size", spr_size);
 
         // Rendering
         ImGui::Render();

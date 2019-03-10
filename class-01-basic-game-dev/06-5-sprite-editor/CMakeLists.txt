@@ -32,7 +32,7 @@ elseif(MSVC)
                           opengl32)
 endif()
 
-add_executable(06-5-sprite-editor sprite_editor.cxx)
+add_executable(06-5-sprite-editor sprite_editor.cxx sprite.cxx sprite.hxx)
 target_compile_features(06-5-sprite-editor PUBLIC cxx_std_17)
 
 target_link_libraries(06-5-sprite-editor engine-06-5)
