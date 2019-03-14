@@ -5,7 +5,7 @@ add_executable(hello_cout_dynamic cout_main.cxx)
 # install static version of standard libraries
 #>sudo dnf install libstdc++-static glibc-static
 add_executable(hello_cout_static cout_main.cxx)
-target_link_libraries(hello_cout_static -static)
+target_link_options(hello_cout_static PRIVATE -static)
 
 add_executable(hello_nostartfiles hack_main.cxx)
 target_link_options(hello_nostartfiles PRIVATE -nostartfiles)
