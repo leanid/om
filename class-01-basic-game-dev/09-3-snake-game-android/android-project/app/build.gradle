@@ -26,7 +26,14 @@ android {
         versionName "1.0"
         externalNativeBuild {
 	        cmake {
-	        // Use the following syntax when passing arguments to variables:
+                version "3.14+"  // double check your ENV variable PATH have cmake with correct version
+                                 // or you have to set path to it in local.properties like:
+                                 // # If you set this property, Gradle no longer uses PATH to find CMake.
+                                 // # gradle works only with canonical cmake from cmake.org
+                                 // cmake.dir="path-to-cmake"
+
+
+                // Use the following syntax when passing arguments to variables:
 	        // arguments "-DVAR_NAME=ARGUMENT".
                 arguments "-DSDL2_SRC_DIR=" + sdl2SrcDir
                 arguments "-DSDL2_BUILD_DIR=" + sdl2BuildDir
