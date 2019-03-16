@@ -11,6 +11,7 @@
 #include "imgui.h"
 
 #include "engine.hxx"
+#include "sprite.hxx"
 
 int main(int /*argc*/, char* /*argv*/[])
 {
@@ -59,10 +60,11 @@ int main(int /*argc*/, char* /*argv*/[])
 
     std::string texture_path;
     texture_path.reserve(1024);
-    om::texture* loaded_tex        = nullptr;
-    int32_t      spr_rect[4]       = {};
-    float        spr_center_pos[2] = {};
-    float        spr_size[2]       = {};
+    om::texture* loaded_tex     = nullptr;
+    rect         spr_rect       = {};
+    om::vec2     spr_center_pos = {};
+    om::vec2     spr_size       = {};
+    float        angle          = 0.f;
 
     while (continue_loop)
     {
@@ -121,7 +123,7 @@ int main(int /*argc*/, char* /*argv*/[])
             ImGui::ShowDemoWindow(&show_demo_window);
         }
 
-        ImGui::InputText("path to texture file", texture_path.data(),
+        ImGui::InputText("texture: ", texture_path.data(),
                          texture_path.capacity());
 
         if (ImGui::Button("load texture"))
@@ -139,12 +141,17 @@ int main(int /*argc*/, char* /*argv*/[])
                          ImVec2(texture->get_width(), texture->get_height()));
         }
 
-        ImGui::InputInt4("rect on texture", spr_rect);
-        ImGui::InputFloat2("center pos", spr_center_pos);
-        ImGui::InputFloat2("size", spr_size);
+        ImGui::InputFloat4("uv_rect", &spr_rect.pos.x);
+        ImGui::InputFloat2("world_pos", &spr_center_pos.x);
+        ImGui::InputFloat2("size", &spr_size.x);
+        ImGui::InputFloat("angle", &angle);
 
         // Rendering
         ImGui::Render();
+
+        sprite spr(texture, spr_rect, spr_center_pos, spr_size, angle);
+
+        spr.draw(*engine);
 
         engine->swap_buffers();
     }

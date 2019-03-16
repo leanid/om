@@ -3,21 +3,69 @@
 sprite::sprite() {}
 
 sprite::sprite(om::texture* tex, const rect& rect_on_texture,
-               const om::vec2& pos, const om::vec2& size,
-               const om::vec2& center_pos)
+               const om::vec2& pos, const om::vec2& size, const float angle)
     : texture_(tex)
-    , tex_rect_(rect_on_texture)
+    , uv_rect_(rect_on_texture)
     , pos_(pos)
     , size_(size)
-    , center_(center_pos)
+    , rotation_(angle)
 {
 }
 
-void sprite::draw(om::engine& /*render*/)
+void sprite::draw(om::engine& render)
 {
-    om::v2 vertexes[4];
+    if (texture_ == nullptr)
+    {
+        return; // sprite is empty nothing to do
+    }
 
-    vertexes[0].uv.x = tex_rect_.pos.x;
+    ///   0            1
+    ///   *------------*
+    ///   |           /|
+    ///   |         /  |
+    ///   |      P/    |  // P - pos_ or center of sprite
+    ///   |     /      |
+    ///   |   /        |
+    ///   | /          |
+    ///   *------------*
+    ///   3            2
+
+    om::v2 vertexes[4];
+    vertexes[0].uv = uv_rect_.pos;
+    vertexes[1].uv = uv_rect_.pos + om::vec2(uv_rect_.size.x, 0.f);
+    vertexes[2].uv = uv_rect_.pos + uv_rect_.size;
+    vertexes[3].uv = uv_rect_.pos + om::vec2(0.f, uv_rect_.size.y);
+
+    float half_width  = size_.x / 2;
+    float half_height = size_.y / 2;
+
+    vertexes[0].pos = pos_ + om::vec2(-half_width, half_height);
+    vertexes[1].pos = pos_ + om::vec2(half_width, half_height);
+    vertexes[2].pos = pos_ + om::vec2(half_width, -half_height);
+    vertexes[3].pos = pos_ + om::vec2(-half_width, -half_height);
+
+    om::color white{ 1, 1, 1, 1 };
+
+    vertexes[0].c = white;
+    vertexes[1].c = white;
+    vertexes[2].c = white;
+    vertexes[3].c = white;
+
+    // build 2 triangles to render sprite
+    om::tri2 tr0;
+    tr0.v[0] = vertexes[0];
+    tr0.v[1] = vertexes[1];
+    tr0.v[2] = vertexes[3];
+
+    om::tri2 tr1;
+    tr1.v[0] = vertexes[1];
+    tr1.v[1] = vertexes[2];
+    tr1.v[2] = vertexes[3];
+
+    om::mat2x3 world_transform; // identity for now
+
+    render.render(tr0, texture_, world_transform);
+    render.render(tr1, texture_, world_transform);
 }
 
 om::texture* sprite::texture() const
@@ -48,16 +96,6 @@ om::vec2 sprite::size() const
 void sprite::size(const om::vec2& s)
 {
     size_ = s;
-}
-
-om::vec2 sprite::center() const
-{
-    return center_;
-}
-
-void sprite::center(const om::vec2& c)
-{
-    center_ = c;
 }
 
 float sprite::rotation() const
