@@ -1,11 +1,11 @@
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 3.14)
 project(06-5-sprite-editor)
 
 add_library(engine-06-5 SHARED engine.cxx)
 target_compile_features(engine-06-5 PUBLIC cxx_std_17)
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/imgui-src)
-target_link_libraries(engine-06-5 imgui)
+target_link_libraries(engine-06-5 imgui_editor)
 
 if(WIN32)
   target_compile_definitions(engine-06-5 PRIVATE "-DOM_DECLSPEC=__declspec(dllexport)")

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 3.14)
 
 project(all-tests-build)
 
@@ -23,6 +23,7 @@ add_subdirectory(06-1-matrix-and-vector)
 add_subdirectory(06-2-shader-multiply-matrix)
 add_subdirectory(06-3-move-tank)
 add_subdirectory(06-4-add-imgui)
+add_subdirectory(06-5-sprite-editor)
 
 add_subdirectory(07-1-sdl-sound-example)
 add_subdirectory(07-2-add-sound-to-engine)
