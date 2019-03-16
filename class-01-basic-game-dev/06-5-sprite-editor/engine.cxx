@@ -851,6 +851,10 @@ public:
     }
     void render(const tri2& t, texture* tex, const mat2x3& m) final
     {
+        // disable other render functions call influence
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        OM_GL_CHECK();
+
         shader03->use();
         texture_gl_es20* texture = static_cast<texture_gl_es20*>(tex);
         texture->bind();

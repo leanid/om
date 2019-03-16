@@ -29,22 +29,26 @@ void sprite::draw(om::engine& render)
     ///   | /          |
     ///   *------------*
     ///   3            2
+    ///
 
-    om::v2 vertexes[4];
-    vertexes[0].uv = uv_rect_.pos;
-    vertexes[1].uv = uv_rect_.pos + om::vec2(uv_rect_.size.x, 0.f);
-    vertexes[2].uv = uv_rect_.pos + uv_rect_.size;
-    vertexes[3].uv = uv_rect_.pos + om::vec2(0.f, uv_rect_.size.y);
+    using namespace om;
+
+    v2 vertexes[4];
+    /// remember in OpenGL texture lower left angle is (0, 0) coordinate
+    vertexes[0].uv = uv_rect_.pos + vec2(0.f, uv_rect_.size.y);
+    vertexes[1].uv = uv_rect_.pos + vec2(uv_rect_.size.x, uv_rect_.size.y);
+    vertexes[2].uv = uv_rect_.pos + vec2(uv_rect_.size.x, 0.f);
+    vertexes[3].uv = uv_rect_.pos;
 
     float half_width  = size_.x / 2;
     float half_height = size_.y / 2;
 
-    vertexes[0].pos = pos_ + om::vec2(-half_width, half_height);
-    vertexes[1].pos = pos_ + om::vec2(half_width, half_height);
-    vertexes[2].pos = pos_ + om::vec2(half_width, -half_height);
-    vertexes[3].pos = pos_ + om::vec2(-half_width, -half_height);
+    vertexes[0].pos = pos_ + vec2(-half_width, half_height);
+    vertexes[1].pos = pos_ + vec2(half_width, half_height);
+    vertexes[2].pos = pos_ + vec2(half_width, -half_height);
+    vertexes[3].pos = pos_ + vec2(-half_width, -half_height);
 
-    om::color white{ 1, 1, 1, 1 };
+    color white{ 1, 1, 1, 1 };
 
     vertexes[0].c = white;
     vertexes[1].c = white;
@@ -52,17 +56,17 @@ void sprite::draw(om::engine& render)
     vertexes[3].c = white;
 
     // build 2 triangles to render sprite
-    om::tri2 tr0;
+    tri2 tr0;
     tr0.v[0] = vertexes[0];
     tr0.v[1] = vertexes[1];
     tr0.v[2] = vertexes[3];
 
-    om::tri2 tr1;
+    tri2 tr1;
     tr1.v[0] = vertexes[1];
     tr1.v[1] = vertexes[2];
     tr1.v[2] = vertexes[3];
 
-    om::mat2x3 world_transform; // identity for now
+    mat2x3 world_transform; // identity for now
 
     render.render(tr0, texture_, world_transform);
     render.render(tr1, texture_, world_transform);

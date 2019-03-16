@@ -15,17 +15,25 @@
 
 int main(int /*argc*/, char* /*argv*/[])
 {
-    std::unique_ptr<om::engine, void (*)(om::engine*)> engine(
-        om::create_engine(), om::destroy_engine);
+    std::unique_ptr<om::engine, void (*)(om::engine*)> e(om::create_engine(),
+                                                         om::destroy_engine);
 
-    const std::string error = engine->initialize("");
+    if (!e)
+    {
+        std::cerr << "can't create engine object";
+        return EXIT_FAILURE;
+    }
+
+    const std::string error = e->initialize("");
     if (!error.empty())
     {
         std::cerr << error << std::endl;
         return EXIT_FAILURE;
     }
 
-    om::texture* texture = engine->create_texture("tank.png");
+    om::engine& engine = *e;
+
+    om::texture* texture = engine.create_texture("tank.png");
     if (nullptr == texture)
     {
         std::cerr << "failed load texture\n";
@@ -44,7 +52,7 @@ int main(int /*argc*/, char* /*argv*/[])
     {
         std::array<om::tri2, 2> tr;
         file >> tr[0] >> tr[1];
-        vertex_buf = engine->create_vertex_buffer(&tr[0], tr.size());
+        vertex_buf = engine.create_vertex_buffer(&tr[0], tr.size());
         if (vertex_buf == nullptr)
         {
             std::cerr << "can't create vertex buffer\n";
@@ -54,9 +62,9 @@ int main(int /*argc*/, char* /*argv*/[])
 
     bool continue_loop = true;
 
-    om::vec2    current_tank_pos(0.f, 0.f);
-    float       current_tank_direction(0.f);
-    const float pi = 3.1415926f;
+    om::vec2               current_tank_pos(0.f, 0.f);
+    [[maybe_unused]] float current_tank_direction(0.f);
+    const float            pi = 3.1415926f;
 
     std::string texture_path;
     texture_path.reserve(1024);
@@ -70,7 +78,7 @@ int main(int /*argc*/, char* /*argv*/[])
     {
         om::event event;
 
-        while (engine->read_event(event))
+        while (engine.read_event(event))
         {
             std::cout << event << std::endl;
             switch (event)
@@ -84,22 +92,22 @@ int main(int /*argc*/, char* /*argv*/[])
             }
         }
 
-        if (engine->is_key_down(om::keys::left))
+        if (engine.is_key_down(om::keys::left))
         {
             current_tank_pos.x -= 0.01f;
             current_tank_direction = pi / 2.f;
         }
-        else if (engine->is_key_down(om::keys::right))
+        else if (engine.is_key_down(om::keys::right))
         {
             current_tank_pos.x += 0.01f;
             current_tank_direction = -pi / 2.f;
         }
-        else if (engine->is_key_down(om::keys::up))
+        else if (engine.is_key_down(om::keys::up))
         {
             current_tank_pos.y += 0.01f;
             current_tank_direction = 0.f;
         }
-        else if (engine->is_key_down(om::keys::down))
+        else if (engine.is_key_down(om::keys::down))
         {
             current_tank_pos.y -= 0.01f;
             current_tank_direction = -pi;
@@ -107,10 +115,10 @@ int main(int /*argc*/, char* /*argv*/[])
 
         om::mat2x3 move   = om::mat2x3::move(current_tank_pos);
         om::mat2x3 aspect = om::mat2x3::scale(1, 640.f / 480.f);
-        om::mat2x3 rot    = om::mat2x3::rotation(current_tank_direction);
-        om::mat2x3 m      = rot * move * aspect;
+        // om::mat2x3 rot    = om::mat2x3::rotation(current_tank_direction);
+        om::mat2x3 m = /*rot **/ move * aspect;
 
-        engine->render(*vertex_buf, texture, m);
+        engine.render(*vertex_buf, texture, m);
 
         // Start the frame. This call will update the io.WantCaptureMouse,
         // io.WantCaptureKeyboard flag that you can use to dispatch inputs (or
@@ -130,9 +138,9 @@ int main(int /*argc*/, char* /*argv*/[])
         {
             if (texture != nullptr)
             {
-                engine->destroy_texture(loaded_tex);
+                engine.destroy_texture(loaded_tex);
             }
-            loaded_tex = engine->create_texture(texture_path);
+            loaded_tex = engine.create_texture(texture_path);
         }
 
         if (loaded_tex != nullptr)
@@ -151,12 +159,12 @@ int main(int /*argc*/, char* /*argv*/[])
 
         sprite spr(texture, spr_rect, spr_center_pos, spr_size, angle);
 
-        spr.draw(*engine);
+        spr.draw(engine);
 
-        engine->swap_buffers();
+        engine.swap_buffers();
     }
 
-    engine->uninitialize();
+    engine.uninitialize();
 
     return EXIT_SUCCESS;
 }
