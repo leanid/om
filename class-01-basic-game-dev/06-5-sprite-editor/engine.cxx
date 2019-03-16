@@ -1090,7 +1090,8 @@ texture_gl_es20::texture_gl_es20(std::string_view path)
     std::ifstream              ifs(path.data(), std::ios_base::binary);
     if (!ifs)
     {
-        throw std::runtime_error("can't load texture");
+        throw std::runtime_error("can't load texture[" + std::string(path) +
+                                 "]");
     }
     ifs.seekg(0, std::ios_base::end);
     std::streamoff pos_in_file = ifs.tellg();
