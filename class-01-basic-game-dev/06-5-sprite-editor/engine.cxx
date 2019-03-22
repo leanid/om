@@ -689,6 +689,8 @@ public:
     /// create main window
     /// on success return empty string
     std::string initialize(std::string_view /*config*/) final;
+    /// return window size
+    virtual om::vec2 screen_size() const final;
     /// return seconds from initialization
     float get_time_from_init() final
     {
@@ -1018,6 +1020,7 @@ void destroy_engine(engine* e)
         throw std::runtime_error("e is nullptr");
     }
     delete e;
+    already_exist = false;
 }
 
 color::color(std::uint32_t rgba_)
@@ -1197,9 +1200,9 @@ std::string engine_impl::initialize(std::string_view)
         return serr.str();
     }
 
-    window =
-        SDL_CreateWindow("title", SDL_WINDOWPOS_CENTERED,
-                         SDL_WINDOWPOS_CENTERED, 800, 600, ::SDL_WINDOW_OPENGL);
+    window = SDL_CreateWindow("title", SDL_WINDOWPOS_CENTERED,
+                              SDL_WINDOWPOS_CENTERED, 1024, 768,
+                              ::SDL_WINDOW_OPENGL);
 
     if (window == nullptr)
     {
@@ -1370,10 +1373,10 @@ std::string engine_impl::initialize(std::string_view)
                 varying vec2 v_tex_coord;
                 void main()
                 {
-                v_tex_coord = a_tex_coord;
-                v_color = a_color;
-                vec3 pos = vec3(a_position, 1.0) * u_matrix;
-                gl_Position = vec4(pos, 1.0);
+                    v_tex_coord = a_tex_coord;
+                    v_color = a_color;
+                    vec3 pos = vec3(a_position, 1.0) * u_matrix;
+                    gl_Position = vec4(pos, 1.0);
                 }
                 )",
         R"(
@@ -1383,7 +1386,7 @@ std::string engine_impl::initialize(std::string_view)
                 uniform sampler2D s_texture;
                 void main()
                 {
-                gl_FragColor = texture2D(s_texture, v_tex_coord) * v_color;
+                    gl_FragColor = texture2D(s_texture, v_tex_coord) * v_color;
                 }
                 )",
         { { 0, "a_position" }, { 1, "a_color" }, { 2, "a_tex_coord" } });
@@ -1397,7 +1400,9 @@ std::string engine_impl::initialize(std::string_view)
     glClearColor(0.f, 0.0, 0.f, 0.0f);
     OM_GL_CHECK();
 
-    glViewport(0, 0, 800, 600);
+    om::vec2 window_size = screen_size();
+
+    glViewport(0, 0, window_size.x, window_size.y);
     OM_GL_CHECK();
 
     if (!ImGui_ImplSdlGL3_Init(window))
@@ -1409,6 +1414,14 @@ std::string engine_impl::initialize(std::string_view)
     ImGui_ImplSdlGL3_NewFrame(window);
 
     return "";
+}
+
+om::vec2 engine_impl::screen_size() const
+{
+    int w;
+    int h;
+    SDL_GetWindowSize(window, &w, &h);
+    return om::vec2(static_cast<float>(w), static_cast<float>(h));
 }
 
 } // end namespace om

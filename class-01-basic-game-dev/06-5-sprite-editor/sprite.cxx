@@ -66,7 +66,10 @@ void sprite::draw(om::engine& render)
     tr1.v[1] = vertexes[2];
     tr1.v[2] = vertexes[3];
 
-    mat2x3 world_transform; // identity for now
+    mat2x3 move     = mat2x3::move(pos_);
+    mat2x3 rotation = mat2x3::rotation(rotation_ * (3.14159f / 180));
+
+    mat2x3 world_transform = move * rotation;
 
     render.render(tr0, texture_, world_transform);
     render.render(tr1, texture_, world_transform);

@@ -186,6 +186,7 @@ public:
     /// create main window
     /// on success return empty string
     virtual std::string initialize(std::string_view config) = 0;
+    virtual om::vec2    screen_size() const                 = 0;
     /// return seconds from initialization
     virtual float get_time_from_init() = 0;
     /// pool event from input queue
