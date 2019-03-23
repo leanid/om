@@ -123,12 +123,23 @@ vec2::vec2(float x_, float y_)
 {
 }
 
+float vec2::length() const
+{
+    return std::sqrt(x * x + y * y);
+}
+
 vec2 operator+(const vec2& l, const vec2& r)
 {
     vec2 result;
     result.x = l.x + r.x;
     result.y = l.y + r.y;
     return result;
+}
+
+bool operator==(const vec2& l, const vec2& r)
+{
+    vec2 diff = l + vec2(-r.x, -r.y);
+    return diff.length() <= 0.000001f;
 }
 
 mat2x3::mat2x3()
@@ -312,6 +323,7 @@ public:
 
     std::uint32_t get_width() const final { return width; }
     std::uint32_t get_height() const final { return height; }
+    std::string   get_name() const final { return file_path; }
 
 private:
     void gen_texture_from_pixels(const void* pixels, const size_t width,

@@ -1,5 +1,7 @@
 #include "sprite_reader.hxx"
 
+#include <algorithm>
+#include <iomanip>
 #include <iostream>
 
 sprite_reader::sprite_reader() {}
@@ -34,22 +36,51 @@ void sprite_reader::load_sprites(std::vector<sprite>& sprites, std::istream& in)
         {
             float a;
             in >> a;
-            spr.rotation(a * (3.1415926f / 180));
+            spr.rotation(a);
+
+            // angle: - last attribute in sprite so add it to result
+            sprites.push_back(spr);
         }
         else if ("id:" == attribute_name)
         {
             std::string name;
             in >> name;
             spr.id(name);
-
-            // id: - last attribute in sprite so add it to result
-            sprites.push_back(spr);
         }
     }
     return;
 }
 
-void sprite_reader::save_sprites(const std::vector<sprite>&, std::ostream&)
+void sprite_reader::save_sprites(const std::vector<sprite>& list,
+                                 std::ostream&              ss)
 {
-    return;
+    const auto save_one_sprite = [&ss](const sprite& spr) {
+        using namespace std;
+        ss << left << setw(12) << "id: " << spr.id() << '\n';
+
+        const om::texture* texture = spr.texture();
+        if (texture == nullptr)
+        {
+            throw std::runtime_error{ "error: no texture in spite!!!" };
+        }
+
+        const std::string_view name = texture->get_name();
+        ss << left << setw(12) << "texture: " << name << '\n';
+        ss << left << setw(12) << "uv_rect: ";
+        const rect& r = spr.uv_rect();
+        // clang-format off
+        ss << left <<setprecision(3) << fixed
+           << setw(7) << r.pos.x << ' '
+           << setw(7) << r.pos.y << ' '
+           << setw(7) << r.size.x << ' '
+           << setw(7) << r.size.y << '\n';
+        // clang-format on
+        ss << left << setw(12) << "world_pos: " << spr.pos().x << ' '
+           << spr.pos().y << '\n';
+        ss << left << setw(12) << "size: " << spr.size().x << ' '
+           << spr.size().y << '\n';
+        ss << left << setw(12) << "angle: " << spr.rotation() << '\n';
+    };
+
+    std::for_each(begin(list), end(list), save_one_sprite);
 }

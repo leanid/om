@@ -9,42 +9,55 @@
 #include <iostream>
 #include <sstream>
 
-TEST_CASE("test read one sprite", "one")
+TEST_CASE("save and load one sprite")
 {
     using namespace std;
 
-    rect r;
-    r.pos.x  = 0.30003f;
-    r.pos.y  = 0.5f;
-    r.size.x = 0.5f;
-    r.size.y = 0.5f;
-    om::vec2 pos(0.123f, 0.123f);
-    om::vec2 size(1.0f, 0.3f);
-    float    angle{ 270 };
-    string   tank_name{ "tank_spr" };
+    sprite_reader loader;
+
+    const rect     r{ { 0.3f, 0.3f }, { 0.5f, 0.5f } };
+    const om::vec2 pos(0.123f, 0.123f);
+    const om::vec2 size(1.0f, 0.3f);
+    const float    angle{ 270 };
+    const string   texture_name{ "tank.png" };
+    const string   tank_name{ "tank_spr" };
 
     stringstream ss;
-    ss << "uv_rect: ";
-    ss << setprecision(3) << fixed << setw(7);
-    ss << r.pos.x << ' ' << r.pos.y << ' ' << r.size.x << ' ' << r.size.y
-       << ' ';
-    ss << "world_pos: " << pos.x << ' ' << pos.y << ' ';
-    ss << "size: " << size.x << ' ' << size.y << ' ';
-    ss << "angle: " << angle << ' ';
-    ss << "id: " << tank_name;
+    ss << left << setw(12) << "id: " << tank_name << '\n';
+    ss << left << setw(12) << "texture: " << texture_name << '\n';
+    ss << left << setw(12) << "uv_rect: ";
+    // clang-format off
+    ss << left <<setprecision(3) << fixed
+       << setw(7) << r.pos.x << ' '
+       << setw(7) << r.pos.y << ' '
+       << setw(7) << r.size.x << ' '
+       << setw(7) << r.size.y << '\n';
+    // clang-format on
+    ss << left << setw(12) << "world_pos: " << pos.x << ' ' << pos.y << '\n';
+    ss << left << setw(12) << "size: " << size.x << ' ' << size.y << '\n';
+    ss << left << setw(12) << "angle: " << angle << '\n';
 
-    sprite_reader  loader;
     vector<sprite> sprites;
     loader.load_sprites(sprites, ss);
 
     cout << ss.str() << endl << "num_sprites: " << sprites.size() << endl;
 
-    REQUIRE(sprites.size() == 1);
     if (sprites.empty())
     {
+        REQUIRE(false);
         return;
     }
-    sprite spr = sprites.at(0);
-    REQUIRE(spr.uv_rect().pos.x == r.pos.x);
-    REQUIRE(spr.rotation() == angle);
+    const sprite& spr_ref = sprites.at(0);
+    sprite        spr(spr_ref);
+
+    stringstream ssave;
+    loader.save_sprites(sprites, ssave);
+    // now load from just saved stream back
+    vector<sprite> sprites_saved;
+    loader.load_sprites(sprites_saved, ssave);
+
+    REQUIRE(sprites.size() == 1);
+    REQUIRE(spr.uv_rect() == r);
+    REQUIRE(std::abs(spr.rotation() - angle) <= 0.000001f);
+    REQUIRE(sprites_saved == sprites);
 }

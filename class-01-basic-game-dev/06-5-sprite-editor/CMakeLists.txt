@@ -46,7 +46,7 @@ add_executable(06-5-test-spr-loader sprite_reader.cxx
                                     sprite.cxx
                                     sprite_reader_test.cxx
                                     sprite_reader.hxx)
-target_compile_features(06-5-test-spr-loader PUBLIC cxx_std_17)
+target_compile_features(06-5-test-spr-loader PUBLIC cxx_std_20)
 target_link_libraries(06-5-test-spr-loader engine-06-5)
 
 

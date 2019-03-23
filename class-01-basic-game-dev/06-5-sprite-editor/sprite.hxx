@@ -12,6 +12,7 @@ class sprite
 {
 public:
     sprite();
+    sprite(const sprite&) = default;
     sprite(om::texture* tex, const rect& rect_on_texture, const om::vec2& pos,
            const om::vec2& size, const float angle);
 
@@ -31,7 +32,7 @@ public:
     om::vec2 size() const;
     void     size(const om::vec2& s);
 
-    /// angle of sprite in radians
+    /// angle of sprite in degrees
     float rotation() const;
     void  rotation(const float r);
 
@@ -44,5 +45,18 @@ private:
     rect         uv_rect_;
     om::vec2     pos_;
     om::vec2     size_;
-    float        rotation_ = 0; // radian
+    float        rotation_ = 0; // degrees
 };
+
+inline bool operator==(const rect& l, const rect& r)
+{
+    return l.pos == r.pos && l.size == r.size;
+}
+
+inline bool operator==(const sprite& l, const sprite& r)
+{
+    return l.id() == r.id() && l.texture() == r.texture() &&
+           l.uv_rect() == r.uv_rect() && l.pos() == r.pos() &&
+           l.size() == r.size() &&
+           std::abs(l.rotation() - r.rotation()) <= 0.000001f;
+}

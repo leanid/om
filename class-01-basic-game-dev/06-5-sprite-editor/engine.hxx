@@ -14,11 +14,14 @@ namespace om
 struct OM_DECLSPEC vec2
 {
     vec2();
+    vec2(const vec2&) = default;
     vec2(float x, float y);
+    float length() const;
     float x = 0;
     float y = 0;
 };
 
+OM_DECLSPEC bool operator==(const vec2& l, const vec2& r);
 OM_DECLSPEC vec2 operator+(const vec2& l, const vec2& r);
 
 struct OM_DECLSPEC mat2x3
@@ -161,6 +164,7 @@ public:
     virtual void          bind() const       = 0;
     virtual std::uint32_t get_width() const  = 0;
     virtual std::uint32_t get_height() const = 0;
+    virtual std::string   get_name() const   = 0;
 };
 
 class OM_DECLSPEC vertex_buffer
