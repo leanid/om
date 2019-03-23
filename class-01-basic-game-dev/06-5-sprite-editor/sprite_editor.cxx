@@ -37,8 +37,7 @@ int main(int /*argc*/, char* /*argv*/[])
 
     [[maybe_unused]] constexpr float pi = 3.1415926f;
 
-    std::string texture_path;
-    texture_path.reserve(1024);
+    std::string  texture_path(1024, '\0');
     om::texture* texture        = nullptr;
     rect         spr_rect       = {};
     om::vec2     spr_center_pos = {};
@@ -87,7 +86,7 @@ int main(int /*argc*/, char* /*argv*/[])
                 {
                     engine.destroy_texture(texture);
                 }
-                texture = engine.create_texture(texture_path);
+                texture = engine.create_texture(texture_path.c_str());
             }
 
             if (texture != nullptr)

@@ -10,6 +10,7 @@
 .gradle/
 local.properties
 *.user
+imgui.ini
 
 build/
 build-Debug/

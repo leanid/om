@@ -32,14 +32,26 @@ elseif(MSVC)
                           opengl32)
 endif()
 
-add_executable(06-5-sprite-editor sprite_editor.cxx sprite.cxx sprite.hxx)
+add_executable(06-5-sprite-editor sprite_editor.cxx
+                                  sprite.cxx
+                                  sprite_reader.cxx
+                                  sprite.hxx
+                                  sprite_reader.hxx
+                                  )
 target_compile_features(06-5-sprite-editor PUBLIC cxx_std_17)
 
 target_link_libraries(06-5-sprite-editor engine-06-5)
 
+add_executable(06-5-test-spr-loader sprite_reader.cxx
+                                    sprite.cxx
+                                    sprite_reader_test.cxx
+                                    sprite_reader.hxx)
+target_compile_features(06-5-test-spr-loader PUBLIC cxx_std_17)
+target_link_libraries(06-5-test-spr-loader engine-06-5)
+
 
 if(MSVC)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /WX /std:c++17")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /WX")
 else()
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -Werror")
 endif()

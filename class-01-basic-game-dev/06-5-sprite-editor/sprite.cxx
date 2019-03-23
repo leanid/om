@@ -66,10 +66,14 @@ void sprite::draw(om::engine& render)
     tr1.v[1] = vertexes[2];
     tr1.v[2] = vertexes[3];
 
+    om::vec2 screen_size   = render.screen_size();
+    float    aspect        = screen_size.y / screen_size.x;
+    mat2x3   window_aspect = mat2x3::scale(aspect, 1.0);
+
     mat2x3 move     = mat2x3::move(pos_);
     mat2x3 rotation = mat2x3::rotation(rotation_ * (3.14159f / 180));
 
-    mat2x3 world_transform = move * rotation;
+    mat2x3 world_transform = move * rotation * window_aspect;
 
     render.render(tr0, texture_, world_transform);
     render.render(tr1, texture_, world_transform);
@@ -83,6 +87,16 @@ om::texture* sprite::texture() const
 void sprite::texture(om::texture* t)
 {
     texture_ = t;
+}
+
+const rect& sprite::uv_rect() const
+{
+    return uv_rect_;
+}
+
+void sprite::uv_rect(const rect& r)
+{
+    uv_rect_ = r;
 }
 
 om::vec2 sprite::pos() const
@@ -113,4 +127,14 @@ float sprite::rotation() const
 void sprite::rotation(const float r)
 {
     rotation_ = r;
+}
+
+const std::string& sprite::id() const
+{
+    return id_;
+}
+
+void sprite::id(std::string_view name)
+{
+    id_ = name;
 }

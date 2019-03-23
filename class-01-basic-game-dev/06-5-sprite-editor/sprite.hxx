@@ -35,7 +35,11 @@ public:
     float rotation() const;
     void  rotation(const float r);
 
+    const std::string& id() const;
+    void               id(std::string_view name);
+
 private:
+    std::string  id_;
     om::texture* texture_ = nullptr;
     rect         uv_rect_;
     om::vec2     pos_;
