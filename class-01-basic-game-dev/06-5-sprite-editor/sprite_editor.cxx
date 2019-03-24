@@ -16,6 +16,34 @@
 #include "sprite.hxx"
 #include "sprite_reader.hxx"
 
+#include "ani2d.hxx"
+
+#include <chrono> // for std::chrono functions
+
+class timer
+{
+public:
+    timer()
+        : m_beg(clock_t::now())
+    {
+    }
+
+    void reset() { m_beg = clock_t::now(); }
+
+    float elapsed() const
+    {
+        return std::chrono::duration_cast<second_t>(clock_t::now() - m_beg)
+            .count();
+    }
+
+private:
+    // Type aliases to make accessing nested type easier
+    using clock_t  = std::chrono::high_resolution_clock;
+    using second_t = std::chrono::duration<float, std::ratio<1>>;
+
+    std::chrono::time_point<clock_t> m_beg;
+};
+
 int main(int /*argc*/, char* /*argv*/[])
 {
     std::unique_ptr<om::engine, void (*)(om::engine*)> e(om::create_engine(),
@@ -49,8 +77,22 @@ int main(int /*argc*/, char* /*argv*/[])
     om::vec2     spr_size       = {};
     float        angle          = 0.f;
 
+    sprite_reader       loader_of_sprites;
+    std::vector<sprite> sprites_for_animation;
+    std::ifstream       ifile;
+    ifile.open("spr_cache.yaml", std::ios::binary);
+    loader_of_sprites.load_sprites(sprites_for_animation, ifile, engine);
+
+    ani2d animation;
+    animation.sprites(sprites_for_animation);
+    animation.fps(2);
+
+    timer timer_;
     while (continue_loop)
     {
+        float delta_time = timer_.elapsed();
+        timer_.reset();
+
         om::event event;
 
         while (engine.read_event(event))
@@ -134,6 +176,8 @@ int main(int /*argc*/, char* /*argv*/[])
                    angle);
 
         spr.draw(engine);
+
+        animation.draw(engine, delta_time);
 
         engine.swap_buffers();
     }

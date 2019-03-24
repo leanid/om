@@ -35,6 +35,8 @@ endif()
 add_executable(06-5-sprite-editor sprite_editor.cxx
                                   sprite.cxx
                                   sprite_reader.cxx
+                                  ani2d.cxx
+                                  ani2d.hxx
                                   sprite.hxx
                                   sprite_reader.hxx
                                   )
