@@ -13,6 +13,7 @@
 #include <stdexcept>
 #include <string_view>
 #include <tuple>
+#include <unordered_map>
 #include <vector>
 
 #include <SDL2/SDL.h>
@@ -765,14 +766,32 @@ public:
 
     texture* create_texture(std::string_view path) final
     {
-        return new texture_gl_es20(path);
+        std::string key{ path };
+        auto        it = texture_cache.find(key);
+        if (it == end(texture_cache))
+        {
+            texture* t = new texture_gl_es20(path);
+            texture_cache.insert({ key, t });
+            return t;
+        }
+        return it->second;
     }
+
     texture* create_texture_rgba32(const void* pixels, const size_t width,
                                    const size_t height)
     {
         return new texture_gl_es20(pixels, width, height);
     }
-    void destroy_texture(texture* t) final { delete t; }
+
+    void destroy_texture(texture* t) final
+    {
+        std::string key{ t->get_name() };
+        auto        it = texture_cache.find(key);
+        if (it != end(texture_cache))
+        {
+            delete it->second;
+        }
+    }
 
     vertex_buffer* create_vertex_buffer(const tri2* triangles, std::size_t n)
     {
@@ -994,8 +1013,9 @@ public:
     }
 
 private:
-    SDL_Window*   window     = nullptr;
-    SDL_GLContext gl_context = nullptr;
+    std::unordered_map<std::string, texture*> texture_cache;
+    SDL_Window*                               window     = nullptr;
+    SDL_GLContext                             gl_context = nullptr;
 
     shader_gl_es20* shader00       = nullptr;
     shader_gl_es20* shader01       = nullptr;

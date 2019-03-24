@@ -13,7 +13,8 @@ class sprite
 public:
     sprite();
     sprite(const sprite&) = default;
-    sprite(om::texture* tex, const rect& rect_on_texture, const om::vec2& pos,
+    sprite(const std::string_view id, om::texture* tex,
+           const rect& rect_on_texture, const om::vec2& pos,
            const om::vec2& size, const float angle);
 
     void draw(om::engine& render);

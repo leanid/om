@@ -37,8 +37,12 @@ TEST_CASE("save and load one sprite")
     ss << left << setw(12) << "size: " << size.x << ' ' << size.y << '\n';
     ss << left << setw(12) << "angle: " << angle << '\n';
 
+    std::unique_ptr<om::engine, void (*)(om::engine*)> e(om::create_engine(),
+                                                         om::destroy_engine);
+
+    om::engine&    texture_cache = *e;
     vector<sprite> sprites;
-    loader.load_sprites(sprites, ss);
+    loader.load_sprites(sprites, ss, texture_cache);
 
     cout << ss.str() << endl << "num_sprites: " << sprites.size() << endl;
 
@@ -54,7 +58,7 @@ TEST_CASE("save and load one sprite")
     loader.save_sprites(sprites, ssave);
     // now load from just saved stream back
     vector<sprite> sprites_saved;
-    loader.load_sprites(sprites_saved, ssave);
+    loader.load_sprites(sprites_saved, ssave, texture_cache);
 
     REQUIRE(sprites.size() == 1);
     REQUIRE(spr.uv_rect() == r);

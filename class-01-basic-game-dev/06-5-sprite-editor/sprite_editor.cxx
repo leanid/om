@@ -3,15 +3,18 @@
 #include <cassert>
 #include <cmath>
 #include <cstdlib>
+#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <memory>
 #include <string_view>
+#include <vector>
 
 #include "imgui.h"
 
 #include "engine.hxx"
 #include "sprite.hxx"
+#include "sprite_reader.hxx"
 
 int main(int /*argc*/, char* /*argv*/[])
 {
@@ -38,6 +41,8 @@ int main(int /*argc*/, char* /*argv*/[])
     [[maybe_unused]] constexpr float pi = 3.1415926f;
 
     std::string  texture_path(1024, '\0');
+    std::string  texture_cache_file(1024, '\0');
+    std::string  sprite_id(1024, '\0');
     om::texture* texture        = nullptr;
     rect         spr_rect       = {};
     om::vec2     spr_center_pos = {};
@@ -77,8 +82,11 @@ int main(int /*argc*/, char* /*argv*/[])
         if (ImGui::Begin("sprite properties", &is_propetries_window_open,
                          ImGuiWindowFlags_NoMove))
         {
+            ImGui::InputText("texture_cache_file: ", texture_cache_file.data(),
+                             texture_cache_file.size());
             ImGui::InputText("texture: ", texture_path.data(),
                              texture_path.capacity());
+            ImGui::InputText("spr_id: ", sprite_id.data(), sprite_id.size());
 
             if (ImGui::Button("load texture"))
             {
@@ -98,6 +106,23 @@ int main(int /*argc*/, char* /*argv*/[])
                 ImGui::InputFloat2("world_pos", &spr_center_pos.x);
                 ImGui::InputFloat2("size", &spr_size.x);
                 ImGui::SliderFloat("angle", &angle, 0.0f, 360.f);
+
+                if (spr_rect.size.length() > 0.f && spr_size.length() > 0.f &&
+                    std::strlen(texture_cache_file.data()) > 0)
+                {
+                    if (ImGui::Button("save to cache"))
+                    {
+                        std::vector<sprite> sprites;
+                        sprites.emplace_back(sprite_id, texture, spr_rect,
+                                             spr_center_pos, spr_size, angle);
+
+                        sprite_reader reader;
+                        std::ofstream fout;
+                        fout.exceptions(std::ios::badbit);
+                        fout.open(texture_cache_file.data(), std::ios::binary);
+                        reader.save_sprites(sprites, fout);
+                    }
+                }
             }
         } // end window "sprite properties"
         ImGui::End();
@@ -105,7 +130,8 @@ int main(int /*argc*/, char* /*argv*/[])
         // Rendering
         ImGui::Render();
 
-        sprite spr(texture, spr_rect, spr_center_pos, spr_size, angle);
+        sprite spr(sprite_id, texture, spr_rect, spr_center_pos, spr_size,
+                   angle);
 
         spr.draw(engine);
 

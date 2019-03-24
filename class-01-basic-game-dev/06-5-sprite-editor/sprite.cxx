@@ -1,10 +1,15 @@
 #include "sprite.hxx"
 
-sprite::sprite() {}
+sprite::sprite()
+    : id_{ "__no__id__error:__" }
+{
+}
 
-sprite::sprite(om::texture* tex, const rect& rect_on_texture,
-               const om::vec2& pos, const om::vec2& size, const float angle)
-    : texture_(tex)
+sprite::sprite(const std::string_view id, om::texture* tex,
+               const rect& rect_on_texture, const om::vec2& pos,
+               const om::vec2& size, const float angle)
+    : id_{ id }
+    , texture_(tex)
     , uv_rect_(rect_on_texture)
     , pos_(pos)
     , size_(size)

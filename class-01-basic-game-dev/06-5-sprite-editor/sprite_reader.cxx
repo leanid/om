@@ -6,7 +6,8 @@
 
 sprite_reader::sprite_reader() {}
 
-void sprite_reader::load_sprites(std::vector<sprite>& sprites, std::istream& in)
+void sprite_reader::load_sprites(std::vector<sprite>& sprites, std::istream& in,
+                                 om::engine& texture_cache)
 {
     sprite spr;
 
@@ -46,6 +47,13 @@ void sprite_reader::load_sprites(std::vector<sprite>& sprites, std::istream& in)
             std::string name;
             in >> name;
             spr.id(name);
+        }
+        else if ("texture:" == attribute_name)
+        {
+            std::string name;
+            in >> name;
+            om::texture* texture = texture_cache.create_texture(name);
+            spr.texture(texture);
         }
     }
     return;
