@@ -196,6 +196,7 @@ public:
     /// pool event from input queue
     virtual bool read_event(event& e)    = 0;
     virtual bool is_key_down(const keys) = 0;
+    virtual vec2 mouse_pos()             = 0;
 
     virtual texture* create_texture(std::string_view path)      = 0;
     virtual texture* create_texture_rgba32(const void*  pixels,

@@ -5,8 +5,10 @@
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <memory>
+#include <sstream>
 #include <string_view>
 #include <vector>
 
@@ -46,19 +48,20 @@ private:
 
 int main(int /*argc*/, char* /*argv*/[])
 {
-    std::unique_ptr<om::engine, void (*)(om::engine*)> e(om::create_engine(),
-                                                         om::destroy_engine);
+    using namespace std;
+    unique_ptr<om::engine, void (*)(om::engine*)> e(om::create_engine(),
+                                                    om::destroy_engine);
 
     if (!e)
     {
-        std::cerr << "can't create engine object";
+        cerr << "can't create engine object";
         return EXIT_FAILURE;
     }
 
-    const std::string error = e->initialize("");
+    const string error = e->initialize("");
     if (!error.empty())
     {
-        std::cerr << error << std::endl;
+        cerr << error << endl;
         return EXIT_FAILURE;
     }
 
@@ -68,24 +71,27 @@ int main(int /*argc*/, char* /*argv*/[])
 
     [[maybe_unused]] constexpr float pi = 3.1415926f;
 
-    std::string  texture_path(1024, '\0');
-    std::string  texture_cache_file(1024, '\0');
-    std::string  sprite_id(1024, '\0');
+    string       texture_path(1024, '\0');
+    string       texture_cache_file(1024, '\0');
+    string       sprite_id(1024, '\0');
     om::texture* texture        = nullptr;
     rect         spr_rect       = {};
     om::vec2     spr_center_pos = {};
     om::vec2     spr_size       = {};
     float        angle          = 0.f;
 
-    sprite_reader       loader_of_sprites;
-    std::vector<sprite> sprites_for_animation;
-    std::ifstream       ifile;
-    ifile.open("spr_cache.yaml", std::ios::binary);
+    sprite_reader  loader_of_sprites;
+    vector<sprite> sprites_for_animation;
+    ifstream       ifile;
+    ifile.open("spr_cache.yaml", ios::binary);
     loader_of_sprites.load_sprites(sprites_for_animation, ifile, engine);
 
     ani2d animation;
     animation.sprites(sprites_for_animation);
     animation.fps(2);
+
+    om::vec2 mouse_pos = engine.mouse_pos();
+    om::vec2 image_screen_start_pos;
 
     timer timer_;
     while (continue_loop)
@@ -97,7 +103,7 @@ int main(int /*argc*/, char* /*argv*/[])
 
         while (engine.read_event(event))
         {
-            std::cout << event << std::endl;
+            cout << event << endl;
             switch (event)
             {
                 case om::event::turn_off:
@@ -109,6 +115,8 @@ int main(int /*argc*/, char* /*argv*/[])
             }
         }
 
+        mouse_pos = engine.mouse_pos();
+
         om::mat2x3 move        = om::mat2x3::move(om::vec2(0.f, 0.f));
         om::vec2   screen_size = engine.screen_size();
         om::mat2x3 aspect = om::mat2x3::scale(1, screen_size.x / screen_size.y);
@@ -118,7 +126,7 @@ int main(int /*argc*/, char* /*argv*/[])
         ImGui::NewFrame();
 
         ImGui::SetNextWindowPos(ImVec2(0, 0));
-        ImGui::SetNextWindowSize(ImVec2(500, 0));
+        ImGui::SetNextWindowSize(ImVec2(screen_size.x, 0));
 
         bool is_propetries_window_open = true;
         if (ImGui::Begin("sprite properties", &is_propetries_window_open,
@@ -141,8 +149,25 @@ int main(int /*argc*/, char* /*argv*/[])
 
             if (texture != nullptr)
             {
-                ImGui::Image(texture, ImVec2(texture->get_width(),
-                                             texture->get_height()));
+                stringstream message;
+                message << "Now you move over image, and hold LEFT mouse in \n"
+                           "top left angle you want sprite has, then move to \n"
+                           "bottom right and unpress LEFT mouse"
+                        << "[" << setw(3)
+                        << mouse_pos.x - image_screen_start_pos.x << ", "
+                        << setw(3) << mouse_pos.y - image_screen_start_pos.y
+                        << ']';
+                string msg = message.str();
+                ImGui::TextUnformatted(msg.data(), msg.data() + msg.size());
+
+                ImVec2 cur_sreccn_pos    = ImGui::GetCursorScreenPos();
+                image_screen_start_pos.x = cur_sreccn_pos.x;
+                image_screen_start_pos.y = cur_sreccn_pos.y;
+
+                ImGui::Image(
+                    texture,
+                    ImVec2(texture->get_width(), texture->get_height()),
+                    ImVec2(0, 1), ImVec2(1, 0));
 
                 ImGui::InputFloat4("uv_rect", &spr_rect.pos.x);
                 ImGui::InputFloat2("world_pos", &spr_center_pos.x);
@@ -150,18 +175,18 @@ int main(int /*argc*/, char* /*argv*/[])
                 ImGui::SliderFloat("angle", &angle, 0.0f, 360.f);
 
                 if (spr_rect.size.length() > 0.f && spr_size.length() > 0.f &&
-                    std::strlen(texture_cache_file.data()) > 0)
+                    strlen(texture_cache_file.data()) > 0)
                 {
                     if (ImGui::Button("save to cache"))
                     {
-                        std::vector<sprite> sprites;
+                        vector<sprite> sprites;
                         sprites.emplace_back(sprite_id, texture, spr_rect,
                                              spr_center_pos, spr_size, angle);
 
                         sprite_reader reader;
-                        std::ofstream fout;
-                        fout.exceptions(std::ios::badbit);
-                        fout.open(texture_cache_file.data(), std::ios::binary);
+                        ofstream      fout;
+                        fout.exceptions(ios::badbit);
+                        fout.open(texture_cache_file.data(), ios::binary);
                         reader.save_sprites(sprites, fout);
                     }
                 }
