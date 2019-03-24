@@ -12,7 +12,11 @@
 #include <string_view>
 #include <vector>
 
+#pragma GCC diagnostic push
+// turn off the specific warning. Can also use "-Wall"
+#pragma GCC diagnostic ignored "-Wall"
 #include "imgui.h"
+#pragma GCC diagnostic pop
 
 #include "engine.hxx"
 #include "sprite.hxx"
@@ -93,6 +97,10 @@ int main(int /*argc*/, char* /*argv*/[])
     om::vec2 mouse_pos = engine.mouse_pos();
     om::vec2 image_screen_start_pos;
 
+    [[maybe_unused]] bool is_left_mouse_holded = false;
+    om::vec2              start_drag_pos;
+    om::vec2              end_drag_pos;
+
     timer timer_;
     while (continue_loop)
     {
@@ -108,6 +116,35 @@ int main(int /*argc*/, char* /*argv*/[])
             {
                 case om::event::turn_off:
                     continue_loop = false;
+                    break;
+                case om::event::left_mouse_pressed:
+                {
+                    om::vec2 cur_pos = engine.mouse_pos();
+                    if (cur_pos.x >= image_screen_start_pos.x &&
+                        cur_pos.y >= image_screen_start_pos.y &&
+                        texture != nullptr &&
+                        cur_pos.x <=
+                            image_screen_start_pos.x + texture->get_width() &&
+                        cur_pos.y <=
+                            image_screen_start_pos.y + texture->get_height())
+                    {
+                        is_left_mouse_holded = true;
+                        start_drag_pos       = cur_pos;
+                    }
+                }
+                break;
+                case om::event::left_mouse_released:
+                    if (is_left_mouse_holded)
+                    {
+                        is_left_mouse_holded = false;
+                        end_drag_pos         = engine.mouse_pos();
+                    }
+                    break;
+                case om::event::mouse_moved:
+                    if (is_left_mouse_holded)
+                    {
+                        end_drag_pos = engine.mouse_pos();
+                    }
                     break;
                 default:
 
@@ -156,20 +193,76 @@ int main(int /*argc*/, char* /*argv*/[])
                         << "[" << setw(3)
                         << mouse_pos.x - image_screen_start_pos.x << ", "
                         << setw(3) << mouse_pos.y - image_screen_start_pos.y
-                        << ']';
+                        << "]\n"
+                        << "selection start [" << setw(3) << start_drag_pos.x
+                        << ", " << setw(3) << start_drag_pos.y << "]"
+                        << "selection end [" << setw(3) << end_drag_pos.x
+                        << ", " << setw(3) << end_drag_pos.y << "]";
                 string msg = message.str();
                 ImGui::TextUnformatted(msg.data(), msg.data() + msg.size());
 
-                ImVec2 cur_sreccn_pos    = ImGui::GetCursorScreenPos();
-                image_screen_start_pos.x = cur_sreccn_pos.x;
-                image_screen_start_pos.y = cur_sreccn_pos.y;
+                // get next screen position for image control
+                // it is not mouse cursor, but it is virtual next render pos
+                ImVec2 cur_screen_pos    = ImGui::GetCursorScreenPos();
+                image_screen_start_pos.x = cur_screen_pos.x;
+                image_screen_start_pos.y = cur_screen_pos.y;
 
                 ImGui::Image(
                     texture,
                     ImVec2(texture->get_width(), texture->get_height()),
                     ImVec2(0, 1), ImVec2(1, 0));
 
-                ImGui::InputFloat4("uv_rect", &spr_rect.pos.x);
+                if (start_drag_pos.x >= image_screen_start_pos.x &&
+                    start_drag_pos.y >= image_screen_start_pos.y &&
+                    end_drag_pos.x > start_drag_pos.x &&
+                    end_drag_pos.y > start_drag_pos.y &&
+                    end_drag_pos.x <=
+                        image_screen_start_pos.x + texture->get_width() &&
+                    end_drag_pos.y <=
+                        image_screen_start_pos.y + texture->get_height())
+                {
+                    // our selection is inside image so we can render
+                    // selection over it
+                    ImVec2 p(start_drag_pos.x, start_drag_pos.y);
+                    float  sel_w = end_drag_pos.x - start_drag_pos.x;
+                    float  sel_h = end_drag_pos.y - start_drag_pos.y;
+                    ImGui::GetWindowDrawList()->AddLine(
+                        p, ImVec2(p.x + sel_w, p.y), IM_COL32(255, 0, 0, 255),
+                        3.0f);
+                    ImGui::GetWindowDrawList()->AddLine(
+                        p, ImVec2(p.x, p.y + sel_h), IM_COL32(255, 0, 0, 255),
+                        3.0f);
+                    ImGui::GetWindowDrawList()->AddLine(
+                        ImVec2(p.x + sel_w, p.y),
+                        ImVec2(p.x + sel_w, p.y + sel_h),
+                        IM_COL32(255, 0, 0, 255), 3.0f);
+                    ImGui::GetWindowDrawList()->AddLine(
+                        ImVec2(p.x, p.y + sel_h),
+                        ImVec2(p.x + sel_w, p.y + sel_h),
+                        IM_COL32(255, 0, 0, 255), 3.0f);
+
+                    // update rect
+                    if (is_left_mouse_holded)
+                    {
+                        spr_rect.pos.x =
+                            start_drag_pos.x - image_screen_start_pos.x;
+                        spr_rect.pos.y =
+                            start_drag_pos.y - image_screen_start_pos.y;
+                        spr_rect.size.x = sel_w;
+                        spr_rect.size.y = sel_h;
+                    }
+                }
+
+                if (ImGui::InputFloat4("uv_rect", &spr_rect.pos.x))
+                {
+                    // update selection
+                    start_drag_pos.x =
+                        spr_rect.pos.x + image_screen_start_pos.x;
+                    start_drag_pos.y =
+                        spr_rect.pos.y + image_screen_start_pos.y;
+                    end_drag_pos.x = start_drag_pos.x + spr_rect.size.x;
+                    end_drag_pos.y = start_drag_pos.y + spr_rect.size.y;
+                }
                 ImGui::InputFloat2("world_pos", &spr_center_pos.x);
                 ImGui::InputFloat2("size", &spr_size.x);
                 ImGui::SliderFloat("angle", &angle, 0.0f, 360.f);

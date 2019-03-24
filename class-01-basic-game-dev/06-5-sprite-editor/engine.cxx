@@ -549,12 +549,8 @@ std::ostream& operator<<(std::ostream& stream, const event e)
     if (value >= minimal && value <= maximal)
     {
         stream << event_names[value];
-        return stream;
     }
-    else
-    {
-        throw std::runtime_error("too big event value");
-    }
+    return stream;
 }
 
 tri0::tri0()
@@ -763,6 +759,27 @@ public:
                     e = binding->event_released;
                     return true;
                 }
+            }
+            else if (sdl_event.type == SDL_MOUSEBUTTONDOWN)
+            {
+                if (sdl_event.button.button == SDL_BUTTON_LEFT)
+                {
+                    e = event::left_mouse_pressed;
+                    return true;
+                }
+            }
+            else if (sdl_event.type == SDL_MOUSEBUTTONUP)
+            {
+                if (sdl_event.button.button == SDL_BUTTON_LEFT)
+                {
+                    e = event::left_mouse_released;
+                    return true;
+                }
+            }
+            else if (sdl_event.type == SDL_MOUSEMOTION)
+            {
+                e = event::mouse_moved;
+                return true;
             }
         }
         return false;
