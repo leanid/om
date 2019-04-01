@@ -61,7 +61,11 @@ enum class event
     button2_pressed,
     button2_released,
     /// virtual console events
-    turn_off
+    turn_off,
+    /// editor help events
+    left_mouse_pressed,
+    left_mouse_released,
+    mouse_moved,
 };
 
 OM_DECLSPEC std::ostream& operator<<(std::ostream& stream, const event e);
@@ -196,6 +200,7 @@ public:
     /// pool event from input queue
     virtual bool read_event(event& e)    = 0;
     virtual bool is_key_down(const keys) = 0;
+    virtual vec2 mouse_pos()             = 0;
 
     virtual texture* create_texture(std::string_view path)      = 0;
     virtual texture* create_texture_rgba32(const void*  pixels,

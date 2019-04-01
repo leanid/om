@@ -20,9 +20,14 @@
 #include <SDL2/SDL_opengl.h>
 #include <SDL2/SDL_opengl_glext.h>
 
-#include "picopng.hxx"
-
+#define STB_IMAGE_IMPLEMENTATION
+#pragma GCC diagnostic push
+// turn off the specific warning. Can also use "-Wall"
+#pragma GCC diagnostic ignored "-Wall"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 #include "imgui.h"
+#include "stb_image.h"
+#pragma GCC diagnostic pop
 
 bool ImGui_ImplSdlGL3_Init(SDL_Window* window);
 void ImGui_ImplSdlGL3_Shutdown();
@@ -326,14 +331,28 @@ public:
     std::uint32_t get_height() const final { return height; }
     std::string   get_name() const final { return file_path; }
 
+    void add_ref() { ++ref_counter; }
+
+    bool remove_ref()
+    {
+        --ref_counter;
+        if (ref_counter == 0)
+        {
+            delete this;
+            return true;
+        }
+        return false;
+    }
+
 private:
     void gen_texture_from_pixels(const void* pixels, const size_t width,
                                  const size_t height);
 
     std::string   file_path;
-    GLuint        tex_handl = 0;
-    std::uint32_t width     = 0;
-    std::uint32_t height    = 0;
+    size_t        ref_counter = 1;
+    GLuint        tex_handl   = 0;
+    std::uint32_t width       = 0;
+    std::uint32_t height      = 0;
 };
 #pragma pack(pop)
 
@@ -530,12 +549,8 @@ std::ostream& operator<<(std::ostream& stream, const event e)
     if (value >= minimal && value <= maximal)
     {
         stream << event_names[value];
-        return stream;
     }
-    else
-    {
-        throw std::runtime_error("too big event value");
-    }
+    return stream;
 }
 
 tri0::tri0()
@@ -745,6 +760,27 @@ public:
                     return true;
                 }
             }
+            else if (sdl_event.type == SDL_MOUSEBUTTONDOWN)
+            {
+                if (sdl_event.button.button == SDL_BUTTON_LEFT)
+                {
+                    e = event::left_mouse_pressed;
+                    return true;
+                }
+            }
+            else if (sdl_event.type == SDL_MOUSEBUTTONUP)
+            {
+                if (sdl_event.button.button == SDL_BUTTON_LEFT)
+                {
+                    e = event::left_mouse_released;
+                    return true;
+                }
+            }
+            else if (sdl_event.type == SDL_MOUSEMOTION)
+            {
+                e = event::mouse_moved;
+                return true;
+            }
         }
         return false;
     }
@@ -764,17 +800,27 @@ public:
         return false;
     }
 
+    vec2 mouse_pos() final
+    {
+        int x;
+        int y;
+        SDL_GetMouseState(&x, &y);
+        return vec2(static_cast<float>(x), static_cast<float>(y));
+    }
+
     texture* create_texture(std::string_view path) final
     {
         std::string key{ path };
         auto        it = texture_cache.find(key);
         if (it == end(texture_cache))
         {
-            texture* t = new texture_gl_es20(path);
+            texture_gl_es20* t = new texture_gl_es20(path);
             texture_cache.insert({ key, t });
             return t;
         }
-        return it->second;
+        texture_gl_es20* t = it->second;
+        t->add_ref();
+        return t;
     }
 
     texture* create_texture_rgba32(const void* pixels, const size_t width,
@@ -789,7 +835,11 @@ public:
         auto        it = texture_cache.find(key);
         if (it != end(texture_cache))
         {
-            delete it->second;
+            texture_gl_es20* t = it->second;
+            if (t->remove_ref())
+            {
+                texture_cache.erase(key);
+            }
         }
     }
 
@@ -1013,9 +1063,9 @@ public:
     }
 
 private:
-    std::unordered_map<std::string, texture*> texture_cache;
-    SDL_Window*                               window     = nullptr;
-    SDL_GLContext                             gl_context = nullptr;
+    std::unordered_map<std::string, texture_gl_es20*> texture_cache;
+    SDL_Window*                                       window     = nullptr;
+    SDL_GLContext                                     gl_context = nullptr;
 
     shader_gl_es20* shader00       = nullptr;
     shader_gl_es20* shader01       = nullptr;
@@ -1147,22 +1197,34 @@ texture_gl_es20::texture_gl_es20(std::string_view path)
         throw std::runtime_error("can't load texture");
     }
 
-    std::vector<unsigned char> image;
-    unsigned long              w = 0;
-    unsigned long              h = 0;
-    int error = decodePNG(image, w, h, &png_file_in_memory[0],
-                          png_file_in_memory.size(), false);
+    stbi_set_flip_vertically_on_load(true);
+    int w          = 0;
+    int h          = 0;
+    int components = 0;
+    // clang-format off
+    unsigned char* decoded_img = stbi_load_from_memory(
+        reinterpret_cast<unsigned char*>(png_file_in_memory.data()),
+        static_cast<int>(png_file_in_memory.size()),
+        &w,
+        &h,
+        &components,
+        4);
+    // clang-format on
 
     // if there's an error, display it
-    if (error != 0)
+    if (decoded_img == nullptr)
     {
-        std::cerr << "error: " << error << std::endl;
+        std::cerr << "error: can't load file: " << path << std::endl;
         throw std::runtime_error("can't load texture");
     }
 
-    gen_texture_from_pixels(image.data(), w, h);
-    width  = w;
-    height = h;
+    gen_texture_from_pixels(decoded_img, static_cast<size_t>(w),
+                            static_cast<size_t>(h));
+
+    free(decoded_img);
+
+    this->width  = static_cast<uint32_t>(w);
+    this->height = static_cast<uint32_t>(h);
 }
 
 void texture_gl_es20::gen_texture_from_pixels(const void*  pixels,
