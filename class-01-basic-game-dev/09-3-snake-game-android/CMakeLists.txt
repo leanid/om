@@ -4,7 +4,7 @@ if(SDL2_SRC_DIR)
 add_subdirectory( # Specifies the directory of the CMakeLists.txt file.
                   ${SDL2_SRC_DIR}
                   # Specifies the directory for the build outputs.
-                  ${SDL2_BUILD_DIR} )  
+                  ${SDL2_BUILD_DIR}_${ANDROID_ABI} )  
 endif()
 
 

@@ -40,7 +40,7 @@
 #include "stb_image.h"
 #pragma GCC diagnostic pop
 
-//extern std::unique_ptr<om::lila> om_tat_sat();
+// extern std::unique_ptr<om::lila> om_tat_sat();
 
 // we have to load all extension GL function pointers
 // dynamically from OpenGL library
@@ -1416,8 +1416,9 @@ int initialize_and_start_main_loop()
     } guard;
 
     std::vector<const char*> lib_names{
-				       { "libgame-09-2.dll", "game-09-2.dll", "./libgame-09-2.so", "./game-09-2.so",
-          "./build/Debug/libgame-09-2.so", "./build/Debug/libgame-09-2.dll" }
+        { "libgame-09-2.dll", "game-09-2.dll", "./libgame-09-2.so",
+          "./game-09-2.so", "./build/Debug/libgame-09-2.so",
+          "./build/Debug/libgame-09-2.dll", "./build-Debug/libgame-09-2.so" }
     };
 
     void* so_handle   = nullptr;
@@ -1450,7 +1451,8 @@ int initialize_and_start_main_loop()
 #if defined(__MINGW32__) || defined(__linux__)
     om_tat_sat_func = "_Z10om_tat_satv";
 #elif defined(_MSC_VER)
-    om_tat_sat_func = "?om_tat_sat@@YA?AV?$unique_ptr@Ulila@om@@U?$default_delete@Ulila@om@@@std@@@std@@XZ";
+    om_tat_sat_func = "?om_tat_sat@@YA?AV?$unique_ptr@Ulila@om@@U?$default_"
+                      "delete@Ulila@om@@@std@@@std@@XZ";
 #else
 #error "add mangled name for your compiler"
 #endif
@@ -1522,7 +1524,7 @@ start_game_again:
     return EXIT_SUCCESS;
 }
 
-int main(int /*argc*/, char* /*argv*/ [])
+int main(int /*argc*/, char* /*argv*/[])
 {
     try
     {

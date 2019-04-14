@@ -12,9 +12,19 @@ android {
 
     Properties properties = new Properties()
     properties.load(project.rootProject.file('local.properties').newDataInputStream())
-    def sdl2SrcDir = properties.getProperty('sdl2_src.dir') ?: "add sdl2_src.dir in local.properties"
-    def sdl2BuildDir = properties.getProperty('sdl2_build.dir') ?: "add sdl2_build.dir in local.properties"
 
+    if (properties.getProperty('sdl2_src.dir') == null)
+    {
+        throw new IllegalArgumentException("error: add sdl2_src.dir in local.properties")
+    }
+
+    if (properties.getProperty('sdl2_build.dir') == null)
+    {
+        throw new IllegalArgumentException("error: add sdl2_build.dir in local.properties")
+    }
+
+    def sdl2SrcDir = properties.getProperty('sdl2_src.dir')
+    def sdl2BuildDir = properties.getProperty('sdl2_build.dir')
 
     defaultConfig {
         if (buildAsApplication) {
@@ -24,6 +34,11 @@ android {
         targetSdkVersion 28
         versionCode 1
         versionName "1.0"
+
+        ndk {
+            //abiFilters "arm64-v8a"
+        }
+
         externalNativeBuild {
 	        cmake {
                 version "3.14+"  // double check your ENV variable PATH have cmake with correct version
@@ -37,12 +52,13 @@ android {
 	        // arguments "-DVAR_NAME=ARGUMENT".
                 arguments "-DSDL2_SRC_DIR=" + sdl2SrcDir
                 arguments "-DSDL2_BUILD_DIR=" + sdl2BuildDir
+		
 	        // arguments "-DANDROID_ARM_NEON=TRUE",
 	        // If you're passing multiple arguments to a variable, pass them together:
 	        // arguments "-DVAR_NAME=ARG_1 ARG_2"
 	        // The following line passes 'rtti' and 'exceptions' to 'ANDROID_CPP_FEATURES'.
-	            arguments "-DANDROID_CPP_FEATURES=rtti exceptions",
-	                      "-DANDROID_STL=c++_shared"
+	        arguments "-DANDROID_CPP_FEATURES=rtti exceptions",
+	                  "-DANDROID_STL=c++_shared"
 	        }
         }
     }
@@ -60,7 +76,6 @@ android {
 
     externalNativeBuild {
        cmake {
-           //version "3.12.1"
            path '../../CMakeLists.txt'
        }
     }
