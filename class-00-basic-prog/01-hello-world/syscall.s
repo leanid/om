@@ -7,9 +7,9 @@
     .text
     .globl syscall
     .type syscall @function
-    
+
     //ENTRY (syscall)
-syscall:    
+syscall:
         movq %rdi, %rax                /* Syscall number -> rax.  */
         movq %rsi, %rdi                /* shift arg1 - arg5.  */
         movq %rdx, %rsi

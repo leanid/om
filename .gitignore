@@ -3,6 +3,7 @@
 .idea
 .settings
 .user
+CMakeLists.txt.user*
 .a
 .lib
 *.iml
