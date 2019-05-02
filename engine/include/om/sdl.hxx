@@ -87,7 +87,6 @@ hittest_result hit_test(window& win, const point& p, std::any);
 class window
 {
 public:
-    // FIXME The flags below are hardcoded
     enum class mode
     {
         undefined,
@@ -204,37 +203,6 @@ private:
     friend class video;
 };
 
-enum class gl_attribute
-{
-    gl_red_size,
-    gl_green_size,
-    gl_blue_size,
-    gl_alpha_size,
-    gl_buffer_size,
-    gl_doublebuffer,
-    gl_depth_size,
-    gl_stencil_size,
-    gl_accum_red_size,
-    gl_accum_green_size,
-    gl_accum_blue_size,
-    gl_accum_alpha_size,
-    gl_stereo,
-    gl_multisamplebuffers,
-    gl_multisamplesamples,
-    gl_accelerated_visual,
-    gl_retained_backing,
-    gl_context_major_version,
-    gl_context_minor_version,
-    gl_context_egl,
-    gl_context_flags,
-    gl_context_profile_mask,
-    gl_share_with_current_context,
-    gl_framebuffer_srgb_capable,
-    gl_context_release_behavior,
-    gl_context_reset_notification,
-    gl_context_no_error
-};
-
 class gl_context
 {
 public:
@@ -257,11 +225,12 @@ enum class gl_swap_interval
 {
     immediate,
     synchronized,
-    late_swaps
+    adaptive
 };
 
-struct video
+class video
 {
+public:
     static std::vector<std::string_view> get_drivers();
     void                                 init(const char* driver_name);
     void                                 quit();
@@ -281,13 +250,13 @@ struct video
     void                  enable_screen_saver();
     void                  disable_screen_saver();
 
-    bool         gl_load_library(std::string_view path);
-    void*        gl_get_proc_address(std::string_view proc);
-    void         gl_unload_library();
-    bool         gl_extension_supported(std::string_view extension);
-    void         gl_reset_attributes();
-    bool         gl_set_attribute(gl_attribute attr, std::int32_t value);
-    std::int32_t gl_get_attribute(gl_attribute attr);
+    bool  gl_load_library(std::string_view path);
+    void* gl_get_proc_address(std::string_view proc);
+    void  gl_unload_library();
+    bool  gl_extension_supported(std::string_view extension);
+    void  gl_reset_attributes();
+    // void         gl_set_attribute(gl_attribute attr, std::int32_t value);
+    // std::int32_t gl_get_attribute(gl_attribute attr);
     bool       gl_make_current(const window& window, const gl_context& context);
     window     gl_get_current_window();
     gl_context gl_get_current_context();
@@ -295,6 +264,84 @@ struct video
     bool         gl_set_swap_interval(gl_swap_interval);
     void         gl_swap_window(const window&);
     void         gl_delete_context(const gl_context&);
+
+    enum class gl_context_flag
+    {
+        debug,
+        forward_compatible_mode,
+        robust_access_mode,
+        reset_isolation_mode,
+    };
+
+    enum class gl_context_profile
+    {
+        automatic,
+        core,
+        compatibility,
+        es,
+    };
+
+    enum class gl_context_release_flag
+    {
+        none,
+        flush
+    };
+
+private:
+    class gl_attribute
+    {
+    public:
+        void red_size(int);
+        int  red_size();
+        void green_size(int);
+        int  green_size();
+        void blue_size(int);
+        int  blue_size();
+        void alpha_size(int);
+        int  alpha_size();
+        void buffer_size(int);
+        int  buffer_size();
+        void doublebuffer(bool);
+        bool doublebuffer();
+        void depth_size(int);
+        int  depth_size();
+        void stencil_size(int);
+        int  stencil_size();
+        void accum_red_size(int);
+        int  accum_red_size();
+        void accum_green_size(int);
+        int  accum_green_size();
+        void accum_blue_size(int);
+        int  accum_blue_size();
+        void accum_alpha_size(int);
+        int  accum_alpha_size();
+        void stereo(bool);
+        bool stereo();
+        void multisamplebuffers(int);
+        int  multisamplebuffers();
+        void multisamplesamples(int);
+        int  multisamplesamples();
+        void accelerated_visual(bool);
+        bool accelerated_visual();
+        void context_major_version(int);
+        int  context_major_version();
+        void context_minor_version(int);
+        int  context_minor_version();
+        void context_flag(gl_context_flag flag, bool state); // on/off
+        // FIXME:  Can we really switch flag off?
+        bool               context_flag(gl_context_flag flag); // on/off
+        void               context_profile_mask(gl_context_profile);
+        gl_context_profile context_profile_mask();
+        void               share_with_curent_context(bool);
+        bool               share_with_curent_context();
+        void               gl_framebuffer_srgb_capable(bool);
+        bool               gl_framebuffer_srgb_capable();
+        void               context_release_behavior(gl_context_release_flag);
+        gl_context_release_flag context_release_behavior();
+    };
+
+public:
+    gl_attribute gl_attr;
 };
 
 struct sdlxx
