@@ -6,6 +6,7 @@
 #include <forward_list>
 #include <fstream>
 #include <iostream>
+#include <iterator>
 #include <regex>
 #include <sstream>
 #include <string>
@@ -18,72 +19,69 @@
 
 struct token
 {
-    enum class type : uint8_t
+    enum class type_t : uint8_t
     {
         none,
-        type_name,
-        prop_name,
-        operator_name,
-        float_value,
-        string_value,
-        end_of_expr,
+        type_id,
+        identifier,
+        operation,
+        float_literal,
+        string_literal,
+        semicolon,
         open_curly_bracket,
         close_curle_bracket,
         comma
     };
 
-    type             type = type::none;
+    type_t           type_t = type_t::none;
     std::string_view value;
 };
 
-std::ostream& operator<<(std::ostream& stream, const enum token::type t);
+std::ostream& operator<<(std::ostream& stream, const enum token::type_t t);
 
-struct properties_lexer
+struct lexer_t
 {
-
-    std::vector<token> token_list;
-    std::string        content;
-
     struct token_regex
     {
-        token_regex(enum token::type t_, const char* r_)
+        token_regex(enum token::type_t t_, const char* r_)
             : type{ t_ }
             , regex{ r_ }
         {
         }
-        enum token::type type;
-        std::regex       regex;
+        enum token::type_t type;
+        std::regex         regex;
     };
 
-    std::vector<token_regex> token_bind;
-
-    properties_lexer(std::string content_)
+    explicit lexer_t(std::string content_)
         : content{ std::move(content_) }
     {
+        std::vector<token_regex> token_bind;
+
         token_bind.reserve(10);
-        token_bind.emplace_back(token::type::type_name,
+        token_bind.emplace_back(token::type_t::type_id,
                                 R"(float|std::string|glm::vec3)");
-        token_bind.emplace_back(token::type::operator_name, R"(=|\+|-|\*|\/)");
-        token_bind.emplace_back(token::type::prop_name,
+        token_bind.emplace_back(token::type_t::operation, R"(=|\+|-|\*|\/)");
+        token_bind.emplace_back(token::type_t::identifier,
                                 R"([a-zA-Z_][a-zA-Z0-9_]*)");
-        token_bind.emplace_back(token::type::float_value,
+        token_bind.emplace_back(token::type_t::float_literal,
                                 R"([+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)f)");
         // original from internet: /"([^"\\]|\\.)*"/
-        token_bind.emplace_back(token::type::string_value,
+        token_bind.emplace_back(token::type_t::string_literal,
                                 R"("([^"\\]|\\.)*")");
-        token_bind.emplace_back(token::type::end_of_expr, R"(;)");
-        token_bind.emplace_back(token::type::open_curly_bracket, R"(\{)");
-        token_bind.emplace_back(token::type::close_curle_bracket, R"(\})");
-        token_bind.emplace_back(token::type::comma, R"(\,)");
-        token_bind.emplace_back(token::type::none, R"(#.*\n|//.*\n| |\n|\t)");
+        token_bind.emplace_back(token::type_t::semicolon, R"(;)");
+        token_bind.emplace_back(token::type_t::open_curly_bracket, R"(\{)");
+        token_bind.emplace_back(token::type_t::close_curle_bracket, R"(\})");
+        token_bind.emplace_back(token::type_t::comma, R"(\,)");
+        token_bind.emplace_back(token::type_t::none, R"(#.*\n|//.*\n| |\n|\t)");
 
         std::string_view rest_content{ content };
         bool             cant_find_match = false;
 
         while (!rest_content.empty() && !cant_find_match)
         {
-            std::cmatch  token_best_match;
-            token_regex* best_token_regex = nullptr;
+            std::cmatch        token_best_match;
+            enum token::type_t token_best_type{ token::type_t::none };
+
             for (token_regex& tok_regex : token_bind)
             {
                 std::cmatch token_match;
@@ -93,12 +91,12 @@ struct properties_lexer
                                       token_match, tok_regex.regex,
                                       std::regex_constants::match_continuous))
                 {
-                    auto& first = *token_match.cbegin();
+                    auto first = token_match.cbegin();
                     if (token_best_match.empty() ||
-                        first.length() > token_best_match.cbegin()->length())
+                        first->length() > token_best_match.cbegin()->length())
                     {
                         token_best_match = token_match;
-                        best_token_regex = &tok_regex;
+                        token_best_type  = tok_regex.type;
                     }
                 }
             }
@@ -106,7 +104,7 @@ struct properties_lexer
             if (!token_best_match.empty())
             {
                 token tok;
-                tok.type                   = best_token_regex->type;
+                tok.type_t                 = token_best_type;
                 auto&       first_match    = token_best_match[0];
                 const char* first_char_ptr = first_match.first;
                 size_t      length = static_cast<size_t>(first_match.length());
@@ -114,19 +112,19 @@ struct properties_lexer
 
                 rest_content = rest_content.substr(tok.value.size());
 
-                if (tok.type == token::type::string_value)
+                if (tok.type_t == token::type_t::string_literal)
                 {
                     // skip "" - charecters in string literal
                     tok.value = tok.value.substr(1, tok.value.size() - 2);
                 }
 
-                if (best_token_regex->type == token::type::none)
+                if (token_best_type == token::type_t::none)
                 {
                     continue;
                 }
                 else
                 {
-                    token_list.push_back(tok);
+                    tokens.push_back(tok);
                 }
             }
             else
@@ -141,19 +139,22 @@ struct properties_lexer
                                      std::string(rest_content));
         }
 
-        for (auto tok : token_list)
+        for (auto tok : tokens)
         {
-            std::clog << tok.type << " = " << tok.value << '\n';
+            std::clog << tok.type_t << " = [" << tok.value << "]\n";
         }
     }
+
+    std::vector<token> tokens;
+    const std::string  content;
 };
 
 using value_t = std::variant<std::string, glm::vec3, float>;
 
-namespace program_structure
+namespace prog_struct
 {
 
-struct lvalue
+struct var_name
 {
     const token* name = nullptr;
 };
@@ -161,12 +162,12 @@ struct lvalue
 struct declaration
 {
     const token* type = nullptr;
-    lvalue       var;
+    var_name     name_tok;
 };
 
 struct variable
 {
-    std::variant<std::monostate, declaration, lvalue> name;
+    std::variant<std::monostate, declaration, var_name> name;
 };
 
 struct constant
@@ -208,36 +209,35 @@ struct expression
     operation       op;
     expr_or_operand right_operand;
 };
-} // end namespace program_structure
+} // namespace prog_struct
 
-struct properties_parser
+struct parser_t
 {
-    std::vector<program_structure::expression> commands;
+    std::vector<prog_struct::expression> commands;
 
-    program_structure::expression parse_expression(
+    prog_struct::expression parse_expression(
         std::vector<token>::iterator& token_it);
-    program_structure::operand parse_operand(
+    prog_struct::operand parse_operand(std::vector<token>::iterator& token_it);
+    prog_struct::declaration parse_declaration(
         std::vector<token>::iterator& token_it);
-    program_structure::declaration parse_declaration(
+    prog_struct::variable parse_variable_name(
         std::vector<token>::iterator& token_it);
-    program_structure::variable parse_variable_name(
+    prog_struct::constant parse_constant(
         std::vector<token>::iterator& token_it);
-    program_structure::constant parse_constant(
+    prog_struct::operation parse_operation(
         std::vector<token>::iterator& token_it);
-    program_structure::operation parse_operation(
-        std::vector<token>::iterator& token_it);
-    program_structure::expr_or_operand parse_expr_or_operand(
+    prog_struct::expr_or_operand parse_expr_or_operand(
         std::vector<token>::iterator& token_it);
 
-    properties_lexer& lexer;
+    lexer_t& lexer;
 
-    properties_parser(properties_lexer& lexer_)
+    parser_t(lexer_t& lexer_)
         : lexer{ lexer_ }
     {
-        using namespace program_structure;
+        using namespace prog_struct;
 
-        for (auto token_iter = begin(lexer.token_list);
-             token_iter != end(lexer.token_list);)
+        for (auto token_iter = begin(lexer.tokens);
+             token_iter != end(lexer.tokens);)
         {
             expression expr = parse_expression(token_iter);
             commands.push_back(expr);
@@ -264,15 +264,15 @@ struct properties_parser
     }
 
     token* expected(const std::vector<token>::iterator& it,
-                    const enum token::type              type)
+                    const enum token::type_t            type)
     {
-        if (it == end(lexer.token_list))
+        if (it == end(lexer.tokens))
         {
             std::stringstream ss;
             ss << "error: expected " << type << " but got: EOF";
             throw std::runtime_error(ss.str());
         }
-        if (it->type != type)
+        if (it->type_t != type)
         {
             std::stringstream ss;
             ss << "error: expected " << type << " but got: " << it->value;
@@ -282,10 +282,11 @@ struct properties_parser
         return &(*it);
     }
 
-    token* expected_one_of(const std::vector<token>::iterator&            it,
-                           const std::initializer_list<enum token::type>& types)
+    token* expected_one_of(
+        const std::vector<token>::iterator&              it,
+        const std::initializer_list<enum token::type_t>& types)
     {
-        if (it == end(lexer.token_list))
+        if (it == end(lexer.tokens))
         {
             std::stringstream ss;
             ss << "error: expected one of: ";
@@ -296,7 +297,7 @@ struct properties_parser
             ss << " but got: EOF";
             throw std::runtime_error(ss.str());
         }
-        auto type_it = std::find(begin(types), end(types), it->type);
+        auto type_it = std::find(begin(types), end(types), it->type_t);
         if (type_it == end(types))
         {
             std::stringstream ss;
@@ -305,7 +306,7 @@ struct properties_parser
             {
                 ss << type << ", ";
             }
-            ss << "but got: " << it->type;
+            ss << "but got: " << it->type_t;
             ss << print_position_of_token(*it);
             throw std::runtime_error(ss.str());
         }
@@ -313,10 +314,10 @@ struct properties_parser
     }
 };
 
-program_structure::expression properties_parser::parse_expression(
+prog_struct::expression parser_t::parse_expression(
     std::vector<token>::iterator& token_it)
 {
-    using namespace program_structure;
+    using namespace prog_struct;
 
     operand         lvalue = parse_operand(token_it);
     operation       op     = parse_operation(token_it);
@@ -324,26 +325,26 @@ program_structure::expression properties_parser::parse_expression(
 
     if (std::holds_alternative<operand>(rvalue.value))
     {
-        expected(token_it, token::type::end_of_expr);
+        expected(token_it, token::type_t::semicolon);
         ++token_it;
     }
 
     return { lvalue, op, rvalue };
 }
 
-program_structure::operand properties_parser::parse_operand(
+prog_struct::operand parser_t::parse_operand(
     std::vector<token>::iterator& token_it)
 {
-    using namespace program_structure;
+    using namespace prog_struct;
 
     operand result;
 
-    const auto value_types = { token::type::float_value,
-                               token::type::string_value };
+    const auto value_types = { token::type_t::float_literal,
+                               token::type_t::string_literal };
 
     // operand can be: declaration, var_name, constant
     const token& first_token = *token_it;
-    if (first_token.type == token::type::type_name)
+    if (first_token.type_t == token::type_t::type_id)
     {
         declaration decl = parse_declaration(token_it);
         variable    var{ decl };
@@ -351,21 +352,21 @@ program_structure::operand properties_parser::parse_operand(
         result.first_token    = &first_token;
         result.past_end_token = &(*token_it);
     }
-    else if (first_token.type == token::type::prop_name)
+    else if (first_token.type_t == token::type_t::identifier)
     {
         variable var          = parse_variable_name(token_it);
         result.value          = var;
         result.first_token    = &first_token;
         result.past_end_token = &(*token_it);
     }
-    else if (first_token.type == token::type::open_curly_bracket)
+    else if (first_token.type_t == token::type_t::open_curly_bracket)
     {
         // TODO implement it
         std::clog << "implement me";
     }
     else if (std::any_of(
                  begin(value_types), end(value_types),
-                 [&first_token](auto& v) { return v == first_token.type; }))
+                 [&first_token](auto& v) { return v == first_token.type_t; }))
     {
         constant const_value  = parse_constant(token_it);
         result.value          = const_value;
@@ -376,36 +377,36 @@ program_structure::operand properties_parser::parse_operand(
     return result;
 }
 
-program_structure::declaration properties_parser::parse_declaration(
+prog_struct::declaration parser_t::parse_declaration(
     std::vector<token>::iterator& token_it)
 {
-    using namespace program_structure;
+    using namespace prog_struct;
 
-    expected(token_it, token::type::type_name);
+    expected(token_it, token::type_t::type_id);
 
     const token& first_token = *token_it;
     ++token_it;
 
-    expected(token_it, token::type::prop_name);
+    expected(token_it, token::type_t::identifier);
     const token& second_token = *token_it;
 
     declaration decl;
-    decl.type     = &first_token;
-    decl.var.name = &second_token;
+    decl.type          = &first_token;
+    decl.name_tok.name = &second_token;
 
     ++token_it;
 
     return decl;
 }
 
-program_structure::variable properties_parser::parse_variable_name(
+prog_struct::variable parser_t::parse_variable_name(
     std::vector<token>::iterator& token_it)
 {
-    using namespace program_structure;
+    using namespace prog_struct;
 
-    expected(token_it, token::type::prop_name);
+    expected(token_it, token::type_t::identifier);
 
-    lvalue var_name;
+    var_name var_name;
     var_name.name = &(*token_it);
 
     variable var;
@@ -416,13 +417,13 @@ program_structure::variable properties_parser::parse_variable_name(
     return var;
 }
 
-program_structure::constant properties_parser::parse_constant(
+prog_struct::constant parser_t::parse_constant(
     std::vector<token>::iterator& token_it)
 {
-    using namespace program_structure;
+    using namespace prog_struct;
 
-    expected_one_of(token_it,
-                    { token::type::float_value, token::type::string_value });
+    expected_one_of(token_it, { token::type_t::float_literal,
+                                token::type_t::string_literal });
 
     const token* t = &(*token_it);
 
@@ -430,22 +431,22 @@ program_structure::constant properties_parser::parse_constant(
     return { t };
 }
 
-program_structure::operation properties_parser::parse_operation(
+prog_struct::operation parser_t::parse_operation(
     std::vector<token>::iterator& token_it)
 {
-    using namespace program_structure;
+    using namespace prog_struct;
 
-    expected(token_it, token::type::operator_name);
+    expected(token_it, token::type_t::operation);
     const token* t = &(*token_it);
 
     ++token_it;
     return { t };
 }
 
-program_structure::expr_or_operand properties_parser::parse_expr_or_operand(
+prog_struct::expr_or_operand parser_t::parse_expr_or_operand(
     std::vector<token>::iterator& token_it)
 {
-    using namespace program_structure;
+    using namespace prog_struct;
 
     std::vector<token>::iterator token_it_copy = token_it;
 
@@ -453,7 +454,7 @@ program_structure::expr_or_operand properties_parser::parse_expr_or_operand(
 
     operand first_operand = parse_operand(token_it);
 
-    if (token_it->type == token::type::end_of_expr)
+    if (token_it->type_t == token::type_t::semicolon)
     {
         const token* past_end_token = &(*token_it);
         return { first_operand, first_token, past_end_token };
@@ -469,18 +470,18 @@ program_structure::expr_or_operand properties_parser::parse_expr_or_operand(
     }
 }
 
-struct properties_interpretator
+struct interpretator_t
 {
-    properties_parser& parser;
-    properties_interpretator(properties_parser& parser_)
+    parser_t& parser;
+    interpretator_t(parser_t& parser_)
         : parser{ parser_ }
     {
     }
 
-    void execute(const program_structure::expression&      command,
+    void execute(const prog_struct::expression&            command,
                  std::unordered_map<std::string, value_t>& key_values)
     {
-        using namespace program_structure;
+        using namespace prog_struct;
 
         if (std::holds_alternative<variable>(command.left_operand.value))
         {
@@ -488,7 +489,7 @@ struct properties_interpretator
 
             declaration decl = std::get<declaration>(var.name);
 
-            std::string key(decl.var.name->value);
+            std::string key(decl.name_tok.name->value);
 
             if (std::holds_alternative<expression*>(
                     command.right_operand.value))
@@ -617,33 +618,33 @@ private:
         throw std::runtime_error("value_t !(string, glm::vec3, float)");
     }
     value_t calculate_expression(
-        program_structure::expression*                  expr,
+        prog_struct::expression*                        expr,
         const std::unordered_map<std::string, value_t>& key_values)
     {
         value_t first_value = get_value(expr->left_operand, key_values);
         std::string_view op = expr->op.op->value;
-        if (std::holds_alternative<program_structure::expression*>(
+        if (std::holds_alternative<prog_struct::expression*>(
                 expr->right_operand.value))
         {
-            auto next_exp = std::get<program_structure::expression*>(
-                expr->right_operand.value);
+            auto next_exp =
+                std::get<prog_struct::expression*>(expr->right_operand.value);
 
             value_t next = calculate_expression(next_exp, key_values);
             return apply(op, first_value, next);
         }
         else
         {
-            program_structure::operand operand =
-                std::get<program_structure::operand>(expr->right_operand.value);
+            prog_struct::operand operand =
+                std::get<prog_struct::operand>(expr->right_operand.value);
             value_t next = get_value(operand, key_values);
             return apply(op, first_value, next);
         }
     }
     value_t get_value(
-        const program_structure::operand&               op,
+        const prog_struct::operand&                     op,
         const std::unordered_map<std::string, value_t>& key_values)
     {
-        using namespace program_structure;
+        using namespace prog_struct;
         // it can be
         // 1. constant {int, float, string}
         // 2. variable {int, float, string}
@@ -651,9 +652,9 @@ private:
         if (std::holds_alternative<variable>(op.value))
         {
             variable var = std::get<variable>(op.value);
-            if (std::holds_alternative<lvalue>(var.name))
+            if (std::holds_alternative<var_name>(var.name))
             {
-                lvalue lv = std::get<lvalue>(var.name);
+                var_name lv = std::get<var_name>(var.name);
                 // TODO get value_t by lvalue name
                 std::string var_name(lv.name->value);
                 auto        it = key_values.find(var_name);
@@ -673,11 +674,11 @@ private:
         else if (std::holds_alternative<constant>(op.value))
         {
             constant val = std::get<constant>(op.value);
-            if (val.value->type == token::type::string_value)
+            if (val.value->type_t == token::type_t::string_literal)
             {
                 return { std::string(val.value->value) };
             }
-            else if (val.value->type == token::type::float_value)
+            else if (val.value->type_t == token::type_t::float_literal)
             {
                 float result = std::stof(std::string(val.value->value));
                 return { result };
@@ -718,16 +719,17 @@ private:
 
         file.open(path);
 
-        std::stringstream ss;
-        ss << file.rdbuf();
+        std::string content{ std::istreambuf_iterator<char>(file),
+                             std::istreambuf_iterator<char>() };
 
-        const std::string content{ ss.str() };
+        lexer_t         lexer(content);
+        parser_t        parser(lexer);
+        interpretator_t interpretator(parser);
 
-        properties_lexer         lexer(content);
-        properties_parser        parser(lexer);
-        properties_interpretator generator(parser);
+        std::unordered_map<std::string, value_t> generated_key_values;
+        interpretator.run(generated_key_values);
 
-        generator.run(key_values);
+        std::swap(generated_key_values, key_values);
     }
 
     std::unordered_map<std::string, value_t> key_values;
@@ -763,40 +765,30 @@ const glm::vec3& properties_reader::get_vec3(std::string_view name) const
 
 properties_reader::~properties_reader() {}
 
-std::ostream& operator<<(std::ostream& stream, const enum token::type t)
+std::ostream& operator<<(std::ostream& stream, const enum token::type_t t)
 {
-    switch (t)
+    const auto index_of_type = static_cast<size_t>(t);
+
+    if (index_of_type > static_cast<size_t>(token::type_t::comma))
     {
-        case token::type::operator_name:
-            stream << "operator";
-            break;
-        case token::type::float_value:
-            stream << "float";
-            break;
-        case token::type::string_value:
-            stream << "string";
-            break;
-        case token::type::prop_name:
-            stream << "variable_name";
-            break;
-        case token::type::type_name:
-            stream << "type_name";
-            break;
-        case token::type::none:
-            stream << "ws";
-            break;
-        case token::type::end_of_expr:
-            stream << "end_of_expr";
-            break;
-        case token::type::open_curly_bracket:
-            stream << "open_curly_bracket";
-            break;
-        case token::type::close_curle_bracket:
-            stream << "close_curly_bracket";
-            break;
-        case token::type::comma:
-            stream << "comma";
-            break;
+        throw std::runtime_error("invalid t, forgot to add new value?");
     }
+
+    // clang-format off
+    const char* names[]{ "none",
+                         "type_id",
+                         "identifier",
+                         "operation",
+                         "float_literal",
+                         "string_literal",
+                         "semicolon",
+                         "open_braket",
+                         "close_braket",
+                         "comma" };
+    // clang-format on
+
+    const char* type_name = names[index_of_type];
+    stream << type_name;
+
     return stream;
 }

@@ -15,3 +15,19 @@ float       aspect        = screen_height / screen_width;
 float       angle         = -45.f;
 glm::vec3   rotate_axis_x = { 1.f, 0.f, 0.f };
 // glm::vec3   move_camera   = { 0.f, 0.f, -3.f };
+
+// mini grammatics for parser
+//
+// float     z_near           =       3.f;
+// glm::vec3 move_camera      =       { 0.f, 0.f, -2.f };
+//
+// <type>   <identifier>  <operation> <expression>;
+// type:   <float, std::string, glm::vec3>
+// identifier: <a-zA-Z_0-9>
+// operation: <+, -, =, /, *>
+// expression: <float_literal,
+//              string_literal,
+//              identifier,
+//              *_literal operation expression,
+//              identifier operation expression,
+//              '{' expression ',' expression ',' expression '}'
