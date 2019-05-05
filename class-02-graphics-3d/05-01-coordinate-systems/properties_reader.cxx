@@ -55,6 +55,23 @@ struct lexer_t
     explicit lexer_t(std::string content_)
         : content{ std::move(content_) }
     {
+        try
+        {
+            do_lexer();
+        }
+        catch (...)
+        {
+            std::cerr << "error: lexer failed:" << std::endl;
+            throw;
+        }
+    }
+
+    std::vector<token> tokens;
+    const std::string  content;
+
+private:
+    void do_lexer()
+    {
         std::vector<token_regex> token_bind;
 
         token_bind.reserve(10);
@@ -144,9 +161,6 @@ struct lexer_t
             std::clog << tok.type_t << " = [" << tok.value << "]\n";
         }
     }
-
-    std::vector<token> tokens;
-    const std::string  content;
 };
 
 using value_t = std::variant<std::string, glm::vec3, float>;
@@ -213,6 +227,15 @@ struct expression
 
 struct parser_t
 {
+    struct expression_t;
+    struct key_value_expr
+    {
+        std::string_view              type_id;
+        std::string_view              identifier;
+        std::string_view              operation;
+        std::unique_ptr<expression_t> expression;
+    };
+
     std::vector<prog_struct::expression> commands;
 
     prog_struct::expression parse_expression(
@@ -231,8 +254,7 @@ struct parser_t
 
     lexer_t& lexer;
 
-    parser_t(lexer_t& lexer_)
-        : lexer{ lexer_ }
+    void do_parser()
     {
         using namespace prog_struct;
 
@@ -241,6 +263,20 @@ struct parser_t
         {
             expression expr = parse_expression(token_iter);
             commands.push_back(expr);
+        }
+    }
+
+    explicit parser_t(lexer_t& lexer_)
+        : lexer{ lexer_ }
+    {
+        try
+        {
+            do_parser();
+        }
+        catch (...)
+        {
+            std::cerr << "error: parser failed:" << std::endl;
+            throw;
         }
     }
 
