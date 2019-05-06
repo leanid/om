@@ -1,6 +1,5 @@
 #include "properties_reader.hxx"
 
-//#include <charconv> // not found on Visual Studio 2017.7
 #include <algorithm>
 #include <charconv>
 #include <forward_list>
@@ -19,7 +18,7 @@
 
 struct token
 {
-    enum class type_t : uint8_t
+    enum class type : uint8_t
     {
         none,
         type_id,
@@ -33,23 +32,26 @@ struct token
         comma
     };
 
-    type_t           type_t = type_t::none;
+    type             type = type::none;
     std::string_view value;
 };
 
-std::ostream& operator<<(std::ostream& stream, const enum token::type_t t);
+using value_t = std::variant<std::string, glm::vec3, float>;
+
+std::ostream& operator<<(std::ostream& stream, const enum token::type t);
+std::ostream& operator<<(std::ostream& stream, const value_t& t);
 
 struct lexer_t
 {
     struct token_regex
     {
-        token_regex(enum token::type_t t_, const char* r_)
+        token_regex(enum token::type t_, const char* r_)
             : type{ t_ }
             , regex{ r_ }
         {
         }
-        enum token::type_t type;
-        std::regex         regex;
+        enum token::type type;
+        std::regex       regex;
     };
 
     explicit lexer_t(std::string content_)
@@ -75,29 +77,29 @@ private:
         std::vector<token_regex> token_bind;
 
         token_bind.reserve(10);
-        token_bind.emplace_back(token::type_t::type_id,
+        token_bind.emplace_back(token::type::type_id,
                                 R"(float|std::string|glm::vec3)");
-        token_bind.emplace_back(token::type_t::operation, R"(=|\+|-|\*|\/)");
-        token_bind.emplace_back(token::type_t::identifier,
+        token_bind.emplace_back(token::type::operation, R"(=|\+|-|\*|\/)");
+        token_bind.emplace_back(token::type::identifier,
                                 R"([a-zA-Z_][a-zA-Z0-9_]*)");
-        token_bind.emplace_back(token::type_t::float_literal,
+        token_bind.emplace_back(token::type::float_literal,
                                 R"([+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)f)");
         // original from internet: /"([^"\\]|\\.)*"/
-        token_bind.emplace_back(token::type_t::string_literal,
+        token_bind.emplace_back(token::type::string_literal,
                                 R"("([^"\\]|\\.)*")");
-        token_bind.emplace_back(token::type_t::semicolon, R"(;)");
-        token_bind.emplace_back(token::type_t::open_curly_bracket, R"(\{)");
-        token_bind.emplace_back(token::type_t::close_curle_bracket, R"(\})");
-        token_bind.emplace_back(token::type_t::comma, R"(\,)");
-        token_bind.emplace_back(token::type_t::none, R"(#.*\n|//.*\n| |\n|\t)");
+        token_bind.emplace_back(token::type::semicolon, R"(;)");
+        token_bind.emplace_back(token::type::open_curly_bracket, R"(\{)");
+        token_bind.emplace_back(token::type::close_curle_bracket, R"(\})");
+        token_bind.emplace_back(token::type::comma, R"(\,)");
+        token_bind.emplace_back(token::type::none, R"(#.*\n|//.*\n| |\n|\t)");
 
         std::string_view rest_content{ content };
         bool             cant_find_match = false;
 
         while (!rest_content.empty() && !cant_find_match)
         {
-            std::cmatch        token_best_match;
-            enum token::type_t token_best_type{ token::type_t::none };
+            std::cmatch      token_best_match;
+            enum token::type token_best_type{ token::type::none };
 
             for (token_regex& tok_regex : token_bind)
             {
@@ -121,7 +123,7 @@ private:
             if (!token_best_match.empty())
             {
                 token tok;
-                tok.type_t                 = token_best_type;
+                tok.type                   = token_best_type;
                 auto&       first_match    = token_best_match[0];
                 const char* first_char_ptr = first_match.first;
                 size_t      length = static_cast<size_t>(first_match.length());
@@ -129,13 +131,13 @@ private:
 
                 rest_content = rest_content.substr(tok.value.size());
 
-                if (tok.type_t == token::type_t::string_literal)
+                if (tok.type == token::type::string_literal)
                 {
                     // skip "" - charecters in string literal
                     tok.value = tok.value.substr(1, tok.value.size() - 2);
                 }
 
-                if (token_best_type == token::type_t::none)
+                if (token_best_type == token::type::none)
                 {
                     continue;
                 }
@@ -158,111 +160,123 @@ private:
 
         for (auto tok : tokens)
         {
-            std::clog << tok.type_t << " = [" << tok.value << "]\n";
+            std::clog << tok.type << " = [" << tok.value << "]\n";
         }
     }
 };
 
-using value_t = std::variant<std::string, glm::vec3, float>;
-
-namespace prog_struct
-{
-
-struct var_name
-{
-    const token* name = nullptr;
-};
-
-struct declaration
-{
-    const token* type = nullptr;
-    var_name     name_tok;
-};
-
-struct variable
-{
-    std::variant<std::monostate, declaration, var_name> name;
-};
-
-struct constant
-{
-    const token* value = nullptr;
-};
-
-struct operation
-{
-    const token* op = nullptr;
-};
-
-using name_or_constant = std::variant<std::monostate, variable, constant>;
-
-struct init_list
-{
-    std::forward_list<name_or_constant> items;
-};
-
-struct operand
-{
-    name_or_constant value;
-    const token*     first_token    = nullptr;
-    const token*     past_end_token = nullptr;
-};
-
-struct expression;
-
-struct expr_or_operand
-{
-    std::variant<std::monostate, expression*, operand> value;
-    const token*                                       first_token    = nullptr;
-    const token*                                       past_end_token = nullptr;
-};
-
-struct expression
-{
-    operand         left_operand;
-    operation       op;
-    expr_or_operand right_operand;
-};
-} // namespace prog_struct
-
 struct parser_t
 {
-    struct expression_t;
-    struct key_value_expr
+    struct expression_t
     {
-        std::string_view              type_id;
-        std::string_view              identifier;
-        std::string_view              operation;
-        std::unique_ptr<expression_t> expression;
+        virtual ~expression_t() = default;
+        virtual value_t evaluate(
+            std::unordered_map<std::string, value_t>& key_values) const = 0;
     };
 
-    std::vector<prog_struct::expression> commands;
+    struct key_value_expr
+    {
+        token*                        type_id    = nullptr;
+        token*                        identifier = nullptr;
+        token*                        operation  = nullptr;
+        std::shared_ptr<expression_t> expression;
+        token*                        semicolon = nullptr;
+    };
 
-    prog_struct::expression parse_expression(
-        std::vector<token>::iterator& token_it);
-    prog_struct::operand parse_operand(std::vector<token>::iterator& token_it);
-    prog_struct::declaration parse_declaration(
-        std::vector<token>::iterator& token_it);
-    prog_struct::variable parse_variable_name(
-        std::vector<token>::iterator& token_it);
-    prog_struct::constant parse_constant(
-        std::vector<token>::iterator& token_it);
-    prog_struct::operation parse_operation(
-        std::vector<token>::iterator& token_it);
-    prog_struct::expr_or_operand parse_expr_or_operand(
-        std::vector<token>::iterator& token_it);
+    struct literal_expr : expression_t
+    {
+        token* literal = nullptr;
+
+        value_t evaluate(
+            std::unordered_map<std::string, value_t>&) const override
+        {
+            const char* start    = literal->value.data();
+            const char* past_end = start + literal->value.size();
+            if (literal->type == token::type::string_literal)
+            {
+                return std::string{ start, past_end };
+            }
+            else if (literal->type == token::type::float_literal)
+            {
+                const std::string value{ start, past_end };
+                return std::stof(value);
+            }
+            else
+            {
+                throw std::runtime_error("error: unsuported literal: ");
+            }
+        }
+    };
+
+    struct identifier_expr : expression_t
+    {
+        token* identifier = nullptr;
+
+        value_t evaluate(
+            std::unordered_map<std::string, value_t>& key_values) const override
+        {
+            const char*       start    = identifier->value.data();
+            const char*       past_end = start + identifier->value.size();
+            const std::string value{ start, past_end };
+            return key_values.at(value);
+        }
+    };
+
+    struct gml_vec3_expr : expression_t
+    {
+        token*                        open_curl = nullptr;
+        std::shared_ptr<expression_t> x_component;
+        token*                        first_comma = nullptr;
+        std::shared_ptr<expression_t> y_component;
+        token*                        second_comma = nullptr;
+        std::shared_ptr<expression_t> z_component;
+        token*                        close_curl = nullptr;
+
+        value_t evaluate(
+            std::unordered_map<std::string, value_t>& key_values) const override
+        {
+            float x = std::get<float>(x_component->evaluate(key_values));
+            float y = std::get<float>(y_component->evaluate(key_values));
+            float z = std::get<float>(z_component->evaluate(key_values));
+            return { glm::vec3(x, y, z) };
+        }
+    };
+
+    struct sub_expr : expression_t
+    {
+        std::shared_ptr<expression_t> identifier_or_literal;
+        token*                        operation = nullptr;
+        std::shared_ptr<expression_t> other_expr;
+
+        value_t evaluate(
+            std::unordered_map<std::string, value_t>& key_values) const override
+        {
+            value_t left  = identifier_or_literal->evaluate(key_values);
+            value_t right = other_expr->evaluate(key_values);
+            return parser_t::apply(operation->value, left, right);
+        }
+    };
+
+    std::vector<key_value_expr> commands;
 
     lexer_t& lexer;
 
     void do_parser()
     {
-        using namespace prog_struct;
-
         for (auto token_iter = begin(lexer.tokens);
              token_iter != end(lexer.tokens);)
         {
-            expression expr = parse_expression(token_iter);
-            commands.push_back(expr);
+            key_value_expr key_val;
+            key_val.type_id = expected(token_iter, token::type::type_id);
+            ++token_iter;
+            key_val.identifier = expected(token_iter, token::type::identifier);
+            ++token_iter;
+            key_val.operation = expected(token_iter, token::type::operation);
+            ++token_iter;
+            key_val.expression = parse_expression(token_iter);
+            key_val.semicolon  = expected(token_iter, token::type::semicolon);
+            ++token_iter;
+            commands.push_back(key_val);
         }
     }
 
@@ -300,7 +314,7 @@ struct parser_t
     }
 
     token* expected(const std::vector<token>::iterator& it,
-                    const enum token::type_t            type)
+                    const enum token::type              type)
     {
         if (it == end(lexer.tokens))
         {
@@ -308,7 +322,7 @@ struct parser_t
             ss << "error: expected " << type << " but got: EOF";
             throw std::runtime_error(ss.str());
         }
-        if (it->type_t != type)
+        if (it->type != type)
         {
             std::stringstream ss;
             ss << "error: expected " << type << " but got: " << it->value;
@@ -318,9 +332,8 @@ struct parser_t
         return &(*it);
     }
 
-    token* expected_one_of(
-        const std::vector<token>::iterator&              it,
-        const std::initializer_list<enum token::type_t>& types)
+    token* expected_one_of(const std::vector<token>::iterator&            it,
+                           const std::initializer_list<enum token::type>& types)
     {
         if (it == end(lexer.tokens))
         {
@@ -333,7 +346,7 @@ struct parser_t
             ss << " but got: EOF";
             throw std::runtime_error(ss.str());
         }
-        auto type_it = std::find(begin(types), end(types), it->type_t);
+        auto type_it = std::find(begin(types), end(types), it->type);
         if (type_it == end(types))
         {
             std::stringstream ss;
@@ -342,265 +355,90 @@ struct parser_t
             {
                 ss << type << ", ";
             }
-            ss << "but got: " << it->type_t;
+            ss << "but got: " << it->type;
             ss << print_position_of_token(*it);
             throw std::runtime_error(ss.str());
         }
         return &(*it);
     }
-};
-
-prog_struct::expression parser_t::parse_expression(
-    std::vector<token>::iterator& token_it)
-{
-    using namespace prog_struct;
-
-    operand         lvalue = parse_operand(token_it);
-    operation       op     = parse_operation(token_it);
-    expr_or_operand rvalue = parse_expr_or_operand(token_it);
-
-    if (std::holds_alternative<operand>(rvalue.value))
+    std::shared_ptr<expression_t> parse_expression(
+        std::vector<token>::iterator& token_it)
     {
-        expected(token_it, token::type_t::semicolon);
-        ++token_it;
-    }
-
-    return { lvalue, op, rvalue };
-}
-
-prog_struct::operand parser_t::parse_operand(
-    std::vector<token>::iterator& token_it)
-{
-    using namespace prog_struct;
-
-    operand result;
-
-    const auto value_types = { token::type_t::float_literal,
-                               token::type_t::string_literal };
-
-    // operand can be: declaration, var_name, constant
-    const token& first_token = *token_it;
-    if (first_token.type_t == token::type_t::type_id)
-    {
-        declaration decl = parse_declaration(token_it);
-        variable    var{ decl };
-        result.value          = var;
-        result.first_token    = &first_token;
-        result.past_end_token = &(*token_it);
-    }
-    else if (first_token.type_t == token::type_t::identifier)
-    {
-        variable var          = parse_variable_name(token_it);
-        result.value          = var;
-        result.first_token    = &first_token;
-        result.past_end_token = &(*token_it);
-    }
-    else if (first_token.type_t == token::type_t::open_curly_bracket)
-    {
-        // TODO implement it
-        std::clog << "implement me";
-    }
-    else if (std::any_of(
-                 begin(value_types), end(value_types),
-                 [&first_token](auto& v) { return v == first_token.type_t; }))
-    {
-        constant const_value  = parse_constant(token_it);
-        result.value          = const_value;
-        result.first_token    = &first_token;
-        result.past_end_token = &(*token_it);
-    }
-
-    return result;
-}
-
-prog_struct::declaration parser_t::parse_declaration(
-    std::vector<token>::iterator& token_it)
-{
-    using namespace prog_struct;
-
-    expected(token_it, token::type_t::type_id);
-
-    const token& first_token = *token_it;
-    ++token_it;
-
-    expected(token_it, token::type_t::identifier);
-    const token& second_token = *token_it;
-
-    declaration decl;
-    decl.type          = &first_token;
-    decl.name_tok.name = &second_token;
-
-    ++token_it;
-
-    return decl;
-}
-
-prog_struct::variable parser_t::parse_variable_name(
-    std::vector<token>::iterator& token_it)
-{
-    using namespace prog_struct;
-
-    expected(token_it, token::type_t::identifier);
-
-    var_name var_name;
-    var_name.name = &(*token_it);
-
-    variable var;
-    var.name = var_name;
-
-    ++token_it;
-
-    return var;
-}
-
-prog_struct::constant parser_t::parse_constant(
-    std::vector<token>::iterator& token_it)
-{
-    using namespace prog_struct;
-
-    expected_one_of(token_it, { token::type_t::float_literal,
-                                token::type_t::string_literal });
-
-    const token* t = &(*token_it);
-
-    ++token_it;
-    return { t };
-}
-
-prog_struct::operation parser_t::parse_operation(
-    std::vector<token>::iterator& token_it)
-{
-    using namespace prog_struct;
-
-    expected(token_it, token::type_t::operation);
-    const token* t = &(*token_it);
-
-    ++token_it;
-    return { t };
-}
-
-prog_struct::expr_or_operand parser_t::parse_expr_or_operand(
-    std::vector<token>::iterator& token_it)
-{
-    using namespace prog_struct;
-
-    std::vector<token>::iterator token_it_copy = token_it;
-
-    const token* first_token = &(*token_it);
-
-    operand first_operand = parse_operand(token_it);
-
-    if (token_it->type_t == token::type_t::semicolon)
-    {
-        const token* past_end_token = &(*token_it);
-        return { first_operand, first_token, past_end_token };
-    }
-    else
-    {
-        expression   expr           = parse_expression(token_it_copy);
-        const token* past_end_token = &(*token_it_copy);
-        // restore iterator to current state
-        token_it = token_it_copy;
-        // FIXME memory leak
-        return { new expression(expr), first_token, past_end_token };
-    }
-}
-
-struct interpretator_t
-{
-    parser_t& parser;
-    interpretator_t(parser_t& parser_)
-        : parser{ parser_ }
-    {
-    }
-
-    void execute(const prog_struct::expression&            command,
-                 std::unordered_map<std::string, value_t>& key_values)
-    {
-        using namespace prog_struct;
-
-        if (std::holds_alternative<variable>(command.left_operand.value))
+        if (token_it->type == token::type::open_curly_bracket)
         {
-            variable var = std::get<variable>(command.left_operand.value);
-
-            declaration decl = std::get<declaration>(var.name);
-
-            std::string key(decl.name_tok.name->value);
-
-            if (std::holds_alternative<expression*>(
-                    command.right_operand.value))
+            // parse {expression, expression, expression};
+            auto expr = std::make_shared<parser_t::gml_vec3_expr>();
+            expr->open_curl =
+                expected(token_it, token::type::open_curly_bracket);
+            ++token_it;
+            expr->x_component = parse_expression(token_it);
+            expr->first_comma = expected(token_it, token::type::comma);
+            ++token_it;
+            expr->y_component  = parse_expression(token_it);
+            expr->second_comma = expected(token_it, token::type::comma);
+            ++token_it;
+            expr->z_component = parse_expression(token_it);
+            expr->close_curl =
+                expected(token_it, token::type::close_curle_bracket);
+            ++token_it;
+            return expr;
+        }
+        else if (token_it->type == token::type::float_literal ||
+                 token_it->type == token::type::string_literal)
+        {
+            token* literal = &*token_it;
+            ++token_it;
+            if (token_it->type == token::type::semicolon ||
+                token_it->type == token::type::close_curle_bracket ||
+                token_it->type == token::type::comma)
             {
-                expression* expr =
-                    std::get<expression*>(command.right_operand.value);
-                value_t value   = calculate_expression(expr, key_values);
-                key_values[key] = value;
+                auto expr     = std::make_shared<parser_t::literal_expr>();
+                expr->literal = literal;
+                return expr;
             }
             else
             {
-                operand right_value =
-                    std::get<operand>(command.right_operand.value);
-
-                if (command.op.op->value != "=")
-                {
-                    throw std::runtime_error(
-                        "expected operator =\n" +
-                        parser.print_position_of_token(*command.op.op));
-                }
-
-                if (decl.type->value == "std::string")
-                {
-                    if (!std::holds_alternative<constant>(right_value.value))
-                    {
-                        throw std::runtime_error(
-                            "expected std::string constant: " +
-                            parser.print_position_of_token(
-                                *right_value.first_token));
-                    }
-
-                    std::string value(
-                        std::get<constant>(right_value.value).value->value);
-
-                    key_values[key] = value;
-                }
-                else if (decl.type->value == "int")
-                {
-                    // TODO
-                    throw std::runtime_error("implement me");
-                }
-                else if (decl.type->value == "float")
-                {
-                    if (!std::holds_alternative<constant>(right_value.value))
-                    {
-                        throw std::runtime_error("expected float constant: " +
-                                                 parser.print_position_of_token(
-                                                     *right_value.first_token));
-                    }
-
-                    std::string value_str(
-                        std::get<constant>(right_value.value).value->value);
-                    float value     = stof(value_str);
-                    key_values[key] = value;
-                }
+                token* operation  = expected(token_it, token::type::operation);
+                auto   first_expr = std::make_shared<literal_expr>();
+                first_expr->literal         = literal;
+                auto expr                   = std::make_shared<sub_expr>();
+                expr->identifier_or_literal = first_expr;
+                expr->operation             = operation;
+                ++token_it;
+                expr->other_expr = parse_expression(token_it);
             }
         }
-        else
+        else if (token_it->type == token::type::identifier)
         {
-            // TODO
+            token* identifier = &*token_it;
+            ++token_it;
+            if (token_it->type == token::type::semicolon ||
+                token_it->type == token::type::close_curle_bracket ||
+                token_it->type == token::type::comma)
+            {
+                auto expr = std::make_shared<parser_t::identifier_expr>();
+                expr->identifier = identifier;
+                return expr;
+            }
+            else
+            {
+                token* operation  = expected(token_it, token::type::operation);
+                auto   first_expr = std::make_shared<identifier_expr>();
+                first_expr->identifier      = identifier;
+                auto expr                   = std::make_shared<sub_expr>();
+                expr->identifier_or_literal = first_expr;
+                expr->operation             = operation;
+                ++token_it;
+                expr->other_expr = parse_expression(token_it);
+                return expr;
+            }
         }
+
+        throw std::runtime_error("error: parse failed:");
     }
 
-    void run(std::unordered_map<std::string, value_t>& key_values)
-    {
-        // interpret program and fill key_values map
-        for (const auto& command : parser.commands)
-        {
-            execute(command, key_values);
-        }
-    }
-
-private:
-    value_t apply(std::string_view operator_literal, const value_t& left,
-                  const value_t& right)
+    static value_t apply(std::string_view operator_literal, const value_t& left,
+                         const value_t& right)
     {
         if (std::holds_alternative<std::string>(left))
         {
@@ -653,75 +491,40 @@ private:
         }
         throw std::runtime_error("value_t !(string, glm::vec3, float)");
     }
-    value_t calculate_expression(
-        prog_struct::expression*                        expr,
-        const std::unordered_map<std::string, value_t>& key_values)
-    {
-        value_t first_value = get_value(expr->left_operand, key_values);
-        std::string_view op = expr->op.op->value;
-        if (std::holds_alternative<prog_struct::expression*>(
-                expr->right_operand.value))
-        {
-            auto next_exp =
-                std::get<prog_struct::expression*>(expr->right_operand.value);
+};
 
-            value_t next = calculate_expression(next_exp, key_values);
-            return apply(op, first_value, next);
-        }
-        else
+struct interpretator_t
+{
+    parser_t& parser;
+    interpretator_t(parser_t& parser_)
+        : parser{ parser_ }
+    {
+    }
+
+    void run(std::unordered_map<std::string, value_t>& key_values)
+    {
+        // interpret program and fill key_values map
+        for ([[maybe_unused]] const auto& command : parser.commands)
         {
-            prog_struct::operand operand =
-                std::get<prog_struct::operand>(expr->right_operand.value);
-            value_t next = get_value(operand, key_values);
-            return apply(op, first_value, next);
+            execute(command, key_values);
+        }
+
+        // dump values
+        for (auto [key, value] : key_values)
+        {
+            std::cout << key << "=[" << value << "]" << std::endl;
         }
     }
-    value_t get_value(
-        const prog_struct::operand&                     op,
-        const std::unordered_map<std::string, value_t>& key_values)
-    {
-        using namespace prog_struct;
-        // it can be
-        // 1. constant {int, float, string}
-        // 2. variable {int, float, string}
 
-        if (std::holds_alternative<variable>(op.value))
-        {
-            variable var = std::get<variable>(op.value);
-            if (std::holds_alternative<var_name>(var.name))
-            {
-                var_name lv = std::get<var_name>(var.name);
-                // TODO get value_t by lvalue name
-                std::string var_name(lv.name->value);
-                auto        it = key_values.find(var_name);
-                if (it == std::end(key_values))
-                {
-                    throw std::runtime_error(
-                        "can't find lvalue with name: " + var_name +
-                        parser.print_position_of_token(*lv.name));
-                }
-                return it->second;
-            }
-            else
-            {
-                throw std::runtime_error("expected lvalue not declaration");
-            }
-        }
-        else if (std::holds_alternative<constant>(op.value))
-        {
-            constant val = std::get<constant>(op.value);
-            if (val.value->type_t == token::type_t::string_literal)
-            {
-                return { std::string(val.value->value) };
-            }
-            else if (val.value->type_t == token::type_t::float_literal)
-            {
-                float result = std::stof(std::string(val.value->value));
-                return { result };
-            }
-            throw std::runtime_error("constant not (int, float, string)");
-        }
-        throw std::runtime_error("expected operant be constant or variable");
+private:
+    void execute(const parser_t::key_value_expr&           command,
+                 std::unordered_map<std::string, value_t>& key_values)
+    {
+        value_t     value    = command.expression->evaluate(key_values);
+        const char* start    = command.identifier->value.data();
+        const char* past_end = start + command.identifier->value.size();
+        std::string identifier{ start, past_end };
+        key_values[identifier] = value;
     }
 };
 
@@ -801,11 +604,11 @@ const glm::vec3& properties_reader::get_vec3(std::string_view name) const
 
 properties_reader::~properties_reader() {}
 
-std::ostream& operator<<(std::ostream& stream, const enum token::type_t t)
+std::ostream& operator<<(std::ostream& stream, const enum token::type t)
 {
     const auto index_of_type = static_cast<size_t>(t);
 
-    if (index_of_type > static_cast<size_t>(token::type_t::comma))
+    if (index_of_type > static_cast<size_t>(token::type::comma))
     {
         throw std::runtime_error("invalid t, forgot to add new value?");
     }
@@ -826,5 +629,27 @@ std::ostream& operator<<(std::ostream& stream, const enum token::type_t t)
     const char* type_name = names[index_of_type];
     stream << type_name;
 
+    return stream;
+}
+
+std::ostream& operator<<(std::ostream& stream, const value_t& t)
+{
+    if (std::holds_alternative<float>(t))
+    {
+        stream << std::get<float>(t);
+    }
+    else if (std::holds_alternative<std::string>(t))
+    {
+        stream << std::get<std::string>(t);
+    }
+    else if (std::holds_alternative<glm::vec3>(t))
+    {
+        glm::vec3 v = std::get<glm::vec3>(t);
+        stream << v.x << ',' << v.y << ',' << v.z << std::endl;
+    }
+    else
+    {
+        throw std::runtime_error("unknown type");
+    }
     return stream;
 }
