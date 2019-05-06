@@ -297,22 +297,22 @@ int main(int /*argc*/, char* /*argv*/[])
         }
 
         glm::mat4 model(1);
-        model = glm::rotate(model, glm::radians(properties.get_float("angle")),
-                            glm::vec3(1.0f, 0.0f, 0.0f));
+        angle       = properties.get_float("angle");
+        rotate_axis = properties.get_vec3("rotate_axis");
+        model       = glm::rotate(model, glm::radians(angle), rotate_axis);
 
         glm::mat4 view(1.f);
-        // glm::vec3 move_camera = properties.get_vec3("move_camera");
-        // glm::vec3(0.f, 0.f, -3.f));
-        // view = glm::translate(view, move_camera);
+        move_camera = properties.get_vec3("move_camera");
+        view        = glm::translate(view, move_camera);
 
         fovy   = properties.get_float("fovy");
         aspect = properties.get_float("aspect");
         z_near = properties.get_float("z_near"); // 3.f;
         z_far  = properties.get_float("z_far");  // 100.f;
-        glm::mat4 projection(1);
-        //        projection =
-        // glm::perspective(glm::radians(fovy), aspect, z_near, z_far);
-        //            glm::ortho(-10, 10, -10, 10);
+        glm::mat4 projection =
+            glm::perspective(glm::radians(fovy), aspect, z_near, z_far);
+
+        // projection = glm::mat4(1);
 
         auto current_time = high_resolution_clock::now();
 
