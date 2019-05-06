@@ -59,7 +59,7 @@ struct lexer_t
     {
         try
         {
-            do_lexer();
+            generate_token_stream();
         }
         catch (...)
         {
@@ -72,7 +72,7 @@ struct lexer_t
     const std::string  content;
 
 private:
-    void do_lexer()
+    void generate_token_stream()
     {
         std::vector<token_regex> token_bind;
 
@@ -176,7 +176,7 @@ struct parser_t
             std::unordered_map<std::string, value_t>& key_values) const = 0;
     };
 
-    struct key_value_expr
+    struct definition_ast
     {
         token*                        type_id    = nullptr;
         token*                        identifier = nullptr;
@@ -192,20 +192,19 @@ struct parser_t
         value_t evaluate(
             std::unordered_map<std::string, value_t>&) const override
         {
-            const char* start    = literal->value.data();
-            const char* past_end = start + literal->value.size();
             if (literal->type == token::type::string_literal)
             {
-                return std::string{ start, past_end };
+                return std::string{ literal->value };
             }
             else if (literal->type == token::type::float_literal)
             {
-                const std::string value{ start, past_end };
+                const std::string value{ literal->value };
                 return std::stof(value);
             }
             else
             {
-                throw std::runtime_error("error: unsuported literal: ");
+                throw std::runtime_error("error: unsuported literal: " +
+                                         std::string(literal->value));
             }
         }
     };
@@ -217,9 +216,7 @@ struct parser_t
         value_t evaluate(
             std::unordered_map<std::string, value_t>& key_values) const override
         {
-            const char*       start    = identifier->value.data();
-            const char*       past_end = start + identifier->value.size();
-            const std::string value{ start, past_end };
+            const std::string value{ identifier->value };
             return key_values.at(value);
         }
     };
@@ -259,16 +256,16 @@ struct parser_t
         }
     };
 
-    std::vector<key_value_expr> commands;
+    std::vector<definition_ast> commands;
 
     lexer_t& lexer;
 
-    void do_parser()
+    void generate_ast()
     {
         for (auto token_iter = begin(lexer.tokens);
              token_iter != end(lexer.tokens);)
         {
-            key_value_expr key_val;
+            definition_ast key_val;
             key_val.type_id = expected(token_iter, token::type::type_id);
             ++token_iter;
             key_val.identifier = expected(token_iter, token::type::identifier);
@@ -287,7 +284,7 @@ struct parser_t
     {
         try
         {
-            do_parser();
+            generate_ast();
         }
         catch (...)
         {
@@ -408,6 +405,7 @@ struct parser_t
                 expr->operation             = operation;
                 ++token_it;
                 expr->other_expr = parse_expression(token_it);
+                return expr;
             }
         }
         else if (token_it->type == token::type::identifier)
@@ -519,7 +517,7 @@ struct interpretator_t
     }
 
 private:
-    void execute(const parser_t::key_value_expr&           command,
+    void execute(const parser_t::definition_ast&           command,
                  std::unordered_map<std::string, value_t>& key_values)
     {
         value_t     value    = command.expression->evaluate(key_values);
@@ -537,7 +535,7 @@ public:
         : path{ path_ }
         , last_update_time{ fs::last_write_time(path) }
     {
-        load_and_parse();
+        build_properties_map();
     }
 
     std::unordered_map<std::string, value_t>& get_map() { return key_values; }
@@ -548,20 +546,25 @@ public:
         if (new_time != last_update_time)
         {
             last_update_time = new_time;
-            load_and_parse();
+            build_properties_map();
         }
     }
 
 private:
-    void load_and_parse()
+    std::string load_file()
     {
         std::ifstream file;
         file.exceptions(std::ifstream::badbit | std::ifstream::failbit);
 
         file.open(path);
 
-        std::string content{ std::istreambuf_iterator<char>(file),
-                             std::istreambuf_iterator<char>() };
+        return { std::istreambuf_iterator<char>(file),
+                 std::istreambuf_iterator<char>() };
+    }
+
+    void build_properties_map()
+    {
+        std::string content{ load_file() };
 
         lexer_t         lexer(content);
         parser_t        parser(lexer);

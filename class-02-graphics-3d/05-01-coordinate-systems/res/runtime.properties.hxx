@@ -14,7 +14,7 @@ float       screen_height = 480.f;
 float       aspect        = screen_width / screen_height;
 float       angle         = 45.f;
 glm::vec3   rotate_axis   = { 1.f, 0.f, 0.f };
-glm::vec3   move_camera   = { 0.f, 0.f, -1.f };
+glm::vec3   move_camera   = { 0.f, 0.f, -1.f + -3.f };
 
 // mini grammatics for parser
 //
