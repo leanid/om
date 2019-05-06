@@ -158,10 +158,12 @@ private:
                                      std::string(rest_content));
         }
 
+#ifdef _DEBUG
         for (auto tok : tokens)
         {
             std::clog << tok.type << " = [" << tok.value << "]\n";
         }
+#endif
     }
 };
 
@@ -645,7 +647,7 @@ std::ostream& operator<<(std::ostream& stream, const value_t& t)
     else if (std::holds_alternative<glm::vec3>(t))
     {
         glm::vec3 v = std::get<glm::vec3>(t);
-        stream << v.x << ',' << v.y << ',' << v.z << std::endl;
+        stream << v.x << ',' << v.y << ',' << v.z;
     }
     else
     {

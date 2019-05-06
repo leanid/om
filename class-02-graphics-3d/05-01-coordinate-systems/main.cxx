@@ -296,34 +296,39 @@ int main(int /*argc*/, char* /*argv*/[])
             }
         }
 
-        glm::mat4 model;
+        glm::mat4 model(1);
         model = glm::rotate(model, glm::radians(properties.get_float("angle")),
                             glm::vec3(1.0f, 0.0f, 0.0f));
 
         glm::mat4 view(1.f);
-        view = glm::translate(view, glm::vec3(0.f, 0.f, -3.f));
+        // glm::vec3 move_camera = properties.get_vec3("move_camera");
+        // glm::vec3(0.f, 0.f, -3.f));
+        // view = glm::translate(view, move_camera);
 
-        fovy   = glm::radians(properties.get_float("fovy"));
+        fovy   = properties.get_float("fovy");
         aspect = properties.get_float("aspect");
         z_near = properties.get_float("z_near"); // 3.f;
         z_far  = properties.get_float("z_far");  // 100.f;
-        glm::mat4 projection;
-        projection = glm::perspective(fovy, aspect, z_near, z_far);
+        glm::mat4 projection(1);
+        //        projection =
+        // glm::perspective(glm::radians(fovy), aspect, z_near, z_far);
+        //            glm::ortho(-10, 10, -10, 10);
 
         auto current_time = high_resolution_clock::now();
 
         milliseconds now{ duration_cast<milliseconds>(current_time -
                                                       start_time) };
-        float        sin_value = std::sin(now.count() * 0.001f);
+        // float        sin_value = std::sin(now.count() * 0.001f);
+        /*
+                glm::mat4 transform(1.f);
 
-        glm::mat4 transform(1.f);
+                transform =
+                    glm::rotate(transform, glm::radians(10 * now.count() *
+           0.001f), glm::vec3(0, 0, 1.0f));
 
-        transform =
-            glm::rotate(transform, glm::radians(10 * now.count() * 0.001f),
-                        glm::vec3(0, 0, 1.0f));
-
-        transform = glm::scale(transform, glm::vec3(sin_value, sin_value, 1.0));
-
+                transform = glm::scale(transform, glm::vec3(sin_value,
+           sin_value, 1.0));
+        */
         float red   = 0.f;
         float green = 1.f;
         float blue  = 0.f;
