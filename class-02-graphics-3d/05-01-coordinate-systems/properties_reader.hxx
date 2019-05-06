@@ -25,6 +25,7 @@ public:
     const std::string& get_string(std::string_view name) const noexcept(false);
     float              get_float(std::string_view name) const noexcept(false);
     const glm::vec3&   get_vec3(std::string_view name) const noexcept(false);
+    bool               get_bool(std::string_view name) const noexcept(false);
 
 private:
     class impl;

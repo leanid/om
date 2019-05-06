@@ -2,7 +2,9 @@
 #include <cstdlib>
 #include <iostream>
 #include <memory>
+#include <numeric>
 #include <string>
+#include <vector>
 
 #include "gles30_shader.hxx"
 #include "gles30_texture.hxx"
@@ -37,6 +39,54 @@ void print_view_port()
     gl_check();
     clog << "view port is: x=" << view_port[0] << " y=" << view_port[1]
          << " w=" << view_port[2] << " h=" << view_port[3] << endl;
+}
+
+extern float cube_vertices[36 * 8];
+
+void update_vertex_attributes()
+{
+    // now tell OpenGL how to interpret data from VBO
+    GLuint    location_of_vertex_attribute = 0; // position
+    int       size_of_attribute            = 3; // 3 float values (x, y, z)
+    GLenum    type_of_data   = GL_FLOAT; // all values in vec{2,3,4} of float
+    GLboolean normalize_data = GL_FALSE; // OpenGL can normalize values
+    // to [0, 1] - for unsigned and to [-1, 1] for signed values
+    int stride =
+        (3 + 3 + 2) * sizeof(float); // step in bytes from one attribute to next
+    void* start_of_data_offset = nullptr; // we start from begin of buffer
+    glVertexAttribPointer(location_of_vertex_attribute, size_of_attribute,
+                          type_of_data, normalize_data, stride,
+                          start_of_data_offset);
+    gl_check();
+
+    glEnableVertexAttribArray(0);
+    gl_check();
+
+    location_of_vertex_attribute = 1; // color
+    size_of_attribute            = 3; // r + g + b
+    type_of_data                 = GL_FLOAT;
+    normalize_data               = GL_FALSE;
+    start_of_data_offset         = reinterpret_cast<void*>(3 * sizeof(float));
+    glVertexAttribPointer(location_of_vertex_attribute, size_of_attribute,
+                          type_of_data, normalize_data, stride,
+                          start_of_data_offset);
+    gl_check();
+
+    glEnableVertexAttribArray(1);
+    gl_check();
+
+    location_of_vertex_attribute = 2; // tex coord
+    size_of_attribute            = 2; // u + v (s + t)
+    type_of_data                 = GL_FLOAT;
+    normalize_data               = GL_FALSE;
+    start_of_data_offset         = reinterpret_cast<void*>(6 * sizeof(float));
+    glVertexAttribPointer(location_of_vertex_attribute, size_of_attribute,
+                          type_of_data, normalize_data, stride,
+                          start_of_data_offset);
+    gl_check();
+
+    glEnableVertexAttribArray(2);
+    gl_check();
 }
 
 int main(int /*argc*/, char* /*argv*/[])
@@ -151,11 +201,6 @@ int main(int /*argc*/, char* /*argv*/[])
         1, 2, 3  // second triangle
     };
 
-    // generate OpenGL object id for future VertexBufferObject
-    uint32_t VBO;
-    glGenBuffers(1, &VBO);
-    gl_check();
-
     // Generate VAO VertexArrayState object to remember current VBO and EBO(if
     // any) with all attributes parameters stored in one object called VAO think
     // it is current VBO + EBO + attributes state in one object
@@ -164,6 +209,11 @@ int main(int /*argc*/, char* /*argv*/[])
     gl_check();
 
     glBindVertexArray(VAO);
+    gl_check();
+
+    // generate OpenGL object id for future VertexBufferObject
+    uint32_t VBO;
+    glGenBuffers(1, &VBO);
     gl_check();
 
     // GL_ARRAY_BUFFER - is VertexBufferObject type
@@ -177,7 +227,7 @@ int main(int /*argc*/, char* /*argv*/[])
     //    very rarely.
     // GL_DYNAMIC_DRAW: the data is likely to change a lot.
     // GL_STREAM_DRAW: the data will change every time it is drawn.
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
     gl_check();
 
     uint32_t EBO; // ElementBufferObject - indices buffer
@@ -188,54 +238,10 @@ int main(int /*argc*/, char* /*argv*/[])
     gl_check();
 
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices,
-                 GL_STATIC_DRAW);
+                 GL_DYNAMIC_DRAW);
     gl_check();
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    gl_check();
-
-    // now tell OpenGL how to interpret data from VBO
-    GLuint    location_of_vertex_attribute = 0; // position
-    int       size_of_attribute            = 3; // 3 float values (x, y, z)
-    GLenum    type_of_data   = GL_FLOAT; // all values in vec{2,3,4} of float
-    GLboolean normalize_data = GL_FALSE; // OpenGL can normalize values
-    // to [0, 1] - for unsigned and to [-1, 1] for signed values
-    int stride =
-        (3 + 3 + 2) * sizeof(float); // step in bytes from one attribute to next
-    void* start_of_data_offset = nullptr; // we start from begin of buffer
-    glVertexAttribPointer(location_of_vertex_attribute, size_of_attribute,
-                          type_of_data, normalize_data, stride,
-                          start_of_data_offset);
-    gl_check();
-
-    glEnableVertexAttribArray(0);
-    gl_check();
-
-    location_of_vertex_attribute = 1; // color
-    size_of_attribute            = 3; // r + g + b
-    type_of_data                 = GL_FLOAT;
-    normalize_data               = GL_FALSE;
-    start_of_data_offset         = reinterpret_cast<void*>(3 * sizeof(float));
-    glVertexAttribPointer(location_of_vertex_attribute, size_of_attribute,
-                          type_of_data, normalize_data, stride,
-                          start_of_data_offset);
-    gl_check();
-
-    glEnableVertexAttribArray(1);
-    gl_check();
-
-    location_of_vertex_attribute = 2; // tex coord
-    size_of_attribute            = 2; // u + v (s + t)
-    type_of_data                 = GL_FLOAT;
-    normalize_data               = GL_FALSE;
-    start_of_data_offset         = reinterpret_cast<void*>(6 * sizeof(float));
-    glVertexAttribPointer(location_of_vertex_attribute, size_of_attribute,
-                          type_of_data, normalize_data, stride,
-                          start_of_data_offset);
-    gl_check();
-
-    glEnableVertexAttribArray(2);
-    gl_check();
+    update_vertex_attributes();
 
     GLenum primitive_render_mode = GL_TRIANGLES;
 
@@ -296,10 +302,73 @@ int main(int /*argc*/, char* /*argv*/[])
             }
         }
 
+        enable_depth = properties.get_bool("enable_depth");
+        use_cube     = properties.get_bool("use_cube");
+        multi_cube   = properties.get_bool("multi_cube");
+
+        if (enable_depth)
+        {
+            glEnable(GL_DEPTH_TEST);
+            gl_check();
+        }
+        else
+        {
+            glDisable(GL_DEPTH_TEST);
+            gl_check();
+        }
+
+        if (use_cube)
+        {
+            uint32_t cube_indexes[36];
+            std::iota(begin(cube_indexes), end(cube_indexes), 0);
+
+            glBufferData(GL_ARRAY_BUFFER, sizeof(cube_vertices), cube_vertices,
+                         GL_DYNAMIC_DRAW);
+            gl_check();
+
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cube_indexes),
+                         cube_indexes, GL_DYNAMIC_DRAW);
+            gl_check();
+        }
+        else
+        {
+            glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices,
+                         GL_DYNAMIC_DRAW);
+            gl_check();
+
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices,
+                         GL_DYNAMIC_DRAW);
+            gl_check();
+        }
+
+        auto current_time = high_resolution_clock::now();
+
+        milliseconds now{ duration_cast<milliseconds>(current_time -
+                                                      start_time) };
+
+        float red   = 0.f;
+        float green = 1.f;
+        float blue  = 0.f;
+        float alpha = 0.f;
+
+        glClearColor(red, green, blue, alpha);
+
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        // enable new shader program
+        shader.use();
+
         glm::mat4 model(1);
-        angle       = properties.get_float("angle");
-        rotate_axis = properties.get_vec3("rotate_axis");
-        model       = glm::rotate(model, glm::radians(angle), rotate_axis);
+        angle         = properties.get_float("angle");
+        rotate_axis   = properties.get_vec3("rotate_axis");
+        angle_per_sec = properties.get_float("angle_per_sec");
+        if (!multi_cube)
+        {
+            model = glm::rotate(
+                model,
+                glm::radians(float(now.count() * 0.001f * angle_per_sec)),
+                rotate_axis);
+        }
 
         glm::mat4 view(1.f);
         move_camera = properties.get_vec3("move_camera");
@@ -312,52 +381,56 @@ int main(int /*argc*/, char* /*argv*/[])
         glm::mat4 projection =
             glm::perspective(glm::radians(fovy), aspect, z_near, z_far);
 
-        // projection = glm::mat4(1);
-
-        auto current_time = high_resolution_clock::now();
-
-        milliseconds now{ duration_cast<milliseconds>(current_time -
-                                                      start_time) };
-        // float        sin_value = std::sin(now.count() * 0.001f);
-        /*
-                glm::mat4 transform(1.f);
-
-                transform =
-                    glm::rotate(transform, glm::radians(10 * now.count() *
-           0.001f), glm::vec3(0, 0, 1.0f));
-
-                transform = glm::scale(transform, glm::vec3(sin_value,
-           sin_value, 1.0));
-        */
-        float red   = 0.f;
-        float green = 1.f;
-        float blue  = 0.f;
-        float alpha = 0.f;
-
-        glClearColor(red, green, blue, alpha);
-
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        // enable new shader program
-        shader.use();
-
         shader.set_uniform("texture0", texture0, 0);
         shader.set_uniform("texture1", texture1, 1);
         shader.set_uniform("model", model);
         shader.set_uniform("view", view);
         shader.set_uniform("projection", projection);
 
-        // one call select VBO and all attributes like we setup before
-        glBindVertexArray(VAO);
-        gl_check();
-
         if (std::string log = shader.validate(); !log.empty())
         {
             clog << log << endl;
         }
 
-        glDrawElements(primitive_render_mode, 6, GL_UNSIGNED_INT, nullptr);
-        gl_check();
+        if (multi_cube && use_cube)
+        {
+            glm::vec3 cube_positions[] = {
+                glm::vec3(0.0f, 0.0f, 0.0f),    glm::vec3(2.0f, 5.0f, -15.0f),
+                glm::vec3(-1.5f, -2.2f, -2.5f), glm::vec3(-3.8f, -2.0f, -12.3f),
+                glm::vec3(2.4f, -0.4f, -3.5f),  glm::vec3(-1.7f, 3.0f, -7.5f),
+                glm::vec3(1.3f, -2.0f, -2.5f),  glm::vec3(1.5f, 2.0f, -2.5f),
+                glm::vec3(1.5f, 0.2f, -1.5f),   glm::vec3(-1.3f, 1.0f, -1.5f)
+            };
+
+            int i = 0;
+            for (glm::vec3 pos : cube_positions)
+            {
+                model       = glm::translate(model, pos);
+                float angle = 20.0f * i++;
+                model       = glm::rotate(model, glm::radians(angle),
+                                    glm::vec3(1.0f, 0.3f, 0.5f));
+                shader.set_uniform("model", model);
+
+                glDrawElements(primitive_render_mode, 36, GL_UNSIGNED_INT,
+                               nullptr);
+                gl_check();
+            }
+        }
+        else
+        {
+            if (use_cube)
+            {
+                glDrawElements(primitive_render_mode, 36, GL_UNSIGNED_INT,
+                               nullptr);
+                gl_check();
+            }
+            else
+            {
+                glDrawElements(primitive_render_mode, 6, GL_UNSIGNED_INT,
+                               nullptr);
+                gl_check();
+            }
+        }
 
         SDL_GL_SwapWindow(window.get());
     }
@@ -366,3 +439,50 @@ int main(int /*argc*/, char* /*argv*/[])
 
     return 0;
 }
+
+// clang-format off
+float cube_vertices[36 * 8] = {
+    // pos               // color          // tex coord
+    -0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
+    0.5f, -0.5f, -0.5f,  1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
+    0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+    0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+    -0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 1.0f,  0.0f, 1.0f,
+    -0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f,  0.0f, 0.0f,
+
+    -0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 1.0f,  0.0f, 0.0f,
+    0.5f, -0.5f,  0.5f,  1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
+    0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+    0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+    -0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f,  0.0f, 1.0f,
+    -0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 1.0f,  0.0f, 0.0f,
+
+    -0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f,  1.0f, 0.0f,
+    -0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 1.0f,  1.0f, 1.0f,
+    -0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f,  0.0f, 1.0f,
+    -0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f,  0.0f, 1.0f,
+    -0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 1.0f,  0.0f, 0.0f,
+    -0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f,  1.0f, 0.0f,
+
+    0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 1.0f,  1.0f, 0.0f,
+    0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 1.0f,  1.0f, 1.0f,
+    0.5f, -0.5f, -0.5f,  1.0f, 1.0f, 1.0f,  0.0f, 1.0f,
+    0.5f, -0.5f, -0.5f,  1.0f, 1.0f, 1.0f,  0.0f, 1.0f,
+    0.5f, -0.5f,  0.5f,  1.0f, 1.0f, 1.0f,  0.0f, 0.0f,
+    0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 1.0f,  1.0f, 0.0f,
+
+    -0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f,  0.0f, 1.0f,
+    0.5f, -0.5f, -0.5f,  1.0f, 1.0f, 1.0f,  1.0f, 1.0f,
+    0.5f, -0.5f,  0.5f,  1.0f, 1.0f, 1.0f,  1.0f, 0.0f,
+    0.5f, -0.5f,  0.5f,  1.0f, 1.0f, 1.0f,  1.0f, 0.0f,
+    -0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 1.0f,  0.0f, 0.0f,
+    -0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f,  0.0f, 1.0f,
+
+    -0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 1.0f,  0.0f, 1.0f,
+    0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 1.0f,  1.0f, 1.0f,
+    0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 1.0f,  1.0f, 0.0f,
+    0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 1.0f,  1.0f, 0.0f,
+    -0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f,  0.0f, 0.0f,
+    -0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 1.0f,  0.0f, 1.0f
+};
+// clang-format on

@@ -1,3 +1,20 @@
+// mini grammatics for parser
+//
+// float     z_near           =       3.f;
+// glm::vec3 move_camera      =       { 0.f, 0.f, -2.f };
+//
+// <type>   <identifier>  <operation> <expression>;
+// type:   <float, std::string, glm::vec3>
+// identifier: <a-zA-Z_0-9>
+// operation: <+, -, =, /, *>
+// expression: <float_literal,
+//              string_literal,
+//              bool_literal,
+//              identifier,
+//              *_literal operation expression,
+//              identifier operation expression,
+//              '{' expression ',' expression ',' expression '}'>
+
 #include "properties_reader.hxx"
 
 #include <algorithm>
@@ -26,6 +43,7 @@ struct token
         operation,
         float_literal,
         string_literal,
+        bool_literal,
         semicolon,
         open_curly_bracket,
         close_curle_bracket,
@@ -36,7 +54,7 @@ struct token
     std::string_view value;
 };
 
-using value_t = std::variant<std::string, glm::vec3, float>;
+using value_t = std::variant<std::string, glm::vec3, float, bool>;
 
 std::ostream& operator<<(std::ostream& stream, const enum token::type t);
 std::ostream& operator<<(std::ostream& stream, const value_t& t);
@@ -78,15 +96,16 @@ private:
 
         token_bind.reserve(10);
         token_bind.emplace_back(token::type::type_id,
-                                R"(float|std::string|glm::vec3)");
+                                R"(float|std::string|glm::vec3|bool)");
         token_bind.emplace_back(token::type::operation, R"(=|\+|-|\*|\/)");
-        token_bind.emplace_back(token::type::identifier,
-                                R"([a-zA-Z_][a-zA-Z0-9_]*)");
         token_bind.emplace_back(token::type::float_literal,
                                 R"([+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)f)");
         // original from internet: /"([^"\\]|\\.)*"/
         token_bind.emplace_back(token::type::string_literal,
                                 R"("([^"\\]|\\.)*")");
+        token_bind.emplace_back(token::type::bool_literal, R"(true|false)");
+        token_bind.emplace_back(token::type::identifier,
+                                R"([a-zA-Z_][a-zA-Z0-9_]*)");
         token_bind.emplace_back(token::type::semicolon, R"(;)");
         token_bind.emplace_back(token::type::open_curly_bracket, R"(\{)");
         token_bind.emplace_back(token::type::close_curle_bracket, R"(\})");
@@ -158,12 +177,10 @@ private:
                                      std::string(rest_content));
         }
 
-#ifdef _DEBUG
         for (auto tok : tokens)
         {
             std::clog << tok.type << " = [" << tok.value << "]\n";
         }
-#endif
     }
 };
 
@@ -200,6 +217,10 @@ struct parser_t
             {
                 const std::string value{ literal->value };
                 return std::stof(value);
+            }
+            else if (literal->type == token::type::bool_literal)
+            {
+                return literal->value == "true";
             }
             else
             {
@@ -383,7 +404,8 @@ struct parser_t
             return expr;
         }
         else if (token_it->type == token::type::float_literal ||
-                 token_it->type == token::type::string_literal)
+                 token_it->type == token::type::string_literal ||
+                 token_it->type == token::type::bool_literal)
         {
             token* literal = &*token_it;
             ++token_it;
@@ -520,10 +542,8 @@ private:
     void execute(const parser_t::definition_ast&           command,
                  std::unordered_map<std::string, value_t>& key_values)
     {
-        value_t     value    = command.expression->evaluate(key_values);
-        const char* start    = command.identifier->value.data();
-        const char* past_end = start + command.identifier->value.size();
-        std::string identifier{ start, past_end };
+        value_t     value = command.expression->evaluate(key_values);
+        std::string identifier{ command.identifier->value };
         key_values[identifier] = value;
     }
 };
@@ -607,6 +627,11 @@ const glm::vec3& properties_reader::get_vec3(std::string_view name) const
     return std::get<glm::vec3>(ptr->get_map()[std::string(name)]);
 }
 
+bool properties_reader::get_bool(std::string_view name) const
+{
+    return std::get<bool>(ptr->get_map()[std::string{ name }]);
+}
+
 properties_reader::~properties_reader() {}
 
 std::ostream& operator<<(std::ostream& stream, const enum token::type t)
@@ -625,6 +650,7 @@ std::ostream& operator<<(std::ostream& stream, const enum token::type t)
                          "operation",
                          "float_literal",
                          "string_literal",
+                         "bool_literal",
                          "semicolon",
                          "open_braket",
                          "close_braket",
@@ -652,9 +678,14 @@ std::ostream& operator<<(std::ostream& stream, const value_t& t)
         glm::vec3 v = std::get<glm::vec3>(t);
         stream << v.x << ',' << v.y << ',' << v.z;
     }
+    else if (std::holds_alternative<bool>(t))
+    {
+        stream << std::get<bool>(t);
+    }
     else
     {
         throw std::runtime_error("unknown type");
     }
     return stream;
 }
+#pragma clang diagnostic pop
