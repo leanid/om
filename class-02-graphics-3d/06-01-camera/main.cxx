@@ -245,9 +245,16 @@ int main(int /*argc*/, char* /*argv*/[])
 
     GLenum primitive_render_mode = GL_TRIANGLES;
 
+    float deltaTime = 0.0f; // Time between current frame and last frame
+    float lastFrame = 0.0f; // Time of last frame
+
     bool continue_loop = true;
     while (continue_loop)
     {
+        float currentFrame = SDL_GetTicks() * 0.001f; // seconds
+        deltaTime          = currentFrame - lastFrame;
+        lastFrame          = currentFrame;
+
         properties.update_changes();
 
         SDL_Event event;
@@ -372,7 +379,36 @@ int main(int /*argc*/, char* /*argv*/[])
 
         glm::mat4 view(1.f);
         move_camera = properties.get_vec3("move_camera");
-        view        = glm::translate(view, move_camera);
+        radius      = properties.get_float("radius");
+        use_wasd    = properties.get_bool("use_wasd");
+
+        if (!use_wasd)
+        {
+            uint32_t time_from_init_ms = SDL_GetTicks();
+            float    seconds           = time_from_init_ms * 0.001f;
+
+            glm::vec3 camera_position{ radius * std::sin(seconds), 0.f,
+                                       radius * std::cos(seconds) };
+            view = glm::lookAt(camera_position, glm::vec3(0, 0, 0),
+                               glm::vec3(0, 1, 0));
+        }
+        else
+        {
+            cameraSpeed               = properties.get_float("cameraSpeed");
+            const uint8_t* keys_state = SDL_GetKeyboardState(nullptr);
+            if (keys_state[SDL_SCANCODE_W])
+                cameraPos += cameraSpeed * deltaTime * cameraFront;
+            if (keys_state[SDL_SCANCODE_S])
+                cameraPos -= cameraSpeed * deltaTime * cameraFront;
+            if (keys_state[SDL_SCANCODE_A])
+                cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) *
+                             cameraSpeed * deltaTime;
+            if (keys_state[SDL_SCANCODE_D])
+                cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) *
+                             cameraSpeed * deltaTime;
+
+            view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+        }
 
         fovy   = properties.get_float("fovy");
         aspect = properties.get_float("aspect");
