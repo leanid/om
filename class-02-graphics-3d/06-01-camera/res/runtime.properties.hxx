@@ -25,3 +25,5 @@ glm::vec3   cameraFront   = { 0.0f, 0.0f, -1.0f };
 glm::vec3   cameraUp      = { 0.0f, 1.0f, 0.0f };
 float       cameraSpeed   = 5.f;
 bool        use_wasd      = true;
+float       yaw           = 0.f;
+float       pitch         = 0.f;
