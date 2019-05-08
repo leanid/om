@@ -267,6 +267,8 @@ int main(int /*argc*/, char* /*argv*/[])
     float deltaTime = 0.0f; // Time between current frame and last frame
     float lastFrame = 0.0f; // Time of last frame
 
+    fovy = properties.get_float("fovy");
+
     bool continue_loop = true;
     while (continue_loop)
     {
@@ -294,6 +296,15 @@ int main(int /*argc*/, char* /*argv*/[])
                 float xpos = event.motion.xrel;
                 float ypos = event.motion.yrel;
                 mouse_callback(xpos, ypos);
+            }
+            else if (SDL_MOUSEWHEEL == event.type)
+            {
+                if (fovy >= 1.0f && fovy <= 45.0f)
+                    fovy -= event.wheel.y;
+                if (fovy <= 1.0f)
+                    fovy = 1.0f;
+                if (fovy >= 45.0f)
+                    fovy = 45.0f;
             }
             else if (SDL_KEYUP == event.type)
             {
@@ -449,7 +460,6 @@ int main(int /*argc*/, char* /*argv*/[])
             view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
         }
 
-        fovy   = properties.get_float("fovy");
         aspect = properties.get_float("aspect");
         z_near = properties.get_float("z_near"); // 3.f;
         z_far  = properties.get_float("z_far");  // 100.f;
