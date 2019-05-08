@@ -89,29 +89,10 @@ void update_vertex_attributes()
     gl_check();
 }
 
-static bool  firstMouse = true;
-static float lastX      = 0;
-static float lastY      = 0;
-
 void mouse_callback(float xpos, float ypos)
 {
-    if (firstMouse)
-    {
-        lastX      = xpos;
-        lastY      = ypos;
-        firstMouse = false;
-    }
-
-    float xoffset = xpos - lastX;
-    float yoffset = lastY - ypos;
-    lastX         = xpos;
-    lastY         = ypos;
-
     float sensitivity = 0.05f;
-    xoffset *= sensitivity;
-    yoffset *= sensitivity;
-
-    // yaw += xoffset;
+    yaw += xpos * sensitivity;   // xoffset;
     pitch += ypos * sensitivity; // yoffset;
 
     if (pitch > 89.0f)
@@ -120,9 +101,10 @@ void mouse_callback(float xpos, float ypos)
         pitch = -89.0f;
 
     glm::vec3 front;
-    front.x     = 0; // cos(glm::radians(yaw));
-    front.y     = std::sin(glm::radians(pitch));
-    front.z     = -1.f * std::cos(glm::radians(pitch));
+    front.x = std::sin(glm::radians(yaw));
+    front.y = std::sin(glm::radians(pitch));
+    front.z =
+        -1.f * std::cos(glm::radians(pitch)) * std::cos(glm::radians(yaw));
     cameraFront = glm::normalize(front);
 }
 
@@ -366,10 +348,6 @@ int main(int /*argc*/, char* /*argv*/[])
             }
         }
 
-        // mouse_callback(0, 0);
-
-        yaw = properties.get_float("yaw");
-        // pitch        = properties.get_float("pitch");
         enable_depth = properties.get_bool("enable_depth");
         use_cube     = properties.get_bool("use_cube");
         multi_cube   = properties.get_bool("multi_cube");
