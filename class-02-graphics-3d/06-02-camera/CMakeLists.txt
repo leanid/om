@@ -51,10 +51,12 @@ target_sources(${PROJECT_NAME} PRIVATE main.cxx
                                        opengles30.cxx
                                        gles30_texture.cxx
                                        properties_reader.cxx
+                                       fps_camera.cxx
                                        opengles30.hxx
                                        gles30_shader.hxx
                                        gles30_texture.hxx
                                        properties_reader.hxx
+                                       fps_camera.hxx
                                        stb_image.h)
 
 
