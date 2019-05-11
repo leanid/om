@@ -4,8 +4,11 @@ project(02-sdl-static)
 add_executable(${PROJECT_NAME} main.cxx)
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 
-#find_package(sdl2 REQUIRED)
-find_library(SDL2_LIB libSDL2.a)
+find_library(SDL2_LIB NAMES libSDL2.a)
+
+if(NOT SDL2_LIB)
+    message("Error: find_library(...) did not find libSDL2.a")
+endif()
 
 if (MINGW)
     # find out what libraries are needed for staticaly linking with libSDL.a
@@ -68,7 +71,7 @@ elseif(UNIX)
       # -lSDL2 -Wl,--no-undefined -lm -ldl -lpthread -lrt
     
       target_link_libraries(${PROJECT_NAME} 
-               "${SDL2_LIB}" # full path to libSDL2.a force to staticaly link with it
+               ${SDL2_LIB} # full path to libSDL2.a force to staticaly link with it
                # -Wl,--no-undefined # not compiled on MacOS
                -lm
                -ldl
