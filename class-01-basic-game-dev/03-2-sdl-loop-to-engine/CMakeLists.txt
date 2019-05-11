@@ -6,6 +6,10 @@ target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 
 find_library(SDL2_LIB NAMES libSDL2.a)
 
+if(NOT SDL2_LIB)
+    message(FATAL_ERROR "Error: find_library(...) did not find libSDL2.a")
+endif()
+
 if (MINGW)
     # find out what libraries are needed for staticaly linking with libSDL.a
     # using mingw64 cross-compiler
