@@ -7,12 +7,33 @@
 class fps_camera
 {
 public:
+    enum class step
+    {
+        forward,
+        backward,
+        left,
+        right
+    };
+    ///
+    /// \brief fps_camera
+    /// \param a_position coordinate in world space
+    /// \param a_direction vector from camera position to object
+    /// \param a_up vector in world space
+    ///
     fps_camera(glm::vec3 a_position, glm::vec3 a_direction, glm::vec3 a_up);
     fps_camera()                  = default;
     fps_camera(const fps_camera&) = default;
     fps_camera& operator=(const fps_camera&) = default;
 
     glm::mat4 view_matrix() const;
+
+    void move(const step direction, const float delta_time);
+    ///
+    /// \brief rotate
+    /// \param delta_yaw in degrees
+    /// \param delta_pitch in degrees
+    ///
+    void rotate(const float delta_yaw, const float delta_pitch);
 
 private:
     // Calculates the front vector from the Camera's (updated) Euler Angles
@@ -61,15 +82,47 @@ inline fps_camera::fps_camera(glm::vec3 a_position, glm::vec3 a_direction,
                               glm::vec3 a_up)
 {
     a_direction = glm::normalize(a_direction);
-    // if direction {0, 0, -1} expect yaw == 90
+    // In OpenGL camera
+    // direction vector pointing from camera position
+    // to oposite side from object.
+    a_direction *= -1.f;
+    // if direction {0, 0, -1} expect yaw == 0 degrees
     float yaw_rad = std::asin(a_direction.x);
     yaw           = glm::degrees(yaw_rad);
-    // if direction {0, 0, -1} expect pitch == 0
+    // if direction {0, 0, -1} expect pitch == 0 degrees
     float pitch_rad = std::asin(a_direction.y);
     pitch           = glm::degrees(pitch_rad);
 
     position = a_position;
     world_up = glm::normalize(a_up);
+
+    update_camera_vectors();
+}
+
+inline void fps_camera::move(const step direction, const float delta_time)
+{
+    const float velocity = movement_speed * delta_time;
+
+    switch (direction)
+    {
+        case step::forward:
+            position += front * velocity;
+            break;
+        case step::backward:
+            position -= front * velocity;
+            break;
+        case step::left:
+            position -= right * velocity;
+            break;
+        case step::right:
+            position += right * velocity;
+            break;
+    }
+}
+inline void fps_camera::rotate(const float delta_yaw, const float delta_pitch)
+{
+    yaw += delta_yaw;
+    pitch += delta_pitch;
 
     update_camera_vectors();
 }
