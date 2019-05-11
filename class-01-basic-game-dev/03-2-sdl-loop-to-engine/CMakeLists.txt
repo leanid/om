@@ -7,7 +7,7 @@ target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 find_library(SDL2_LIB NAMES libSDL2.a)
 
 if(NOT SDL2_LIB)
-    message("Error: find_library(...) did not find libSDL2.a")
+    message(FATAL_ERROR "Error: find_library(...) did not find libSDL2.a")
 endif()
 
 if (MINGW)
