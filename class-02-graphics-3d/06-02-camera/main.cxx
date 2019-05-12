@@ -6,12 +6,15 @@
 #include <string>
 #include <vector>
 
+#include "fps_camera.hxx"
 #include "gles30_shader.hxx"
 #include "gles30_texture.hxx"
 #include "opengles30.hxx"
 #include "properties_reader.hxx"
 
 #include "res/runtime.properties.hxx"
+
+static fps_camera camera;
 
 #pragma pack(push, 4)
 struct context_parameters
@@ -21,7 +24,7 @@ struct context_parameters
     int32_t     minor_version = 0;
     int32_t     profile_type  = 0;
 };
-#pragma pack(pop)
+#pragma pop
 
 std::ostream& operator<<(std::ostream& out, const context_parameters& params)
 {
@@ -89,33 +92,12 @@ void update_vertex_attributes()
     gl_check();
 }
 
-void mouse_callback(float xpos, float ypos)
-{
-    float sensitivity = 0.05f;
-    yaw += xpos * sensitivity;   // xoffset;
-    pitch += ypos * sensitivity; // yoffset;
-
-    if (pitch > 89.0f)
-        pitch = 89.0f;
-    if (pitch < -89.0f)
-        pitch = -89.0f;
-
-    glm::vec3 front;
-    front.x = std::sin(glm::radians(yaw));
-    front.y = std::sin(glm::radians(pitch));
-    front.z =
-        -1.f * std::cos(glm::radians(pitch)) * std::cos(glm::radians(yaw));
-    cameraFront = glm::normalize(front);
-}
-
 int main(int /*argc*/, char* /*argv*/[])
 {
     using namespace std;
     using namespace std::chrono;
 
     properties_reader properties("./res/runtime.properties.hxx");
-
-    auto start_time = high_resolution_clock::now();
 
     const int init_result = SDL_Init(SDL_INIT_EVERYTHING);
     if (init_result != 0)
@@ -207,19 +189,6 @@ int main(int /*argc*/, char* /*argv*/[])
     gles30::texture texture0(fs::path("./res/1.jpg"));
     gles30::texture texture1(fs::path("./res/2.jpg"));
 
-    float vertices[] = {
-        // pos              // color       // tex coord
-        0.5f,  0.5f,  0.0f, 1.f, 1.f, 1.f, 1.f, 1.f, // top right
-        0.5f,  -0.5f, 0.0f, 1.f, 1.f, 1.f, 1.f, 0.f, // bottom right
-        -0.5f, -0.5f, 0.0f, 1.f, 1.f, 1.f, 0.f, 0.f, // bottom left
-        -0.5f, 0.5f,  0.0f, 1.f, 1.f, 1.f, 0.f, 1.f  // top left
-    };
-
-    uint32_t indices[] = {
-        0, 1, 3, // first triangle
-        1, 2, 3  // second triangle
-    };
-
     // Generate VAO VertexArrayState object to remember current VBO and EBO(if
     // any) with all attributes parameters stored in one object called VAO think
     // it is current VBO + EBO + attributes state in one object
@@ -246,7 +215,11 @@ int main(int /*argc*/, char* /*argv*/[])
     //    very rarely.
     // GL_DYNAMIC_DRAW: the data is likely to change a lot.
     // GL_STREAM_DRAW: the data will change every time it is drawn.
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
+    uint32_t cube_indexes[36];
+    std::iota(begin(cube_indexes), end(cube_indexes), 0);
+
+    glBufferData(GL_ARRAY_BUFFER, sizeof(cube_vertices), cube_vertices,
+                 GL_STATIC_DRAW);
     gl_check();
 
     uint32_t EBO; // ElementBufferObject - indices buffer
@@ -256,8 +229,8 @@ int main(int /*argc*/, char* /*argv*/[])
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     gl_check();
 
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices,
-                 GL_DYNAMIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cube_indexes), cube_indexes,
+                 GL_STATIC_DRAW);
     gl_check();
 
     update_vertex_attributes();
@@ -267,7 +240,13 @@ int main(int /*argc*/, char* /*argv*/[])
     float deltaTime = 0.0f; // Time between current frame and last frame
     float lastFrame = 0.0f; // Time of last frame
 
+    camera = fps_camera(/*pos*/ { 0, 0, 1 }, /*dir*/ { 0, 0, -1 },
+                        /*up*/ { 0, 1, 0 });
+
     fovy = properties.get_float("fovy");
+    camera.fovy(fovy);
+    aspect = properties.get_float("aspect");
+    camera.aspect(aspect);
 
     bool continue_loop = true;
     while (continue_loop)
@@ -293,18 +272,14 @@ int main(int /*argc*/, char* /*argv*/[])
             }
             else if (SDL_MOUSEMOTION == event.type)
             {
-                float xpos = event.motion.xrel;
-                float ypos = event.motion.yrel;
-                mouse_callback(xpos, ypos);
+                const float sensivity   = 0.05f;
+                const float delta_yaw   = event.motion.xrel * sensivity;
+                const float delta_pitch = -1 * event.motion.yrel * sensivity;
+                camera.rotate(delta_yaw, delta_pitch);
             }
             else if (SDL_MOUSEWHEEL == event.type)
             {
-                if (fovy >= 1.0f && fovy <= 45.0f)
-                    fovy -= event.wheel.y;
-                if (fovy <= 1.0f)
-                    fovy = 1.0f;
-                if (fovy >= 45.0f)
-                    fovy = 45.0f;
+                camera.zoom(-event.wheel.y);
             }
             else if (SDL_KEYUP == event.type)
             {
@@ -360,8 +335,6 @@ int main(int /*argc*/, char* /*argv*/[])
         }
 
         enable_depth = properties.get_bool("enable_depth");
-        use_cube     = properties.get_bool("use_cube");
-        multi_cube   = properties.get_bool("multi_cube");
 
         if (enable_depth)
         {
@@ -373,35 +346,6 @@ int main(int /*argc*/, char* /*argv*/[])
             glDisable(GL_DEPTH_TEST);
             gl_check();
         }
-
-        if (use_cube)
-        {
-            uint32_t cube_indexes[36];
-            std::iota(begin(cube_indexes), end(cube_indexes), 0);
-
-            glBufferData(GL_ARRAY_BUFFER, sizeof(cube_vertices), cube_vertices,
-                         GL_DYNAMIC_DRAW);
-            gl_check();
-
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cube_indexes),
-                         cube_indexes, GL_DYNAMIC_DRAW);
-            gl_check();
-        }
-        else
-        {
-            glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices,
-                         GL_DYNAMIC_DRAW);
-            gl_check();
-
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices,
-                         GL_DYNAMIC_DRAW);
-            gl_check();
-        }
-
-        auto current_time = high_resolution_clock::now();
-
-        milliseconds now{ duration_cast<milliseconds>(current_time -
-                                                      start_time) };
 
         float red   = 0.f;
         float green = 1.f;
@@ -415,56 +359,11 @@ int main(int /*argc*/, char* /*argv*/[])
         // enable new shader program
         shader.use();
 
-        glm::mat4 model(1);
-        angle         = properties.get_float("angle");
-        rotate_axis   = properties.get_vec3("rotate_axis");
-        angle_per_sec = properties.get_float("angle_per_sec");
-        if (!multi_cube)
-        {
-            model = glm::rotate(
-                model,
-                glm::radians(float(now.count() * 0.001f * angle_per_sec)),
-                rotate_axis);
-        }
+        camera.move_using_keyboard_wasd(deltaTime);
 
-        glm::mat4 view(1.f);
-        move_camera = properties.get_vec3("move_camera");
-        radius      = properties.get_float("radius");
-        use_wasd    = properties.get_bool("use_wasd");
-
-        if (!use_wasd)
-        {
-            uint32_t time_from_init_ms = SDL_GetTicks();
-            float    seconds           = time_from_init_ms * 0.001f;
-
-            glm::vec3 camera_position{ radius * std::sin(seconds), 0.f,
-                                       radius * std::cos(seconds) };
-            view = glm::lookAt(camera_position, glm::vec3(0, 0, 0),
-                               glm::vec3(0, 1, 0));
-        }
-        else
-        {
-            cameraSpeed               = properties.get_float("cameraSpeed");
-            const uint8_t* keys_state = SDL_GetKeyboardState(nullptr);
-            if (keys_state[SDL_SCANCODE_W])
-                cameraPos += cameraSpeed * deltaTime * cameraFront;
-            if (keys_state[SDL_SCANCODE_S])
-                cameraPos -= cameraSpeed * deltaTime * cameraFront;
-            if (keys_state[SDL_SCANCODE_A])
-                cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) *
-                             cameraSpeed * deltaTime;
-            if (keys_state[SDL_SCANCODE_D])
-                cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) *
-                             cameraSpeed * deltaTime;
-
-            view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-        }
-
-        aspect = properties.get_float("aspect");
-        z_near = properties.get_float("z_near"); // 3.f;
-        z_far  = properties.get_float("z_far");  // 100.f;
-        glm::mat4 projection =
-            glm::perspective(glm::radians(fovy), aspect, z_near, z_far);
+        glm::mat4 model{ 1 };
+        glm::mat4 view       = camera.view_matrix();
+        glm::mat4 projection = camera.projection_matrix();
 
         shader.set_uniform("texture0", texture0, 0);
         shader.set_uniform("texture1", texture1, 1);
@@ -477,44 +376,25 @@ int main(int /*argc*/, char* /*argv*/[])
             clog << log << endl;
         }
 
-        if (multi_cube && use_cube)
-        {
-            glm::vec3 cube_positions[] = {
-                glm::vec3(0.0f, 0.0f, 0.0f),    glm::vec3(2.0f, 5.0f, -15.0f),
-                glm::vec3(-1.5f, -2.2f, -2.5f), glm::vec3(-3.8f, -2.0f, -12.3f),
-                glm::vec3(2.4f, -0.4f, -3.5f),  glm::vec3(-1.7f, 3.0f, -7.5f),
-                glm::vec3(1.3f, -2.0f, -2.5f),  glm::vec3(1.5f, 2.0f, -2.5f),
-                glm::vec3(1.5f, 0.2f, -1.5f),   glm::vec3(-1.3f, 1.0f, -1.5f)
-            };
+        glm::vec3 cube_positions[] = {
+            glm::vec3(0.0f, 0.0f, 0.0f),    glm::vec3(2.0f, 5.0f, -15.0f),
+            glm::vec3(-1.5f, -2.2f, -2.5f), glm::vec3(-3.8f, -2.0f, -12.3f),
+            glm::vec3(2.4f, -0.4f, -3.5f),  glm::vec3(-1.7f, 3.0f, -7.5f),
+            glm::vec3(1.3f, -2.0f, -2.5f),  glm::vec3(1.5f, 2.0f, -2.5f),
+            glm::vec3(1.5f, 0.2f, -1.5f),   glm::vec3(-1.3f, 1.0f, -1.5f)
+        };
 
-            int i = 0;
-            for (glm::vec3 pos : cube_positions)
-            {
-                model       = glm::translate(model, pos);
-                float angle = 20.0f * i++;
-                model       = glm::rotate(model, glm::radians(angle),
-                                    glm::vec3(1.0f, 0.3f, 0.5f));
-                shader.set_uniform("model", model);
-
-                glDrawElements(primitive_render_mode, 36, GL_UNSIGNED_INT,
-                               nullptr);
-                gl_check();
-            }
-        }
-        else
+        int i = 0;
+        for (glm::vec3 pos : cube_positions)
         {
-            if (use_cube)
-            {
-                glDrawElements(primitive_render_mode, 36, GL_UNSIGNED_INT,
-                               nullptr);
-                gl_check();
-            }
-            else
-            {
-                glDrawElements(primitive_render_mode, 6, GL_UNSIGNED_INT,
-                               nullptr);
-                gl_check();
-            }
+            model       = glm::translate(model, pos);
+            float angle = 20.0f * i++;
+            model       = glm::rotate(model, glm::radians(angle),
+                                glm::vec3(1.0f, 0.3f, 0.5f));
+            shader.set_uniform("model", model);
+
+            glDrawElements(primitive_render_mode, 36, GL_UNSIGNED_INT, nullptr);
+            gl_check();
         }
 
         SDL_GL_SwapWindow(window.get());

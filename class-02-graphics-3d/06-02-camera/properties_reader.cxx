@@ -33,6 +33,8 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wpadded"
 
+constexpr bool print_debug_info{ false };
+
 struct token
 {
     enum class type : uint8_t
@@ -177,9 +179,12 @@ private:
                                      std::string(rest_content));
         }
 
-        for (auto tok : tokens)
+        if constexpr (print_debug_info)
         {
-            std::clog << tok.type << " = [" << tok.value << "]\n";
+            for (auto tok : tokens)
+            {
+                std::clog << tok.type << " = [" << tok.value << "]\n";
+            }
         }
     }
 };
@@ -531,10 +536,13 @@ struct interpretator_t
             execute(command, key_values);
         }
 
-        // dump values
-        for (auto [key, value] : key_values)
+        if constexpr (print_debug_info)
         {
-            std::cout << key << "=[" << value << "]" << std::endl;
+            // dump values
+            for (auto [key, value] : key_values)
+            {
+                std::cout << key << "=[" << value << "]" << std::endl;
+            }
         }
     }
 
