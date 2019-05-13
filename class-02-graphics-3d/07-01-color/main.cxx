@@ -182,16 +182,18 @@ int main(int /*argc*/, char* /*argv*/[])
     clog << "default ";
     print_view_port();
 
-    fs::path vertex_path{ "./res/basic.vsh" };
-    fs::path fragment_path{ "./res/basic.fsh" };
+    gles30::shader object_shader(fs::path{ "./res/vertex_pos.vsh" },
+                                 "./res/object_color.fsh");
+    gles30::shader light_shader(fs::path{ "./res/vertex_pos.vsh" },
+                                "./res/lamp_color.fsh");
 
-    gles30::shader  shader(vertex_path, fragment_path);
-    gles30::texture texture0(fs::path("./res/1.jpg"));
-    gles30::texture texture1(fs::path("./res/2.jpg"));
+    //    gles30::texture texture0(fs::path("./res/1.jpg"));
+    //    gles30::texture texture1(fs::path("./res/2.jpg"));
 
-    // Generate VAO VertexArrayState object to remember current VBO and EBO(if
-    // any) with all attributes parameters stored in one object called VAO think
-    // it is current VBO + EBO + attributes state in one object
+    // Generate VAO VertexArrayState object to remember current VBO and
+    // EBO(if any) with all attributes parameters stored in one object
+    // called VAO think it is current VBO + EBO + attributes state in one
+    // object
     uint32_t VAO;
     glGenVertexArrays(1, &VAO);
     gl_check();
@@ -368,7 +370,7 @@ int main(int /*argc*/, char* /*argv*/[])
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // enable new shader program
-        shader.use();
+        object_shader.use();
 
         camera.move_using_keyboard_wasd(deltaTime);
 
@@ -376,38 +378,17 @@ int main(int /*argc*/, char* /*argv*/[])
         glm::mat4 view       = camera.view_matrix();
         glm::mat4 projection = camera.projection_matrix();
 
-        shader.set_uniform("texture0", texture0, 0);
-        shader.set_uniform("texture1", texture1, 1);
-        shader.set_uniform("model", model);
-        shader.set_uniform("view", view);
-        shader.set_uniform("projection", projection);
+        object_shader.set_uniform("objectColor", { 1.0f, 0.5f, 0.31f });
+        object_shader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
 
-        if (std::string log = shader.validate(); !log.empty())
-        {
-            clog << log << endl;
-        }
+        object_shader.set_uniform("texture0", texture0, 0);
+        object_shader.set_uniform("texture1", texture1, 1);
+        object_shader.set_uniform("model", model);
+        object_shader.set_uniform("view", view);
+        object_shader.set_uniform("projection", projection);
 
-        glm::vec3 cube_positions[] = {
-            glm::vec3(0.0f, 0.0f, 0.0f),    glm::vec3(2.0f, 5.0f, -15.0f),
-            glm::vec3(-1.5f, -2.2f, -2.5f), glm::vec3(-3.8f, -2.0f, -12.3f),
-            glm::vec3(2.4f, -0.4f, -3.5f),  glm::vec3(-1.7f, 3.0f, -7.5f),
-            glm::vec3(1.3f, -2.0f, -2.5f),  glm::vec3(1.5f, 2.0f, -2.5f),
-            glm::vec3(1.5f, 0.2f, -1.5f),   glm::vec3(-1.3f, 1.0f, -1.5f)
-        };
-
-        int i = 0;
-        for (glm::vec3 pos : cube_positions)
-        {
-            model       = glm::translate(model, pos);
-            float angle = 20.0f * i++;
-            model       = glm::rotate(model, glm::radians(angle),
-                                glm::vec3(1.0f, 0.3f, 0.5f));
-            shader.set_uniform("model", model);
-
-            glDrawElements(primitive_render_mode, 36, GL_UNSIGNED_INT, nullptr);
-            gl_check();
-        }
-
+        glDrawElements(primitive_render_mode, 36, GL_UNSIGNED_INT, nullptr);
+        gl_check();
         SDL_GL_SwapWindow(window.get());
     }
 

@@ -35,6 +35,7 @@ public:
     void set_uniform(std::string_view name, texture& tex, std::uint32_t index);
     void set_uniform(std::string_view name, const glm::mat4&);
     void set_uniform(std::string_view name, const glm::mat3&);
+    void set_uniform(std::string_view name, const glm::vec3&);
 
     /// just for debug purposes you can validate current state before
     /// render geometry

@@ -231,6 +231,13 @@ void shader::set_uniform(std::string_view name, const glm::mat3& m)
     gl_check();
 }
 
+void shader::set_uniform(std::string_view name, const glm::vec3& v)
+{
+    GLint uniform_index = get_uniform_index(name, program_id);
+    glUniform3fv(uniform_index, glm::value_ptr(v));
+    gl_check();
+}
+
 std::string shader::validate() noexcept(false)
 {
     // validate current OpenGL state
