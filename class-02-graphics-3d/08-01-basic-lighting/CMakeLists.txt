@@ -57,7 +57,16 @@ target_sources(${PROJECT_NAME} PRIVATE main.cxx
                                        gles30_texture.hxx
                                        properties_reader.hxx
                                        fps_camera.hxx
-                                       stb_image.h)
+                                       stb_image.h
+
+                                       res/basic.fsh
+                                       res/basic.vsh
+                                       res/lamp_color.fsh
+                                       res/object_color.fsh
+                                       res/vertex_pos.vsh
+
+                                       res/runtime.properties.hxx
+                                       )
 
 
 if(MSVC)
