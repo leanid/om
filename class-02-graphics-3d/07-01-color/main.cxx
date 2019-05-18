@@ -194,11 +194,11 @@ int main(int /*argc*/, char* /*argv*/[])
     // EBO(if any) with all attributes parameters stored in one object
     // called VAO think it is current VBO + EBO + attributes state in one
     // object
-    uint32_t VAO;
-    glGenVertexArrays(1, &VAO);
+    uint32_t object_VAO;
+    glGenVertexArrays(1, &object_VAO);
     gl_check();
 
-    glBindVertexArray(VAO);
+    glBindVertexArray(object_VAO);
     gl_check();
 
     // generate OpenGL object id for future VertexBufferObject
@@ -237,16 +237,25 @@ int main(int /*argc*/, char* /*argv*/[])
 
     update_vertex_attributes();
 
-    uint32_t lightVAO;
-    glGenVertexArrays(1, &lightVAO);
-    glBindVertexArray(lightVAO);
+    uint32_t light_VAO;
+    glGenVertexArrays(1, &light_VAO);
+    gl_check();
+    glBindVertexArray(light_VAO);
+    gl_check();
     // we only need to bind to the VBO, the container's VBO's data already
     // contains the correct data.
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    gl_check();
     // set the vertex attributes (only position data for our lamp)
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, (3 + 3 + 2) * sizeof(float),
                           nullptr);
+    gl_check();
     glEnableVertexAttribArray(0);
+    gl_check();
+
+    // indexes should be same for light box too just bind it
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    gl_check();
 
     GLenum primitive_render_mode = GL_TRIANGLES;
 
@@ -260,6 +269,9 @@ int main(int /*argc*/, char* /*argv*/[])
     camera.fovy(fovy);
     aspect = properties.get_float("aspect");
     camera.aspect(aspect);
+
+    glEnable(GL_DEPTH_TEST);
+    gl_check();
 
     bool continue_loop = true;
     while (continue_loop)
@@ -347,21 +359,14 @@ int main(int /*argc*/, char* /*argv*/[])
             }
         }
 
-        enable_depth = properties.get_bool("enable_depth");
+        camera.move_using_keyboard_wasd(deltaTime);
 
-        if (enable_depth)
-        {
-            glEnable(GL_DEPTH_TEST);
-            gl_check();
-        }
-        else
-        {
-            glDisable(GL_DEPTH_TEST);
-            gl_check();
-        }
+        glm::mat4 model{ 1 };
+        glm::mat4 view       = camera.view_matrix();
+        glm::mat4 projection = camera.projection_matrix();
 
         float red   = 0.f;
-        float green = 1.f;
+        float green = 0.f;
         float blue  = 0.f;
         float alpha = 0.f;
 
@@ -369,26 +374,40 @@ int main(int /*argc*/, char* /*argv*/[])
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // enable new shader program
-        object_shader.use();
+        // render object
+        {
+            glBindVertexArray(object_VAO);
+            gl_check();
 
-        camera.move_using_keyboard_wasd(deltaTime);
+            // enable new shader program
+            object_shader.use();
 
-        glm::mat4 model{ 1 };
-        glm::mat4 view       = camera.view_matrix();
-        glm::mat4 projection = camera.projection_matrix();
+            object_shader.set_uniform("objectColor", { 1.0f, 0.5f, 0.31f });
+            object_shader.set_uniform("lightColor", { 1.0f, 1.0f, 1.0f });
 
-        object_shader.set_uniform("objectColor", { 1.0f, 0.5f, 0.31f });
-        object_shader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
+            object_shader.set_uniform("model", model);
+            object_shader.set_uniform("view", view);
+            object_shader.set_uniform("projection", projection);
 
-        object_shader.set_uniform("texture0", texture0, 0);
-        object_shader.set_uniform("texture1", texture1, 1);
-        object_shader.set_uniform("model", model);
-        object_shader.set_uniform("view", view);
-        object_shader.set_uniform("projection", projection);
+            glDrawElements(primitive_render_mode, 36, GL_UNSIGNED_INT, nullptr);
+            gl_check();
+        }
 
-        glDrawElements(primitive_render_mode, 36, GL_UNSIGNED_INT, nullptr);
-        gl_check();
+        // render light
+        {
+            glBindVertexArray(light_VAO);
+            gl_check();
+
+            model = glm::translate(model, { 0.f, 0.f, -5.f });
+
+            light_shader.use();
+            object_shader.set_uniform("model", model);
+            object_shader.set_uniform("view", view);
+            object_shader.set_uniform("projection", projection);
+
+            glDrawElements(primitive_render_mode, 36, GL_UNSIGNED_INT, nullptr);
+            gl_check();
+        }
         SDL_GL_SwapWindow(window.get());
     }
 
