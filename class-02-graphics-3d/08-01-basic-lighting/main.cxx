@@ -371,7 +371,13 @@ int main(int /*argc*/, char* /*argv*/[])
             object_shader.set_uniform("lightColor", { 1.0f, 1.0f, 1.0f });
             object_shader.set_uniform("lightPos", light_pos);
 
-            object_shader.set_uniform("model", model);
+            glm::mat4 rotated_model{ model };
+            angle += properties.get_float("angle");
+            rotate_axis = properties.get_vec3("rotate_axis");
+
+            rotated_model = glm::rotate(rotated_model, angle, rotate_axis);
+
+            object_shader.set_uniform("model", rotated_model);
             object_shader.set_uniform("view", view);
             object_shader.set_uniform("projection", projection);
 

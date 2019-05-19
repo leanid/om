@@ -13,3 +13,6 @@ float       screen_width  = 640.f;
 float       screen_height = 480.f;
 float       aspect        = screen_width / screen_height;
 glm::vec3   light_pos     = { -2.f, 1.f, -3.f };
+// to understand normal transform - try rotate cube
+float     angle       = 0.001f;
+glm::vec3 rotate_axis = { 0.f, 1.f, 0.f };
