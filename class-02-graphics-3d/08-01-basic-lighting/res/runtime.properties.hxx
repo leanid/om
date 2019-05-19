@@ -12,3 +12,4 @@ float       fovy          = 45.f;
 float       screen_width  = 640.f;
 float       screen_height = 480.f;
 float       aspect        = screen_width / screen_height;
+glm::vec3   light_pos     = { -2.f, 1.f, -3.f };

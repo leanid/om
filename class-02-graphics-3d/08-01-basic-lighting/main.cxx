@@ -44,7 +44,7 @@ void print_view_port()
          << " w=" << view_port[2] << " h=" << view_port[3] << endl;
 }
 
-extern float cube_vertices[36 * 8];
+extern float vertices[36 * 6];
 
 void update_vertex_attributes()
 {
@@ -55,7 +55,7 @@ void update_vertex_attributes()
     GLboolean normalize_data = GL_FALSE; // OpenGL can normalize values
     // to [0, 1] - for unsigned and to [-1, 1] for signed values
     int stride =
-        (3 + 3 + 2) * sizeof(float); // step in bytes from one attribute to next
+        (3 + 3) * sizeof(float); // step in bytes from one attribute to next
     void* start_of_data_offset = nullptr; // we start from begin of buffer
     glVertexAttribPointer(location_of_vertex_attribute, size_of_attribute,
                           type_of_data, normalize_data, stride,
@@ -65,8 +65,8 @@ void update_vertex_attributes()
     glEnableVertexAttribArray(0);
     gl_check();
 
-    location_of_vertex_attribute = 1; // color
-    size_of_attribute            = 3; // r + g + b
+    location_of_vertex_attribute = 1; // normal
+    size_of_attribute            = 3; // x, y, z
     type_of_data                 = GL_FLOAT;
     normalize_data               = GL_FALSE;
     start_of_data_offset         = reinterpret_cast<void*>(3 * sizeof(float));
@@ -76,19 +76,6 @@ void update_vertex_attributes()
     gl_check();
 
     glEnableVertexAttribArray(1);
-    gl_check();
-
-    location_of_vertex_attribute = 2; // tex coord
-    size_of_attribute            = 2; // u + v (s + t)
-    type_of_data                 = GL_FLOAT;
-    normalize_data               = GL_FALSE;
-    start_of_data_offset         = reinterpret_cast<void*>(6 * sizeof(float));
-    glVertexAttribPointer(location_of_vertex_attribute, size_of_attribute,
-                          type_of_data, normalize_data, stride,
-                          start_of_data_offset);
-    gl_check();
-
-    glEnableVertexAttribArray(2);
     gl_check();
 }
 
@@ -187,9 +174,6 @@ int main(int /*argc*/, char* /*argv*/[])
     gles30::shader light_shader(fs::path{ "./res/vertex_pos.vsh" },
                                 "./res/lamp_color.fsh");
 
-    //    gles30::texture texture0(fs::path("./res/1.jpg"));
-    //    gles30::texture texture1(fs::path("./res/2.jpg"));
-
     // Generate VAO VertexArrayState object to remember current VBO and
     // EBO(if any) with all attributes parameters stored in one object
     // called VAO think it is current VBO + EBO + attributes state in one
@@ -220,8 +204,7 @@ int main(int /*argc*/, char* /*argv*/[])
     uint32_t cube_indexes[36];
     std::iota(begin(cube_indexes), end(cube_indexes), 0);
 
-    glBufferData(GL_ARRAY_BUFFER, sizeof(cube_vertices), cube_vertices,
-                 GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
     gl_check();
 
     uint32_t EBO; // ElementBufferObject - indices buffer
@@ -247,7 +230,7 @@ int main(int /*argc*/, char* /*argv*/[])
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     gl_check();
     // set the vertex attributes (only position data for our lamp)
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, (3 + 3 + 2) * sizeof(float),
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, (3 + 3) * sizeof(float),
                           nullptr);
     gl_check();
     glEnableVertexAttribArray(0);
@@ -374,6 +357,8 @@ int main(int /*argc*/, char* /*argv*/[])
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        light_pos = properties.get_vec3("light_pos");
+
         // render object
         {
             glBindVertexArray(object_VAO);
@@ -384,6 +369,7 @@ int main(int /*argc*/, char* /*argv*/[])
 
             object_shader.set_uniform("objectColor", { 1.0f, 0.5f, 0.31f });
             object_shader.set_uniform("lightColor", { 1.0f, 1.0f, 1.0f });
+            object_shader.set_uniform("lightPos", light_pos);
 
             object_shader.set_uniform("model", model);
             object_shader.set_uniform("view", view);
@@ -398,7 +384,7 @@ int main(int /*argc*/, char* /*argv*/[])
             glBindVertexArray(light_VAO);
             gl_check();
 
-            model = glm::translate(model, { 0.f, 0.f, -5.f });
+            model = glm::translate(model, light_pos);
 
             light_shader.use();
             object_shader.set_uniform("model", model);
@@ -417,48 +403,48 @@ int main(int /*argc*/, char* /*argv*/[])
 }
 
 // clang-format off
-float cube_vertices[36 * 8] = {
-    // pos               // color          // tex coord
-    -0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
-    0.5f, -0.5f, -0.5f,  1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
-    0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-    0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-    -0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 1.0f,  0.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f,  0.0f, 0.0f,
+float vertices[36 * 6] = {
+    // position         // normal
+    -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+     0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+     0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+     0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+    -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
 
-    -0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 1.0f,  0.0f, 0.0f,
-    0.5f, -0.5f,  0.5f,  1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
-    0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-    0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-    -0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f,  0.0f, 1.0f,
-    -0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 1.0f,  0.0f, 0.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+     0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+     0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+     0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+    -0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
 
-    -0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f,  1.0f, 0.0f,
-    -0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 1.0f,  1.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f,  0.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f,  0.0f, 1.0f,
-    -0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 1.0f,  0.0f, 0.0f,
-    -0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f,  1.0f, 0.0f,
+    -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+    -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+    -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+    -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+    -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+    -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
 
-    0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 1.0f,  1.0f, 0.0f,
-    0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 1.0f,  1.0f, 1.0f,
-    0.5f, -0.5f, -0.5f,  1.0f, 1.0f, 1.0f,  0.0f, 1.0f,
-    0.5f, -0.5f, -0.5f,  1.0f, 1.0f, 1.0f,  0.0f, 1.0f,
-    0.5f, -0.5f,  0.5f,  1.0f, 1.0f, 1.0f,  0.0f, 0.0f,
-    0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 1.0f,  1.0f, 0.0f,
+     0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+     0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+     0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+     0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+     0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+     0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
 
-    -0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f,  0.0f, 1.0f,
-    0.5f, -0.5f, -0.5f,  1.0f, 1.0f, 1.0f,  1.0f, 1.0f,
-    0.5f, -0.5f,  0.5f,  1.0f, 1.0f, 1.0f,  1.0f, 0.0f,
-    0.5f, -0.5f,  0.5f,  1.0f, 1.0f, 1.0f,  1.0f, 0.0f,
-    -0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 1.0f,  0.0f, 0.0f,
-    -0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f,  0.0f, 1.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+     0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+     0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+     0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
 
-    -0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 1.0f,  0.0f, 1.0f,
-    0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 1.0f,  1.0f, 1.0f,
-    0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 1.0f,  1.0f, 0.0f,
-    0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 1.0f,  1.0f, 0.0f,
-    -0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f,  0.0f, 0.0f,
-    -0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 1.0f,  0.0f, 1.0f
+    -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+     0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+     0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+     0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+    -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+    -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
 };
 // clang-format on
