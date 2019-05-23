@@ -367,9 +367,16 @@ int main(int /*argc*/, char* /*argv*/[])
             // enable new shader program
             material.use();
 
-            material.set_uniform("objectColor", { 1.0f, 0.5f, 0.31f });
-            material.set_uniform("lightColor", { 1.0f, 1.0f, 1.0f });
-            material.set_uniform("lightPos", light_pos);
+            light_ambient  = properties.get_vec3("light_ambient");
+            light_diffuse  = properties.get_vec3("light_diffuse");
+            light_specular = properties.get_vec3("light_specular");
+
+            material.set_uniform("light.ambient", light_ambient);
+            material.set_uniform("light.diffuse", light_diffuse);
+            material.set_uniform("light.specular", light_specular);
+            material.set_uniform("light.position", light_pos);
+
+            // material.set_uniform("objectColor", { 1.0f, 0.5f, 0.31f });
             material.set_uniform("viewPos", camera.position());
 
             material_shininess = properties.get_float("material_shininess");
