@@ -181,6 +181,7 @@ int main(int /*argc*/, char* /*argv*/[])
     print_view_port();
 
     gles30::texture diffuse_map(fs::path{ "./res/container2.png" });
+    gles30::texture specular_map(fs::path{ "./res/container2_specular.png" });
 
     gles30::shader material(fs::path{ "./res/vertex_pos.vsh" },
                             "./res/material.fsh");
@@ -394,9 +395,9 @@ int main(int /*argc*/, char* /*argv*/[])
             material_shininess = properties.get_float("material_shininess");
             material_specular  = properties.get_vec3("material_specular");
 
-            material.set_uniform("material.specular", material_specular);
             material.set_uniform("material.shininess", material_shininess);
             material.set_uniform("material.diffuse", diffuse_map, 0);
+            material.set_uniform("material.specular", specular_map, 1);
 
             glm::mat4 rotated_model{ model };
             angle += properties.get_float("angle");
