@@ -79,6 +79,6 @@ void main()
     else
     { // else, use ambient light so scene isn't completely dark outside the
       // spotlight.
-        FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+        FragColor = vec4(ambient, 1.0);
     }
 }
