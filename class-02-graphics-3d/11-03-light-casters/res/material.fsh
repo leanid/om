@@ -17,6 +17,7 @@ struct Light
     vec3 direction;
 
     float cut_off; // cos from light_dir to spot Phi
+    float outer_cut_off; // cos from light_dir to
 
     vec3 ambient;
     vec3 diffuse;
@@ -50,7 +51,7 @@ void main()
     vec3  lightDir = normalize(light.position - FragPos);
     float theta    = dot(lightDir, normalize(-light.direction));
 
-    if (theta > light.cut_off)
+    if (theta > light.outer_cut_off)
     {
         // do lighting calculations
         // diffuse
@@ -72,6 +73,13 @@ void main()
         ambient *= attenuation;
         diffuse *= attenuation;
         specular *= attenuation;
+
+        // do not forget it is cosinus positive value
+        float epsilon   = light.cut_off - light.outer_cut_off;
+        float intensity = clamp((theta - light.outer_cut_off) / epsilon, 0.0, 1.0);
+
+        diffuse *= intensity;
+        specular *= intensity;
 
         vec3 result = (ambient + diffuse + specular); // * objectColor;
         FragColor   = vec4(result, 1.0);

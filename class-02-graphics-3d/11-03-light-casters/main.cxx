@@ -394,6 +394,8 @@ int main(int /*argc*/, char* /*argv*/[])
             material.set_uniform("light.position", light_pos);
             material.set_uniform("light.cut_off",
                                  glm::cos(glm::radians(12.5f)));
+            material.set_uniform("light.outer_cut_off",
+                                 glm::cos(glm::radians(17.5f)));
 
             material.set_uniform("light.constant", 1.0f);
             material.set_uniform("light.linear", 0.09f);
