@@ -381,14 +381,15 @@ int main(int /*argc*/, char* /*argv*/[])
             // enable new shader program
             material.use();
 
-            light_ambient  = properties.get_vec3("light_ambient");
-            light_diffuse  = properties.get_vec3("light_diffuse");
-            light_specular = properties.get_vec3("light_specular");
+            light_ambient       = properties.get_vec3("light_ambient");
+            light_diffuse       = properties.get_vec3("light_diffuse");
+            light_specular      = properties.get_vec3("light_specular");
+            glm::vec3 light_dir = camera.direction();
 
             material.set_uniform("light.ambient", light_ambient);
             material.set_uniform("light.diffuse", light_diffuse);
             material.set_uniform("light.specular", light_specular);
-            material.set_uniform("light.position", light_pos);
+            material.set_uniform("light.direction", light_dir);
 
             material.set_uniform("viewPos", camera.position());
 

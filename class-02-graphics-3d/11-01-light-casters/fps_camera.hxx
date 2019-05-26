@@ -57,6 +57,11 @@ public:
     float z_far() const;
     void  z_far(const float);
 
+    ///
+    /// \brief direction where camera is looking at
+    /// \return normalized verctor
+    glm::vec3 direction() const;
+
 private:
     // Calculates the front vector from the Camera's (updated) Euler Angles
     void update_camera_vectors()
@@ -209,4 +214,9 @@ inline void fps_camera::z_far(const float v)
 {
     z_far_ = v;
     std::clamp(z_far_, z_near_, 10000.f);
+}
+
+inline glm::vec3 fps_camera::direction() const
+{
+    return glm::normalize(front);
 }
