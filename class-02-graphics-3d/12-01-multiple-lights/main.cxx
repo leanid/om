@@ -408,6 +408,13 @@ int main(int /*argc*/, char* /*argv*/[])
                                                 glm::vec3(-4.0f, 2.0f, -12.0f),
                                                 glm::vec3(0.0f, 0.0f, -3.0f) };
 
+            std::vector<std::string> names{
+                "pointLights[0].position",  "pointLights[0].ambient",
+                "pointLights[0].diffuse",   "pointLights[0].specular",
+                "pointLights[0].constant",  "pointLights[0].linear",
+                "pointLights[0].quadratic",
+            };
+
             // directional light
             material.set_uniform("dirLight.direction", { -0.2f, -1.0f, -0.3f });
             material.set_uniform("dirLight.ambient", { 0.05f, 0.05f, 0.05f });
@@ -418,19 +425,13 @@ int main(int /*argc*/, char* /*argv*/[])
             std::iota(begin(indexes), end(indexes), 0);
             std::for_each(
                 begin(indexes), end(indexes),
-                [&material, &pointLightPositions](size_t index) {
-                    char                     i = static_cast<char>('0' + index);
-                    std::vector<std::string> names{
-                        "pointLights[0].position",  "pointLights[0].ambient",
-                        "pointLights[0].diffuse",   "pointLights[0].specular",
-                        "pointLights[0].constant",  "pointLights[0].linear",
-                        "pointLights[0].quadratic",
-                    };
+                [&material, &pointLightPositions, &names](size_t index) {
+                    char   i        = static_cast<char>('0' + index);
+                    size_t zero_pos = names.front().find('[') + 1;
 
-                    std::for_each(begin(names), end(names),
-                                  [i](std::string& v) {
-                                      std::replace(begin(v), end(v), '0', i);
-                                  });
+                    std::for_each(
+                        begin(names), end(names),
+                        [i, zero_pos](std::string& v) { v[zero_pos] = i; });
 
                     material.set_uniform(names[0], pointLightPositions[index]);
                     material.set_uniform(names[1], { 0.05f, 0.05f, 0.05f });
