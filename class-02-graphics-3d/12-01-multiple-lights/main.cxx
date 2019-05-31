@@ -371,8 +371,6 @@ int main(int /*argc*/, char* /*argv*/[])
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        light_pos = properties.get_vec3("light_pos");
-
         // render object
         {
             glBindVertexArray(object_VAO);
@@ -381,30 +379,10 @@ int main(int /*argc*/, char* /*argv*/[])
             // enable new shader program
             material.use();
 
-            light_ambient       = properties.get_vec3("light_ambient");
-            light_diffuse       = properties.get_vec3("light_diffuse");
-            light_specular      = properties.get_vec3("light_specular");
-            glm::vec3 light_dir = camera.direction();
-            light_pos           = camera.position();
-
-            material.set_uniform("light.ambient", light_ambient);
-            material.set_uniform("light.diffuse", light_diffuse);
-            material.set_uniform("light.specular", light_specular);
-            material.set_uniform("light.direction", light_dir);
-            material.set_uniform("light.position", light_pos);
-            material.set_uniform("light.cut_off",
-                                 glm::cos(glm::radians(12.5f)));
-            material.set_uniform("light.outer_cut_off",
-                                 glm::cos(glm::radians(17.5f)));
-
-            material.set_uniform("light.constant", 1.0f);
-            material.set_uniform("light.linear", 0.09f);
-            material.set_uniform("light.quadratic", 0.032f);
-
-            material.set_uniform("pointLights[0].constant", 1.0f);
-            // TODO
-
-            material.set_uniform("viewPos", camera.position());
+            light_ambient  = properties.get_vec3("light_ambient");
+            light_diffuse  = properties.get_vec3("light_diffuse");
+            light_specular = properties.get_vec3("light_specular");
+            light_pos      = camera.position();
 
             material_shininess = properties.get_float("material_shininess");
             material_specular  = properties.get_vec3("material_specular");
@@ -436,24 +414,46 @@ int main(int /*argc*/, char* /*argv*/[])
             material.set_uniform("dirLight.diffuse", { 0.4f, 0.4f, 0.4f });
             material.set_uniform("dirLight.specular", { 0.5f, 0.5f, 0.5f });
             // point lights
-            for (size_t index = 0; index < 4; ++index)
-            {
-                char   i = static_cast<char>('0' + index);
-                string name{ "pointLights[0].position" };
-                std::replace(begin(name), end(name), '0', i);
+            std::array<size_t, std::size(pointLightPositions)> indexes;
+            std::iota(begin(indexes), end(indexes), 0);
+            std::for_each(
+                begin(indexes), end(indexes),
+                [&material, &pointLightPositions](size_t index) {
+                    char                     i = static_cast<char>('0' + index);
+                    std::vector<std::string> names{
+                        "pointLights[0].position",  "pointLights[0].ambient",
+                        "pointLights[0].diffuse",   "pointLights[0].specular",
+                        "pointLights[0].constant",  "pointLights[0].linear",
+                        "pointLights[0].quadratic",
+                    };
 
-                material.set_uniform(name, pointLightPositions[0]);
-                material.set_uniform("pointLights[" + to_string(i) +
-                                         "].ambient",
-                                     { 0.05f, 0.05f, 0.05f });
-                material.set_uniform("pointLights[0].diffuse",
-                                     { 0.8f, 0.8f, 0.8f });
-                material.set_uniform("pointLights[0].specular",
-                                     { 1.0f, 1.0f, 1.0f });
-                material.set_uniform("pointLights[0].constant", 1.0f);
-                material.set_uniform("pointLights[0].linear", 0.09f);
-                material.set_uniform("pointLights[0].quadratic", 0.032f);
-            }
+                    std::for_each(begin(names), end(names),
+                                  [i](std::string& v) {
+                                      std::replace(begin(v), end(v), '0', i);
+                                  });
+
+                    material.set_uniform(names[0], pointLightPositions[index]);
+                    material.set_uniform(names[1], { 0.05f, 0.05f, 0.05f });
+                    material.set_uniform(names[2], { 0.8f, 0.8f, 0.8f });
+                    material.set_uniform(names[3], { 1.0f, 1.0f, 1.0f });
+                    material.set_uniform(names[4], 1.0f);
+                    material.set_uniform(names[5], 0.09f);
+                    material.set_uniform(names[6], 0.032f);
+                });
+
+            // spot light
+            material.set_uniform("spot_light.position", camera.position());
+            material.set_uniform("spot_light.direction", camera.direction());
+            material.set_uniform("spot_light.ambient", { 0.0f, 0.0f, 0.0f });
+            material.set_uniform("spot_light.diffuse", { 1.0f, 1.0f, 1.0f });
+            material.set_uniform("spot_light.specular", { 1.0f, 1.0f, 1.0f });
+            material.set_uniform("spot_light.constant", 1.0f);
+            material.set_uniform("spot_light.linear", 0.09f);
+            material.set_uniform("spot_light.quadratic", 0.032f);
+            material.set_uniform("spot_light.cut_off",
+                                 glm::cos(glm::radians(12.5f)));
+            material.set_uniform("spot_light.outer_cut_off",
+                                 glm::cos(glm::radians(15.0f)));
 
             rotated_model = glm::rotate(rotated_model, angle, rotate_axis);
 
@@ -461,8 +461,38 @@ int main(int /*argc*/, char* /*argv*/[])
             material.set_uniform("view", view);
             material.set_uniform("projection", projection);
 
-            glDrawElements(primitive_render_mode, 36, GL_UNSIGNED_INT, nullptr);
-            gl_check();
+            for (size_t i = 0; i < std::size(cubePositions); i++)
+            {
+                // calculate the model matrix for each object and pass it to
+                // shader before drawing
+                glm::mat4 model = glm::mat4(1.0f);
+                model           = glm::translate(model, cubePositions[i]);
+                float angle     = 20.0f * i;
+                model           = glm::rotate(model, glm::radians(angle),
+                                    glm::vec3(1.0f, 0.3f, 0.5f));
+                material.set_uniform("model", model);
+
+                glDrawElements(primitive_render_mode, 36, GL_UNSIGNED_INT,
+                               nullptr);
+                gl_check();
+            }
+
+            // also draw the lamp object(s)
+            light_shader.use();
+            light_shader.set_uniform("projection", projection);
+            light_shader.set_uniform("view", view);
+
+            // we now draw as many light bulbs as we have point lights.
+            glBindVertexArray(light_VAO);
+            for (unsigned int i = 0; i < std::size(pointLightPositions); i++)
+            {
+                model = glm::mat4(1.0f);
+                model = glm::translate(model, pointLightPositions[i]);
+                model = glm::scale(model,
+                                   glm::vec3(0.2f)); // Make it a smaller cube
+                light_shader.set_uniform("model", model);
+                glDrawArrays(GL_TRIANGLES, 0, 36);
+            }
         }
 
         SDL_GL_SwapWindow(window.get());
