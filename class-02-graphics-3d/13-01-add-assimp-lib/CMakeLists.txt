@@ -9,17 +9,22 @@ endif()
 
 include(ExternalProject)
 
-ExternalProject_Add(assimp_proj
-  GIT_REPOSITORY    https://github.com/assimp/assimp.git
-  GIT_TAG           v4.1.0
-  GIT_PROGRESS      TRUE
-  CMAKE_ARGS        -DBUILD_SHARED_LIBS:STRING=OFF,
-                    -DASSIMP_NO_EXPORT:STRING=ON,
-                    -DASSIMP_BUILD_ASSIMP_TOOLS:STRING=OFF,
-                    -DASSIMP_BUILD_TESTS:STRING=OFF,
-                    -DINJECT_DEBUG_POSTFIX:STRING=OFF
-  INSTALL_COMMAND   ""
-)
+# super fast way to go on linux with assimp:
+# sudo dnf install assimp-devel
+# or
+# build it yourself for android for example:
+
+#ExternalProject_Add(assimp_proj
+#  GIT_REPOSITORY    https://github.com/assimp/assimp.git
+#  GIT_TAG           v4.1.0
+#  GIT_PROGRESS      TRUE
+#  CMAKE_ARGS        -DBUILD_SHARED_LIBS:STRING=OFF,
+#                    -DASSIMP_NO_EXPORT:STRING=ON,
+#                    -DASSIMP_BUILD_ASSIMP_TOOLS:STRING=OFF,
+#                    -DASSIMP_BUILD_TESTS:STRING=OFF,
+#                    -DINJECT_DEBUG_POSTFIX:STRING=OFF
+#  INSTALL_COMMAND   ""
+#)
 
 project(13-01-add-assimp-lib CXX)
 
@@ -80,6 +85,8 @@ target_sources(${PROJECT_NAME} PRIVATE main.cxx
 
                                        res/runtime.properties.hxx
                                        )
+
+find_library(assimp REQUIRED)
 target_link_libraries(${PROJECT_NAME} PRIVATE assimp)
 
 
