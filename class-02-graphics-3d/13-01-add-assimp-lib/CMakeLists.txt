@@ -14,17 +14,20 @@ include(ExternalProject)
 # or
 # build it yourself for android for example:
 
-#ExternalProject_Add(assimp_proj
-#  GIT_REPOSITORY    https://github.com/assimp/assimp.git
-#  GIT_TAG           v4.1.0
-#  GIT_PROGRESS      TRUE
-#  CMAKE_ARGS        -DBUILD_SHARED_LIBS:STRING=OFF,
-#                    -DASSIMP_NO_EXPORT:STRING=ON,
-#                    -DASSIMP_BUILD_ASSIMP_TOOLS:STRING=OFF,
-#                    -DASSIMP_BUILD_TESTS:STRING=OFF,
-#                    -DINJECT_DEBUG_POSTFIX:STRING=OFF
-#  INSTALL_COMMAND   ""
-#)
+set(ASSIMP_BUILD_DIR ${CMAKE_CURRENT_LIST_DIR}/build/assimp_root)
+
+ExternalProject_Add(assimp_proj
+  PREFIX            ${ASSIMP_BUILD_DIR}
+  GIT_REPOSITORY    https://github.com/assimp/assimp.git
+  GIT_TAG           v4.1.0
+  GIT_PROGRESS      TRUE
+  CMAKE_CACHE_ARGS  -DBUILD_SHARED_LIBS:STRING=OFF
+                    -DASSIMP_NO_EXPORT:STRING=ON
+                    -DASSIMP_BUILD_ASSIMP_TOOLS:STRING=OFF
+                    -DASSIMP_BUILD_TESTS:STRING=OFF
+                    -DINJECT_DEBUG_POSTFIX:STRING=OFF
+                    -DCMAKE_INSTALL_PREFIX:PATH=${ASSIMP_BUILD_DIR}_install/
+)
 
 project(13-01-add-assimp-lib CXX)
 
@@ -86,9 +89,11 @@ target_sources(${PROJECT_NAME} PRIVATE main.cxx
                                        res/runtime.properties.hxx
                                        )
 
-find_library(assimp REQUIRED)
-target_link_libraries(${PROJECT_NAME} PRIVATE assimp)
+add_dependencies(${PROJECT_NAME} assimp_proj)
 
+target_link_directories(${PROJECT_NAME} PRIVATE ${ASSIMP_BUILD_DIR}_install/lib)
+target_link_libraries(${PROJECT_NAME} PRIVATE assimp)
+target_include_directories(${PROJECT_NAME} PRIVATE ${ASSIMP_BUILD_DIR}_install/include)
 
 if(MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4  /utf-8 ") # /WX
