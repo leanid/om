@@ -83,7 +83,8 @@ target_sources(${PROJECT_NAME} PRIVATE main.cxx
                                        properties_reader.cxx
                                        fps_camera.hxx
                                        fps_camera.cxx
-                                       mesh.hxx
+                                       gles30_mesh.hxx
+                                       gles30_mesh.cxx
                                        stb_image.h
 
                                        res/basic.fsh
