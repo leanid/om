@@ -8,10 +8,11 @@
 #include <SDL_opengles2.h>
 #else
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_opengles2.h>
-
 #define GL_GLEXT_PROTOTYPES 1
-#include <GLES3/gl3.h> // TODO need for glGenVertexArrays
+#include <SDL2/SDL_opengles2.h>
+#define glGenVertexArrays glGenVertexArraysOES
+#define glBindVertexArray glBindVertexArrayOES
+//#include <GLES3/gl3.h> // TODO need for glGenVertexArrays
 #endif
 
 const char* gl_err_to_s(GLenum err);

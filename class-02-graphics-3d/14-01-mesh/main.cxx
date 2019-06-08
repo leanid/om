@@ -5,6 +5,7 @@
 #include <numeric>
 #include <string>
 #include <vector>
+#include <array>
 
 #include "fps_camera.hxx"
 #include "gles30_shader.hxx"

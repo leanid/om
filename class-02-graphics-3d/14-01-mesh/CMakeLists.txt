@@ -19,12 +19,13 @@ set(ASSIMP_BUILD_DIR ${CMAKE_CURRENT_LIST_DIR}/build/assimp_root)
 ExternalProject_Add(assimp_proj
   PREFIX            ${ASSIMP_BUILD_DIR}
   GIT_REPOSITORY    https://github.com/assimp/assimp.git
-  GIT_TAG           v4.1.0
+  GIT_TAG           v.5.0.0.rc1
   GIT_PROGRESS      TRUE
   CMAKE_CACHE_ARGS  -DBUILD_SHARED_LIBS:STRING=OFF
                     -DASSIMP_NO_EXPORT:STRING=ON
                     -DASSIMP_BUILD_ASSIMP_TOOLS:STRING=OFF
                     -DASSIMP_BUILD_TESTS:STRING=OFF
+                    -DASSIMP_INSTALL_PDB:STRING=OFF
                     -DINJECT_DEBUG_POSTFIX:STRING=OFF
                     -DCMAKE_INSTALL_PREFIX:PATH=${ASSIMP_BUILD_DIR}_install/
 )
@@ -64,7 +65,10 @@ elseif(MSVC)
                                                   SDL2::SDL2main
                                                   SDL2::SDL2
                                                   opengl32
+                                                  IrrXMLd.lib
+                                                  zlibstaticd.lib
                                                   )
+    set(ASSIMP_POSTFIX "-vc140-mtd.lib")
 endif()
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
@@ -93,7 +97,7 @@ target_sources(${PROJECT_NAME} PRIVATE main.cxx
 add_dependencies(${PROJECT_NAME} assimp_proj)
 
 target_link_directories(${PROJECT_NAME} PRIVATE ${ASSIMP_BUILD_DIR}_install/lib)
-target_link_libraries(${PROJECT_NAME} PRIVATE assimp)
+target_link_libraries(${PROJECT_NAME} PRIVATE assimp${ASSIMP_POSTFIX})
 target_include_directories(${PROJECT_NAME} PRIVATE ${ASSIMP_BUILD_DIR}_install/include)
 
 if(MSVC)

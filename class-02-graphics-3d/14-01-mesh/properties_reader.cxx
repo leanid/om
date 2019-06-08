@@ -18,7 +18,7 @@
 #include "properties_reader.hxx"
 
 #include <algorithm>
-#include <charconv>
+//#include <charconv>
 #include <forward_list>
 #include <fstream>
 #include <iostream>
@@ -52,7 +52,7 @@ struct token
         comma
     };
 
-    type             type = type::none;
+    token::type             type = type::none;
     std::string_view value;
 };
 
@@ -358,7 +358,7 @@ struct parser_t
     }
 
     token* expected_one_of(const std::vector<token>::iterator&            it,
-                           const std::initializer_list<enum token::type>& types)
+                           const std::initializer_list<decltype(token::type)>& types)
     {
         if (it == end(lexer.tokens))
         {
@@ -531,7 +531,7 @@ struct interpretator_t
     void run(std::unordered_map<std::string, value_t>& key_values)
     {
         // interpret program and fill key_values map
-        for ([[maybe_unused]] const auto& command : parser.commands)
+        for (/*[[maybe_unused]]*/ const auto& command : parser.commands)
         {
             execute(command, key_values);
         }
