@@ -2,7 +2,7 @@
 #include <iostream>
 #include <new>
 
-int global_counter = 0;
+static int global_counter = 0;
 
 void* operator new(std::size_t n) noexcept(
     false) // _THROW_BAD_ALLOC // throw(std::bad_alloc)
@@ -29,7 +29,10 @@ struct A
     {
         std::cout << "constructor A" << std::endl;
     }
-    ~A() noexcept(false) { throw value; }
+    [[noreturn]]~A() noexcept(false) {
+        std::cout << "in destructor" << std::endl;
+        throw value;
+    }
 
     int value;
 };
