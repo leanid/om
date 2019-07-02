@@ -1,7 +1,7 @@
 #include <cstdlib>
 #include <iostream>
 
-#include <SDL2/SDL_version.h>
+#include <SDL_version.h>
 
 std::ostream& operator<<(std::ostream& out, const SDL_version& v)
 {
@@ -11,7 +11,7 @@ std::ostream& operator<<(std::ostream& out, const SDL_version& v)
     return out;
 }
 
-int main(int /*argc*/, char* /*argv*/ [])
+int main(int /*argc*/, char* /*argv*/[])
 {
     using namespace std;
 
