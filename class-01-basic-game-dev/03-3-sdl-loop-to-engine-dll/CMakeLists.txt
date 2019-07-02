@@ -8,7 +8,9 @@ if(WIN32)
   target_compile_definitions(engine-03-3 PRIVATE "-DOM_DECLSPEC=__declspec(dllexport)")
 endif(WIN32)
 
-find_library(SDL2_LIB NAMES SDL2)
+find_package(sdl2 REQUIRED)
+target_include_directories(engine-03-3 PRIVATE ${SDL2_INCLUDE_DIRS})
+target_link_libraries(engine-03-3 PRIVATE ${SDL2_LIBRARIES})
 
 if (MINGW)
     target_link_libraries(engine-03-3 
@@ -17,19 +19,14 @@ if (MINGW)
                -lSDL2
                -mwindows
                )
-elseif(UNIX)
-    target_link_libraries(engine-03-3
-               -lSDL2
-               )
 elseif(MSVC)
-    find_package(sdl2 REQUIRED)
     target_link_libraries(engine-03-3 PRIVATE SDL2::SDL2 SDL2::SDL2main)
 endif()
 
 add_executable(game-03-3 game.cxx)
 target_compile_features(game-03-3 PUBLIC cxx_std_17)
 
-target_link_libraries(game-03-3 engine-03-3)
+target_link_libraries(game-03-3 PRIVATE engine-03-3)
 
 if(MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /WX /std:c++17")
