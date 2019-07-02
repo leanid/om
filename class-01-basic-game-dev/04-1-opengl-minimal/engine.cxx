@@ -10,16 +10,16 @@
 #include <string_view>
 #include <vector>
 
-#include <SDL2/SDL.h>
-#if __MINGW32__
-#include <SDL2/SDL_opengl.h> // on windows for mingw
+#include <SDL.h>
+#if defined(__MINGW32__) || defined(__APPLE__)
+#include <SDL_opengl.h> // on windows for mingw
 #else
-#include <SDL2/SDL_opengles2.h>
+#include <SDL_opengles2.h>
 #endif
 
 #define OM_GL_CHECK()                                                          \
     {                                                                          \
-        const int err = glGetError();                                          \
+        const int err = static_cast<int>(glGetError());                        \
         if (err != GL_NO_ERROR)                                                \
         {                                                                      \
             switch (err)                                                       \
@@ -188,15 +188,21 @@ public:
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, gl_minor_ver);
 
         SDL_GLContext gl_context = SDL_GL_CreateContext(window);
-        SDL_assert(gl_context != nullptr);
+        if (gl_context == nullptr)
+        {
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
+                                SDL_GL_CONTEXT_PROFILE_CORE);
+            gl_context = SDL_GL_CreateContext(window);
+        }
+        assert(gl_context != nullptr);
 
         int result =
             SDL_GL_GetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, &gl_major_ver);
-        SDL_assert(result == 0);
+        assert(result == 0);
 
         result =
             SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, &gl_minor_ver);
-        SDL_assert(result == 0);
+        assert(result == 0);
 
         if (gl_major_ver < 2)
         {
