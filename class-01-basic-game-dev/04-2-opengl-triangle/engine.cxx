@@ -10,9 +10,9 @@
 #include <string_view>
 #include <vector>
 
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_opengl.h>
-#include <SDL2/SDL_opengl_glext.h>
+#include <SDL.h>
+#include <SDL_opengl.h>
+#include <SDL_opengl_glext.h>
 
 // we have to load all extension GL function pointers
 // dynamically from opengl library
@@ -250,9 +250,13 @@ std::string engine_impl::initialize(std::string_view)
         return serr.str();
     }
 
-    window =
-        SDL_CreateWindow("title", SDL_WINDOWPOS_CENTERED,
-                         SDL_WINDOWPOS_CENTERED, 640, 480, ::SDL_WINDOW_OPENGL);
+    // On Apple's OS X you must set the NSHighResolutionCapable Info.plist
+    // property to YES, otherwise you will not receive a High DPI OpenGL canvas.
+    // just read:
+    // https://stackoverflow.com/questions/1596945/building-osx-app-bundle
+    window = SDL_CreateWindow("title", SDL_WINDOWPOS_CENTERED,
+                              SDL_WINDOWPOS_CENTERED, 640, 480,
+                              SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI);
 
     if (window == nullptr)
     {

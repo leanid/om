@@ -8,7 +8,9 @@ if(WIN32)
   target_compile_definitions(engine-04-2 PRIVATE "-DOM_DECLSPEC=__declspec(dllexport)")
 endif(WIN32)
 
-find_library(SDL2_LIB NAMES SDL2)
+find_package(sdl2 REQUIRED)
+target_include_directories(engine-04-2 PRIVATE ${SDL2_INCLUDE_DIRS})
+target_link_libraries(engine-04-2 PRIVATE ${SDL2_LIBRARIES})
 
 if (MINGW)
     target_link_libraries(engine-04-2 
@@ -18,13 +20,16 @@ if (MINGW)
                -mwindows
                -lopengl32
                )
+elseif(APPLE)
+    target_link_libraries(engine-04-2 PRIVATE
+               -Wl,-framework,OpenGL
+               )
 elseif(UNIX)
-    target_link_libraries(engine-04-2
+    target_link_libraries(engine-04-2 PRIVATE
                -lSDL2
                -lGL
                )
 elseif(MSVC)
-    find_package(sdl2 REQUIRED)
     target_link_libraries(engine-04-2 PRIVATE SDL2::SDL2 SDL2::SDL2main
                          opengl32)
 endif()
