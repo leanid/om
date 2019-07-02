@@ -4,7 +4,7 @@
 #include <iostream>
 #include <string_view>
 
-#include <SDL2/SDL.h>
+#include <SDL.h>
 
 std::ostream& operator<<(std::ostream& out, const SDL_version& v)
 {
@@ -53,7 +53,7 @@ void check_input(const SDL_Event& e)
     }
 }
 
-int main(int /*argc*/, char* /*argv*/ [])
+int main(int /*argc*/, char* /*argv*/[])
 {
     using namespace std;
 

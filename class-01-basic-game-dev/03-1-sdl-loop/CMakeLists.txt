@@ -4,11 +4,9 @@ project(03-sdl-loop)
 add_executable(${PROJECT_NAME} main.cxx)
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 
-find_library(SDL2_LIB NAMES libSDL2.a SDL2.lib SDL2.dll)
-
-if(NOT SDL2_LIB)
-    message(FATAL_ERROR "Error: find_library(...) did not find libSDL2.a")
-endif()
+find_package(sdl2 REQUIRED)
+target_include_directories(${PROJECT_NAME} PRIVATE ${SDL2_INCLUDE_DIRS})
+target_link_libraries(${PROJECT_NAME} PRIVATE ${SDL2_LIBRARIES})
 
 if (MINGW)
     # find out what libraries are needed for staticaly linking with libSDL.a
@@ -40,19 +38,6 @@ if (MINGW)
                -lversion
                -luuid
                -static-libgcc
-               )
-elseif(UNIX)
-    # find out what libraries are needed for staticaly linking with libSDL.a
-    # using default linux compiler
-    #$> sdl2-config --static-libs
-    # -lSDL2 -Wl,--no-undefined -lm -ldl -lpthread -lrt
-    
-    target_link_libraries(${PROJECT_NAME} 
-               "${SDL2_LIB}" # full path to libSDL2.a force to staticaly link with it
-               -lm
-               -ldl
-               -lpthread
-               -lrt
                )
 elseif(MSVC)
     find_package(sdl2 REQUIRED)

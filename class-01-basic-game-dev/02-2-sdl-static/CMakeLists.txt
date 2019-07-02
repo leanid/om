@@ -4,6 +4,8 @@ project(02-sdl-static)
 add_executable(${PROJECT_NAME} main.cxx)
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 
+find_package(sdl2 REQUIRED)
+target_include_directories(${PROJECT_NAME} PRIVATE ${SDL2_INCLUDE_DIRS})
 find_library(SDL2_LIB NAMES libSDL2.a)
 
 if(NOT SDL2_LIB)
@@ -53,16 +55,18 @@ elseif(UNIX)
 
       target_link_libraries(${PROJECT_NAME} 
                "${SDL2_LIB}" # full path to libSDL2.a force to staticaly link with it
-               -lm 
-               -liconv 
-               -Wl,-framework,CoreAudio 
-               -Wl,-framework,AudioToolbox 
-               -Wl,-framework,ForceFeedback 
-               -lobjc 
-               -Wl,-framework,CoreVideo 
-               -Wl,-framework,Cocoa 
-               -Wl,-framework,Carbon 
+               -lm
+               -liconv
+               -Wl,-framework,CoreAudio
+               -Wl,-framework,AudioToolbox
+               -Wl,-framework,ForceFeedback
+               -lobjc
+               -Wl,-framework,CoreVideo
+               -Wl,-framework,Cocoa
+               -Wl,-framework,Carbon
                -Wl,-framework,IOKit
+               -Wl,-weak_framework,QuartzCore
+               -Wl,-weak_framework,Metal
                )
     else()
       # find out what libraries are needed for staticaly linking with libSDL.a on Linux
