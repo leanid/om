@@ -6,7 +6,7 @@ add_executable(04-0-render-basic graphics_basic.cxx
 target_compile_features(04-0-render-basic PUBLIC cxx_std_17)
 
 if(MSVC)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /WX /std:c++17")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /WX")
 else()
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -Werror")
 endif()
