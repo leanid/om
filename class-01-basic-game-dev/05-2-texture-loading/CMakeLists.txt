@@ -4,7 +4,7 @@ project(05-2-texture-loading)
 add_library(engine-05-2 SHARED engine.cxx)
 target_compile_features(engine-05-2 PUBLIC cxx_std_17)
 
-if(WIN32)   
+if(WIN32)
   target_compile_definitions(engine-05-2 PRIVATE "-DOM_DECLSPEC=__declspec(dllexport)")
 endif(WIN32)
 
@@ -13,9 +13,9 @@ target_include_directories(engine-05-2 PRIVATE ${SDL2_INCLUDE_DIRS})
 target_link_libraries(engine-05-2 PRIVATE ${SDL2_LIBRARIES})
 
 if (MINGW)
-    target_link_libraries(engine-05-2
+    target_link_libraries(engine-05-2 PRIVATE
                mingw32
-               SDL2main 
+               SDL2main
                SDL2
                opengl32
                -mwindows
@@ -25,7 +25,7 @@ elseif(APPLE)
             -Wl,-framework,OpenGL
             )
 elseif(UNIX)
-    target_link_libraries(engine-05-2
+    target_link_libraries(engine-05-2 PRIVATE
                SDL2
                GL
                )
@@ -38,7 +38,7 @@ endif()
 add_executable(game-05-2 game.cxx)
 target_compile_features(game-05-2 PUBLIC cxx_std_17)
 
-target_link_libraries(game-05-2 engine-05-2)
+target_link_libraries(game-05-2 PRIVATE engine-05-2)
 
 
 if(MSVC)
