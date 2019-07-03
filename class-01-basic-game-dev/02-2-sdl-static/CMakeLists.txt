@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 3.14)
 project(02-sdl-static)
 
 add_executable(${PROJECT_NAME} main.cxx)
@@ -15,18 +15,18 @@ endif()
 if (MINGW)
     # find out what libraries are needed for staticaly linking with libSDL.a
     # using mingw64 cross-compiler
-    
+
     #$> $ /usr/x86_64-w64-mingw32/sys-root/mingw/bin/sdl2-config --static-libs
-    #-L/usr/x86_64-w64-mingw32/sys-root/mingw/lib -lmingw32 -lSDL2main 
-    #-lSDL2 -mwindows -Wl,--no-undefined -lm -ldinput8 -ldxguid -ldxerr8 -luser32 
-    #-lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lshell32 -lversion -luuid 
+    #-L/usr/x86_64-w64-mingw32/sys-root/mingw/lib -lmingw32 -lSDL2main
+    #-lSDL2 -mwindows -Wl,--no-undefined -lm -ldinput8 -ldxguid -ldxerr8 -luser32
+    #-lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lshell32 -lversion -luuid
     #-static-libgcc
-    
-    target_link_libraries(${PROJECT_NAME} 
-               #SDL2::SDL2-static 
+
+    target_link_libraries(${PROJECT_NAME}
+               #SDL2::SDL2-static
                #SDL2::SDL2main
-               -lmingw32 
-               -lSDL2main 
+               -lmingw32
+               -lSDL2main
                ${SDL2_LIB} # full path to libSDL2.a force to staticaly link with it
                -mwindows
                -Wl,--no-undefined
@@ -34,7 +34,7 @@ if (MINGW)
                -ldinput8
                -ldxguid
                -ldxerr8
-               -luser32 
+               -luser32
                -lgdi32
                -lwinmm
                -limm32
@@ -43,17 +43,18 @@ if (MINGW)
                -lshell32
                -lversion
                -luuid
+               -lsetupapi
                -static-libgcc
                )
 elseif(UNIX)
     if(APPLE)
       # find out what libraries are needed for staticcaly linking with libSDL.a on MacOS with HOMEBREW (currently clang++ not supported c++17)
       # $> /usr/local/bin/sdl2-config --static-libs
-      # -L/usr/local/lib -lSDL2 -lm -liconv -Wl,-framework,CoreAudio 
-      # -Wl,-framework,AudioToolbox -Wl,-framework,ForceFeedback -lobjc -Wl,-framework,CoreVideo -Wl,-framework,Cocoa 
+      # -L/usr/local/lib -lSDL2 -lm -liconv -Wl,-framework,CoreAudio
+      # -Wl,-framework,AudioToolbox -Wl,-framework,ForceFeedback -lobjc -Wl,-framework,CoreVideo -Wl,-framework,Cocoa
       # -Wl,-framework,Carbon -Wl,-framework,IOKit
 
-      target_link_libraries(${PROJECT_NAME} 
+      target_link_libraries(${PROJECT_NAME}
                "${SDL2_LIB}" # full path to libSDL2.a force to staticaly link with it
                -lm
                -liconv
@@ -73,8 +74,8 @@ elseif(UNIX)
       # using default linux compiler
       # $> sdl2-config --static-libs
       # -lSDL2 -Wl,--no-undefined -lm -ldl -lpthread -lrt
-    
-      target_link_libraries(${PROJECT_NAME} 
+
+      target_link_libraries(${PROJECT_NAME}
                ${SDL2_LIB} # full path to libSDL2.a force to staticaly link with it
                # -Wl,--no-undefined # not compiled on MacOS
                -lm
@@ -94,7 +95,7 @@ else()
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -Werror")
 endif()
 
-install(TARGETS ${PROJECT_NAME} 
+install(TARGETS ${PROJECT_NAME}
         RUNTIME DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../../bin/tests
         LIBRARY DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../../bin/tests
         ARCHIVE DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../../bin/tests)
