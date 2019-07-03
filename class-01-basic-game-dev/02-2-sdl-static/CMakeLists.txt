@@ -6,7 +6,7 @@ target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 
 find_package(sdl2 REQUIRED)
 target_include_directories(${PROJECT_NAME} PRIVATE ${SDL2_INCLUDE_DIRS})
-find_library(SDL2_LIB NAMES libSDL2.a)
+find_library(SDL2_LIB NAMES libSDL2.a SDL2.lib)
 
 if(NOT SDL2_LIB)
     message(FATAL_ERROR "Error: find_library(...) did not find libSDL2.a")
