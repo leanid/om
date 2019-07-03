@@ -8,7 +8,9 @@ if(WIN32)
   target_compile_definitions(engine-05-2 PRIVATE "-DOM_DECLSPEC=__declspec(dllexport)")
 endif(WIN32)
 
-find_library(SDL2_LIB NAMES SDL2)
+find_package(sdl2 REQUIRED)
+target_include_directories(engine-05-2 PRIVATE ${SDL2_INCLUDE_DIRS})
+target_link_libraries(engine-05-2 PRIVATE ${SDL2_LIBRARIES})
 
 if (MINGW)
     target_link_libraries(engine-05-2
@@ -18,6 +20,10 @@ if (MINGW)
                opengl32
                -mwindows
                )
+elseif(APPLE)
+    target_link_libraries(engine-05-2 PRIVATE
+            -Wl,-framework,OpenGL
+            )
 elseif(UNIX)
     target_link_libraries(engine-05-2
                SDL2
@@ -36,7 +42,7 @@ target_link_libraries(game-05-2 engine-05-2)
 
 
 if(MSVC)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /WX /std:c++17")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /WX")
 else()
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -Werror")
 endif()
