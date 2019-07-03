@@ -10,9 +10,9 @@
 #include <string_view>
 #include <vector>
 
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_opengl.h>
-#include <SDL2/SDL_opengl_glext.h>
+#include <SDL.h>
+#include <SDL_opengl.h>
+#include <SDL_opengl_glext.h>
 
 // we have to load all extension GL function pointers
 // dynamically from opengl library
@@ -292,10 +292,10 @@ std::string engine_impl::initialize(std::string_view)
     int gl_major_ver = 0;
     int result =
         SDL_GL_GetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, &gl_major_ver);
-    SDL_assert(result == 0);
+    assert(result == 0);
     int gl_minor_ver = 0;
     result = SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, &gl_minor_ver);
-    SDL_assert(result == 0);
+    assert(result == 0);
 
     std::cout << "gl_context: " << gl_major_ver << '.' << gl_minor_ver
               << std::endl;
@@ -354,11 +354,11 @@ std::string engine_impl::initialize(std::string_view)
 
     GLuint vert_shader = glCreateShader(GL_VERTEX_SHADER);
     OM_GL_CHECK();
-    string_view vertex_shader_src = R"(
-                                    attribute vec3 a_position;
-                                    attribute vec3 a_color;
-                                    varying vec4 v_position;
-                                    varying vec3 v_color;
+    string_view vertex_shader_src = R"(#version 330 core
+                                    layout (location = 0) in vec3 a_position;
+                                    layout (location = 1) in vec3 a_color;
+                                    out vec4 v_position;
+                                    out vec3 v_color;
                                     void main()
                                     {
                                         v_position = vec4(a_position, 1.0);
@@ -398,21 +398,22 @@ std::string engine_impl::initialize(std::string_view)
 
     GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
     OM_GL_CHECK();
-    string_view fragment_shader_src = R"(
-                                      varying vec4 v_position;
-                                      varying vec3 v_color;
+    string_view fragment_shader_src = R"(#version 330 core
+                                      in vec4 v_position;
+                                      in vec3 v_color;
+                                      out vec4 FragColor;
                                       void main()
                                       {
-                                          gl_FragColor = vec4(v_color, 1.0);
+                                          FragColor = vec4(v_color, 1.0);
                                           /*
                                           if (v_position.z >= 0.0)
                                           {
                                             float light_green = 0.5 + v_position.z / 2.0;
-                                            gl_FragColor = vec4(0.0, light_green, 0.0, 1.0);
+                                            FragColor = vec4(0.0, light_green, 0.0, 1.0);
                                           } else
                                           {
                                             float dark_green = 0.5 - (v_position.z / -2.0);
-                                            gl_FragColor = vec4(0.0, dark_green, 0.0, 1.0);
+                                            FragColor = vec4(0.0, dark_green, 0.0, 1.0);
                                           }
                                           */
                                       }
