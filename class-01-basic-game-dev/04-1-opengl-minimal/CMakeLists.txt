@@ -20,9 +20,12 @@ if (MINGW)
                -mwindows
                -lopengl32
                )
+elseif (APPLE)
+    target_link_libraries(engine-04-1 PRIVATE
+         -Wl,-framework,OpenGL)
 elseif (UNIX)
     target_link_libraries(engine-04-1 PRIVATE
-        -Wl,-framework,OpenGL)
+         GL)
 elseif(MSVC)
     target_link_libraries(engine-04-1 PRIVATE SDL2::SDL2 SDL2::SDL2main
                          opengl32)
