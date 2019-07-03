@@ -1,6 +1,6 @@
 version: '1.0.{build}'
 
-image: Visual Studio 2017
+image: Visual Studio 2019
 
 init:
   - vcpkg install sdl2:x64-windows
@@ -13,7 +13,7 @@ configuration:
   - Debug
 
 before_build:
-  - cmake -DCMAKE_TOOLCHAIN_FILE=c:/tools/vcpkg/scripts/buildsystems/vcpkg.cmake -G "Visual Studio 15 2017 Win64" class-01-basic-game-dev
+  - cmake -DCMAKE_TOOLCHAIN_FILE=c:/tools/vcpkg/scripts/buildsystems/vcpkg.cmake -G "Visual Studio 17 2019 Win64" class-01-basic-game-dev
 
 build:
   project: $(APPVEYOR_BUILD_FOLDER)\all-tests-build.sln
