@@ -15,9 +15,9 @@
 #include <tuple>
 #include <vector>
 
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_opengl.h>
-#include <SDL2/SDL_opengl_glext.h>
+#include <SDL.h>
+#include <SDL_opengl.h>
+#include <SDL_opengl_glext.h>
 
 #include "picopng.hxx"
 
@@ -74,7 +74,7 @@ static void load_gl_func(const char* func_name, T& result)
     void* gl_pointer = SDL_GL_GetProcAddress(func_name);
     if (nullptr == gl_pointer)
     {
-        throw std::runtime_error(std::string("can't load GL function") +
+        throw std::runtime_error(std::string("can't load GL function: ") +
                                  func_name);
     }
     result = reinterpret_cast<T>(gl_pointer);
@@ -217,7 +217,7 @@ public:
 
         bind();
 
-        GLsizeiptr size_in_bytes = n * 3 * sizeof(v2);
+        GLsizeiptr size_in_bytes = static_cast<GLsizeiptr>(n * 3 * sizeof(v2));
 
         glBufferData(GL_ARRAY_BUFFER, size_in_bytes, &tri->v[0],
                      GL_STATIC_DRAW);
@@ -231,27 +231,20 @@ public:
 
         bind();
 
-        GLsizeiptr size_in_bytes = n * sizeof(v2);
+        GLsizeiptr size_in_bytes = static_cast<GLsizeiptr>(n * sizeof(v2));
 
         glBufferData(GL_ARRAY_BUFFER, size_in_bytes, vert, GL_STATIC_DRAW);
         OM_GL_CHECK();
     }
-    ~vertex_buffer_impl() final
-    {
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        OM_GL_CHECK();
+    ~vertex_buffer_impl() final;
 
-        glDeleteBuffers(1, &gl_handle);
-        OM_GL_CHECK();
-    }
-
-    void bind() const
+    void bind() const override
     {
         glBindBuffer(GL_ARRAY_BUFFER, gl_handle);
         OM_GL_CHECK();
     }
 
-    std::uint32_t size() const { return count; }
+    std::uint32_t size() const override { return count; }
 
 private:
     std::uint32_t gl_handle{ 0 };
@@ -261,33 +254,15 @@ private:
 class index_buffer_impl final : public index_buffer
 {
 public:
-    index_buffer_impl(const std::uint16_t* i, size_t n)
-        : count(static_cast<std::uint32_t>(n))
-    {
-        glGenBuffers(1, &gl_handle);
-        OM_GL_CHECK();
-
-        bind();
-
-        GLsizeiptr size_in_bytes = n * sizeof(std::uint16_t);
-
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, size_in_bytes, i, GL_STATIC_DRAW);
-        OM_GL_CHECK();
-    }
-    ~index_buffer_impl()
-    {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-        OM_GL_CHECK();
-        glDeleteBuffers(1, &gl_handle);
-        OM_GL_CHECK();
-    }
-    void bind() const
+    index_buffer_impl(const std::uint16_t* i, size_t n);
+    ~index_buffer_impl() override;
+    void bind() const override
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl_handle);
         OM_GL_CHECK();
     }
 
-    std::uint32_t size() const { return count; }
+    std::uint32_t size() const override { return count; }
 
 private:
     std::uint32_t gl_handle{ 0 };
@@ -950,8 +925,8 @@ public:
                               reinterpret_cast<void*>(4 * sizeof(float)));
         OM_GL_CHECK();
 
-        glDrawElements(GL_TRIANGLES, num_vertexes, GL_UNSIGNED_SHORT,
-                       start_vertex_index);
+        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(num_vertexes),
+                       GL_UNSIGNED_SHORT, start_vertex_index);
 
         OM_GL_CHECK();
     }
@@ -1223,10 +1198,16 @@ std::string engine_impl::initialize(std::string_view)
     gl_context = SDL_GL_CreateContext(window);
     if (gl_context == nullptr)
     {
-        std::string msg("can't create opengl context: ");
-        msg += SDL_GetError();
-        serr << msg << endl;
-        return serr.str();
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
+                            SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
+        gl_context = SDL_GL_CreateContext(window);
+        if (gl_context == nullptr)
+        {
+            std::string msg("can't create opengl context: ");
+            msg += SDL_GetError();
+            serr << msg << endl;
+            return serr.str();
+        }
     }
 
     int gl_major_ver = 0;
@@ -1272,7 +1253,7 @@ std::string engine_impl::initialize(std::string_view)
         load_gl_func("glGenBuffers", glGenBuffers);
         load_gl_func("glBindBuffer", glBindBuffer);
         load_gl_func("glBufferData", glBufferData);
-        load_gl_func("glBufferSubDataF", glBufferSubData);
+        load_gl_func("glBufferSubData", glBufferSubData);
         load_gl_func("glUniformMatrix4fv", glUniformMatrix4fv);
         load_gl_func("glBlendEquationSeparate", glBlendEquationSeparate);
         load_gl_func("glBlendFuncSeparate", glBlendFuncSeparate);
@@ -1303,7 +1284,9 @@ std::string engine_impl::initialize(std::string_view)
                                   }
                                   )",
                                   R"(
+                                  #ifdef GL_ES
                                   precision mediump float;
+                                  #endif
                                   uniform vec4 u_color;
                                   void main()
                                   {
@@ -1327,7 +1310,9 @@ std::string engine_impl::initialize(std::string_view)
                 }
                 )",
         R"(
+                #ifdef GL_ES
                 precision mediump float;
+                #endif
                 varying vec4 v_color;
                 void main()
                 {
@@ -1353,7 +1338,9 @@ std::string engine_impl::initialize(std::string_view)
                 }
                 )",
         R"(
+                #ifdef GL_ES
                 precision mediump float;
+                #endif
                 varying vec2 v_tex_coord;
                 varying vec4 v_color;
                 uniform sampler2D s_texture;
@@ -1384,7 +1371,9 @@ std::string engine_impl::initialize(std::string_view)
                 }
                 )",
         R"(
+                #ifdef GL_ES
                 precision mediump float;
+                #endif
                 varying vec2 v_tex_coord;
                 varying vec4 v_color;
                 uniform sampler2D s_texture;
@@ -1413,6 +1402,38 @@ std::string engine_impl::initialize(std::string_view)
     }
 
     return "";
+}
+
+index_buffer_impl::index_buffer_impl(const uint16_t* i, size_t n)
+    : count(static_cast<std::uint32_t>(n))
+{
+    glGenBuffers(1, &gl_handle);
+    OM_GL_CHECK();
+
+    bind();
+
+    GLsizeiptr size_in_bytes =
+        static_cast<GLsizeiptr>(n * sizeof(std::uint16_t));
+
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, size_in_bytes, i, GL_STATIC_DRAW);
+    OM_GL_CHECK();
+}
+
+index_buffer_impl::~index_buffer_impl()
+{
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    OM_GL_CHECK();
+    glDeleteBuffers(1, &gl_handle);
+    OM_GL_CHECK();
+}
+
+vertex_buffer_impl::~vertex_buffer_impl()
+{
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    OM_GL_CHECK();
+
+    glDeleteBuffers(1, &gl_handle);
+    OM_GL_CHECK();
 }
 
 } // end namespace om

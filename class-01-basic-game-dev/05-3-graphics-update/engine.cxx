@@ -13,9 +13,9 @@
 #include <tuple>
 #include <vector>
 
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_opengl.h>
-#include <SDL2/SDL_opengl_glext.h>
+#include <SDL.h>
+#include <SDL_opengl.h>
+#include <SDL_opengl_glext.h>
 
 #include "picopng.hxx"
 
@@ -89,6 +89,7 @@ namespace om
 
 texture::~texture() {}
 
+#pragma pack(push, 1)
 class texture_gl_es20 final : public texture
 {
 public:
@@ -110,6 +111,7 @@ private:
     std::uint32_t width     = 0;
     std::uint32_t height    = 0;
 };
+#pragma pack(pop)
 
 class shader_gl_es20
 {
@@ -196,7 +198,7 @@ private:
             glGetShaderiv(shader_id, GL_INFO_LOG_LENGTH, &info_len);
             OM_GL_CHECK();
             std::vector<char> info_chars(static_cast<size_t>(info_len));
-            glGetShaderInfoLog(shader_id, info_len, NULL, info_chars.data());
+            glGetShaderInfoLog(shader_id, info_len, nullptr, info_chars.data());
             OM_GL_CHECK();
             glDeleteShader(shader_id);
             OM_GL_CHECK();
@@ -248,7 +250,7 @@ private:
             glGetProgramiv(program_id_, GL_INFO_LOG_LENGTH, &infoLen);
             OM_GL_CHECK();
             std::vector<char> infoLog(static_cast<size_t>(infoLen));
-            glGetProgramInfoLog(program_id_, infoLen, NULL, infoLog.data());
+            glGetProgramInfoLog(program_id_, infoLen, nullptr, infoLog.data());
             OM_GL_CHECK();
             std::cerr << "Error linking program:\n" << infoLog.data();
             glDeleteProgram(program_id_);
@@ -383,6 +385,7 @@ std::istream& operator>>(std::istream& is, tri2& t)
     return is;
 }
 
+#pragma pack(push, 1)
 struct bind
 {
     bind(std::string_view s, SDL_Keycode k, event pressed, event released)
@@ -399,6 +402,7 @@ struct bind
     event event_pressed;
     event event_released;
 };
+#pragma pack(pop)
 
 const std::array<bind, 8> keys{
     { bind{ "up", SDLK_w, event::up_pressed, event::up_released },
@@ -792,10 +796,10 @@ std::string engine_impl::initialize(std::string_view)
     int gl_major_ver = 0;
     int result =
         SDL_GL_GetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, &gl_major_ver);
-    SDL_assert(result == 0);
+    assert(result == 0);
     int gl_minor_ver = 0;
     result = SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, &gl_minor_ver);
-    SDL_assert(result == 0);
+    assert(result == 0);
 
     if (gl_major_ver <= 2 && gl_minor_ver < 1)
     {

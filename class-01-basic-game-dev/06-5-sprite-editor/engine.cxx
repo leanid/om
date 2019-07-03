@@ -16,9 +16,9 @@
 #include <unordered_map>
 #include <vector>
 
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_opengl.h>
-#include <SDL2/SDL_opengl_glext.h>
+#include <SDL.h>
+#include <SDL_opengl.h>
+#include <SDL_opengl_glext.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #pragma GCC diagnostic push
@@ -81,7 +81,7 @@ static void load_gl_func(const char* func_name, T& result)
     void* gl_pointer = SDL_GL_GetProcAddress(func_name);
     if (nullptr == gl_pointer)
     {
-        throw std::runtime_error(std::string("can't load GL function") +
+        throw std::runtime_error(std::string("can't load GL function: ") +
                                  func_name);
     }
     result = reinterpret_cast<T>(gl_pointer);
@@ -1313,10 +1313,16 @@ std::string engine_impl::initialize(std::string_view)
     gl_context = SDL_GL_CreateContext(window);
     if (gl_context == nullptr)
     {
-        std::string msg("can't create opengl context: ");
-        msg += SDL_GetError();
-        serr << msg << endl;
-        return serr.str();
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
+                            SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
+        gl_context = SDL_GL_CreateContext(window);
+        if (gl_context == nullptr)
+        {
+            std::string msg("can't create opengl context: ");
+            msg += SDL_GetError();
+            serr << msg << endl;
+            return serr.str();
+        }
     }
 
     int gl_major_ver = 0;
@@ -1362,7 +1368,7 @@ std::string engine_impl::initialize(std::string_view)
         load_gl_func("glGenBuffers", glGenBuffers);
         load_gl_func("glBindBuffer", glBindBuffer);
         load_gl_func("glBufferData", glBufferData);
-        load_gl_func("glBufferSubDataF", glBufferSubData);
+        load_gl_func("glBufferSubData", glBufferSubData);
         load_gl_func("glUniformMatrix4fv", glUniformMatrix4fv);
         load_gl_func("glBlendEquationSeparate", glBlendEquationSeparate);
         load_gl_func("glBlendFuncSeparate", glBlendFuncSeparate);
@@ -1393,7 +1399,9 @@ std::string engine_impl::initialize(std::string_view)
                                   }
                                   )",
                                   R"(
+                                  #ifdef GL_ES
                                   precision mediump float;
+                                  #endif
                                   uniform vec4 u_color;
                                   void main()
                                   {
@@ -1417,7 +1425,9 @@ std::string engine_impl::initialize(std::string_view)
                 }
                 )",
         R"(
+                #ifdef GL_ES
                 precision mediump float;
+                #endif
                 varying vec4 v_color;
                 void main()
                 {
@@ -1443,7 +1453,9 @@ std::string engine_impl::initialize(std::string_view)
                 }
                 )",
         R"(
+                #ifdef GL_ES
                 precision mediump float;
+                #endif
                 varying vec2 v_tex_coord;
                 varying vec4 v_color;
                 uniform sampler2D s_texture;
@@ -1474,7 +1486,9 @@ std::string engine_impl::initialize(std::string_view)
                 }
                 )",
         R"(
+                #ifdef GL_ES
                 precision mediump float;
+                #endif
                 varying vec2 v_tex_coord;
                 varying vec4 v_color;
                 uniform sampler2D s_texture;

@@ -104,7 +104,7 @@ int main(int /*argc*/, char* /*argv*/[])
     timer timer_;
     while (continue_loop)
     {
-        float delta_time = timer_.elapsed();
+        [[maybe_unused]] float delta_time = timer_.elapsed();
         timer_.reset();
 
         om::event event;
@@ -295,7 +295,7 @@ int main(int /*argc*/, char* /*argv*/[])
 
         spr.draw(engine);
 
-        animation.draw(engine, delta_time);
+        // animation.draw(engine, delta_time);
 
         engine.swap_buffers();
     }

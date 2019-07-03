@@ -14,9 +14,9 @@
 #include <tuple>
 #include <vector>
 
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_opengl.h>
-#include <SDL2/SDL_opengl_glext.h>
+#include <SDL.h>
+#include <SDL_opengl.h>
+#include <SDL_opengl_glext.h>
 
 #include "picopng.hxx"
 
@@ -210,6 +210,7 @@ private:
 
 vertex_buffer_impl::~vertex_buffer_impl() {}
 
+#pragma pack(push, 1)
 class texture_gl_es20 final : public texture
 {
 public:
@@ -231,6 +232,7 @@ private:
     std::uint32_t width     = 0;
     std::uint32_t height    = 0;
 };
+#pragma pack(pop)
 
 class shader_gl_es20
 {
@@ -389,7 +391,7 @@ private:
             glGetProgramiv(program_id_, GL_INFO_LOG_LENGTH, &infoLen);
             OM_GL_CHECK();
             std::vector<char> infoLog(static_cast<size_t>(infoLen));
-            glGetProgramInfoLog(program_id_, infoLen, NULL, infoLog.data());
+            glGetProgramInfoLog(program_id_, infoLen, nullptr, infoLog.data());
             OM_GL_CHECK();
             std::cerr << "Error linking program:\n" << infoLog.data();
             glDeleteProgram(program_id_);
@@ -588,6 +590,7 @@ static bool check_input(const SDL_Event& e, const bind*& result)
     return false;
 }
 
+#pragma pack(push, 1)
 class engine_impl final : public engine
 {
 public:
@@ -843,6 +846,7 @@ private:
     shader_gl_es20* shader03       = nullptr;
     uint32_t        gl_default_vbo = 0;
 };
+#pragma pack(pop)
 
 static bool already_exist = false;
 
@@ -1045,19 +1049,26 @@ std::string engine_impl::initialize(std::string_view)
     gl_context = SDL_GL_CreateContext(window);
     if (gl_context == nullptr)
     {
-        std::string msg("can't create opengl context: ");
-        msg += SDL_GetError();
-        serr << msg << endl;
-        return serr.str();
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
+                            SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
+
+        gl_context = SDL_GL_CreateContext(window);
+        if (gl_context == nullptr)
+        {
+            std::string msg("can't create opengl context: ");
+            msg += SDL_GetError();
+            serr << msg << endl;
+            return serr.str();
+        }
     }
 
     int gl_major_ver = 0;
     int result =
         SDL_GL_GetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, &gl_major_ver);
-    SDL_assert(result == 0);
+    assert(result == 0);
     int gl_minor_ver = 0;
     result = SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, &gl_minor_ver);
-    SDL_assert(result == 0);
+    assert(result == 0);
 
     if (gl_major_ver < 2)
     {
@@ -1119,7 +1130,9 @@ std::string engine_impl::initialize(std::string_view)
                                   }
                                   )",
                                   R"(
+                                  #ifdef GL_ES
                                   precision mediump float;
+                                  #endif
                                   uniform vec4 u_color;
                                   void main()
                                   {
@@ -1143,7 +1156,9 @@ std::string engine_impl::initialize(std::string_view)
                 }
                 )",
         R"(
+                #ifdef GL_ES
                 precision mediump float;
+                #endif
                 varying vec4 v_color;
                 void main()
                 {
@@ -1169,7 +1184,9 @@ std::string engine_impl::initialize(std::string_view)
                 }
                 )",
         R"(
+                #ifdef GL_ES
                 precision mediump float;
+                #endif
                 varying vec2 v_tex_coord;
                 varying vec4 v_color;
                 uniform sampler2D s_texture;
@@ -1200,7 +1217,9 @@ std::string engine_impl::initialize(std::string_view)
                 }
                 )",
         R"(
+                #ifdef GL_ES
                 precision mediump float;
+                #endif
                 varying vec2 v_tex_coord;
                 varying vec4 v_color;
                 uniform sampler2D s_texture;
