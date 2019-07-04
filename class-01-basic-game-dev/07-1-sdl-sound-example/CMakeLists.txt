@@ -1,31 +1,27 @@
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 3.14)
 project(07-1-add-sound CXX)
-
-find_library(SDL2_LIB NAMES SDL2)
 
 add_executable(sound_test-07-1 sound_test.cxx)
 target_compile_features(sound_test-07-1 PUBLIC cxx_std_20)
 
+find_package(sdl2 REQUIRED)
+target_include_directories(sound_test-07-1 PRIVATE ${SDL2_INCLUDE_DIRS})
+target_link_libraries(sound_test-07-1 PRIVATE ${SDL2_LIBRARIES})
+
 if (MINGW)
-    target_link_libraries(sound_test-07-1
+    target_link_libraries(sound_test-07-1 PRIVATE
                -lmingw32
                -lSDL2main
                -lSDL2
                -mwindows
                -lopengl32
                )
-elseif(UNIX)
-    target_link_libraries(sound_test-07-1
-               -lSDL2
-               -lGL
-               )
 elseif(MSVC)
-    find_package(sdl2 REQUIRED)
     target_link_libraries(sound_test-07-1 PRIVATE SDL2::SDL2 SDL2::SDL2main)
 endif()
 
 if(MSVC)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /WX /std:c++17")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /WX")
 else()
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -Werror")
 endif()

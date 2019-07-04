@@ -5,6 +5,10 @@ add_executable(engine-08-2 engine.cxx engine.hxx picopng.hxx)
 set_target_properties(engine-08-2 PROPERTIES ENABLE_EXPORTS TRUE)
 target_compile_features(engine-08-2 PUBLIC cxx_std_17)
 
+find_package(sdl2 REQUIRED)
+target_include_directories(engine-08-2 PRIVATE ${SDL2_INCLUDE_DIRS})
+target_link_libraries(engine-08-2 PRIVATE ${SDL2_LIBRARIES})
+
 if(WIN32)
   target_compile_definitions(engine-08-2 PRIVATE "-DOM_DECLSPEC=__declspec(dllexport)")
   target_compile_definitions(engine-08-2 PRIVATE "-DOM_GAME=__declspec(dllimport)")  # for om_tat_sat import
@@ -13,28 +17,31 @@ endif(WIN32)
 find_library(SDL2_LIB NAMES SDL2)
 
 if (MINGW)
-    target_link_libraries(engine-08-2
+    target_link_libraries(engine-08-2 PRIVATE
                -lmingw32
                -lSDL2main
                -lSDL2
                -mwindows
                -lopengl32
                )
+elseif(APPLE)
+    target_link_libraries(engine-08-2 PRIVATE
+              -Wl,-framework,OpenGL
+              )
 elseif(UNIX)
-    target_link_libraries(engine-08-2
+    target_link_libraries(engine-08-2 PRIVATE
                -lSDL2
                -lGL
                )
 elseif(MSVC)
-    find_package(sdl2 REQUIRED)
     target_link_libraries(engine-08-2 PRIVATE SDL2::SDL2 SDL2::SDL2main
                           opengl32)
 endif()
 
-add_library(game-08-2 SHARED game.cxx)
+add_library(game-08-2 MODULE game.cxx)
 target_compile_features(game-08-2 PUBLIC cxx_std_17)
 
-target_link_libraries(game-08-2 engine-08-2)
+target_link_libraries(game-08-2 PRIVATE engine-08-2)
 
 if(MSVC)
   # for all engine functions
@@ -42,7 +49,6 @@ if(MSVC)
   # for om_tat_sat export
   target_compile_definitions(game-08-2 PRIVATE "-DOM_GAME=__declspec(dllexport)")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17")
 elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   # using regular Clang or AppleClang
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")

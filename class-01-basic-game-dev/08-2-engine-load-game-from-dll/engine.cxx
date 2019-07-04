@@ -18,9 +18,9 @@
 #include <tuple>
 #include <vector>
 
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_opengl.h>
-#include <SDL2/SDL_opengl_glext.h>
+#include <SDL.h>
+#include <SDL_opengl.h>
+#include <SDL_opengl_glext.h>
 
 #include "picopng.hxx"
 
@@ -1488,12 +1488,15 @@ int initialize_and_start_main_loop()
 {
     om::engine engine("");
 
-    std::string_view game_so_name("game-08-2.dll");
+    // "game-08-2.dll" - works on windows
+    // "libgame-08-2.so" - works on MacOSX and Linux
+    std::string_view game_so_name("./build/libgame-08-2.so");
 
     void* so_handle = SDL_LoadObject(game_so_name.data());
     if (so_handle == nullptr)
     {
-        engine.log << "can't load " << game_so_name << std::endl;
+        engine.log << "can't load " << game_so_name << ' ' << SDL_GetError()
+                   << std::endl;
         return EXIT_FAILURE;
     }
 
@@ -1505,6 +1508,8 @@ int initialize_and_start_main_loop()
     om_tat_sat_func =
         "?om_tat_sat@@YA?AV?$unique_ptr@Ulila@om@@U?$default_delete@Ulila@om@@@"
         "std@@@std@@AAVengine@om@@@Z"; // TODO fix it later
+#elif defined(__APPLE__)
+    om_tat_sat_func = "_Z10om_tat_satRN2om6engineE";
 #else
 #error "add mangled name for your compiler"
 #endif
@@ -1550,7 +1555,7 @@ int initialize_and_start_main_loop()
     return EXIT_SUCCESS;
 }
 
-int main(int /*argc*/, char* /*argv*/ [])
+int main(int /*argc*/, char* /*argv*/[])
 {
     try
     {

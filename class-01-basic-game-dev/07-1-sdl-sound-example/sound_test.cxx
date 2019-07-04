@@ -6,7 +6,7 @@
 #include <iomanip>
 #include <iostream>
 
-#include <SDL2/SDL.h>
+#include <SDL.h>
 
 constexpr int32_t AUDIO_FORMAT = AUDIO_S16LSB;
 
