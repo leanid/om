@@ -18,6 +18,7 @@
 #include <SDL.h>
 #include <SDL_opengl.h>
 #include <SDL_opengl_glext.h>
+#include <SDL_syswm.h>
 
 #include "picopng.hxx"
 
@@ -1509,10 +1510,10 @@ void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
             const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
             assert(pcmd->UserCallback == nullptr); // we not use it
 
-            om::texture* texture =
+            om::texture* tex =
                 reinterpret_cast<om::texture*>(pcmd->TextureId);
 
-            om::g_engine->render(vertex_buff, index_buff, texture,
+            om::g_engine->render(vertex_buff, index_buff, tex,
                                  idx_buffer_offset, pcmd->ElemCount);
 
             idx_buffer_offset += pcmd->ElemCount;
@@ -1722,15 +1723,6 @@ bool ImGui_ImplSdlGL3_Init(SDL_Window* window)
     g_MouseCursors[ImGuiMouseCursor_Hand] =
         SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_HAND);
 */
-#ifdef _WIN32
-    SDL_SysWMinfo wmInfo;
-    SDL_VERSION(&wmInfo.version);
-    SDL_GetWindowWMInfo(window, &wmInfo);
-    io.ImeWindowHandle = wmInfo.info.win.window;
-#else
-    (void)window;
-#endif
-
     io.RenderDrawListsFn =
         ImGui_ImplSdlGL3_RenderDrawLists; // Alternatively you can set this to
                                           // NULL and call ImGui::GetDrawData()

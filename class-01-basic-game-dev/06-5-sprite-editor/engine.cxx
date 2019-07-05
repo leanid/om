@@ -19,15 +19,20 @@
 #include <SDL.h>
 #include <SDL_opengl.h>
 #include <SDL_opengl_glext.h>
+#include <SDL_syswm.h>
 
 #define STB_IMAGE_IMPLEMENTATION
+#ifdef __GNUG__
 #pragma GCC diagnostic push
 // turn off the specific warning. Can also use "-Wall"
 #pragma GCC diagnostic ignored "-Wall"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif
 #include "imgui.h"
 #include "stb_image.h"
+#ifdef __GNUG__
 #pragma GCC diagnostic pop
+#endif
 
 bool ImGui_ImplSdlGL3_Init(SDL_Window* window);
 void ImGui_ImplSdlGL3_Shutdown();
@@ -835,8 +840,8 @@ public:
         auto        it = texture_cache.find(key);
         if (it != end(texture_cache))
         {
-            texture_gl_es20* t = it->second;
-            if (t->remove_ref())
+            texture_gl_es20* t_ = it->second;
+            if (t_->remove_ref())
             {
                 texture_cache.erase(key);
             }
@@ -1605,10 +1610,10 @@ void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
             const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
             assert(pcmd->UserCallback == nullptr); // we not use it
 
-            om::texture* texture =
+            om::texture* tex =
                 reinterpret_cast<om::texture*>(pcmd->TextureId);
 
-            om::g_engine->render(vertex_buff, index_buff, texture,
+            om::g_engine->render(vertex_buff, index_buff, tex,
                                  idx_buffer_offset, pcmd->ElemCount);
 
             idx_buffer_offset += pcmd->ElemCount;
@@ -1818,15 +1823,6 @@ bool ImGui_ImplSdlGL3_Init(SDL_Window* window)
     g_MouseCursors[ImGuiMouseCursor_Hand] =
         SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_HAND);
 */
-#ifdef _WIN32
-    SDL_SysWMinfo wmInfo;
-    SDL_VERSION(&wmInfo.version);
-    SDL_GetWindowWMInfo(window, &wmInfo);
-    io.ImeWindowHandle = wmInfo.info.win.window;
-#else
-    (void)window;
-#endif
-
     io.SetClipboardTextFn = ImGui_ImplSdlGL3_SetClipboardText;
     io.GetClipboardTextFn = ImGui_ImplSdlGL3_GetClipboardText;
     io.ClipboardUserData  = nullptr;
