@@ -1418,7 +1418,8 @@ int initialize_and_start_main_loop()
     std::vector<const char*> lib_names{
         { "libgame-09-2.dll", "game-09-2.dll", "./libgame-09-2.so",
           "./game-09-2.so", "./build/Debug/libgame-09-2.so",
-          "./build/Debug/libgame-09-2.dll", "./build-Debug/libgame-09-2.so" }
+          "./build/Debug/libgame-09-2.dll", "./build-Debug/libgame-09-2.so",
+          "./build/libgame-09-2.so" }
     };
 
     void* so_handle   = nullptr;
