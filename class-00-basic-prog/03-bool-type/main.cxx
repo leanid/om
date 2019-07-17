@@ -4,9 +4,37 @@
 
 #include "bool.hxx"
 
-int main(int argc, char* argv[])
+int main(int, char**)
 {
     using namespace om;
-    bool_ b(true_);
+
+    // clang-format off
+    std::cout << "/// operation | first value | second value | result\n";
+    std::cout << "/// -----------------------------------------------\n";
+    std::cout << "///     ==    |    true     |   true       | " << (true_ == true_) << "\n";
+    std::cout << "///     ==    |    true     |   false      | " << (true_ == false_) << "\n";
+    std::cout << "///     ==    |    false    |   true       | " << (false_ == true_) << "\n";
+    std::cout << "///     ==    |    false    |   false      | " << (false_ == false_) << "\n";
+    std::cout << "/// -----------------------------------------------\n";
+    std::cout << "///     &&    |    true     |   true       | " << (true_ && true_) << "\n";
+    std::cout << "///     &&    |    true     |   false      | " << (true_ && false_) << "\n";
+    std::cout << "///     &&    |    false    |   true       | " << (false_ && true_) << "\n";
+    std::cout << "///     &&    |    false    |   false      | " << (false_ && false_) << "\n";
+    std::cout << "/// -----------------------------------------------\n";
+    std::cout << "///     ||    |    true     |   true       | " << (true_ || true_) << "\n";
+    std::cout << "///     ||    |    true     |   false      | " << (true_ || false_) << "\n";
+    std::cout << "///     ||    |    false    |   true       | " << (false_ || true_) << "\n";
+    std::cout << "///     ||    |    false    |   false      | " << (false_ || false_) << "\n";
+    std::cout << "/// -----------------------------------------------\n";
+    std::cout << "///     ^     |    true     |   true       | " << (true_ ^ true_) << "\n";
+    std::cout << "///     ^     |    true     |   false      | " << (true_ ^ false_) << "\n";
+    std::cout << "///     ^     |    false    |   true       | " << (false_ ^ true_) << "\n";
+    std::cout << "///     ^     |    false    |   false      | " << (false_ ^ false_) << "\n";
+    std::cout << "/// -----------------------------------------------\n";
+    std::cout << "///     !     |    true     |              | " << (!true_) << "\n";
+    std::cout << "///     !     |    false    |              | " << (!false_) << "\n";
+    std::cout << "/// -----------------------------------------------\n";
+    // clang-format on;
+
     return 0;
 }
