@@ -34,30 +34,32 @@ namespace om
 /// from standard:
 /// bool - type, capable of holding one of the two values: true or false.
 /// The value of sizeof(bool) is implementation defined and might differ from 1.
-struct bool_
+struct bool_t
 {
-    bool_();
-    bool_(const bool_& other);
-    bool_(bool_&&);
-    ~bool_();
-    bool_& operator=(const bool_&);
-    bool_& operator=(bool_&&);
+    bool_t();
+    bool_t(const bool_t& other);
+    bool_t(bool_t&&);
+    ~bool_t();
+    bool_t& operator=(const bool_t&);
+    bool_t& operator=(bool_t&&);
 
-    friend std::ostream& operator<<(std::ostream& stream, const bool_&);
-    friend std::ostream& operator>>(std::ostream& stream, bool_&);
+    explicit operator bool() const;
+
+    friend std::ostream& operator<<(std::ostream& stream, const bool_t&);
+    friend std::ostream& operator>>(std::ostream& stream, bool_t&);
 
 private:
     std::byte value;
 };
 
-bool_ operator==(bool_ l, bool_ r);
-bool_ operator&&(bool_ l, bool_ r);
-bool_ operator||(bool_ l, bool_ r);
-bool_ operator^(bool_ l, bool_ r);
-bool_ operator!(bool_ b);
-bool_ operator~(bool_ b);
+bool_t operator==(bool_t l, bool_t r);
+bool_t operator&&(bool_t l, bool_t r);
+bool_t operator||(bool_t l, bool_t r);
+bool_t operator^(bool_t l, bool_t r);
+bool_t operator!(bool_t b);
+bool_t operator~(bool_t b);
 
-extern const bool_ true_;
-extern const bool_ false_;
+extern const bool_t true_;
+extern const bool_t false_;
 
 } // end namespace om

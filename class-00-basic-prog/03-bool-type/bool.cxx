@@ -7,38 +7,44 @@ namespace om
 static const std::byte false_byte{ 0b00000000 };
 static const std::byte true_byte{ 0b00000001 };
 
-const bool_ true_{ reinterpret_cast<const bool_&>(true_byte) };
-const bool_ false_{ reinterpret_cast<const bool_&>(false_byte) };
+const bool_t true_{ reinterpret_cast<const bool_t&>(true_byte) };
+const bool_t false_{ reinterpret_cast<const bool_t&>(false_byte) };
 
-bool_::bool_()
+bool_t::bool_t()
     : value{ false_byte } {};
 
-bool_::bool_(const bool_& other)
+bool_t::bool_t(const bool_t& other)
     : value{ other.value }
 {
 }
 
-bool_::bool_(bool_&& other)
+bool_t::bool_t(bool_t&& other)
     : value{ other.value }
 {
 }
 
-bool_::~bool_()
+bool_t::~bool_t()
 {
     value = false_byte;
 }
 
-bool_& bool_::operator=(const bool_& other)
+bool_t& bool_t::operator=(const bool_t& other)
 {
     value = other.value;
     return *this;
 }
 
-bool_& bool_::operator=(bool_&& other)
+bool_t& bool_t::operator=(bool_t&& other)
 {
     value = other.value;
     return *this;
 }
+
+bool_t::operator bool() const
+{
+    return static_cast<bool>(value & true_byte);
+}
+
 /// operation | first value | second value | result
 /// -----------------------------------------------
 ///     ==    |    true     |   true       | true
@@ -65,7 +71,7 @@ bool_& bool_::operator=(bool_&& other)
 ///     !     |    false    |              | true
 /// -----------------------------------------------
 
-bool_ operator==(bool_ l, bool_ r)
+bool_t operator==(bool_t l, bool_t r)
 {
     const std::byte& lb = reinterpret_cast<const std::byte&>(l);
     const std::byte& rb = reinterpret_cast<const std::byte&>(r);
@@ -80,7 +86,7 @@ bool_ operator==(bool_ l, bool_ r)
     }
 }
 
-bool_ operator&&(bool_ l, bool_ r)
+bool_t operator&&(bool_t l, bool_t r)
 {
     const std::byte& lb = reinterpret_cast<const std::byte&>(l);
     const std::byte& rb = reinterpret_cast<const std::byte&>(r);
@@ -94,7 +100,7 @@ bool_ operator&&(bool_ l, bool_ r)
     }
 }
 
-bool_ operator||(bool_ l, bool_ r)
+bool_t operator||(bool_t l, bool_t r)
 {
     const std::byte& lb = reinterpret_cast<const std::byte&>(l);
     const std::byte& rb = reinterpret_cast<const std::byte&>(r);
@@ -108,7 +114,7 @@ bool_ operator||(bool_ l, bool_ r)
     }
 }
 
-bool_ operator^(bool_ l, bool_ r)
+bool_t operator^(bool_t l, bool_t r)
 {
     const std::byte& lb = reinterpret_cast<const std::byte&>(l);
     const std::byte& rb = reinterpret_cast<const std::byte&>(r);
@@ -123,7 +129,7 @@ bool_ operator^(bool_ l, bool_ r)
     }
 }
 
-bool_ operator!(bool_ b)
+bool_t operator!(bool_t b)
 {
     const std::byte& lb = reinterpret_cast<const std::byte&>(b);
     if (lb == true_byte)
@@ -136,12 +142,12 @@ bool_ operator!(bool_ b)
     }
 }
 
-bool_ operator~(bool_ b)
+bool_t operator~(bool_t b)
 {
     return !b;
 }
 
-std::ostream& operator<<(std::ostream& stream, const bool_& b)
+std::ostream& operator<<(std::ostream& stream, const bool_t& b)
 {
     const std::byte& lb = reinterpret_cast<const std::byte&>(b);
     if (lb == true_byte)
@@ -154,7 +160,7 @@ std::ostream& operator<<(std::ostream& stream, const bool_& b)
     }
     return stream;
 }
-std::istream& operator>>(std::istream& stream, bool_& result)
+std::istream& operator>>(std::istream& stream, bool_t& result)
 {
     std::string str;
     stream >> str;
