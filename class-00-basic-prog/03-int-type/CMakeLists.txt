@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.14)
 project(03-int-type)
-add_executable(${PROJECT_NAME} hack_main.cxx)
-target_compile_features(${PROJECT_NAME} PRIVATE std_cxx_17)
+add_executable(${PROJECT_NAME} main.cxx bool.hxx bool.cxx)
+target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)
 

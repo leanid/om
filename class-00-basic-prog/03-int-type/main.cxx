@@ -2,72 +2,109 @@
 #include <cstddef>
 #include <iostream>
 
+#include "bool.hxx"
+
 namespace om
 {
-class u8
+
+class u8_t;
+std::ostream& operator<<(std::ostream& stream, const u8_t& v);
+
+class u8_t
 {
 public:
-    u8() = default;
-    u8(std::byte v)
-        : value{ v } {};
+    u8_t()            = default;
+    u8_t(const u8_t&) = default;
+    u8_t(u8_t&&)      = default;
+    u8_t(std::byte v)
+        : value{ v }
+    {
+    }
+
+    std::string to_str() const;
+
+    friend u8_t operator+(const u8_t& l, const u8_t& r);
+    friend u8_t operator-(const u8_t& l, const u8_t& r);
+    friend u8_t operator<(const u8_t& l, const u8_t& r);
 
 private:
-    std::byte value = 0;
-    friend u8 operator+(const u8& l, const u8& r);
+    friend std::ostream& operator<<(std::ostream& stream, const u8_t&);
+    friend std::istream& operator>>(std::istream& stream, u8_t&);
+
+    std::byte value{ 0 };
 };
-u8 operator+(const u8& l, const u8& r)
+u8_t operator+(const u8_t& l, const u8_t& r)
 {
-    u8               result;
-    constexpr size_t bits_in_byte = CHAR_BIT;
-    bool             carry_bit    = 0;
-    for (size_t i = 0; i < bits_in_byte; ++i)
+    std::byte result{ 0b00000000 };
+    bool_t    carry_bit = false_;
+
+    for (std::byte bit_index_mask{ 1 }; bit_index_mask != std::byte{ 0 };
+         bit_index_mask <<= 1)
     {
-        bool left_bit  = (l >> i) & 1;
-        bool right_bit = (r >> i) & 1;
+        bool_t one_bit_l =
+            (l.value & bit_index_mask) == std::byte{ 0 } ? false_ : true_;
+        bool_t one_bit_r =
+            (r.value & bit_index_mask) == std::byte{ 0 } ? false_ : true_;
 
-        if (left_bit == 1 && right_bit == 1 && carry_bit == 1) // 3
-        {
-            goto total_bits_3;
-        }
-        else if (left_bit == 1 && right_bit == 1 && carry_bit == 0) // 2
-        {
-            goto total_bits_2;
-        }
-        else if (left_bit == 1 && right_bit == 0 && carry_bit == 1) // 2
-        {
-            goto total_bits_2;
-        }
-        else if (left_bit == 0 && right_bit == 1 && carry_bit == 1) // 2
-        {
-            goto total_bits_2;
-        }
-        else if (left_bit == 0 && right_bit == 1 && carry_bit == 0) // 1
-        {
-            goto total_bits_1;
-        }
-        else if (left_bit == 0 && right_bit == 0 && carry_bit == 1) // 1
-        {
-            goto total_bits_1;
-        }
-        else if (left_bit == 1 && right_bit == 0 && carry_bit == 0) // 1
-        {
-            goto total_bits_1;
-        }
-        else if (left_bit == 0 && right_bit == 0 && carry_bit == 0) // 0
-        {
-            goto total_bits_0;
-        }
+        bool_t result_bit = carry_bit ^ (one_bit_l ^ one_bit_r);
+        carry_bit = (one_bit_l && one_bit_r) || (carry_bit && one_bit_l) ||
+                    (carry_bit && one_bit_r);
 
-    total_bits_3:
-        // set current bit to 1 and carry_bit to 1
-    total_bits_2:
-        // set current bit to 0 and carry_bit to 1
-    total_bits_1:
-        // set current bit to 1 and carry_bit to 0
-    total_bits_0:
-        // set current bit to 0 and carry_bit to 0
+        if (result_bit)
+        {
+            result |= bit_index_mask;
+        }
+    }
+
+    if (carry_bit)
+    {
+        std::cerr << "overflow result not fit into u8_t" << std::endl;
     }
 
     return result;
 }
+
+std::ostream& operator<<(std::ostream& stream, const u8_t& v)
+{
+    stream << "0b";
+    for (std::byte i{ 0b10000000 }; i != std::byte{ 0 }; i >>= 1)
+    {
+        char print_char = (i & v.value) == std::byte{ 0 } ? '0' : '1';
+        stream << print_char;
+    }
+    return stream;
+}
+
+std::string u8_t::to_str() const
+{
+    return std::to_string(static_cast<uint32_t>(value));
+}
+
 } // end namespace om
+
+std::istream& operator>>(std::istream& stream, om::u8_t&);
+
+int main()
+{
+    using namespace om;
+
+    auto first_operands  = { 0b10101010, 0b00000001, 0b11111111 };
+    auto second_operands = { 0b01010101, 0b00000001, 0b01111111 };
+
+    for (auto first  = std::begin(first_operands),
+              second = std::begin(second_operands);
+         first != std::end(first_operands); ++first, ++second)
+    {
+
+        u8_t a0{ static_cast<std::byte>(*first) };
+        u8_t a1{ static_cast<std::byte>(*second) };
+
+        u8_t r0 = a0 + a1;
+
+        std::cout << "a0 == " << a0 << '(' << a0.to_str() << ")\n";
+        std::cout << "a1 == " << a1 << '(' << a1.to_str() << ")\n";
+        std::cout << "r0 == " << r0 << '(' << r0.to_str() << ")\n";
+    }
+
+    return 0;
+}
