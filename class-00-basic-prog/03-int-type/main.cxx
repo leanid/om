@@ -20,6 +20,7 @@ public:
         : value{ v }
     {
     }
+    u8_t& operator=(const u8_t&) = default;
 
     std::string to_str() const;
 
@@ -64,6 +65,15 @@ u8_t operator+(const u8_t& l, const u8_t& r)
     return result;
 }
 
+u8_t operator-(const u8_t& l, const u8_t& r)
+{
+    // invert r
+    u8_t minus_r{ static_cast<std::byte>(~r.value) };
+    minus_r = minus_r + u8_t{ std::byte{ 1 } };
+
+    return l + minus_r;
+}
+
 std::ostream& operator<<(std::ostream& stream, const u8_t& v)
 {
     stream << "0b";
@@ -88,12 +98,12 @@ int main()
 {
     using namespace om;
 
-    auto first_operands  = { 0b10101010, 0b00000001, 0b11111111 };
-    auto second_operands = { 0b01010101, 0b00000001, 0b01111111 };
+    std::cout << "Plus examples:\n";
+    auto plus_arg_a0 = { 0b10101010, 0b00000001, 0b11111111 };
+    auto plus_arg_a1 = { 0b01010101, 0b00000001, 0b01111111 };
 
-    for (auto first  = std::begin(first_operands),
-              second = std::begin(second_operands);
-         first != std::end(first_operands); ++first, ++second)
+    for (auto first = std::begin(plus_arg_a0), second = std::begin(plus_arg_a1);
+         first != std::end(plus_arg_a0); ++first, ++second)
     {
 
         u8_t a0{ static_cast<std::byte>(*first) };
@@ -105,6 +115,42 @@ int main()
         std::cout << "a1 == " << a1 << '(' << a1.to_str() << ")\n";
         std::cout << "r0 == " << r0 << '(' << r0.to_str() << ")\n";
     }
+
+    uint8_t a0 = 255;
+    uint8_t a1 = 255;
+    auto    r0 = a0 + a1; // type of r0 is ? (uint32_t)?
+
+    std::cout << "a0 == " << static_cast<uint32_t>(a0) << '\n';
+    std::cout << "a1 == " << static_cast<uint32_t>(a1) << '\n';
+    std::cout << "r0 == " << static_cast<uint32_t>(r0) << '\n';
+
+    std::cout << "Minus examples:\n";
+
+    auto minus_arg_a0 = { 0b10101010, 0b00000001, 0b11111111 };
+    auto minus_arg_a1 = { 0b01010101, 0b00000001, 0b01111111 };
+
+    for (auto first  = std::begin(minus_arg_a0),
+              second = std::begin(minus_arg_a1);
+         first != std::end(minus_arg_a0); ++first, ++second)
+    {
+
+        u8_t a0{ static_cast<std::byte>(*first) };
+        u8_t a1{ static_cast<std::byte>(*second) };
+
+        u8_t r0 = a0 - a1;
+
+        std::cout << "a0 == " << a0 << '(' << a0.to_str() << ")\n";
+        std::cout << "a1 == " << a1 << '(' << a1.to_str() << ")\n";
+        std::cout << "r0 == " << r0 << '(' << r0.to_str() << ")\n";
+    }
+
+    a0         = 1;
+    a1         = 2;
+    uint8_t r1 = a0 - a1;
+
+    std::cout << "a0 == " << static_cast<uint32_t>(a0) << '\n';
+    std::cout << "a1 == " << static_cast<uint32_t>(a1) << '\n';
+    std::cout << "r1 == " << static_cast<uint32_t>(r1) << '\n';
 
     return 0;
 }
