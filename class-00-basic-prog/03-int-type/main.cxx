@@ -1,5 +1,6 @@
 #include <climits>
 #include <cstddef>
+#include <iomanip>
 #include <iostream>
 
 #include "bool.hxx"
@@ -22,7 +23,8 @@ public:
     }
     u8_t& operator=(const u8_t&) = default;
 
-    std::string to_str() const;
+    std::string  to_str() const;
+    std::int32_t to_int() const;
 
     friend u8_t operator+(const u8_t& l, const u8_t& r);
     friend u8_t operator-(const u8_t& l, const u8_t& r);
@@ -90,6 +92,15 @@ std::string u8_t::to_str() const
     return std::to_string(static_cast<uint32_t>(value));
 }
 
+std::int32_t u8_t::to_int() const
+{
+    std::int32_t i{ 0 };
+    // not all systems are little-endian
+    std::byte& ref_to_low_byte{ reinterpret_cast<std::byte&>(i) };
+    ref_to_low_byte = value;
+    return i;
+}
+
 } // end namespace om
 
 std::istream& operator>>(std::istream& stream, om::u8_t&);
@@ -97,60 +108,64 @@ std::istream& operator>>(std::istream& stream, om::u8_t&);
 int main()
 {
     using namespace om;
+    using namespace std;
 
-    std::cout << "Plus examples:\n";
-    auto plus_arg_a0 = { 0b10101010, 0b00000001, 0b11111111 };
-    auto plus_arg_a1 = { 0b01010101, 0b00000001, 0b01111111 };
+    cout << "Plus examples:\n";
+    auto plus_arg_a0 = { 0b10101010, 0b00000001, 0b11111111,
+                         0b11111111, 0b11111111, 0b11111111 };
+    auto plus_arg_a1 = { 0b01010101, 0b00000011, 0b01111111,
+                         0b10000000, 0b11111110, 0b11111111 };
 
-    for (auto first = std::begin(plus_arg_a0), second = std::begin(plus_arg_a1);
-         first != std::end(plus_arg_a0); ++first, ++second)
+    for (auto first = begin(plus_arg_a0), second = begin(plus_arg_a1);
+         first != end(plus_arg_a0); ++first, ++second)
     {
 
-        u8_t a0{ static_cast<std::byte>(*first) };
-        u8_t a1{ static_cast<std::byte>(*second) };
+        u8_t a0{ static_cast<byte>(*first) };
+        u8_t a1{ static_cast<byte>(*second) };
 
         u8_t r0 = a0 + a1;
 
-        std::cout << "a0 == " << a0 << '(' << a0.to_str() << ")\n";
-        std::cout << "a1 == " << a1 << '(' << a1.to_str() << ")\n";
-        std::cout << "r0 == " << r0 << '(' << r0.to_str() << ")\n";
+        cout << "-------------------------------------------\n";
+        cout << "a0  == " << a0 << '(' << setw(3) << a0.to_str() << ")\n";
+        cout << "a1  == " << a1 << '(' << setw(3) << a1.to_str() << ")\n";
+        cout << "r0  == " << r0 << '(' << setw(3) << r0.to_str() << ")\n";
+
+        int32_t     i_a0       = a0.to_int();
+        int32_t     i_a1       = a1.to_int();
+        int32_t     i_r0       = r0.to_int();
+        const char* equal_sign = i_r0 == i_a0 + i_a1 ? " == " : " != ";
+        cout << setw(3) << r0.to_int() << equal_sign << "(" << i_a0 << " + "
+             << i_a1 << ")\n";
     }
 
-    uint8_t a0 = 255;
-    uint8_t a1 = 255;
-    auto    r0 = a0 + a1; // type of r0 is ? (uint32_t)?
+    cout << "-------------------------------------------\n";
+    cout << "Minus examples:\n";
 
-    std::cout << "a0 == " << static_cast<uint32_t>(a0) << '\n';
-    std::cout << "a1 == " << static_cast<uint32_t>(a1) << '\n';
-    std::cout << "r0 == " << static_cast<uint32_t>(r0) << '\n';
+    auto minus_arg_a0 = { 0b10101010, 0b00000001, 0b11111111,
+                          0b11111111, 0b11111111, 0b11111111 };
+    auto minus_arg_a1 = { 0b01010101, 0b00000011, 0b01111111,
+                          0b10000000, 0b11111110, 0b11111111 };
 
-    std::cout << "Minus examples:\n";
-
-    auto minus_arg_a0 = { 0b10101010, 0b00000001, 0b11111111 };
-    auto minus_arg_a1 = { 0b01010101, 0b00000001, 0b01111111 };
-
-    for (auto first  = std::begin(minus_arg_a0),
-              second = std::begin(minus_arg_a1);
-         first != std::end(minus_arg_a0); ++first, ++second)
+    for (auto first = begin(minus_arg_a0), second = begin(minus_arg_a1);
+         first != end(minus_arg_a0); ++first, ++second)
     {
 
-        u8_t a0{ static_cast<std::byte>(*first) };
-        u8_t a1{ static_cast<std::byte>(*second) };
+        u8_t a0{ static_cast<byte>(*first) };
+        u8_t a1{ static_cast<byte>(*second) };
 
         u8_t r0 = a0 - a1;
+        cout << "-------------------------------------------\n";
+        cout << "a0  == " << a0 << '(' << setw(3) << a0.to_str() << ")\n";
+        cout << "a1  == " << a1 << '(' << setw(3) << a1.to_str() << ")\n";
+        cout << "r0  == " << r0 << '(' << setw(3) << r0.to_str() << ")\n";
 
-        std::cout << "a0 == " << a0 << '(' << a0.to_str() << ")\n";
-        std::cout << "a1 == " << a1 << '(' << a1.to_str() << ")\n";
-        std::cout << "r0 == " << r0 << '(' << r0.to_str() << ")\n";
+        int32_t     i_a0       = a0.to_int();
+        int32_t     i_a1       = a1.to_int();
+        int32_t     i_r0       = r0.to_int();
+        const char* equal_sign = i_r0 == i_a0 - i_a1 ? " == " : " != ";
+        cout << setw(3) << r0.to_int() << equal_sign << "(" << i_a0 << " - "
+             << i_a1 << ")\n";
     }
-
-    a0         = 1;
-    a1         = 2;
-    uint8_t r1 = a0 - a1;
-
-    std::cout << "a0 == " << static_cast<uint32_t>(a0) << '\n';
-    std::cout << "a1 == " << static_cast<uint32_t>(a1) << '\n';
-    std::cout << "r1 == " << static_cast<uint32_t>(r1) << '\n';
 
     return 0;
 }
