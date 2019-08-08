@@ -17,11 +17,12 @@ glm::vec3   light_pos     = { -10.f, 0.f, -2.f };
 float     angle       = 0.001f;
 glm::vec3 rotate_axis = { 0.f, 1.f, 0.f };
 
-glm::vec3 material_ambient   = { 1.0f, 0.5f, 0.31f };
-glm::vec3 material_diffuse   = { 1.0f, 0.5f, 0.31f };
+glm::vec3 material_ambient   = { 1.0f, 1.0f, 1.0f };
+glm::vec3 material_diffuse   = { 1.0f, 1.0f, 1.0f };
 glm::vec3 material_specular  = { 0.5f, 0.5f, 0.5f };
 float     material_shininess = 256.f;
 
-glm::vec3 light_ambient  = { 0.2f, 0.2f, 0.2f };
+glm::vec3 light_ambient  = { 0.5f, 0.5f, 0.5f };
 glm::vec3 light_diffuse  = { 1.0f, 1.0f, 1.0f };
 glm::vec3 light_specular = { 1.0f, 1.0f, 1.0f };
+glm::vec3 clear_color    = { 0.1f, 0.3f, 0.1f };
