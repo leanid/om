@@ -10,7 +10,7 @@
 
 namespace gles30
 {
-texture::texture(const fs::path& path)
+texture::texture(const std::filesystem::path& path)
     : file_name{ path.u8string() }
     , texture_id{ 0 }
 {

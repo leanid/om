@@ -26,7 +26,7 @@ struct context_parameters
     int32_t     minor_version = 0;
     int32_t     profile_type  = 0;
 };
-#pragma pop
+#pragma pack(pop)
 
 std::ostream& operator<<(std::ostream& out, const context_parameters& params)
 {
@@ -401,16 +401,6 @@ int main(int /*argc*/, char* /*argv*/[])
             glm::mat4 rotated_model{ model };
             angle += properties.get_float("angle");
             rotate_axis = properties.get_vec3("rotate_axis");
-            /*
-                        glm::vec3 cubePositions[] = {
-                            glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(2.0f, 5.0f,
-               -15.0f), glm::vec3(-1.5f, -2.2f, -2.5f), glm::vec3(-3.8f, -2.0f,
-               -12.3f), glm::vec3(2.4f, -0.4f, -3.5f),  glm::vec3(-1.7f, 3.0f,
-               -7.5f), glm::vec3(1.3f, -2.0f, -2.5f),  glm::vec3(1.5f, 2.0f,
-               -2.5f), glm::vec3(1.5f, 0.2f, -1.5f),   glm::vec3(-1.3f, 1.0f,
-               -1.5f)
-                        };
-            */
             glm::vec3 pointLightPositions[] = { glm::vec3(0.7f, 0.2f, 2.0f),
                                                 glm::vec3(2.3f, -3.3f, -4.0f),
                                                 glm::vec3(-4.0f, 2.0f, -12.0f),
@@ -471,23 +461,6 @@ int main(int /*argc*/, char* /*argv*/[])
             material.set_uniform("projection", projection);
 
             nanosuit.draw(material);
-            /*
-                            for (size_t i = 0; i < std::size(cubePositions);
-               i++)
-                        {
-                            // calculate the model matrix for each object and
-               pass it to
-                            // shader before drawing
-                            glm::mat4 model = glm::mat4(1.0f);
-                            model           = glm::translate(model,
-               cubePositions[i]); float angle     = 20.0f * i; model           =
-               glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f,
-               0.5f)); material.set_uniform("model", model);
-
-                            glDrawElements(primitive_render_mode, 36,
-               GL_UNSIGNED_INT, nullptr); gl_check();
-                        }
-            */
             // also draw the lamp object(s)
             light_shader.use();
             light_shader.set_uniform("projection", projection);
@@ -516,7 +489,7 @@ int main(int /*argc*/, char* /*argv*/[])
 
 // clang-format off
 float vertices[36 * 8] = {
-   // positions          // normals           // texture coords
+     // positions         // normals           // texture coords
     -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
      0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.0f,
      0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f,

@@ -4,11 +4,6 @@
 
 namespace gles30
 {
-#ifdef _MSC_VER
-namespace fs = std::experimental::filesystem;
-#else
-namespace fs = std::filesystem;
-#endif
 
 enum class filter
 {
@@ -36,7 +31,7 @@ public:
         specular,
     };
 
-    explicit texture(const fs::path& path);
+    explicit texture(const std::filesystem::path& path);
 
     void bind();
 
@@ -48,7 +43,7 @@ public:
     void wrap_s(const wrap);
     void wrap_t(const wrap);
 
-    void set_type(const uv_type);
+    void    set_type(const uv_type);
     uv_type get_type() const;
 
     ~texture();
@@ -61,7 +56,7 @@ public:
 private:
     std::string   file_name;
     std::uint32_t texture_id;
-    uv_type          texture_type = uv_type::diffuse;
+    uv_type       texture_type = uv_type::diffuse;
 };
 
 inline void texture::set_type(const uv_type t)

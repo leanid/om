@@ -115,8 +115,9 @@ shader::shader(std::string_view vertex_shader_src,
     gl_check();
 }
 
-shader::shader(const fs::path& vertex_shader_path,
-               const fs::path& fragment_shader_path) noexcept(false)
+shader::shader(
+    const std::filesystem::path& vertex_shader_path,
+    const std::filesystem::path& fragment_shader_path) noexcept(false)
 {
     std::ifstream vertex_stream;
     std::ifstream fragmen_stream;

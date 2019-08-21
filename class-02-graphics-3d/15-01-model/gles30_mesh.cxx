@@ -45,6 +45,9 @@ mesh::~mesh() noexcept
 
     glDeleteBuffers(1, &VBO);
     gl_check();
+
+    glDeleteBuffers(1, &EBO);
+    gl_check();
 }
 
 void mesh::draw(shader& shader) const
@@ -75,16 +78,14 @@ void mesh::draw(shader& shader) const
             assert(is_ok > 0);
         }
 
-        char mat_name[64];
-        is_ok = snprintf(mat_name, sizeof(mat_name), "material.%s", str);
+        char tex_uniform_name[64];
+        is_ok = snprintf(tex_uniform_name, sizeof(tex_uniform_name),
+                         "material.%s", str);
         assert(is_ok > 0);
 
-        shader.set_uniform(mat_name, static_cast<int32_t>(i));
+        shader.set_uniform(tex_uniform_name, static_cast<int32_t>(i));
         texture.bind();
     }
-
-    glActiveTexture(GL_TEXTURE0);
-    gl_check();
 
     // draw mesh
     glBindVertexArray(VAO);

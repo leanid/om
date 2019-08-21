@@ -38,11 +38,6 @@ ExternalProject_Add(glm_proj
   CMAKE_CACHE_ARGS  -DBUILD_SHARED_LIBS:BOOL=OFF
                     -DBUILD_STATIC_LIBS:BOOL=OFF
                     -DGLM_TEST_ENABLE:BOOL=OFF
-                    -DASSIMP_NO_EXPORT:STRING=ON
-                    -DASSIMP_BUILD_ASSIMP_TOOLS:BOOL=OFF
-                    -DASSIMP_BUILD_TESTS:STRING=OFF
-                    -DASSIMP_INSTALL_PDB:STRING=OFF
-                    -DINJECT_DEBUG_POSTFIX:STRING=OFF
                     -DCMAKE_INSTALL_PREFIX:PATH=${ASSIMP_BUILD_DIR}_install/
 )
 
@@ -52,7 +47,7 @@ if (SDL2_SRC_DIR) # Android
     add_library(15-01-model SHARED)
     find_library(SDL2_LIB NAMES SDL2)
     target_include_directories(15-01-model PRIVATE ${SDL2_SRC_DIR}/include )
-    target_link_libraries(15-01-model SDL2 SDL2main )
+    target_link_libraries(15-01-model PRIVATE SDL2 SDL2main )
 elseif(MINGW)
     add_executable(15-01-model)
     find_package(SDL2 CONFIG REQUIRED)
@@ -92,30 +87,40 @@ elseif(MSVC)
 endif()
 
 target_compile_features(15-01-model PUBLIC cxx_std_17)
+
+file(GLOB MODEL_PNG_FILES
+     RELATIVE ${CMAKE_CURRENT_LIST_DIR}
+     res/model/*.png)
+
 target_sources(15-01-model PRIVATE main.cxx
-                                       gles30_shader.hxx
-                                       gles30_shader.cxx
-                                       opengles30.hxx
-                                       opengles30.cxx
-                                       gles30_texture.hxx
-                                       gles30_texture.cxx
-                                       properties_reader.hxx
-                                       properties_reader.cxx
-                                       fps_camera.hxx
-                                       fps_camera.cxx
-                                       gles30_mesh.hxx
-                                       gles30_mesh.cxx
-                                       gles30_model.hxx
-                                       gles30_model.cxx
-                                       stb_image.h
+                                   gles30_shader.hxx
+                                   gles30_shader.cxx
+                                   opengles30.hxx
+                                   opengles30.cxx
+                                   gles30_texture.hxx
+                                   gles30_texture.cxx
+                                   properties_reader.hxx
+                                   properties_reader.cxx
+                                   fps_camera.hxx
+                                   fps_camera.cxx
+                                   gles30_mesh.hxx
+                                   gles30_mesh.cxx
+                                   gles30_model.hxx
+                                   gles30_model.cxx
+                                   stb_image.h
 
-                                       res/basic.fsh
-                                       res/basic.vsh
-                                       res/material.fsh
-                                       res/vertex_pos.vsh
+                                   res/basic.fsh
+                                   res/basic.vsh
+                                   res/material.fsh
+                                   res/vertex_pos.vsh
 
-                                       res/runtime.properties.hxx
-                                       )
+                                   res/runtime.properties.hxx
+
+                                   res/container2.png
+                                   res/container2_specular.png
+
+                                   ${MODEL_PNG_FILES}
+                                   )
 
 add_dependencies(15-01-model assimp_proj)
 add_dependencies(15-01-model glm_proj)
