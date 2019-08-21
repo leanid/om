@@ -30,42 +30,58 @@ ExternalProject_Add(assimp_proj
                     -DCMAKE_INSTALL_PREFIX:PATH=${ASSIMP_BUILD_DIR}_install/
 )
 
+ExternalProject_Add(glm_proj
+  PREFIX            ${ASSIMP_BUILD_DIR}
+  GIT_REPOSITORY    https://github.com/g-truc/glm.git
+  GIT_TAG           0.9.9.5
+  GIT_PROGRESS      TRUE
+  CMAKE_CACHE_ARGS  -DBUILD_SHARED_LIBS:BOOL=OFF
+                    -DBUILD_STATIC_LIBS:BOOL=OFF
+                    -DGLM_TEST_ENABLE:BOOL=OFF
+                    -DASSIMP_NO_EXPORT:STRING=ON
+                    -DASSIMP_BUILD_ASSIMP_TOOLS:BOOL=OFF
+                    -DASSIMP_BUILD_TESTS:STRING=OFF
+                    -DASSIMP_INSTALL_PDB:STRING=OFF
+                    -DINJECT_DEBUG_POSTFIX:STRING=OFF
+                    -DCMAKE_INSTALL_PREFIX:PATH=${ASSIMP_BUILD_DIR}_install/
+)
+
 project(15-01-model CXX)
 
 if (SDL2_SRC_DIR) # Android
-    add_library(${PROJECT_NAME} SHARED)
+    add_library(15-01-model SHARED)
     find_library(SDL2_LIB NAMES SDL2)
-    target_include_directories(${PROJECT_NAME} PRIVATE ${SDL2_SRC_DIR}/include )
-    target_link_libraries(${PROJECT_NAME} SDL2 SDL2main )
+    target_include_directories(15-01-model PRIVATE ${SDL2_SRC_DIR}/include )
+    target_link_libraries(15-01-model SDL2 SDL2main )
 elseif(MINGW)
-    add_executable(${PROJECT_NAME})
+    add_executable(15-01-model)
     find_package(SDL2 CONFIG REQUIRED)
-    target_link_libraries(${PROJECT_NAME} PRIVATE mingw32
+    target_link_libraries(15-01-model PRIVATE mingw32
                                                   SDL2main
                                                   SDL2
                                                   opengl32
                                                   -mwindows
                                                   )
 elseif(APPLE)
-    add_executable(${PROJECT_NAME})
+    add_executable(15-01-model)
     find_package(SDL2 CONFIG REQUIRED)
-    target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2main
+    target_link_libraries(15-01-model PRIVATE SDL2::SDL2main
                                               SDL2::SDL2-static
                                               "-framework OpenGL"
                                               )
 elseif(UNIX)
-    add_executable(${PROJECT_NAME})
+    add_executable(15-01-model)
     find_package(SDL2 REQUIRED)
-    target_link_libraries(${PROJECT_NAME} PRIVATE SDL2
+    target_link_libraries(15-01-model PRIVATE SDL2
                                                   GL
                                                   stdc++fs
                                                   -lz
                                                   )
 elseif(MSVC)
-    add_executable(${PROJECT_NAME})
+    add_executable(15-01-model)
     find_package(SDL2 CONFIG REQUIRED)
     find_package(glm CONFIG REQUIRED)
-    target_link_libraries(${PROJECT_NAME} PRIVATE glm
+    target_link_libraries(15-01-model PRIVATE glm
                                                   SDL2::SDL2main
                                                   SDL2::SDL2
                                                   opengl32
@@ -75,8 +91,8 @@ elseif(MSVC)
     set(ASSIMP_POSTFIX "-vc140-mtd.lib")
 endif()
 
-target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
-target_sources(${PROJECT_NAME} PRIVATE main.cxx
+target_compile_features(15-01-model PUBLIC cxx_std_17)
+target_sources(15-01-model PRIVATE main.cxx
                                        gles30_shader.hxx
                                        gles30_shader.cxx
                                        opengles30.hxx
@@ -101,11 +117,14 @@ target_sources(${PROJECT_NAME} PRIVATE main.cxx
                                        res/runtime.properties.hxx
                                        )
 
-add_dependencies(${PROJECT_NAME} assimp_proj)
+add_dependencies(15-01-model assimp_proj)
+add_dependencies(15-01-model glm_proj)
 
-target_link_directories(${PROJECT_NAME} PRIVATE ${ASSIMP_BUILD_DIR}_install/lib)
-target_link_libraries(${PROJECT_NAME} PRIVATE assimp${ASSIMP_POSTFIX} IrrXML)
-target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE ${ASSIMP_BUILD_DIR}_install/include)
+target_link_directories(15-01-model PRIVATE ${ASSIMP_BUILD_DIR}_install/lib)
+target_link_libraries(15-01-model PRIVATE assimp${ASSIMP_POSTFIX} IrrXML)
+target_include_directories(15-01-model SYSTEM PRIVATE ${ASSIMP_BUILD_DIR}_install/include)
+
+target_link_libraries(15-01-model INTERFACE glm)
 
 if(MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4  /utf-8 ") # /WX
