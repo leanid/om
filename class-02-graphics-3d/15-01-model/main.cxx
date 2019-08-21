@@ -182,6 +182,8 @@ int main(int /*argc*/, char* /*argv*/[])
     clog << "default ";
     print_view_port();
 
+    namespace fs = std::filesystem;
+
     gles30::texture diffuse_map(fs::path{ "./res/container2.png" });
     gles30::texture specular_map(fs::path{ "./res/container2_specular.png" });
 
@@ -366,10 +368,11 @@ int main(int /*argc*/, char* /*argv*/[])
         glm::mat4 view       = camera.view_matrix();
         glm::mat4 projection = camera.projection_matrix();
 
-        float red   = 0.f;
-        float green = 0.f;
-        float blue  = 0.f;
-        float alpha = 0.f;
+        glm::vec3 clear_color = properties.get_vec3("clear_color");
+        float     red         = clear_color.r;
+        float     green       = clear_color.g;
+        float     blue        = clear_color.b;
+        float     alpha       = 0.f;
 
         glClearColor(red, green, blue, alpha);
 

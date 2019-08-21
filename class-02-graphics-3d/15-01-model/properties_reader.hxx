@@ -6,16 +6,10 @@
 
 #include <glm/vec3.hpp>
 
-#ifdef _MSC_VER
-namespace fs = std::experimental::filesystem;
-#else
-namespace fs = std::filesystem;
-#endif
-
 class properties_reader
 {
 public:
-    explicit properties_reader(const fs::path& path);
+    explicit properties_reader(const std::filesystem::path& path);
     properties_reader(const properties_reader&) = delete;
     properties_reader& operator=(const properties_reader&) = delete;
     ~properties_reader();

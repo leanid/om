@@ -52,7 +52,7 @@ struct token
         comma
     };
 
-    token::type             type = type::none;
+    token::type      type = type::none;
     std::string_view value;
 };
 
@@ -357,8 +357,9 @@ struct parser_t
         return &(*it);
     }
 
-    token* expected_one_of(const std::vector<token>::iterator&            it,
-                           const std::initializer_list<decltype(token::type)>& types)
+    token* expected_one_of(
+        const std::vector<token>::iterator&                 it,
+        const std::initializer_list<decltype(token::type)>& types)
     {
         if (it == end(lexer.tokens))
         {
@@ -559,9 +560,9 @@ private:
 class properties_reader::impl
 {
 public:
-    impl(const fs::path& path_)
+    impl(const std::filesystem::path& path_)
         : path{ path_ }
-        , last_update_time{ fs::last_write_time(path) }
+        , last_update_time{ std::filesystem::last_write_time(path) }
     {
         build_properties_map();
     }
@@ -570,7 +571,8 @@ public:
 
     void update_changes()
     {
-        fs::file_time_type new_time = fs::last_write_time(path);
+        std::filesystem::file_time_type new_time =
+            std::filesystem::last_write_time(path);
         if (new_time != last_update_time)
         {
             last_update_time = new_time;
@@ -605,11 +607,11 @@ private:
     }
 
     std::unordered_map<std::string, value_t> key_values;
-    fs::path                                 path;
-    fs::file_time_type                       last_update_time;
+    std::filesystem::path                    path;
+    std::filesystem::file_time_type          last_update_time;
 };
 
-properties_reader::properties_reader(const fs::path& path)
+properties_reader::properties_reader(const std::filesystem::path& path)
     : ptr(new impl(path))
 {
 }
