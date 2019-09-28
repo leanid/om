@@ -107,7 +107,7 @@ int main(int /*argc*/, char* /*argv*/[])
         return -1;
     }
 
-    const std::string title = properties.get_string("title");
+    title = properties.get_string("title");
 
     unique_ptr<SDL_Window, void (*)(SDL_Window*)> window(
         SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_CENTERED,
@@ -260,7 +260,7 @@ int main(int /*argc*/, char* /*argv*/[])
 
     [[maybe_unused]] GLenum primitive_render_mode = GL_TRIANGLES;
 
-    float deltaTime = 0.0f; // Time between current frame and last frame
+    float deltaTime; // Time between current frame and last frame
     float lastFrame = 0.0f; // Time of last frame
 
     camera = fps_camera(/*pos*/ { 0, 0, 1 }, /*dir*/ { 0, 0, -1 },
@@ -302,7 +302,7 @@ int main(int /*argc*/, char* /*argv*/[])
             {
                 const float sensivity   = 0.05f;
                 const float delta_yaw   = event.motion.xrel * sensivity;
-                const float delta_pitch = -1 * event.motion.yrel * sensivity;
+                const float delta_pitch = -1.f * event.motion.yrel * sensivity;
                 camera.rotate(delta_yaw, delta_pitch);
             }
             else if (SDL_MOUSEWHEEL == event.type)
@@ -368,7 +368,7 @@ int main(int /*argc*/, char* /*argv*/[])
         glm::mat4 view       = camera.view_matrix();
         glm::mat4 projection = camera.projection_matrix();
 
-        glm::vec3 clear_color = properties.get_vec3("clear_color");
+        clear_color = properties.get_vec3("clear_color");
         float     red         = clear_color.r;
         float     green       = clear_color.g;
         float     blue        = clear_color.b;
@@ -419,7 +419,7 @@ int main(int /*argc*/, char* /*argv*/[])
             material.set_uniform("dirLight.diffuse", { 0.4f, 0.4f, 0.4f });
             material.set_uniform("dirLight.specular", { 0.5f, 0.5f, 0.5f });
             // point lights
-            std::array<size_t, std::size(pointLightPositions)> indexes;
+            std::array<size_t, std::size(pointLightPositions)> indexes{};
             std::iota(begin(indexes), end(indexes), 0);
             std::for_each(
                 begin(indexes), end(indexes),
@@ -468,14 +468,14 @@ int main(int /*argc*/, char* /*argv*/[])
 
             // we now draw as many light bulbs as we have point lights.
             glBindVertexArray(light_VAO);
-            for (unsigned int i = 0; i < std::size(pointLightPositions); i++)
+            for (auto pointLightPosition : pointLightPositions)
             {
                 model = glm::mat4(1.0f);
-                model = glm::translate(model, pointLightPositions[i]);
+                model = glm::translate(model, pointLightPosition);
                 model = glm::scale(model,
                                    glm::vec3(0.2f)); // Make it a smaller cube
                 light_shader.set_uniform("model", model);
-                glDrawArrays(GL_TRIANGLES, 0, 36);
+                glDrawArrays(primitive_render_mode, 0, 36);
             }
         }
 
