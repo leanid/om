@@ -38,10 +38,10 @@ struct bool_t
 {
     bool_t();
     bool_t(const bool_t& other);
-    bool_t(bool_t&&);
+    bool_t(bool_t&&) noexcept;
     ~bool_t();
     bool_t& operator=(const bool_t&);
-    bool_t& operator=(bool_t&&);
+    bool_t& operator=(bool_t&&) noexcept;
 
     explicit operator bool() const;
 

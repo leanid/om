@@ -25,7 +25,7 @@ elseif(APPLE)
          -Wl,-framework,OpenGL
          )
 elseif(UNIX)
-    target_link_libraries(engine-06-2
+    target_link_libraries(engine-06-2 PRIVATE
                -lSDL2
                -lGL
                )
