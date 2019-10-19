@@ -2,7 +2,7 @@
 #include <iostream>
 #include <string_view>
 
-int main(int /*argc*/, char* /*argv*/ [])
+int main(int /*argc*/, char* /*argv*/[])
 {
     using namespace std;
 
