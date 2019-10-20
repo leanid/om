@@ -1,16 +1,16 @@
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 3.14)
 project(01-1-hello-world CXX)
 
-add_executable(${PROJECT_NAME} main.cxx)
-target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
-
-if(MSVC)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /WX")
-else()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -Werror")
-endif()
+add_executable(01-1-hello-world main.cxx)
+target_compile_features(01-1-hello-world PUBLIC cxx_std_17)
 
 install(TARGETS ${PROJECT_NAME} 
         RUNTIME DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../../../bin/tests
         LIBRARY DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../../../bin/tests
         ARCHIVE DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../../../bin/tests)
+
+include(CTest)
+
+add_test(NAME check_hello_exit_zero
+         COMMAND 01-1-hello-world
+         )

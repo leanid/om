@@ -1,17 +1,16 @@
-cmake_minimum_required(VERSION 3.9)
-project(hello-bin)
+cmake_minimum_required(VERSION 3.14)
+project(hello-bin CXX)
 
-add_executable(hello-bin src/main.cxx)
-target_compile_features(hello-bin PRIVATE cxx_std_17)
-target_link_libraries(hello-bin LINK_PUBLIC hello-lib)
+add_executable(hello-bin-static src/main.cxx)
+target_compile_features(hello-bin-static PRIVATE cxx_std_17)
+target_link_libraries(hello-bin-static LINK_PUBLIC hello-lib-static)
+target_link_options(hello-bin-static PRIVATE -static)
 
-if(MSVC)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /WX /std:c++17")
-else()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -Werror")
-endif()
+add_executable(hello-bin-dynamic src/main.cxx)
+target_compile_features(hello-bin-dynamic PRIVATE cxx_std_17)
+target_link_libraries(hello-bin-dynamic LINK_PUBLIC hello-lib-dynamic)
 
-install(TARGETS hello-bin
+install(TARGETS hello-bin-static hello-bin-dynamic
         RUNTIME DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../../../bin/tests
         LIBRARY DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../../../bin/tests
         ARCHIVE DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../../../bin/tests)
