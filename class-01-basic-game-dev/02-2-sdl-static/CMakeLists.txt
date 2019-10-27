@@ -6,10 +6,17 @@ target_compile_features(02-sdl-static PUBLIC cxx_std_17)
 
 find_package(sdl2 REQUIRED)
 target_include_directories(02-sdl-static PRIVATE ${SDL2_INCLUDE_DIRS})
-find_library(SDL2_LIB NAMES libSDL2.a SDL2.lib)
+find_library(SDL2_LIB libSDL2.a)
+## if you need to link with our own compiled library you may point cmake to it.
+#find_library(SDL2_LIB
+#             NAMES libSDL2d.a
+#             PATHS /usr/local /usr/local/lib /usr/local/lib
+#             )
 
 if(NOT SDL2_LIB)
     message(FATAL_ERROR "Error: find_library(...) did not find libSDL2.a")
+else()
+    message(STATUS "path to static libSDL2.a [${SDL2_LIB}]")
 endif()
 
 if (MINGW)
