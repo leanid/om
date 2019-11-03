@@ -60,7 +60,7 @@ int main(int /*argc*/, char* /*argv*/[])
     SDL_version compiled = { 0, 0, 0 };
     SDL_version linked   = { 0, 0, 0 };
 
-    SDL_VERSION(&compiled);
+    SDL_VERSION(&compiled)
     SDL_GetVersion(&linked);
 
     if (SDL_COMPILEDVERSION !=

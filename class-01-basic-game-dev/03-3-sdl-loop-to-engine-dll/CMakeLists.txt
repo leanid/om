@@ -1,7 +1,7 @@
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 3.16)
 project(03-sdl-loop-to-engine-dll)
 
-add_library(engine-03-3 SHARED engine.cxx)
+add_library(engine-03-3 SHARED engine.cxx engine.hxx)
 target_compile_features(engine-03-3 PUBLIC cxx_std_17)
 
 if(WIN32)   
@@ -27,12 +27,6 @@ add_executable(game-03-3 game.cxx)
 target_compile_features(game-03-3 PUBLIC cxx_std_17)
 
 target_link_libraries(game-03-3 PRIVATE engine-03-3)
-
-if(MSVC)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /WX /std:c++17")
-else()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -Werror")
-endif()
 
 install(TARGETS engine-03-3 game-03-3
         RUNTIME DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../../bin/tests
