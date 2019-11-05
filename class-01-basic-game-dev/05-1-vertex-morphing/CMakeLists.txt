@@ -1,7 +1,8 @@
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 3.16)
 project(05-1-vertex-morphing)
 
-add_library(engine-05-1 SHARED engine.cxx)
+add_library(engine-05-1 SHARED engine.cxx
+                               engine.hxx)
 target_compile_features(engine-05-1 PUBLIC cxx_std_17)
 
 if(WIN32)
@@ -36,14 +37,7 @@ endif()
 
 add_executable(game-05-1 game.cxx)
 target_compile_features(game-05-1 PUBLIC cxx_std_17)
-
-target_link_libraries(game-05-1 engine-05-1)
-
-if(MSVC)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /WX /std:c++17")
-else()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -Werror")
-endif()
+target_link_libraries(game-05-1 PRIVATE engine-05-1)
 
 install(TARGETS engine-05-1 game-05-1
         RUNTIME DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../../bin/tests

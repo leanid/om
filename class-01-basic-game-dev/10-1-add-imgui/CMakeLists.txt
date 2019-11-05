@@ -1,18 +1,22 @@
-cmake_minimum_required(VERSION 3.9)
-project(10-1-add-imgui)
+cmake_minimum_required(VERSION 3.16)
+project(10-1-add-imgui CXX)
 
 add_executable(engine-10-1 om/engine.cxx
-                      om/imgui_impl_sdl_gl3.cpp
-                      om/imgui.cpp
-                      om/imgui_draw.cpp
-                      om/imgui_demo.cpp
-                      om/imgui.h
-                      om/imgui_impl_sdl_gl3.h
-                      om/imgui_internal.h
-                      om/imconfig.h
-                      om/gles20.hxx
-                      om/engine.hxx 
-                      om/picopng.hxx)
+                           om/imgui_impl_sdl_gl3.cpp
+                           om/imgui.cpp
+                           om/imgui_draw.cpp
+                           om/imgui_demo.cpp
+                           om/imgui.h
+                           om/imgui_impl_sdl_gl3.h
+                           om/imgui_internal.h
+                           om/imconfig.h
+                           om/gles20.hxx
+                           om/engine.hxx
+                           om/picopng.hxx
+                           om/math.hxx
+                           om/stb_rect_pack.h
+                           om/stb_textedit.h
+                           om/stb_truetype.h)
 set_target_properties(engine-10-1 PROPERTIES ENABLE_EXPORTS TRUE)
 target_compile_features(engine-10-1 PRIVATE cxx_std_17)
 
@@ -52,13 +56,9 @@ target_link_libraries(game-10-1 engine-10-1)
 
 if(MSVC)
   target_compile_definitions(game-10-1 PRIVATE "-DOM_DECLSPEC=__declspec(dllimport)")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17")
 elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   # using regular Clang or AppleClang
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
-else()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -Werror")
 endif()
 
 install(TARGETS engine-10-1 game-10-1

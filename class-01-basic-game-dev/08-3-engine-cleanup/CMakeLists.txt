@@ -1,7 +1,11 @@
-cmake_minimum_required(VERSION 3.9)
-project(08-3-engine-cleanup)
+cmake_minimum_required(VERSION 3.16)
+project(08-3-engine-cleanup CXX)
 
-add_executable(engine-08-3 engine.cxx engine.hxx picopng.hxx)
+add_executable(engine-08-3 engine.cxx
+                           engine.hxx
+                           picopng.hxx
+                           configuration_loader.hxx
+                           game_object.hxx)
 set_target_properties(engine-08-3 PROPERTIES ENABLE_EXPORTS TRUE)
 target_compile_features(engine-08-3 PUBLIC cxx_std_17)
 
@@ -32,18 +36,13 @@ endif()
 
 add_library(game-08-3 SHARED game.cxx)
 target_compile_features(game-08-3 PUBLIC cxx_std_17)
-
-target_link_libraries(game-08-3 engine-08-3)
+target_link_libraries(game-08-3 PRIVATE engine-08-3)
 
 if(MSVC)
   target_compile_definitions(game-08-3 PRIVATE "-DOM_DECLSPEC=__declspec(dllimport)")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17")
 elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   # using regular Clang or AppleClang
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
-else()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -Werror")
 endif()
 
 install(TARGETS engine-08-3 game-08-3

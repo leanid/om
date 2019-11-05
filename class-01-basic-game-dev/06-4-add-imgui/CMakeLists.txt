@@ -1,7 +1,9 @@
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 3.16)
 project(06-4-add-imgui)
 
-add_library(engine-06-4 SHARED engine.cxx)
+add_library(engine-06-4 SHARED engine.cxx
+                               engine.hxx
+                               picopng.hxx)
 target_compile_features(engine-06-4 PUBLIC cxx_std_17)
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/imgui-src)
@@ -39,15 +41,7 @@ endif()
 
 add_executable(game-06-4 game.cxx)
 target_compile_features(game-06-4 PUBLIC cxx_std_17)
-
 target_link_libraries(game-06-4 PRIVATE engine-06-4)
-
-
-if(MSVC)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /WX /std:c++17")
-else()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -Werror")
-endif()
 
 install(TARGETS engine-06-4 game-06-4
         RUNTIME DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../../bin/tests

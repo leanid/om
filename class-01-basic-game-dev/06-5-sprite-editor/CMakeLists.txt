@@ -1,7 +1,11 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.16)
 project(06-5-sprite-editor)
 
-add_library(engine-06-5 SHARED engine.cxx)
+add_library(engine-06-5 SHARED engine.cxx
+                               engine.hxx
+                               picopng.hxx
+                               catch.hpp
+                               stb_image.h)
 target_compile_features(engine-06-5 PUBLIC cxx_std_17)
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/imgui-src)
@@ -46,22 +50,13 @@ add_executable(06-5-sprite-editor sprite_editor.cxx
                                   sprite_reader.hxx
                                   )
 target_compile_features(06-5-sprite-editor PUBLIC cxx_std_17)
-
 target_link_libraries(06-5-sprite-editor PRIVATE engine-06-5)
-
 add_executable(06-5-test-spr-loader sprite_reader.cxx
                                     sprite.cxx
                                     sprite_reader_test.cxx
                                     sprite_reader.hxx)
 target_compile_features(06-5-test-spr-loader PUBLIC cxx_std_20)
 target_link_libraries(06-5-test-spr-loader PRIVATE engine-06-5)
-
-
-if(MSVC)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /WX")
-else()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -Werror")
-endif()
 
 install(TARGETS engine-06-5 06-5-sprite-editor
         RUNTIME DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../../bin/tests

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.16)
 
 add_subdirectory(01-hello-world)
 add_subdirectory(02-destr-except)

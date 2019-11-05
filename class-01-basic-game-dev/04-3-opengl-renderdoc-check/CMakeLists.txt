@@ -1,10 +1,11 @@
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 3.16)
 project(04-3-opengl-renderdoc-check)
 
-add_library(engine-04-3 STATIC engine.cxx)
+add_library(engine-04-3 STATIC engine.cxx
+                               engine.hxx)
 target_compile_features(engine-04-3 PUBLIC cxx_std_17)
 
-if(WIN32)   
+if(WIN32)
   target_compile_definitions(engine-04-3 PRIVATE "-DOM_DECLSPEC=__declspec(dllexport)")
 endif(WIN32)
 
@@ -14,8 +15,8 @@ target_link_libraries(engine-04-3 PRIVATE ${SDL2_LIBRARIES})
 
 if (MINGW)
     target_link_libraries(engine-04-3 PRIVATE
-               -lmingw32 
-               -lSDL2main 
+               -lmingw32
+               -lSDL2main
                -lSDL2
                -mwindows
                -lopengl32
@@ -36,14 +37,7 @@ endif()
 
 add_executable(game-04-3 game.cxx)
 target_compile_features(game-04-3 PUBLIC cxx_std_17)
-
-target_link_libraries(game-04-3 engine-04-3)
-
-if(MSVC)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /WX")
-else()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -Werror")
-endif()
+target_link_libraries(game-04-3 PRIVATE engine-04-3)
 
 install(TARGETS engine-04-3 game-04-3
         RUNTIME DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../../bin/tests

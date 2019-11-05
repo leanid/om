@@ -1,7 +1,10 @@
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 3.16)
 project(09-2-start-game-protorype)
 
-add_executable(engine-09-2 om/engine.cxx om/engine.hxx om/stb_image.h)
+add_executable(engine-09-2 om/engine.cxx
+                           om/engine.hxx
+                           om/stb_image.h
+                           om/math.hxx)
 set_target_properties(engine-09-2 PROPERTIES ENABLE_EXPORTS TRUE)
 target_compile_features(engine-09-2 PRIVATE cxx_std_17)
 
@@ -30,29 +33,24 @@ elseif(MSVC)
                           opengl32)
 endif()
 
-add_library(game-09-2 SHARED game/game.cxx 
-                        game/game_object.cxx
-                        game/snake.cxx
-                        game/fruit.cxx
-                        game/configuration_loader.hxx
-                        game/game_object.hxx
-                        game/snake.hxx
-                        game/fruit.hxx)
+add_library(game-09-2 SHARED game/game.cxx
+                             game/game_object.cxx
+                             game/snake.cxx
+                             game/fruit.cxx
+                             game/configuration_loader.hxx
+                             game/game_object.hxx
+                             game/snake.hxx
+                             game/fruit.hxx)
 target_include_directories(game-09-2 PRIVATE .)
 target_compile_features(game-09-2 PRIVATE cxx_std_17)
-
-target_link_libraries(game-09-2 engine-09-2)
+target_link_libraries(game-09-2 PRIVATE engine-09-2)
 
 if(MSVC)
   target_compile_definitions(game-09-2 PRIVATE "-DOM_DECLSPEC=__declspec(dllimport)")
   target_compile_definitions(game-09-2 PRIVATE "-DOM_EXPORT=__declspec(dllexport)")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17")
 elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   # using regular Clang or AppleClang
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
-else()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -Werror")
 endif()
 
 install(TARGETS engine-09-2 game-09-2

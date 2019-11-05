@@ -1,7 +1,9 @@
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 3.16)
 project(05-3-texture-loading)
 
-add_library(engine-05-3 SHARED engine.cxx)
+add_library(engine-05-3 SHARED engine.cxx
+                               engine.hxx
+                               picopng.hxx)
 target_compile_features(engine-05-3 PUBLIC cxx_std_17)
 
 if(WIN32)
@@ -37,14 +39,8 @@ endif()
 
 add_executable(game-05-3 game.cxx)
 target_compile_features(game-05-3 PUBLIC cxx_std_17)
-
 target_link_libraries(game-05-3 PRIVATE engine-05-3)
 
-if(MSVC)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /WX")
-else()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -Werror")
-endif()
 
 install(TARGETS engine-05-3 game-05-3
         RUNTIME DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../../bin/tests

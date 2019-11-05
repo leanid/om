@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.16)
 
 add_executable(hello_cout_dynamic cout_main.cxx)
 
@@ -11,5 +11,6 @@ add_executable(hello_nostartfiles hack_main.cxx)
 target_link_options(hello_nostartfiles PRIVATE -nostartfiles)
 
 enable_language(ASM)
-add_executable(hello_asm hack_asm_main.cxx syscall.s)
+add_executable(hello_asm)
+target_sources(hello_asm PRIVATE syscall.s hack_asm_main.cxx)
 target_link_options(hello_asm PRIVATE -nostartfiles -nostdlib)

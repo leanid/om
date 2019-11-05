@@ -1,7 +1,7 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.16)
 project(04-1-opengl-minimal)
 
-add_library(engine-04-1 SHARED engine.cxx)
+add_library(engine-04-1 SHARED engine.cxx engine.hxx)
 target_compile_features(engine-04-1 PUBLIC cxx_std_17)
 
 if(WIN32)
@@ -33,14 +33,7 @@ endif()
 
 add_executable(game-04-1 game.cxx)
 target_compile_features(game-04-1 PUBLIC cxx_std_17)
-
 target_link_libraries(game-04-1 PRIVATE engine-04-1)
-
-if(MSVC)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /WX")
-else()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -Werror")
-endif()
 
 install(TARGETS engine-04-1 game-04-1
         RUNTIME DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../../bin/tests
