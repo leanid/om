@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(all-tests-build)
+project(01-basic-game-dev CXX)
 
 add_subdirectory(01-1-hello-world)
 add_subdirectory(01-2-hello-lib)

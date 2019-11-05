@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-
+project(01-hello-world CXX)
 add_executable(hello_cout_dynamic cout_main.cxx)
 
 # install static version of standard libraries

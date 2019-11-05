@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 3.14)
-project(03-bool-type)
-add_executable(${PROJECT_NAME} main.cxx bool.hxx bool.cxx readme.md)
-target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)
+cmake_minimum_required(VERSION 3.16)
+project(03-bool-type CXX)
+add_executable(03-bool-type main.cxx bool.hxx bool.cxx readme.md)
+target_compile_features(03-bool-type PRIVATE cxx_std_17)
 
