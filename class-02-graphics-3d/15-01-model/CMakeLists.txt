@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14.0)
+cmake_minimum_required(VERSION 3.16.0)
 
 if(SDL2_SRC_DIR)  # Android build directly from source
     add_subdirectory( # Specifies the directory of the CMakeLists.txt file.
@@ -14,7 +14,7 @@ include(ExternalProject)
 # or
 # build it yourself for android for example:
 
-set(ASSIMP_BUILD_DIR ${CMAKE_CURRENT_LIST_DIR}/build/assimp_root)
+set(ASSIMP_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/build/assimp_root)
 
 ExternalProject_Add(assimp_proj
   PREFIX            ${ASSIMP_BUILD_DIR}
@@ -128,11 +128,4 @@ add_dependencies(15-01-model glm_proj)
 target_link_directories(15-01-model PRIVATE ${ASSIMP_BUILD_DIR}_install/lib)
 target_link_libraries(15-01-model PRIVATE assimp${ASSIMP_POSTFIX} IrrXML)
 target_include_directories(15-01-model SYSTEM PRIVATE ${ASSIMP_BUILD_DIR}_install/include)
-
 target_link_libraries(15-01-model INTERFACE glm)
-
-if(MSVC)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4  /utf-8 ") # /WX
-else()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -Werror -Wno-unknown-pragmas")
-endif()
