@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 3.16)
 
 if(SDL2_SRC_DIR)
 add_subdirectory( # Specifies the directory of the CMakeLists.txt file.
@@ -8,13 +8,17 @@ add_subdirectory( # Specifies the directory of the CMakeLists.txt file.
 endif()
 
 
-project(09-3-start-game-protorype)
+project(09-3-start-game-protorype CXX)
 
 if (SDL2_SRC_DIR)
-    add_library(engine-09-3 SHARED om/engine.cxx om/engine.hxx om/stb_image.h)
+    add_library(engine-09-3 SHARED)
 else()
-    add_executable(engine-09-3 om/engine.cxx om/engine.hxx om/stb_image.h)
+    add_executable(engine-09-3)
 endif()
+target_sources(engine-09-3 PRIVATE om/engine.cxx
+                                   om/engine.hxx
+                                   om/stb_image.h
+                                   om/math.hxx)
 set_target_properties(engine-09-3 PROPERTIES ENABLE_EXPORTS TRUE)
 target_compile_features(engine-09-3 PRIVATE cxx_std_17)
 
@@ -25,7 +29,7 @@ endif(WIN32)
 find_library(SDL2_LIB NAMES SDL2)
 
 if (MINGW)
-    target_link_libraries(engine-09-3
+    target_link_libraries(engine-09-3 PRIVATE
                mingw32
                SDL2main
                SDL2
@@ -35,9 +39,9 @@ if (MINGW)
 elseif(UNIX)
     if(SDL2_SRC_DIR)
         #target_include_directories( engine-09-3 PRIVATE ${SDL2_SRC_DIR}/include )
-        target_link_libraries( engine-09-3 SDL2 SDL2main )
+        target_link_libraries( engine-09-3 PRIVATE SDL2 SDL2main )
     else()
-        target_link_libraries(engine-09-3
+        target_link_libraries(engine-09-3 PRIVATE
                 SDL2
                 GL
                 #-lstdc++fs
@@ -60,17 +64,13 @@ add_library(game-09-3 SHARED game/game.cxx
 target_include_directories(game-09-3 PRIVATE .)
 target_compile_features(game-09-3 PRIVATE cxx_std_17)
 
-target_link_libraries(game-09-3 engine-09-3)
+target_link_libraries(game-09-3 PRIVATE engine-09-3)
 
 if(MSVC)
   target_compile_definitions(game-09-3 PRIVATE "-DOM_DECLSPEC=__declspec(dllimport)")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17")
 elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   # using regular Clang or AppleClang
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
-else()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -Werror")
 endif()
 
 install(TARGETS engine-09-3 game-09-3

@@ -18,7 +18,7 @@ bool_t::bool_t(const bool_t& other)
 {
 }
 
-bool_t::bool_t(bool_t&& other)
+bool_t::bool_t(bool_t&& other) noexcept
     : value{ other.value }
 {
 }
@@ -34,7 +34,7 @@ bool_t& bool_t::operator=(const bool_t& other)
     return *this;
 }
 
-bool_t& bool_t::operator=(bool_t&& other)
+bool_t& bool_t::operator=(bool_t&& other) noexcept
 {
     value = other.value;
     return *this;
@@ -188,7 +188,6 @@ std::istream& operator>>(std::istream& stream, bool_t& result)
 ///                     (или степерь в которую возводим
 ///                      основание системы счисления)
 
-
 /// 4-bit unsigned int table     | school example:|
 /// number  | bits   |           | 7        0b0111|
 /// --------+--------+           |+5       +0b0101|
@@ -210,7 +209,6 @@ std::istream& operator>>(std::istream& stream, bool_t& result)
 /// 15      | 0b1111 |
 ///
 ///
-
 
 ///
 ///  7 в десятичной системе счисления.
