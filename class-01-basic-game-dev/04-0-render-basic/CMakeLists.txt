@@ -41,7 +41,10 @@ add_executable(04-0-render-basic-triangle-interpolated 04_triangle_interpolated_
                                                        )
 target_compile_features(04-0-render-basic-triangle-interpolated PUBLIC cxx_std_17)
 
-find_package(SDL2 REQUIRED)
+find_package(sdl2 REQUIRED)
+message(STATUS "SDL2_LIBRARIES[${SDL2_LIBRARIES}] "
+    "SDL2_INCLUDE_DIRS[${SDL2_INCLUDE_DIRS}]")
+
 
 add_executable(05-0-render-basic-windowed 05-0-render-basic-windowed.cxx
                                           04_triangle_interpolated_render.cxx

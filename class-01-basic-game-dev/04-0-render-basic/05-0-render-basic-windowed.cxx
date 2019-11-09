@@ -1,6 +1,6 @@
 #include "04_triangle_interpolated_render.hxx"
 
-#include <SDL2/SDL.h>
+#include <SDL.h>
 
 #include <cstdlib>
 #include <iostream>

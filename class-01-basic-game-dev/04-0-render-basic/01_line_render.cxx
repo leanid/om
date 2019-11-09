@@ -107,5 +107,5 @@ pixels line_render::pixels_positions(position start, position end)
 void line_render::draw_line(position start, position end, color c)
 {
     pixels l = pixels_positions(start, end);
-    std::for_each(l.begin(), l.end(), [&](auto& pos) { set_pixel(pos, c); });
+    std::for_each(begin(l), std::end(l), [&](auto& pos) { set_pixel(pos, c); });
 }

@@ -48,6 +48,7 @@ static std::ostream& operator<<(std::ostream& out, const SDL_version& v)
     return out;
 }
 
+#pragma pack(push, 4)
 struct bind
 {
     SDL_Keycode      key;
@@ -55,6 +56,7 @@ struct bind
     event            event_pressed;
     event            event_released;
 };
+#pragma pack(pop)
 
 const std::array<bind, 8> keys{
     { { SDLK_w, "up", event::up_pressed, event::up_released },

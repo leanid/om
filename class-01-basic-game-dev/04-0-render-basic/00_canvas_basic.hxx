@@ -34,8 +34,9 @@ public:
         out_file.exceptions(std::ios_base::failbit);
         out_file.open(file_name, std::ios_base::binary);
         out_file << "P6\n" << width << ' ' << height << ' ' << 255 << '\n';
-        out_file.write(reinterpret_cast<const char*>(this),
-                       sizeof(color) * size());
+        std::streamsize buf_size =
+            static_cast<std::streamsize>(sizeof(color) * size());
+        out_file.write(reinterpret_cast<const char*>(this), buf_size);
     }
 
     void load_image(const std::string& file_name)
@@ -53,8 +54,9 @@ public:
         {
             throw std::runtime_error("image size not match");
         }
-
-        in_file.read(reinterpret_cast<char*>(this), sizeof(color) * size());
+        std::streamsize buf_size =
+            static_cast<std::streamsize>(sizeof(color) * size());
+        in_file.read(reinterpret_cast<char*>(this), buf_size);
     }
 };
 
