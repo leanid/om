@@ -56,6 +56,9 @@ add_executable(05-0-render-basic-windowed 05-0-render-basic-windowed.cxx
                                           )
 target_link_libraries(05-0-render-basic-windowed PRIVATE ${SDL2_LIBRARIES})
 target_include_directories(05-0-render-basic-windowed PRIVATE ${SDL2_INCLUDE_DIRS})
+if (MSVC)
+    target_link_libraries(05-0-render-basic-windowed PRIVATE SDL2::SDL2 SDL2::SDL2main)
+endif()
 target_compile_features(05-0-render-basic-windowed PUBLIC cxx_std_17)
 
 

@@ -13,7 +13,7 @@ find_library(SDL2_LIB libSDL2.a)
 #             PATHS /usr/local /usr/local/lib /usr/local/lib
 #             )
 
-if(NOT SDL2_LIB)
+if(NOT SDL2_LIB AND NOT MSVC)
     message(FATAL_ERROR "Error: find_library(...) did not find libSDL2.a")
 else()
     message(STATUS "path to static libSDL2.a [${SDL2_LIB}]")
