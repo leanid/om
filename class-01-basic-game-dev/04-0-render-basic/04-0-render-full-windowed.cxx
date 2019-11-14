@@ -1,0 +1,243 @@
+#include "04_triangle_interpolated_render.hxx"
+
+#include <SDL.h>
+
+#include <cstdlib>
+#include <iostream>
+
+int main(int, char**)
+{
+    using namespace std;
+
+    if (0 != SDL_Init(SDL_INIT_EVERYTHING))
+    {
+        cerr << SDL_GetError() << endl;
+        return EXIT_FAILURE;
+    }
+
+    SDL_Window* window = SDL_CreateWindow(
+        "runtime soft render", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+        width, height, SDL_WINDOW_OPENGL);
+    if (window == nullptr)
+    {
+        cerr << SDL_GetError() << endl;
+        return EXIT_FAILURE;
+    }
+
+    SDL_Renderer* renderer =
+        SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    if (renderer == nullptr)
+    {
+        cerr << SDL_GetError() << endl;
+        return EXIT_FAILURE;
+    }
+
+    const color black = { 0, 0, 0 };
+
+    canvas image;
+
+    triangle_interpolated interpolated_render(image, width, height);
+
+    struct program : gfx_program
+    {
+        double mouse_x{};
+        double mouse_y{};
+        double radius{};
+
+        void set_uniforms(const uniforms& a_uniforms) override
+        {
+            mouse_x = a_uniforms.f0;
+            mouse_y = a_uniforms.f1;
+            radius  = a_uniforms.f2;
+        }
+        vertex vertex_shader(const vertex& v_in) override
+        {
+            vertex out = v_in;
+
+            double x = out.f0;
+            double y = out.f1;
+
+            double dx = x - mouse_x;
+            double dy = y - mouse_y;
+            if (dx * dx + dy * dy < radius * radius)
+            {
+                // un magnet from mouse
+                double len = std::sqrt(dx * dx + dy * dy);
+                if (len >= 0)
+                {
+                    // normalize vector from vertex to mouse pos
+                    double norm_dx = dx / len;
+                    double norm_dy = dy / len;
+                    // find position of point on radius from mouse pos in center
+                    double radius_pos_x = mouse_x + norm_dx * radius;
+                    double radius_pos_y = mouse_y + norm_dy * radius;
+                    // find middle point
+                    x = (x + radius_pos_x) / 2;
+                    y = (y + radius_pos_y) / 2;
+                }
+            }
+
+            out.f0 = x;
+            out.f1 = y;
+
+            return out;
+        }
+        color fragment_shader(const vertex& v_in) override
+        {
+            color out;
+            out.r = static_cast<uint8_t>(v_in.f2 * 255);
+            out.g = static_cast<uint8_t>(v_in.f3 * 255);
+            out.b = static_cast<uint8_t>(v_in.f4 * 255);
+            /*
+                        double x  = v_in.f0;
+                        double y  = v_in.f1;
+                        double dx = mouse_x - x;
+                        double dy = mouse_y - y;
+                        if (dx * dx + dy * dy < radius * radius)
+                        {
+                            double len          = std::sqrt(dx * dx + dy * dy);
+                            double green_to_red = len / radius;
+                            out.r               = (1 - green_to_red) * 255;
+                            out.g               = (green_to_red)*255;
+                            out.b               = 0;
+                        }
+            */
+            return out;
+        }
+    } program01;
+
+    std::vector<vertex> triangle_v;
+
+    const size_t cell_x_count = 16;
+    const size_t cell_y_count = 16;
+    const double cell_width   = static_cast<double>(width) / cell_x_count;
+    const double cell_height  = static_cast<double>(height) / cell_y_count;
+
+    // generate vertexes for our cell mesh
+    for (size_t j = 0; j < cell_y_count; ++j)
+    {
+        for (size_t i = 0; i < cell_x_count; ++i)
+        {
+            double x = i * cell_width;
+            double y = j * cell_height;
+            double r = 0;
+            double g = 1;
+            double b = 0;
+            double u = 0;
+            double v = 0;
+            triangle_v.push_back({ x, y, r, g, b, u, v, 0 });
+        }
+    }
+
+    std::vector<uint8_t> indexes_v;
+
+    // generate indexes for our cell mesh
+    for (size_t j = 0; j < cell_y_count - 1; ++j)
+    {
+        for (size_t i = 0; i < cell_x_count - 1; ++i)
+        {
+            uint8_t v0 = j * cell_x_count + i;
+            uint8_t v1 = v0 + 1;
+            uint8_t v2 = v0 + cell_x_count;
+            uint8_t v3 = v2 + 1;
+
+            // add two triangles
+            //  v0-----v1
+            //  |     /|
+            //  |    / |
+            //  |   /  |
+            //  |  /   |
+            //  | /    |
+            //  v2-----v3
+            // we want only cells without internal color fill
+            // so generate "triangle" for every age
+            bool want_only_cell_border = true;
+            if (want_only_cell_border)
+            {
+                indexes_v.insert(end(indexes_v), { v0, v1, v0 });
+                // indexes_v.insert(end(indexes_v), { v1, v2, v1 });
+                indexes_v.insert(end(indexes_v), { v2, v0, v2 });
+
+                indexes_v.insert(end(indexes_v), { v2, v3, v2 });
+                indexes_v.insert(end(indexes_v), { v1, v3, v1 });
+            }
+            else
+            {
+                indexes_v.insert(end(indexes_v), { v0, v1, v2 });
+                indexes_v.insert(end(indexes_v), { v2, v1, v3 });
+            }
+        }
+    }
+
+    void*     pixels = image.data();
+    const int depth  = sizeof(color) * 8;
+    const int pitch  = width * sizeof(color);
+    const int rmask  = 0x000000ff;
+    const int gmask  = 0x0000ff00;
+    const int bmask  = 0x00ff0000;
+    const int amask  = 0;
+
+    interpolated_render.set_gfx_program(program01);
+
+    double mouse_x{ 1000 };
+    double mouse_y{ 100 };
+    double radius{ 40.0 }; // 20 pixels radius
+
+    bool continue_loop = true;
+
+    while (continue_loop)
+    {
+        SDL_Event e;
+        while (SDL_PollEvent(&e))
+        {
+            if (e.type == SDL_QUIT)
+            {
+                continue_loop = false;
+                break;
+            }
+            else if (e.type == SDL_MOUSEMOTION)
+            {
+                mouse_x = e.motion.x;
+                mouse_y = e.motion.y;
+            }
+            else if (e.type == SDL_MOUSEWHEEL)
+            {
+                radius *= e.wheel.y;
+            }
+        }
+
+        interpolated_render.clear(black);
+        program01.set_uniforms(uniforms{ mouse_x, mouse_y, radius });
+
+        interpolated_render.draw_triangles(triangle_v, indexes_v);
+
+        SDL_Surface* bitmapSurface = SDL_CreateRGBSurfaceFrom(
+            pixels, width, height, depth, pitch, rmask, gmask, bmask, amask);
+        if (bitmapSurface == nullptr)
+        {
+            cerr << SDL_GetError() << endl;
+            return EXIT_FAILURE;
+        }
+        SDL_Texture* bitmapTex =
+            SDL_CreateTextureFromSurface(renderer, bitmapSurface);
+        if (bitmapTex == nullptr)
+        {
+            cerr << SDL_GetError() << endl;
+            return EXIT_FAILURE;
+        }
+        SDL_FreeSurface(bitmapSurface);
+
+        SDL_RenderClear(renderer);
+        SDL_RenderCopy(renderer, bitmapTex, nullptr, nullptr);
+        SDL_RenderPresent(renderer);
+
+        SDL_DestroyTexture(bitmapTex);
+    }
+
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
+
+    SDL_Quit();
+
+    return EXIT_SUCCESS;
+}

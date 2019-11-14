@@ -46,7 +46,7 @@ message(STATUS "SDL2_LIBRARIES[${SDL2_LIBRARIES}] "
     "SDL2_INCLUDE_DIRS[${SDL2_INCLUDE_DIRS}]")
 
 
-add_executable(05-0-render-basic-windowed 05-0-render-basic-windowed.cxx
+add_executable(04-0-render-basic-windowed 05-0-render-basic-windowed.cxx
                                           04_triangle_interpolated_render.cxx
                                           04_triangle_interpolated_render.hxx
                                           00_canvas_basic.cxx
@@ -54,12 +54,27 @@ add_executable(05-0-render-basic-windowed 05-0-render-basic-windowed.cxx
                                           02_triangle_render.cxx
                                           03_triangle_indexed_render.cxx
                                           )
-target_link_libraries(05-0-render-basic-windowed PRIVATE ${SDL2_LIBRARIES})
-target_include_directories(05-0-render-basic-windowed PRIVATE ${SDL2_INCLUDE_DIRS})
+target_link_libraries(04-0-render-basic-windowed PRIVATE ${SDL2_LIBRARIES})
+target_include_directories(04-0-render-basic-windowed PRIVATE ${SDL2_INCLUDE_DIRS})
 if (MSVC)
-    target_link_libraries(05-0-render-basic-windowed PRIVATE SDL2::SDL2 SDL2::SDL2main)
+    target_link_libraries(04-0-render-basic-windowed PRIVATE SDL2::SDL2 SDL2::SDL2main)
 endif()
-target_compile_features(05-0-render-basic-windowed PUBLIC cxx_std_17)
+target_compile_features(04-0-render-basic-windowed PUBLIC cxx_std_17)
+
+add_executable(04-0-render-full-windowed  04-0-render-full-windowed.cxx
+                                          04_triangle_interpolated_render.cxx
+                                          04_triangle_interpolated_render.hxx
+                                          00_canvas_basic.cxx
+                                          01_line_render.cxx
+                                          02_triangle_render.cxx
+                                          03_triangle_indexed_render.cxx
+                                          )
+target_link_libraries(04-0-render-full-windowed PRIVATE ${SDL2_LIBRARIES})
+target_include_directories(04-0-render-full-windowed PRIVATE ${SDL2_INCLUDE_DIRS})
+if (MSVC)
+    target_link_libraries(04-0-render-full-windowed PRIVATE SDL2::SDL2 SDL2::SDL2main)
+endif()
+target_compile_features(04-0-render-full-windowed PUBLIC cxx_std_17)
 
 
 install(TARGETS 04-0-render-basic

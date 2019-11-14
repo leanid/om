@@ -1,6 +1,7 @@
 #include "04_triangle_interpolated_render.hxx"
 
 #include <algorithm>
+#include <iostream>
 
 double interpolate(const double f0, const double f1, const double t)
 {
@@ -107,6 +108,22 @@ std::vector<vertex> triangle_interpolated::rasterize_triangle(const vertex& v0,
                     static_cast<int32_t>(std::round(top.f1)) };
     position end{ static_cast<int32_t>(std::round(bottom.f0)),
                   static_cast<int32_t>(std::round(bottom.f1)) };
+    position middle_pos{ static_cast<int32_t>(std::round(middle.f0)),
+                         static_cast<int32_t>(std::round(middle.f1)) };
+
+    if (start == end)
+    {
+        // just render line start -> middle
+        position delta        = start - middle_pos;
+        size_t   count_pixels = delta.x + delta.y + 1;
+        for (size_t i = 0; i < count_pixels; ++i)
+        {
+            double t      = static_cast<double>(i) / count_pixels;
+            vertex vertex = interpolate(top, middle, t);
+            out.push_back(vertex);
+        }
+        return out;
+    }
 
     std::vector<position> longest_side_line = pixels_positions(start, end);
 
@@ -119,16 +136,32 @@ std::vector<vertex> triangle_interpolated::rasterize_triangle(const vertex& v0,
     position second_middle = *it_middle;
 
     // interpolate second_middle position to get 4 vertex
-    double t = (second_middle - start).length() / (end - start).length();
+    double t{ 0 };
+    if ((end - start).length() > 0)
+    {
+        t = (second_middle - start).length() / (end - start).length();
+    }
+    else
+    {
+        // start == end so we need just render line
+        std::vector<position> line = pixels_positions(start, middle_pos);
+    }
     vertex second_middle_vertex = interpolate(top, bottom, t);
 
     // now render two horizontal triangles with horizontal lines
     // top triangle
     std::vector<vertex> top_triangle =
         raster_horizontal_triangle(top, middle, second_middle_vertex);
+    if (top_triangle.size() == 0)
+    {
+        std::cout << "0 size!!!" << std::endl;
+    }
     std::vector<vertex> bottom_triangle =
         raster_horizontal_triangle(bottom, middle, second_middle_vertex);
-
+    if (bottom_triangle.size() == 0)
+    {
+        std::cout << "0 size!!!" << std::endl;
+    }
     out.insert(std::end(out), begin(top_triangle), std::end(top_triangle));
     out.insert(std::end(out), begin(bottom_triangle),
                std::end(bottom_triangle));

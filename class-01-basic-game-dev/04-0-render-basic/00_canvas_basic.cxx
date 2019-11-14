@@ -15,3 +15,8 @@ position operator-(const position& left, const position& right)
 {
     return { left.x - right.x, left.y - right.y };
 }
+
+bool operator==(const position& left, const position& right)
+{
+    return left.x == right.x && left.y == right.y;
+}
