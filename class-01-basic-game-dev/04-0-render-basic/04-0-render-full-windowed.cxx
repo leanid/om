@@ -2,7 +2,9 @@
 
 #include <SDL.h>
 
+#include <cmath>
 #include <cstdlib>
+
 #include <iostream>
 
 int main(int, char**)
@@ -63,7 +65,7 @@ int main(int, char**)
             {
                 // un magnet from mouse
                 double len = std::sqrt(dx * dx + dy * dy);
-                if (len >= 0)
+                if (len > 0)
                 {
                     // normalize vector from vertex to mouse pos
                     double norm_dx = dx / len;
@@ -77,6 +79,8 @@ int main(int, char**)
                 }
             }
 
+            assert(!std::isnan(x));
+            assert(!std::isnan(y));
             out.f0 = x;
             out.f1 = y;
 
