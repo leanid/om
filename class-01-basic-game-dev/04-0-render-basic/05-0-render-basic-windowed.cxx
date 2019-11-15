@@ -88,10 +88,10 @@ int main(int, char**)
         }
     } program01;
 
-    std::vector<vertex>  triangle_v{ { 0, 0, 1, 0, 0, 0, 0, 0 },
+    std::vector<vertex>   triangle_v{ { 0, 0, 1, 0, 0, 0, 0, 0 },
                                     { 0, 239, 0, 1, 0, 0, 239, 0 },
                                     { 319, 239, 0, 0, 1, 319, 239, 0 } };
-    std::vector<uint8_t> indexes_v{ 0, 1, 2 };
+    std::vector<uint16_t> indexes_v{ 0, 1, 2 };
 
     void*     pixels = image.data();
     const int depth  = sizeof(color) * 8;

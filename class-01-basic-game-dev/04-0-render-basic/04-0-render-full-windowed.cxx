@@ -5,6 +5,7 @@
 #include <cmath>
 #include <cstdlib>
 
+#include <algorithm>
 #include <iostream>
 
 int main(int, char**)
@@ -92,28 +93,29 @@ int main(int, char**)
             out.r = static_cast<uint8_t>(v_in.f2 * 255);
             out.g = static_cast<uint8_t>(v_in.f3 * 255);
             out.b = static_cast<uint8_t>(v_in.f4 * 255);
-            /*
-                        double x  = v_in.f0;
-                        double y  = v_in.f1;
-                        double dx = mouse_x - x;
-                        double dy = mouse_y - y;
-                        if (dx * dx + dy * dy < radius * radius)
-                        {
-                            double len          = std::sqrt(dx * dx + dy * dy);
-                            double green_to_red = len / radius;
-                            out.r               = (1 - green_to_red) * 255;
-                            out.g               = (green_to_red)*255;
-                            out.b               = 0;
-                        }
-            */
+
+            double x  = v_in.f0;
+            double y  = v_in.f1;
+            double dx = mouse_x - x;
+            double dy = mouse_y - y;
+            if (dx * dx + dy * dy < radius * radius)
+            {
+                double len          = std::sqrt(dx * dx + dy * dy);
+                double green_to_red = (len / radius) - 0.35;
+                green_to_red        = std::clamp(green_to_red, 0.0, 1.0);
+                out.r               = (1 - green_to_red) * 255;
+                out.g               = (green_to_red)*255;
+                out.b               = 0;
+            }
+
             return out;
         }
     } program01;
 
     std::vector<vertex> triangle_v;
 
-    const size_t cell_x_count = 16;
-    const size_t cell_y_count = 16;
+    const size_t cell_x_count = 20;
+    const size_t cell_y_count = 20;
     const double cell_width   = static_cast<double>(width) / cell_x_count;
     const double cell_height  = static_cast<double>(height) / cell_y_count;
 
@@ -133,17 +135,17 @@ int main(int, char**)
         }
     }
 
-    std::vector<uint8_t> indexes_v;
+    std::vector<uint16_t> indexes_v;
 
     // generate indexes for our cell mesh
     for (size_t j = 0; j < cell_y_count - 1; ++j)
     {
         for (size_t i = 0; i < cell_x_count - 1; ++i)
         {
-            uint8_t v0 = j * cell_x_count + i;
-            uint8_t v1 = v0 + 1;
-            uint8_t v2 = v0 + cell_x_count;
-            uint8_t v3 = v2 + 1;
+            uint16_t v0 = j * cell_x_count + i;
+            uint16_t v1 = v0 + 1;
+            uint16_t v2 = v0 + cell_x_count;
+            uint16_t v3 = v2 + 1;
 
             // add two triangles
             //  v0-----v1

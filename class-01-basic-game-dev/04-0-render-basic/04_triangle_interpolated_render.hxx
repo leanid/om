@@ -42,8 +42,8 @@ struct triangle_interpolated : triangle_indexed_render
 {
     triangle_interpolated(canvas& buffer, size_t width, size_t height);
     void set_gfx_program(gfx_program& program) { program_ = &program; }
-    void draw_triangles(std::vector<vertex>&  vertexes,
-                        std::vector<uint8_t>& indexes);
+    void draw_triangles(std::vector<vertex>&   vertexes,
+                        std::vector<uint16_t>& indexes);
 
 private:
     std::vector<vertex> rasterize_triangle(const vertex& v0, const vertex& v1,

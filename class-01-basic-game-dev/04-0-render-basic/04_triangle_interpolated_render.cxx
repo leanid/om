@@ -111,17 +111,52 @@ std::vector<vertex> triangle_interpolated::rasterize_triangle(const vertex& v0,
     position middle_pos{ static_cast<int32_t>(std::round(middle.f0)),
                          static_cast<int32_t>(std::round(middle.f1)) };
 
+    // Here 3 quik and durty HACK if triangle consist from same points
     if (start == end)
     {
         // just render line start -> middle
+
         position delta        = start - middle_pos;
-        size_t   count_pixels = std::abs(delta.x) + std::abs(delta.y) + 1;
+        size_t   count_pixels = 4 * (std::abs(delta.x) + std::abs(delta.y) + 1);
         for (size_t i = 0; i < count_pixels; ++i)
         {
             double t      = static_cast<double>(i) / count_pixels;
             vertex vertex = interpolate(top, middle, t);
             out.push_back(vertex);
         }
+
+        return out;
+    }
+
+    if (start == middle_pos)
+    {
+        // just render line start -> middle
+
+        position delta        = start - end;
+        size_t   count_pixels = 4 * (std::abs(delta.x) + std::abs(delta.y) + 1);
+        for (size_t i = 0; i < count_pixels; ++i)
+        {
+            double t      = static_cast<double>(i) / count_pixels;
+            vertex vertex = interpolate(top, bottom, t);
+            out.push_back(vertex);
+        }
+
+        return out;
+    }
+
+    if (end == middle_pos)
+    {
+        // just render line start -> middle
+
+        position delta        = start - middle_pos;
+        size_t   count_pixels = 4 * (std::abs(delta.x) + std::abs(delta.y) + 1);
+        for (size_t i = 0; i < count_pixels; ++i)
+        {
+            double t      = static_cast<double>(i) / count_pixels;
+            vertex vertex = interpolate(top, middle, t);
+            out.push_back(vertex);
+        }
+
         return out;
     }
 
@@ -154,16 +189,10 @@ std::vector<vertex> triangle_interpolated::rasterize_triangle(const vertex& v0,
     // top triangle
     std::vector<vertex> top_triangle =
         raster_horizontal_triangle(top, middle, second_middle_vertex);
-    if (top_triangle.size() == 0)
-    {
-        std::cout << "0 size!!!" << std::endl;
-    }
+
     std::vector<vertex> bottom_triangle =
         raster_horizontal_triangle(bottom, middle, second_middle_vertex);
-    if (bottom_triangle.size() == 0)
-    {
-        std::cout << "0 size!!!" << std::endl;
-    }
+
     out.insert(std::end(out), begin(top_triangle), std::end(top_triangle));
     out.insert(std::end(out), begin(bottom_triangle),
                std::end(bottom_triangle));
@@ -171,14 +200,14 @@ std::vector<vertex> triangle_interpolated::rasterize_triangle(const vertex& v0,
     return out;
 }
 
-void triangle_interpolated::draw_triangles(std::vector<vertex>&  vertexes,
-                                           std::vector<uint8_t>& indexes)
+void triangle_interpolated::draw_triangles(std::vector<vertex>&   vertexes,
+                                           std::vector<uint16_t>& indexes)
 {
     for (size_t index = 0; index < indexes.size(); index += 3)
     {
-        const uint8_t index0 = indexes.at(index + 0);
-        const uint8_t index1 = indexes.at(index + 1);
-        const uint8_t index2 = indexes.at(index + 2);
+        const uint16_t index0 = indexes.at(index + 0);
+        const uint16_t index1 = indexes.at(index + 1);
+        const uint16_t index2 = indexes.at(index + 2);
 
         const vertex& v0 = vertexes.at(index0);
         const vertex& v1 = vertexes.at(index1);
