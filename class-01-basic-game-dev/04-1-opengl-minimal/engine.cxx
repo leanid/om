@@ -11,11 +11,8 @@
 #include <vector>
 
 #include <SDL.h>
-#if defined(__MINGW32__) || defined(__APPLE__)
-#include <SDL_opengl.h> // on windows for mingw
-#else
-#include <SDL_opengles2.h>
-#endif
+
+#include "glad/glad.h"
 
 #define OM_GL_CHECK()                                                          \
     {                                                                          \
@@ -211,6 +208,11 @@ public:
                       << "need openg version at least: 2.1\n"
                       << std::flush;
             throw std::runtime_error("opengl version too low");
+        }
+
+        if (gladLoadGLES2Loader(SDL_GL_GetProcAddress) == 0)
+        {
+            std::clog << "error: failed to initialize glad" << std::endl;
         }
 
         return "";

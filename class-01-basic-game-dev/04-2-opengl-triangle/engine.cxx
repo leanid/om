@@ -232,7 +232,7 @@ std::string engine_impl::initialize(std::string_view)
     SDL_version compiled = { 0, 0, 0 };
     SDL_version linked   = { 0, 0, 0 };
 
-    SDL_VERSION(&compiled);
+    SDL_VERSION(&compiled)
     SDL_GetVersion(&linked);
 
     if (SDL_COMPILEDVERSION !=
@@ -318,36 +318,37 @@ std::string engine_impl::initialize(std::string_view)
     // create vertex shader
 
     GLuint vert_shader = glCreateShader(GL_VERTEX_SHADER);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
     string_view vertex_shader_src = R"(
                                     attribute vec3 a_position;
                                     varying vec4 v_position;
+
                                     void main()
                                     {
-                                    v_position = vec4(a_position, 1.0);
-                                    gl_Position = v_position;
+                                        v_position = vec4(a_position, 1.0);
+                                        gl_Position = v_position;
                                     }
                                     )";
     const char* source            = vertex_shader_src.data();
     glShaderSource(vert_shader, 1, &source, nullptr);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
 
     glCompileShader(vert_shader);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
 
     GLint compiled_status = 0;
     glGetShaderiv(vert_shader, GL_COMPILE_STATUS, &compiled_status);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
     if (compiled_status == 0)
     {
         GLint info_len = 0;
         glGetShaderiv(vert_shader, GL_INFO_LOG_LENGTH, &info_len);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         std::vector<char> info_chars(static_cast<size_t>(info_len));
         glGetShaderInfoLog(vert_shader, info_len, nullptr, info_chars.data());
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         glDeleteShader(vert_shader);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
 
         std::string shader_type_name = "vertex";
         serr << "Error compiling shader(vertex)\n"
@@ -359,43 +360,44 @@ std::string engine_impl::initialize(std::string_view)
     // create fragment shader
 
     GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
     string_view fragment_shader_src = R"(
-                                      varying vec4 v_position;
-                                      void main()
-                                      {
-                                      if (v_position.z >= 0.0)
-                                      {
-                                        float light_green = 0.5 + v_position.z / 2.0;
-                                        gl_FragColor = vec4(0.0, light_green, 0.0, 1.0);
-                                      } else
-                                      {
-                                        float dark_green = 0.5 - (v_position.z / -2.0);
-                                        gl_FragColor = vec4(0.0, dark_green, 0.0, 1.0);
-                                      }
-                                      }
-                                      )";
+                      varying vec4 v_position;
+
+                      void main()
+                      {
+                          if (v_position.z >= 0.0)
+                          {
+                              float light_green = 0.5 + v_position.z / 2.0;
+                              gl_FragColor = vec4(0.0, light_green, 0.0, 1.0);
+                          } else
+                          {
+                              float color = 0.5 - (v_position.z / -2.0);
+                              gl_FragColor = vec4(color, 0.0, 0.0, 1.0);
+                          }
+                      }
+                      )";
     source                          = fragment_shader_src.data();
     glShaderSource(fragment_shader, 1, &source, nullptr);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
 
     glCompileShader(fragment_shader);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
 
     compiled_status = 0;
     glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &compiled_status);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
     if (compiled_status == 0)
     {
         GLint info_len = 0;
         glGetShaderiv(fragment_shader, GL_INFO_LOG_LENGTH, &info_len);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         std::vector<char> info_chars(static_cast<size_t>(info_len));
         glGetShaderInfoLog(fragment_shader, info_len, nullptr,
                            info_chars.data());
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         glDeleteShader(fragment_shader);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
 
         serr << "Error compiling shader(fragment)\n"
              << vertex_shader_src << "\n"
@@ -406,7 +408,7 @@ std::string engine_impl::initialize(std::string_view)
     // now create program and attach vertex and fragment shaders
 
     program_id_ = glCreateProgram();
-    OM_GL_CHECK();
+    OM_GL_CHECK()
     if (0 == program_id_)
     {
         serr << "failed to create gl program";
@@ -414,37 +416,37 @@ std::string engine_impl::initialize(std::string_view)
     }
 
     glAttachShader(program_id_, vert_shader);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
     glAttachShader(program_id_, fragment_shader);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
 
     // bind attribute location
     glBindAttribLocation(program_id_, 0, "a_position");
-    OM_GL_CHECK();
+    OM_GL_CHECK()
     // link program after binding attribute locations
     glLinkProgram(program_id_);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
     // Check the link status
     GLint linked_status = 0;
     glGetProgramiv(program_id_, GL_LINK_STATUS, &linked_status);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
     if (linked_status == 0)
     {
         GLint infoLen = 0;
         glGetProgramiv(program_id_, GL_INFO_LOG_LENGTH, &infoLen);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         std::vector<char> infoLog(static_cast<size_t>(infoLen));
         glGetProgramInfoLog(program_id_, infoLen, nullptr, infoLog.data());
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         serr << "Error linking program:\n" << infoLog.data();
         glDeleteProgram(program_id_);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         return serr.str();
     }
 
     // turn on rendering with just created shader program
     glUseProgram(program_id_);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
 
     glEnable(GL_DEPTH_TEST);
 
@@ -488,28 +490,28 @@ bool engine_impl::read_input(event& e)
 void engine_impl::render_triangle(const triangle& t)
 {
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex), &t.v[0]);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
     glEnableVertexAttribArray(0);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
     glValidateProgram(program_id_);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
     // Check the validate status
     GLint validate_status = 0;
     glGetProgramiv(program_id_, GL_VALIDATE_STATUS, &validate_status);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
     if (validate_status == GL_FALSE)
     {
         GLint infoLen = 0;
         glGetProgramiv(program_id_, GL_INFO_LOG_LENGTH, &infoLen);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         std::vector<char> infoLog(static_cast<size_t>(infoLen));
         glGetProgramInfoLog(program_id_, infoLen, nullptr, infoLog.data());
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         std::cerr << "Error linking program:\n" << infoLog.data();
         throw std::runtime_error("error");
     }
     glDrawArrays(GL_TRIANGLES, 0, 3);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
 }
 
 void engine_impl::swap_buffers()
@@ -517,9 +519,9 @@ void engine_impl::swap_buffers()
     SDL_GL_SwapWindow(window);
 
     glClearColor(0.3f, 0.3f, 1.0f, 0.0f);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
 }
 
 void engine_impl::uninitialize()

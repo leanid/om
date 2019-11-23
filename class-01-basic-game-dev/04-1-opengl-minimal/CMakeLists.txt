@@ -1,7 +1,11 @@
 cmake_minimum_required(VERSION 3.16)
-project(04-1-opengl-minimal)
+project(04-1-opengl-minimal CXX C)
 
-add_library(engine-04-1 SHARED engine.cxx engine.hxx)
+add_library(engine-04-1 SHARED
+    engine.cxx
+    engine.hxx
+    glad/glad.h
+    glad/glad.c)
 target_compile_features(engine-04-1 PUBLIC cxx_std_17)
 
 if(WIN32)
@@ -9,7 +13,8 @@ if(WIN32)
 endif(WIN32)
 
 find_package(sdl2 REQUIRED)
-target_include_directories(engine-04-1 PRIVATE ${SDL2_INCLUDE_DIRS})
+target_include_directories(engine-04-1 PRIVATE ${SDL2_INCLUDE_DIRS}
+    ${CMAKE_CURRENT_LIST_DIR})
 target_link_libraries(engine-04-1 PRIVATE ${SDL2_LIBRARIES})
 
 if (MINGW)
