@@ -244,7 +244,7 @@ std::string engine_impl::initialize(std::string_view)
     SDL_version compiled = { 0, 0, 0 };
     SDL_version linked   = { 0, 0, 0 };
 
-    SDL_VERSION(&compiled);
+    SDL_VERSION(&compiled)
     SDL_GetVersion(&linked);
 
     if (SDL_COMPILEDVERSION !=
@@ -341,19 +341,19 @@ std::string engine_impl::initialize(std::string_view)
     // RENDER_DOC///////////////////////////////////////////
     GLuint vertex_buffer = 0;
     glGenBuffers(1, &vertex_buffer);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
     glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
     GLuint vertex_array_object = 0;
     glGenVertexArrays(1, &vertex_array_object);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
     glBindVertexArray(vertex_array_object);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
     // RENDER_DOC///////////////////////////////////////////
     // create vertex shader
 
     GLuint vert_shader = glCreateShader(GL_VERTEX_SHADER);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
     string_view vertex_shader_src = R"(#version 330 core
                                     layout (location = 0) in vec3 a_position;
                                     layout (location = 1) in vec3 a_color;
@@ -368,24 +368,24 @@ std::string engine_impl::initialize(std::string_view)
                                     )";
     const char* source            = vertex_shader_src.data();
     glShaderSource(vert_shader, 1, &source, nullptr);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
 
     glCompileShader(vert_shader);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
 
     GLint compiled_status = 0;
     glGetShaderiv(vert_shader, GL_COMPILE_STATUS, &compiled_status);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
     if (compiled_status == 0)
     {
         GLint info_len = 0;
         glGetShaderiv(vert_shader, GL_INFO_LOG_LENGTH, &info_len);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         std::vector<char> info_chars(static_cast<size_t>(info_len));
         glGetShaderInfoLog(vert_shader, info_len, nullptr, info_chars.data());
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         glDeleteShader(vert_shader);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
 
         std::string shader_type_name = "vertex";
         serr << "Error compiling shader(vertex)\n"
@@ -397,7 +397,7 @@ std::string engine_impl::initialize(std::string_view)
     // create fragment shader
 
     GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
     string_view fragment_shader_src = R"(#version 330 core
                                       in vec4 v_position;
                                       in vec3 v_color;
@@ -420,25 +420,25 @@ std::string engine_impl::initialize(std::string_view)
                                       )";
     source                          = fragment_shader_src.data();
     glShaderSource(fragment_shader, 1, &source, nullptr);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
 
     glCompileShader(fragment_shader);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
 
     compiled_status = 0;
     glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &compiled_status);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
     if (compiled_status == 0)
     {
         GLint info_len = 0;
         glGetShaderiv(fragment_shader, GL_INFO_LOG_LENGTH, &info_len);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         std::vector<char> info_chars(static_cast<size_t>(info_len));
         glGetShaderInfoLog(fragment_shader, info_len, nullptr,
                            info_chars.data());
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         glDeleteShader(fragment_shader);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
 
         serr << "Error compiling shader(fragment)\n"
              << vertex_shader_src << "\n"
@@ -449,7 +449,7 @@ std::string engine_impl::initialize(std::string_view)
     // now create program and attach vertex and fragment shaders
 
     program_id_ = glCreateProgram();
-    OM_GL_CHECK();
+    OM_GL_CHECK()
     if (0 == program_id_)
     {
         serr << "failed to create gl program";
@@ -457,42 +457,42 @@ std::string engine_impl::initialize(std::string_view)
     }
 
     glAttachShader(program_id_, vert_shader);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
     glAttachShader(program_id_, fragment_shader);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
 
     // bind attribute location
     glBindAttribLocation(program_id_, 0, "a_position");
-    OM_GL_CHECK();
+    OM_GL_CHECK()
     glBindAttribLocation(program_id_, 1, "a_color");
-    OM_GL_CHECK();
+    OM_GL_CHECK()
     // link program after binding attribute locations
     glLinkProgram(program_id_);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
     // Check the link status
     GLint linked_status = 0;
     glGetProgramiv(program_id_, GL_LINK_STATUS, &linked_status);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
     if (linked_status == 0)
     {
         GLint infoLen = 0;
         glGetProgramiv(program_id_, GL_INFO_LOG_LENGTH, &infoLen);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         std::vector<char> infoLog(static_cast<size_t>(infoLen));
         glGetProgramInfoLog(program_id_, infoLen, nullptr, infoLog.data());
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         serr << "Error linking program:\n" << infoLog.data();
         glDeleteProgram(program_id_);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         return serr.str();
     }
 
     // turn on rendering with just created shader program
     glUseProgram(program_id_);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
 
     glEnable(GL_DEPTH_TEST);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
 
     return "";
 }
@@ -533,43 +533,44 @@ bool engine_impl::read_input(event& e)
 
 void engine_impl::render_triangle(const triangle& t)
 {
+    // RENDER DOC addition ////////////////////
     glBufferData(GL_ARRAY_BUFFER, sizeof(t), &t, GL_STATIC_DRAW);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
     glEnableVertexAttribArray(0);
 
     GLintptr position_attr_offset = 0;
 
-    OM_GL_CHECK();
+    OM_GL_CHECK()
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex),
                           reinterpret_cast<void*>(position_attr_offset));
-    OM_GL_CHECK();
+    OM_GL_CHECK()
     glEnableVertexAttribArray(1);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
 
     GLintptr color_attr_offset = sizeof(float) * 3;
 
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(vertex),
                           reinterpret_cast<void*>(color_attr_offset));
-    OM_GL_CHECK();
+    OM_GL_CHECK()
     glValidateProgram(program_id_);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
     // Check the validate status
     GLint validate_status = 0;
     glGetProgramiv(program_id_, GL_VALIDATE_STATUS, &validate_status);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
     if (validate_status == GL_FALSE)
     {
         GLint infoLen = 0;
         glGetProgramiv(program_id_, GL_INFO_LOG_LENGTH, &infoLen);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         std::vector<char> infoLog(static_cast<size_t>(infoLen));
         glGetProgramInfoLog(program_id_, infoLen, nullptr, infoLog.data());
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         std::cerr << "Error linking program:\n" << infoLog.data();
         throw std::runtime_error("error");
     }
     glDrawArrays(GL_TRIANGLES, 0, 3);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
 }
 
 void engine_impl::swap_buffers()
@@ -577,9 +578,9 @@ void engine_impl::swap_buffers()
     SDL_GL_SwapWindow(window);
 
     glClearColor(0.3f, 0.3f, 1.0f, 0.0f);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
 }
 
 void engine_impl::uninitialize()

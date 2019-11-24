@@ -449,6 +449,7 @@ std::string engine_impl::initialize(std::string_view)
     OM_GL_CHECK()
 
     glEnable(GL_DEPTH_TEST);
+    // glDisable(GL_DEPTH_TEST);
 
     return "";
 }
