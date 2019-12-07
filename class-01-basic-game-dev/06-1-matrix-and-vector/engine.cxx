@@ -113,7 +113,7 @@ mat2::mat2()
 {
 }
 
-mat2 mat2::identiry()
+mat2 mat2::identity()
 {
     return mat2::scale(1.f);
 }

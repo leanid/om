@@ -54,7 +54,7 @@ static void load_gl_func(const char* func_name, T& result)
 
 #define OM_GL_CHECK()                                                          \
     {                                                                          \
-        const int err = glGetError();                                          \
+        const uint32_t err = glGetError();                                     \
         if (err != GL_NO_ERROR)                                                \
         {                                                                      \
             switch (err)                                                       \
@@ -188,7 +188,7 @@ public:
         SDL_version compiled = { 0, 0, 0 };
         SDL_version linked   = { 0, 0, 0 };
 
-        SDL_VERSION(&compiled);
+        SDL_VERSION(&compiled)
         SDL_GetVersion(&linked);
 
         if (SDL_COMPILEDVERSION !=
@@ -229,13 +229,10 @@ public:
         }
 
         int gl_major_ver = 0;
-        int result =
-            SDL_GL_GetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, &gl_major_ver);
-        SDL_assert(result == 0);
+
+        SDL_GL_GetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, &gl_major_ver);
         int gl_minor_ver = 0;
-        result =
-            SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, &gl_minor_ver);
-        SDL_assert(result == 0);
+        SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, &gl_minor_ver);
 
         if (gl_major_ver <= 2 && gl_minor_ver < 1)
         {
@@ -275,7 +272,7 @@ public:
         // create vertex shader
 
         GLuint vert_shader = glCreateShader(GL_VERTEX_SHADER);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         string_view vertex_shader_src = R"(
 attribute vec2 a_position;
 attribute vec2 a_tex_coord;
@@ -465,8 +462,8 @@ void main()
 
     bool load_texture(std::string_view path) final
     {
-        std::vector<unsigned char> png_file_in_memory;
-        std::ifstream              ifs(path.data(), std::ios_base::binary);
+        std::vector<std::byte> png_file_in_memory;
+        std::ifstream          ifs(path.data(), std::ios_base::binary);
         if (!ifs)
         {
             return false;
@@ -481,15 +478,15 @@ void main()
         }
 
         ifs.read(reinterpret_cast<char*>(png_file_in_memory.data()),
-                 pos_in_file);
+                 static_cast<std::streamsize>(png_file_in_memory.size()));
         if (!ifs.good())
         {
             return false;
         }
 
-        std::vector<unsigned char> image;
-        unsigned long              w = 0;
-        unsigned long              h = 0;
+        std::vector<std::byte> image;
+        unsigned long          w = 0;
+        unsigned long          h = 0;
         int error = decodePNG(image, w, h, &png_file_in_memory[0],
                               png_file_in_memory.size(), false);
 
@@ -502,20 +499,29 @@ void main()
 
         GLuint tex_handl = 0;
         glGenTextures(1, &tex_handl);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         glBindTexture(GL_TEXTURE_2D, tex_handl);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
 
         GLint mipmap_level = 0;
         GLint border       = 0;
-        glTexImage2D(GL_TEXTURE_2D, mipmap_level, GL_RGBA, w, h, border,
-                     GL_RGBA, GL_UNSIGNED_BYTE, &image[0]);
-        OM_GL_CHECK();
+        // clang-format off
+        glTexImage2D(GL_TEXTURE_2D, // Specifies the target texture of the active texture unit
+                     mipmap_level,  // Specifies the level-of-detail number. Level 0 is the base image level
+                     GL_RGBA,       // Specifies the internal format of the texture
+                     static_cast<GLsizei>(w),
+                     static_cast<GLsizei>(h),
+                     border,        // Specifies the width of the border. Must be 0. For GLES 2.0
+                     GL_RGBA,       // Specifies the format of the texel data. Must match internalformat
+                     GL_UNSIGNED_BYTE, // Specifies the data type of the texel data
+                     &image[0]);    // Specifies a pointer to the image data in memory
+        // clang-format on
+        OM_GL_CHECK()
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         return true;
     }
     void render_triangle(const triangle& t) final

@@ -27,7 +27,7 @@ om::tri0 blend(const om::tri0& tl, const om::tri0& tr, const float a)
     return r;
 }
 
-int main(int /*argc*/, char* /*argv*/ [])
+int main(int /*argc*/, char* /*argv*/[])
 {
     std::unique_ptr<om::engine, void (*)(om::engine*)> engine(
         om::create_engine(), om::destroy_engine);
@@ -46,8 +46,10 @@ int main(int /*argc*/, char* /*argv*/ [])
         return EXIT_FAILURE;
     }
 
-    bool continue_loop  = true;
-    int  current_shader = 0;
+    bool  continue_loop  = true;
+    bool  stop_rotate    = false;
+    float stop_time      = 0.f;
+    int   current_shader = 0;
     while (continue_loop)
     {
         om::event event;
@@ -59,6 +61,10 @@ int main(int /*argc*/, char* /*argv*/ [])
             {
                 case om::event::turn_off:
                     continue_loop = false;
+                    break;
+                case om::event::button2_released:
+                    stop_rotate = !stop_rotate;
+                    stop_time   = engine->get_time_from_init();
                     break;
                 case om::event::button1_released:
                     ++current_shader;
@@ -119,33 +125,41 @@ int main(int /*argc*/, char* /*argv*/ [])
 
             file >> tr1 >> tr2;
 
-            float time = engine->get_time_from_init();
+            float time = stop_rotate ? stop_time : engine->get_time_from_init();
             float s    = std::sin(time);
             float c    = std::cos(time);
 
             // animate one triangle texture coordinates
+            /*
             for (auto& v : tr1.v)
             {
                 v.uv.x += c;
                 v.uv.y += s;
             }
+*/
 
-            engine->render(tr1, texture);
+            //          engine->render(tr1, texture);
 
             om::mat2 aspect;
-            aspect.col0.x = 640.f / 480.f;
+            aspect.col0.x = 480.f / 640.f;
             aspect.col0.y = 0.f;
             aspect.col1.x = 0.f;
             aspect.col1.y = 1.f;
 
-            om::mat2 m = aspect * om::mat2::rotation(time) *
-                         om::mat2::scale(std::sin(time));
+            om::mat2 m = om::mat2::rotation(time * 0.5f) * aspect;
+            /**
+                     om::mat2::scale(std::sin(time))*/
 
             for (auto& v : tr2.v)
             {
                 v.pos = v.pos * m;
             }
+            for (auto& v : tr1.v)
+            {
+                v.pos = v.pos * m;
+            }
 
+            engine->render(tr1, texture);
             engine->render(tr2, texture);
         }
 

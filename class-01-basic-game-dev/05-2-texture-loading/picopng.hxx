@@ -27,8 +27,8 @@ data
 information.
 return: 0 if success, not 0 if some error occured.
 */
-int decodePNG(std::vector<unsigned char>& out_image, unsigned long& image_width,
-              unsigned long& image_height, const unsigned char* in_png,
+int decodePNG(std::vector<std::byte>& out_image, unsigned long& image_width,
+              unsigned long& image_height, const std::byte* in_png,
               size_t in_size, bool convert_to_rgba32 = true)
 {
     // picoPNG version 20101224
@@ -521,7 +521,7 @@ int decodePNG(std::vector<unsigned char>& out_image, unsigned long& image_width,
             std::vector<unsigned char> palette;
         } info;
         int  error;
-        void decode(std::vector<unsigned char>& out, const unsigned char* in,
+        void decode(std::vector<std::byte>& out, const unsigned char* in,
                     size_t size, bool convert_to_rgba32)
         {
             error = 0;
@@ -673,7 +673,8 @@ int decodePNG(std::vector<unsigned char>& out_image, unsigned long& image_width,
                    outlength = (info.height * info.width * bpp + 7) / 8;
             out.resize(outlength); // time to fill the out buffer
             unsigned char* out_ =
-                outlength ? &out[0] : 0;   // use a regular pointer to the
+                outlength ? reinterpret_cast<unsigned char*>(&out[0])
+                          : 0;             // use a regular pointer to the
                                            // std::vector for faster code if
                                            // compiled without optimization
             if (info.interlaceMethod == 0) // no interlace, just filter
@@ -755,8 +756,9 @@ int decodePNG(std::vector<unsigned char>& out_image, unsigned long& image_width,
             if (convert_to_rgba32 && (info.colorType != 6 ||
                                       info.bitDepth != 8)) // conversion needed
             {
-                std::vector<unsigned char> data = out;
-                error = convert(out, &data[0], info, info.width, info.height);
+                std::vector<std::byte> data = out;
+                error = convert(out, reinterpret_cast<unsigned char*>(&data[0]),
+                                info, info.width, info.height);
             }
         }
         void readPngHeader(const unsigned char* in,
@@ -983,7 +985,7 @@ int decodePNG(std::vector<unsigned char>& out_image, unsigned long& image_width,
             else
                 return info_.bitDepth;
         }
-        int convert(std::vector<unsigned char>& out, const unsigned char* in,
+        int convert(std::vector<std::byte>& out, const unsigned char* in,
                     Info& infoIn, unsigned long w, unsigned long h)
         { // converts from any color type to 32-bit. return value = LodePNG
           // error code
@@ -992,7 +994,8 @@ int decodePNG(std::vector<unsigned char>& out_image, unsigned long& image_width,
             unsigned char* out_ =
                 out.empty()
                     ? 0
-                    : &out[0]; // faster if compiled without optimization
+                    : reinterpret_cast<unsigned char*>(
+                          &out[0]); // faster if compiled without optimization
             if (infoIn.bitDepth == 8 && infoIn.colorType == 0) // greyscale
                 for (size_t i = 0; i < numpixels; i++)
                 {
@@ -1115,7 +1118,8 @@ int decodePNG(std::vector<unsigned char>& out_image, unsigned long& image_width,
         }
     };
     PNG decoder;
-    decoder.decode(out_image, in_png, in_size, convert_to_rgba32);
+    decoder.decode(out_image, reinterpret_cast<const unsigned char*>(in_png),
+                   in_size, convert_to_rgba32);
     if (0 == decoder.error)
     {
         image_width  = decoder.info.width;

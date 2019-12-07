@@ -214,7 +214,7 @@ public:
         : count(static_cast<std::uint32_t>(n * 3))
     {
         glGenBuffers(1, &gl_handle);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
 
         bind();
 
@@ -222,27 +222,27 @@ public:
 
         glBufferData(GL_ARRAY_BUFFER, size_in_bytes, &tri->v[0],
                      GL_STATIC_DRAW);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
     }
     vertex_buffer_impl(const v2* vert, std::size_t n)
         : count(static_cast<std::uint32_t>(n))
     {
         glGenBuffers(1, &gl_handle);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
 
         bind();
 
         GLsizeiptr size_in_bytes = static_cast<GLsizeiptr>(n * sizeof(v2));
 
         glBufferData(GL_ARRAY_BUFFER, size_in_bytes, vert, GL_STATIC_DRAW);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
     }
     ~vertex_buffer_impl() final;
 
     void bind() const override
     {
         glBindBuffer(GL_ARRAY_BUFFER, gl_handle);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
     }
 
     std::uint32_t size() const override { return count; }
@@ -910,26 +910,26 @@ public:
         indexes->bind();
 
         glEnableVertexAttribArray(0); // g_AttribLocationPosition
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         glEnableVertexAttribArray(1); // g_AttribLocationUV
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         glEnableVertexAttribArray(2); // g_AttribLocationColor
-        OM_GL_CHECK();
+        OM_GL_CHECK()
 
         glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(v2),
                               reinterpret_cast<void*>(0));
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(v2),
                               reinterpret_cast<void*>(2 * sizeof(float)));
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(v2),
                               reinterpret_cast<void*>(4 * sizeof(float)));
-        OM_GL_CHECK();
+        OM_GL_CHECK()
 
         glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(num_vertexes),
                        GL_UNSIGNED_SHORT, start_vertex_index);
 
-        OM_GL_CHECK();
+        OM_GL_CHECK()
     }
 
     void swap_buffers() final
@@ -958,7 +958,7 @@ public:
         SDL_GL_SwapWindow(window);
 
         glClear(GL_COLOR_BUFFER_BIT);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
     }
     void uninitialize() final
     {
@@ -1387,15 +1387,15 @@ std::string engine_impl::initialize(std::string_view)
     shader03->use();
 
     glEnable(GL_BLEND);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
 
     glClearColor(0.f, 0.0, 0.f, 0.0f);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
 
     glViewport(0, 0, 800, 600);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
 
     if (!ImGui_ImplSdlGL3_Init(window))
     {
@@ -1409,7 +1409,7 @@ index_buffer_impl::index_buffer_impl(const uint16_t* i, size_t n)
     : count(static_cast<std::uint32_t>(n))
 {
     glGenBuffers(1, &gl_handle);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
 
     bind();
 
@@ -1417,24 +1417,24 @@ index_buffer_impl::index_buffer_impl(const uint16_t* i, size_t n)
         static_cast<GLsizeiptr>(n * sizeof(std::uint16_t));
 
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, size_in_bytes, i, GL_STATIC_DRAW);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
 }
 
 index_buffer_impl::~index_buffer_impl()
 {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
     glDeleteBuffers(1, &gl_handle);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
 }
 
 vertex_buffer_impl::~vertex_buffer_impl()
 {
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
 
     glDeleteBuffers(1, &gl_handle);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
 }
 
 } // end namespace om
@@ -1455,7 +1455,7 @@ static om::shader_gl_es20* g_im_gui_shader   = nullptr;
 // If text or lines are blurry when integrating ImGui in your engine: in your
 // Render function, try translating your projection matrix by (0.5f,0.5f) or
 // (0.375f,0.375f)
-void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
+void imgui_to_engine_render(ImDrawData* draw_data)
 {
     // Avoid rendering when minimized, scale coordinates for retina displays
     // (screen coordinates != framebuffer coordinates)
@@ -1510,8 +1510,7 @@ void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
             const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
             assert(pcmd->UserCallback == nullptr); // we not use it
 
-            om::texture* tex =
-                reinterpret_cast<om::texture*>(pcmd->TextureId);
+            om::texture* tex = reinterpret_cast<om::texture*>(pcmd->TextureId);
 
             om::g_engine->render(vertex_buff, index_buff, tex,
                                  idx_buffer_offset, pcmd->ElemCount);
@@ -1663,10 +1662,6 @@ bool ImGui_ImplSdlGL3_Init(SDL_Window* window)
     ImGui::StyleColorsDark();
     // ImGui::StyleColorsClassic();
 
-    // Setup Platform/Renderer bindings
-    // ImGui_ImplSDL2_InitForOpenGL(window, gl_context);
-    // ImGui_ImplOpenGL3_Init(glsl_version);
-
     ImGuiIO& io = ImGui::GetIO();
     // g_Window    = window;
 
@@ -1680,7 +1675,7 @@ bool ImGui_ImplSdlGL3_Init(SDL_Window* window)
     //        io.WantSetMousePos
     //                                          // requests (optional, rarely
     //                                          used)
-    io.BackendPlatformName = "imgui_impl_sdl";
+    io.BackendPlatformName = "custom_micro_engine";
 
     // Keyboard mapping. ImGui will use those indices to peek into the
     // io.KeysDown[] array.
@@ -1705,29 +1700,29 @@ bool ImGui_ImplSdlGL3_Init(SDL_Window* window)
     io.KeyMap[ImGuiKey_X]          = SDL_SCANCODE_X;
     io.KeyMap[ImGuiKey_Y]          = SDL_SCANCODE_Y;
     io.KeyMap[ImGuiKey_Z]          = SDL_SCANCODE_Z;
-/*
-    g_MouseCursors[ImGuiMouseCursor_Arrow] =
-        SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW);
-    g_MouseCursors[ImGuiMouseCursor_TextInput] =
-        SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_IBEAM);
-    g_MouseCursors[ImGuiMouseCursor_ResizeAll] =
-        SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZEALL);
-    g_MouseCursors[ImGuiMouseCursor_ResizeNS] =
-        SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZENS);
-    g_MouseCursors[ImGuiMouseCursor_ResizeEW] =
-        SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZEWE);
-    g_MouseCursors[ImGuiMouseCursor_ResizeNESW] =
-        SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZENESW);
-    g_MouseCursors[ImGuiMouseCursor_ResizeNWSE] =
-        SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZENWSE);
-    g_MouseCursors[ImGuiMouseCursor_Hand] =
-        SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_HAND);
-*/
+    /*
+        g_MouseCursors[ImGuiMouseCursor_Arrow] =
+            SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW);
+        g_MouseCursors[ImGuiMouseCursor_TextInput] =
+            SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_IBEAM);
+        g_MouseCursors[ImGuiMouseCursor_ResizeAll] =
+            SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZEALL);
+        g_MouseCursors[ImGuiMouseCursor_ResizeNS] =
+            SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZENS);
+        g_MouseCursors[ImGuiMouseCursor_ResizeEW] =
+            SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZEWE);
+        g_MouseCursors[ImGuiMouseCursor_ResizeNESW] =
+            SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZENESW);
+        g_MouseCursors[ImGuiMouseCursor_ResizeNWSE] =
+            SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZENWSE);
+        g_MouseCursors[ImGuiMouseCursor_Hand] =
+            SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_HAND);
+    */
     io.RenderDrawListsFn =
-        ImGui_ImplSdlGL3_RenderDrawLists; // Alternatively you can set this to
-                                          // NULL and call ImGui::GetDrawData()
-                                          // after ImGui::Render() to get the
-                                          // same ImDrawData pointer.
+        imgui_to_engine_render; // Alternatively you can set this to
+                                // NULL and call ImGui::GetDrawData()
+                                // after ImGui::Render() to get the
+                                // same ImDrawData pointer.
     io.SetClipboardTextFn = ImGui_ImplSdlGL3_SetClipboardText;
     io.GetClipboardTextFn = ImGui_ImplSdlGL3_GetClipboardText;
     io.ClipboardUserData  = nullptr;
