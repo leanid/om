@@ -13,7 +13,7 @@ void sprite_reader::load_sprites(std::vector<sprite>& sprites, std::istream& in,
 
     std::string attribute_name;
     // float       value;
-    while (in >> attribute_name)
+    while (!in.eof() && in >> attribute_name)
     {
         if ("uv_rect:" == attribute_name)
         {
@@ -55,6 +55,8 @@ void sprite_reader::load_sprites(std::vector<sprite>& sprites, std::istream& in,
             om::texture* texture = texture_cache.create_texture(name);
             spr.texture(texture);
         }
+
+        in >> std::ws;
     }
     return;
 }

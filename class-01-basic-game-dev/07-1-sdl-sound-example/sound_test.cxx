@@ -30,9 +30,9 @@ struct audio_buff
 
 std::ostream& operator<<(std::ostream& o, const SDL_AudioSpec& spec);
 
-static auto    start         = std::chrono::high_resolution_clock::now();
-static auto    finish        = start;
-static int32_t default_delay = 0;
+static auto     start         = std::chrono::high_resolution_clock::now();
+static auto     finish        = start;
+static uint32_t default_delay = 0;
 
 int main(int /*argc*/, char* /*argv*/[])
 {

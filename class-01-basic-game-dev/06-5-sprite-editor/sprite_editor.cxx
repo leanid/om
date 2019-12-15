@@ -87,6 +87,7 @@ int main(int /*argc*/, char* /*argv*/[])
     sprite_reader  loader_of_sprites;
     vector<sprite> sprites_for_animation;
     ifstream       ifile;
+    ifile.exceptions(std::ios::badbit | std::ios::failbit);
     ifile.open("spr_cache.yaml", ios::binary);
     loader_of_sprites.load_sprites(sprites_for_animation, ifile, engine);
 
@@ -295,7 +296,7 @@ int main(int /*argc*/, char* /*argv*/[])
 
         spr.draw(engine);
 
-        // animation.draw(engine, delta_time);
+        animation.draw(engine, delta_time);
 
         engine.swap_buffers();
     }

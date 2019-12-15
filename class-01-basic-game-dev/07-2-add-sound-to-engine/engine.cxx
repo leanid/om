@@ -234,6 +234,7 @@ static std::size_t get_sound_format_size(uint16_t format_value)
     return it->second;
 }
 
+#pragma pack(push, 1)
 class sound_buffer_impl final : public sound_buffer
 {
 public:
@@ -264,6 +265,7 @@ public:
     bool                       is_playing = false;
     bool                       is_looped  = false;
 };
+#pragma pack(pop)
 
 sound_buffer_impl::sound_buffer_impl(std::string_view  path,
                                      SDL_AudioDeviceID device_,
@@ -298,7 +300,8 @@ sound_buffer_impl::sound_buffer_impl(std::string_view  path,
               << "length: " << length << '\n'
               << "time: "
               << static_cast<double>(length) /
-                     (file_audio_spec.channels * file_audio_spec.freq *
+                     (file_audio_spec.channels *
+                      static_cast<uint32_t>(file_audio_spec.freq) *
                       get_sound_format_size(file_audio_spec.format))
               << "sec" << std::endl;
 
@@ -311,11 +314,12 @@ sound_buffer_impl::sound_buffer_impl(std::string_view  path,
                           file_audio_spec.channels, file_audio_spec.freq,
                           device_audio_spec.format, device_audio_spec.channels,
                           device_audio_spec.freq);
-        SDL_assert(cvt.needed); // obviously, this one is always needed.
+        assert(cvt.needed); // obviously, this one is always needed.
         // read your data into cvt.buf here.
-        cvt.len = length;
+        cvt.len = static_cast<int>(length);
         // we have to make buffer for inplace conversion
-        tmp_buf.reset(new uint8_t[cvt.len * cvt.len_mult]);
+        size_t new_buffer_size = static_cast<size_t>(cvt.len * cvt.len_mult);
+        tmp_buf.reset(new uint8_t[new_buffer_size]);
         uint8_t* buf = tmp_buf.get();
         std::copy_n(buffer, length, buf);
         cvt.buf = buf;
@@ -327,7 +331,7 @@ sound_buffer_impl::sound_buffer_impl(std::string_view  path,
         // cvt.buf has cvt.len_cvt bytes of converted data now.
         SDL_FreeWAV(buffer);
         buffer = tmp_buf.get();
-        length = cvt.len_cvt;
+        length = static_cast<uint32_t>(cvt.len_cvt);
     }
 }
 
@@ -345,6 +349,7 @@ sound_buffer_impl::~sound_buffer_impl()
 
 vertex_buffer_impl::~vertex_buffer_impl() {}
 
+#pragma pack(push, 1)
 class texture_gl_es20 final : public texture
 {
 public:
@@ -354,10 +359,10 @@ public:
     void bind() const
     {
         GLboolean is_texture = glIsTexture(tex_handl);
-        SDL_assert(is_texture);
-        OM_GL_CHECK();
+        assert(is_texture);
+        OM_GL_CHECK()
         glBindTexture(GL_TEXTURE_2D, tex_handl);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
     }
 
     std::uint32_t get_width() const final { return width; }
@@ -369,6 +374,7 @@ private:
     std::uint32_t width     = 0;
     std::uint32_t height    = 0;
 };
+#pragma pack(pop)
 
 class shader_gl_es20
 {
@@ -393,7 +399,7 @@ public:
     void use() const
     {
         glUseProgram(program_id);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
     }
 
     void set_uniform(std::string_view uniform_name, texture_gl_es20* texture)
@@ -401,7 +407,7 @@ public:
         assert(texture != nullptr);
         const int location =
             glGetUniformLocation(program_id, uniform_name.data());
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         if (location == -1)
         {
             std::cerr << "can't get uniform location from shader\n";
@@ -409,20 +415,20 @@ public:
         }
         unsigned int texture_unit = 0;
         glActiveTexture_(GL_TEXTURE0 + texture_unit);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
 
         texture->bind();
 
         // http://www.khronos.org/opengles/sdk/docs/man/xhtml/glUniform.xml
         glUniform1i(location, static_cast<int>(0 + texture_unit));
-        OM_GL_CHECK();
+        OM_GL_CHECK()
     }
 
     void set_uniform(std::string_view uniform_name, const color& c)
     {
         const int location =
             glGetUniformLocation(program_id, uniform_name.data());
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         if (location == -1)
         {
             std::cerr << "can't get uniform location from shader\n";
@@ -430,14 +436,14 @@ public:
         }
         float values[4] = { c.get_r(), c.get_g(), c.get_b(), c.get_a() };
         glUniform4fv(location, 1, &values[0]);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
     }
 
     void set_uniform(std::string_view uniform_name, const mat2x3& m)
     {
         const int location =
             glGetUniformLocation(program_id, uniform_name.data());
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         if (location == -1)
         {
             std::cerr << "can't get uniform location from shader\n";
@@ -450,35 +456,35 @@ public:
                             0.f,      0.f,       1.f };
         // clang-format on
         glUniformMatrix3fv(location, 1, GL_FALSE, &values[0]);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
     }
 
 private:
     GLuint compile_shader(GLenum shader_type, std::string_view src)
     {
         GLuint shader_id = glCreateShader(shader_type);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         std::string_view vertex_shader_src = src;
         const char*      source            = vertex_shader_src.data();
         glShaderSource(shader_id, 1, &source, nullptr);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
 
         glCompileShader(shader_id);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
 
         GLint compiled_status = 0;
         glGetShaderiv(shader_id, GL_COMPILE_STATUS, &compiled_status);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         if (compiled_status == 0)
         {
             GLint info_len = 0;
             glGetShaderiv(shader_id, GL_INFO_LOG_LENGTH, &info_len);
-            OM_GL_CHECK();
+            OM_GL_CHECK()
             std::vector<char> info_chars(static_cast<size_t>(info_len));
-            glGetShaderInfoLog(shader_id, info_len, NULL, info_chars.data());
-            OM_GL_CHECK();
+            glGetShaderInfoLog(shader_id, info_len, nullptr, info_chars.data());
+            OM_GL_CHECK()
             glDeleteShader(shader_id);
-            OM_GL_CHECK();
+            OM_GL_CHECK()
 
             std::string shader_type_name =
                 shader_type == GL_VERTEX_SHADER ? "vertex" : "fragment";
@@ -493,7 +499,7 @@ private:
         const std::vector<std::tuple<GLuint, const GLchar*>>& attributes)
     {
         GLuint program_id_ = glCreateProgram();
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         if (0 == program_id_)
         {
             std::cerr << "failed to create gl program";
@@ -501,9 +507,9 @@ private:
         }
 
         glAttachShader(program_id_, vert_shader);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         glAttachShader(program_id_, frag_shader);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
 
         // bind attribute location
         for (const auto& attr : attributes)
@@ -511,27 +517,27 @@ private:
             GLuint        loc  = std::get<0>(attr);
             const GLchar* name = std::get<1>(attr);
             glBindAttribLocation(program_id_, loc, name);
-            OM_GL_CHECK();
+            OM_GL_CHECK()
         }
 
         // link program after binding attribute locations
         glLinkProgram(program_id_);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         // Check the link status
         GLint linked_status = 0;
         glGetProgramiv(program_id_, GL_LINK_STATUS, &linked_status);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         if (linked_status == 0)
         {
             GLint infoLen = 0;
             glGetProgramiv(program_id_, GL_INFO_LOG_LENGTH, &infoLen);
-            OM_GL_CHECK();
+            OM_GL_CHECK()
             std::vector<char> infoLog(static_cast<size_t>(infoLen));
-            glGetProgramInfoLog(program_id_, infoLen, NULL, infoLog.data());
-            OM_GL_CHECK();
+            glGetProgramInfoLog(program_id_, infoLen, nullptr, infoLog.data());
+            OM_GL_CHECK()
             std::cerr << "Error linking program:\n" << infoLog.data();
             glDeleteProgram(program_id_);
-            OM_GL_CHECK();
+            OM_GL_CHECK()
             return 0;
         }
         return program_id_;
@@ -571,7 +577,7 @@ std::ostream& operator<<(std::ostream& stream, const event& e)
         case om::event_type::hardware:
             stream << std::get<om::hardware_data>(e.info);
             break;
-    };
+    }
     return stream;
 }
 
@@ -717,6 +723,7 @@ static bool check_input(const SDL_Event& e, const bind*& result)
     return false;
 }
 
+#pragma pack(push, 1)
 class engine_impl final : public engine
 {
 public:
@@ -813,12 +820,12 @@ public:
         // vertex coordinates
         glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(v0),
                               &t.v[0].pos.x);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         glEnableVertexAttribArray(0);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
 
         glDrawArrays(GL_TRIANGLES, 0, 3);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
     }
     void render(const tri1& t) final
     {
@@ -826,21 +833,21 @@ public:
         // positions
         glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(t.v[0]),
                               &t.v[0].pos);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         glEnableVertexAttribArray(0);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         // colors
         glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(t.v[0]),
                               &t.v[0].c);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         glEnableVertexAttribArray(1);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
 
         glDrawArrays(GL_TRIANGLES, 0, 3);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
 
         glDisableVertexAttribArray(1);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
     }
     void render(const tri2& t, texture* tex) final
     {
@@ -851,30 +858,30 @@ public:
         // positions
         glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(t.v[0]),
                               &t.v[0].pos);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         glEnableVertexAttribArray(0);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         // colors
         glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(t.v[0]),
                               &t.v[0].c);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         glEnableVertexAttribArray(1);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
 
         // texture coordinates
         glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(t.v[0]),
                               &t.v[0].uv);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         glEnableVertexAttribArray(2);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
 
         glDrawArrays(GL_TRIANGLES, 0, 3);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
 
         glDisableVertexAttribArray(1);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         glDisableVertexAttribArray(2);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
     }
     void render(const tri2& t, texture* tex, const mat2x3& m) final
     {
@@ -886,30 +893,30 @@ public:
         // positions
         glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(t.v[0]),
                               &t.v[0].pos);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         glEnableVertexAttribArray(0);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         // colors
         glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(t.v[0]),
                               &t.v[0].c);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         glEnableVertexAttribArray(1);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
 
         // texture coordinates
         glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(t.v[0]),
                               &t.v[0].uv);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         glEnableVertexAttribArray(2);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
 
         glDrawArrays(GL_TRIANGLES, 0, 3);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
 
         glDisableVertexAttribArray(1);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         glDisableVertexAttribArray(2);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
     }
     void render(const vertex_buffer& buff, texture* tex, const mat2x3& m) final
     {
@@ -922,37 +929,37 @@ public:
         const v2* t = buff.data();
         // positions
         glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(v2), &t->pos);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         glEnableVertexAttribArray(0);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         // colors
         glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(v2),
                               &t->c);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         glEnableVertexAttribArray(1);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
 
         // texture coordinates
         glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(v2), &t->uv);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         glEnableVertexAttribArray(2);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
 
         GLsizei num_of_vertexes = static_cast<GLsizei>(buff.size());
         glDrawArrays(GL_TRIANGLES, 0, num_of_vertexes);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
 
         glDisableVertexAttribArray(1);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         glDisableVertexAttribArray(2);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
     }
     void swap_buffers() final
     {
         SDL_GL_SwapWindow(window);
 
         glClear(GL_COLOR_BUFFER_BIT);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
     }
     void uninitialize() final
     {
@@ -976,6 +983,7 @@ private:
     SDL_AudioSpec                   audio_device_spec;
     std::vector<sound_buffer_impl*> sounds;
 };
+#pragma pack(pop)
 
 static bool already_exist = false;
 
@@ -1106,9 +1114,9 @@ texture_gl_es20::texture_gl_es20(std::string_view path)
     }
 
     glGenTextures(1, &tex_handl);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
     glBindTexture(GL_TEXTURE_2D, tex_handl);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
 
     GLint   mipmap_level = 0;
     GLint   border       = 0;
@@ -1116,18 +1124,18 @@ texture_gl_es20::texture_gl_es20(std::string_view path)
     GLsizei height_      = static_cast<GLsizei>(img.height);
     glTexImage2D(GL_TEXTURE_2D, mipmap_level, GL_RGBA, width_, height_, border,
                  GL_RGBA, GL_UNSIGNED_BYTE, &img.raw_image[0]);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
 }
 
 texture_gl_es20::~texture_gl_es20()
 {
     glDeleteTextures(1, &tex_handl);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
 }
 
 std::string engine_impl::initialize(std::string_view)
@@ -1139,7 +1147,7 @@ std::string engine_impl::initialize(std::string_view)
     SDL_version compiled = { 0, 0, 0 };
     SDL_version linked   = { 0, 0, 0 };
 
-    SDL_VERSION(&compiled);
+    SDL_VERSION(&compiled)
     SDL_GetVersion(&linked);
 
     if (SDL_COMPILEDVERSION !=
@@ -1205,10 +1213,10 @@ std::string engine_impl::initialize(std::string_view)
     int gl_major_ver = 0;
     int result =
         SDL_GL_GetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, &gl_major_ver);
-    SDL_assert(result == 0);
+    assert(result == 0);
     int gl_minor_ver = 0;
     result = SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, &gl_minor_ver);
-    SDL_assert(result == 0);
+    assert(result == 0);
 
     if (gl_major_ver <= 2 && gl_minor_ver < 1)
     {
@@ -1346,15 +1354,15 @@ std::string engine_impl::initialize(std::string_view)
     shader03->use();
 
     glEnable(GL_BLEND);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
 
     glClearColor(0.f, 0.0, 0.f, 0.0f);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
 
     glViewport(0, 0, 640, 480);
-    OM_GL_CHECK();
+    OM_GL_CHECK()
 
     // initialize audio
     audio_device_spec.freq     = 48000;
@@ -1387,6 +1395,7 @@ std::string engine_impl::initialize(std::string_view)
 
     const char* default_audio_device_name = nullptr;
 
+    // SDL_FALSE - mean get only OUTPUT audio devices
     const int num_audio_devices = SDL_GetNumAudioDevices(SDL_FALSE);
     if (num_audio_devices > 0)
     {
