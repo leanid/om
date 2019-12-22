@@ -64,6 +64,11 @@ static void load_gl_func(const char* func_name, T& result)
     result = reinterpret_cast<T>(gl_pointer);
 }
 
+#define OM_NO_GL_CHECK 1
+
+#if defined(OM_NO_GL_CHECK)
+#define OM_GL_CHECK()
+#else
 #define OM_GL_CHECK()                                                          \
     {                                                                          \
         const unsigned int err = glGetError();                                 \
@@ -92,6 +97,7 @@ static void load_gl_func(const char* func_name, T& result)
             assert(false);                                                     \
         }                                                                      \
     }
+#endif
 
 namespace om
 {
@@ -1178,8 +1184,6 @@ static void uninitialize()
 {
     if (already_exist)
     {
-        SDL_GL_DeleteContext(gl_context);
-        SDL_DestroyWindow(window);
         SDL_Quit();
 
         already_exist = false;
@@ -1381,7 +1385,8 @@ int initialize_and_start_main_loop()
     std::vector<const char*> lib_names{
         { "libgame-09-1.dll", "libgame-09-1.so", "game-09-1.so",
           "./build/Debug/libgame-09-1.so", "./build/Debug/libgame-09-1.dll",
-          "./build-Debug/libgame-09-1.so" }
+          "./build-Debug/libgame-09-1.so",
+          "./build/RelWithDebInfo/libgame-09-1.so" }
     };
 
     void* so_handle   = nullptr;
