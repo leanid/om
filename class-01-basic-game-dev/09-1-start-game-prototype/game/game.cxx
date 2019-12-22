@@ -209,8 +209,8 @@ void tanks_game::on_render() const
 
     std::for_each(begin(render_order), end(render_order),
                   [&](object_type type) {
-                      std::for_each(begin(objects), end(objects),
-                                    draw(type, world_size, aspect));
+                      draw draw_op(type, world_size, aspect);
+                      std::for_each(begin(objects), end(objects), draw_op);
                   });
 }
 

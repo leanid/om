@@ -268,6 +268,7 @@ static bool continue_game_loop = true;
 static int32_t exit_code = EXIT_FAILURE;
 // no more Globals ////////////////////////////////////////////////////////////
 
+#pragma pack(push, 2)
 class sound_buffer_impl final : public sound
 {
 public:
@@ -312,6 +313,7 @@ public:
     bool                       is_playing_ = false;
     bool                       is_looped   = false;
 };
+#pragma pack(pop)
 
 sound_buffer_impl::sound_buffer_impl(std::string_view  path,
                                      SDL_AudioDeviceID device_,
@@ -346,7 +348,8 @@ sound_buffer_impl::sound_buffer_impl(std::string_view  path,
               << "length: " << length << '\n'
               << "time: "
               << static_cast<double>(length) /
-                     (file_audio_spec.channels * file_audio_spec.freq *
+                     (static_cast<size_t>(file_audio_spec.channels *
+                                          file_audio_spec.freq) *
                       get_sound_format_size(file_audio_spec.format))
               << "sec" << std::endl;
 
@@ -361,9 +364,10 @@ sound_buffer_impl::sound_buffer_impl(std::string_view  path,
                           device_audio_spec.freq);
         SDL_assert(cvt.needed); // obviously, this one is always needed.
         // read your data into cvt.buf here.
-        cvt.len = length;
+        cvt.len = static_cast<int>(length);
         // we have to make buffer for inplace conversion
-        tmp_buf.reset(new uint8_t[cvt.len * cvt.len_mult]);
+        tmp_buf.reset(
+            new uint8_t[static_cast<unsigned>(cvt.len * cvt.len_mult)]);
         uint8_t* buf = tmp_buf.get();
         std::copy_n(buffer, length, buf);
         cvt.buf = buf;
@@ -375,7 +379,7 @@ sound_buffer_impl::sound_buffer_impl(std::string_view  path,
         // cvt.buf has cvt.len_cvt bytes of converted data now.
         SDL_FreeWAV(buffer);
         buffer = tmp_buf.get();
-        length = cvt.len_cvt;
+        length = static_cast<uint32_t>(cvt.len_cvt);
     }
 }
 
@@ -393,6 +397,7 @@ sound_buffer_impl::~sound_buffer_impl()
 
 vertex_buffer_impl::~vertex_buffer_impl() {}
 
+#pragma pack(push, 4)
 class texture_gl_es20 final : public texture
 {
 public:
@@ -417,6 +422,7 @@ private:
     std::uint32_t width     = 0;
     std::uint32_t height    = 0;
 };
+#pragma pack(pop)
 
 class shader_gl_es20
 {
@@ -524,7 +530,7 @@ private:
             glGetShaderiv(shader_id, GL_INFO_LOG_LENGTH, &info_len);
             OM_GL_CHECK()
             std::vector<char> info_chars(static_cast<size_t>(info_len));
-            glGetShaderInfoLog(shader_id, info_len, NULL, info_chars.data());
+            glGetShaderInfoLog(shader_id, info_len, nullptr, info_chars.data());
             OM_GL_CHECK()
             glDeleteShader(shader_id);
             OM_GL_CHECK()
@@ -576,7 +582,7 @@ private:
             glGetProgramiv(program_id_, GL_INFO_LOG_LENGTH, &infoLen);
             OM_GL_CHECK()
             std::vector<char> infoLog(static_cast<size_t>(infoLen));
-            glGetProgramInfoLog(program_id_, infoLen, NULL, infoLog.data());
+            glGetProgramInfoLog(program_id_, infoLen, nullptr, infoLog.data());
             OM_GL_CHECK()
             std::cerr << "Error linking program:\n" << infoLog.data();
             glDeleteProgram(program_id_);
@@ -620,7 +626,7 @@ std::ostream& operator<<(std::ostream& stream, const event& e)
         case om::event_type::hardware:
             stream << std::get<om::hardware_data>(e.info);
             break;
-    };
+    }
     return stream;
 }
 
@@ -884,7 +890,7 @@ static void initialize_internal(std::string_view   title,
         SDL_version compiled = { 0, 0, 0 };
         SDL_version linked   = { 0, 0, 0 };
 
-        SDL_VERSION(&compiled);
+        SDL_VERSION(&compiled)
         SDL_GetVersion(&linked);
 
         if (SDL_COMPILEDVERSION !=
