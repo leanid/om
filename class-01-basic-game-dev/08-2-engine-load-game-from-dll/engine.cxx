@@ -1490,7 +1490,7 @@ int initialize_and_start_main_loop()
 
     // "game-08-2.dll" - works on windows
     // "libgame-08-2.so" - works on MacOSX and Linux
-    std::string_view game_so_name("./build/libgame-08-2.so");
+    std::string_view game_so_name("./build-Debug/libgame-08-2.so");
 
     void* so_handle = SDL_LoadObject(game_so_name.data());
     if (so_handle == nullptr)

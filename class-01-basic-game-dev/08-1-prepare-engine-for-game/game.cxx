@@ -164,7 +164,7 @@ int initialize_and_start_main_loop()
     return EXIT_SUCCESS;
 }
 
-int main(int /*argc*/, char* /*argv*/ [])
+int main(int /*argc*/, char* /*argv*/[])
 {
     try
     {

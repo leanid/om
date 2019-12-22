@@ -1361,9 +1361,9 @@ int initialize_and_start_main_loop()
         ~start() { om::uninitialize(); }
     } guard;
 
-    std::vector<const char*> lib_names{
-        { "libgame.dll", "libgame.so", "game.so", "./build/Debug/libgame.so" }
-    };
+    std::vector<const char*> lib_names{ { "libgame.dll", "libgame.so",
+                                          "game.so", "./build/Debug/libgame.so",
+                                          "./build-Debug/libgame-08-3.so" } };
 
     void* so_handle   = nullptr;
     auto  lib_name_it = std::find_if(begin(lib_names), end(lib_names),
@@ -1452,7 +1452,7 @@ int initialize_and_start_main_loop()
     return EXIT_SUCCESS;
 }
 
-int main(int /*argc*/, char* /*argv*/ [])
+int main(int /*argc*/, char* /*argv*/[])
 {
     try
     {
