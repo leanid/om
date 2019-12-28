@@ -17,7 +17,7 @@
 
 static constexpr size_t screen_width  = 960.f;
 static constexpr size_t screen_height = 540.f;
-om::texture*            debug_texture = nullptr;
+static om::texture*     debug_texture = nullptr;
 
 class tanks_game final : public om::lila
 {
@@ -43,9 +43,9 @@ std::unique_ptr<om::lila> om_tat_sat()
     om::initialize("tanks", window_mode);
 
     om::log << "creating main game object..." << std::endl;
-    auto game = std::make_unique<tanks_game>();
+    auto game = new tanks_game();
     om::log << "finish creating main game object" << std::endl;
-    return game;
+    return std::unique_ptr<om::lila>(game);
 }
 
 om::vbo* load_mesh_from_file_with_scale(const std::string_view path,
@@ -153,6 +153,9 @@ void tanks_game::on_render() const
             : obj_type(type)
             , world(om::matrix::scale(2 * height_aspect / world_size.x,
                                       2 * height_aspect / world_size.y))
+            , aspect(om::matrix::scale(1, static_cast<float>(screen_width) /
+                                              screen_height))
+            , world_x_aspect(world * aspect)
         {
             // let the world is rectangle 100x100 units with center in (0, 0)
             // build world matrix to map 100x100 X(-50 to 50) Y(-50 to 50)
@@ -164,15 +167,13 @@ void tanks_game::on_render() const
         {
             if (obj_type == obj.type)
             {
-                om::matrix aspect = om::matrix::scale(
-                    1, static_cast<float>(screen_width) / screen_height);
 
-                om::matrix move = om::matrix::move(obj.position);
-                om::matrix rot  = om::matrix::rotation(obj.direction);
-                om::matrix m    = rot * move * world * aspect;
+                const om::matrix move = om::matrix::move(obj.position);
+                const om::matrix rot  = om::matrix::rotation(obj.direction);
+                const om::matrix m    = rot * move * world_x_aspect;
 
-                om::vbo&     vbo     = *obj.mesh;
-                om::texture* texture = obj.texture;
+                const om::vbo&     vbo     = *obj.mesh;
+                const om::texture* texture = obj.texture;
 
                 om::render(om::primitives::triangls, vbo, texture, m);
                 if (debug_texture)
@@ -184,6 +185,8 @@ void tanks_game::on_render() const
         }
         const object_type obj_type;
         const om::matrix  world;
+        const om::matrix  aspect;
+        const om::matrix  world_x_aspect;
     };
 
     static const std::vector<object_type> render_order = {
@@ -206,8 +209,8 @@ void tanks_game::on_render() const
 
     std::for_each(begin(render_order), end(render_order),
                   [&](object_type type) {
-                      std::for_each(begin(objects), end(objects),
-                                    draw(type, world_size, aspect));
+                      draw draw_op(type, world_size, aspect);
+                      std::for_each(begin(objects), end(objects), draw_op);
                   });
 }
 
