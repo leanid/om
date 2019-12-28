@@ -15,6 +15,8 @@ endif(WIN32)
 find_library(SDL2_LIB NAMES SDL2)
 
 if (MINGW)
+    find_package(sdl2 REQUIRED)
+    target_include_directories(engine-09-2 PRIVATE ${SDL2_INCLUDE_DIRS})
     target_link_libraries(engine-09-2
                mingw32
                SDL2main
