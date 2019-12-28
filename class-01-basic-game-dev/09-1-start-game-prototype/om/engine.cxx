@@ -878,7 +878,7 @@ static void initialize_internal(std::string_view   title,
         SDL_version compiled = { 0, 0, 0 };
         SDL_version linked   = { 0, 0, 0 };
 
-        SDL_VERSION(&compiled);
+        SDL_VERSION(&compiled)
         SDL_GetVersion(&linked);
 
         if (SDL_COMPILEDVERSION !=
@@ -1167,7 +1167,7 @@ static void initialize_internal(std::string_view   title,
                       << "samples: " << audio_device_spec.samples << '\n'
                       << std::flush;
 
-            // unpause device
+            // unpause device and start audio thread
             SDL_PauseAudioDevice(audio_device, SDL_FALSE);
         }
     }
@@ -1178,8 +1178,12 @@ static void uninitialize()
 {
     if (already_exist)
     {
+        /*
+        SDL_PauseAudioDevice(audio_device, SDL_TRUE);
+        SDL_CloseAudioDevice(audio_device);
         SDL_GL_DeleteContext(gl_context);
         SDL_DestroyWindow(window);
+        */
         SDL_Quit();
 
         already_exist = false;
@@ -1482,6 +1486,8 @@ start_game_again:
             goto start_game_again;
         }
     }
+
+    game.reset();
 
     return om::exit_code;
 }

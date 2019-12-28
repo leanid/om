@@ -23,7 +23,12 @@
 
 static constexpr size_t screen_width  = 960.f;
 static constexpr size_t screen_height = 540.f;
-om::texture*            debug_texture = nullptr;
+static om::texture*     debug_texture = nullptr;
+
+constexpr float operator"" _px(unsigned long long n)
+{
+    return static_cast<float>(n);
+}
 
 class snake_game final : public om::lila
 {
@@ -149,27 +154,6 @@ void snake_game::on_event(om::event& event)
 
 void snake_game::on_update(std::chrono::milliseconds frame_delta)
 {
-    if (om::is_key_down(om::keys::left))
-    {
-        //        current_tank_pos.x -= 0.01f;
-        //        current_tank_direction = -pi / 2.f;
-    }
-    else if (om::is_key_down(om::keys::right))
-    {
-        //        current_tank_pos.x += 0.01f;
-        //        current_tank_direction = pi / 2.f;
-    }
-    else if (om::is_key_down(om::keys::up))
-    {
-        //        current_tank_pos.y += 0.01f;
-        //        current_tank_direction = 0.f;
-    }
-    else if (om::is_key_down(om::keys::down))
-    {
-        //        current_tank_pos.y -= 0.01f;
-        //        current_tank_direction = -pi;
-    }
-
     if (snake_)
     {
         // TODO check collision snake with apple
@@ -179,7 +163,7 @@ void snake_game::on_update(std::chrono::milliseconds frame_delta)
         om::vec2 head_pos = snake_->parts.front().game_obj.position;
         // 3. compare cell positions
         om::vec2 distance = fruit_pos - head_pos;
-        if (distance.length() <= 5)
+        if (distance.length() <= 5_px)
         {
             // TODO generate next fruit position
             update_free_cells();
@@ -189,8 +173,8 @@ void snake_game::on_update(std::chrono::milliseconds frame_delta)
         }
         // 4. if same - add one snake_part
 
-        float dt = frame_delta.count() * 0.001f;
-        snake_->update(dt);
+        float dt_in_seconds = frame_delta.count() * 0.001f;
+        snake_->update(dt_in_seconds);
     }
 }
 
