@@ -47,7 +47,7 @@ void print_view_port()
 }
 
 extern const float     cube_vertices[36 * 8];
-extern const glm::vec3 pointLightPositions[4];
+extern const glm::vec3 light_positions[4];
 
 void set_cube_vertex_attributes()
 {
@@ -123,11 +123,7 @@ int main(int /*argc*/, char* /*argv*/[])
         SDL_Quit();
         return -1;
     }
-
-    int                r;
     context_parameters ask_context;
-
-    using namespace std::string_literals;
 
     string_view platform_name = SDL_GetPlatform();
 
@@ -154,6 +150,7 @@ int main(int /*argc*/, char* /*argv*/[])
         ask_context.profile_type  = SDL_GL_CONTEXT_PROFILE_ES;
     }
 
+    int r;
     r = SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
                             ask_context.profile_type);
     SDL_assert_always(r == 0);
@@ -363,16 +360,13 @@ int main(int /*argc*/, char* /*argv*/[])
 
         // render nanosuit model
         {
-            // glBindVertexArray(nanosuit_VAO);
-            // gl_check();
-
             // enable new shader program
             nanosuit_shader.use();
 
             light_ambient  = properties.get_vec3("light_ambient");
             light_diffuse  = properties.get_vec3("light_diffuse");
             light_specular = properties.get_vec3("light_specular");
-            light_pos      = camera.position();
+            // light_pos      = camera.position();
 
             material_shininess = properties.get_float("material_shininess");
             material_specular  = properties.get_vec3("material_specular");
@@ -399,32 +393,30 @@ int main(int /*argc*/, char* /*argv*/[])
             nanosuit_shader.set_uniform("dirLight.ambient",
                                         { 0.05f, 0.05f, 0.05f });
             nanosuit_shader.set_uniform("dirLight.diffuse",
-                                        { 0.4f, 0.4f, 0.4f });
+                                        { 0.6f, 0.6f, 0.6f });
             nanosuit_shader.set_uniform("dirLight.specular",
                                         { 0.5f, 0.5f, 0.5f });
             // point lights
-            std::array<size_t, std::size(pointLightPositions)> indexes{};
-            std::iota(begin(indexes), end(indexes), 0);
-            std::for_each(
-                begin(indexes), end(indexes),
-                [&nanosuit_shader, &names](size_t index) {
-                    char   i        = static_cast<char>('0' + index);
-                    size_t zero_pos = names.front().find('[') + 1;
+            for (auto& light_pos : light_positions)
+            {
+                auto   start_it = begin(light_positions);
+                size_t index    = std::distance(start_it, &light_pos);
+                char   i        = static_cast<char>('0' + index);
+                size_t zero_pos = names.front().find('[') + 1;
 
-                    std::for_each(
-                        begin(names), end(names),
-                        [i, zero_pos](std::string& v) { v[zero_pos] = i; });
+                for (auto& name : names)
+                {
+                    name[zero_pos] = i;
+                }
 
-                    nanosuit_shader.set_uniform(names[0],
-                                                pointLightPositions[index]);
-                    nanosuit_shader.set_uniform(names[1],
-                                                { 0.05f, 0.05f, 0.05f });
-                    nanosuit_shader.set_uniform(names[2], { 0.8f, 0.8f, 0.8f });
-                    nanosuit_shader.set_uniform(names[3], { 1.0f, 1.0f, 1.0f });
-                    nanosuit_shader.set_uniform(names[4], 1.0f);
-                    nanosuit_shader.set_uniform(names[5], 0.09f);
-                    nanosuit_shader.set_uniform(names[6], 0.032f);
-                });
+                nanosuit_shader.set_uniform(names[0], light_pos);
+                nanosuit_shader.set_uniform(names[1], { 0.05f, 0.05f, 0.05f });
+                nanosuit_shader.set_uniform(names[2], { 0.8f, 0.8f, 0.8f });
+                nanosuit_shader.set_uniform(names[3], { 1.0f, 1.0f, 1.0f });
+                nanosuit_shader.set_uniform(names[4], 1.0f);
+                nanosuit_shader.set_uniform(names[5], 0.09f);
+                nanosuit_shader.set_uniform(names[6], 0.032f);
+            };
 
             // spot light
             nanosuit_shader.set_uniform("spot_light.position",
@@ -461,7 +453,7 @@ int main(int /*argc*/, char* /*argv*/[])
 
             // we now draw as many light bulbs as we have point lights.
             glBindVertexArray(cube_vao);
-            for (auto pointLightPosition : pointLightPositions)
+            for (auto pointLightPosition : light_positions)
             {
                 model = glm::mat4(1.0f);
                 model = glm::translate(model, pointLightPosition);
@@ -481,7 +473,7 @@ int main(int /*argc*/, char* /*argv*/[])
 }
 
 // clang-format off
-const glm::vec3 pointLightPositions[4] = { glm::vec3(0.7f, 0.2f, 2.0f),
+const glm::vec3 light_positions[4] = { glm::vec3(0.7f, 0.2f, 2.0f),
                                            glm::vec3(2.3f, -3.3f, -4.0f),
                                            glm::vec3(-4.0f, 2.0f, -12.0f),
                                            glm::vec3(0.0f, 0.0f, -3.0f) };

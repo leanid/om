@@ -11,8 +11,8 @@ out vec4 frag_color;
 
 void main()
 {
-    frag_color = texture(texture1, tex_coord);
-    vec4 col = texture(texture0, tex_coord);
+    frag_color = texture2D(texture1, tex_coord);
+    vec4 col = texture2D(texture0, tex_coord);
     if (col.r + col.g + col.b >= 0.3)
     {
         frag_color = col;

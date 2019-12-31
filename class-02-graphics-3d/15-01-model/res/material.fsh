@@ -14,7 +14,6 @@ uniform Material material;
 struct DirLight
 {
     vec3 direction;
-
     vec3 ambient;
     vec3 diffuse;
     vec3 specular;
@@ -55,8 +54,6 @@ struct SpotLight
 };
 
 uniform SpotLight spot_light;
-
-//uniform vec3 viewPos;
 
 in vec3 FragPos;
 in vec3 Normal;
@@ -158,8 +155,8 @@ vec3 calc_spot_light(SpotLight spot_light, vec3 Normal, vec3 FragPos, vec3 viewD
 void main()
 {
     // properties
-    vec3 diffuse_color  = texture(material.tex_diffuse1, TexCoords).rgb;
-    vec3 specular_color = texture(material.tex_specular1, TexCoords).rgb;
+    vec3 diffuse_color  = texture2D(material.tex_diffuse1, TexCoords).rgb;
+    vec3 specular_color = texture2D(material.tex_specular1, TexCoords).rgb;
 
     vec3 norm    = normalize(Normal);
     vec3 viewDir = normalize(spot_light.position - FragPos); // camera is spot_light
