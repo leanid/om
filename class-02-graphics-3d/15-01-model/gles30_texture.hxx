@@ -25,13 +25,13 @@ enum class wrap
 class texture
 {
 public:
-    enum class uv_type
+    enum class type
     {
         diffuse,
         specular,
     };
 
-    explicit texture(const std::filesystem::path& path);
+    explicit texture(const std::filesystem::path& path, const type);
 
     void bind();
 
@@ -43,8 +43,8 @@ public:
     void wrap_s(const wrap);
     void wrap_t(const wrap);
 
-    void    set_type(const uv_type);
-    uv_type get_type() const;
+    void set_type(const type);
+    type get_type() const;
 
     ~texture();
     texture(texture&&);
@@ -56,15 +56,15 @@ public:
 private:
     std::string   file_name;
     std::uint32_t texture_id;
-    uv_type       texture_type = uv_type::diffuse;
+    type          texture_type = type::diffuse;
 };
 
-inline void texture::set_type(const uv_type t)
+inline void texture::set_type(const type t)
 {
     texture_type = t;
 }
 
-inline texture::uv_type texture::get_type() const
+inline texture::type texture::get_type() const
 {
     return texture_type;
 }

@@ -40,9 +40,9 @@ private:
     std::vector<uint32_t> indices;
     std::vector<texture*> textures;
 
-    uint32_t VAO{ 0 };
-    uint32_t VBO{ 0 };
-    uint32_t EBO{ 0 };
+    uint32_t vao{ 0 }; // vertex array object (store format and vbo's info)
+    uint32_t vbo{ 0 }; // vertex buffer object
+    uint32_t ebo{ 0 }; // element buffer object (index)
 };
 
 inline mesh::mesh(std::vector<vertex>   a_vertices,

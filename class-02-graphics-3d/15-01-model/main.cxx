@@ -46,9 +46,10 @@ void print_view_port()
          << " w=" << view_port[2] << " h=" << view_port[3] << endl;
 }
 
-extern float vertices[36 * 8];
+extern const float     cube_vertices[36 * 8];
+extern const glm::vec3 pointLightPositions[4];
 
-void update_vertex_attributes()
+void set_cube_vertex_attributes()
 {
     // now tell OpenGL how to interpret data from VBO
     GLuint    location_of_vertex_attribute = 0; // position
@@ -128,9 +129,15 @@ int main(int /*argc*/, char* /*argv*/[])
 
     using namespace std::string_literals;
 
-    const char* platform_name = SDL_GetPlatform();
-    if (platform_name == "Windows"s || platform_name == "Mac OS X"s ||
-        platform_name == "Linux"s)
+    string_view platform_name = SDL_GetPlatform();
+
+    const array<string_view, 3> desktop_platforms{ "Windows", "Mac OS X",
+                                                   "Linux" };
+
+    auto it =
+        find(begin(desktop_platforms), end(desktop_platforms), platform_name);
+
+    if (it != end(desktop_platforms))
     {
         // we want OpenGL Core 3.3 context
         ask_context.name          = "OpenGL Core";
@@ -171,45 +178,31 @@ int main(int /*argc*/, char* /*argv*/[])
 
     int result = SDL_GL_GetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION,
                                      &got_context.major_version);
-    SDL_assert_always(result == 0);
+    assert(result == 0);
     result = SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION,
                                  &got_context.minor_version);
-    SDL_assert_always(result == 0);
+    assert(result == 0);
 
     clog << "Ask for " << ask_context << endl;
     clog << "Receive " << got_context << endl;
-
     clog << "default ";
     print_view_port();
 
     namespace fs = std::filesystem;
+    using namespace gles30;
 
-    gles30::texture diffuse_map(fs::path{ "./res/container2.png" });
-    gles30::texture specular_map(fs::path{ "./res/container2_specular.png" });
-
-    gles30::shader material(fs::path{ "./res/vertex_pos.vsh" },
-                            "./res/material.fsh");
-    gles30::shader light_shader(fs::path{ "./res/vertex_pos.vsh" },
-                                "./res/lamp_color.fsh");
-
-    // Generate VAO VertexArrayState object to remember current VBO and
-    // EBO(if any) with all attributes parameters stored in one object
-    // called VAO think it is current VBO + EBO + attributes state in one
-    // object
-    uint32_t object_VAO;
-    glGenVertexArrays(1, &object_VAO);
-    gl_check();
-
-    glBindVertexArray(object_VAO);
-    gl_check();
+    shader nanosuit_shader(fs::path{ "./res/vertex_pos.vsh" },
+                           "./res/material.fsh");
+    shader light_shader(fs::path{ "./res/vertex_pos.vsh" },
+                        "./res/lamp_color.fsh");
 
     // generate OpenGL object id for future VertexBufferObject
-    uint32_t VBO;
-    glGenBuffers(1, &VBO);
+    uint32_t cube_vbo;
+    glGenBuffers(1, &cube_vbo);
     gl_check();
 
     // GL_ARRAY_BUFFER - is VertexBufferObject type
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, cube_vbo);
     gl_check();
 
     // copy vertex data into GPU memory
@@ -219,10 +212,8 @@ int main(int /*argc*/, char* /*argv*/[])
     //    very rarely.
     // GL_DYNAMIC_DRAW: the data is likely to change a lot.
     // GL_STREAM_DRAW: the data will change every time it is drawn.
-    uint32_t cube_indexes[36];
-    std::iota(begin(cube_indexes), end(cube_indexes), 0);
-
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(cube_vertices), cube_vertices,
+                 GL_STATIC_DRAW);
     gl_check();
 
     uint32_t EBO; // ElementBufferObject - indices buffer
@@ -232,35 +223,27 @@ int main(int /*argc*/, char* /*argv*/[])
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     gl_check();
 
+    uint32_t cube_indexes[36];
+    std::iota(begin(cube_indexes), end(cube_indexes), 0);
+
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cube_indexes), cube_indexes,
                  GL_STATIC_DRAW);
     gl_check();
 
-    update_vertex_attributes();
-
-    uint32_t light_VAO;
-    glGenVertexArrays(1, &light_VAO);
+    // Generate VAO VertexArrayState object to remember current VBO and
+    // EBO(if any) with all attributes parameters stored in one object
+    // called VAO think it is current VBO + EBO + attributes state in one
+    // object
+    uint32_t cube_vao;
+    glGenVertexArrays(1, &cube_vao);
     gl_check();
-    glBindVertexArray(light_VAO);
-    gl_check();
-    // we only need to bind to the VBO, the container's VBO's data already
-    // contains the correct data.
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    gl_check();
-    // set the vertex attributes (only position data for our lamp)
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, (3 + 3 + 2) * sizeof(float),
-                          nullptr);
-    gl_check();
-    glEnableVertexAttribArray(0);
+    glBindVertexArray(cube_vao);
     gl_check();
 
-    // indexes should be same for light box too just bind it
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    gl_check();
+    set_cube_vertex_attributes();
 
     [[maybe_unused]] GLenum primitive_render_mode = GL_TRIANGLES;
 
-    float deltaTime; // Time between current frame and last frame
     float lastFrame = 0.0f; // Time of last frame
 
     camera = fps_camera(/*pos*/ { 0, 0, 1 }, /*dir*/ { 0, 0, -1 },
@@ -280,7 +263,7 @@ int main(int /*argc*/, char* /*argv*/[])
     while (continue_loop)
     {
         float currentFrame = SDL_GetTicks() * 0.001f; // seconds
-        deltaTime          = currentFrame - lastFrame;
+        float deltaTime    = currentFrame - lastFrame;
         lastFrame          = currentFrame;
 
         properties.update_changes();
@@ -369,22 +352,22 @@ int main(int /*argc*/, char* /*argv*/[])
         glm::mat4 projection = camera.projection_matrix();
 
         clear_color = properties.get_vec3("clear_color");
-        float     red         = clear_color.r;
-        float     green       = clear_color.g;
-        float     blue        = clear_color.b;
-        float     alpha       = 0.f;
+        float red   = clear_color.r;
+        float green = clear_color.g;
+        float blue  = clear_color.b;
+        float alpha = 0.f;
 
         glClearColor(red, green, blue, alpha);
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // render object
+        // render nanosuit model
         {
-            glBindVertexArray(object_VAO);
-            gl_check();
+            // glBindVertexArray(nanosuit_VAO);
+            // gl_check();
 
             // enable new shader program
-            material.use();
+            nanosuit_shader.use();
 
             light_ambient  = properties.get_vec3("light_ambient");
             light_diffuse  = properties.get_vec3("light_diffuse");
@@ -394,17 +377,14 @@ int main(int /*argc*/, char* /*argv*/[])
             material_shininess = properties.get_float("material_shininess");
             material_specular  = properties.get_vec3("material_specular");
 
-            material.set_uniform("material.shininess", material_shininess);
+            nanosuit_shader.set_uniform("material.shininess",
+                                        material_shininess);
             // material.set_uniform("material.diffuse", diffuse_map, 0);
             // material.set_uniform("material.specular", specular_map, 1);
 
             glm::mat4 rotated_model{ model };
             angle += properties.get_float("angle");
             rotate_axis = properties.get_vec3("rotate_axis");
-            glm::vec3 pointLightPositions[] = { glm::vec3(0.7f, 0.2f, 2.0f),
-                                                glm::vec3(2.3f, -3.3f, -4.0f),
-                                                glm::vec3(-4.0f, 2.0f, -12.0f),
-                                                glm::vec3(0.0f, 0.0f, -3.0f) };
 
             std::vector<std::string> names{
                 "pointLights[0].position",  "pointLights[0].ambient",
@@ -414,16 +394,20 @@ int main(int /*argc*/, char* /*argv*/[])
             };
 
             // directional light
-            material.set_uniform("dirLight.direction", { -0.2f, -1.0f, -0.3f });
-            material.set_uniform("dirLight.ambient", { 0.05f, 0.05f, 0.05f });
-            material.set_uniform("dirLight.diffuse", { 0.4f, 0.4f, 0.4f });
-            material.set_uniform("dirLight.specular", { 0.5f, 0.5f, 0.5f });
+            nanosuit_shader.set_uniform("dirLight.direction",
+                                        { -0.2f, -1.0f, -0.3f });
+            nanosuit_shader.set_uniform("dirLight.ambient",
+                                        { 0.05f, 0.05f, 0.05f });
+            nanosuit_shader.set_uniform("dirLight.diffuse",
+                                        { 0.4f, 0.4f, 0.4f });
+            nanosuit_shader.set_uniform("dirLight.specular",
+                                        { 0.5f, 0.5f, 0.5f });
             // point lights
             std::array<size_t, std::size(pointLightPositions)> indexes{};
             std::iota(begin(indexes), end(indexes), 0);
             std::for_each(
                 begin(indexes), end(indexes),
-                [&material, &pointLightPositions, &names](size_t index) {
+                [&nanosuit_shader, &names](size_t index) {
                     char   i        = static_cast<char>('0' + index);
                     size_t zero_pos = names.front().find('[') + 1;
 
@@ -431,43 +415,52 @@ int main(int /*argc*/, char* /*argv*/[])
                         begin(names), end(names),
                         [i, zero_pos](std::string& v) { v[zero_pos] = i; });
 
-                    material.set_uniform(names[0], pointLightPositions[index]);
-                    material.set_uniform(names[1], { 0.05f, 0.05f, 0.05f });
-                    material.set_uniform(names[2], { 0.8f, 0.8f, 0.8f });
-                    material.set_uniform(names[3], { 1.0f, 1.0f, 1.0f });
-                    material.set_uniform(names[4], 1.0f);
-                    material.set_uniform(names[5], 0.09f);
-                    material.set_uniform(names[6], 0.032f);
+                    nanosuit_shader.set_uniform(names[0],
+                                                pointLightPositions[index]);
+                    nanosuit_shader.set_uniform(names[1],
+                                                { 0.05f, 0.05f, 0.05f });
+                    nanosuit_shader.set_uniform(names[2], { 0.8f, 0.8f, 0.8f });
+                    nanosuit_shader.set_uniform(names[3], { 1.0f, 1.0f, 1.0f });
+                    nanosuit_shader.set_uniform(names[4], 1.0f);
+                    nanosuit_shader.set_uniform(names[5], 0.09f);
+                    nanosuit_shader.set_uniform(names[6], 0.032f);
                 });
 
             // spot light
-            material.set_uniform("spot_light.position", camera.position());
-            material.set_uniform("spot_light.direction", camera.direction());
-            material.set_uniform("spot_light.ambient", { 0.0f, 0.0f, 0.0f });
-            material.set_uniform("spot_light.diffuse", { 1.0f, 1.0f, 1.0f });
-            material.set_uniform("spot_light.specular", { 1.0f, 1.0f, 1.0f });
-            material.set_uniform("spot_light.constant", 1.0f);
-            material.set_uniform("spot_light.linear", 0.09f);
-            material.set_uniform("spot_light.quadratic", 0.032f);
-            material.set_uniform("spot_light.cut_off",
-                                 glm::cos(glm::radians(12.5f)));
-            material.set_uniform("spot_light.outer_cut_off",
-                                 glm::cos(glm::radians(15.0f)));
+            nanosuit_shader.set_uniform("spot_light.position",
+                                        camera.position());
+            nanosuit_shader.set_uniform("spot_light.direction",
+                                        camera.direction());
+            nanosuit_shader.set_uniform("spot_light.ambient",
+                                        { 0.0f, 0.0f, 0.0f });
+            nanosuit_shader.set_uniform("spot_light.diffuse",
+                                        { 1.0f, 1.0f, 1.0f });
+            nanosuit_shader.set_uniform("spot_light.specular",
+                                        { 1.0f, 1.0f, 1.0f });
+            nanosuit_shader.set_uniform("spot_light.constant", 1.0f);
+            nanosuit_shader.set_uniform("spot_light.linear", 0.09f);
+            nanosuit_shader.set_uniform("spot_light.quadratic", 0.032f);
+            nanosuit_shader.set_uniform("spot_light.cut_off",
+                                        glm::cos(glm::radians(12.5f)));
+            nanosuit_shader.set_uniform("spot_light.outer_cut_off",
+                                        glm::cos(glm::radians(15.0f)));
 
             rotated_model = glm::rotate(rotated_model, angle, rotate_axis);
 
-            material.set_uniform("model", rotated_model);
-            material.set_uniform("view", view);
-            material.set_uniform("projection", projection);
+            nanosuit_shader.set_uniform("model", rotated_model);
+            nanosuit_shader.set_uniform("view", view);
+            nanosuit_shader.set_uniform("projection", projection);
 
-            nanosuit.draw(material);
+            nanosuit.draw(nanosuit_shader);
+        }
+        {
             // also draw the lamp object(s)
             light_shader.use();
             light_shader.set_uniform("projection", projection);
             light_shader.set_uniform("view", view);
 
             // we now draw as many light bulbs as we have point lights.
-            glBindVertexArray(light_VAO);
+            glBindVertexArray(cube_vao);
             for (auto pointLightPosition : pointLightPositions)
             {
                 model = glm::mat4(1.0f);
@@ -488,7 +481,13 @@ int main(int /*argc*/, char* /*argv*/[])
 }
 
 // clang-format off
-float vertices[36 * 8] = {
+const glm::vec3 pointLightPositions[4] = { glm::vec3(0.7f, 0.2f, 2.0f),
+                                           glm::vec3(2.3f, -3.3f, -4.0f),
+                                           glm::vec3(-4.0f, 2.0f, -12.0f),
+                                           glm::vec3(0.0f, 0.0f, -3.0f) };
+
+
+const float cube_vertices[36 * 8] = {
      // positions         // normals           // texture coords
     -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
      0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.0f,

@@ -10,9 +10,10 @@
 
 namespace gles30
 {
-texture::texture(const std::filesystem::path& path)
+texture::texture(const std::filesystem::path& path, const type tex_type)
     : file_name{ path.u8string() }
     , texture_id{ 0 }
+    , texture_type{ tex_type }
 {
     stbi_set_flip_vertically_on_load(1);
 
@@ -47,13 +48,13 @@ texture::texture(const std::filesystem::path& path)
 
     GLint mipmap_level = 0;
     GLint border       = 0;
-    if (3 == prefered_channels_count)
+    if (3 == channels)
     {
         glTexImage2D(GL_TEXTURE_2D, mipmap_level, GL_RGB, width, height, border,
                      GL_RGB, GL_UNSIGNED_BYTE, data.get());
         gl_check();
     }
-    else if (4 == prefered_channels_count)
+    else if (4 == channels)
     {
         glTexImage2D(GL_TEXTURE_2D, mipmap_level, GL_RGBA, width, height,
                      border, GL_RGBA, GL_UNSIGNED_BYTE, data.get());

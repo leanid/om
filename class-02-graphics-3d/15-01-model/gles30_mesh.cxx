@@ -11,13 +11,13 @@ mesh::mesh(mesh&& other) noexcept
     : vertices{ std::move(other.vertices) }
     , indices{ std::move(other.indices) }
     , textures{ std::move(other.textures) }
-    , VAO{ 0 }
-    , VBO{ 0 }
-    , EBO{ 0 }
+    , vao{ 0 }
+    , vbo{ 0 }
+    , ebo{ 0 }
 {
-    std::swap(VBO, other.VBO);
-    std::swap(EBO, other.EBO);
-    std::swap(VAO, other.VAO);
+    std::swap(vbo, other.vbo);
+    std::swap(ebo, other.ebo);
+    std::swap(vao, other.vao);
 }
 
 void swap(mesh& l, mesh& r) noexcept
@@ -26,9 +26,9 @@ void swap(mesh& l, mesh& r) noexcept
     swap(l.vertices, r.vertices);
     swap(l.indices, r.indices);
     swap(l.textures, r.textures);
-    std::swap(l.EBO, r.EBO);
-    std::swap(l.VBO, r.VBO);
-    std::swap(l.VAO, r.VAO);
+    std::swap(l.ebo, r.ebo);
+    std::swap(l.vbo, r.vbo);
+    std::swap(l.vao, r.vao);
 }
 
 mesh& mesh::operator=(mesh&& other) noexcept
@@ -40,13 +40,13 @@ mesh& mesh::operator=(mesh&& other) noexcept
 
 mesh::~mesh() noexcept
 {
-    glDeleteBuffers(1, &VAO);
+    glDeleteBuffers(1, &vao);
     gl_check();
 
-    glDeleteBuffers(1, &VBO);
+    glDeleteBuffers(1, &vbo);
     gl_check();
 
-    glDeleteBuffers(1, &EBO);
+    glDeleteBuffers(1, &ebo);
     gl_check();
 }
 
@@ -62,19 +62,19 @@ void mesh::draw(shader& shader) const
         gl_check();
         // retrieve texture number (the N in diffuse_textureN)
         texture&         texture = *textures.at(i);
-        texture::uv_type type    = texture.get_type();
+        texture::type type    = texture.get_type();
         char             str[32];
 
         int32_t is_ok = 0;
 
-        if (type == texture::uv_type::diffuse)
+        if (type == texture::type::diffuse)
         {
-            is_ok = snprintf(str, sizeof(str), "tex_diffuse%d", diffuseNr++);
+            is_ok = snprintf(str, sizeof(str), "tex_diffuse%u", diffuseNr++);
             assert(is_ok > 0);
         }
-        else if (type == texture::uv_type::specular)
+        else if (type == texture::type::specular)
         {
-            is_ok = snprintf(str, sizeof(str), "tex_specular%d", specularNr++);
+            is_ok = snprintf(str, sizeof(str), "tex_specular%u", specularNr++);
             assert(is_ok > 0);
         }
 
@@ -88,7 +88,7 @@ void mesh::draw(shader& shader) const
     }
 
     // draw mesh
-    glBindVertexArray(VAO);
+    glBindVertexArray(vao);
     gl_check();
     glDrawElements(GL_TRIANGLES, static_cast<signed>(indices.size()),
                    GL_UNSIGNED_INT, nullptr);
@@ -99,20 +99,20 @@ void mesh::draw(shader& shader) const
 
 void mesh::setup()
 {
-    assert(VBO == 0);
-    assert(EBO == 0);
-    assert(VAO == 0);
+    assert(vbo == 0);
+    assert(ebo == 0);
+    assert(vao == 0);
 
-    glGenVertexArrays(1, &VAO);
+    glGenVertexArrays(1, &vao);
     gl_check();
-    glGenBuffers(1, &VBO);
+    glGenBuffers(1, &vbo);
     gl_check();
-    glGenBuffers(1, &EBO);
+    glGenBuffers(1, &ebo);
     gl_check();
 
-    glBindVertexArray(VAO);
+    glBindVertexArray(vao);
     gl_check();
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
     gl_check();
 
     glBufferData(GL_ARRAY_BUFFER,
@@ -120,7 +120,7 @@ void mesh::setup()
                  vertices.data(), GL_STATIC_DRAW);
     gl_check();
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
     gl_check();
     glBufferData(GL_ELEMENT_ARRAY_BUFFER,
                  static_cast<signed>(indices.size() * sizeof(uint32_t)),
