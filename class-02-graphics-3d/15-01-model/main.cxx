@@ -159,19 +159,121 @@ void render_light_cubes(gles30::shader&   light_cube_shader,
     return gl_context;
 };
 
-int main(int /*argc*/, char* /*argv*/[])
+void pull_system_events(bool& continue_loop, GLenum& primitive_render_mode)
 {
     using namespace std;
-    using namespace std::chrono;
+    SDL_Event event;
+    while (SDL_PollEvent(&event))
+    {
+        if (SDL_FINGERDOWN == event.type)
+        {
+            continue_loop = false;
+            break;
+        }
+        else if (SDL_QUIT == event.type)
+        {
+            continue_loop = false;
+            break;
+        }
+        else if (SDL_MOUSEMOTION == event.type)
+        {
+            const float sensivity   = 0.05f;
+            const float delta_yaw   = event.motion.xrel * sensivity;
+            const float delta_pitch = -1.f * event.motion.yrel * sensivity;
+            camera.rotate(delta_yaw, delta_pitch);
+        }
+        else if (SDL_MOUSEWHEEL == event.type)
+        {
+            camera.zoom(-event.wheel.y);
+        }
+        else if (SDL_KEYUP == event.type)
+        {
+            // OpenGL ES 3.0 did't have glPolygonMode
+            // so we try to emulate it with next render primitive types
+            if (event.key.keysym.sym == SDLK_1)
+            {
+                primitive_render_mode = GL_TRIANGLES;
+            }
+            else if (event.key.keysym.sym == SDLK_2)
+            {
+                primitive_render_mode = GL_LINES;
+            }
+            else if (event.key.keysym.sym == SDLK_3)
+            {
+                primitive_render_mode = GL_LINE_STRIP;
+            }
+            else if (event.key.keysym.sym == SDLK_4)
+            {
+                primitive_render_mode = GL_LINE_LOOP;
+            }
+            else if (event.key.keysym.sym == SDLK_5)
+            {
+                if (0 != SDL_SetRelativeMouseMode(SDL_TRUE))
+                {
+                    throw std::runtime_error(SDL_GetError());
+                }
+            }
+            else if (event.key.keysym.sym == SDLK_6)
+            {
+                if (0 != SDL_SetRelativeMouseMode(SDL_FALSE))
+                {
+                    throw std::runtime_error(SDL_GetError());
+                }
+            }
+        }
+        else if (SDL_WINDOWEVENT == event.type)
+        {
+            switch (event.window.event)
+            {
+                case ::SDL_WindowEventID::SDL_WINDOWEVENT_RESIZED:
+                    clog << "windows resized: " << event.window.data1 << ' '
+                         << event.window.data2 << ' ';
+                    // play with it to understand OpenGL origin point
+                    // for window screen coordinate system
+                    screen_width  = event.window.data1;
+                    screen_height = event.window.data2;
+                    screen_aspect = screen_width / screen_height;
+                    camera.aspect(screen_aspect);
+                    glViewport(0, 0, event.window.data1, event.window.data2);
+                    gl_check();
+                    print_view_port();
+                    break;
+            }
+        }
+    }
+}
 
-    properties_reader properties("res/runtime.properties.hxx");
+float update_delta_time(float& lastFrame)
+{
+    float currentFrame = SDL_GetTicks() * 0.001f; // seconds
+    float deltaTime    = currentFrame - lastFrame;
+    lastFrame          = currentFrame;
+    return deltaTime;
+}
 
+void clear_back_buffer(const glm::vec3 clear_color)
+{
+    float red   = clear_color.r;
+    float green = clear_color.g;
+    float blue  = clear_color.b;
+    float alpha = 0.f;
+
+    glClearColor(red, green, blue, alpha);
+    gl_check();
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    gl_check();
+}
+
+std::unique_ptr<SDL_Window, void (*)(SDL_Window*)> create_window(
+    const properties_reader& properties)
+{
+    using namespace std;
     const int init_result = SDL_Init(SDL_INIT_EVERYTHING);
     if (init_result != 0)
     {
-        const char* err_message = SDL_GetError();
+        std::string err_message = SDL_GetError();
         clog << "error: failed call SDL_Init: " << err_message << endl;
-        return -1;
+        throw std::runtime_error(err_message);
     }
 
     title         = properties.get_string("title");
@@ -186,13 +288,25 @@ int main(int /*argc*/, char* /*argv*/[])
 
     if (window.get() == nullptr)
     {
-        const char* err_message = SDL_GetError();
+        std::string err_message = SDL_GetError();
         clog << "error: failed call SDL_CreateWindow: " << err_message << endl;
         SDL_Quit();
-        return -1;
+        throw std::runtime_error(err_message);
     }
 
-    auto gl_context = create_opengl_context(window.get());
+    return window;
+}
+
+int main(int /*argc*/, char* /*argv*/[])
+{
+    using namespace std;
+    using namespace std::chrono;
+
+    properties_reader properties("res/runtime.properties.hxx");
+
+    auto window = create_window(properties);
+    // destroy only on exit from main
+    [[maybe_unused]] auto gl_context = create_opengl_context(window.get());
 
     namespace fs = std::filesystem;
     using namespace gles30;
@@ -250,7 +364,7 @@ int main(int /*argc*/, char* /*argv*/[])
 
     [[maybe_unused]] GLenum primitive_render_mode = GL_TRIANGLES;
 
-    float lastFrame = 0.0f; // Time of last frame
+    float last_frame_time = 0.0f; // Time of last frame
 
     cam_pos = properties.get_vec3("cam_pos");
     cam_dir = properties.get_vec3("cam_dir");
@@ -271,132 +385,38 @@ int main(int /*argc*/, char* /*argv*/[])
     bool continue_loop = true;
     while (continue_loop)
     {
-        float currentFrame = SDL_GetTicks() * 0.001f; // seconds
-        float deltaTime    = currentFrame - lastFrame;
-        lastFrame          = currentFrame;
+        float delta_time = update_delta_time(last_frame_time);
 
         properties.update_changes();
 
-        SDL_Event event;
-        while (SDL_PollEvent(&event))
-        {
-            if (SDL_FINGERDOWN == event.type)
-            {
-                continue_loop = false;
-                break;
-            }
-            else if (SDL_QUIT == event.type)
-            {
-                continue_loop = false;
-                break;
-            }
-            else if (SDL_MOUSEMOTION == event.type)
-            {
-                const float sensivity   = 0.05f;
-                const float delta_yaw   = event.motion.xrel * sensivity;
-                const float delta_pitch = -1.f * event.motion.yrel * sensivity;
-                camera.rotate(delta_yaw, delta_pitch);
-            }
-            else if (SDL_MOUSEWHEEL == event.type)
-            {
-                camera.zoom(-event.wheel.y);
-            }
-            else if (SDL_KEYUP == event.type)
-            {
-                // OpenGL ES 3.0 did't have glPolygonMode
-                // so we try to emulate it with next render primitive types
-                if (event.key.keysym.sym == SDLK_1)
-                {
-                    primitive_render_mode = GL_TRIANGLES;
-                }
-                else if (event.key.keysym.sym == SDLK_2)
-                {
-                    primitive_render_mode = GL_LINES;
-                }
-                else if (event.key.keysym.sym == SDLK_3)
-                {
-                    primitive_render_mode = GL_LINE_STRIP;
-                }
-                else if (event.key.keysym.sym == SDLK_4)
-                {
-                    primitive_render_mode = GL_LINE_LOOP;
-                }
-                else if (event.key.keysym.sym == SDLK_5)
-                {
-                    if (0 != SDL_SetRelativeMouseMode(SDL_TRUE))
-                    {
-                        throw std::runtime_error(SDL_GetError());
-                    }
-                }
-                else if (event.key.keysym.sym == SDLK_6)
-                {
-                    if (0 != SDL_SetRelativeMouseMode(SDL_FALSE))
-                    {
-                        throw std::runtime_error(SDL_GetError());
-                    }
-                }
-            }
-            else if (SDL_WINDOWEVENT == event.type)
-            {
-                switch (event.window.event)
-                {
-                    case ::SDL_WindowEventID::SDL_WINDOWEVENT_RESIZED:
-                        clog << "windows resized: " << event.window.data1 << ' '
-                             << event.window.data2 << ' ';
-                        // play with it to understand OpenGL origin point
-                        // for window screen coordinate system
-                        screen_width  = event.window.data1;
-                        screen_height = event.window.data2;
-                        screen_aspect = screen_width / screen_height;
-                        camera.aspect(screen_aspect);
-                        glViewport(0, 0, event.window.data1,
-                                   event.window.data2);
-                        gl_check();
-                        print_view_port();
-                        break;
-                }
-            }
-        }
+        pull_system_events(continue_loop, primitive_render_mode);
 
-        camera.move_using_keyboard_wasd(deltaTime);
+        camera.move_using_keyboard_wasd(delta_time);
 
-        glm::mat4 model{ 1 };
-        glm::mat4 view       = camera.view_matrix();
-        glm::mat4 projection = camera.projection_matrix();
-
-        clear_color = properties.get_vec3("clear_color");
-        float red   = clear_color.r;
-        float green = clear_color.g;
-        float blue  = clear_color.b;
-        float alpha = 0.f;
-
-        glClearColor(red, green, blue, alpha);
-
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        clear_back_buffer(properties.get_vec3("clear_color"));
 
         // render nanosuit model
         {
             // enable new shader program
             nanosuit_shader.use();
 
-            light_ambient  = properties.get_vec3("light_ambient");
-            light_diffuse  = properties.get_vec3("light_diffuse");
-            light_specular = properties.get_vec3("light_specular");
+            // light_ambient  = properties.get_vec3("light_ambient");
+            // light_diffuse  = properties.get_vec3("light_diffuse");
+            // light_specular = properties.get_vec3("light_specular");
             // light_pos      = camera.position();
 
             material_shininess = properties.get_float("material_shininess");
-            material_specular  = properties.get_vec3("material_specular");
+            // material_specular  = properties.get_vec3("material_specular");
 
             nanosuit_shader.set_uniform("material.shininess",
                                         material_shininess);
-            // material.set_uniform("material.diffuse", diffuse_map, 0);
-            // material.set_uniform("material.specular", specular_map, 1);
 
+            glm::mat4 model{ 1 };
             glm::mat4 rotated_model{ model };
             angle += properties.get_float("angle");
             rotate_axis = properties.get_vec3("rotate_axis");
 
-            std::vector<std::string> names{
+            vector<string> names{
                 "pointLights[0].position",  "pointLights[0].ambient",
                 "pointLights[0].diffuse",   "pointLights[0].specular",
                 "pointLights[0].constant",  "pointLights[0].linear",
@@ -456,6 +476,10 @@ int main(int /*argc*/, char* /*argv*/[])
             rotated_model = glm::rotate(rotated_model, angle, rotate_axis);
 
             nanosuit_shader.set_uniform("model", rotated_model);
+
+            glm::mat4 view       = camera.view_matrix();
+            glm::mat4 projection = camera.projection_matrix();
+
             nanosuit_shader.set_uniform("view", view);
             nanosuit_shader.set_uniform("projection", projection);
 
