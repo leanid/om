@@ -108,11 +108,13 @@ int main(int /*argc*/, char* /*argv*/[])
         return -1;
     }
 
-    title = properties.get_string("title");
+    title         = properties.get_string("title");
+    screen_width  = properties.get_float("screen_width");
+    screen_height = properties.get_float("screen_height");
 
     unique_ptr<SDL_Window, void (*)(SDL_Window*)> window(
         SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_CENTERED,
-                         SDL_WINDOWPOS_CENTERED, 640, 480,
+                         SDL_WINDOWPOS_CENTERED, screen_width, screen_height,
                          ::SDL_WINDOW_OPENGL | ::SDL_WINDOW_RESIZABLE),
         SDL_DestroyWindow);
 
@@ -243,18 +245,21 @@ int main(int /*argc*/, char* /*argv*/[])
 
     float lastFrame = 0.0f; // Time of last frame
 
-    camera = fps_camera(/*pos*/ { 0, 0, 1 }, /*dir*/ { 0, 0, -1 },
+    cam_pos = properties.get_vec3("cam_pos");
+    cam_dir = properties.get_vec3("cam_dir");
+
+    camera = fps_camera(cam_pos, cam_dir,
                         /*up*/ { 0, 1, 0 });
 
     fovy = properties.get_float("fovy");
     camera.fovy(fovy);
-    aspect = properties.get_float("aspect");
-    camera.aspect(aspect);
+    screen_aspect = properties.get_float("screen_aspect");
+    camera.aspect(screen_aspect);
 
     glEnable(GL_DEPTH_TEST);
     gl_check();
 
-    gles30::model nanosuit("./res/model/nanosuit.obj");
+    gles30::model nanosuit("res/model/nanosuit.obj");
 
     bool continue_loop = true;
     while (continue_loop)
@@ -333,6 +338,10 @@ int main(int /*argc*/, char* /*argv*/[])
                              << event.window.data2 << ' ';
                         // play with it to understand OpenGL origin point
                         // for window screen coordinate system
+                        screen_width  = event.window.data1;
+                        screen_height = event.window.data2;
+                        screen_aspect = screen_width / screen_height;
+                        camera.aspect(screen_aspect);
                         glViewport(0, 0, event.window.data1,
                                    event.window.data2);
                         gl_check();
