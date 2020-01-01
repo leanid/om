@@ -12,9 +12,8 @@
 
 namespace gles30
 {
-shader::shader(std::string_view vertex_shader_src,
-               std::string_view fragment_shader_src)
-    : program_id(0)
+void shader::create(std::string_view vertex_shader_src,
+                    std::string_view fragment_shader_src)
 {
     // create OpenGL object id for vertex shader object
     uint32_t vertex_shader = glCreateShader(GL_VERTEX_SHADER);
@@ -118,6 +117,7 @@ shader::shader(std::string_view vertex_shader_src,
 shader::shader(
     const std::filesystem::path& vertex_shader_path,
     const std::filesystem::path& fragment_shader_path) noexcept(false)
+    : program_id(0)
 {
     std::ifstream vertex_stream;
     std::ifstream fragmen_stream;
@@ -157,8 +157,7 @@ shader::shader(
         std::string_view v{ v_src };
         std::string_view f{ f_src };
 
-        // placement new operator (call other contructor at existing memory)
-        new (this) shader(v, f);
+        create(v, f);
     }
     catch (const std::exception& e)
     {

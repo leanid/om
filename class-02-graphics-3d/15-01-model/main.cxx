@@ -49,29 +49,8 @@ void print_view_port()
 extern const float     cube_vertices[36 * 8];
 extern const glm::vec3 light_positions[4];
 
-void set_cube_vertex_attributes()
-{
-    // now tell OpenGL how to interpret data from VBO
-    GLuint    location_of_vertex_attribute = 0; // position
-    int       size_of_attribute            = 3; // 3 float values (x, y, z)
-    GLenum    type_of_data   = GL_FLOAT; // all values in vec{2,3,4} of float
-    GLboolean normalize_data = GL_FALSE; // OpenGL can normalize values
-    // to [0, 1] - for unsigned and to [-1, 1] for signed values
-    int stride =
-        (3 + 3 + 2) * sizeof(float); // step in bytes from one attribute to next
-    void* start_of_data_offset = nullptr; // we start from begin of buffer
-    glVertexAttribPointer(location_of_vertex_attribute, size_of_attribute,
-                          type_of_data, normalize_data, stride,
-                          start_of_data_offset);
-    gl_check();
-
-    glEnableVertexAttribArray(0);
-    gl_check();
-}
-
 void render_light_cubes(gles30::shader&   light_cube_shader,
-                        const fps_camera& camera,
-                        uint32_t primitive_render_mode, uint32_t cube_vao)
+                        const fps_camera& camera, const gles30::mesh& mesh)
 {
     // also draw the lamp object(s)
     light_cube_shader.use();
@@ -79,14 +58,13 @@ void render_light_cubes(gles30::shader&   light_cube_shader,
     light_cube_shader.set_uniform("view", camera.view_matrix());
 
     // we now draw as many light bulbs as we have point lights.
-    glBindVertexArray(cube_vao);
     for (auto& light_position : light_positions)
     {
         glm::mat4 model = glm::mat4(1.0f);
         model           = glm::translate(model, light_position);
         model           = glm::scale(model, glm::vec3(0.2f));
         light_cube_shader.set_uniform("model", model);
-        glDrawArrays(primitive_render_mode, 0, 36);
+        mesh.draw(light_cube_shader);
     }
 }
 
@@ -155,6 +133,9 @@ void render_light_cubes(gles30::shader&   light_cube_shader,
     clog << "Receive " << got_context << endl;
     clog << "default ";
     print_view_port();
+
+    glEnable(GL_DEPTH_TEST);
+    gl_check();
 
     return gl_context;
 };
@@ -297,75 +278,28 @@ std::unique_ptr<SDL_Window, void (*)(SDL_Window*)> create_window(
     return window;
 }
 
-int main(int /*argc*/, char* /*argv*/[])
+gles30::mesh create_cube_mesh()
 {
     using namespace std;
-    using namespace std::chrono;
+    vector<gles30::vertex> cube_vert;
+    cube_vert.reserve(sizeof(cube_vertices) / 4 / 8);
+    for (size_t i = 0; i < sizeof(cube_vertices) / 4; i += 8)
+    {
+        gles30::vertex v;
+        v.position.x = cube_vertices[i + 0];
+        v.position.y = cube_vertices[i + 1];
+        v.position.z = cube_vertices[i + 2];
 
-    properties_reader properties("res/runtime.properties.hxx");
-
-    auto window = create_window(properties);
-    // destroy only on exit from main
-    [[maybe_unused]] auto gl_context = create_opengl_context(window.get());
-
-    namespace fs = std::filesystem;
-    using namespace gles30;
-
-    shader nanosuit_shader(fs::path{ "res/vertex_pos.vsh" },
-                           "res/material.fsh");
-    shader light_cube_shader(fs::path{ "res/light_cube.vsh" },
-                             "res/light_cube.fsh");
-
-    // generate OpenGL object id for future VertexBufferObject
-    uint32_t cube_vbo;
-    glGenBuffers(1, &cube_vbo);
-    gl_check();
-
-    // GL_ARRAY_BUFFER - is VertexBufferObject type
-    glBindBuffer(GL_ARRAY_BUFFER, cube_vbo);
-    gl_check();
-
-    // copy vertex data into GPU memory
-    // Using newly created VBO
-    //
-    // GL_STATIC_DRAW: the data will most likely not change at all or
-    //    very rarely.
-    // GL_DYNAMIC_DRAW: the data is likely to change a lot.
-    // GL_STREAM_DRAW: the data will change every time it is drawn.
-    glBufferData(GL_ARRAY_BUFFER, sizeof(cube_vertices), cube_vertices,
-                 GL_STATIC_DRAW);
-    gl_check();
-
-    uint32_t EBO; // ElementBufferObject - indices buffer
-    glGenBuffers(1, &EBO);
-    gl_check();
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    gl_check();
-
-    uint32_t cube_indexes[36];
+        cube_vert.push_back(v);
+    }
+    vector<uint32_t> cube_indexes(36);
     std::iota(begin(cube_indexes), end(cube_indexes), 0);
 
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cube_indexes), cube_indexes,
-                 GL_STATIC_DRAW);
-    gl_check();
+    return gles30::mesh(std::move(cube_vert), std::move(cube_indexes), {});
+}
 
-    // Generate VAO VertexArrayState object to remember current VBO and
-    // EBO(if any) with all attributes parameters stored in one object
-    // called VAO think it is current VBO + EBO + attributes state in one
-    // object
-    uint32_t cube_vao;
-    glGenVertexArrays(1, &cube_vao);
-    gl_check();
-    glBindVertexArray(cube_vao);
-    gl_check();
-
-    set_cube_vertex_attributes();
-
-    [[maybe_unused]] GLenum primitive_render_mode = GL_TRIANGLES;
-
-    float last_frame_time = 0.0f; // Time of last frame
-
+void create_camera(const properties_reader& properties)
+{
     cam_pos = properties.get_vec3("cam_pos");
     cam_dir = properties.get_vec3("cam_dir");
 
@@ -376,11 +310,116 @@ int main(int /*argc*/, char* /*argv*/[])
     camera.fovy(fovy);
     screen_aspect = properties.get_float("screen_aspect");
     camera.aspect(screen_aspect);
+}
 
-    glEnable(GL_DEPTH_TEST);
-    gl_check();
+// render nanosuit model
+void render_nanosuit_model(gles30::shader&          nanosuit_shader,
+                           const properties_reader& properties,
+                           const gles30::model&     nanosuit,
+                           const fps_camera&        camera)
+{
+    using namespace std;
+    // enable new shader program
+    nanosuit_shader.use();
 
-    gles30::model nanosuit("res/model/nanosuit.obj");
+    // light_ambient  = properties.get_vec3("light_ambient");
+    // light_diffuse  = properties.get_vec3("light_diffuse");
+    // light_specular = properties.get_vec3("light_specular");
+    // light_pos      = camera.position();
+
+    material_shininess = properties.get_float("material_shininess");
+    // material_specular  =
+    // properties.get_vec3("material_specular");
+
+    nanosuit_shader.set_uniform("material.shininess", material_shininess);
+
+    glm::mat4 model{ 1 };
+    glm::mat4 rotated_model{ model };
+    angle += properties.get_float("angle");
+    rotate_axis = properties.get_vec3("rotate_axis");
+
+    vector<string> names{
+        "pointLights[0].position",  "pointLights[0].ambient",
+        "pointLights[0].diffuse",   "pointLights[0].specular",
+        "pointLights[0].constant",  "pointLights[0].linear",
+        "pointLights[0].quadratic",
+    };
+
+    // directional light
+    nanosuit_shader.set_uniform("dirLight.direction", { -0.2f, -1.0f, -0.3f });
+    nanosuit_shader.set_uniform("dirLight.ambient", { 0.05f, 0.05f, 0.05f });
+    nanosuit_shader.set_uniform("dirLight.diffuse", { 0.6f, 0.6f, 0.6f });
+    nanosuit_shader.set_uniform("dirLight.specular", { 0.5f, 0.5f, 0.5f });
+    // point lights
+    for (auto& light_pos : light_positions)
+    {
+        auto   start_it = begin(light_positions);
+        size_t index    = std::distance(start_it, &light_pos);
+        char   i        = static_cast<char>('0' + index);
+        size_t zero_pos = names.front().find('[') + 1;
+
+        for (auto& name : names)
+        {
+            name[zero_pos] = i;
+        }
+
+        nanosuit_shader.set_uniform(names[0], light_pos);
+        nanosuit_shader.set_uniform(names[1], { 0.05f, 0.05f, 0.05f });
+        nanosuit_shader.set_uniform(names[2], { 0.8f, 0.8f, 0.8f });
+        nanosuit_shader.set_uniform(names[3], { 1.0f, 1.0f, 1.0f });
+        nanosuit_shader.set_uniform(names[4], 1.0f);
+        nanosuit_shader.set_uniform(names[5], 0.09f);
+        nanosuit_shader.set_uniform(names[6], 0.032f);
+    };
+
+    // spot light
+    nanosuit_shader.set_uniform("spot_light.position", camera.position());
+    nanosuit_shader.set_uniform("spot_light.direction", camera.direction());
+    nanosuit_shader.set_uniform("spot_light.ambient", { 0.0f, 0.0f, 0.0f });
+    nanosuit_shader.set_uniform("spot_light.diffuse", { 1.0f, 1.0f, 1.0f });
+    nanosuit_shader.set_uniform("spot_light.specular", { 1.0f, 1.0f, 1.0f });
+    nanosuit_shader.set_uniform("spot_light.constant", 1.0f);
+    nanosuit_shader.set_uniform("spot_light.linear", 0.09f);
+    nanosuit_shader.set_uniform("spot_light.quadratic", 0.032f);
+    nanosuit_shader.set_uniform("spot_light.cut_off", cos(glm::radians(12.5f)));
+    nanosuit_shader.set_uniform("spot_light.outer_cut_off",
+                                cos(glm::radians(15.0f)));
+
+    rotated_model = glm::rotate(rotated_model, angle, rotate_axis);
+
+    nanosuit_shader.set_uniform("model", rotated_model);
+
+    glm::mat4 view       = camera.view_matrix();
+    glm::mat4 projection = camera.projection_matrix();
+
+    nanosuit_shader.set_uniform("view", view);
+    nanosuit_shader.set_uniform("projection", projection);
+
+    nanosuit.draw(nanosuit_shader);
+};
+
+int main(int /*argc*/, char* /*argv*/[])
+{
+    using namespace std;
+    using namespace gles30;
+
+    properties_reader properties("res/runtime.properties.hxx");
+
+    auto window = create_window(properties);
+    // destroy only on exit from main
+    [[maybe_unused]] auto gl_context = create_opengl_context(window.get());
+
+    shader nanosuit_shader("res/vertex_pos.vsh", "res/material.fsh");
+    shader light_cube_shader("res/light_cube.vsh", "res/light_cube.fsh");
+
+    mesh  cube_mesh = create_cube_mesh();
+    model nanosuit("res/model/nanosuit.obj");
+
+    [[maybe_unused]] GLenum primitive_render_mode = GL_TRIANGLES;
+
+    float last_frame_time = 0.0f; // Time of last frame
+
+    create_camera(properties);
 
     bool continue_loop = true;
     while (continue_loop)
@@ -395,99 +434,9 @@ int main(int /*argc*/, char* /*argv*/[])
 
         clear_back_buffer(properties.get_vec3("clear_color"));
 
-        // render nanosuit model
-        {
-            // enable new shader program
-            nanosuit_shader.use();
+        render_nanosuit_model(nanosuit_shader, properties, nanosuit, camera);
 
-            // light_ambient  = properties.get_vec3("light_ambient");
-            // light_diffuse  = properties.get_vec3("light_diffuse");
-            // light_specular = properties.get_vec3("light_specular");
-            // light_pos      = camera.position();
-
-            material_shininess = properties.get_float("material_shininess");
-            // material_specular  = properties.get_vec3("material_specular");
-
-            nanosuit_shader.set_uniform("material.shininess",
-                                        material_shininess);
-
-            glm::mat4 model{ 1 };
-            glm::mat4 rotated_model{ model };
-            angle += properties.get_float("angle");
-            rotate_axis = properties.get_vec3("rotate_axis");
-
-            vector<string> names{
-                "pointLights[0].position",  "pointLights[0].ambient",
-                "pointLights[0].diffuse",   "pointLights[0].specular",
-                "pointLights[0].constant",  "pointLights[0].linear",
-                "pointLights[0].quadratic",
-            };
-
-            // directional light
-            nanosuit_shader.set_uniform("dirLight.direction",
-                                        { -0.2f, -1.0f, -0.3f });
-            nanosuit_shader.set_uniform("dirLight.ambient",
-                                        { 0.05f, 0.05f, 0.05f });
-            nanosuit_shader.set_uniform("dirLight.diffuse",
-                                        { 0.6f, 0.6f, 0.6f });
-            nanosuit_shader.set_uniform("dirLight.specular",
-                                        { 0.5f, 0.5f, 0.5f });
-            // point lights
-            for (auto& light_pos : light_positions)
-            {
-                auto   start_it = begin(light_positions);
-                size_t index    = std::distance(start_it, &light_pos);
-                char   i        = static_cast<char>('0' + index);
-                size_t zero_pos = names.front().find('[') + 1;
-
-                for (auto& name : names)
-                {
-                    name[zero_pos] = i;
-                }
-
-                nanosuit_shader.set_uniform(names[0], light_pos);
-                nanosuit_shader.set_uniform(names[1], { 0.05f, 0.05f, 0.05f });
-                nanosuit_shader.set_uniform(names[2], { 0.8f, 0.8f, 0.8f });
-                nanosuit_shader.set_uniform(names[3], { 1.0f, 1.0f, 1.0f });
-                nanosuit_shader.set_uniform(names[4], 1.0f);
-                nanosuit_shader.set_uniform(names[5], 0.09f);
-                nanosuit_shader.set_uniform(names[6], 0.032f);
-            };
-
-            // spot light
-            nanosuit_shader.set_uniform("spot_light.position",
-                                        camera.position());
-            nanosuit_shader.set_uniform("spot_light.direction",
-                                        camera.direction());
-            nanosuit_shader.set_uniform("spot_light.ambient",
-                                        { 0.0f, 0.0f, 0.0f });
-            nanosuit_shader.set_uniform("spot_light.diffuse",
-                                        { 1.0f, 1.0f, 1.0f });
-            nanosuit_shader.set_uniform("spot_light.specular",
-                                        { 1.0f, 1.0f, 1.0f });
-            nanosuit_shader.set_uniform("spot_light.constant", 1.0f);
-            nanosuit_shader.set_uniform("spot_light.linear", 0.09f);
-            nanosuit_shader.set_uniform("spot_light.quadratic", 0.032f);
-            nanosuit_shader.set_uniform("spot_light.cut_off",
-                                        glm::cos(glm::radians(12.5f)));
-            nanosuit_shader.set_uniform("spot_light.outer_cut_off",
-                                        glm::cos(glm::radians(15.0f)));
-
-            rotated_model = glm::rotate(rotated_model, angle, rotate_axis);
-
-            nanosuit_shader.set_uniform("model", rotated_model);
-
-            glm::mat4 view       = camera.view_matrix();
-            glm::mat4 projection = camera.projection_matrix();
-
-            nanosuit_shader.set_uniform("view", view);
-            nanosuit_shader.set_uniform("projection", projection);
-
-            nanosuit.draw(nanosuit_shader);
-        }
-
-        render_light_cubes(light_cube_shader, camera, primitive_render_mode,
-                           cube_vao);
+        render_light_cubes(light_cube_shader, camera, cube_mesh);
 
         SDL_GL_SwapWindow(window.get());
     }

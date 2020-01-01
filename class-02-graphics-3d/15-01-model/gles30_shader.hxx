@@ -41,8 +41,8 @@ public:
     shader& operator=(const shader&) = delete;
 
 private:
-    shader(std::string_view vertex_shader_src,
-           std::string_view fragment_shader_src) noexcept(false);
+    void          create(std::string_view vertex_shader_src,
+                         std::string_view fragment_shader_src) noexcept(false);
     std::uint32_t program_id;
 };
 } // end namespace gles30
