@@ -4,7 +4,7 @@
 // glm::vec3 move_camera      =       { 0.f, 0.f, -2.f };
 //
 // <type>   <identifier>  <operation> <expression>;
-// type:   <float, std::string, glm::vec3>
+// type:   <float, std::string, glm::vec3, bool>
 // identifier: <a-zA-Z_0-9>
 // operation: <+, -, =, /, *>
 // expression: <float_literal,
@@ -23,6 +23,7 @@
 #include <fstream>
 #include <iostream>
 #include <iterator>
+#include <numeric>
 #include <regex>
 #include <sstream>
 #include <string>
@@ -524,7 +525,7 @@ struct parser_t
 struct interpretator_t
 {
     parser_t& parser;
-    interpretator_t(parser_t& parser_)
+    explicit interpretator_t(parser_t& parser_)
         : parser{ parser_ }
     {
     }
@@ -560,7 +561,7 @@ private:
 class properties_reader::impl
 {
 public:
-    impl(const std::filesystem::path& path_)
+    explicit impl(const std::filesystem::path& path_)
         : path{ path_ }
         , last_update_time{ std::filesystem::last_write_time(path) }
     {
@@ -634,7 +635,49 @@ float properties_reader::get_float(std::string_view key) const
 const glm::vec3& properties_reader::get_vec3(std::string_view name) const
     noexcept(false)
 {
-    return std::get<glm::vec3>(ptr->get_map()[std::string(name)]);
+    try
+    {
+        return std::get<glm::vec3>(ptr->get_map()[std::string(name)]);
+    }
+    catch (const std::bad_variant_access& ex)
+    {
+        // print similar names and rethrow
+        const auto&      map              = ptr->get_map();
+        std::string_view best_match       = "";
+        size_t           best_mathc_score = 0;
+        for (const auto& key_val : map)
+        {
+            const std::string& key           = key_val.first;
+            uint32_t           count_matches = 0;
+            if (size(key) < size(name))
+            {
+                count_matches =
+                    std::inner_product(begin(key), end(key), begin(name), 0u,
+                                       std::plus<>(), std::equal_to<>());
+            }
+            else
+            {
+                count_matches =
+                    std::inner_product(begin(name), end(name), begin(key), 0u,
+                                       std::plus<>(), std::equal_to<>());
+            }
+            if (count_matches > best_mathc_score)
+            {
+                best_match       = key;
+                best_mathc_score = size(key);
+            }
+        }
+
+        std::cerr << "error: can't get property [" << name << "]" << std::endl;
+        uint32_t match_80_percent =
+            static_cast<uint32_t>(size(best_match) * 0.8);
+        if (best_mathc_score >= match_80_percent)
+        {
+            std::cerr << "    best match is [" << best_match << "]"
+                      << std::endl;
+        }
+        throw;
+    }
 }
 
 bool properties_reader::get_bool(std::string_view name) const

@@ -322,15 +322,10 @@ void render_nanosuit_model(gles30::shader&          nanosuit_shader,
     // enable new shader program
     nanosuit_shader.use();
 
-    // light_ambient  = properties.get_vec3("light_ambient");
-    // light_diffuse  = properties.get_vec3("light_diffuse");
-    // light_specular = properties.get_vec3("light_specular");
-    // light_pos      = camera.position();
-
     material_shininess = properties.get_float("material_shininess");
-    // material_specular  =
-    // properties.get_vec3("material_specular");
+    material_ambient   = properties.get_vec3("material.ambient");
 
+    nanosuit_shader.set_uniform("material.ambient", material_ambient);
     nanosuit_shader.set_uniform("material.shininess", material_shininess);
 
     glm::mat4 model{ 1 };

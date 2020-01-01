@@ -53,29 +53,33 @@ mesh::~mesh() noexcept
 void mesh::draw(shader& shader) const
 {
     shader.use();
-    uint32_t diffuseNr  = 1;
-    uint32_t specularNr = 1;
+    uint32_t diffuse_index  = 0;
+    uint32_t specular_index = 0;
     for (uint32_t i = 0; i < textures.size(); i++)
     {
         // activate proper texture unit before binding
         glActiveTexture(GL_TEXTURE0 + i);
         gl_check();
         // retrieve texture number (the N in diffuse_textureN)
-        texture&         texture = *textures.at(i);
-        texture::type type    = texture.get_type();
-        char             str[32];
+        texture& texture = *textures.at(i);
+        texture.bind();
+        texture::type type = texture.get_type();
+        char          str[32];
 
         int32_t is_ok = 0;
 
         if (type == texture::type::diffuse)
         {
-            is_ok = snprintf(str, sizeof(str), "tex_diffuse%u", diffuseNr++);
+            is_ok = snprintf(str, sizeof(str), "tex_diffuse%u", diffuse_index);
             assert(is_ok > 0);
+            ++diffuse_index;
         }
         else if (type == texture::type::specular)
         {
-            is_ok = snprintf(str, sizeof(str), "tex_specular%u", specularNr++);
+            is_ok =
+                snprintf(str, sizeof(str), "tex_specular%u", specular_index);
             assert(is_ok > 0);
+            ++specular_index;
         }
 
         char tex_uniform_name[64];
@@ -84,7 +88,6 @@ void mesh::draw(shader& shader) const
         assert(is_ok > 0);
 
         shader.set_uniform(tex_uniform_name, static_cast<int32_t>(i));
-        texture.bind();
     }
 
     // draw mesh

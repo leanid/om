@@ -1,15 +1,15 @@
 #version 300 es
 precision mediump float;
 
-struct Material
+struct nanosuit_material
 {
     vec3      ambient;
-    sampler2D tex_diffuse1;
-    sampler2D tex_specular1;
+    sampler2D tex_diffuse0;
+    sampler2D tex_specular0;
     float     shininess;
 };
 
-uniform Material material;
+uniform nanosuit_material material;
 
 struct DirLight
 {
@@ -155,14 +155,16 @@ vec3 calc_spot_light(SpotLight spot_light, vec3 Normal, vec3 FragPos, vec3 viewD
 void main()
 {
     // properties
-    vec3 diffuse_color  = texture2D(material.tex_diffuse1, TexCoords).rgb;
-    vec3 specular_color = texture2D(material.tex_specular1, TexCoords).rgb;
+    vec3 ambient_color  = material.ambient;
+    vec3 diffuse_color  = texture2D(material.tex_diffuse0, TexCoords).rgb;
+    vec3 specular_color = texture2D(material.tex_specular0, TexCoords).rgb;
 
     vec3 norm    = normalize(Normal);
     vec3 viewDir = normalize(spot_light.position - FragPos); // camera is spot_light
 
+    vec3 result = ambient_color;
     // phase 1: Directional lighting
-    vec3 result = calc_dir_light(norm, viewDir, diffuse_color, specular_color);
+    result += calc_dir_light(norm, viewDir, diffuse_color, specular_color);
     // phase 2: Point lights
     for (int i = 0; i < 4; i++)
     {
