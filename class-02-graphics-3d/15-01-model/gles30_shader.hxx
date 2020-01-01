@@ -16,8 +16,6 @@ class texture;
 class shader
 {
 public:
-    shader(std::string_view vertex_shader_src,
-           std::string_view fragment_shader_src) noexcept(false);
     shader(const std::filesystem::path& vertex_shader_path,
            const std::filesystem::path& fragment_shader_path) noexcept(false);
 
@@ -43,6 +41,8 @@ public:
     shader& operator=(const shader&) = delete;
 
 private:
+    shader(std::string_view vertex_shader_src,
+           std::string_view fragment_shader_src) noexcept(false);
     std::uint32_t program_id;
 };
 } // end namespace gles30

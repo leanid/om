@@ -109,11 +109,10 @@ target_sources(15-01-model PRIVATE main.cxx
                                    gles30_model.cxx
                                    stb_image.h
 
-                                   res/basic.fsh
-                                   res/basic.vsh
                                    res/material.fsh
                                    res/vertex_pos.vsh
-                                   res/lamp_color.fsh
+                                   res/light_cube.vsh
+                                   res/light_cube.fsh
 
                                    res/runtime.properties.hxx
 

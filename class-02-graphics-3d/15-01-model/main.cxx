@@ -67,64 +67,33 @@ void set_cube_vertex_attributes()
 
     glEnableVertexAttribArray(0);
     gl_check();
-
-    location_of_vertex_attribute = 1; // normal
-    size_of_attribute            = 3; // x, y, z
-    type_of_data                 = GL_FLOAT;
-    normalize_data               = GL_FALSE;
-    start_of_data_offset         = reinterpret_cast<void*>(3 * sizeof(float));
-    glVertexAttribPointer(location_of_vertex_attribute, size_of_attribute,
-                          type_of_data, normalize_data, stride,
-                          start_of_data_offset);
-    gl_check();
-
-    glEnableVertexAttribArray(1);
-    gl_check();
-
-    location_of_vertex_attribute = 2; // texCoords
-    size_of_attribute            = 2; // x, y
-    type_of_data                 = GL_FLOAT;
-    normalize_data               = GL_FALSE;
-    start_of_data_offset         = reinterpret_cast<void*>(6 * sizeof(float));
-    glVertexAttribPointer(location_of_vertex_attribute, size_of_attribute,
-                          type_of_data, normalize_data, stride,
-                          start_of_data_offset);
-    gl_check();
-    glEnableVertexAttribArray(2);
 }
 
-int main(int /*argc*/, char* /*argv*/[])
+void render_light_cubes(gles30::shader&   light_cube_shader,
+                        const fps_camera& camera,
+                        uint32_t primitive_render_mode, uint32_t cube_vao)
+{
+    // also draw the lamp object(s)
+    light_cube_shader.use();
+    light_cube_shader.set_uniform("projection", camera.projection_matrix());
+    light_cube_shader.set_uniform("view", camera.view_matrix());
+
+    // we now draw as many light bulbs as we have point lights.
+    glBindVertexArray(cube_vao);
+    for (auto& light_position : light_positions)
+    {
+        glm::mat4 model = glm::mat4(1.0f);
+        model           = glm::translate(model, light_position);
+        model           = glm::scale(model, glm::vec3(0.2f));
+        light_cube_shader.set_uniform("model", model);
+        glDrawArrays(primitive_render_mode, 0, 36);
+    }
+}
+
+[[nodiscard]] std::unique_ptr<void, void (*)(void*)> create_opengl_context(
+    SDL_Window* window)
 {
     using namespace std;
-    using namespace std::chrono;
-
-    properties_reader properties("./res/runtime.properties.hxx");
-
-    const int init_result = SDL_Init(SDL_INIT_EVERYTHING);
-    if (init_result != 0)
-    {
-        const char* err_message = SDL_GetError();
-        clog << "error: failed call SDL_Init: " << err_message << endl;
-        return -1;
-    }
-
-    title         = properties.get_string("title");
-    screen_width  = properties.get_float("screen_width");
-    screen_height = properties.get_float("screen_height");
-
-    unique_ptr<SDL_Window, void (*)(SDL_Window*)> window(
-        SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_CENTERED,
-                         SDL_WINDOWPOS_CENTERED, screen_width, screen_height,
-                         ::SDL_WINDOW_OPENGL | ::SDL_WINDOW_RESIZABLE),
-        SDL_DestroyWindow);
-
-    if (window == nullptr)
-    {
-        const char* err_message = SDL_GetError();
-        clog << "error: failed call SDL_CreateWindow: " << err_message << endl;
-        SDL_Quit();
-        return -1;
-    }
     context_parameters ask_context;
 
     string_view platform_name = SDL_GetPlatform();
@@ -163,14 +132,14 @@ int main(int /*argc*/, char* /*argv*/[])
                             ask_context.minor_version);
     SDL_assert_always(r == 0);
 
-    unique_ptr<void, void (*)(void*)> gl_context(
-        SDL_GL_CreateContext(window.get()), SDL_GL_DeleteContext);
+    unique_ptr<void, void (*)(void*)> gl_context(SDL_GL_CreateContext(window),
+                                                 SDL_GL_DeleteContext);
     if (nullptr == gl_context)
     {
         clog << "Failed to create: " << ask_context
              << " error: " << SDL_GetError() << endl;
         SDL_Quit();
-        return -1;
+        throw std::runtime_error("error: can't create opengl context");
     }
 
     context_parameters got_context = ask_context;
@@ -187,13 +156,51 @@ int main(int /*argc*/, char* /*argv*/[])
     clog << "default ";
     print_view_port();
 
+    return gl_context;
+};
+
+int main(int /*argc*/, char* /*argv*/[])
+{
+    using namespace std;
+    using namespace std::chrono;
+
+    properties_reader properties("res/runtime.properties.hxx");
+
+    const int init_result = SDL_Init(SDL_INIT_EVERYTHING);
+    if (init_result != 0)
+    {
+        const char* err_message = SDL_GetError();
+        clog << "error: failed call SDL_Init: " << err_message << endl;
+        return -1;
+    }
+
+    title         = properties.get_string("title");
+    screen_width  = properties.get_float("screen_width");
+    screen_height = properties.get_float("screen_height");
+
+    unique_ptr<SDL_Window, void (*)(SDL_Window*)> window(
+        SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_CENTERED,
+                         SDL_WINDOWPOS_CENTERED, screen_width, screen_height,
+                         ::SDL_WINDOW_OPENGL | ::SDL_WINDOW_RESIZABLE),
+        SDL_DestroyWindow);
+
+    if (window.get() == nullptr)
+    {
+        const char* err_message = SDL_GetError();
+        clog << "error: failed call SDL_CreateWindow: " << err_message << endl;
+        SDL_Quit();
+        return -1;
+    }
+
+    auto gl_context = create_opengl_context(window.get());
+
     namespace fs = std::filesystem;
     using namespace gles30;
 
     shader nanosuit_shader(fs::path{ "res/vertex_pos.vsh" },
                            "res/material.fsh");
-    shader light_cube_shader(fs::path{ "res/vertex_pos.vsh" },
-                             "res/lamp_color.fsh");
+    shader light_cube_shader(fs::path{ "res/light_cube.vsh" },
+                             "res/light_cube.fsh");
 
     // generate OpenGL object id for future VertexBufferObject
     uint32_t cube_vbo;
@@ -454,24 +461,9 @@ int main(int /*argc*/, char* /*argv*/[])
 
             nanosuit.draw(nanosuit_shader);
         }
-        {
-            // also draw the lamp object(s)
-            light_cube_shader.use();
-            light_cube_shader.set_uniform("projection", projection);
-            light_cube_shader.set_uniform("view", view);
 
-            // we now draw as many light bulbs as we have point lights.
-            glBindVertexArray(cube_vao);
-            for (auto& pointLightPosition : light_positions)
-            {
-                model = glm::mat4(1.0f);
-                model = glm::translate(model, pointLightPosition);
-                model = glm::scale(model,
-                                   glm::vec3(0.2f)); // Make it a smaller cube
-                light_cube_shader.set_uniform("model", model);
-                glDrawArrays(primitive_render_mode, 0, 36);
-            }
-        }
+        render_light_cubes(light_cube_shader, camera, primitive_render_mode,
+                           cube_vao);
 
         SDL_GL_SwapWindow(window.get());
     }
@@ -482,10 +474,10 @@ int main(int /*argc*/, char* /*argv*/[])
 }
 
 // clang-format off
-const glm::vec3 light_positions[4] = { glm::vec3(0.7f, 0.2f, 2.0f),
-                                           glm::vec3(2.3f, -3.3f, -4.0f),
-                                           glm::vec3(-4.0f, 2.0f, -12.0f),
-                                           glm::vec3(0.0f, 0.0f, -3.0f) };
+const glm::vec3 light_positions[4] = { glm::vec3(0.7f, 1.2f, 2.0f),
+                                       glm::vec3(2.3f, 10.3f, -4.0f),
+                                       glm::vec3(4.0f, 12.0f, 2.0f),
+                                       glm::vec3(0.0f, 8.0f, -3.0f) };
 
 
 const float cube_vertices[36 * 8] = {
