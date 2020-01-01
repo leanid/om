@@ -113,6 +113,7 @@ target_sources(15-01-model PRIVATE main.cxx
                                    res/basic.vsh
                                    res/material.fsh
                                    res/vertex_pos.vsh
+                                   res/lamp_color.fsh
 
                                    res/runtime.properties.hxx
 

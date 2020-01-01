@@ -190,10 +190,10 @@ int main(int /*argc*/, char* /*argv*/[])
     namespace fs = std::filesystem;
     using namespace gles30;
 
-    shader nanosuit_shader(fs::path{ "./res/vertex_pos.vsh" },
-                           "./res/material.fsh");
-    shader light_shader(fs::path{ "./res/vertex_pos.vsh" },
-                        "./res/lamp_color.fsh");
+    shader nanosuit_shader(fs::path{ "res/vertex_pos.vsh" },
+                           "res/material.fsh");
+    shader light_cube_shader(fs::path{ "res/vertex_pos.vsh" },
+                             "res/lamp_color.fsh");
 
     // generate OpenGL object id for future VertexBufferObject
     uint32_t cube_vbo;
@@ -456,19 +456,19 @@ int main(int /*argc*/, char* /*argv*/[])
         }
         {
             // also draw the lamp object(s)
-            light_shader.use();
-            light_shader.set_uniform("projection", projection);
-            light_shader.set_uniform("view", view);
+            light_cube_shader.use();
+            light_cube_shader.set_uniform("projection", projection);
+            light_cube_shader.set_uniform("view", view);
 
             // we now draw as many light bulbs as we have point lights.
             glBindVertexArray(cube_vao);
-            for (auto pointLightPosition : light_positions)
+            for (auto& pointLightPosition : light_positions)
             {
                 model = glm::mat4(1.0f);
                 model = glm::translate(model, pointLightPosition);
                 model = glm::scale(model,
                                    glm::vec3(0.2f)); // Make it a smaller cube
-                light_shader.set_uniform("model", model);
+                light_cube_shader.set_uniform("model", model);
                 glDrawArrays(primitive_render_mode, 0, 36);
             }
         }
