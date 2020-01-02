@@ -19,10 +19,13 @@ glm::vec3 cam_dir = { 0.f, 0.f, -1.f };
 float     angle       = 0.000f;
 glm::vec3 rotate_axis = { 0.f, 1.f, 0.f };
 
-glm::vec3 material_ambient = { 0.0f, 0.0f, 0.0f };
-// glm::vec3 material_diffuse   = { 1.0f, 1.0f, 1.0f }; // from texture
-// glm::vec3 material_specular  = { 0.5f, 0.5f, 0.5f }; // from texture
-float material_shininess = 256.f;
+glm::vec3 nanosuit_material_ambient   = { 0.0f, 0.0f, 0.0f };
+float     nanosuit_material_shininess = 256.f;
+
+glm::vec3 dir_light_direction = { 0.0f, 0.0f, -1.0f };
+glm::vec3 dir_light_ambient   = { 0.25f, 0.25f, 0.25f };
+glm::vec3 dir_light_diffuse   = { 0.6f, 0.6f, 0.6f };
+glm::vec3 dir_light_specular  = { 0.5f, 0.5f, 0.5f };
 
 glm::vec3 light_ambient  = { 0.5f, 0.5f, 0.5f };
 glm::vec3 light_diffuse  = { 1.0f, 1.0f, 1.0f };

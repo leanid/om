@@ -335,11 +335,25 @@ void render_nanosuit_model(gles30::shader&          nanosuit_shader,
     // enable new shader program
     nanosuit_shader.use();
 
-    material_shininess = properties.get_float("material_shininess");
-    material_ambient   = properties.get_vec3("material_ambient");
+    nanosuit_material_shininess =
+        properties.get_float("nanosuit_material_shininess");
+    nanosuit_material_ambient =
+        properties.get_vec3("nanosuit_material_ambient");
 
-    nanosuit_shader.set_uniform("material.ambient", material_ambient);
-    nanosuit_shader.set_uniform("material.shininess", material_shininess);
+    nanosuit_shader.set_uniform("material.ambient", nanosuit_material_ambient);
+    nanosuit_shader.set_uniform("material.shininess",
+                                nanosuit_material_shininess);
+
+    // directional light
+    dir_light_direction = properties.get_vec3("dir_light_direction");
+    nanosuit_shader.set_uniform("direction_light.direction",
+                                dir_light_direction);
+    dir_light_ambient = properties.get_vec3("dir_light_ambient");
+    nanosuit_shader.set_uniform("direction_light.ambient", dir_light_ambient);
+    dir_light_diffuse = properties.get_vec3("dir_light_diffuse");
+    nanosuit_shader.set_uniform("direction_light.diffuse", dir_light_diffuse);
+    dir_light_specular = properties.get_vec3("dir_light_specular");
+    nanosuit_shader.set_uniform("direction_light.specular", dir_light_specular);
 
     glm::mat4 model{ 1 };
     glm::mat4 rotated_model{ model };
@@ -353,11 +367,6 @@ void render_nanosuit_model(gles30::shader&          nanosuit_shader,
         "pointLights[0].quadratic",
     };
 
-    // directional light
-    nanosuit_shader.set_uniform("dirLight.direction", { -0.2f, -1.0f, -0.3f });
-    nanosuit_shader.set_uniform("dirLight.ambient", { 0.05f, 0.05f, 0.05f });
-    nanosuit_shader.set_uniform("dirLight.diffuse", { 0.6f, 0.6f, 0.6f });
-    nanosuit_shader.set_uniform("dirLight.specular", { 0.5f, 0.5f, 0.5f });
     // point lights
     for (auto& light_pos : light_positions)
     {
