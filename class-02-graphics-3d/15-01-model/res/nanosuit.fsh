@@ -21,7 +21,7 @@ struct dir_light
 
 uniform dir_light direction_light;
 
-struct PointLight
+struct point_light
 {
     vec3 position;
 
@@ -34,9 +34,9 @@ struct PointLight
     vec3 specular;
 };
 
-uniform PointLight pointLights[4];
+uniform point_light point_lights[4];
 
-struct SpotLight
+struct spot_light_t
 {
     vec3 position;
     vec3 direction;
@@ -53,7 +53,7 @@ struct SpotLight
     float quadratic;
 };
 
-uniform SpotLight spot_light;
+uniform spot_light_t spot_light;
 
 in vec3 v_frag_pos;
 in vec3 v_normal;
@@ -68,8 +68,8 @@ vec3 calc_dir_light(in vec3 normal, in vec3 view_dir, in vec3 diffuse_color,
     // diffuse shading
     float diff = max(dot(normal, light_dir), 0.0);
     // specular shading
-    vec3  reflectDir = reflect(-light_dir, normal);
-    float spec = pow(max(dot(view_dir, reflectDir), 0.0), shininess);
+    vec3  reflect_dir = reflect(-light_dir, normal);
+    float spec = pow(max(dot(view_dir, reflect_dir), 0.0), shininess);
     // combine results
     vec3 ambient  = direction_light.ambient * diffuse_color;
     vec3 diffuse  = direction_light.diffuse * diff * diffuse_color;
@@ -77,16 +77,16 @@ vec3 calc_dir_light(in vec3 normal, in vec3 view_dir, in vec3 diffuse_color,
     return (ambient + diffuse + specular);
 }
 
-vec3 calc_point_light(in PointLight light, in vec3 normal, in vec3 frag_pos,
+vec3 calc_point_light(in point_light light, in vec3 normal, in vec3 frag_pos,
                       in vec3 viewDir, in vec3 diffuse_color,
                       in vec3 specular_color, in float shininess)
 {
-    vec3 lightDir = normalize(light.position - frag_pos);
+    vec3 light_dir = normalize(light.position - frag_pos);
     // diffuse shading
-    float diff = max(dot(normal, lightDir), 0.0);
+    float diff = max(dot(normal, light_dir), 0.0);
     // specular shading
-    vec3  reflectDir = reflect(-lightDir, normal);
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
+    vec3  reflect_dir = reflect(-light_dir, normal);
+    float spec = pow(max(dot(viewDir, reflect_dir), 0.0), shininess);
     // attenuation
     float distance    = length(light.position - frag_pos);
     float attenuation = 1.0 / (light.constant + light.linear * distance +
@@ -99,11 +99,12 @@ vec3 calc_point_light(in PointLight light, in vec3 normal, in vec3 frag_pos,
     ambient *= attenuation;
     diffuse *= attenuation;
     specular *= attenuation;
-    return (ambient + diffuse + specular);
+
+    return ambient + diffuse + specular;
 }
 
-vec3 calc_spot_light(in SpotLight spot_light, in vec3 normal, in vec3 frag_pos,
-                     in vec3 viewDir, in vec3 diffuse_color,
+vec3 calc_spot_light(in spot_light_t spot_light, in vec3 normal, in vec3 frag_pos,
+                     in vec3 view_dir, in vec3 diffuse_color,
                      in vec3 specular_color, in float shininess)
 {
     vec3 result = vec3(0.0, 0.0, 0.0);
@@ -111,22 +112,24 @@ vec3 calc_spot_light(in SpotLight spot_light, in vec3 normal, in vec3 frag_pos,
     vec3 ambient = spot_light.ambient * diffuse_color;
 
     // calculate direction from light position
-    vec3  lightDir = normalize(spot_light.position - frag_pos);
-    float theta    = dot(lightDir, normalize(-spot_light.direction));
+    vec3  light_dir = normalize(spot_light.position - frag_pos);
+    float theta    = dot(light_dir, normalize(-spot_light.direction));
 
+    // theta - is cosinus 1 - max
+    // so if outer_cut_off <= theta <= 1 we in conus
     if (theta > spot_light.outer_cut_off)
     {
         // do lighting calculations
         // diffuse
         vec3  norm    = normalize(normal);
-        float diff    = max(dot(norm, lightDir), 0.0);
+        float diff    = max(dot(norm, light_dir), 0.0);
         vec3  diffuse = spot_light.diffuse * (diff * diffuse_color);
 
-        // specular
-        vec3  viewDir    = normalize(spot_light.position - frag_pos); // viewDir == lightDir camera
-        vec3  reflectDir = reflect(-lightDir, norm);
+        // specular  view_dir == light_dir camera
+        vec3  view_dir    = normalize(spot_light.position - frag_pos);
+        vec3  reflect_dir = reflect(-light_dir, norm);
         float spec =
-            pow(max(dot(viewDir, reflectDir), 0.0), shininess);
+            pow(max(dot(view_dir, reflect_dir), 0.0), shininess);
         vec3 specular = spot_light.specular * (spec * specular_color);
 
         float distance    = length(spot_light.position - frag_pos);
@@ -173,7 +176,7 @@ void main()
     // phase 2: Point lights
     for (int i = 0; i < 4; i++)
     {
-        result += calc_point_light(pointLights[i], v_normal, v_frag_pos, view_dir,
+        result += calc_point_light(point_lights[i], v_normal, v_frag_pos, view_dir,
                                    diffuse_color, specular_color, shininess);
     }
 

@@ -361,11 +361,18 @@ void render_nanosuit_model(gles30::shader&          nanosuit_shader,
     rotate_axis = properties.get_vec3("rotate_axis");
 
     vector<string> names{
-        "pointLights[0].position",  "pointLights[0].ambient",
-        "pointLights[0].diffuse",   "pointLights[0].specular",
-        "pointLights[0].constant",  "pointLights[0].linear",
-        "pointLights[0].quadratic",
+        "point_lights[0].position",  "point_lights[0].ambient",
+        "point_lights[0].diffuse",   "point_lights[0].specular",
+        "point_lights[0].constant",  "point_lights[0].linear",
+        "point_lights[0].quadratic",
     };
+
+    point_light_constant  = properties.get_float("point_light_constant");
+    point_light_ambient   = properties.get_vec3("point_light_ambient");
+    point_light_diffuse   = properties.get_vec3("point_light_diffuse");
+    point_light_specular  = properties.get_vec3("point_light_specular");
+    point_light_linear    = properties.get_float("point_light_linear");
+    point_light_quadratic = properties.get_float("point_light_quadratic");
 
     // point lights
     for (auto& light_pos : light_positions)
@@ -381,26 +388,37 @@ void render_nanosuit_model(gles30::shader&          nanosuit_shader,
         }
 
         nanosuit_shader.set_uniform(names[0], light_pos);
-        nanosuit_shader.set_uniform(names[1], { 0.05f, 0.05f, 0.05f });
-        nanosuit_shader.set_uniform(names[2], { 0.8f, 0.8f, 0.8f });
-        nanosuit_shader.set_uniform(names[3], { 1.0f, 1.0f, 1.0f });
-        nanosuit_shader.set_uniform(names[4], 1.0f);
-        nanosuit_shader.set_uniform(names[5], 0.09f);
-        nanosuit_shader.set_uniform(names[6], 0.032f);
+        nanosuit_shader.set_uniform(names[1], point_light_ambient);
+        nanosuit_shader.set_uniform(names[2], point_light_diffuse);
+        nanosuit_shader.set_uniform(names[3], point_light_specular);
+        nanosuit_shader.set_uniform(names[4], point_light_constant);
+        nanosuit_shader.set_uniform(names[5], point_light_linear);
+        nanosuit_shader.set_uniform(names[6], point_light_quadratic);
     };
 
     // spot light
+    spot_light_ambient   = properties.get_vec3("spot_light_ambient");
+    spot_light_diffuse   = properties.get_vec3("spot_light_diffuse");
+    spot_light_specular  = properties.get_vec3("spot_light_specular");
+    spot_light_constant  = properties.get_float("spot_light_constant");
+    spot_light_linear    = properties.get_float("spot_light_linear");
+    spot_light_quadratic = properties.get_float("spot_light_quadratic");
+    spot_light_cut_off = properties.get_float("spot_light_cut_off"); // degrees
+    spot_light_outer_cut_off =
+        properties.get_float("spot_light_outer_cut_off"); // degrees
+
     nanosuit_shader.set_uniform("spot_light.position", camera.position());
     nanosuit_shader.set_uniform("spot_light.direction", camera.direction());
-    nanosuit_shader.set_uniform("spot_light.ambient", { 0.0f, 0.0f, 0.0f });
-    nanosuit_shader.set_uniform("spot_light.diffuse", { 1.0f, 1.0f, 1.0f });
-    nanosuit_shader.set_uniform("spot_light.specular", { 1.0f, 1.0f, 1.0f });
-    nanosuit_shader.set_uniform("spot_light.constant", 1.0f);
-    nanosuit_shader.set_uniform("spot_light.linear", 0.09f);
-    nanosuit_shader.set_uniform("spot_light.quadratic", 0.032f);
-    nanosuit_shader.set_uniform("spot_light.cut_off", cos(glm::radians(12.5f)));
+    nanosuit_shader.set_uniform("spot_light.ambient", spot_light_ambient);
+    nanosuit_shader.set_uniform("spot_light.diffuse", spot_light_diffuse);
+    nanosuit_shader.set_uniform("spot_light.specular", spot_light_specular);
+    nanosuit_shader.set_uniform("spot_light.constant", spot_light_constant);
+    nanosuit_shader.set_uniform("spot_light.linear", spot_light_linear);
+    nanosuit_shader.set_uniform("spot_light.quadratic", spot_light_quadratic);
+    nanosuit_shader.set_uniform("spot_light.cut_off",
+                                cos(glm::radians(spot_light_cut_off)));
     nanosuit_shader.set_uniform("spot_light.outer_cut_off",
-                                cos(glm::radians(15.0f)));
+                                cos(glm::radians(spot_light_outer_cut_off)));
 
     rotated_model = glm::rotate(rotated_model, angle, rotate_axis);
 

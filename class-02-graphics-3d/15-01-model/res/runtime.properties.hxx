@@ -5,10 +5,10 @@
 // also you can update during runtime this values with
 // properties_reader.hxx
 
-std::string title  = "1-triangles, 2-lines, 3-line-strip, 4-line-loop, 5,6-cam";
-float       z_near = 0.1f;
-float       z_far  = 100.f;
-float       fovy   = 45.f;
+std::string title         = "1,2,3,4-primitive type, 5,6-cam";
+float       z_near        = 0.1f;
+float       z_far         = 100.f;
+float       fovy          = 45.f;
 float       screen_width  = 1024.f;
 float       screen_height = 768.f;
 float       screen_aspect = screen_width / screen_height;
@@ -27,7 +27,20 @@ glm::vec3 dir_light_ambient   = { 0.25f, 0.25f, 0.25f };
 glm::vec3 dir_light_diffuse   = { 0.6f, 0.6f, 0.6f };
 glm::vec3 dir_light_specular  = { 0.5f, 0.5f, 0.5f };
 
-glm::vec3 light_ambient  = { 0.5f, 0.5f, 0.5f };
-glm::vec3 light_diffuse  = { 1.0f, 1.0f, 1.0f };
-glm::vec3 light_specular = { 1.0f, 1.0f, 1.0f };
-glm::vec3 clear_color    = { 0.1f, 0.3f, 0.1f };
+float     point_light_constant  = 1.0f;
+glm::vec3 point_light_ambient   = { 0.05f, 0.05f, 0.05f };
+glm::vec3 point_light_diffuse   = { 0.8f, 0.8f, 0.8f };
+glm::vec3 point_light_specular  = { 1.0f, 1.0f, 1.0f };
+float     point_light_linear    = 0.09f;
+float     point_light_quadratic = 0.032f;
+
+glm::vec3 spot_light_ambient       = { 0.0f, 0.0f, 0.0f };
+glm::vec3 spot_light_diffuse       = { 1.0f, 1.0f, 1.0f };
+glm::vec3 spot_light_specular      = { 1.0f, 1.0f, 1.0f };
+float     spot_light_constant      = 1.0f;
+float     spot_light_linear        = 0.09f;
+float     spot_light_quadratic     = 0.032f;
+float     spot_light_cut_off       = 12.5f; // degrees
+float     spot_light_outer_cut_off = 15.0f; // degrees
+
+glm::vec3 clear_color = { 0.1f, 0.3f, 0.1f };
