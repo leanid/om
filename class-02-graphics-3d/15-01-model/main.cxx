@@ -28,6 +28,18 @@ struct context_parameters
 };
 #pragma pack(pop)
 
+bool operator==(const context_parameters& l, const context_parameters& r)
+{
+    return std::string_view(l.name) == r.name &&
+           l.major_version == r.major_version && l.minor_version &&
+           r.minor_version && l.profile_type && r.profile_type;
+}
+
+bool operator!=(const context_parameters& l, const context_parameters& r)
+{
+    return !(l == r);
+}
+
 std::ostream& operator<<(std::ostream& out, const context_parameters& params)
 {
     out << params.name << ' ' << params.major_version << '.'
@@ -129,10 +141,11 @@ void render_light_cubes(gles30::shader&   light_cube_shader,
                                  &got_context.minor_version);
     assert(result == 0);
 
-    clog << "Ask for " << ask_context << endl;
-    clog << "Receive " << got_context << endl;
-    clog << "default ";
-    print_view_port();
+    if (ask_context != got_context)
+    {
+        clog << "Ask for " << ask_context << endl;
+        clog << "Receive " << got_context << endl;
+    }
 
     glEnable(GL_DEPTH_TEST);
     gl_check();
@@ -404,7 +417,7 @@ int main(int /*argc*/, char* /*argv*/[])
     // destroy only on exit from main
     [[maybe_unused]] auto gl_context = create_opengl_context(window.get());
 
-    shader nanosuit_shader("res/vertex_pos.vsh", "res/material.fsh");
+    shader nanosuit_shader("res/nanosuit.vsh", "res/nanosuit.fsh");
     shader light_cube_shader("res/light_cube.vsh", "res/light_cube.fsh");
 
     mesh  cube_mesh = create_cube_mesh();
