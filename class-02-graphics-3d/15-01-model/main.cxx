@@ -323,7 +323,7 @@ void render_nanosuit_model(gles30::shader&          nanosuit_shader,
     nanosuit_shader.use();
 
     material_shininess = properties.get_float("material_shininess");
-    material_ambient   = properties.get_vec3("material.ambient");
+    material_ambient   = properties.get_vec3("material_ambient");
 
     nanosuit_shader.set_uniform("material.ambient", material_ambient);
     nanosuit_shader.set_uniform("material.shininess", material_shininess);

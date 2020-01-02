@@ -31,6 +31,32 @@
 #include <utility>
 #include <variant>
 
+#ifdef __GNUG__
+#include <cstdlib>
+#include <cxxabi.h>
+#include <memory>
+
+static std::string demangle(const char* name)
+{
+    int status;
+
+    std::unique_ptr<char, void (*)(void*)> res{
+        abi::__cxa_demangle(name, NULL, NULL, &status), std::free
+    };
+
+    return (status == 0) ? res.get() : name;
+}
+
+#else
+
+// does nothing if not g++
+static std::string demangle(const char* name)
+{
+    return name;
+}
+
+#endif
+
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wpadded"
 
@@ -568,7 +594,65 @@ public:
         build_properties_map();
     }
 
-    std::unordered_map<std::string, value_t>& get_map() { return key_values; }
+    const std::filesystem::path& get_filepath() const { return path; }
+
+    const std::unordered_map<std::string, value_t>& get_map() const
+    {
+        return key_values;
+    }
+
+    void print_best_match(const std::string_view name) const
+    {
+        std::string_view best_match       = "";
+        size_t           best_mathc_score = 0;
+        for (const auto& key_val : key_values)
+        {
+            const std::string& key           = key_val.first;
+            uint32_t           count_matches = 0;
+            if (size(key) < size(name))
+            {
+                count_matches =
+                    std::inner_product(begin(key), end(key), begin(name), 0u,
+                                       std::plus<>(), std::equal_to<>());
+            }
+            else
+            {
+                count_matches =
+                    std::inner_product(begin(name), end(name), begin(key), 0u,
+                                       std::plus<>(), std::equal_to<>());
+            }
+            if (count_matches > best_mathc_score)
+            {
+                best_match       = key;
+                best_mathc_score = count_matches;
+            }
+        }
+
+        std::cerr << "error: property_reader can't get property [" << name
+                  << "]" << std::endl
+                  << "    from file [" << path << "]" << std::endl;
+
+        uint32_t match_80_percent =
+            static_cast<uint32_t>(size(best_match) * 0.8);
+        if (best_mathc_score >= match_80_percent)
+        {
+            std::cerr << "    best match is [" << best_match << "]"
+                      << std::endl;
+        }
+    }
+
+    const value_t* get_value_t(std::string_view name) const
+    {
+        try
+        {
+            return &key_values.at(std::string(name));
+        }
+        catch (const std::out_of_range&)
+        {
+            print_best_match(name);
+            throw;
+        }
+    };
 
     void update_changes()
     {
@@ -622,67 +706,60 @@ void properties_reader::update_changes()
     ptr->update_changes();
 }
 
+std::string inner_type_name(const value_t& v)
+{
+    const auto& type_info =
+        std::visit([](auto&& x) -> decltype(auto) { return typeid(x); }, v);
+    const char* str = type_info.name();
+    return demangle(str);
+}
+
+template <typename Result>
+const Result& get_value_checked_type(const value_t*               ptr_value,
+                                     const std::string_view       name,
+                                     const std::filesystem::path& filepath)
+{
+    try
+    {
+        return std::get<Result>(*ptr_value);
+    }
+    catch (const std::bad_variant_access&)
+    {
+        std::string want_type = demangle(typeid(Result).name());
+        std::string have_type = inner_type_name(*ptr_value);
+        std::cerr << "error: property_reader can't get property [" << name
+                  << "]" << std::endl
+                  << "    cause type mismatch: you want type [" << want_type
+                  << "]" << std::endl
+                  << "    but you have type [" << have_type << "]" << std::endl
+                  << "    properties file [" << filepath << "]" << std::endl;
+        throw;
+    }
+};
+
 const std::string& properties_reader::get_string(std::string_view key) const
 {
-    return std::get<std::string>(ptr->get_map()[std::string(key)]);
+    return get_value_checked_type<std::string>(ptr->get_value_t(key), key,
+                                               ptr->get_filepath());
 }
 
 float properties_reader::get_float(std::string_view key) const
 {
-    return std::get<float>(ptr->get_map()[std::string(key)]);
+    return get_value_checked_type<float>(ptr->get_value_t(key), key,
+                                         ptr->get_filepath());
 }
 
-const glm::vec3& properties_reader::get_vec3(std::string_view name) const
+const glm::vec3& properties_reader::get_vec3(std::string_view key) const
     noexcept(false)
 {
-    try
-    {
-        return std::get<glm::vec3>(ptr->get_map()[std::string(name)]);
-    }
-    catch (const std::bad_variant_access& ex)
-    {
-        // print similar names and rethrow
-        const auto&      map              = ptr->get_map();
-        std::string_view best_match       = "";
-        size_t           best_mathc_score = 0;
-        for (const auto& key_val : map)
-        {
-            const std::string& key           = key_val.first;
-            uint32_t           count_matches = 0;
-            if (size(key) < size(name))
-            {
-                count_matches =
-                    std::inner_product(begin(key), end(key), begin(name), 0u,
-                                       std::plus<>(), std::equal_to<>());
-            }
-            else
-            {
-                count_matches =
-                    std::inner_product(begin(name), end(name), begin(key), 0u,
-                                       std::plus<>(), std::equal_to<>());
-            }
-            if (count_matches > best_mathc_score)
-            {
-                best_match       = key;
-                best_mathc_score = size(key);
-            }
-        }
-
-        std::cerr << "error: can't get property [" << name << "]" << std::endl;
-        uint32_t match_80_percent =
-            static_cast<uint32_t>(size(best_match) * 0.8);
-        if (best_mathc_score >= match_80_percent)
-        {
-            std::cerr << "    best match is [" << best_match << "]"
-                      << std::endl;
-        }
-        throw;
-    }
+    return get_value_checked_type<glm::vec3>(ptr->get_value_t(key), key,
+                                             ptr->get_filepath());
 }
 
-bool properties_reader::get_bool(std::string_view name) const
+bool properties_reader::get_bool(std::string_view key) const
 {
-    return std::get<bool>(ptr->get_map()[std::string{ name }]);
+    return get_value_checked_type<bool>(ptr->get_value_t(key), key,
+                                        ptr->get_filepath());
 }
 
 properties_reader::~properties_reader() {}

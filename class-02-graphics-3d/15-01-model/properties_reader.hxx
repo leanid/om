@@ -16,10 +16,12 @@ public:
 
     void update_changes();
 
-    const std::string& get_string(std::string_view name) const noexcept(false);
-    float              get_float(std::string_view name) const noexcept(false);
-    const glm::vec3&   get_vec3(std::string_view name) const noexcept(false);
-    bool               get_bool(std::string_view name) const noexcept(false);
+    [[nodiscard]] const std::string& get_string(std::string_view name) const
+        noexcept(false);
+    [[nodiscard]] float get_float(std::string_view name) const noexcept(false);
+    [[nodiscard]] const glm::vec3& get_vec3(std::string_view name) const
+        noexcept(false);
+    [[nodiscard]] bool get_bool(std::string_view name) const noexcept(false);
 
 private:
     class impl;
