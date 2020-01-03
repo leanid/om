@@ -20,3 +20,14 @@ float     angle       = 0.000f;
 glm::vec3 rotate_axis = { 0.f, 1.f, 0.f };
 
 glm::vec3 clear_color = { 0.0f, 0.0f, 0.0f };
+
+std::string z_buf_operation = "notequal";
+
+//{ { "always", GL_ALWAYS },
+//  { "never", GL_NEVER },
+//  { "less", GL_LESS },
+//  { "equal", GL_GEQUAL },
+//  { "lequal", GL_LEQUAL },
+//  { "greater", GL_GREATER },
+//  { "notequal", GL_NOTEQUAL },
+//  { "gequal", GL_GEQUAL } }

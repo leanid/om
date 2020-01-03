@@ -18,6 +18,31 @@
 
 static fps_camera camera;
 
+const std::array<std::pair<std::string_view, int>, 8> z_buf_operations{
+    { { "always", GL_ALWAYS },
+      { "never", GL_NEVER },
+      { "less", GL_LESS },
+      { "equal", GL_GEQUAL },
+      { "lequal", GL_LEQUAL },
+      { "greater", GL_GREATER },
+      { "notequal", GL_NOTEQUAL },
+      { "gequal", GL_GEQUAL } }
+};
+
+int get_z_buf_operation(std::string_view name)
+{
+    auto it = std::find_if(begin(z_buf_operations), end(z_buf_operations),
+                           [&name](const std::pair<std::string_view, int>& p) {
+                               return p.first == name;
+                           });
+    if (it == end(z_buf_operations))
+    {
+        throw std::out_of_range(std::string("z_buf_operation not found: ") +
+                                std::string(name));
+    }
+    return it->second;
+}
+
 #pragma pack(push, 4)
 struct context_parameters
 {
@@ -361,6 +386,11 @@ int main(int /*argc*/, char* /*argv*/[])
         float delta_time = update_delta_time(last_frame_time);
 
         properties.update_changes();
+
+        int z_buf_op =
+            get_z_buf_operation(properties.get_string("z_buf_operation"));
+        glDepthFunc(z_buf_op);
+        gl_check();
 
         pull_system_events(continue_loop, primitive_render_mode);
 
