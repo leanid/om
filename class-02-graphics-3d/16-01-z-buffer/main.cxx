@@ -172,6 +172,11 @@ void render_mesh(gles30::shader& cube_shader, const fps_camera& camera,
     result = SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION,
                                  &got_context.minor_version);
     assert(result == 0);
+    int got_depth_size = 0;
+    result = SDL_GL_GetAttribute(SDL_GL_DEPTH_SIZE, &got_depth_size);
+    assert(result == 0);
+
+    clog << "current context have DEPTH_SIZE: " << got_depth_size << std::endl;
 
     if (ask_context != got_context)
     {
@@ -306,6 +311,14 @@ std::unique_ptr<SDL_Window, void (*)(SDL_Window*)> create_window(
     title         = properties.get_string("title");
     screen_width  = properties.get_float("screen_width");
     screen_height = properties.get_float("screen_height");
+
+    // we have to set DEPTH_SIZE before creating window!
+    SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
+    SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
+    SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
+    // https://gamedev.stackexchange.com/questions/120644/is-glxinfo-saying-that-the-980-gtx-doesnt-support-a-32-bit-depth-buffer
+    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
     unique_ptr<SDL_Window, void (*)(SDL_Window*)> window(
         SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_CENTERED,
