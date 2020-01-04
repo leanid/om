@@ -84,12 +84,22 @@ void print_view_port()
 }
 
 extern const float cube_vertices[36 * 8];
+extern const float plane_vertices[6 * 8];
 
-void render_light_cubes(gles30::shader& cube_shader, const fps_camera& camera,
-                        const gles30::mesh& mesh, glm::vec3 position)
+void render_mesh(gles30::shader& cube_shader, const fps_camera& camera,
+                 const gles30::mesh& mesh, glm::vec3 position,
+                 const properties_reader& properties)
 {
     // also draw the lamp object(s)
     cube_shader.use();
+    linear_z_buffer = properties.get_bool("linear_z_buffer");
+    show_z_buffer   = properties.get_bool("show_z_buffer");
+    z_near          = properties.get_float("z_near");
+    z_far           = properties.get_float("z_far");
+    cube_shader.set_uniform("show_z_buffer", show_z_buffer);
+    cube_shader.set_uniform("linear_z_buffer", linear_z_buffer);
+    cube_shader.set_uniform("z_near", z_near);
+    cube_shader.set_uniform("z_far", z_far);
     cube_shader.set_uniform("projection", camera.projection_matrix());
     cube_shader.set_uniform("view", camera.view_matrix());
 
@@ -208,6 +218,7 @@ void pull_system_events(bool& continue_loop, GLenum& primitive_render_mode)
             // so we try to emulate it with next render primitive types
             if (event.key.keysym.sym == SDLK_1)
             {
+                show_z_buffer         = !show_z_buffer;
                 primitive_render_mode = GL_TRIANGLES;
             }
             else if (event.key.keysym.sym == SDLK_2)
@@ -313,32 +324,33 @@ std::unique_ptr<SDL_Window, void (*)(SDL_Window*)> create_window(
     return window;
 }
 
-gles30::mesh create_cube_mesh(gles30::texture* texture)
+gles30::mesh create_mesh(const float* vertices, size_t count_vert,
+                         gles30::texture* texture)
 {
     using namespace std;
-    vector<gles30::vertex> cube_vert;
-    cube_vert.reserve(sizeof(cube_vertices) / 4 / 8);
-    for (size_t i = 0; i < sizeof(cube_vertices) / 4; i += 8)
+    vector<gles30::vertex> vert;
+    vert.reserve(count_vert);
+    for (size_t index = 0; index < count_vert; index++)
     {
         gles30::vertex v;
-        v.position.x = cube_vertices[i + 0];
-        v.position.y = cube_vertices[i + 1];
-        v.position.z = cube_vertices[i + 2];
+        size_t         i = index * 8;
+        v.position.x     = vertices[i + 0];
+        v.position.y     = vertices[i + 1];
+        v.position.z     = vertices[i + 2];
 
-        v.normal.x = cube_vertices[i + 3];
-        v.normal.y = cube_vertices[i + 4];
-        v.normal.z = cube_vertices[i + 5];
+        v.normal.x = vertices[i + 3];
+        v.normal.y = vertices[i + 4];
+        v.normal.z = vertices[i + 5];
 
-        v.uv.x = cube_vertices[i + 6];
-        v.uv.y = cube_vertices[i + 7];
+        v.uv.x = vertices[i + 6];
+        v.uv.y = vertices[i + 7];
 
-        cube_vert.push_back(v);
+        vert.push_back(v);
     }
-    vector<uint32_t> cube_indexes(36);
-    std::iota(begin(cube_indexes), end(cube_indexes), 0);
+    vector<uint32_t> indexes(count_vert);
+    std::iota(begin(indexes), end(indexes), 0);
 
-    return gles30::mesh(std::move(cube_vert), std::move(cube_indexes),
-                        { texture });
+    return gles30::mesh(std::move(vert), std::move(indexes), { texture });
 }
 
 void create_camera(const properties_reader& properties)
@@ -366,13 +378,18 @@ int main(int /*argc*/, char* /*argv*/[])
     // destroy only on exit from main
     [[maybe_unused]] auto gl_context = create_opengl_context(window.get());
 
-    shader light_cube_shader("res/cube.vsh", "res/cube.fsh");
+    shader cube_shader("res/cube.vsh", "res/cube.fsh");
 
     texture tex_marble("res/marble.jpg", texture::type::diffuse);
     texture tex_metal("res/metal.png", texture::type::diffuse);
 
-    mesh cube_marble = create_cube_mesh(&tex_marble);
-    mesh cube_metal  = create_cube_mesh(&tex_metal);
+    mesh cube_marble =
+        create_mesh(cube_vertices, sizeof(cube_vertices) / 4 / 8, &tex_marble);
+    mesh cube_metal =
+        create_mesh(cube_vertices, sizeof(cube_vertices) / 4 / 8, &tex_metal);
+
+    mesh plane_metal =
+        create_mesh(plane_vertices, sizeof(plane_vertices) / 4 / 8, &tex_metal);
 
     [[maybe_unused]] GLenum primitive_render_mode = GL_TRIANGLES;
 
@@ -398,10 +415,13 @@ int main(int /*argc*/, char* /*argv*/[])
 
         clear_back_buffer(properties.get_vec3("clear_color"));
 
-        render_light_cubes(light_cube_shader, camera, cube_marble,
-                           glm::vec3(-1.0f, 0.0f, -1.0f));
-        render_light_cubes(light_cube_shader, camera, cube_metal,
-                           glm::vec3(2.0f, 0.0f, 0.0f));
+        render_mesh(cube_shader, camera, plane_metal,
+                    glm::vec3(0.0f, 0.0f, 0.0f), properties);
+
+        render_mesh(cube_shader, camera, cube_marble,
+                    glm::vec3(-1.0f, 0.0f, -1.0f), properties);
+        render_mesh(cube_shader, camera, cube_metal,
+                    glm::vec3(2.0f, 0.0f, 0.0f), properties);
 
         SDL_GL_SwapWindow(window.get());
     }
@@ -455,5 +475,16 @@ const float cube_vertices[36 * 8] = {
      0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f,
     -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 0.0f,
     -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f
+};
+
+const float plane_vertices[6 * 8] = {
+    // positions                            // texture Coords (note we set these higher than 1 (together with GL_REPEAT as texture wrapping mode). this will cause the floor texture to repeat)
+     5.0f, -0.5f,  5.0f, 0.0f, 0.0f, 0.0f,  2.0f, 0.0f,
+    -5.0f, -0.5f,  5.0f, 0.0f, 0.0f, 0.0f,  0.0f, 0.0f,
+    -5.0f, -0.5f, -5.0f, 0.0f, 0.0f, 0.0f,  0.0f, 2.0f,
+
+     5.0f, -0.5f,  5.0f, 0.0f, 0.0f, 0.0f,  2.0f, 0.0f,
+    -5.0f, -0.5f, -5.0f, 0.0f, 0.0f, 0.0f,  0.0f, 2.0f,
+     5.0f, -0.5f, -5.0f, 0.0f, 0.0f, 0.0f,  2.0f, 2.0f
 };
 // clang-format on
