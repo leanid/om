@@ -467,6 +467,10 @@ int main(int /*argc*/, char* /*argv*/[])
 
         camera.move_using_keyboard_wasd(delta_time);
 
+        glEnable(GL_DEPTH_TEST);
+        glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+
+        glStencilMask(0xFF); // enable writing to the stencil buffer
         clear_back_buffer(properties.get_vec3("clear_color"));
 
         glEnable(GL_DEPTH_TEST);
