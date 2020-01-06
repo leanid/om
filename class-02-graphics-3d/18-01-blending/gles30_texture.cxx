@@ -10,18 +10,22 @@
 
 namespace gles30
 {
-texture::texture(const std::filesystem::path& path, const type tex_type)
+texture::texture(const std::filesystem::path& path, const type tex_type,
+                 const opt options)
     : file_name{ path.u8string() }
     , texture_id{ 0 }
     , texture_type{ tex_type }
 {
-    stbi_set_flip_vertically_on_load(1);
+    if (options == opt::flip_y)
+    {
+        stbi_set_flip_vertically_on_load(1);
+    }
 
     int width;
     int height;
     int channels;
 
-    const int prefered_channels_count = 4;
+    const int prefered_channels_count = 0; // same as in texture
 
     std::unique_ptr<uint8_t, void (*)(void*)> data(
         stbi_load(file_name.c_str(), &width, &height, &channels,
@@ -48,17 +52,21 @@ texture::texture(const std::filesystem::path& path, const type tex_type)
 
     GLint mipmap_level = 0;
     GLint border       = 0;
-    if (3 == prefered_channels_count)
+    if (3 == channels)
     {
         glTexImage2D(GL_TEXTURE_2D, mipmap_level, GL_RGB, width, height, border,
                      GL_RGB, GL_UNSIGNED_BYTE, data.get());
         gl_check();
     }
-    else if (4 == prefered_channels_count)
+    else if (4 == channels)
     {
         glTexImage2D(GL_TEXTURE_2D, mipmap_level, GL_RGBA, width, height,
                      border, GL_RGBA, GL_UNSIGNED_BYTE, data.get());
         gl_check();
+        // RBG + A - should be clamped on border color to border not
+        // reverse side pixel (or leave 1px on boarder on texture)
+        wrap_s(wrap::clamp_to_edge);
+        wrap_t(wrap::clamp_to_edge);
     }
     else
     {

@@ -17,7 +17,7 @@ void main()
     vec4 color = texture2D(material.tex_diffuse0, v_tex_coords);
     if (color.a < 0.1)
     {
-    //    discard;
+        discard;
     }
     frag_color = color;
 }

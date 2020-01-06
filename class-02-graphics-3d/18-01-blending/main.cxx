@@ -439,7 +439,8 @@ int main(int /*argc*/, char* /*argv*/[])
 
     texture tex_marble("res/marble.jpg", texture::type::diffuse);
     texture tex_metal("res/metal.png", texture::type::diffuse);
-    texture tex_grass("res/grass.png", texture::type::diffuse);
+    texture tex_grass("res/grass.png", texture::type::diffuse,
+                      texture::opt::no_flip);
 
     mesh cube_marble = create_mesh(cube_vertices, sizeof(cube_vertices) / 4 / 8,
                                    { &tex_marble });
@@ -472,6 +473,11 @@ int main(int /*argc*/, char* /*argv*/[])
     create_camera(properties);
 
     glEnable(GL_DEPTH_TEST);
+    gl_check();
+    glEnable(GL_BLEND);
+    gl_check();
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    gl_check();
 
     bool continue_loop = true;
     while (continue_loop)

@@ -31,7 +31,14 @@ public:
         specular,
     };
 
-    explicit texture(const std::filesystem::path& path, const type);
+    enum class opt
+    {
+        no_flip,
+        flip_y
+    };
+
+    explicit texture(const std::filesystem::path& path, const type,
+                     const opt = opt::no_flip);
 
     void bind();
 
