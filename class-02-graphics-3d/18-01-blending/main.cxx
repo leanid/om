@@ -474,9 +474,9 @@ int main(int /*argc*/, char* /*argv*/[])
 
     glEnable(GL_DEPTH_TEST);
     gl_check();
-    glEnable(GL_BLEND);
+    // glEnable(GL_BLEND);
     gl_check();
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     gl_check();
 
     bool continue_loop = true;
