@@ -36,12 +36,14 @@ android {
         versionName "1.0"
 
         ndk {
+            // on NDK20b arm64-v8a dlopen failed
             //abiFilters "arm64-v8a"
+            abiFilters "armeabi-v7a"
         }
 
         externalNativeBuild {
 	        cmake {
-                version "3.14+"  // double check your ENV variable PATH have cmake with correct version
+                version "3.16+"  // double check your ENV variable PATH have cmake with correct version
                                  // or you have to set path to it in local.properties like:
                                  // # If you set this property, Gradle no longer uses PATH to find CMake.
                                  // # gradle works only with canonical cmake from cmake.org
@@ -49,15 +51,15 @@ android {
 
 
                 // Use the following syntax when passing arguments to variables:
-	        // arguments "-DVAR_NAME=ARGUMENT".
+       	        // arguments "-DVAR_NAME=ARGUMENT".
                 arguments "-DSDL2_SRC_DIR=" + sdl2SrcDir
                 arguments "-DSDL2_BUILD_DIR=" + sdl2BuildDir
 		
-	        // arguments "-DANDROID_ARM_NEON=TRUE",
-	        // If you're passing multiple arguments to a variable, pass them together:
-	        // arguments "-DVAR_NAME=ARG_1 ARG_2"
-	        // The following line passes 'rtti' and 'exceptions' to 'ANDROID_CPP_FEATURES'.
-	        arguments "-DANDROID_CPP_FEATURES=rtti exceptions",
+	            // arguments "-DANDROID_ARM_NEON=TRUE",
+      	        // If you're passing multiple arguments to a variable, pass them together:
+	            // arguments "-DVAR_NAME=ARG_1 ARG_2"
+      	        // The following line passes 'rtti' and 'exceptions' to 'ANDROID_CPP_FEATURES'.
+                arguments "-DANDROID_CPP_FEATURES=rtti exceptions",
 	                  "-DANDROID_STL=c++_shared"
 	        }
         }
