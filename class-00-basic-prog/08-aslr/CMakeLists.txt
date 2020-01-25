@@ -26,5 +26,7 @@ endif()
 
 target_link_libraries(08-aslr-test PRIVATE 08-exec-stream)
 
+add_dependencies(08-aslr-test 08-aslr)
+
 
 
