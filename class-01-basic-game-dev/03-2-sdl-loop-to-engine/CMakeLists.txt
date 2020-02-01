@@ -14,16 +14,16 @@ target_link_libraries(03-sdl-loop-to-engine PRIVATE ${SDL2_LIBRARIES})
 if (MINGW)
     # find out what libraries are needed for staticaly linking with libSDL.a
     # using mingw64 cross-compiler
-    
+
     #$> $ /usr/x86_64-w64-mingw32/sys-root/mingw/bin/sdl2-config --static-libs
-    #-L/usr/x86_64-w64-mingw32/sys-root/mingw/lib -lmingw32 -lSDL2main 
-    #-lSDL2 -mwindows -Wl,--no-undefined -lm -ldinput8 -ldxguid -ldxerr8 -luser32 
-    #-lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lshell32 -lversion -luuid 
+    #-L/usr/x86_64-w64-mingw32/sys-root/mingw/lib -lmingw32 -lSDL2main
+    #-lSDL2 -mwindows -Wl,--no-undefined -lm -ldinput8 -ldxguid -ldxerr8 -luser32
+    #-lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lshell32 -lversion -luuid
     #-static-libgcc
-    
+
     target_link_libraries(03-sdl-loop-to-engine
-               -lmingw32 
-               -lSDL2main 
+               -lmingw32
+               -lSDL2main
                "${SDL2_LIB}" # full path to libSDL2.a force to staticaly link with it
                -mwindows
                -Wl,--no-undefined
@@ -31,7 +31,7 @@ if (MINGW)
                -ldinput8
                -ldxguid
                -ldxerr8
-               -luser32 
+               -luser32
                -lgdi32
                -lwinmm
                -limm32
