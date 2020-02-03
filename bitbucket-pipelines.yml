@@ -1,4 +1,4 @@
-image: leanid/fedora30
+image: leanid/fedora_latest
 pipelines:
   default:
     - step:
