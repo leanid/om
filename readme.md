@@ -109,19 +109,20 @@ $ brew install cmake
     - cmake --build .
 
 ### Generate Docker image (for bitbucket pipelines)
+ - read complete example in ```support/docker{Dockerfile|readme.md}```
  - write Dockerfile
  - call ```sudo systemctl start docker```
- - call ```sudo docker build -t leanid/fedora30 .```
- - call ```sudo docker push leanid/fedora30```
+ - call ```sudo docker build -t leanid/fedora_latest .```
+ - call ```sudo docker push leanid/fedora_latest```
 
 Dockerfile content:
 
 ```sh
-FROM fedora:30
+FROM fedora:latest
 
 RUN dnf update -y
 RUN dnf upgrade -y
-RUN dnf install -y gcc-c++ make cmake mingw64-gcc mingw64-gcc-c++ clang wine git SDL2-devel SDL2-static mingw64-SDL2 mingw64-SDL2-static
+RUN dnf install -y gcc-c++ make cmake mingw64-gcc mingw64-gcc-c++ clang wine git SDL2-devel SDL2-static mingw64-SDL2 mingw64-SDL2-static libstdc++-static glibc-static ninja-build
 ```
 
 ### Todos
