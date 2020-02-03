@@ -25,7 +25,7 @@ pipelines:
           - cmake -configure class-01-basic-game-dev/01-2-hello-lib/
           - cmake -generate class-01-basic-game-dev/01-2-hello-lib/
           - make
-          - hello_bin/hello-bin
+          - hello_bin/hello-bin-static
           
           - git clean -df
           - mingw64-cmake -configure class-01-basic-game-dev/01-2-hello-lib/
@@ -37,7 +37,7 @@ pipelines:
           - CXX=clang++ cmake -configure class-01-basic-game-dev/01-2-hello-lib/
           - CXX=clang++ cmake -generate class-01-basic-game-dev/01-2-hello-lib/
           - make
-          - hello_bin/hello-bin
+          - hello_bin/hello-bin-dynamic
 
           - git clean -df
           - cmake -configure class-01-basic-game-dev/02-1-sdl-dynamic/
