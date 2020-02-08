@@ -16,7 +16,7 @@ before_build:
   - cmake -DCMAKE_TOOLCHAIN_FILE=c:/tools/vcpkg/scripts/buildsystems/vcpkg.cmake -G "Visual Studio 16 2019" -A x64 class-01-basic-game-dev
 
 build:
-  project: $(APPVEYOR_BUILD_FOLDER)\all-tests-build.sln
+  project: $(APPVEYOR_BUILD_FOLDER)\01-basic-game-dev.sln
 
 test_script:
   - '%APPVEYOR_BUILD_FOLDER%\01-1-hello-world\%CONFIGURATION%\01-1-hello-world.exe'
