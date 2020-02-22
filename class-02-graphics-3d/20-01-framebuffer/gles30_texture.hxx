@@ -37,6 +37,7 @@ public:
         flip_y
     };
 
+    texture(const type, size_t width, size_t height);
     explicit texture(const std::filesystem::path& path, const type,
                      const opt = opt::no_flip);
 
@@ -61,6 +62,9 @@ public:
     texture& operator=(const texture&) = delete;
 
 private:
+    void gen_texture_set_filters_and_wrap();
+    friend class framebuffer;
+
     std::string   file_name;
     std::uint32_t texture_id;
     type          texture_type = type::diffuse;

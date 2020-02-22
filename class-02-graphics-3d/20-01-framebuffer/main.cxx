@@ -10,6 +10,7 @@
 #include <SDL.h>
 
 #include "fps_camera.hxx"
+#include "gles30_framebuffer.hxx"
 #include "gles30_model.hxx"
 #include "gles30_shader.hxx"
 #include "gles30_texture.hxx"
@@ -111,11 +112,13 @@ void print_view_port()
 extern const float cube_vertices[36 * 8];
 extern const float plane_vertices[6 * 8];
 extern const float transparent_vert[6 * 8];
+extern const float fullscreen_vertices[6 * 8];
 
 enum class render_options
 {
     only_pro_view_model,
-    set_near_far_etc
+    set_near_far_etc,
+    no_matrix
 };
 
 void render_mesh(gles30::shader& shader, const fps_camera& camera,
@@ -135,14 +138,22 @@ void render_mesh(gles30::shader& shader, const fps_camera& camera,
         shader.set_uniform("z_near", z_near);
         shader.set_uniform("z_far", z_far);
     }
-    shader.set_uniform("projection", camera.projection_matrix());
-    shader.set_uniform("view", camera.view_matrix());
-
+    if (options == render_options::only_pro_view_model ||
+        options == render_options::set_near_far_etc)
     {
-        glm::mat4 model = glm::mat4(1.0f);
-        model           = glm::translate(model, position);
-        model           = glm::scale(model, glm::vec3(scale));
-        shader.set_uniform("model", model);
+        shader.set_uniform("projection", camera.projection_matrix());
+        shader.set_uniform("view", camera.view_matrix());
+
+        {
+            glm::mat4 model = glm::mat4(1.0f);
+            model           = glm::translate(model, position);
+            model           = glm::scale(model, glm::vec3(scale));
+            shader.set_uniform("model", model);
+            mesh.draw(shader);
+        }
+    }
+    if (options == render_options::no_matrix)
+    {
         mesh.draw(shader);
     }
 }
@@ -421,6 +432,7 @@ struct scene
 {
     scene();
     void render(float delta_time);
+    void render_fullscreen_quad();
 
     properties_reader properties;
 
@@ -430,18 +442,23 @@ struct scene
     gles30::shader cube_shader;
     gles30::shader outline;
     gles30::shader transparend_shader;
+    gles30::shader quad_shader;
 
     gles30::texture tex_marble;
     gles30::texture tex_metal;
     gles30::texture tex_grass;
     gles30::texture tex_window;
+    gles30::texture tex_color_buffer;
 
     gles30::mesh cube_marble;
     gles30::mesh cube_metal;
     gles30::mesh plane_metal;
     gles30::mesh transparent_quad;
+    gles30::mesh fullscreen_quad;
 
     std::vector<glm::vec3> vegetation;
+
+    gles30::framebuffer frame;
 };
 
 scene::scene()
@@ -451,12 +468,16 @@ scene::scene()
     , cube_shader("res/cube.vsh", "res/cube.fsh")
     , outline("res/cube.vsh", "res/outline.fsh")
     , transparend_shader("res/cube.vsh", "res/discard.fsh")
+    , quad_shader("res/quad_vertex.vsh", "res/quad_frag.fsh")
     , tex_marble("res/marble.jpg", gles30::texture::type::diffuse)
     , tex_metal("res/metal.png", gles30::texture::type::diffuse)
     , tex_grass("res/grass.png", gles30::texture::type::diffuse,
                 gles30::texture::opt::no_flip)
     , tex_window("res/blending_transparent_window.png",
                  gles30::texture::type::diffuse, gles30::texture::opt::no_flip)
+    , tex_color_buffer(gles30::texture::type::diffuse,
+                       properties.get_float("screen_width"),
+                       properties.get_float("screen_height"))
     , cube_marble{ create_mesh(cube_vertices, sizeof(cube_vertices) / 4 / 8,
                                { &tex_marble }) }
     , cube_metal{ create_mesh(cube_vertices, sizeof(cube_vertices) / 4 / 8,
@@ -465,19 +486,31 @@ scene::scene()
                                { &tex_metal }) }
     , transparent_quad{ create_mesh(
           transparent_vert, sizeof(transparent_vert) / 4 / 8, { &tex_window }) }
+    , fullscreen_quad{ create_mesh(fullscreen_vertices,
+                                   sizeof(fullscreen_vertices) / 4 / 8,
+                                   { &tex_color_buffer }) }
     , vegetation{ glm::vec3(-1.5f, 0.0f, -0.48f), glm::vec3(1.5f, 0.0f, 0.51f),
                   glm::vec3(0.0f, 0.0f, 0.7f), glm::vec3(-0.3f, 0.0f, -2.3f),
                   glm::vec3(0.5f, 0.0f, -0.6f) }
+    , frame(properties.get_float("screen_width"),
+            properties.get_float("screen_height"))
 {
     create_camera(properties);
 
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    frame.color_attachment(tex_color_buffer);
+
+    if (!frame.is_complete())
+    {
+        throw std::runtime_error("framebuffer incomplete");
+    }
 }
 
 void scene::render(float delta_time)
 {
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
     camera.move_using_keyboard_wasd(delta_time);
 
     clear_back_buffer(properties.get_vec3("clear_color"));
@@ -511,6 +544,18 @@ void scene::render(float delta_time)
     }
 }
 
+void scene::render_fullscreen_quad()
+{
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_BLEND);
+    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    quad_shader.use();
+    tex_color_buffer.bind();
+    render_mesh(quad_shader, camera, fullscreen_quad, glm::vec3(0, 0, 0), 1.0f,
+                properties, render_options::no_matrix);
+}
+
 int main(int /*argc*/, char* /*argv*/[])
 {
     scene scene;
@@ -525,7 +570,11 @@ int main(int /*argc*/, char* /*argv*/[])
 
         pull_system_events(continue_loop);
 
+        scene.frame.bind();
         scene.render(delta_time);
+
+        scene.frame.unbind();
+        scene.render_fullscreen_quad();
 
         SDL_GL_SwapWindow(scene.window.get());
     }
@@ -602,4 +651,14 @@ const float transparent_vert[6 * 8] = {
         1.0f, -0.5f,  0.0f, 0.0f, 0.0f, 0.0f,  1.0f,  1.0f,
         1.0f,  0.5f,  0.0f, 0.0f, 0.0f, 0.0f,  1.0f,  0.0f
     };
+const float fullscreen_vertices[6 * 8]{
+        // positions       // normal       // texCoords
+        -1.0f,  1.0f, 0.f, 0.f, 0.f, 0.f,  0.0f, 1.0f,
+        -1.0f, -1.0f, 0.f, 0.f, 0.f, 0.f,  0.0f, 0.0f,
+         1.0f, -1.0f, 0.f, 0.f, 0.f, 0.f,  1.0f, 0.0f,
+
+        -1.0f,  1.0f, 0.f, 0.f, 0.f, 0.f,  0.0f, 1.0f,
+         1.0f, -1.0f, 0.f, 0.f, 0.f, 0.f,  1.0f, 0.0f,
+         1.0f,  1.0f, 0.f, 0.f, 0.f, 0.f,  1.0f, 1.0f
+};
 // clang-format on

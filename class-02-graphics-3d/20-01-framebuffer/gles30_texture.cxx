@@ -10,6 +10,34 @@
 
 namespace gles30
 {
+texture::texture(const type tex_type, size_t width, size_t height)
+    : file_name{ "from memory" }
+    , texture_id{ 0 }
+    , texture_type{ tex_type }
+{
+    gen_texture_set_filters_and_wrap();
+
+    GLint mipmap_level = 0;
+    GLint border       = 0;
+    // allocate memory for texture
+    glTexImage2D(GL_TEXTURE_2D, mipmap_level, GL_RGB, width, height, border,
+                 GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+}
+
+void texture::gen_texture_set_filters_and_wrap()
+{
+    glGenTextures(1, &texture_id);
+    glBindTexture(GL_TEXTURE_2D, texture_id);
+
+    wrap_s(wrap::repeat);
+    wrap_t(wrap::repeat);
+
+    // if you plan to use this texture in framebuffer object
+    // do not set nothing else filter::liner (no min/mag mitmap can be used)
+    max_filter(filter::liner);
+    min_filter(filter::liner);
+}
+
 texture::texture(const std::filesystem::path& path, const type tex_type,
                  const opt options)
     : file_name{ path.u8string() }
@@ -38,15 +66,7 @@ texture::texture(const std::filesystem::path& path, const type tex_type,
                                  file_name);
     }
 
-    glGenTextures(1, &texture_id);
-
-    glBindTexture(GL_TEXTURE_2D, texture_id);
-
-    wrap_s(wrap::repeat);
-    wrap_t(wrap::repeat);
-
-    max_filter(filter::liner);
-    min_filter(filter::linear_mipmap_linear);
+    gen_texture_set_filters_and_wrap();
 
     GLint mipmap_level = 0;
     GLint border       = 0;

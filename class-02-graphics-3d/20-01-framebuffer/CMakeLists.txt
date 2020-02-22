@@ -69,24 +69,30 @@ target_compile_features(20-01-framebuffer PUBLIC cxx_std_17)
 target_sources(20-01-framebuffer PRIVATE main.cxx
                                    gles30_shader.hxx
                                    gles30_shader.cxx
-                                   opengles30.hxx
-                                   opengles30.cxx
                                    gles30_texture.hxx
                                    gles30_texture.cxx
-                                   properties_reader.hxx
-                                   properties_reader.cxx
-                                   fps_camera.hxx
-                                   fps_camera.cxx
                                    gles30_mesh.hxx
                                    gles30_mesh.cxx
                                    gles30_model.hxx
                                    gles30_model.cxx
+                                   gles30_framebuffer.hxx
+                                   gles30_framebuffer.cxx
+
+                                   properties_reader.hxx
+                                   properties_reader.cxx
+                                   fps_camera.hxx
+                                   fps_camera.cxx
+                                   opengles30.hxx
+                                   opengles30.cxx
+
                                    stb_image.h
 
                                    res/cube.vsh
                                    res/cube.fsh
                                    res/outline.fsh
                                    res/discard.fsh
+                                   res/quad_vertex.vsh
+                                   res/quad_frag.fsh
 
                                    res/runtime.properties.hxx
 
