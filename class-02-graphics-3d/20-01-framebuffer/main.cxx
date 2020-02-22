@@ -231,7 +231,7 @@ void render_mesh(gles30::shader& shader, const fps_camera& camera,
     return gl_context;
 };
 
-void pull_system_events(bool& continue_loop, GLenum& primitive_render_mode)
+void pull_system_events(bool& continue_loop)
 {
     using namespace std;
     SDL_Event event;
@@ -264,20 +264,16 @@ void pull_system_events(bool& continue_loop, GLenum& primitive_render_mode)
             // so we try to emulate it with next render primitive types
             if (event.key.keysym.sym == SDLK_1)
             {
-                show_z_buffer         = !show_z_buffer;
-                primitive_render_mode = GL_TRIANGLES;
+                show_z_buffer = !show_z_buffer;
             }
             else if (event.key.keysym.sym == SDLK_2)
             {
-                primitive_render_mode = GL_LINES;
             }
             else if (event.key.keysym.sym == SDLK_3)
             {
-                primitive_render_mode = GL_LINE_STRIP;
             }
             else if (event.key.keysym.sym == SDLK_4)
             {
-                primitive_render_mode = GL_LINE_LOOP;
             }
             else if (event.key.keysym.sym == SDLK_5)
             {
@@ -421,114 +417,117 @@ void create_camera(const properties_reader& properties)
     camera.aspect(screen_aspect);
 }
 
-int main(int /*argc*/, char* /*argv*/[])
+struct scene
 {
-    using namespace std;
-    using namespace gles30;
+    scene();
+    void render(float delta_time);
 
-    properties_reader properties("res/runtime.properties.hxx");
+    properties_reader properties;
 
-    auto window = create_window(properties);
-    // destroy only on exit from main
-    [[maybe_unused]] auto gl_context = create_opengl_context(window.get());
+    std::unique_ptr<SDL_Window, void (*)(SDL_Window*)> window;
+    std::unique_ptr<void, void (*)(void*)>             context;
 
-    shader cube_shader("res/cube.vsh", "res/cube.fsh");
-    shader outline("res/cube.vsh", "res/outline.fsh");
-    shader transparend_shader("res/cube.vsh", "res/discard.fsh");
+    gles30::shader cube_shader;
+    gles30::shader outline;
+    gles30::shader transparend_shader;
 
-    texture tex_marble("res/marble.jpg", texture::type::diffuse);
-    texture tex_metal("res/metal.png", texture::type::diffuse);
-    texture tex_grass("res/grass.png", texture::type::diffuse,
-                      texture::opt::no_flip);
-    texture tex_window("res/blending_transparent_window.png",
-                       texture::type::diffuse, texture::opt::no_flip);
+    gles30::texture tex_marble;
+    gles30::texture tex_metal;
+    gles30::texture tex_grass;
+    gles30::texture tex_window;
 
-    mesh cube_marble = create_mesh(cube_vertices, sizeof(cube_vertices) / 4 / 8,
-                                   { &tex_marble });
-    mesh cube_metal  = create_mesh(cube_vertices, sizeof(cube_vertices) / 4 / 8,
-                                  { &tex_metal });
+    gles30::mesh cube_marble;
+    gles30::mesh cube_metal;
+    gles30::mesh plane_metal;
+    gles30::mesh transparent_quad;
 
-    mesh plane_metal = create_mesh(
-        plane_vertices, sizeof(plane_vertices) / 4 / 8, { &tex_metal });
+    std::vector<glm::vec3> vegetation;
+};
 
-    mesh transparent_quad = create_mesh(
-        transparent_vert, sizeof(transparent_vert) / 4 / 8, { &tex_window });
-
-    // transparent vegetation locations
-    // --------------------------------
-    vector<glm::vec3> vegetation{ glm::vec3(-1.5f, 0.0f, -0.48f),
-                                  glm::vec3(1.5f, 0.0f, 0.51f),
-                                  glm::vec3(0.0f, 0.0f, 0.7f),
-                                  glm::vec3(-0.3f, 0.0f, -2.3f),
-                                  glm::vec3(0.5f, 0.0f, -0.6f) };
-
-    [[maybe_unused]] GLenum primitive_render_mode = GL_TRIANGLES;
-
-    float last_frame_time = 0.0f; // Time of last frame
-
+scene::scene()
+    : properties("res/runtime.properties.hxx")
+    , window{ create_window(properties) }
+    , context{ create_opengl_context(window.get()) }
+    , cube_shader("res/cube.vsh", "res/cube.fsh")
+    , outline("res/cube.vsh", "res/outline.fsh")
+    , transparend_shader("res/cube.vsh", "res/discard.fsh")
+    , tex_marble("res/marble.jpg", gles30::texture::type::diffuse)
+    , tex_metal("res/metal.png", gles30::texture::type::diffuse)
+    , tex_grass("res/grass.png", gles30::texture::type::diffuse,
+                gles30::texture::opt::no_flip)
+    , tex_window("res/blending_transparent_window.png",
+                 gles30::texture::type::diffuse, gles30::texture::opt::no_flip)
+    , cube_marble{ create_mesh(cube_vertices, sizeof(cube_vertices) / 4 / 8,
+                               { &tex_marble }) }
+    , cube_metal{ create_mesh(cube_vertices, sizeof(cube_vertices) / 4 / 8,
+                              { &tex_metal }) }
+    , plane_metal{ create_mesh(plane_vertices, sizeof(plane_vertices) / 4 / 8,
+                               { &tex_metal }) }
+    , transparent_quad{ create_mesh(
+          transparent_vert, sizeof(transparent_vert) / 4 / 8, { &tex_window }) }
+    , vegetation{ glm::vec3(-1.5f, 0.0f, -0.48f), glm::vec3(1.5f, 0.0f, 0.51f),
+                  glm::vec3(0.0f, 0.0f, 0.7f), glm::vec3(-0.3f, 0.0f, -2.3f),
+                  glm::vec3(0.5f, 0.0f, -0.6f) }
+{
     create_camera(properties);
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glEnable(GL_CULL_FACE);
+}
 
-    // If mode is GL_FRONT_AND_BACK, no facets are drawn, but other primitives
-    // such as points and lines are drawn.
-    glCullFace(GL_BACK);
-    glFrontFace(GL_CW);
+void scene::render(float delta_time)
+{
+    camera.move_using_keyboard_wasd(delta_time);
 
-    bool continue_loop = true;
-    while (continue_loop)
+    clear_back_buffer(properties.get_vec3("clear_color"));
+
+    float scale = 1.0f;
+    render_mesh(cube_shader, camera, plane_metal, glm::vec3(0.0f, 0.0f, 0.0f),
+                scale, properties, render_options::only_pro_view_model);
+
+    render_mesh(cube_shader, camera, cube_marble, glm::vec3(-1.0f, 0.0f, -1.0f),
+                scale, properties, render_options::only_pro_view_model);
+    render_mesh(cube_shader, camera, cube_metal, glm::vec3(2.0f, 0.0f, 0.0f),
+                scale, properties, render_options::only_pro_view_model);
+
+    transparend_shader.use();
+    sort_transparent_quads = properties.get_bool("sort_transparent_quads");
+    if (sort_transparent_quads)
+    {
+        glm::vec3 cam_position = camera.position();
+        // we want to sort in order of far from camera
+        std::sort(begin(vegetation), end(vegetation),
+                  [&cam_position](const glm::vec3& l, const glm::vec3& r) {
+                      return glm::length(l - cam_position) >
+                             glm::length(r - cam_position);
+                  });
+    }
+
+    for (auto pos : vegetation)
+    {
+        render_mesh(transparend_shader, camera, transparent_quad, pos, scale,
+                    properties, render_options::only_pro_view_model);
+    }
+}
+
+int main(int /*argc*/, char* /*argv*/[])
+{
+    scene scene;
+
+    float last_frame_time = 0.0f; // Time of last frame
+
+    for (bool continue_loop = true; continue_loop;)
     {
         float delta_time = update_delta_time(last_frame_time);
 
-        properties.update_changes();
+        scene.properties.update_changes();
 
-        int z_buf_op =
-            get_z_buf_operation(properties.get_string("z_buf_operation"));
-        glDepthFunc(static_cast<GLenum>(z_buf_op));
+        pull_system_events(continue_loop);
 
-        pull_system_events(continue_loop, primitive_render_mode);
+        scene.render(delta_time);
 
-        camera.move_using_keyboard_wasd(delta_time);
-
-        glDisable(GL_STENCIL_TEST);
-
-        clear_back_buffer(properties.get_vec3("clear_color"));
-
-        float scale = 1.0f;
-        render_mesh(cube_shader, camera, plane_metal,
-                    glm::vec3(0.0f, 0.0f, 0.0f), scale, properties,
-                    render_options::only_pro_view_model);
-
-        render_mesh(cube_shader, camera, cube_marble,
-                    glm::vec3(-1.0f, 0.0f, -1.0f), scale, properties,
-                    render_options::only_pro_view_model);
-        render_mesh(cube_shader, camera, cube_metal,
-                    glm::vec3(2.0f, 0.0f, 0.0f), scale, properties,
-                    render_options::only_pro_view_model);
-
-        transparend_shader.use();
-        sort_transparent_quads = properties.get_bool("sort_transparent_quads");
-        if (sort_transparent_quads)
-        {
-            glm::vec3 cam_position = camera.position();
-            // we want to sort in order of far from camera
-            std::sort(begin(vegetation), end(vegetation),
-                      [&cam_position](const glm::vec3& l, const glm::vec3& r) {
-                          return glm::length(l - cam_position) >
-                                 glm::length(r - cam_position);
-                      });
-        }
-
-        for (auto pos : vegetation)
-        {
-            render_mesh(transparend_shader, camera, transparent_quad, pos,
-                        scale, properties, render_options::only_pro_view_model);
-        }
-
-        SDL_GL_SwapWindow(window.get());
+        SDL_GL_SwapWindow(scene.window.get());
     }
 
     SDL_Quit();
