@@ -242,7 +242,7 @@ void render_mesh(gles30::shader& shader, const fps_camera& camera,
     return gl_context;
 };
 
-void pull_system_events(bool& continue_loop)
+void pull_system_events(bool& continue_loop, int& current_effect)
 {
     using namespace std;
     SDL_Event event;
@@ -271,20 +271,25 @@ void pull_system_events(bool& continue_loop)
         }
         else if (SDL_KEYUP == event.type)
         {
-            // OpenGL ES 3.0 did't have glPolygonMode
-            // so we try to emulate it with next render primitive types
-            if (event.key.keysym.sym == SDLK_1)
+            if (event.key.keysym.sym == SDLK_0)
             {
-                show_z_buffer = !show_z_buffer;
+                current_effect = 5;
+            }
+            else if (event.key.keysym.sym == SDLK_1)
+            {
+                current_effect = 1;
             }
             else if (event.key.keysym.sym == SDLK_2)
             {
+                current_effect = 2;
             }
             else if (event.key.keysym.sym == SDLK_3)
             {
+                current_effect = 3;
             }
             else if (event.key.keysym.sym == SDLK_4)
             {
+                current_effect = 4;
             }
             else if (event.key.keysym.sym == SDLK_5)
             {
@@ -560,7 +565,8 @@ int main(int /*argc*/, char* /*argv*/[])
 {
     scene scene;
 
-    float last_frame_time = 0.0f; // Time of last frame
+    float last_frame_time      = 0.0f; // Time of last frame
+    int   current_post_process = 0;
 
     for (bool continue_loop = true; continue_loop;)
     {
@@ -568,12 +574,15 @@ int main(int /*argc*/, char* /*argv*/[])
 
         scene.properties.update_changes();
 
-        pull_system_events(continue_loop);
+        pull_system_events(continue_loop, current_post_process);
 
         scene.frame.bind();
         scene.render(delta_time);
 
         scene.frame.unbind();
+        scene.quad_shader.use();
+        scene.quad_shader.set_uniform("current_post_process",
+                                      current_post_process);
         scene.render_fullscreen_quad();
 
         SDL_GL_SwapWindow(scene.window.get());
