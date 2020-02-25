@@ -4,15 +4,20 @@ project(01-hello-world CXX)
 
 add_executable(hello_cout_dynamic cout_main.cxx)
 
-# install static version of standard libraries
-#>sudo dnf install libstdc++-static glibc-static
-add_executable(hello_cout_static cout_main.cxx)
-target_link_options(hello_cout_static PRIVATE -static)
+message(VERBOSE "${CMAKE_SYSTEM_NAME}")
 
-add_executable(hello_nostartfiles hack_main.cxx)
-target_link_options(hello_nostartfiles PRIVATE -nostartfiles)
+if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    message(VERBOSE "use gcc/linux specific code here")
+    # install static version of standard libraries
+    #>sudo dnf install libstdc++-static glibc-static
+    add_executable(hello_cout_static cout_main.cxx)
+    target_link_options(hello_cout_static PRIVATE -static)
 
-enable_language(ASM)
-add_executable(hello_asm)
-target_sources(hello_asm PRIVATE syscall.s hack_asm_main.cxx)
-target_link_options(hello_asm PRIVATE -nostartfiles -nostdlib)
+    add_executable(hello_nostartfiles hack_main.cxx)
+    target_link_options(hello_nostartfiles PRIVATE -nostartfiles)
+
+    enable_language(ASM)
+    add_executable(hello_asm)
+    target_sources(hello_asm PRIVATE syscall.s hack_asm_main.cxx)
+    target_link_options(hello_asm PRIVATE -nostartfiles -nostdlib)
+endif()
