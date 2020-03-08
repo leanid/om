@@ -47,4 +47,11 @@ void main()
     {
         frag_color += vec4(0.0, 5.0, 0.0, 0.0);
     }
+
+    // some parts of cube facing backward so fly around and you will see
+    // this triangls
+    if (!gl_FrontFacing)
+    {
+        frag_color += vec4(0.0, 0.0, 0.75, 0.0);
+    }
 }
