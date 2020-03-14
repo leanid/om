@@ -22,13 +22,16 @@ if (SDL2_SRC_DIR) # Android
     target_link_libraries(23-02-gl_frag_coord PRIVATE SDL2 SDL2main )
 elseif(MINGW)
     add_executable(23-02-gl_frag_coord)
-    find_package(SDL2 CONFIG REQUIRED)
-    target_link_libraries(15-01-model PRIVATE mingw32
-                                                  SDL2main
-                                                  SDL2
-                                                  opengl32
-                                                  -mwindows
-                                                  )
+    find_package(SDL2 REQUIRED)
+    #find_package(assimp REQUIRED)
+    find_package(glm REQUIRED)
+    target_link_libraries(23-02-gl_frag_coord PRIVATE mingw32
+                                                      assimp
+                                                      SDL2main
+                                                      SDL2
+                                                      opengl32
+                                                      -mwindows
+                                                      )
 elseif(APPLE)
     add_executable(23-02-gl_frag_coord)
     find_package(SDL2 CONFIG REQUIRED)

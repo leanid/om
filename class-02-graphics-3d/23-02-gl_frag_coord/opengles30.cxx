@@ -3,7 +3,11 @@
 #include <csignal>
 #include <sstream>
 
+#if __has_include(<SDL.h>)
 #include <SDL.h>
+#elif __has_include(<SDL2/SDL.h>)
+#include <SDL2/SDL.h>
+#endif
 
 #ifdef __ANDROID__
 #include <android/log.h>
@@ -56,12 +60,14 @@ struct global_redirect_handler
         clog_buf = clog.rdbuf();
         clog.rdbuf(&logcat);
     }
+
     ~global_redirect_handler()
     {
         using namespace std;
         clog.rdbuf(clog_buf);
     }
 } global_var;
+
 #endif // __ANDROID__
 
 std::string_view gl_err_to_s(GLenum err)
@@ -70,14 +76,19 @@ std::string_view gl_err_to_s(GLenum err)
     {
         case GL_NO_ERROR:
             return "No error";
+
         case GL_INVALID_ENUM:
             return "Invalid enum";
+
         case GL_INVALID_VALUE:
             return "Invalid value";
+
         case GL_INVALID_OPERATION:
             return "Invalid operation";
+
         case GL_OUT_OF_MEMORY:
             return "Out of memory";
+
         default:
             return "Unknown error";
     }
