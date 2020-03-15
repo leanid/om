@@ -269,8 +269,9 @@ static void APIENTRY callback_opengl_debug(
     {
         // TODO use https://en.cppreference.com/w/cpp/io/basic_osyncstream
         // to fix possible data races
-        std::clog.write(buff.data(), num_chars);
-        std::clog.flush();
+        // now we use GL_DEBUG_OUTPUT_SYNCHRONOUS to garantie call in main
+        // thread
+        std::cerr.write(buff.data(), num_chars);
     }
 }
 
@@ -352,6 +353,7 @@ static void APIENTRY callback_opengl_debug(
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_STENCIL_TEST);
     glEnable(GL_DEBUG_OUTPUT);
+    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
     glDebugMessageCallback(callback_opengl_debug, nullptr);
     glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr,
                           GL_TRUE);
