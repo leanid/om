@@ -40,7 +40,7 @@ void main()
         }
     } else
     {
-        frag_color = texture2D(material.tex_diffuse0, fs_in.v_tex_coords);
+        frag_color = texture(material.tex_diffuse0, fs_in.v_tex_coords);
     }
 
     if (gl_FragCoord.x < (screen_size.x / 2.0))

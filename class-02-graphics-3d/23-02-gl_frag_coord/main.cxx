@@ -182,6 +182,90 @@ static void destroy_opengl_context(void* ptr)
     SDL_GL_DeleteContext(ptr);
 }
 
+static std::string_view source_to_strv(GLenum source)
+{
+    switch (source)
+    {
+        case GL_DEBUG_SOURCE_API:
+            return "GL_DEBUG_SOURCE_API";
+        case GL_DEBUG_SOURCE_SHADER_COMPILER:
+            return "GL_DEBUG_SOURCE_SHADER_COMPILER";
+        case GL_DEBUG_SOURCE_WINDOW_SYSTEM:
+            return "GL_DEBUG_SOURCE_WINDOW_SYSTEM";
+        case GL_DEBUG_SOURCE_THIRD_PARTY:
+            return "GL_DEBUG_SOURCE_THIRD_PARTY";
+        case GL_DEBUG_SOURCE_APPLICATION:
+            return "GL_DEBUG_SOURCE_APPLICATION";
+        case GL_DEBUG_SOURCE_OTHER:
+            return "GL_DEBUG_SOURCE_OTHER";
+    }
+    return "error unknown source";
+}
+
+static std::string_view type_to_strv(GLenum type)
+{
+    switch (type)
+    {
+        case GL_DEBUG_TYPE_ERROR:
+            return "GL_DEBUG_TYPE_ERROR";
+        case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
+            return "GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR";
+        case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
+            return "GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR";
+        case GL_DEBUG_TYPE_PERFORMANCE:
+            return "GL_DEBUG_TYPE_PERFORMANCE";
+        case GL_DEBUG_TYPE_PORTABILITY:
+            return "GL_DEBUG_TYPE_PORTABILITY";
+        case GL_DEBUG_TYPE_MARKER:
+            return "GL_DEBUG_TYPE_MARKER";
+        case GL_DEBUG_TYPE_PUSH_GROUP:
+            return "GL_DEBUG_TYPE_PUSH_GROUP";
+        case GL_DEBUG_TYPE_POP_GROUP:
+            return "GL_DEBUG_TYPE_POP_GROUP";
+        case GL_DEBUG_TYPE_OTHER:
+            return "GL_DEBUG_TYPE_OTHER";
+    };
+    return "error unknown type";
+}
+
+static std::string_view severity_to_strv(GLenum severity)
+{
+    switch (severity)
+    {
+        case GL_DEBUG_SEVERITY_HIGH:
+            return "GL_DEBUG_SEVERITY_HIGH";
+        case GL_DEBUG_SEVERITY_MEDIUM:
+            return "GL_DEBUG_SEVERITY_MEDIUM";
+        case GL_DEBUG_SEVERITY_LOW:
+            return "GL_DEBUG_SEVERITY_LOW";
+        case GL_DEBUG_SEVERITY_NOTIFICATION:
+            return "GL_DEBUG_SEVERITY_NOTIFICATION";
+    }
+    return "error unknown severity";
+}
+
+static void APIENTRY callback_opengl_debug(
+    GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length,
+    const GLchar* message, [[maybe_unused]] const void* userParam)
+{
+    // The memory formessageis owned and managed by the GL, and should onlybe
+    // considered valid for the duration of the function call.The behavior of
+    // calling any GL or window system function from within thecallback function
+    // is undefined and may lead to program termination.Care must also be taken
+    // in securing debug callbacks for use with asynchronousdebug output by
+    // multi-threaded GL implementations.  Section 18.8 describes thisin further
+    // detail.
+
+    using namespace std;
+
+    stringstream ss;
+    ss << source_to_strv(source) << ' ' << type_to_strv(type) << " id: " << id
+       << ' ' << severity_to_strv(severity) << ' ';
+    ss.write(message, static_cast<streamsize>(length));
+
+    clog << ss.rdbuf() << endl;
+}
+
 [[nodiscard]] std::unique_ptr<void, void (*)(void*)> create_opengl_context(
     SDL_Window* window)
 {
@@ -259,6 +343,10 @@ static void destroy_opengl_context(void* ptr)
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_STENCIL_TEST);
+    glEnable(GL_DEBUG_OUTPUT);
+    glDebugMessageCallback(callback_opengl_debug, nullptr);
+    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr,
+                          GL_TRUE);
 
     if (got_context.name == "OpenGL Core")
     {
@@ -408,6 +496,7 @@ std::unique_ptr<SDL_Window, void (*)(SDL_Window*)> create_window(
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
     SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
 
     unique_ptr<SDL_Window, void (*)(SDL_Window*)> window(
         SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_CENTERED,
