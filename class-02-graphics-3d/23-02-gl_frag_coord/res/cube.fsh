@@ -8,7 +8,10 @@ uniform float z_far;
 
 out vec4 frag_color;
 
-in vec2 v_tex_coords;
+in VS_OUT
+{
+    vec2 v_tex_coords;
+} fs_in;
 
 struct default_mat
 {
@@ -37,7 +40,7 @@ void main()
         }
     } else
     {
-        frag_color = texture2D(material.tex_diffuse0, v_tex_coords);
+        frag_color = texture2D(material.tex_diffuse0, fs_in.v_tex_coords);
     }
 
     if (gl_FragCoord.x < (screen_size.x / 2.0))

@@ -176,6 +176,12 @@ void render_mesh(gles30::shader& shader, const fps_camera& camera,
     }
 }
 
+static void destroy_opengl_context(void* ptr)
+{
+    // for debug check
+    SDL_GL_DeleteContext(ptr);
+}
+
 [[nodiscard]] std::unique_ptr<void, void (*)(void*)> create_opengl_context(
     SDL_Window* window)
 {
@@ -219,7 +225,7 @@ void render_mesh(gles30::shader& shader, const fps_camera& camera,
     SDL_assert_always(r == 0);
 
     unique_ptr<void, void (*)(void*)> gl_context(SDL_GL_CreateContext(window),
-                                                 SDL_GL_DeleteContext);
+                                                 destroy_opengl_context);
     if (nullptr == gl_context)
     {
         clog << "Failed to create: " << ask_context
@@ -242,9 +248,6 @@ void render_mesh(gles30::shader& shader, const fps_camera& camera,
     int stensil_size = 0;
     result           = SDL_GL_GetAttribute(SDL_GL_STENCIL_SIZE, &stensil_size);
     assert(result == 0);
-
-    clog << "current context have DEPTH_SIZE: " << got_depth_size << std::endl;
-    clog << "current context have STENSIL_SIZE: " << stensil_size << std::endl;
 
     if (ask_context != got_context)
     {
@@ -372,6 +375,15 @@ void clear_back_buffer(const glm::vec3 clear_color)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 }
 
+static void destroy_window(SDL_Window* ptr)
+{
+    // for debug check
+    SDL_DestroyWindow(ptr);
+    // do not call SDL_Quit() if you still has window or context
+    // sdl destroy OpenGL context with window
+    SDL_Quit();
+}
+
 std::unique_ptr<SDL_Window, void (*)(SDL_Window*)> create_window(
     const properties_reader& properties)
 {
@@ -402,7 +414,7 @@ std::unique_ptr<SDL_Window, void (*)(SDL_Window*)> create_window(
                          SDL_WINDOWPOS_CENTERED, static_cast<int>(screen_width),
                          static_cast<int>(screen_height),
                          ::SDL_WINDOW_OPENGL | ::SDL_WINDOW_RESIZABLE),
-        SDL_DestroyWindow);
+        destroy_window);
 
     if (window.get() == nullptr)
     {
@@ -526,25 +538,25 @@ void scene::render(float delta_time)
 
 int main(int /*argc*/, char* /*argv*/[])
 {
-    scene scene;
-
-    float last_frame_time      = 0.0f; // Time of last frame
-    int   current_post_process = 0;
-
-    for (bool continue_loop = true; continue_loop;)
     {
-        float delta_time = update_delta_time(last_frame_time);
+        scene scene;
 
-        scene.properties.update_changes();
+        float last_frame_time      = 0.0f; // Time of last frame
+        int   current_post_process = 0;
 
-        pull_system_events(continue_loop, current_post_process);
+        for (bool continue_loop = true; continue_loop;)
+        {
+            float delta_time = update_delta_time(last_frame_time);
 
-        scene.render(delta_time);
+            scene.properties.update_changes();
 
-        SDL_GL_SwapWindow(scene.window.get());
+            pull_system_events(continue_loop, current_post_process);
+
+            scene.render(delta_time);
+
+            SDL_GL_SwapWindow(scene.window.get());
+        }
     }
-
-    SDL_Quit();
 
     return 0;
 }

@@ -29,6 +29,26 @@ void _pre_call_callback_default(const char *name, void *funcptr, int len_args, .
     (void) funcptr;
     (void) len_args;
 }
+
+const char* _gl_error_to_c_str(GLenum error_code)
+{
+    switch (error_code) {
+    case GL_INVALID_ENUM:
+        return "GL_INVALID_ENUM";
+    case GL_INVALID_VALUE:
+        return "GL_INVALID_VALUE";
+    case GL_INVALID_INDEX:
+        return "GL_INVALID_INDEX";
+    case GL_INVALID_OPERATION:
+        return "GL_INVALID_OPERATION";
+    case GL_INVALID_FRAMEBUFFER_OPERATION:
+        return "GL_INVALID_FRAMEBUFFER_OPERATION";
+    case GL_NO_ERROR:
+        return "GL_NO_ERROR";
+    }
+    return "UNKNOWN ERROR";
+}
+
 void _post_call_callback_default(const char *name, void *funcptr, int len_args, ...) {
     GLenum error_code;
 
@@ -38,7 +58,9 @@ void _post_call_callback_default(const char *name, void *funcptr, int len_args, 
     error_code = glad_glGetError();
 
     if (error_code != GL_NO_ERROR) {
-        fprintf(stderr, "ERROR %d in %s\n", error_code, name);
+        const char* str_error = _gl_error_to_c_str(error_code);
+        fprintf(stderr, "ERROR %d(%s) in %s\n", error_code, str_error, name);
+        fflush(stderr);
     }
 }
 

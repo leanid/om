@@ -7,11 +7,14 @@ uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 
-out vec2 v_tex_coords;
+out VS_OUT
+{
+    vec2 v_tex_coords;
+} vs_out;
 
 void main()
 {
     gl_Position = projection * view * model * vec4(a_position, 1.0);
-    v_tex_coords = a_tex_coords;
+    vs_out.v_tex_coords = a_tex_coords;
     gl_PointSize = gl_Position.z;
 }
