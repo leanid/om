@@ -1,5 +1,6 @@
 #include <array>
 #include <chrono>
+#include <cstdio>
 #include <cstdlib>
 #include <iostream>
 #include <memory>
@@ -182,67 +183,70 @@ static void destroy_opengl_context(void* ptr)
     SDL_GL_DeleteContext(ptr);
 }
 
-static std::string_view source_to_strv(GLenum source)
+static const char* source_to_strv(GLenum source)
 {
     switch (source)
     {
         case GL_DEBUG_SOURCE_API:
-            return "GL_DEBUG_SOURCE_API";
+            return "API";
         case GL_DEBUG_SOURCE_SHADER_COMPILER:
-            return "GL_DEBUG_SOURCE_SHADER_COMPILER";
+            return "SHADER_COMPILER";
         case GL_DEBUG_SOURCE_WINDOW_SYSTEM:
-            return "GL_DEBUG_SOURCE_WINDOW_SYSTEM";
+            return "WINDOW_SYSTEM";
         case GL_DEBUG_SOURCE_THIRD_PARTY:
-            return "GL_DEBUG_SOURCE_THIRD_PARTY";
+            return "THIRD_PARTY";
         case GL_DEBUG_SOURCE_APPLICATION:
-            return "GL_DEBUG_SOURCE_APPLICATION";
+            return "APPLICATION";
         case GL_DEBUG_SOURCE_OTHER:
-            return "GL_DEBUG_SOURCE_OTHER";
+            return "OTHER";
     }
-    return "error unknown source";
+    return "unknown";
 }
 
-static std::string_view type_to_strv(GLenum type)
+static const char* type_to_strv(GLenum type)
 {
     switch (type)
     {
         case GL_DEBUG_TYPE_ERROR:
-            return "GL_DEBUG_TYPE_ERROR";
+            return "ERROR";
         case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
-            return "GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR";
+            return "DEPRECATED_BEHAVIOR";
         case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
-            return "GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR";
+            return "UNDEFINED_BEHAVIOR";
         case GL_DEBUG_TYPE_PERFORMANCE:
-            return "GL_DEBUG_TYPE_PERFORMANCE";
+            return "PERFORMANCE";
         case GL_DEBUG_TYPE_PORTABILITY:
-            return "GL_DEBUG_TYPE_PORTABILITY";
+            return "PORTABILITY";
         case GL_DEBUG_TYPE_MARKER:
-            return "GL_DEBUG_TYPE_MARKER";
+            return "MARKER";
         case GL_DEBUG_TYPE_PUSH_GROUP:
-            return "GL_DEBUG_TYPE_PUSH_GROUP";
+            return "PUSH_GROUP";
         case GL_DEBUG_TYPE_POP_GROUP:
-            return "GL_DEBUG_TYPE_POP_GROUP";
+            return "POP_GROUP";
         case GL_DEBUG_TYPE_OTHER:
-            return "GL_DEBUG_TYPE_OTHER";
+            return "OTHER";
     };
-    return "error unknown type";
+    return "unknown";
 }
 
-static std::string_view severity_to_strv(GLenum severity)
+static const char* severity_to_strv(GLenum severity)
 {
     switch (severity)
     {
         case GL_DEBUG_SEVERITY_HIGH:
-            return "GL_DEBUG_SEVERITY_HIGH";
+            return "HIGH";
         case GL_DEBUG_SEVERITY_MEDIUM:
-            return "GL_DEBUG_SEVERITY_MEDIUM";
+            return "MEDIUM";
         case GL_DEBUG_SEVERITY_LOW:
-            return "GL_DEBUG_SEVERITY_LOW";
+            return "LOW";
         case GL_DEBUG_SEVERITY_NOTIFICATION:
-            return "GL_DEBUG_SEVERITY_NOTIFICATION";
+            return "NOTIFICATION";
     }
-    return "error unknown severity";
+    return "unknown";
 }
+
+// 30Kb on my system, too much for stack
+static std::array<char, GL_MAX_DEBUG_MESSAGE_LENGTH> local_log_buff;
 
 static void APIENTRY callback_opengl_debug(
     GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length,
@@ -256,14 +260,18 @@ static void APIENTRY callback_opengl_debug(
     // multi-threaded GL implementations.  Section 18.8 describes thisin further
     // detail.
 
-    using namespace std;
+    auto& buff{ local_log_buff };
+    int   num_chars = std::snprintf(
+        buff.data(), buff.size(), "%s %s %d %s %.*s\n", source_to_strv(source),
+        type_to_strv(type), id, severity_to_strv(severity), length, message);
 
-    stringstream ss;
-    ss << source_to_strv(source) << ' ' << type_to_strv(type) << " id: " << id
-       << ' ' << severity_to_strv(severity) << ' ';
-    ss.write(message, static_cast<streamsize>(length));
-
-    clog << ss.rdbuf() << endl;
+    if (num_chars > 0)
+    {
+        // TODO use https://en.cppreference.com/w/cpp/io/basic_osyncstream
+        // to fix possible data races
+        std::clog.write(buff.data(), num_chars);
+        std::clog.flush();
+    }
 }
 
 [[nodiscard]] std::unique_ptr<void, void (*)(void*)> create_opengl_context(
