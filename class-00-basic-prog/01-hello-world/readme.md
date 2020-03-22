@@ -12,9 +12,9 @@ file a.out
 1. preprocess
 g++ -E main.cxx > prep.cxx
 2. compilation info asm
-g++ -S prep.cxx
+g++ -S prep.cxx > prep.s
 3. compilation info binarycode (platform dependent)
-g++ -c prep.s
+g++ -c prep.s > prep.o
 4. how you have to see prep.o (object file) and final step linking
 ld prep.o
 5. prefious step will fail. We need some _start - this is real start application entry point
