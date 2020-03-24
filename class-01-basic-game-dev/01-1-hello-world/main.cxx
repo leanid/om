@@ -43,14 +43,17 @@ int main(int /*argc*/, char* /*argv*/[], char** env)
 // clang-format on
 static char** get_env_end(char** env)
 {
-    while (*env++)
-        ;
+    while (*env)
+    {
+        ++env;
+    }
+
     return env;
 }
 
 static bool start_with(std::string_view str, std::string_view start)
 {
-    return std::equal(begin(start), end(start), begin(str));
+    return str.size() >= start.size() && std::equal(begin(start), end(start), begin(str));
 }
 
 static std::string_view get_value(std::string_view key_value)
