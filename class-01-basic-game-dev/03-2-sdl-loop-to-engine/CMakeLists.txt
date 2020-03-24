@@ -21,7 +21,7 @@ if (MINGW)
     #-lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lshell32 -lversion -luuid
     #-static-libgcc
 
-    target_link_libraries(03-sdl-loop-to-engine
+    target_link_libraries(03-sdl-loop-to-engine PRIVATE
                -lmingw32
                -lSDL2main
                "${SDL2_LIB}" # full path to libSDL2.a force to staticaly link with it

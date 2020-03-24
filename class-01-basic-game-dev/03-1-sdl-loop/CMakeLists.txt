@@ -18,8 +18,8 @@ if (MINGW)
     #-lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lshell32 -lversion -luuid 
     #-static-libgcc
     
-    target_link_libraries(${PROJECT_NAME} 
-               -lmingw32 
+    target_link_libraries(${PROJECT_NAME} PRIVATE
+               -lmingw32
                -lSDL2main 
                "${SDL2_LIB}" # full path to libSDL2.a force to staticaly link with it
                -mwindows
