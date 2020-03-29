@@ -7,13 +7,13 @@ target_compile_features(02-sdl-dynamic PUBLIC cxx_std_17)
 # MacOSX - brew install sdl2
 # MinGW  - pacman -s sdl2
 # MSVC   - vcpkg install sdl2
-# Fedora - dnf install sdl2-dev sdl2-static
+# Fedora - dnf install sdl2-devel sdl2-static
 set(SDL2_DIR /usr/local/lib/cmake/SDL2)
 find_package(SDL2 REQUIRED)
-target_include_directories(02-sdl-dynamic PRIVATE ${SDL2_INCLUDE_DIRS})
-target_link_libraries(02-sdl-dynamic PRIVATE ${SDL2_LIBRARIES})
 
-if (MINGW)
+if (UNIX)
+    target_link_libraries(02-sdl-dynamic PRIVATE SDL2::SDL2 SDL2::SDL2main)
+elseif (MINGW)
     # find out what libraries are needed for dynamicaly linking with libSDL.so
     # using mingw64 cross-compiler
     
