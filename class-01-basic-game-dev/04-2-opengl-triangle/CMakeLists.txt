@@ -14,7 +14,7 @@ target_include_directories(engine-04-2 PRIVATE ${SDL2_INCLUDE_DIRS})
 target_link_libraries(engine-04-2 PRIVATE ${SDL2_LIBRARIES})
 
 if (MINGW)
-    target_link_libraries(engine-04-2 
+    target_link_libraries(engine-04-2 PRIVATE
                -lmingw32 
                -lSDL2main 
                -lSDL2

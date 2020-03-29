@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 project(01-1-hello-world CXX)
 
 add_executable(01-1-hello-world main.cxx)
-target_compile_features(01-1-hello-world PUBLIC cxx_std_20)
+target_compile_features(01-1-hello-world PUBLIC cxx_std_17)
 
 install(TARGETS ${PROJECT_NAME} 
         RUNTIME DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../../../bin/tests
