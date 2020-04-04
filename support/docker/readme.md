@@ -8,6 +8,7 @@
  - for F31 ```sudo grubby --update-kernel=ALL --args="systemd.unified_cgroup_hierarchy=0"```
  - for F31 ```sudo reboot```
  - call ```sudo systemctl start docker```
+ - call ```sudo docker pull fedora:latest```
  - call ```sudo docker build -t leanid/fedora_latest .```
  - call ```sudo docker login
  - call ```sudo docker push leanid/fedora_latest```
