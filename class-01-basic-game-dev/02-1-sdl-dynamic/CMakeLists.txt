@@ -8,7 +8,7 @@ target_compile_features(02-sdl-dynamic PUBLIC cxx_std_17)
 # MinGW  - pacman -s sdl2
 # MSVC   - vcpkg install sdl2
 # Fedora - dnf install sdl2-devel sdl2-static
-set(SDL2_DIR /usr/local/lib/cmake/SDL2)
+# set(SDL2_DIR /usr/local/lib/cmake/SDL2) # uncomment for local SDL2 build
 find_package(SDL2 REQUIRED)
 
 if (UNIX)
