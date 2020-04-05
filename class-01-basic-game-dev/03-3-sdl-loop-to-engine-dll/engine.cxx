@@ -137,6 +137,26 @@ public:
             SDL_Quit();
             return serr.str();
         }
+
+        /* Open the first available controller. */
+        SDL_GameController* controller = NULL;
+        for (int i = 0; i < SDL_NumJoysticks(); ++i)
+        {
+            if (SDL_IsGameController(i))
+            {
+                controller = SDL_GameControllerOpen(i);
+                if (controller)
+                {
+                    break;
+                }
+                else
+                {
+                    fprintf(stderr, "Could not open gamecontroller %i: %s\n", i,
+                            SDL_GetError());
+                }
+            }
+        }
+
         return "";
     }
     /// pool event from input queue
@@ -170,6 +190,31 @@ public:
                     e = binding->event_released;
                     return true;
                 }
+            }
+            else if (sdl_event.type == SDL_CONTROLLERDEVICEADDED)
+            {
+                // TODO map controller to user
+                std::cerr << "controller added" << std::endl;
+                // continue with next event in queue
+                return read_input(e);
+            }
+            else if (sdl_event.type == SDL_CONTROLLERDEVICEREMOVED)
+            {
+                std::cerr << "controller removed" << std::endl;
+            }
+            else if (sdl_event.type == SDL_CONTROLLERBUTTONDOWN ||
+                     sdl_event.type == SDL_CONTROLLERBUTTONUP)
+            {
+                // TODO finish implementation
+                if (sdl_event.cbutton.state == SDL_PRESSED)
+                {
+                    e = event::button1_pressed;
+                }
+                else
+                {
+                    e = event::button1_released;
+                }
+                return true;
             }
         }
         return false;
