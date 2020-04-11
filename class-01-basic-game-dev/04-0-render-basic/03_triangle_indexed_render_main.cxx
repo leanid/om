@@ -7,7 +7,7 @@ int main(int, char**)
 
     canvas image;
 
-    std::vector<position> triangles_for_index;
+    std::vector<position> vertex_buffer;
 
     size_t max_x = 10;
     size_t max_y = 10;
@@ -22,13 +22,13 @@ int main(int, char**)
             position v{ static_cast<int>(j) * step_x,
                         static_cast<int>(i) * step_y };
 
-            triangles_for_index.push_back(v);
+            vertex_buffer.push_back(v);
         }
     }
 
-    assert(triangles_for_index.size() == (max_x + 1) * (max_y + 1));
+    assert(vertex_buffer.size() == (max_x + 1) * (max_y + 1));
 
-    std::vector<uint8_t> indexes;
+    std::vector<uint8_t> index_buffer;
 
     for (size_t x = 0; x < max_x; ++x)
     {
@@ -39,20 +39,20 @@ int main(int, char**)
             uint8_t index2 = index1 - 1;
             uint8_t index3 = index0 + 1;
 
-            indexes.push_back(index0);
-            indexes.push_back(index1);
-            indexes.push_back(index2);
+            index_buffer.push_back(index0);
+            index_buffer.push_back(index1);
+            index_buffer.push_back(index2);
 
-            indexes.push_back(index0);
-            indexes.push_back(index3);
-            indexes.push_back(index1);
+            index_buffer.push_back(index0);
+            index_buffer.push_back(index3);
+            index_buffer.push_back(index1);
         }
     }
 
     triangle_indexed_render indexed_render(image, width, height);
     indexed_render.clear(black);
 
-    indexed_render.draw_triangles(triangles_for_index, indexes, green);
+    indexed_render.draw_triangles(vertex_buffer, index_buffer, green);
 
     image.save_image("04_triangles_indexes.ppm");
 
