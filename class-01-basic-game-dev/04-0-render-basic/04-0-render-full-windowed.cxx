@@ -1,6 +1,6 @@
 #include "04_triangle_interpolated_render.hxx"
 
-#include <SDL.h>
+#include <SDL2/SDL.h>
 
 #include <cmath>
 #include <cstdlib>
@@ -208,7 +208,7 @@ int main(int, char**)
             }
             else if (e.type == SDL_MOUSEWHEEL)
             {
-                radius *= e.wheel.y;
+                radius += e.wheel.y;
             }
         }
 
