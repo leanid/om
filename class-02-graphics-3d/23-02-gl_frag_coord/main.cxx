@@ -225,7 +225,7 @@ static const char* type_to_strv(GLenum type)
             return "POP_GROUP";
         case GL_DEBUG_TYPE_OTHER:
             return "OTHER";
-    };
+    }
     return "unknown";
 }
 
@@ -352,6 +352,7 @@ static void APIENTRY callback_opengl_debug(
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_STENCIL_TEST);
+
     glEnable(GL_DEBUG_OUTPUT);
     glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
     glDebugMessageCallback(callback_opengl_debug, nullptr);

@@ -4,6 +4,7 @@ project(04-1-opengl-minimal CXX C)
 add_library(engine-04-1 SHARED
     engine.cxx
     engine.hxx
+    KHR/khrplatform.h
     glad/glad.h
     glad/glad.c)
 target_compile_features(engine-04-1 PUBLIC cxx_std_17)
