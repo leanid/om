@@ -10,8 +10,7 @@ if(WIN32)
 endif(WIN32)
 
 find_package(sdl2 REQUIRED)
-target_include_directories(engine-04-3 PRIVATE ${SDL2_INCLUDE_DIRS})
-target_link_libraries(engine-04-3 PRIVATE ${SDL2_LIBRARIES})
+target_link_libraries(engine-04-3 PRIVATE SDL2::SDL2 SDL2::SDL2main)
 
 if (MINGW)
     target_link_libraries(engine-04-3 PRIVATE
@@ -22,17 +21,11 @@ if (MINGW)
                -lopengl32
                )
 elseif(APPLE)
-   target_link_libraries(engine-04-3 PRIVATE
-              -Wl,-framework,OpenGL
-              )
+   target_link_libraries(engine-04-3 PRIVATE -Wl,-framework,OpenGL)
 elseif(UNIX)
-    target_link_libraries(engine-04-3 PRIVATE
-               -lSDL2
-               -lGL
-               )
+    target_link_libraries(engine-04-3 PRIVATE GL)
 elseif(MSVC)
-    target_link_libraries(engine-04-3 PRIVATE SDL2::SDL2 SDL2::SDL2main
-                         opengl32)
+    target_link_libraries(engine-04-3 PRIVATE opengl32)
 endif()
 
 add_executable(game-04-3 game.cxx)
