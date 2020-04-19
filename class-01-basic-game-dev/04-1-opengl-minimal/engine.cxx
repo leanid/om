@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <array>
 #include <cassert>
+#include <chrono>
 #include <exception>
 #include <iostream>
 #include <sstream>
@@ -277,7 +278,15 @@ public:
     }
     void render_triangle(const triangle&) final
     {
-        glClearColor(0.f, 1.0, 1.f, 0.0f);
+        using namespace std;
+        chrono::steady_clock clock;
+        auto                 time_point       = clock.now();
+        auto                 time_since_epoch = time_point.time_since_epoch();
+        auto                 ns               = time_since_epoch.count();
+        auto                 seconds          = ns / 1000'000'000.0f;
+        auto                 current_color = 0.5f * (std::sin(seconds) + 1.0f);
+
+        glClearColor(0.f, current_color, 1.f - current_color, 0.0f);
         OM_GL_CHECK()
         glClear(GL_COLOR_BUFFER_BIT);
         OM_GL_CHECK()
