@@ -18,22 +18,6 @@ endif(WIN32)
 find_package(sdl2 REQUIRED)
 target_link_libraries(engine-04-1 PRIVATE SDL2::SDL2 SDL2::SDL2main)
 
-if (MINGW)
-    target_link_libraries(engine-04-1 PRIVATE
-               -lmingw32
-               -lSDL2main
-               -lSDL2
-               -mwindows
-               -lopengl32
-               )
-elseif (APPLE)
-    target_link_libraries(engine-04-1 PRIVATE -Wl,-framework,OpenGL)
-elseif (UNIX)
-    target_link_libraries(engine-04-1 PRIVATE GL)
-elseif(MSVC)
-    target_link_libraries(engine-04-1 PRIVATE opengl32)
-endif()
-
 add_executable(game-04-1 game.cxx)
 target_compile_features(game-04-1 PUBLIC cxx_std_17)
 target_link_libraries(game-04-1 PRIVATE engine-04-1)

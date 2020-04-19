@@ -13,6 +13,9 @@ find_package(sdl2 REQUIRED)
 
 target_link_libraries(engine-04-2 PRIVATE SDL2::SDL2 SDL2::SDL2main)
 
+# if you want to link with OpenGL library yourself
+# you can skip glad.{h,c} from previous example
+# and directly add link libraries for your platform
 if (MINGW)
     target_link_libraries(engine-04-2 PRIVATE
                -lmingw32 
