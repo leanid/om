@@ -10,6 +10,7 @@
 #include <stdexcept>
 #include <string_view>
 #include <vector>
+#include <cmath>
 
 #include <SDL.h>
 
@@ -187,14 +188,16 @@ public:
         int gl_minor_ver       = 2;
         int gl_context_profile = SDL_GL_CONTEXT_PROFILE_ES;
 
-        std::string_view platform = SDL_GetPlatform();
+        const char* platform_from_sdl = SDL_GetPlatform();
+        std::string_view platform{platform_from_sdl};
         using namespace std::string_view_literals;
         using namespace std;
-        auto list = { "Windows"sv, "Apple"sv };
+        auto list = { "Windows"sv, "Mac OS X"sv };
         auto it   = find(begin(list), end(list), platform);
         if (it != end(list))
         {
-            gl_minor_ver       = 3;
+            gl_major_ver       = 4;
+            gl_minor_ver       = (platform == "Mac OS X") ? 1 : 3;
             gl_context_profile = SDL_GL_CONTEXT_PROFILE_CORE;
         }
 
@@ -205,8 +208,13 @@ public:
         SDL_GLContext gl_context = SDL_GL_CreateContext(window);
         if (gl_context == nullptr)
         {
-            SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
-                                SDL_GL_CONTEXT_PROFILE_CORE);
+            gl_major_ver       = 3;
+            gl_minor_ver       = 2;
+            gl_context_profile = SDL_GL_CONTEXT_PROFILE_ES;
+
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, gl_context_profile);
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, gl_major_ver);
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, gl_minor_ver);
             gl_context = SDL_GL_CreateContext(window);
         }
         assert(gl_context != nullptr);
@@ -219,7 +227,7 @@ public:
             SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, &gl_minor_ver);
         assert(result == 0);
 
-        if (gl_major_ver != 3 || gl_minor_ver != 2)
+        if (gl_major_ver < 3)
         {
             std::clog << "current context opengl version: " << gl_major_ver
                       << '.' << gl_minor_ver << '\n'
@@ -228,17 +236,21 @@ public:
             throw std::runtime_error("opengl version too low");
         }
 
+        std::clog << "OpenGl "<< gl_major_ver << '.'<< gl_minor_ver<<'\n';
+
         if (gladLoadGLES2Loader(SDL_GL_GetProcAddress) == 0)
         {
             std::clog << "error: failed to initialize glad" << std::endl;
         }
 
-        glEnable(GL_DEBUG_OUTPUT);
-        glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-        glDebugMessageCallback(callback_opengl_debug, nullptr);
-        glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0,
+        if (platform != "Mac OS X") // not supported on Mac
+        {
+            glEnable(GL_DEBUG_OUTPUT);
+            glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+            glDebugMessageCallback(callback_opengl_debug, nullptr);
+            glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0,
                               nullptr, GL_TRUE);
-
+        }
         return "";
     }
     /// pool event from input queue
