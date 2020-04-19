@@ -182,11 +182,22 @@ public:
             SDL_Quit();
             return serr.str();
         }
-        int gl_major_ver = 3;
-        int gl_minor_ver = 2;
+        int gl_major_ver       = 3;
+        int gl_minor_ver       = 2;
+        int gl_context_profile = SDL_GL_CONTEXT_PROFILE_ES;
 
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
-                            SDL_GL_CONTEXT_PROFILE_ES);
+        std::string_view platform = SDL_GetPlatform();
+        using namespace std::string_view_literals;
+        using namespace std;
+        auto list = { "Windows"sv, "Apple"sv };
+        auto it   = find(begin(list), end(list), platform);
+        if (it != end(list))
+        {
+            gl_minor_ver       = 3;
+            gl_context_profile = SDL_GL_CONTEXT_PROFILE_CORE;
+        }
+
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, gl_context_profile);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, gl_major_ver);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, gl_minor_ver);
 
