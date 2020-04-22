@@ -1,7 +1,7 @@
 #include <cstdlib>
 #include <iostream>
 
-#include <SDL_version.h>
+#include <SDL2/SDL_version.h>
 
 std::ostream& operator<<(std::ostream& out, const SDL_version& v)
 {

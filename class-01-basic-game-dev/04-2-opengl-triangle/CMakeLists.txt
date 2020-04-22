@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 3.16)
 project(04-2-opengl-triangle)
 
 add_library(engine-04-2 SHARED engine.cxx
@@ -10,9 +10,12 @@ if(WIN32)
 endif(WIN32)
 
 find_package(sdl2 REQUIRED)
-target_include_directories(engine-04-2 PRIVATE ${SDL2_INCLUDE_DIRS})
-target_link_libraries(engine-04-2 PRIVATE ${SDL2_LIBRARIES})
 
+target_link_libraries(engine-04-2 PRIVATE SDL2::SDL2 SDL2::SDL2main)
+
+# if you want to link with OpenGL library yourself
+# you can skip glad.{h,c} from previous example
+# and directly add link libraries for your platform
 if (MINGW)
     target_link_libraries(engine-04-2 PRIVATE
                -lmingw32 
@@ -22,17 +25,11 @@ if (MINGW)
                -lopengl32
                )
 elseif(APPLE)
-    target_link_libraries(engine-04-2 PRIVATE
-               -Wl,-framework,OpenGL
-               )
+    target_link_libraries(engine-04-2 PRIVATE -Wl,-framework,OpenGL)
 elseif(UNIX)
-    target_link_libraries(engine-04-2 PRIVATE
-               -lSDL2
-               -lGL
-               )
+    target_link_libraries(engine-04-2 PRIVATE GL)
 elseif(MSVC)
-    target_link_libraries(engine-04-2 PRIVATE SDL2::SDL2 SDL2::SDL2main
-                         opengl32)
+    target_link_libraries(engine-04-2 PRIVATE opengl32)
 endif()
 
 add_executable(game-04-2 game.cxx)
