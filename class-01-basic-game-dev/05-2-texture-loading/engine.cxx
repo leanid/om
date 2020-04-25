@@ -285,24 +285,24 @@ void main()
 )";
         const char* source            = vertex_shader_src.data();
         glShaderSource(vert_shader, 1, &source, nullptr);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
 
         glCompileShader(vert_shader);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
 
         GLint compiled_status = 0;
         glGetShaderiv(vert_shader, GL_COMPILE_STATUS, &compiled_status);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         if (compiled_status == 0)
         {
             GLint info_len = 0;
             glGetShaderiv(vert_shader, GL_INFO_LOG_LENGTH, &info_len);
-            OM_GL_CHECK();
+            OM_GL_CHECK()
             std::vector<char> info_chars(info_len);
             glGetShaderInfoLog(vert_shader, info_len, NULL, info_chars.data());
-            OM_GL_CHECK();
+            OM_GL_CHECK()
             glDeleteShader(vert_shader);
-            OM_GL_CHECK();
+            OM_GL_CHECK()
 
             std::string shader_type_name = "vertex";
             serr << "Error compiling shader(vertex)\n"
@@ -314,7 +314,7 @@ void main()
         // create fragment shader
 
         GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         string_view fragment_shader_src = R"(
 varying vec2 v_tex_coord;
 uniform sampler2D s_texture;
@@ -325,25 +325,25 @@ void main()
 )";
         source                          = fragment_shader_src.data();
         glShaderSource(fragment_shader, 1, &source, nullptr);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
 
         glCompileShader(fragment_shader);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
 
         compiled_status = 0;
         glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &compiled_status);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         if (compiled_status == 0)
         {
             GLint info_len = 0;
             glGetShaderiv(fragment_shader, GL_INFO_LOG_LENGTH, &info_len);
-            OM_GL_CHECK();
+            OM_GL_CHECK()
             std::vector<char> info_chars(info_len);
             glGetShaderInfoLog(fragment_shader, info_len, NULL,
                                info_chars.data());
-            OM_GL_CHECK();
+            OM_GL_CHECK()
             glDeleteShader(fragment_shader);
-            OM_GL_CHECK();
+            OM_GL_CHECK()
 
             serr << "Error compiling shader(fragment)\n"
                  << vertex_shader_src << "\n"
@@ -354,7 +354,7 @@ void main()
         // now create program and attach vertex and fragment shaders
 
         GLuint program_id_ = glCreateProgram();
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         if (0 == program_id_)
         {
             serr << "failed to create gl program";
@@ -362,44 +362,44 @@ void main()
         }
 
         glAttachShader(program_id_, vert_shader);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         glAttachShader(program_id_, fragment_shader);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
 
         // bind attribute location
         glBindAttribLocation(program_id_, 0, "a_position");
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         // link program after binding attribute locations
         glLinkProgram(program_id_);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         // Check the link status
         GLint linked_status = 0;
         glGetProgramiv(program_id_, GL_LINK_STATUS, &linked_status);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         if (linked_status == 0)
         {
             GLint infoLen = 0;
             glGetProgramiv(program_id_, GL_INFO_LOG_LENGTH, &infoLen);
-            OM_GL_CHECK();
+            OM_GL_CHECK()
             std::vector<char> infoLog(infoLen);
             glGetProgramInfoLog(program_id_, infoLen, NULL, infoLog.data());
-            OM_GL_CHECK();
+            OM_GL_CHECK()
             serr << "Error linking program:\n" << infoLog.data();
             glDeleteProgram(program_id_);
-            OM_GL_CHECK();
+            OM_GL_CHECK()
             return serr.str();
         }
 
         // turn on rendering with just created shader program
         glUseProgram(program_id_);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
 
         int location = glGetUniformLocation(program_id_, "s_texture");
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         assert(-1 != location);
         int texture_unit = 0;
         glActiveTexture_(GL_TEXTURE0 + texture_unit);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
 
         if (!load_texture("tank.png"))
         {
@@ -408,12 +408,12 @@ void main()
 
         // http://www.khronos.org/opengles/sdk/docs/man/xhtml/glUniform.xml
         glUniform1i(location, 0 + texture_unit);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
 
         glEnable(GL_BLEND);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
 
         return "";
     }
@@ -529,28 +529,28 @@ void main()
         // vertex coordinates
         glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(vertex),
                               &t.v[0].x);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         glEnableVertexAttribArray(0);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
 
         // texture coordinates
         glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(vertex),
                               &t.v[0].tx);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         glEnableVertexAttribArray(1);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
 
         glDrawArrays(GL_TRIANGLES, 0, 3);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
     }
     void swap_buffers() final
     {
         SDL_GL_SwapWindow(window);
 
         glClearColor(0.f, 1.0, 0.f, 0.0f);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
         glClear(GL_COLOR_BUFFER_BIT);
-        OM_GL_CHECK();
+        OM_GL_CHECK()
     }
     void uninitialize() final
     {
