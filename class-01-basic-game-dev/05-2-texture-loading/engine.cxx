@@ -298,8 +298,9 @@ void main()
             GLint info_len = 0;
             glGetShaderiv(vert_shader, GL_INFO_LOG_LENGTH, &info_len);
             OM_GL_CHECK()
-            std::vector<char> info_chars(info_len);
-            glGetShaderInfoLog(vert_shader, info_len, NULL, info_chars.data());
+            std::vector<char> info_chars(static_cast<size_t>(info_len));
+            glGetShaderInfoLog(vert_shader, info_len, nullptr,
+                               info_chars.data());
             OM_GL_CHECK()
             glDeleteShader(vert_shader);
             OM_GL_CHECK()
@@ -338,8 +339,8 @@ void main()
             GLint info_len = 0;
             glGetShaderiv(fragment_shader, GL_INFO_LOG_LENGTH, &info_len);
             OM_GL_CHECK()
-            std::vector<char> info_chars(info_len);
-            glGetShaderInfoLog(fragment_shader, info_len, NULL,
+            std::vector<char> info_chars(static_cast<size_t>(info_len));
+            glGetShaderInfoLog(fragment_shader, info_len, nullptr,
                                info_chars.data());
             OM_GL_CHECK()
             glDeleteShader(fragment_shader);
@@ -381,8 +382,8 @@ void main()
             GLint infoLen = 0;
             glGetProgramiv(program_id_, GL_INFO_LOG_LENGTH, &infoLen);
             OM_GL_CHECK()
-            std::vector<char> infoLog(infoLen);
-            glGetProgramInfoLog(program_id_, infoLen, NULL, infoLog.data());
+            std::vector<char> infoLog(static_cast<size_t>(infoLen));
+            glGetProgramInfoLog(program_id_, infoLen, nullptr, infoLog.data());
             OM_GL_CHECK()
             serr << "Error linking program:\n" << infoLog.data();
             glDeleteProgram(program_id_);
