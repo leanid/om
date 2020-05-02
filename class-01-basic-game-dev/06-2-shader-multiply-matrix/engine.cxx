@@ -1003,15 +1003,15 @@ std::string engine_impl::initialize(std::string_view)
                 varying vec4 v_color;
                 void main()
                 {
-                v_color = a_color;
-                gl_Position = vec4(a_position, 0.0, 1.0);
+                    v_color = a_color;
+                    gl_Position = vec4(a_position, 0.0, 1.0);
                 }
                 )",
         R"(
                 varying vec4 v_color;
                 void main()
                 {
-                gl_FragColor = v_color;
+                    gl_FragColor = v_color;
                 }
                 )",
         { { 0, "a_position" }, { 1, "a_color" } });
@@ -1027,9 +1027,9 @@ std::string engine_impl::initialize(std::string_view)
                 varying vec2 v_tex_coord;
                 void main()
                 {
-                v_tex_coord = a_tex_coord;
-                v_color = a_color;
-                gl_Position = vec4(a_position, 0.0, 1.0);
+                    v_tex_coord = a_tex_coord;
+                    v_color = a_color;
+                    gl_Position = vec4(a_position, 0.0, 1.0);
                 }
                 )",
         R"(
@@ -1038,7 +1038,7 @@ std::string engine_impl::initialize(std::string_view)
                 uniform sampler2D s_texture;
                 void main()
                 {
-                gl_FragColor = texture2D(s_texture, v_tex_coord) * v_color;
+                    gl_FragColor = texture2D(s_texture, v_tex_coord) * v_color;
                 }
                 )",
         { { 0, "a_position" }, { 1, "a_color" }, { 2, "a_tex_coord" } });
@@ -1056,10 +1056,10 @@ std::string engine_impl::initialize(std::string_view)
                 varying vec2 v_tex_coord;
                 void main()
                 {
-                v_tex_coord = a_tex_coord;
-                v_color = a_color;
-                vec3 pos = vec3(a_position, 1.0) * u_matrix;
-                gl_Position = vec4(pos, 1.0);
+                    v_tex_coord = a_tex_coord;
+                    v_color = a_color;
+                    vec3 pos = vec3(a_position, 1.0) * u_matrix;
+                    gl_Position = vec4(pos, 1.0);
                 }
                 )",
         R"(
@@ -1068,7 +1068,7 @@ std::string engine_impl::initialize(std::string_view)
                 uniform sampler2D s_texture;
                 void main()
                 {
-                gl_FragColor = texture2D(s_texture, v_tex_coord) * v_color;
+                    gl_FragColor = texture2D(s_texture, v_tex_coord) * v_color;
                 }
                 )",
         { { 0, "a_position" }, { 1, "a_color" }, { 2, "a_tex_coord" } });
