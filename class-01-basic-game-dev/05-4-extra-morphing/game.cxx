@@ -52,6 +52,13 @@ int main(int /*argc*/, char* /*argv*/[])
 
     loader_obj circle_data(file);
 
+    std::ifstream file_next("hart.obj", std::ios::binary);
+    loader_obj    hart_data(file_next);
+
+    // for morphing animation
+    assert(hart_data.vertexes().size() == circle_data.vertexes().size());
+    assert(hart_data.faces().size() == circle_data.faces().size());
+
     std::unique_ptr<om::engine, void (*)(om::engine*)> engine(
         om::create_engine(), om::destroy_engine);
 
@@ -101,29 +108,15 @@ int main(int /*argc*/, char* /*argv*/[])
             for (auto& face : circle_data.faces())
             {
                 om::tri0 tri0 = to_om_triangle(circle_data, face);
-                engine->render(tri0, om::color(1.f, 0.f, 0.f, 1.f));
+                om::tri0 tri1 = to_om_triangle(hart_data, face);
+
+                float time  = engine->get_time_from_init();
+                float alpha = 0.5f * std::sin(time) + 0.5f;
+
+                om::tri0 t1 = blend(tri0, tri1, alpha);
+
+                engine->render(t1, om::color(1.f, 0.f, 0.f, 1.f));
             }
-
-            /*
-            std::ifstream file("vert_pos.txt");
-            assert(!!file);
-
-            om::tri0 tr1;
-            om::tri0 tr2;
-            om::tri0 tr11;
-            om::tri0 tr22;
-
-            file >> tr1 >> tr2 >> tr11 >> tr22;
-
-            float time  = engine->get_time_from_init();
-            float alpha = std::sin(time);
-
-            om::tri0 t1 = blend(tr1, tr11, alpha);
-            om::tri0 t2 = blend(tr2, tr22, alpha);
-
-            engine->render(t1, om::color(1.f, 0.f, 0.f, 1.f));
-            engine->render(t2, om::color(0.f, 1.f, 0.f, 1.f));
-*/
         }
 
         if (current_shader == 1)
