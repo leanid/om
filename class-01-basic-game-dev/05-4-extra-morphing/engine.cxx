@@ -486,7 +486,16 @@ public:
 
     texture* create_texture(std::string_view path) final
     {
-        return new texture_gl_es20(path);
+        texture* result = nullptr;
+        try
+        {
+            result = new texture_gl_es20(path);
+        }
+        catch (const std::exception& ex)
+        {
+            std::clog << ex.what() << std::endl;
+        }
+        return result;
     }
     void destroy_texture(texture* t) final { delete t; }
 

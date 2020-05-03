@@ -10,6 +10,8 @@
 
 #include "engine.hxx"
 
+#include "loader_obj.hxx"
+
 om::v0 blend(const om::v0& vl, const om::v0& vr, const float a)
 {
     om::v0 r;
@@ -27,8 +29,12 @@ om::tri0 blend(const om::tri0& tl, const om::tri0& tr, const float a)
     return r;
 }
 
-int main(int /*argc*/, char* /*argv*/ [])
+int main(int /*argc*/, char* /*argv*/[])
 {
+    std::ifstream file("circle.obj", std::ios::binary);
+
+    loader_obj circle_data(file);
+
     std::unique_ptr<om::engine, void (*)(om::engine*)> engine(
         om::create_engine(), om::destroy_engine);
 
