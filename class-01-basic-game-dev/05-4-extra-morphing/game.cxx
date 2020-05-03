@@ -29,6 +29,23 @@ om::tri0 blend(const om::tri0& tl, const om::tri0& tr, const float a)
     return r;
 }
 
+om::tri0 to_om_triangle(const loader_obj&       mesh_data,
+                        const loader_obj::face& face)
+{
+    om::tri0 result;
+
+    const loader_obj::vertex& v0 = mesh_data.vertexes().at(face.p0.vtn.v - 1);
+    result.v[0].p                = om::pos{ v0.x, v0.y };
+
+    const loader_obj::vertex& v1 = mesh_data.vertexes().at(face.p1.vtn.v - 1);
+    result.v[1].p                = om::pos{ v1.x, v1.y };
+
+    const loader_obj::vertex& v2 = mesh_data.vertexes().at(face.p2.vtn.v - 1);
+    result.v[2].p                = om::pos{ v2.x, v2.y };
+
+    return result;
+}
+
 int main(int /*argc*/, char* /*argv*/[])
 {
     std::ifstream file("circle.obj", std::ios::binary);
@@ -81,6 +98,13 @@ int main(int /*argc*/, char* /*argv*/[])
 
         if (current_shader == 0)
         {
+            for (auto& face : circle_data.faces())
+            {
+                om::tri0 tri0 = to_om_triangle(circle_data, face);
+                engine->render(tri0, om::color(1.f, 0.f, 0.f, 1.f));
+            }
+
+            /*
             std::ifstream file("vert_pos.txt");
             assert(!!file);
 
@@ -99,6 +123,7 @@ int main(int /*argc*/, char* /*argv*/[])
 
             engine->render(t1, om::color(1.f, 0.f, 0.f, 1.f));
             engine->render(t2, om::color(0.f, 1.f, 0.f, 1.f));
+*/
         }
 
         if (current_shader == 1)
