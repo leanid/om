@@ -34,14 +34,17 @@ om::tri0 to_om_triangle(const loader_obj&       mesh_data,
 {
     om::tri0 result;
 
+    const float scale_x = 600.f / 800.f; // window_width / window_height
+    const float scale_y = 1.f;
+
     const loader_obj::vertex& v0 = mesh_data.vertexes().at(face.p0.vtn.v - 1);
-    result.v[0].p                = om::pos{ v0.x, v0.y };
+    result.v[0].p                = om::pos{ v0.x * scale_x, v0.y * scale_y };
 
     const loader_obj::vertex& v1 = mesh_data.vertexes().at(face.p1.vtn.v - 1);
-    result.v[1].p                = om::pos{ v1.x, v1.y };
+    result.v[1].p                = om::pos{ v1.x * scale_x, v1.y * scale_y };
 
     const loader_obj::vertex& v2 = mesh_data.vertexes().at(face.p2.vtn.v - 1);
-    result.v[2].p                = om::pos{ v2.x, v2.y };
+    result.v[2].p                = om::pos{ v2.x * scale_x, v2.y * scale_y };
 
     return result;
 }
