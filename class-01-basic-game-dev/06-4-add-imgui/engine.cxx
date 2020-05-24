@@ -976,7 +976,7 @@ private:
     shader_gl_es20* shader02       = nullptr;
     shader_gl_es20* shader03       = nullptr;
     uint32_t        gl_default_vbo = 0;
-    bool            show_demo_window{ false };
+    bool            show_demo_window{ true };
 };
 #pragma pack(pop)
 

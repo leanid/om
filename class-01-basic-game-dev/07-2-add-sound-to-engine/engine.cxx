@@ -290,6 +290,7 @@ sound_buffer_impl::sound_buffer_impl(std::string_view  path,
         throw std::runtime_error(std::string("can't load wav: ") + path.data());
     }
 
+    std::cout << "--------------------------------------------\n";
     std::cout << "audio format for: " << path << '\n'
               << "format: " << get_sound_format_name(file_audio_spec.format)
               << '\n'
@@ -305,6 +306,7 @@ sound_buffer_impl::sound_buffer_impl(std::string_view  path,
                       static_cast<uint32_t>(file_audio_spec.freq) *
                       get_sound_format_size(file_audio_spec.format))
               << "sec" << std::endl;
+    std::cout << "--------------------------------------------\n";
 
     if (file_audio_spec.channels != device_audio_spec.channels ||
         file_audio_spec.format != device_audio_spec.format ||
@@ -315,24 +317,33 @@ sound_buffer_impl::sound_buffer_impl(std::string_view  path,
                           file_audio_spec.channels, file_audio_spec.freq,
                           device_audio_spec.format, device_audio_spec.channels,
                           device_audio_spec.freq);
-        assert(cvt.needed); // obviously, this one is always needed.
-        // read your data into cvt.buf here.
-        cvt.len = static_cast<int>(length);
-        // we have to make buffer for inplace conversion
-        size_t new_buffer_size = static_cast<size_t>(cvt.len * cvt.len_mult);
-        tmp_buf.reset(new uint8_t[new_buffer_size]);
-        uint8_t* buf = tmp_buf.get();
-        std::copy_n(buffer, length, buf);
-        cvt.buf = buf;
-        if (0 != SDL_ConvertAudio(&cvt))
+        if (cvt.needed) // obviously, this one is always needed.
         {
-            std::cout << "failed to convert audio from file: " << path
-                      << " to audio device format" << std::endl;
+            // read your data into cvt.buf here.
+            cvt.len = static_cast<int>(length);
+            // we have to make buffer for inplace conversion
+            size_t new_buffer_size =
+                static_cast<size_t>(cvt.len * cvt.len_mult);
+            tmp_buf.reset(new uint8_t[new_buffer_size]);
+            uint8_t* buf_tmp = tmp_buf.get();
+            // copy old buffer to new memory
+            std::copy_n(buffer, length, buf_tmp);
+            // cvt.buf has cvt.len_cvt bytes of converted data now.
+            SDL_FreeWAV(buffer);
+            cvt.buf = buf_tmp;
+            if (0 != SDL_ConvertAudio(&cvt))
+            {
+                std::cout << "failed to convert audio from file: " << path
+                          << " to audio device format" << std::endl;
+            }
+
+            buffer = tmp_buf.get();
+            length = static_cast<uint32_t>(cvt.len_cvt);
         }
-        // cvt.buf has cvt.len_cvt bytes of converted data now.
-        SDL_FreeWAV(buffer);
-        buffer = tmp_buf.get();
-        length = static_cast<uint32_t>(cvt.len_cvt);
+        else
+        {
+            // TODO no need to convert buffer, use as is
+        }
     }
 }
 
@@ -801,9 +812,9 @@ public:
 
     sound_buffer* create_sound_buffer(std::string_view path) final
     {
-        SDL_LockAudioDevice(audio_device); // TODO fix lock only push_back
         sound_buffer_impl* s =
             new sound_buffer_impl(path, audio_device, audio_device_spec);
+        SDL_LockAudioDevice(audio_device); // TODO fix lock only push_back
         sounds.push_back(s);
         SDL_UnlockAudioDevice(audio_device);
         return s;
@@ -1420,6 +1431,7 @@ std::string engine_impl::initialize(std::string_view)
     }
     else
     {
+        std::cout << "--------------------------------------------\n";
         std::cout << "audio device selected: " << default_audio_device_name
                   << '\n'
                   << "freq: " << audio_device_spec.freq << '\n'

@@ -133,7 +133,7 @@ int main(int /*argc*/, char* /*argv*/[])
 
     // start playing audio thread
     // now callback is firing
-    SDL_PauseAudioDevice(audio_device_id, 0);
+    SDL_PauseAudioDevice(audio_device_id, SDL_FALSE);
 
     clog << "unpause audio device (start audio thread)" << endl;
 
@@ -218,7 +218,7 @@ int main(int /*argc*/, char* /*argv*/[])
 
     clog << "pause audio device (stop audio thread)" << endl;
     // stop audio device and stop thread call our callback function
-    SDL_PauseAudioDevice(audio_device_id, 1);
+    SDL_PauseAudioDevice(audio_device_id, SDL_TRUE);
 
     clog << "close audio device" << endl;
 

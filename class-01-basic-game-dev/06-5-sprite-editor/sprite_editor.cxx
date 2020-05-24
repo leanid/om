@@ -291,8 +291,18 @@ int main(int /*argc*/, char* /*argv*/[])
         // Rendering
         ImGui::Render();
 
-        sprite spr(sprite_id, texture, spr_rect, spr_center_pos, spr_size,
-                   angle);
+        rect from_pixels_to_relative = spr_rect;
+
+        if (texture != nullptr)
+        {
+            from_pixels_to_relative.pos.x /= texture->get_width();
+            from_pixels_to_relative.pos.y /= texture->get_height();
+            from_pixels_to_relative.size.x /= texture->get_width();
+            from_pixels_to_relative.size.y /= texture->get_height();
+        }
+
+        sprite spr(sprite_id, texture, from_pixels_to_relative, spr_center_pos,
+                   spr_size, angle);
 
         spr.draw(engine);
 
