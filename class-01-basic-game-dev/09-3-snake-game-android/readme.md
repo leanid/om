@@ -15,3 +15,4 @@ cmake.dir=/usr
 
 ## 2. Double check path to cmake see comments in previous example
 ## 3. Check path to SDL2 source directory
+## 4. Add binary dir for every build configuration as we use out of build tree path to SDL2: When specifying an out-of-tree source a binary directory must be explicitly specified.

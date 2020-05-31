@@ -1,10 +1,11 @@
 cmake_minimum_required(VERSION 3.16)
 
 if(SDL2_SRC_DIR)
-add_subdirectory( # Specifies the directory of the CMakeLists.txt file.
-                  ${SDL2_SRC_DIR}
-                  # Specifies the directory for the build outputs.
-                  ${SDL2_BUILD_DIR}_${ANDROID_ABI} )  
+    add_subdirectory( # Specifies the directory of the CMakeLists.txt file.
+                     ${SDL2_SRC_DIR}
+                     # Specifies the directory for the build outputs.
+                     ${SDL2_BUILD_DIR}_${ANDROID_ABI}
+                    )
 endif()
 
 

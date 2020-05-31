@@ -8,7 +8,7 @@ else {
 }
 
 android {
-    compileSdkVersion 28
+    compileSdkVersion 29
 
     Properties properties = new Properties()
     properties.load(project.rootProject.file('local.properties').newDataInputStream())
@@ -45,7 +45,7 @@ android {
             // on NDK20b arm64-v8a dlopen failed if minSdkVersion less 21
             //abiFilters "arm64-v8a"
             //abiFilters "armeabi-v7a"
-            abiFilters "x86"
+            abiFilters "arm64-v8a"
         }
 
         externalNativeBuild {
@@ -54,7 +54,7 @@ android {
                                  // or you have to set path to it in local.properties like:
                                  // # If you set this property, Gradle no longer uses PATH to find CMake.
                                  // # gradle works only with canonical cmake from cmake.org
-                                 // cmake.dir="path-to-cmake"
+                                 // cmake.dir="path-to-cmake like /usr or /home/leo/cmake-3.17.2"
 
 
                 // Use the following syntax when passing arguments to variables:
