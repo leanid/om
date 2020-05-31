@@ -16,7 +16,21 @@ endif(WIN32)
 
 # use sdl >= 2.0.12 (with nice new cmake build file)
 find_package(sdl2 REQUIRED)
-target_link_libraries(engine-04-1 PRIVATE SDL2::SDL2 SDL2::SDL2main)
+if (MINGW)
+    # find out what libraries are needed for dynamicaly linking with libSDL.so
+    # using mingw64 cross-compiler
+
+    #$> /usr/x86_64-w64-mingw32/sys-root/mingw/bin/sdl2-config --libs
+    #-L/usr/x86_64-w64-mingw32/sys-root/mingw/lib -lmingw32 -lSDL2main -lSDL2 -mwindows
+    target_link_libraries(engine-04-1 PRIVATE
+               mingw32
+               SDL2main
+               SDL2
+               -mwindows
+               )
+else()
+    target_link_libraries(engine-04-1 PRIVATE SDL2::SDL2 SDL2::SDL2main)
+endif()
 
 add_executable(game-04-1 game.cxx)
 target_compile_features(game-04-1 PUBLIC cxx_std_17)
