@@ -10,7 +10,6 @@ target_compile_features(02-sdl-dynamic PUBLIC cxx_std_17)
 # Fedora - dnf install sdl2-devel sdl2-static
 # set(SDL2_DIR /usr/local/lib/cmake/SDL2) # uncomment for local SDL2 build
 find_package(SDL2 REQUIRED)
-target_link_libraries(02-sdl-dynamic PRIVATE SDL2::SDL2 SDL2::SDL2main)
 
 if (MINGW)
     # find out what libraries are needed for dynamicaly linking with libSDL.so
@@ -24,6 +23,8 @@ if (MINGW)
                -lSDL2
                -mwindows
                )
+else()
+    target_link_libraries(02-sdl-dynamic PRIVATE SDL2::SDL2 SDL2::SDL2main)
 endif()
 
 install(TARGETS 02-sdl-dynamic

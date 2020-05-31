@@ -4,11 +4,16 @@
 #include <iostream>
 #include <string_view>
 
+#include <chrono>
+#include <thread>
+
 static std::string_view get_user_name(char**);
 
 int main(int /*argc*/, char* /*argv*/[], char** env)
 {
     using namespace std;
+
+    std::this_thread::sleep_for(std::chrono::seconds(1));
 
     string_view user_name = get_user_name(env);
 
@@ -53,7 +58,8 @@ static char** get_env_end(char** env)
 
 static bool start_with(std::string_view str, std::string_view start)
 {
-    return str.size() >= start.size() && std::equal(begin(start), end(start), begin(str));
+    return str.size() >= start.size() &&
+           std::equal(begin(start), end(start), begin(str));
 }
 
 static std::string_view get_value(std::string_view key_value)
