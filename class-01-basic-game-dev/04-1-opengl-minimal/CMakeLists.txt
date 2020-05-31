@@ -28,6 +28,7 @@ if (MINGW)
                SDL2
                -mwindows
                )
+    target_include_directories(engine-04-1 PRIVATE ${SDL2_INCLUDE_DIRS})
 else()
     target_link_libraries(engine-04-1 PRIVATE SDL2::SDL2 SDL2::SDL2main)
 endif()
