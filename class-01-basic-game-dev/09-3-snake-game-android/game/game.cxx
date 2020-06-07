@@ -17,9 +17,9 @@
 #include "game_object.hxx"
 #include "snake.hxx"
 
-size_t screen_width  = 960.f;
-size_t screen_height = 540.f;
-om::texture*            debug_texture = nullptr;
+size_t       screen_width  = 960.f;
+size_t       screen_height = 540.f;
+om::texture* debug_texture = nullptr;
 
 class snake_game final : public om::lila
 {
@@ -65,13 +65,27 @@ void snake_game::update_free_cells()
     cell_state.resize(28 * 28);
     snake_->fill_cells(cell_state);
     free_cells.clear();
-    for (uint32_t i = 0; i < 28 * 28; ++i)
+
+    struct iter
     {
-        if (!cell_state.at(i))
+        uint32_t operator*() { return i; }
+        void     operator++() { ++i; }
+        bool     operator==(const iter& other) const { return i == other.i; }
+        bool operator!=(const iter& other) const { return !(*this == other); }
+        uint32_t i;
+    };
+
+    std::copy_if(iter{ 0 }, iter{ 28 * 28 }, std::back_inserter(free_cells),
+                 [this](int32_t i) { return !cell_state.at(i); });
+    /*
+        for (uint32_t i = 0; i < 28 * 28; ++i)
         {
-            free_cells.push_back(i);
+            if (!cell_state.at(i))
+            {
+                free_cells.push_back(i);
+            }
         }
-    }
+    */
 }
 
 void snake_game::on_initialize()
@@ -230,9 +244,7 @@ void snake_game::on_render() const
         const om::matrix  world;
     };
 
-    static const std::vector<object_type> render_order = {
-        object_type::level
-    };
+    static const std::vector<object_type> render_order = { object_type::level };
 
     auto it =
         std::find_if(begin(objects), end(objects), [](const game_object& obj) {

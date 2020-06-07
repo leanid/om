@@ -69,7 +69,7 @@ static PFNGLACTIVETEXTUREPROC            glActiveTexture_           = nullptr;
 static PFNGLUNIFORM4FVPROC               glUniform4fv               = nullptr;
 static PFNGLUNIFORMMATRIX3FVPROC         glUniformMatrix3fv         = nullptr;
 #if defined(PFNGLGETERRORPROC)
-static PFNGLGETERRORPROC                 glGetError = nullptr;
+static PFNGLGETERRORPROC glGetError = nullptr;
 #endif
 #endif
 
@@ -784,18 +784,21 @@ bool pool_event(event& e)
                 e.type       = om::event_type::input_key;
                 return true;
             }
-        } else if (sdl_event.type == SDL_MOUSEBUTTONDOWN || sdl_event.type == SDL_MOUSEBUTTONUP)
+        }
+        else if (sdl_event.type == SDL_MOUSEBUTTONDOWN ||
+                 sdl_event.type == SDL_MOUSEBUTTONUP)
         {
             int w = 0;
             int h = 0;
             SDL_GetWindowSize(window, &w, &h);
 
-            enum keys key = sdl_event.button.x < (w / 2) ? keys::left : keys::right;
+            enum keys key =
+                sdl_event.button.x < (w / 2) ? keys::left : keys::right;
             bool is_down = SDL_MOUSEBUTTONDOWN == sdl_event.type;
 
-            e.info = om::input_data{key, is_down};
+            e.info      = om::input_data{ key, is_down };
             e.timestamp = sdl_event.common.timestamp * 0.001;
-            e.type = om::event_type::input_key;
+            e.type      = om::event_type::input_key;
             return true;
         }
     }
@@ -855,7 +858,7 @@ void get_window_size(size_t& width, size_t& height)
 
     SDL_GetWindowSize(window, &w, &h);
 
-    width = static_cast<size_t>(w);
+    width  = static_cast<size_t>(w);
     height = static_cast<size_t>(h);
 }
 
@@ -1007,7 +1010,8 @@ static void initialize_internal(std::string_view   title,
 
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
+                            SDL_GL_CONTEXT_PROFILE_ES);
 
         gl_context = SDL_GL_CreateContext(window);
         if (gl_context == nullptr)
@@ -1334,36 +1338,36 @@ void color::set_a(const float a)
     rgba |= a_ << 24;
 }
 
-    membuf load_file(std::string_view path)
+membuf load_file(std::string_view path)
+{
+    SDL_RWops* io = SDL_RWFromFile(path.data(), "rb");
+    if (nullptr == io)
     {
-        SDL_RWops* io = SDL_RWFromFile(path.data(), "rb");
-        if (nullptr == io)
-        {
-            throw std::runtime_error("can't load file: " + std::string(path));
-        }
-
-        Sint64 file_size = io->size(io);
-        if (-1 == file_size)
-        {
-            throw std::runtime_error("can't determine size of file: " +
-                                     std::string(path));
-        }
-        size_t                  size = static_cast<size_t>(file_size);
-        std::unique_ptr<char[]> mem  = std::make_unique<char[]>(size);
-
-        size_t num_readed_objects = io->read(io, mem.get(), size, 1);
-        if (num_readed_objects != 1)
-        {
-            throw std::runtime_error("can't read all content from file: " +
-                                     std::string(path));
-        }
-
-        if (0 != io->close(io))
-        {
-            throw std::runtime_error("failed close file: " + std::string(path));
-        }
-        return membuf(std::move(mem), size);
+        throw std::runtime_error("can't load file: " + std::string(path));
     }
+
+    Sint64 file_size = io->size(io);
+    if (-1 == file_size)
+    {
+        throw std::runtime_error("can't determine size of file: " +
+                                 std::string(path));
+    }
+    size_t                  size = static_cast<size_t>(file_size);
+    std::unique_ptr<char[]> mem  = std::make_unique<char[]>(size);
+
+    size_t num_readed_objects = io->read(io, mem.get(), size, 1);
+    if (num_readed_objects != 1)
+    {
+        throw std::runtime_error("can't read all content from file: " +
+                                 std::string(path));
+    }
+
+    if (0 != io->close(io))
+    {
+        throw std::runtime_error("failed close file: " + std::string(path));
+    }
+    return membuf(std::move(mem), size);
+}
 
 texture_gl_es20::texture_gl_es20(std::string_view path)
     : file_path(path)
@@ -1402,9 +1406,11 @@ texture_gl_es20::texture_gl_es20(std::string_view path)
     int            height     = 0;
     int            components = 0;
     unsigned char* decoded_img =
-    //    stbi_load(path.data(), &width, &height, &components, 4);
+        //    stbi_load(path.data(), &width, &height, &components, 4);
 
-     stbi_load_from_memory(reinterpret_cast<unsigned char*>(file_contents.begin()), file_contents.size(), &width, &height, &components, 4);
+        stbi_load_from_memory(
+            reinterpret_cast<unsigned char*>(file_contents.begin()),
+            file_contents.size(), &width, &height, &components, 4);
 
     // if there's an error, display it
     if (decoded_img == nullptr)
@@ -1503,10 +1509,18 @@ int initialize_and_start_main_loop()
         ~start() { om::uninitialize(); }
     } guard;
 
+    // clang-format off
     std::vector<const char*> lib_names{
-        { "libgame-09-3.so", "game-09-3", "libgame-09-3.dll", "./libgame-09-3.so", "./game-09-3.so",
-          "./build/Debug/libgame-09-3.so", "./build/Debug/libgame-09-3.dll" }
+        { "libgame-09-3.so",
+          "game-09-3",
+          "libgame-09-3.dll",
+          "./libgame-09-3.so",
+          "./game-09-3.so",
+          "./build/Debug/libgame-09-3.so",
+          "./build-Debug/libgame-09-3.so",
+          "./build/Debug/libgame-09-3.dll" }
     };
+    // clang-format on
 
     void* so_handle   = nullptr;
     auto  lib_name_it = std::find_if(
@@ -1538,7 +1552,7 @@ int initialize_and_start_main_loop()
 #if defined(__MINGW32__) || defined(__linux__)
     om_tat_sat_func = "_Z10om_tat_satv";
 #elif defined(_MSC_VER)
-    om_tat_sat_func = "om_tat_sat::om::engine"; // TODO fix it later
+    om_tat_sat_func = "om_tat_sat::om::engine";       // TODO fix it later
 #else
 #error "add mangled name for your compiler"
 #endif
@@ -1650,7 +1664,7 @@ private:
     std::string message;
 };
 
-int main(int /*argc*/, char* /*argv*/ [])
+int main(int /*argc*/, char* /*argv*/[])
 {
     auto cout_buf = std::cout.rdbuf();
     auto cerr_buf = std::cerr.rdbuf();
@@ -1661,7 +1675,7 @@ int main(int /*argc*/, char* /*argv*/ [])
     std::cout.rdbuf(&logcat);
     std::cerr.rdbuf(&logcat);
     std::clog.rdbuf(&logcat);
-    
+
     try
     {
         int result = initialize_and_start_main_loop();
