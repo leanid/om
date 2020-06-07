@@ -7,6 +7,7 @@
 #include <iostream>
 #include <iterator>
 #include <memory>
+#include <ranges>
 #include <string_view>
 #include <vector>
 
@@ -66,17 +67,15 @@ void snake_game::update_free_cells()
     snake_->fill_cells(cell_state);
     free_cells.clear();
 
-    struct iter
-    {
-        uint32_t operator*() { return i; }
-        void     operator++() { ++i; }
-        bool     operator==(const iter& other) const { return i == other.i; }
-        bool operator!=(const iter& other) const { return !(*this == other); }
-        uint32_t i;
-    };
+    auto is_cell_empty = [this](uint32_t i) { return !cell_state.at(i); };
 
-    std::copy_if(iter{ 0 }, iter{ 28 * 28 }, std::back_inserter(free_cells),
-                 [this](int32_t i) { return !cell_state.at(i); });
+    using namespace std;
+    using namespace std::views;
+
+    auto empty_cells = iota(0u, 28u * 28u) | filter(is_cell_empty);
+
+    copy(begin(empty_cells), end(empty_cells), back_inserter(free_cells));
+
     /*
         for (uint32_t i = 0; i < 28 * 28; ++i)
         {
