@@ -7,7 +7,9 @@
 #include <iostream>
 #include <iterator>
 #include <memory>
+#if __has_include(<ranges>)
 #include <ranges>
+#endif
 #include <string_view>
 #include <vector>
 
@@ -68,23 +70,22 @@ void snake_game::update_free_cells()
     free_cells.clear();
 
     auto is_cell_empty = [this](uint32_t i) { return !cell_state.at(i); };
-
+#if __has_include(<ranges>)
     using namespace std;
     using namespace std::views;
 
     auto empty_cells = iota(0u, 28u * 28u) | filter(is_cell_empty);
 
     copy(begin(empty_cells), end(empty_cells), back_inserter(free_cells));
-
-    /*
-        for (uint32_t i = 0; i < 28 * 28; ++i)
+#else
+    for (uint32_t i = 0; i < 28 * 28; ++i)
+    {
+        if (!cell_state.at(i))
         {
-            if (!cell_state.at(i))
-            {
-                free_cells.push_back(i);
-            }
+            free_cells.push_back(i);
         }
-    */
+    }
+#endif
 }
 
 void snake_game::on_initialize()
