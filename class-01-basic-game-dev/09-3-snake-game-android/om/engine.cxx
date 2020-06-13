@@ -1430,6 +1430,8 @@ texture_gl_es20::texture_gl_es20(std::string_view path)
                  GL_RGBA, GL_UNSIGNED_BYTE, decoded_img);
     OM_GL_CHECK();
 
+    stbi_image_free(decoded_img);
+
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     OM_GL_CHECK();
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
