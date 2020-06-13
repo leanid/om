@@ -413,7 +413,7 @@ private:
 
             std::string shader_type_name =
                 shader_type == GL_VERTEX_SHADER ? "vertex" : "fragment";
-            std::cerr << "Error compiling shader(vertex)\n"
+            std::cerr << "Error compiling shader(" << shader_type_name << ")\n"
                       << vertex_shader_src << "\n"
                       << info_chars.data();
             return 0;
@@ -729,30 +729,35 @@ public:
         return new texture_gl_es20(path);
     }
     texture* create_texture_rgba32(const void* pixels, const size_t width,
-                                   const size_t height)
+                                   const size_t height) override
     {
         return new texture_gl_es20(pixels, width, height);
     }
     void destroy_texture(texture* t) final { delete t; }
 
-    vertex_buffer* create_vertex_buffer(const tri2* triangles, std::size_t n)
+    vertex_buffer* create_vertex_buffer(const tri2* triangles,
+                                        std::size_t n) override
     {
         assert(triangles != nullptr);
         return new vertex_buffer_impl(triangles, n);
     }
-    vertex_buffer* create_vertex_buffer(const v2* vert, std::size_t count)
+    vertex_buffer* create_vertex_buffer(const v2*   vert,
+                                        std::size_t count) override
     {
         assert(vert != nullptr);
         return new vertex_buffer_impl(vert, count);
     }
-    void destroy_vertex_buffer(vertex_buffer* buffer) { delete buffer; }
+    void destroy_vertex_buffer(vertex_buffer* buffer) override
+    {
+        delete buffer;
+    }
 
     index_buffer* create_index_buffer(const std::uint16_t* indexes,
-                                      std::size_t          count)
+                                      std::size_t          count) override
     {
         return new index_buffer_impl(indexes, count);
     }
-    void destroy_index_buffer(index_buffer* buffer) { delete buffer; }
+    void destroy_index_buffer(index_buffer* buffer) override { delete buffer; }
 
     void render(const tri0& t, const color& c) final
     {
@@ -901,7 +906,7 @@ public:
 
     void render(const vertex_buffer* buff, const index_buffer* indexes,
                 const texture* tex, const std::uint16_t* start_vertex_index,
-                size_t num_vertexes)
+                size_t num_vertexes) override
     {
         tex->bind();
 
