@@ -17,7 +17,7 @@ sprite::sprite(const std::string_view id, om::texture* tex,
 {
 }
 
-void sprite::draw(om::engine& render)
+void sprite::draw(om::engine& render) const
 {
     if (texture_ == nullptr)
     {

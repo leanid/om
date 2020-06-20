@@ -17,7 +17,7 @@ public:
            const rect& rect_on_texture, const om::vec2& pos,
            const om::vec2& size, const float angle);
 
-    void draw(om::engine& render);
+    void draw(om::engine& render) const;
 
     om::texture* texture() const;
     void         texture(om::texture* t);

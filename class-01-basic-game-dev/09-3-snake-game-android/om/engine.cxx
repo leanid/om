@@ -1022,6 +1022,9 @@ static void initialize_internal(std::string_view   title,
             throw std::runtime_error(serr.str());
         }
 
+        int swap_applyed = SDL_GL_SetSwapInterval(0);
+        assert(swap_applyed == 0);
+
         int gl_major_ver = 0;
         int result =
             SDL_GL_GetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, &gl_major_ver);

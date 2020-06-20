@@ -18,7 +18,7 @@ void ani2d::draw(om::engine& e, float delta_time)
 
     size_t current_frame_index = how_may_frames_from_start % sprites_.size();
 
-    sprite& spr = sprites_.at(current_frame_index);
+    const sprite& spr = sprites_.at(current_frame_index);
 
     spr.draw(e);
 }

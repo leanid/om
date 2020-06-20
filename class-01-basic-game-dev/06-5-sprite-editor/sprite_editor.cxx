@@ -87,13 +87,23 @@ int main(int /*argc*/, char* /*argv*/[])
     sprite_reader  loader_of_sprites;
     vector<sprite> sprites_for_animation;
     ifstream       ifile;
-    ifile.exceptions(std::ios::badbit | std::ios::failbit);
+    ifile.exceptions(ios::badbit | ios::failbit);
     ifile.open("spr_cache.yaml", ios::binary);
     loader_of_sprites.load_sprites(sprites_for_animation, ifile, engine);
 
     ani2d animation;
     animation.sprites(sprites_for_animation);
     animation.fps(2);
+
+    ifstream explosion_file;
+    explosion_file.exceptions(ios::badbit | ios::failbit);
+    explosion_file.open("res/explosion.yaml", ios::binary);
+    vector<sprite> explosion_sprites;
+    loader_of_sprites.load_sprites(explosion_sprites, explosion_file, engine);
+
+    ani2d explosion_ani;
+    explosion_ani.sprites(explosion_sprites);
+    explosion_ani.fps(explosion_sprites.size() / 1.f);
 
     om::vec2 mouse_pos = engine.mouse_pos();
     om::vec2 image_screen_start_pos;
@@ -274,8 +284,9 @@ int main(int /*argc*/, char* /*argv*/[])
                     if (ImGui::Button("save to cache"))
                     {
                         vector<sprite> sprites;
-                        sprites.emplace_back(sprite_id, texture, spr_rect,
-                                             spr_center_pos, spr_size, angle);
+                        sprites.emplace_back(sprite_id.c_str(), texture,
+                                             spr_rect, spr_center_pos, spr_size,
+                                             angle);
 
                         sprite_reader reader;
                         ofstream      fout;
@@ -301,12 +312,14 @@ int main(int /*argc*/, char* /*argv*/[])
             from_pixels_to_relative.size.y /= texture->get_height();
         }
 
-        sprite spr(sprite_id, texture, from_pixels_to_relative, spr_center_pos,
-                   spr_size, angle);
+        sprite spr(sprite_id.c_str(), texture, from_pixels_to_relative,
+                   spr_center_pos, spr_size, angle);
 
         spr.draw(engine);
 
         animation.draw(engine, delta_time);
+
+        explosion_ani.draw(engine, delta_time);
 
         engine.swap_buffers();
     }
