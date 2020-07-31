@@ -9,19 +9,17 @@ target_compile_features(08-aslr-test PRIVATE cxx_std_17)
 
 add_library(08-exec-stream STATIC exec-stream.h exec-stream.cpp)
 
+target_sources(08-exec-stream PRIVATE
+    posix/exec-stream-helpers.hpp
+    posix/exec-stream-helpers.h
+    posix/exec-stream-impl.hpp
+    win/exec-stream-helpers.hpp
+    win/exec-stream-helpers.h
+    win/exec-stream-impl.hpp
+    )
+
 if(UNIX)
-    target_sources(08-aslr-test INTERFACE
-        posix/exec-stream-helpers.cpp
-        posix/exec-stream-helpers.h
-        posix/exec-stream-impl.cpp
-        )
-    target_link_libraries(08-aslr-test PRIVATE pthread)
-else()
-    target_sources(08-aslr-test INTERFACE
-        win/exec-stream-helpers.cpp
-        win/exec-stream-helpers.h
-        win/exec-stream-impl.cpp
-        )
+    target_link_libraries(08-exec-stream PRIVATE pthread)
 endif()
 
 target_link_libraries(08-aslr-test PRIVATE 08-exec-stream)

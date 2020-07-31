@@ -57,8 +57,8 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <unistd.h>
 
 #define HELPERS_H "posix/exec-stream-helpers.h"
-#define HELPERS_CPP "posix/exec-stream-helpers.cpp"
-#define IMPL_CPP "posix/exec-stream-impl.cpp"
+#define HELPERS_CPP "posix/exec-stream-helpers.hpp"
+#define IMPL_CPP "posix/exec-stream-impl.hpp"
 
 #endif
 
