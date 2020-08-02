@@ -1245,7 +1245,7 @@ static void initialize_internal(std::string_view   title,
         const int num_audio_devices = SDL_GetNumAudioDevices(SDL_FALSE);
         if (num_audio_devices > 0)
         {
-            default_audio_device_name = SDL_GetAudioDeviceName(0, SDL_FALSE);
+            default_audio_device_name = SDL_GetAudioDeviceName(num_audio_devices - 1, SDL_FALSE);
             for (int i = 0; i < num_audio_devices; ++i)
             {
                 std::cout << "audio device #" << i << ": "
