@@ -8,7 +8,7 @@ uniform float z_far;
 
 out vec4 frag_color;
 
-in VS_OUT
+in some_block_name
 {
     vec2 v_tex_coords;
 } fs_in;
@@ -40,7 +40,8 @@ void main()
         }
     } else
     {
-        frag_color = texture(material.tex_diffuse0, fs_in.v_tex_coords);
+        vec2 uv_pos = fs_in.v_tex_coords;
+        frag_color = texture2D(material.tex_diffuse0, uv_pos);
     }
 
     if (gl_FragCoord.x < (screen_size.x / 2.0))

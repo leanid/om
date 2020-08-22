@@ -7,7 +7,7 @@ uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 
-out VS_OUT
+out some_block_name
 {
     vec2 v_tex_coords;
 } vs_out;

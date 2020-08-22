@@ -27,8 +27,9 @@ elseif(MINGW)
     find_package(glm REQUIRED)
     target_link_libraries(23-02-gl_frag_coord PRIVATE mingw32
                                                       assimp
-                                                      SDL2main
-                                                      SDL2
+                                                      glm
+                                                      SDL2::SDL2main
+                                                      SDL2::SDL2
                                                       opengl32
                                                       -mwindows
                                                       )
