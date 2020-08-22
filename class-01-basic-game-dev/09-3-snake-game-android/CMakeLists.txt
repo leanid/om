@@ -30,13 +30,13 @@ endif(WIN32)
 find_library(SDL2_LIB NAMES SDL2)
 
 if (MINGW)
+    find_package(sdl2 REQUIRED)
     target_link_libraries(engine-09-3 PRIVATE
-               mingw32
-               SDL2main
-               SDL2
-               -mwindows
-               opengl32
-               )
+                          mingw32
+			  SDL2::SDL2main
+			  SDL2::SDL2
+                          opengl32
+			  -mwindows)
 elseif(UNIX)
     if(SDL2_SRC_DIR)
         #target_include_directories( engine-09-3 PRIVATE ${SDL2_SRC_DIR}/include )
