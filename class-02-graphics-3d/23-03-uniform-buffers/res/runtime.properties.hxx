@@ -19,7 +19,7 @@ glm::vec3 cam_dir = { 0.f, 0.f, -1.f };
 float     angle       = 0.000f;
 glm::vec3 rotate_axis = { 0.f, 1.f, 0.f };
 
-glm::vec3 clear_color = { 0.0f, 0.0f, 0.0f };
+glm::vec3 clear_color = { 0.2f, 0.1f, 0.1f };
 
 bool show_z_buffer   = false;
 bool linear_z_buffer = true;

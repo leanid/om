@@ -9,6 +9,8 @@
 #include <string>
 #include <vector>
 
+#include <gsl/gsl>
+
 #if __has_include(<SDL.h>)
 #include <SDL.h>
 #elif __has_include(<SDL2/SDL.h>)
@@ -577,6 +579,10 @@ struct scene
     scene();
     void render(float delta_time);
     void render_fullscreen_quad();
+    void create_uniform_buffer(const void* buffer_ptr, const size_t buffer_size,
+                               const gsl::czstring<> block_name,
+                               const uint32_t        binding_point,
+                               gles30::shader& shader, uint32_t& ubo_handle);
 
     properties_reader properties;
 
@@ -593,7 +599,29 @@ struct scene
     gles30::texture tex_cubemap;
 
     gles30::mesh cube_mesh;
+
+    uint32_t ubo_matrixes_block;
+    uint32_t ubo_all_not_opaque_uniforms;
 };
+
+void scene::create_uniform_buffer(const void*           buffer_ptr,
+                                  const size_t          buffer_size,
+                                  const gsl::czstring<> block_name,
+                                  const uint32_t        binding_point,
+                                  gles30::shader& shader, uint32_t& ubo_handle)
+{
+    glGenBuffers(1, &ubo_handle);
+    glBindBuffer(GL_UNIFORM_BUFFER, ubo_handle);
+    glBufferData(GL_UNIFORM_BUFFER, buffer_size, buffer_ptr,
+                 GL_STATIC_DRAW); // allocate "buffer_size" bytes of memory
+
+    shader.bind_uniform_block(block_name, binding_point);
+
+    // bind UBO buffer to Binding Point "binding_point"
+    glBindBufferBase(GL_UNIFORM_BUFFER, binding_point, ubo_handle);
+
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+}
 
 scene::scene()
     : properties("res/runtime.properties.hxx")
@@ -612,9 +640,41 @@ scene::scene()
     , tex_cubemap(faces, gles30::texture::opt::no_flip)
     , cube_mesh{ create_mesh(cube_vertices, sizeof(cube_vertices) / 4 / 8,
                              { &tex_metal }) }
+    , ubo_matrixes_block{}
+    , ubo_all_not_opaque_uniforms{}
 {
     create_camera(properties);
     cube_mesh.set_primitive_type(gles30::primitive::triangles);
+
+    create_uniform_buffer(nullptr, sizeof(glm::mat4) * 3, "matrixes_block", 1,
+                          cube_shader, ubo_matrixes_block);
+
+    //    layout (std140) uniform all_not_opaque_uniforms
+    //    {                            // base alignment   // aligned offset
+    //        bool show_z_buffer;      // 4                // 0
+    //        bool linear_z_buffer;    // 4                // 4
+    //        float z_near;            // 4                // 8
+    //        float z_far;             // 4                // 12
+    //        vec2 screen_size;        // 16               // 16
+    //    };
+    struct layout
+    {
+        float     show_z_buffer{ 0 };
+        float     liner_z_buffer{ 0 };
+        float     z_near{ 0 };
+        float     z_far{ 0 };
+        glm::vec4 screen_size{ 0, 0, 0, 0 };
+    } data;
+
+    data.show_z_buffer  = properties.get_bool("show_z_buffer");
+    data.liner_z_buffer = properties.get_bool("linear_z_buffer");
+    data.z_near         = properties.get_float("z_near");
+    data.z_far          = properties.get_float("z_far");
+    data.screen_size.x  = properties.get_float("screen_width");
+    data.screen_size.y  = properties.get_float("screen_height");
+
+    create_uniform_buffer(&data, sizeof(data), "all_not_opaque_uniforms", 2,
+                          cube_shader, ubo_all_not_opaque_uniforms);
 }
 
 void scene::render(float delta_time)
@@ -631,10 +691,35 @@ void scene::render(float delta_time)
     float scale = 1.0f;
 
     cube_shader.use();
-    cube_shader.set_uniform("screen_size",
-                            glm::vec2(screen_width, screen_height));
+
+    //    layout (std140) uniform matrixes_block
+    //    {
+    //        mat4 model;
+    //        mat4 view;
+    //        mat4 projection;
+    //    };
+
+    struct layout
+    {
+        glm::mat4 model;
+        glm::mat4 view;
+        glm::mat4 projection;
+    } data;
+
+    glm::mat4 model = glm::mat4(1.0f);
+    model           = glm::translate(model, glm::vec3(0, 0, 0));
+    model           = glm::scale(model, glm::vec3(scale));
+
+    data.model      = model;
+    data.view       = camera.view_matrix();
+    data.projection = camera.projection_matrix();
+
+    glBindBuffer(GL_UNIFORM_BUFFER, ubo_matrixes_block);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(data), &data, GL_STATIC_DRAW);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
     render_mesh(cube_shader, camera, cube_mesh, glm::vec3(0.0f, 0.0f, 0.0f),
-                scale, properties, render_options::only_pro_view_model);
+                scale, properties, render_options::no_matrix);
 }
 
 int main(int /*argc*/, char* /*argv*/[])

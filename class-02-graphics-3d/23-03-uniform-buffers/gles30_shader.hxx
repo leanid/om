@@ -30,6 +30,9 @@ public:
     void set_uniform(std::string_view name, const glm::vec3&);
     void set_uniform(std::string_view name, const glm::vec2&);
 
+    void bind_uniform_block(std::string_view uniform_block_name,
+                            uint32_t         binding_point);
+
     /// just for debug purposes you can validate current state before
     /// render geometry
     std::string validate() noexcept(false);

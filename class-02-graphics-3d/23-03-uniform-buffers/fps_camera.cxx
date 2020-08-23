@@ -2,25 +2,34 @@
 
 #include <SDL2/SDL_keyboard.h>
 
-void fps_camera::move_using_keyboard_wasd(const float delta_time)
+bool fps_camera::move_using_keyboard_wasd(const float delta_time)
 {
     const uint8_t* keys_state = SDL_GetKeyboardState(nullptr);
-    if (keys_state[SDL_SCANCODE_W])
+    const bool     moved_w    = keys_state[SDL_SCANCODE_W];
+    if (moved_w)
     {
         move(fps_camera::step::forward, delta_time);
     }
-    if (keys_state[SDL_SCANCODE_S])
+
+    const bool moved_s = keys_state[SDL_SCANCODE_S];
+    if (moved_s)
     {
         move(fps_camera::step::backward, delta_time);
     }
-    if (keys_state[SDL_SCANCODE_A])
+
+    const bool moved_a = keys_state[SDL_SCANCODE_A];
+    if (moved_a)
     {
         move(fps_camera::step::left, delta_time);
     }
-    if (keys_state[SDL_SCANCODE_D])
+
+    const bool moved_d = keys_state[SDL_SCANCODE_D];
+    if (moved_d)
     {
         move(fps_camera::step::right, delta_time);
     }
+
+    return moved_w || moved_s || moved_a || moved_d;
 }
 
 glm::vec3 fps_camera::position() const

@@ -40,7 +40,7 @@ public:
 
     void zoom(const float zoom);
 
-    void move_using_keyboard_wasd(const float delta_time);
+    bool move_using_keyboard_wasd(const float delta_time);
 
     glm::vec3 position() const;
     void      position(const glm::vec3& value);

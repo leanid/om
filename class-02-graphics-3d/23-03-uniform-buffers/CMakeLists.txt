@@ -13,6 +13,17 @@ endif()
 # build it yourself for android for example:
 # sudo dnf install glm-devel
 
+include(ExternalProject)
+
+ExternalProject_Add(microsoft_gsl
+  GIT_REPOSITORY    https://github.com/microsoft/GSL.git
+  GIT_PROGRESS      TRUE
+  CMAKE_CACHE_ARGS  -DGSL_CXX_STANDARD:STRING=c++17
+                    -DGSL_TEST:STRING=OFF
+                    -DCMAKE_INSTALL_INCLUDEDIR:PATH=${CMAKE_BINARY_DIR}/gsl_inc
+		    -DCMAKE_INSTALL_DATADIR:PATH=${CMAKE_BINARY_DIR}/gsl_inc
+  )
+
 project(23-03-uniform-buffers CXX)
 
 if (SDL2_SRC_DIR) # Android
@@ -23,11 +34,11 @@ if (SDL2_SRC_DIR) # Android
 elseif(MINGW)
     add_executable(23-03-uniform-buffers)
     find_package(SDL2 REQUIRED)
-    #find_package(assimp REQUIRED)
+    find_package(assimp REQUIRED)
     find_package(glm REQUIRED)
     target_link_libraries(23-03-uniform-buffers PRIVATE mingw32
-                                                      assimp
                                                       glm
+                                                      assimp
                                                       SDL2::SDL2main
                                                       SDL2::SDL2
                                                       opengl32
@@ -67,6 +78,10 @@ elseif(MSVC)
                                                   )
     set(ASSIMP_POSTFIX "-vc140-mtd.lib")
 endif()
+
+add_dependencies(23-03-uniform-buffers microsoft_gsl)
+
+target_include_directories(23-03-uniform-buffers SYSTEM PRIVATE ${CMAKE_BINARY_DIR}/gsl_inc)
 
 target_compile_features(23-03-uniform-buffers PUBLIC cxx_std_17)
 

@@ -4,7 +4,7 @@ layout (location = 1) in vec3 a_normal;
 layout (location = 2) in vec2 a_tex_coords;
 
 
-layout (std140) uniform matrixes
+layout (std140) uniform matrixes_block
 {
     mat4 model;
     mat4 view;

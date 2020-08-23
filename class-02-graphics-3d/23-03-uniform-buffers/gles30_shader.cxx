@@ -237,6 +237,15 @@ void shader::set_uniform(std::string_view name, const glm::vec2& v)
     glUniform2fv(uniform_index, 1, glm::value_ptr(v));
 }
 
+void shader::bind_uniform_block(std::string_view uniform_block_name,
+                                uint32_t         binding_point)
+{
+    uint32_t block_index =
+        glGetUniformBlockIndex(program_id, uniform_block_name.data());
+
+    glUniformBlockBinding(program_id, block_index, binding_point);
+}
+
 std::string shader::validate() noexcept(false)
 {
     // validate current OpenGL state
