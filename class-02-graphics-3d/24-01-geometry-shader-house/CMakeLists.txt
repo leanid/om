@@ -70,7 +70,7 @@ endif()
 
 target_include_directories(24-01-geometry-shader-house SYSTEM PRIVATE ${CMAKE_BINARY_DIR}/gsl_inc)
 
-target_compile_features(24-01-geometry-shader-house PUBLIC cxx_std_17)
+target_compile_features(24-01-geometry-shader-house PUBLIC cxx_std_20)
 
 target_sources(24-01-geometry-shader-house PRIVATE main.cxx
                                    gles30_shader.hxx
@@ -93,6 +93,9 @@ target_sources(24-01-geometry-shader-house PRIVATE main.cxx
 
                                    stb_image.h
 
+                                   res/house.vsh
+                                   res/house.gsh
+                                   res/house.fsh
                                    res/cube.vsh
                                    res/cube.fsh
                                    res/outline.fsh

@@ -18,6 +18,9 @@ class shader
 public:
     shader(const std::filesystem::path& vertex_shader_path,
            const std::filesystem::path& fragment_shader_path) noexcept(false);
+    shader(const std::filesystem::path& vertex_shader_path,
+           const std::filesystem::path& geometry_shader_path,
+           const std::filesystem::path& fragment_shader_path) noexcept(false);
 
     void use();
 
@@ -46,6 +49,7 @@ public:
 
 private:
     void          create(std::string_view vertex_shader_src,
+                         std::string_view geometry_shader_src,
                          std::string_view fragment_shader_src) noexcept(false);
     std::uint32_t program_id;
 };

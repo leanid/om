@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <charconv>
 #include <cstdint>
 #include <fstream>
 #include <iostream>
@@ -13,62 +14,100 @@
 
 namespace gles30
 {
-void shader::create(std::string_view vertex_shader_src,
-                    std::string_view fragment_shader_src)
+
+struct list_code_with_line_numbers
+{
+    std::string_view src;
+    std::string_view err_msg;
+};
+
+std::ostream& operator<<(std::ostream&                      os,
+                         const list_code_with_line_numbers& list)
+{
+    using namespace std;
+
+    const char* open_braket = find(begin(list.err_msg), end(list.err_msg), '(');
+    const char* close_braket = find(open_braket, end(list.err_msg), ')');
+
+    uint32_t value;
+    auto [p, ec] = from_chars(open_braket + 1, close_braket, value);
+    if (ec != std::errc())
+    {
+        throw runtime_error("failed to parse line number from: " +
+                            std::string(p));
+    }
+
+    uint32_t line_num = 1;
+    for (auto first = list.src.begin(), last = list.src.end(); first != last;
+         first += 1, ++line_num)
+    {
+        auto it = find(first, last, '\n');
+        os << setw(3) << right << line_num << ' '
+           << string_view(first, it - first);
+        if (line_num == value)
+        {
+            os << " <= " << list.err_msg;
+        }
+        else
+        {
+            os << '\n';
+        }
+        first = it;
+    }
+    return os;
+}
+
+static uint32_t compile_shader(std::string_view src,
+                               GLenum           shader_type) noexcept(false)
 {
     // create OpenGL object id for vertex shader object
-    uint32_t vertex_shader = glCreateShader(GL_VERTEX_SHADER);
+    uint32_t shader = glCreateShader(shader_type);
 
     // load vertex shader source code into vertex_shader
     const GLchar* array_of_pointers_to_strings_with_src[1];
-    array_of_pointers_to_strings_with_src[0] = vertex_shader_src.data();
+    array_of_pointers_to_strings_with_src[0] = src.data();
 
     GLint array_of_string_lengths[1];
-    array_of_string_lengths[0] = static_cast<GLint>(vertex_shader_src.size());
+    array_of_string_lengths[0] = static_cast<GLint>(src.size());
 
-    glShaderSource(vertex_shader, 1, array_of_pointers_to_strings_with_src,
+    glShaderSource(shader, 1, array_of_pointers_to_strings_with_src,
                    array_of_string_lengths);
 
     // compile vertex shader
-    glCompileShader(vertex_shader);
+    glCompileShader(shader);
 
     // check compilation status of our shader
-    int  success;
-    char info_log[1024] = { 0 };
-    glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &success);
+    int success;
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
 
     if (0 == success)
     {
-        glGetShaderInfoLog(vertex_shader, sizeof(info_log), nullptr, info_log);
+        char info_log[1024] = { 0 };
+        glGetShaderInfoLog(shader, sizeof(info_log), nullptr, info_log);
 
         std::stringstream ss;
-        ss << "error: in vertex shader: " << info_log << std::endl;
+        ss << "error: in shader:\n"
+           << list_code_with_line_numbers{ src, info_log } << '\n';
         throw std::runtime_error(ss.str());
     }
+    return shader;
+}
 
-    // generate new id for shader object
-    uint32_t fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
+void shader::create(std::string_view vertex_shader_src,
+                    std::string_view geometry_shader_src,
+                    std::string_view fragment_shader_src)
+{
 
-    // load fragment shader source code
-    array_of_pointers_to_strings_with_src[0] = fragment_shader_src.data();
-    array_of_string_lengths[0] = static_cast<GLint>(fragment_shader_src.size());
-    glShaderSource(fragment_shader, 1, array_of_pointers_to_strings_with_src,
-                   array_of_string_lengths);
+    uint32_t vertex_shader =
+        compile_shader(vertex_shader_src, GL_VERTEX_SHADER);
 
-    glCompileShader(fragment_shader);
+    uint32_t geometry_shader =
+        geometry_shader_src.empty()
+            ? 0
+            : compile_shader(geometry_shader_src, GL_GEOMETRY_SHADER);
 
-    // check compilation status of our shader
-    glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &success);
-
-    if (0 == success)
-    {
-        glGetShaderInfoLog(fragment_shader, sizeof(info_log), nullptr,
-                           info_log);
-
-        std::stringstream ss;
-        ss << "error: in fragment shader: " << info_log << std::endl;
-        throw std::runtime_error(ss.str());
-    }
+    uint32_t fragment_shader =
+        compile_shader(fragment_shader_src, GL_FRAGMENT_SHADER);
 
     // create complete shader program and reseive id (vertex + geometry +
     // fragment) geometry shader - will have default value
@@ -76,15 +115,22 @@ void shader::create(std::string_view vertex_shader_src,
 
     glAttachShader(program_id, vertex_shader);
 
+    if (!geometry_shader_src.empty())
+    {
+        glAttachShader(program_id, geometry_shader);
+    }
+
     glAttachShader(program_id, fragment_shader);
 
-    // no link program like in c/c++ object files
+    // now link program like in c/c++ object files
     glLinkProgram(program_id);
 
+    int success;
     glGetProgramiv(program_id, GL_LINK_STATUS, &success);
 
     if (0 == success)
     {
+        char info_log[1024] = { 0 };
         glGetProgramInfoLog(program_id, sizeof(info_log), nullptr, info_log);
 
         std::stringstream ss;
@@ -95,8 +141,27 @@ void shader::create(std::string_view vertex_shader_src,
     // after linking shader program we don't need object parts of it
     // so we can free OpenGL memory and delete vertex and fragment parts
     glDeleteShader(vertex_shader);
-
+    glDeleteShader(geometry_shader);
     glDeleteShader(fragment_shader);
+}
+
+static std::string read_file_content(
+    const std::filesystem::path& path) noexcept(false)
+{
+    std::ifstream stream;
+    stream.exceptions(std::ifstream::badbit | std::ifstream::failbit);
+    try
+    {
+        stream.open(path);
+    }
+    catch (...)
+    {
+        std::cerr << "failed to open: " << path << std::endl;
+        throw;
+    }
+    std::stringstream ss;
+    ss << stream.rdbuf();
+    return ss.str();
 }
 
 shader::shader(
@@ -104,54 +169,23 @@ shader::shader(
     const std::filesystem::path& fragment_shader_path) noexcept(false)
     : program_id(0)
 {
-    std::ifstream vertex_stream;
-    std::ifstream fragmen_stream;
-    vertex_stream.exceptions(std::ifstream::badbit | std::ifstream::failbit);
-    fragmen_stream.exceptions(std::ifstream::badbit | std::ifstream::failbit);
+    std::string v_src{ read_file_content(vertex_shader_path) };
+    std::string f_src{ read_file_content(fragment_shader_path) };
 
-    try
-    {
-        try
-        {
-            vertex_stream.open(vertex_shader_path);
-        }
-        catch (...)
-        {
-            std::cerr << "failed to open: " << vertex_shader_path << std::endl;
-            throw;
-        }
+    create(v_src, {}, f_src);
+}
 
-        try
-        {
-            fragmen_stream.open(fragment_shader_path);
-        }
-        catch (...)
-        {
-            std::cerr << "faild to open: " << fragment_shader_path << std::endl;
-            throw;
-        }
+shader::shader(
+    const std::filesystem::path& vertex_shader_path,
+    const std::filesystem::path& geometry_shader_path,
+    const std::filesystem::path& fragment_shader_path) noexcept(false)
+    : program_id(0)
+{
+    std::string v_src{ read_file_content(vertex_shader_path) };
+    std::string g_src{ read_file_content(geometry_shader_path) };
+    std::string f_src{ read_file_content(fragment_shader_path) };
 
-        std::stringstream vertex_src;
-        vertex_src << vertex_stream.rdbuf();
-        std::stringstream fragment_src;
-        fragment_src << fragmen_stream.rdbuf();
-
-        std::string v_src{ vertex_src.str() };
-        std::string f_src{ fragment_src.str() };
-
-        std::string_view v{ v_src };
-        std::string_view f{ f_src };
-
-        create(v, f);
-    }
-    catch (const std::exception& e)
-    {
-        std::clog << e.what() << std::endl;
-
-        throw std::runtime_error(
-            "can't create shader from: " + vertex_shader_path.u8string() + " " +
-            fragment_shader_path.u8string() + " cause: " + e.what());
-    }
+    create(v_src, g_src, f_src);
 }
 
 shader::shader(shader&& other) noexcept

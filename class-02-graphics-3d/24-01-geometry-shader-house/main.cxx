@@ -125,6 +125,7 @@ extern const float cube_vertices[36 * 8];
 extern const float plane_vertices[6 * 8];
 extern const float transparent_vert[6 * 8];
 extern const float fullscreen_vertices[6 * 8];
+extern const float points[5 * 4];
 
 enum class render_options
 {
@@ -587,19 +588,11 @@ struct scene
     std::unique_ptr<SDL_Window, void (*)(SDL_Window*)> window;
     std::unique_ptr<void, void (*)(void*)>             context;
 
-    gles30::shader cube_shader;
+    gles30::shader house_shader;
 
-    gles30::texture tex_marble;
-    gles30::texture tex_metal;
-    gles30::texture tex_grass;
-    gles30::texture tex_window;
-    gles30::texture tex_color_buffer;
-    gles30::texture tex_cubemap;
-
-    gles30::mesh cube_mesh;
-
-    uint32_t ubo_matrixes_block;
-    uint32_t ubo_all_not_opaque_uniforms;
+    uint32_t vao;
+    uint32_t vbo;
+    uint32_t ebo;
 };
 
 void scene::create_uniform_buffer(const void*            buffer_ptr,
@@ -625,54 +618,46 @@ scene::scene()
     : properties("res/runtime.properties.hxx")
     , window{ create_window(properties) }
     , context{ create_opengl_context(window.get()) }
-    , cube_shader("res/cube.vsh", "res/cube.fsh")
-    , tex_marble("res/marble.jpg", gles30::texture::type::diffuse)
-    , tex_metal("res/metal.png", gles30::texture::type::diffuse)
-    , tex_grass("res/grass.png", gles30::texture::type::diffuse,
-                gles30::texture::opt::no_flip)
-    , tex_window("res/blending_transparent_window.png",
-                 gles30::texture::type::diffuse, gles30::texture::opt::no_flip)
-    , tex_color_buffer(gles30::texture::type::diffuse,
-                       properties.get_float("screen_width"),
-                       properties.get_float("screen_height"))
-    , tex_cubemap(faces, gles30::texture::opt::no_flip)
-    , cube_mesh{ create_mesh(cube_vertices, sizeof(cube_vertices) / 4 / 8,
-                             { &tex_metal }) }
-    , ubo_matrixes_block{}
-    , ubo_all_not_opaque_uniforms{}
+    , house_shader("res/house.vsh", "res/house.gsh", "res/house.fsh")
+    , vao{ 0 }
+    , vbo{ 0 }
+    , ebo{ 0 }
 {
     create_camera(properties);
-    cube_mesh.set_primitive_type(gles30::primitive::triangles);
 
-    create_uniform_buffer(nullptr, sizeof(glm::mat4) * 3, "matrixes_block", 1,
-                          cube_shader, ubo_matrixes_block);
+    glGenVertexArrays(1, &vao);
 
-    //    layout (std140) uniform all_not_opaque_uniforms
-    //    {                            // base alignment   // aligned offset
-    //        bool show_z_buffer;      // 4                // 0
-    //        bool linear_z_buffer;    // 4                // 4
-    //        float z_near;            // 4                // 8
-    //        float z_far;             // 4                // 12
-    //        vec2 screen_size;        // 16               // 16
-    //    };
-    struct layout
-    {
-        float     show_z_buffer{ 0 };
-        float     liner_z_buffer{ 0 };
-        float     z_near{ 0 };
-        float     z_far{ 0 };
-        glm::vec4 screen_size{ 0, 0, 0, 0 };
-    } data;
+    glGenBuffers(1, &vbo);
 
-    data.show_z_buffer  = properties.get_bool("show_z_buffer");
-    data.liner_z_buffer = properties.get_bool("linear_z_buffer");
-    data.z_near         = properties.get_float("z_near");
-    data.z_far          = properties.get_float("z_far");
-    data.screen_size.x  = properties.get_float("screen_width");
-    data.screen_size.y  = properties.get_float("screen_height");
+    glGenBuffers(1, &ebo);
 
-    create_uniform_buffer(&data, sizeof(data), "all_not_opaque_uniforms", 2,
-                          cube_shader, ubo_all_not_opaque_uniforms);
+    glBindVertexArray(vao);
+
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+
+    glBufferData(GL_ARRAY_BUFFER, sizeof(points), &points[0], GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+
+    std::vector<uint32_t> indexes(4);
+    std::iota(begin(indexes), end(indexes), 0);
+
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+                 static_cast<signed>(indexes.size() * sizeof(uint32_t)),
+                 indexes.data(), GL_STATIC_DRAW);
+
+    // vertex positions
+    glEnableVertexAttribArray(0);
+
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, nullptr);
+
+    // color values
+    glEnableVertexAttribArray(1);
+
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5,
+                          reinterpret_cast<void*>(sizeof(float) * 2));
+
+    glBindVertexArray(0);
 }
 
 void scene::render(float delta_time)
@@ -686,38 +671,23 @@ void scene::render(float delta_time)
 
     clear_back_buffer(properties.get_vec3("clear_color"));
 
-    float scale = 1.0f;
+    house_shader.use();
 
-    cube_shader.use();
+    // draw mesh
+    glBindVertexArray(vao);
 
-    //    layout (std140) uniform matrixes_block
-    //    {
-    //        mat4 model;
-    //        mat4 view;
-    //        mat4 projection;
-    //    };
-
-    struct layout
+    std::string validation_result = house_shader.validate();
+    if (!validation_result.empty())
     {
-        glm::mat4 model;
-        glm::mat4 view;
-        glm::mat4 projection;
-    } data;
+        std::cout << validation_result << std::endl;
+    }
 
-    glm::mat4 model = glm::mat4(1.0f);
-    model           = glm::translate(model, glm::vec3(0, 0, 0));
-    model           = glm::scale(model, glm::vec3(scale));
+    glDrawArrays(GL_POINTS, 0, 4);
 
-    data.model      = model;
-    data.view       = camera.view_matrix();
-    data.projection = camera.projection_matrix();
+    //    glDrawElements(static_cast<GLenum>(GL_POINTS), static_cast<signed>(4),
+    //                   GL_UNSIGNED_INT, nullptr);
 
-    glBindBuffer(GL_UNIFORM_BUFFER, ubo_matrixes_block);
-    glBufferData(GL_UNIFORM_BUFFER, sizeof(data), &data, GL_STATIC_DRAW);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
-
-    render_mesh(cube_shader, camera, cube_mesh, glm::vec3(0.0f, 0.0f, 0.0f),
-                scale, properties, render_options::no_matrix);
+    glBindVertexArray(0);
 }
 
 int main(int /*argc*/, char* /*argv*/[])
@@ -744,6 +714,13 @@ int main(int /*argc*/, char* /*argv*/[])
 
     return 0;
 }
+
+const float points[] = {
+    -0.5f, 0.5f,  1.0f, 0.0f, 0.0f, // top-left
+    0.5f,  0.5f,  0.0f, 1.0f, 0.0f, // top-right
+    0.5f,  -0.5f, 0.0f, 0.0f, 1.0f, // bottom-right
+    -0.5f, -0.5f, 1.0f, 1.0f, 0.0f  // bottom-left
+};
 
 // clang-format off
 const float cube_vertices[36 * 8] =

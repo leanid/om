@@ -48,7 +48,7 @@ void texture::gen_texture_set_filters_and_wrap()
 
 texture::texture(const std::filesystem::path& path, const type tex_type,
                  const opt options)
-    : file_name{ path.u8string() }
+    : file_name{ path.string() }
     , texture_id{ 0 }
     , texture_type{ tex_type }
 {
@@ -106,7 +106,7 @@ static std::string join_strings_with_spaces(
 {
     std::string result;
     std::accumulate(begin(faces), end(faces), result,
-                    [](std::string& result, const std::filesystem::path& p) {
+                    [](std::string result, const std::filesystem::path& p) {
                         if (!result.empty())
                         {
                             result.push_back(' ');
@@ -138,15 +138,15 @@ texture::texture(const std::array<std::filesystem::path, 6>& faces,
 
     for (size_t i = 0; i < faces.size(); ++i)
     {
-        const auto& path = faces.at(i).u8string();
+        const auto& path = faces.at(i).string();
         const auto& type = face_type.at(i);
         int32_t     width{};
         int32_t     height{};
         int32_t     num_channels{};
         const int   prefered_channels_count = 0; // same as in texture
         std::unique_ptr<unsigned char, void (*)(void*)> data{
-            stbi_load(path.c_str(), &width, &height, &num_channels,
-                      prefered_channels_count),
+            stbi_load(reinterpret_cast<const char*>(path.c_str()), &width,
+                      &height, &num_channels, prefered_channels_count),
             stbi_image_free
         };
         if (!data)
