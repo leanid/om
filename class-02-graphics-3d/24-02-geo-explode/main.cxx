@@ -406,7 +406,8 @@ struct scene
     std::unique_ptr<SDL_Window, void (*)(SDL_Window*)> window;
     std::unique_ptr<void, void (*)(void*)>             context;
 
-    gles30::shader house_shader;
+    gles30::shader explode_shader;
+    gles30::model  nano_suit;
 };
 
 void scene::create_uniform_buffer(const void*            buffer_ptr,
@@ -435,7 +436,8 @@ scene::scene()
     : properties("res/runtime.properties.hxx")
     , window{ create_window(properties) }
     , context{ create_opengl_context(window.get()) }
-    , house_shader("res/house.vsh", "res/house.gsh", "res/house.fsh")
+    , explode_shader("res/explode.vsh", "res/explode.gsh", "res/explode.fsh")
+    , nano_suit("../15-01-model/res/model/nanosuit.obj")
 {
     create_camera(properties);
 }
@@ -451,13 +453,20 @@ void scene::render(float delta_time)
 
     clear_back_buffer(properties.get_vec3("clear_color"));
 
-    house_shader.use();
+    explode_shader.use();
 
-    std::string validation_result = house_shader.validate();
+    static float time = 0.f;
+    time += delta_time;
+
+    explode_shader.set_uniform("time", time);
+
+    std::string validation_result = explode_shader.validate();
     if (!validation_result.empty())
     {
         std::cout << validation_result << std::endl;
     }
+
+    // TODO render model!
 }
 
 int main(int /*argc*/, char* /*argv*/[])

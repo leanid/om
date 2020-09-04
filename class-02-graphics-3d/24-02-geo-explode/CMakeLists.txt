@@ -93,34 +93,11 @@ target_sources(24-02-geo-explode PRIVATE main.cxx
 
                                    stb_image.h
 
-                                   res/house.vsh
-                                   res/house.gsh
-                                   res/house.fsh
-                                   res/cube.vsh
-                                   res/cube.fsh
-                                   res/outline.fsh
-                                   res/discard.fsh
-                                   res/quad_vertex.vsh
-                                   res/quad_frag.fsh
-                                   res/skybox.vsh
-                                   res/skybox.fsh
-                                   res/refraction.vsh
-                                   res/refraction.fsh
+                                   res/explode.vsh
+                                   res/explode.gsh
+                                   res/explode.fsh
 
                                    res/runtime.properties.hxx
-
-                                   res/marble.jpg
-                                   res/metal.png
-                                   res/grass.png
-                                   res/blending_transparent_window.png
-
-                                   res/skybox/right.jpg
-                                   res/skybox/left.jpg
-                                   res/skybox/top.jpg
-                                   res/skybox/bottom.jpg
-                                   res/skybox/front.jpg
-                                   res/skybox/back.jpg
-
                                    )
 
 add_subdirectory(glad)
