@@ -18,4 +18,5 @@ void main()
 {
     frag_color = texture(material.tex_diffuse0, tex_coords);
     frag_color += texture(material.tex_specular0, tex_coords);
+    frag_color += vec4(0, 1, 0, 0);
 }

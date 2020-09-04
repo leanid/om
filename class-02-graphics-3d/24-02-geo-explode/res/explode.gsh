@@ -1,6 +1,6 @@
 #version 320 es
 layout (triangles) in;
-layout (triangle_strip, max_vertices = 3) out;
+layout (line_strip, max_vertices = 4) out;
 
 in VS_OUT {
     vec3 normal;
@@ -36,6 +36,9 @@ void main() {
     EmitVertex();
     gl_Position = explode(gl_in[2].gl_Position, normal);
     tex_coords = gs_in[2].uv;
+    EmitVertex();
+    gl_Position = explode(gl_in[0].gl_Position, normal);
+    tex_coords = gs_in[0].uv;
     EmitVertex();
     EndPrimitive();
 }
