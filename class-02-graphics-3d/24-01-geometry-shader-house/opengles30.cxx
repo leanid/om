@@ -5,7 +5,7 @@
 
 #if __has_include(<SDL.h>)
 #include <SDL.h>
-#elif __has_include(<SDL2/SDL.h>)
+#else
 #include <SDL2/SDL.h>
 #endif
 

@@ -567,7 +567,7 @@ struct interpretator_t
         if constexpr (print_debug_info)
         {
             // dump values
-            for (auto [key, value] : key_values)
+            for (const auto& [key, value] : key_values)
             {
                 std::cout << key << "=[" << value << "]" << std::endl;
             }

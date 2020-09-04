@@ -110,9 +110,11 @@ static int get_exts(void) {
             const char *gl_str_tmp = (const char*)glGetStringi(GL_EXTENSIONS, index);
             size_t len = strlen(gl_str_tmp);
 
-            char *local_str = (char*)malloc((len+1) * sizeof(char));
+            int size = (len+1) * sizeof(char);
+            char *local_str = (char*)malloc(size);
             if(local_str != NULL) {
-                memcpy(local_str, gl_str_tmp, (len+1) * sizeof(char));
+                // NOLINTNEXTLINE
+                memcpy(local_str, gl_str_tmp, size);
             }
             exts_i[index] = local_str;
         }
@@ -3482,7 +3484,7 @@ static void find_coreGLES2(void) {
 #ifdef _MSC_VER
     sscanf_s(version, "%d.%d", &major, &minor);
 #else
-    sscanf(version, "%d.%d", &major, &minor);
+    sscanf_s(version, "%d.%d", &major, &minor);
 #endif
 
     GLVersion.major = major; GLVersion.minor = minor;
