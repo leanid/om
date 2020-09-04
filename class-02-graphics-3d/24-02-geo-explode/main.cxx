@@ -455,7 +455,7 @@ void scene::render(float delta_time)
 
     explode_shader.use();
 
-    static float time = 0.f;
+    static float time = 1.f;
     time += delta_time;
 
     explode_shader.set_uniform("time", time);
@@ -466,7 +466,16 @@ void scene::render(float delta_time)
         std::cout << validation_result << std::endl;
     }
 
+    //
+    // uniform mat4 projection;
+    // uniform mat4 view;
+    // uniform mat4 model;
     // TODO render model!
+    explode_shader.set_uniform("model", glm::mat4(1.f));
+    explode_shader.set_uniform("view", camera.view_matrix());
+    explode_shader.set_uniform("projection", camera.projection_matrix());
+
+    nano_suit.draw(explode_shader);
 }
 
 int main(int /*argc*/, char* /*argv*/[])
