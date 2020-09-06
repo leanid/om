@@ -409,6 +409,7 @@ struct scene
     std::unique_ptr<void, void (*)(void*)>             context;
 
     gles30::shader textured_shader;
+    gles30::shader normal_shader;
     gles30::model  nano_suit;
 };
 
@@ -439,6 +440,7 @@ scene::scene()
     , window{ create_window(properties) }
     , context{ create_opengl_context(window.get()) }
     , textured_shader("res/textured.vsh", "res/textured.fsh")
+    , normal_shader("res/normal.vsh", "res/normal.gsh", "res/normal.fsh")
     , nano_suit("../15-01-model/res/model/nanosuit.obj")
 {
     create_camera(properties);
@@ -470,6 +472,13 @@ void scene::render(float delta_time)
     textured_shader.set_uniform("projection", camera.projection_matrix());
 
     nano_suit.draw(textured_shader);
+
+    normal_shader.use();
+    normal_shader.set_uniform("model", scale);
+    normal_shader.set_uniform("view", camera.view_matrix());
+    textured_shader.set_uniform("projection", camera.projection_matrix());
+
+    nano_suit.draw(normal_shader);
 }
 
 int main(int /*argc*/, char* /*argv*/[])

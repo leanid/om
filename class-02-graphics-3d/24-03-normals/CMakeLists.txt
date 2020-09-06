@@ -96,6 +96,8 @@ target_sources(24-03-normals PRIVATE main.cxx
                                    res/textured.vsh
                                    res/textured.fsh				   
                                    res/normal.gsh
+                                   res/normal.vsh
+                                   res/normal.fsh
 
                                    res/runtime.properties.hxx
                                    )
