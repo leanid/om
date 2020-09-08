@@ -4,7 +4,11 @@
 #include <iostream>
 #include <string_view>
 
+#if __has_include(<SDL.h>)
 #include <SDL.h>
+#else
+#include <SDL2/SDL.h>
+#endif
 
 std::ostream& operator<<(std::ostream& out, const SDL_version& v)
 {
@@ -78,9 +82,12 @@ int main(int /*argc*/, char* /*argv*/[])
         return EXIT_FAILURE;
     }
 
-    SDL_Window* const window =
-        SDL_CreateWindow("title", SDL_WINDOWPOS_CENTERED,
-                         SDL_WINDOWPOS_CENTERED, 640, 480, ::SDL_WINDOW_OPENGL);
+    SDL_Window* const window = SDL_CreateWindow("title",
+                                                SDL_WINDOWPOS_CENTERED,
+                                                SDL_WINDOWPOS_CENTERED,
+                                                640,
+                                                480,
+                                                ::SDL_WINDOW_OPENGL);
 
     if (window == nullptr)
     {

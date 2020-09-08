@@ -41,8 +41,8 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <windows.h>
 
 #define HELPERS_H "win/exec-stream-helpers.h"
-#define HELPERS_CPP "win/exec-stream-helpers.cpp"
-#define IMPL_CPP "win/exec-stream-impl.cpp"
+#define HELPERS_CPP "win/exec-stream-helpers.hpp"
+#define IMPL_CPP "win/exec-stream-impl.hpp"
 
 #else
 
@@ -291,7 +291,8 @@ void exec_stream_buffer_t::clear()
     }
     else
     {
-        setg(m_stream_buffer, m_stream_buffer + STREAM_BUFFER_SIZE,
+        setg(m_stream_buffer,
+             m_stream_buffer + STREAM_BUFFER_SIZE,
              m_stream_buffer + STREAM_BUFFER_SIZE);
     }
 }
