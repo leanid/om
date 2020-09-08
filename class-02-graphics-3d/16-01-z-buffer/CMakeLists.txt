@@ -21,16 +21,16 @@ if (SDL2_SRC_DIR) # Android
     target_include_directories(16-01-z-buffer PRIVATE ${SDL2_SRC_DIR}/include )
     target_link_libraries(16-01-z-buffer PRIVATE SDL2 SDL2main )
 elseif(MINGW)
-    add_executable(15-01-model)
+    add_executable(16-01-z-buffer)
     find_package(SDL2 CONFIG REQUIRED)
-    target_link_libraries(15-01-model PRIVATE mingw32
+    target_link_libraries(16-01-z-buffer PRIVATE mingw32
                                                   SDL2main
                                                   SDL2
                                                   opengl32
                                                   -mwindows
                                                   )
 elseif(APPLE)
-    add_executable(15-01-model)
+    add_executable(16-01-z-buffer)
     find_package(SDL2 CONFIG REQUIRED)
     target_link_libraries(15-01-model PRIVATE SDL2::SDL2main
                                               SDL2::SDL2-static

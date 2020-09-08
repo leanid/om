@@ -115,5 +115,5 @@ target_sources(21-04-cubemap-refraction PRIVATE main.cxx
                                    )
 
 add_subdirectory(glad)
-target_link_libraries(21-04-cubemap-refraction PRIVATE glad)
+target_link_libraries(21-04-cubemap-refraction PRIVATE glad_21_4)
 

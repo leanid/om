@@ -113,5 +113,5 @@ target_sources(21-02-cubemap-optimized PRIVATE main.cxx
                                    )
 
 add_subdirectory(glad)
-target_link_libraries(21-02-cubemap-optimized PRIVATE glad)
+target_link_libraries(21-02-cubemap-optimized PRIVATE glad_20_2)
 

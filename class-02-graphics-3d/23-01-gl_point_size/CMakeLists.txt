@@ -115,5 +115,5 @@ target_sources(23-01-gl_point_size PRIVATE main.cxx
                                    )
 
 add_subdirectory(glad)
-target_link_libraries(23-01-gl_point_size PRIVATE glad)
+target_link_libraries(23-01-gl_point_size PRIVATE glad_23_1)
 

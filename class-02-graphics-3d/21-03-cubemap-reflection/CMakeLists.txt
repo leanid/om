@@ -115,5 +115,5 @@ target_sources(21-03-cubemap-reflection PRIVATE main.cxx
                                    )
 
 add_subdirectory(glad)
-target_link_libraries(21-03-cubemap-reflection PRIVATE glad)
+target_link_libraries(21-03-cubemap-reflection PRIVATE glad_20_3)
 

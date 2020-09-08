@@ -103,5 +103,5 @@ target_sources(20-01-framebuffer PRIVATE main.cxx
                                    )
 
 add_subdirectory(glad)
-target_link_libraries(20-01-framebuffer PRIVATE glad)
+target_link_libraries(20-01-framebuffer PRIVATE glad_20)
 

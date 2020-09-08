@@ -16,7 +16,7 @@ include(ExternalProject)
 
 set(ASSIMP_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/build/assimp_root)
 
-ExternalProject_Add(assimp_proj
+ExternalProject_Add(assimp_proj_15_1
   PREFIX            ${ASSIMP_BUILD_DIR}
   GIT_REPOSITORY    https://github.com/assimp/assimp.git
   GIT_TAG           v.5.0.0.rc1
@@ -30,7 +30,7 @@ ExternalProject_Add(assimp_proj
                     -DCMAKE_INSTALL_PREFIX:PATH=${ASSIMP_BUILD_DIR}_install/
 )
 
-ExternalProject_Add(glm_proj
+ExternalProject_Add(glm_proj_15_1
   PREFIX            ${ASSIMP_BUILD_DIR}
   GIT_REPOSITORY    https://github.com/g-truc/glm.git
   GIT_TAG           0.9.9.5
@@ -122,8 +122,8 @@ target_sources(15-01-model PRIVATE main.cxx
                                    ${MODEL_PNG_FILES}
                                    )
 
-add_dependencies(15-01-model assimp_proj)
-add_dependencies(15-01-model glm_proj)
+add_dependencies(15-01-model assimp_proj_15_1)
+add_dependencies(15-01-model glm_proj_15_1)
 
 target_link_directories(15-01-model PRIVATE ${ASSIMP_BUILD_DIR}_install/lib)
 target_link_libraries(15-01-model PRIVATE assimp${ASSIMP_POSTFIX} IrrXML)

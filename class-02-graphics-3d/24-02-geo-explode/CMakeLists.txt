@@ -101,5 +101,5 @@ target_sources(24-02-geo-explode PRIVATE main.cxx
                                    )
 
 add_subdirectory(glad)
-target_link_libraries(24-02-geo-explode PRIVATE glad)
+target_link_libraries(24-02-geo-explode PRIVATE glad_24_2)
 

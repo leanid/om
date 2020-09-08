@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.16.0)
 
-project(glad C)
+project(glad_24_3 C)
 
-add_library(glad STATIC src/glad.c
+add_library(glad_24_3 STATIC src/glad.c
                         include/glad/glad.h
                         include/KHR/khrplatform.h
                         )
-target_include_directories(glad PUBLIC include)
+target_include_directories(glad_24_3 PUBLIC include)

@@ -134,5 +134,5 @@ target_sources(23-03-uniform-buffers PRIVATE main.cxx
                                    )
 
 add_subdirectory(glad)
-target_link_libraries(23-03-uniform-buffers PRIVATE glad)
+target_link_libraries(23-03-uniform-buffers PRIVATE glad_23_3)
 

@@ -7,7 +7,7 @@ if(SDL2_SRC_DIR)  # Android build directly from source
                       ${SDL2_BUILD_DIR}_${ANDROID_ABI} )
 endif()
 
-project(11-02-light-casters CXX)
+project(11-03-light-casters CXX)
 
 if (SDL2_SRC_DIR) # Android
     add_library(${PROJECT_NAME} SHARED)

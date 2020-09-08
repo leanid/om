@@ -103,5 +103,5 @@ target_sources(24-03-normals PRIVATE main.cxx
                                    )
 
 add_subdirectory(glad)
-target_link_libraries(24-03-normals PRIVATE glad)
+target_link_libraries(24-03-normals PRIVATE glad_24_3)
 

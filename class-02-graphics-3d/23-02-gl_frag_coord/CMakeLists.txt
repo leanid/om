@@ -119,5 +119,5 @@ target_sources(23-02-gl_frag_coord PRIVATE main.cxx
                                    )
 
 add_subdirectory(glad)
-target_link_libraries(23-02-gl_frag_coord PRIVATE glad)
+target_link_libraries(23-02-gl_frag_coord PRIVATE glad_23_2)
 

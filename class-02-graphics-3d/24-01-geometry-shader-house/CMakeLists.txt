@@ -124,5 +124,5 @@ target_sources(24-01-geometry-shader-house PRIVATE main.cxx
                                    )
 
 add_subdirectory(glad)
-target_link_libraries(24-01-geometry-shader-house PRIVATE glad)
+target_link_libraries(24-01-geometry-shader-house PRIVATE glad_24_1)
 

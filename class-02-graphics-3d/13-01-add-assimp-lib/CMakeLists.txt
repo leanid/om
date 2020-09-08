@@ -16,7 +16,7 @@ include(ExternalProject)
 
 set(ASSIMP_BUILD_DIR ${CMAKE_CURRENT_LIST_DIR}/build/assimp_root)
 
-ExternalProject_Add(assimp_proj
+ExternalProject_Add(assimp_proj_13_1
   PREFIX            ${ASSIMP_BUILD_DIR}
   GIT_REPOSITORY    https://github.com/assimp/assimp.git
   GIT_TAG           v4.1.0
@@ -89,7 +89,7 @@ target_sources(${PROJECT_NAME} PRIVATE main.cxx
                                        res/runtime.properties.hxx
                                        )
 
-add_dependencies(${PROJECT_NAME} assimp_proj)
+add_dependencies(${PROJECT_NAME} assimp_proj_13_1)
 
 target_link_directories(${PROJECT_NAME} PRIVATE ${ASSIMP_BUILD_DIR}_install/lib)
 target_link_libraries(${PROJECT_NAME} PRIVATE assimp)
