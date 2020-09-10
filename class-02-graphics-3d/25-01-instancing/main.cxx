@@ -27,6 +27,8 @@
 
 static fps_camera camera;
 
+extern float quadVertices[6 * 8];
+
 enum class render_options
 {
     only_pro_view_model,
@@ -408,9 +410,8 @@ struct scene
     std::unique_ptr<SDL_Window, void (*)(SDL_Window*)> window;
     std::unique_ptr<void, void (*)(void*)>             context;
 
-    gles30::shader textured_shader;
-    gles30::shader normal_shader;
-    gles30::model  nano_suit;
+    gles30::shader instanced_shader;
+    gles30::mesh   quad;
 };
 
 void scene::create_uniform_buffer(const void*            buffer_ptr,
@@ -439,46 +440,51 @@ scene::scene()
     : properties("res/runtime.properties.hxx")
     , window{ create_window(properties) }
     , context{ create_opengl_context(window.get()) }
-    , textured_shader("res/textured.vsh", "res/textured.fsh")
-    , normal_shader("res/normal.vsh", "res/normal.gsh", "res/normal.fsh")
-    , nano_suit("../15-01-model/res/model/nanosuit.obj")
+    , instanced_shader("res/instanced.vsh", "res/instanced.fsh")
+    , quad{ create_mesh(quadVertices, sizeof(quadVertices) / 4 / 8, {}) }
 {
     create_camera(properties);
+
+    // generate offset positions
+    glm::vec2 translations[100];
+    int       index  = 0;
+    float     offset = 0.1f;
+    for (int y = -10; y < 10; y += 2)
+    {
+        for (int x = -10; x < 10; x += 2)
+        {
+            glm::vec2 translation;
+            translation.x         = (float)x / 10.0f + offset;
+            translation.y         = (float)y / 10.0f + offset;
+            translations[index++] = translation;
+        }
+    }
+
+    // pass uniforms values
+    instanced_shader.use();
+    for (unsigned int i = 0; i < 100; i++)
+    {
+        std::string uniform_name = "offsets[" + std::to_string(i) + "]";
+        instanced_shader.set_uniform(uniform_name, translations[i]);
+    }
 }
 
-void scene::render(float delta_time)
+void scene::render([[maybe_unused]] float delta_time)
 {
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
-    // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    // glEnable(GL_PROGRAM_POINT_SIZE); only for DESKTOP GL
-
-    camera.move_using_keyboard_wasd(delta_time);
 
     clear_back_buffer(properties.get_vec3("clear_color"));
 
-    textured_shader.use();
+    instanced_shader.use();
 
-    std::string validation_result = textured_shader.validate();
+    std::string validation_result = instanced_shader.validate();
     if (!validation_result.empty())
     {
         std::cout << validation_result << std::endl;
     }
 
-    glm::mat4 scale(1.f);
-    scale = glm::scale(scale, glm::vec3(0.1f, 0.1f, 0.1f));
-    textured_shader.set_uniform("model", scale);
-    textured_shader.set_uniform("view", camera.view_matrix());
-    textured_shader.set_uniform("projection", camera.projection_matrix());
-
-    nano_suit.draw(textured_shader);
-
-    normal_shader.use();
-    normal_shader.set_uniform("model", scale);
-    normal_shader.set_uniform("view", camera.view_matrix());
-    textured_shader.set_uniform("projection", camera.projection_matrix());
-
-    nano_suit.draw(normal_shader);
+    quad.draw_instanced(instanced_shader, 100);
 }
 
 int main(int /*argc*/, char* /*argv*/[])
@@ -505,3 +511,16 @@ int main(int /*argc*/, char* /*argv*/[])
 
     return 0;
 }
+
+// clang-format off
+float quadVertices[6*8] = {
+    // positions           //normals         // uv
+    -0.05f,  0.05f, 0.0f,  0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+     0.05f, -0.05f, 0.0f,  0.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+    -0.05f, -0.05f, 0.0f,  0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+
+    -0.05f,  0.05f, 0.0f,  0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+     0.05f, -0.05f, 0.0f,  0.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+     0.05f,  0.05f, 0.0f,  0.0f, 0.0f, 0.0f, 1.0f, 0.0f
+};
+// clang-format on

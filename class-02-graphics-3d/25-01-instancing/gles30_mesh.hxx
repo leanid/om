@@ -32,7 +32,8 @@ enum class primitive
 class mesh
 {
 public:
-    mesh(std::vector<vertex> a_vertices, std::vector<uint32_t> a_indices,
+    mesh(std::vector<vertex>   a_vertices,
+         std::vector<uint32_t> a_indices,
          std::vector<texture*> a_textures);
     mesh(mesh&&) noexcept;
     mesh& operator=(mesh&&) noexcept;
@@ -42,6 +43,7 @@ public:
     mesh& operator=(const mesh&) = delete;
 
     void draw(shader& shader) const;
+    void draw_instanced(shader& shader, size_t instance_count) const;
 
     void      set_primitive_type(primitive value);
     primitive get_primitive_type() const;

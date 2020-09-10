@@ -93,11 +93,8 @@ target_sources(25-01-instancing PRIVATE main.cxx
 
                                    stb_image.h
 
-                                   res/textured.vsh
-                                   res/textured.fsh				   
-                                   res/normal.gsh
-                                   res/normal.vsh
-                                   res/normal.fsh
+                                   res/instanced.vsh
+                                   res/instanced.fsh
 
                                    res/runtime.properties.hxx
                                    )

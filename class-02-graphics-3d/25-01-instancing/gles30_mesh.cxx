@@ -96,8 +96,8 @@ void mesh::draw(shader& shader) const
         }
 
         char tex_uniform_name[64];
-        is_ok = snprintf(tex_uniform_name, sizeof(tex_uniform_name),
-                         "material.%s", str);
+        is_ok = snprintf(
+            tex_uniform_name, sizeof(tex_uniform_name), "material.%s", str);
         assert(is_ok > 0);
 
         shader.set_uniform(tex_uniform_name, static_cast<int32_t>(i));
@@ -107,8 +107,68 @@ void mesh::draw(shader& shader) const
     glBindVertexArray(vao);
 
     glDrawElements(static_cast<GLenum>(primitive_type),
-                   static_cast<signed>(indices.size()), GL_UNSIGNED_INT,
+                   static_cast<signed>(indices.size()),
+                   GL_UNSIGNED_INT,
                    nullptr);
+
+    glBindVertexArray(0);
+}
+
+void mesh::draw_instanced(shader& shader, size_t instance_count) const
+{
+    shader.use();
+    uint32_t diffuse_index  = 0;
+    uint32_t specular_index = 0;
+    uint32_t cubemap_index  = 0;
+    for (uint32_t i = 0; i < textures.size(); i++)
+    {
+        // activate proper texture unit before binding
+        glActiveTexture(GL_TEXTURE0 + i);
+
+        // retrieve texture number (the N in diffuse_textureN)
+        texture& texture = *textures.at(i);
+        texture.bind();
+        texture::type type = texture.get_type();
+        char          str[32];
+
+        int32_t is_ok = 0;
+
+        if (type == texture::type::diffuse)
+        {
+            is_ok = snprintf(str, sizeof(str), "tex_diffuse%u", diffuse_index);
+            assert(is_ok > 0);
+            ++diffuse_index;
+        }
+        else if (type == texture::type::specular)
+        {
+            is_ok =
+                snprintf(str, sizeof(str), "tex_specular%u", specular_index);
+            assert(is_ok > 0);
+            ++specular_index;
+        }
+        else if (type == texture::type::cubemap)
+        {
+            is_ok = snprintf(str, sizeof(str), "tex_cubemap%u", cubemap_index);
+            assert(is_ok > 0);
+            ++cubemap_index;
+        }
+
+        char tex_uniform_name[64];
+        is_ok = snprintf(
+            tex_uniform_name, sizeof(tex_uniform_name), "material.%s", str);
+        assert(is_ok > 0);
+
+        shader.set_uniform(tex_uniform_name, static_cast<int32_t>(i));
+    }
+
+    // draw mesh
+    glBindVertexArray(vao);
+
+    glDrawElementsInstanced(static_cast<GLenum>(primitive_type),
+                            static_cast<signed>(indices.size()),
+                            GL_UNSIGNED_INT,
+                            nullptr,
+                            static_cast<GLsizei>(instance_count));
 
     glBindVertexArray(0);
 }
@@ -131,13 +191,15 @@ void mesh::setup()
 
     glBufferData(GL_ARRAY_BUFFER,
                  static_cast<signed>(vertices.size() * sizeof(vertex)),
-                 vertices.data(), GL_STATIC_DRAW);
+                 vertices.data(),
+                 GL_STATIC_DRAW);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 
     glBufferData(GL_ELEMENT_ARRAY_BUFFER,
                  static_cast<signed>(indices.size() * sizeof(uint32_t)),
-                 indices.data(), GL_STATIC_DRAW);
+                 indices.data(),
+                 GL_STATIC_DRAW);
 
     // vertex positions
     glEnableVertexAttribArray(0);
@@ -147,13 +209,21 @@ void mesh::setup()
     // vertex normals
     glEnableVertexAttribArray(1);
 
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(vertex),
+    glVertexAttribPointer(1,
+                          3,
+                          GL_FLOAT,
+                          GL_FALSE,
+                          sizeof(vertex),
                           reinterpret_cast<void*>(offsetof(vertex, normal)));
 
     // vertex texture coords
     glEnableVertexAttribArray(2);
 
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(vertex),
+    glVertexAttribPointer(2,
+                          2,
+                          GL_FLOAT,
+                          GL_FALSE,
+                          sizeof(vertex),
                           reinterpret_cast<void*>(offsetof(vertex, uv)));
 
     glBindVertexArray(0);
