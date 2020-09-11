@@ -413,6 +413,7 @@ struct scene
     gles30::shader instanced_shader;
     gles30::mesh   quad;
     uint32_t       instance_vbo;
+    const size_t   num_instances = 1000;
 };
 
 void scene::create_uniform_buffer(const void*            buffer_ptr,
@@ -448,16 +449,17 @@ scene::scene()
     create_camera(properties);
 
     // generate offset positions
-    glm::vec2 translations[100];
-    int       index  = 0;
-    float     offset = 0.1f;
-    for (int y = -10; y < 10; y += 2)
+    glm::vec2 translations[num_instances];
+    int       index        = 0;
+    float     offset       = 0.1f;
+    int       count_in_row = sqrt(num_instances);
+    for (int y = -count_in_row; y < count_in_row; y += 2)
     {
-        for (int x = -10; x < 10; x += 2)
+        for (int x = -count_in_row; x < count_in_row; x += 2)
         {
             glm::vec2 translation;
-            translation.x         = (float)x / 10.0f + offset;
-            translation.y         = (float)y / 10.0f + offset;
+            translation.x         = (float)x / count_in_row + offset;
+            translation.y         = (float)y / count_in_row + offset;
             translations[index++] = translation;
         }
     }
@@ -468,7 +470,7 @@ scene::scene()
     glGenBuffers(1, &instance_vbo);
     glBindBuffer(GL_ARRAY_BUFFER, instance_vbo);
     glBufferData(GL_ARRAY_BUFFER,
-                 sizeof(glm::vec2) * 100,
+                 sizeof(glm::vec2) * num_instances,
                  &translations[0],
                  GL_STATIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -489,7 +491,7 @@ void scene::render([[maybe_unused]] float delta_time)
         std::cout << validation_result << std::endl;
     }
 
-    quad.draw_instanced(instanced_shader, 100, [&] {
+    quad.draw_instanced(instanced_shader, num_instances, [&] {
         // explain data for OpenGL
         glEnableVertexAttribArray(3);
         glBindBuffer(GL_ARRAY_BUFFER, instance_vbo);
@@ -528,12 +530,12 @@ int main(int /*argc*/, char* /*argv*/[])
 // clang-format off
 float quadVertices[6*8] = {
     // positions           //normals         // uv
-    -0.05f,  0.05f, 0.0f,  0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-     0.05f, -0.05f, 0.0f,  0.0f, 0.0f, 0.0f, 0.0f, 1.0f,
-    -0.05f, -0.05f, 0.0f,  0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+    -0.01f,  0.01f, 0.0f,  0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+     0.01f, -0.01f, 0.0f,  0.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+    -0.01f, -0.01f, 0.0f,  0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
 
-    -0.05f,  0.05f, 0.0f,  0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-     0.05f, -0.05f, 0.0f,  0.0f, 0.0f, 0.0f, 0.0f, 1.0f,
-     0.05f,  0.05f, 0.0f,  0.0f, 0.0f, 0.0f, 1.0f, 0.0f
+    -0.01f,  0.01f, 0.0f,  0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+     0.01f, -0.01f, 0.0f,  0.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+     0.01f,  0.01f, 0.0f,  0.0f, 0.0f, 0.0f, 1.0f, 0.0f
 };
 // clang-format on
