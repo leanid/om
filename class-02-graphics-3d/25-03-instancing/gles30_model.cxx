@@ -14,17 +14,31 @@ namespace gles30
 
 void model::draw(shader& shader) const
 {
-    std::for_each(begin(meshes), end(meshes),
-                  [&shader](const mesh& m) { m.draw(shader); });
+    std::for_each(begin(meshes), end(meshes), [&shader](const mesh& m) {
+        m.draw(shader);
+    });
 }
 
-static void process_node(const aiNode* node, const aiScene* scene,
-                         std::vector<mesh>& meshes,
-                         const std::string& directory);
-static mesh process_mesh(const aiMesh* mesh, const aiScene* scene,
-                         const std::string& directory);
+void model::draw_instanced(shader&               shader,
+                           size_t                instance_count,
+                           std::function<void()> bind_custom_buffer) const
+{
+    std::for_each(begin(meshes), end(meshes), [&](const mesh& m) {
+        m.draw_instanced(shader, instance_count, bind_custom_buffer);
+    });
+}
+
+static void                  process_node(const aiNode*      node,
+                                          const aiScene*     scene,
+                                          std::vector<mesh>& meshes,
+                                          const std::string& directory);
+static mesh                  process_mesh(const aiMesh*      mesh,
+                                          const aiScene*     scene,
+                                          const std::string& directory);
 static std::vector<texture*> load_material_textures(
-    const aiMaterial* mat, aiTextureType type, texture::type type_name,
+    const aiMaterial*  mat,
+    aiTextureType      type,
+    texture::type      type_name,
     const std::string& directory);
 
 void model::load_model(std::string_view path)
@@ -49,7 +63,8 @@ void model::load_model(std::string_view path)
     process_node(scene->mRootNode, scene, meshes, directory);
 }
 
-static void process_node(const aiNode* node, const aiScene* scene,
+static void process_node(const aiNode*      node,
+                         const aiScene*     scene,
                          std::vector<mesh>& meshes,
                          const std::string& directory)
 {
@@ -71,7 +86,8 @@ static void process_node(const aiNode* node, const aiScene* scene,
     });
 }
 
-static mesh process_mesh(const aiMesh* mesh, const aiScene* scene,
+static mesh process_mesh(const aiMesh*      mesh,
+                         const aiScene*     scene,
                          const std::string& directory)
 {
     assert(mesh != nullptr);
@@ -133,17 +149,19 @@ static mesh process_mesh(const aiMesh* mesh, const aiScene* scene,
             material, aiTextureType_DIFFUSE, texture::type::diffuse, directory);
 
         std::vector<texture*> specular_maps =
-            load_material_textures(material, aiTextureType_SPECULAR,
-                                   texture::type::specular, directory);
+            load_material_textures(material,
+                                   aiTextureType_SPECULAR,
+                                   texture::type::specular,
+                                   directory);
 
         textures.reserve(diffuse_maps.size() + specular_maps.size());
         textures.insert(end(textures), begin(diffuse_maps), end(diffuse_maps));
-        textures.insert(end(textures), begin(specular_maps),
-                        end(specular_maps));
+        textures.insert(
+            end(textures), begin(specular_maps), end(specular_maps));
     }
 
-    return gles30::mesh(std::move(vertices), std::move(indices),
-                        std::move(textures));
+    return gles30::mesh(
+        std::move(vertices), std::move(indices), std::move(textures));
 }
 
 std::vector<texture*> load_material_textures(const aiMaterial*  mat,

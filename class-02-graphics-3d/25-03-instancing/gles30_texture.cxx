@@ -41,8 +41,8 @@ void texture::set_default_wrap_and_filters()
 
     // if you plan to use this texture in framebuffer object
     // do not set nothing else filter::liner (no min/mag mitmap can be used)
-    max_filter(filter::liner);
-    min_filter(filter::liner);
+    max_filter(filter::linear_mipmap_linear); // better rock model
+    min_filter(filter::linear_mipmap_linear); // better rock model
 }
 
 void texture::gen_texture_set_filters_and_wrap()

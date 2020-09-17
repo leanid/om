@@ -99,6 +99,7 @@ target_sources(25-03-instancing PRIVATE main.cxx
                                    res/textured.fsh
                                    res/mars.png
                                    res/planet.mtl
+                                   res/rock.mtl
 
                                    res/runtime.properties.hxx
                                    )

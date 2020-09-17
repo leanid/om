@@ -186,91 +186,6 @@ static void destroy_opengl_context(void* ptr)
     return gl_context;
 };
 
-void pull_system_events(bool& continue_loop, int& current_effect)
-{
-    using namespace std;
-    SDL_Event event;
-    while (SDL_PollEvent(&event))
-    {
-        if (SDL_FINGERDOWN == event.type)
-        {
-            continue_loop = false;
-            break;
-        }
-        else if (SDL_QUIT == event.type)
-        {
-            continue_loop = false;
-            break;
-        }
-        else if (SDL_MOUSEMOTION == event.type)
-        {
-            const float sensivity   = 0.05f;
-            const float delta_yaw   = event.motion.xrel * sensivity;
-            const float delta_pitch = -1.f * event.motion.yrel * sensivity;
-            camera.rotate(delta_yaw, delta_pitch);
-        }
-        else if (SDL_MOUSEWHEEL == event.type)
-        {
-            camera.zoom(-event.wheel.y);
-        }
-        else if (SDL_KEYUP == event.type)
-        {
-            if (event.key.keysym.sym == SDLK_0)
-            {
-                current_effect = 5;
-            }
-            else if (event.key.keysym.sym == SDLK_1)
-            {
-                current_effect = 1;
-            }
-            else if (event.key.keysym.sym == SDLK_2)
-            {
-                current_effect = 2;
-            }
-            else if (event.key.keysym.sym == SDLK_3)
-            {
-                current_effect = 3;
-            }
-            else if (event.key.keysym.sym == SDLK_4)
-            {
-                current_effect = 4;
-            }
-            else if (event.key.keysym.sym == SDLK_5)
-            {
-                if (0 != SDL_SetRelativeMouseMode(SDL_TRUE))
-                {
-                    throw std::runtime_error(SDL_GetError());
-                }
-            }
-            else if (event.key.keysym.sym == SDLK_6)
-            {
-                if (0 != SDL_SetRelativeMouseMode(SDL_FALSE))
-                {
-                    throw std::runtime_error(SDL_GetError());
-                }
-            }
-        }
-        else if (SDL_WINDOWEVENT == event.type)
-        {
-            switch (event.window.event)
-            {
-                case ::SDL_WindowEventID::SDL_WINDOWEVENT_RESIZED:
-                    clog << "windows resized: " << event.window.data1 << ' '
-                         << event.window.data2 << ' ';
-                    // play with it to understand OpenGL origin point
-                    // for window screen coordinate system
-                    screen_width  = event.window.data1;
-                    screen_height = event.window.data2;
-                    screen_aspect = screen_width / screen_height;
-                    camera.aspect(screen_aspect);
-                    glViewport(0, 0, event.window.data1, event.window.data2);
-                    print_view_port();
-                    break;
-            }
-        }
-    }
-}
-
 float update_delta_time(float& lastFrame)
 {
     float currentFrame = SDL_GetTicks() * 0.001f; // seconds
@@ -404,6 +319,8 @@ struct scene
                                const uint32_t         binding_point,
                                gles30::shader&        shader,
                                uint32_t&              ubo_handle);
+    void pull_system_events(bool& continue_loop, int& current_effect);
+    void regenerate_rock_matrixes();
 
     properties_reader properties;
 
@@ -414,9 +331,12 @@ struct scene
     gles30::shader planet_shader;
     gles30::mesh   quad;
     uint32_t       instance_vbo;
-    const size_t   num_instances = 1000;
+    size_t         num_instances = 1000;
 
-    gles30::model planet_mars;
+    gles30::model          planet_mars;
+    gles30::model          rock;
+    std::vector<glm::mat4> rock_matrices;
+    bool                   use_instance_draw = false;
 };
 
 void scene::create_uniform_buffer(const void*            buffer_ptr,
@@ -441,6 +361,142 @@ void scene::create_uniform_buffer(const void*            buffer_ptr,
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
+void scene::pull_system_events(bool& continue_loop, int& current_effect)
+{
+    using namespace std;
+    SDL_Event event;
+    while (SDL_PollEvent(&event))
+    {
+        if (SDL_FINGERDOWN == event.type)
+        {
+            continue_loop = false;
+            break;
+        }
+        else if (SDL_QUIT == event.type)
+        {
+            continue_loop = false;
+            break;
+        }
+        else if (SDL_MOUSEMOTION == event.type)
+        {
+            const float sensivity   = 0.05f;
+            const float delta_yaw   = event.motion.xrel * sensivity;
+            const float delta_pitch = -1.f * event.motion.yrel * sensivity;
+            camera.rotate(delta_yaw, delta_pitch);
+        }
+        else if (SDL_MOUSEWHEEL == event.type)
+        {
+            camera.zoom(-event.wheel.y);
+        }
+        else if (SDL_KEYUP == event.type)
+        {
+            if (event.key.keysym.sym == SDLK_0)
+            {
+                use_instance_draw = !use_instance_draw;
+            }
+            else if (event.key.keysym.sym == SDLK_1)
+            {
+                if (use_instance_draw)
+                {
+                    num_instances *= 2;
+                    regenerate_rock_matrixes();
+                }
+            }
+            else if (event.key.keysym.sym == SDLK_2)
+            {
+                current_effect = 2;
+            }
+            else if (event.key.keysym.sym == SDLK_3)
+            {
+                current_effect = 3;
+            }
+            else if (event.key.keysym.sym == SDLK_4)
+            {
+                current_effect = 4;
+            }
+            else if (event.key.keysym.sym == SDLK_5)
+            {
+                if (0 != SDL_SetRelativeMouseMode(SDL_TRUE))
+                {
+                    throw std::runtime_error(SDL_GetError());
+                }
+            }
+            else if (event.key.keysym.sym == SDLK_6)
+            {
+                if (0 != SDL_SetRelativeMouseMode(SDL_FALSE))
+                {
+                    throw std::runtime_error(SDL_GetError());
+                }
+            }
+        }
+        else if (SDL_WINDOWEVENT == event.type)
+        {
+            switch (event.window.event)
+            {
+                case ::SDL_WindowEventID::SDL_WINDOWEVENT_RESIZED:
+                    clog << "windows resized: " << event.window.data1 << ' '
+                         << event.window.data2 << ' ';
+                    // play with it to understand OpenGL origin point
+                    // for window screen coordinate system
+                    screen_width  = event.window.data1;
+                    screen_height = event.window.data2;
+                    screen_aspect = screen_width / screen_height;
+                    camera.aspect(screen_aspect);
+                    glViewport(0, 0, event.window.data1, event.window.data2);
+                    print_view_port();
+                    break;
+            }
+        }
+    }
+}
+
+void scene::regenerate_rock_matrixes()
+{
+    unsigned int amount = num_instances;
+    rock_matrices.resize(amount);
+
+    float radius = 50.0;
+    float offset = 2.5f;
+    for (unsigned int i = 0; i < amount; i++)
+    {
+        glm::mat4 model = glm::mat4(1.0f);
+        // 1. translation: displace along circle with 'radius' in range
+        // [-offset, offset]
+        float angle_rock = (float)i / (float)amount * 360.0f;
+        float displacement =
+            (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
+        float x      = sin(angle_rock) * radius + displacement;
+        displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
+        float y =
+            displacement *
+            0.4f; // keep height of field smaller compared to width of x and z
+        displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
+        float z      = cos(angle_rock) * radius + displacement;
+        model        = glm::translate(model, glm::vec3(x, y, z));
+
+        // 2. scale: scale between 0.05 and 0.25f
+        float scale = (rand() % 20) / 100.0f + 0.05;
+        model       = glm::scale(model, glm::vec3(scale));
+
+        // 3. rotation: add random rotation around a (semi)randomly picked
+        // rotation axis vector
+        float rotAngle = (rand() % 360);
+        model = glm::rotate(model, rotAngle, glm::vec3(0.4f, 0.6f, 0.8f));
+
+        // 4. now add to list of matrices
+        rock_matrices[i] = model;
+    }
+
+    // create OpenGL buffer and load with data
+    glBindBuffer(GL_ARRAY_BUFFER, instance_vbo);
+    glBufferData(GL_ARRAY_BUFFER,
+                 sizeof(glm::mat4) * num_instances,
+                 &rock_matrices[0],
+                 GL_STATIC_DRAW);
+
+    std::cout << "num_instances = " << num_instances << std::endl;
+}
+
 scene::scene()
     : properties("res/runtime.properties.hxx")
     , window{ create_window(properties) }
@@ -450,34 +506,13 @@ scene::scene()
     , quad{ create_mesh(quadVertices, sizeof(quadVertices) / 4 / 8, {}) }
     , instance_vbo{}
     , planet_mars("res/planet.obj")
+    , rock("res/rock.obj")
 {
+    glGenBuffers(1, &instance_vbo);
     create_camera(properties);
 
     // generate offset positions
-    glm::vec2 translations[num_instances];
-    int       index        = 0;
-    float     offset       = 0.1f;
-    int       count_in_row = sqrt(num_instances);
-    for (int y = -count_in_row; y < count_in_row; y += 2)
-    {
-        for (int x = -count_in_row; x < count_in_row; x += 2)
-        {
-            glm::vec2 translation;
-            translation.x         = (float)x / count_in_row + offset;
-            translation.y         = (float)y / count_in_row + offset;
-            translations[index++] = translation;
-        }
-    }
-
-    instanced_shader.use();
-
-    // create OpenGL buffer and load with data
-    glGenBuffers(1, &instance_vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, instance_vbo);
-    glBufferData(GL_ARRAY_BUFFER,
-                 sizeof(glm::vec2) * num_instances,
-                 &translations[0],
-                 GL_STATIC_DRAW);
+    regenerate_rock_matrixes();
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
@@ -496,16 +531,6 @@ void scene::render([[maybe_unused]] float delta_time)
         std::cout << validation_result << std::endl;
     }
 
-    quad.draw_instanced(instanced_shader, num_instances, [&] {
-        // explain data for OpenGL
-        glEnableVertexAttribArray(3);
-        glBindBuffer(GL_ARRAY_BUFFER, instance_vbo);
-        glVertexAttribPointer(
-            3, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glVertexAttribDivisor(3, 1);
-    });
-
     planet_shader.use();
 
     camera.move_using_keyboard_wasd(delta_time);
@@ -515,6 +540,46 @@ void scene::render([[maybe_unused]] float delta_time)
     planet_shader.set_uniform("model", glm::mat4(1.0f));
 
     planet_mars.draw(planet_shader);
+
+    if (use_instance_draw)
+    {
+        instanced_shader.use();
+        instanced_shader.set_uniform("projection", camera.projection_matrix());
+        instanced_shader.set_uniform("view", camera.view_matrix());
+
+        rock.draw_instanced(instanced_shader, num_instances, [&] {
+            //        // explain data for OpenGL
+            glBindBuffer(GL_ARRAY_BUFFER, instance_vbo);
+
+            // vertex attributes
+            std::size_t vec4Size = sizeof(glm::vec4);
+            glEnableVertexAttribArray(3);
+            glVertexAttribPointer(
+                3, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)0);
+            glEnableVertexAttribArray(4);
+            glVertexAttribPointer(
+                4, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(1 * vec4Size));
+            glEnableVertexAttribArray(5);
+            glVertexAttribPointer(
+                5, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(2 * vec4Size));
+            glEnableVertexAttribArray(6);
+            glVertexAttribPointer(
+                6, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(3 * vec4Size));
+
+            glVertexAttribDivisor(3, 1);
+            glVertexAttribDivisor(4, 1);
+            glVertexAttribDivisor(5, 1);
+            glVertexAttribDivisor(6, 1);
+        });
+    }
+    else
+    {
+        for (size_t i = 0; i < num_instances; ++i)
+        {
+            planet_shader.set_uniform("model", rock_matrices[i]);
+            rock.draw(planet_shader);
+        }
+    }
 }
 
 int main(int /*argc*/, char* /*argv*/[])
@@ -531,7 +596,7 @@ int main(int /*argc*/, char* /*argv*/[])
 
             scene.properties.update_changes();
 
-            pull_system_events(continue_loop, current_post_process);
+            scene.pull_system_events(continue_loop, current_post_process);
 
             scene.render(delta_time);
 

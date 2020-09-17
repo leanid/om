@@ -98,7 +98,10 @@ void mesh::draw(shader& shader) const
         char tex_uniform_name[64];
         is_ok = snprintf(
             tex_uniform_name, sizeof(tex_uniform_name), "material.%s", str);
-        assert(is_ok > 0);
+        if (is_ok <= 0)
+        {
+            throw std::runtime_error("error: can't fit name in 64 chars");
+        }
 
         shader.set_uniform(tex_uniform_name, static_cast<int32_t>(i));
     }

@@ -7,7 +7,18 @@ in VS_OUT {
     vec2 uv;
 } vs_out;
 
+
+struct rock_material
+{
+    sampler2D tex_diffuse0;
+    sampler2D tex_specular0;
+};
+
+uniform rock_material material;
+
 void main()
 {
-    frag_color = vec4(vs_out.uv.y, vs_out.uv.x, 0, 1);
+    frag_color = texture(material.tex_diffuse0, vs_out.uv);
+    frag_color += vec4(0.01, 0, 0, 0) * texture(material.tex_specular0, vs_out.uv);
+    // frag_color += vec4(0, 1, 0, 0);
 }
