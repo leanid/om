@@ -95,6 +95,8 @@ target_sources(25-03-instancing PRIVATE main.cxx
 
                                    res/instanced.vsh
                                    res/instanced.fsh
+                                   res/textured.vsh
+                                   res/textured.fsh
                                    res/mars.png
                                    res/planet.mtl
 

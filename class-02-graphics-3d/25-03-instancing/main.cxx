@@ -446,7 +446,7 @@ scene::scene()
     , window{ create_window(properties) }
     , context{ create_opengl_context(window.get()) }
     , instanced_shader("res/instanced.vsh", "res/instanced.fsh")
-    , planet_shader("res/planet.vsh", "res/planet.fsh")
+    , planet_shader("res/textured.vsh", "res/textured.fsh")
     , quad{ create_mesh(quadVertices, sizeof(quadVertices) / 4 / 8, {}) }
     , instance_vbo{}
     , planet_mars("res/planet.obj")
@@ -506,7 +506,15 @@ void scene::render([[maybe_unused]] float delta_time)
         glVertexAttribDivisor(3, 1);
     });
 
-    planet_mars.draw()
+    planet_shader.use();
+
+    camera.move_using_keyboard_wasd(delta_time);
+
+    planet_shader.set_uniform("projection", camera.projection_matrix());
+    planet_shader.set_uniform("view", camera.view_matrix());
+    planet_shader.set_uniform("model", glm::mat4(1.0f));
+
+    planet_mars.draw(planet_shader);
 }
 
 int main(int /*argc*/, char* /*argv*/[])
