@@ -27,7 +27,7 @@
 
 static fps_camera camera;
 
-extern float quadVertices[6 * 8];
+extern const float cube_vertices[36 * 8];
 
 enum class render_options
 {
@@ -327,16 +327,8 @@ struct scene
     std::unique_ptr<SDL_Window, void (*)(SDL_Window*)> window;
     std::unique_ptr<void, void (*)(void*)>             context;
 
-    gles30::shader instanced_shader;
-    gles30::shader planet_shader;
-    gles30::mesh   quad;
-    uint32_t       instance_vbo;
-    size_t         num_instances = 1000;
-
-    gles30::model          planet_mars;
-    gles30::model          rock;
-    std::vector<glm::mat4> rock_matrices;
-    bool                   use_instance_draw = false;
+    gles30::shader qube_shader;
+    gles30::mesh   cube;
 };
 
 void scene::create_uniform_buffer(const void*            buffer_ptr,
@@ -392,15 +384,9 @@ void scene::pull_system_events(bool& continue_loop, int& current_effect)
         {
             if (event.key.keysym.sym == SDLK_0)
             {
-                use_instance_draw = !use_instance_draw;
             }
             else if (event.key.keysym.sym == SDLK_1)
             {
-                if (use_instance_draw)
-                {
-                    num_instances *= 2;
-                    regenerate_rock_matrixes();
-                }
             }
             else if (event.key.keysym.sym == SDLK_2)
             {
@@ -450,69 +436,15 @@ void scene::pull_system_events(bool& continue_loop, int& current_effect)
     }
 }
 
-void scene::regenerate_rock_matrixes()
-{
-    unsigned int amount = num_instances;
-    rock_matrices.resize(amount);
-
-    float radius = 50.0;
-    float offset = 2.5f;
-    for (unsigned int i = 0; i < amount; i++)
-    {
-        glm::mat4 model = glm::mat4(1.0f);
-        // 1. translation: displace along circle with 'radius' in range
-        // [-offset, offset]
-        float angle_rock = (float)i / (float)amount * 360.0f;
-        float displacement =
-            (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
-        float x      = sin(angle_rock) * radius + displacement;
-        displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
-        float y =
-            displacement *
-            0.4f; // keep height of field smaller compared to width of x and z
-        displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
-        float z      = cos(angle_rock) * radius + displacement;
-        model        = glm::translate(model, glm::vec3(x, y, z));
-
-        // 2. scale: scale between 0.05 and 0.25f
-        float scale = (rand() % 20) / 100.0f + 0.05;
-        model       = glm::scale(model, glm::vec3(scale));
-
-        // 3. rotation: add random rotation around a (semi)randomly picked
-        // rotation axis vector
-        float rotAngle = (rand() % 360);
-        model = glm::rotate(model, rotAngle, glm::vec3(0.4f, 0.6f, 0.8f));
-
-        // 4. now add to list of matrices
-        rock_matrices[i] = model;
-    }
-
-    // create OpenGL buffer and load with data
-    glBindBuffer(GL_ARRAY_BUFFER, instance_vbo);
-    glBufferData(GL_ARRAY_BUFFER,
-                 sizeof(glm::mat4) * num_instances,
-                 &rock_matrices[0],
-                 GL_STATIC_DRAW);
-
-    std::cout << "num_instances = " << num_instances << std::endl;
-}
-
 scene::scene()
     : properties("res/runtime.properties.hxx")
     , window{ create_window(properties) }
     , context{ create_opengl_context(window.get()) }
-    , instanced_shader("res/instanced.vsh", "res/instanced.fsh")
-    , planet_shader("res/textured.vsh", "res/textured.fsh")
-    , quad{ create_mesh(quadVertices, sizeof(quadVertices) / 4 / 8, {}) }
-    , instance_vbo{}
-    , planet_mars("res/planet.obj")
-    , rock("res/rock.obj")
+    , qube_shader("res/textured.vsh", "res/textured.fsh")
+    , cube{ create_mesh(cube_vertices, sizeof(cube_vertices) / 4 / 4, {}) }
 {
-    glGenBuffers(1, &instance_vbo);
     create_camera(properties);
 
-    // generate offset positions
-    regenerate_rock_matrixes();
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
@@ -523,63 +455,7 @@ void scene::render([[maybe_unused]] float delta_time)
 
     clear_back_buffer(properties.get_vec3("clear_color"));
 
-    instanced_shader.use();
-
-    std::string validation_result = instanced_shader.validate();
-    if (!validation_result.empty())
-    {
-        std::cout << validation_result << std::endl;
-    }
-
-    planet_shader.use();
-
     camera.move_using_keyboard_wasd(delta_time);
-
-    planet_shader.set_uniform("projection", camera.projection_matrix());
-    planet_shader.set_uniform("view", camera.view_matrix());
-    planet_shader.set_uniform("model", glm::mat4(1.0f));
-
-    planet_mars.draw(planet_shader);
-
-    if (use_instance_draw)
-    {
-        instanced_shader.use();
-        instanced_shader.set_uniform("projection", camera.projection_matrix());
-        instanced_shader.set_uniform("view", camera.view_matrix());
-
-        rock.draw_instanced(instanced_shader, num_instances, [&] {
-            //        // explain data for OpenGL
-            glBindBuffer(GL_ARRAY_BUFFER, instance_vbo);
-
-            // vertex attributes
-            std::size_t vec4Size = sizeof(glm::vec4);
-            glEnableVertexAttribArray(3);
-            glVertexAttribPointer(
-                3, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)0);
-            glEnableVertexAttribArray(4);
-            glVertexAttribPointer(
-                4, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(1 * vec4Size));
-            glEnableVertexAttribArray(5);
-            glVertexAttribPointer(
-                5, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(2 * vec4Size));
-            glEnableVertexAttribArray(6);
-            glVertexAttribPointer(
-                6, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(3 * vec4Size));
-
-            glVertexAttribDivisor(3, 1);
-            glVertexAttribDivisor(4, 1);
-            glVertexAttribDivisor(5, 1);
-            glVertexAttribDivisor(6, 1);
-        });
-    }
-    else
-    {
-        for (size_t i = 0; i < num_instances; ++i)
-        {
-            planet_shader.set_uniform("model", rock_matrices[i]);
-            rock.draw(planet_shader);
-        }
-    }
 }
 
 int main(int /*argc*/, char* /*argv*/[])
@@ -608,14 +484,49 @@ int main(int /*argc*/, char* /*argv*/[])
 }
 
 // clang-format off
-float quadVertices[6*8] = {
-    // positions           //normals         // uv
-    -0.01f,  0.01f, 0.0f,  0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-     0.01f, -0.01f, 0.0f,  0.0f, 0.0f, 0.0f, 0.0f, 1.0f,
-    -0.01f, -0.01f, 0.0f,  0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+const float cube_vertices[36 * 8] = {
+     // positions         // normals           // texture coords
+    -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
+     0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.0f,
+     0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f,
+     0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f,
+    -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 1.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
 
-    -0.01f,  0.01f, 0.0f,  0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-     0.01f, -0.01f, 0.0f,  0.0f, 0.0f, 0.0f, 0.0f, 1.0f,
-     0.01f,  0.01f, 0.0f,  0.0f, 0.0f, 0.0f, 1.0f, 0.0f
+    -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   0.0f, 0.0f,
+     0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   1.0f, 0.0f,
+     0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   1.0f, 1.0f,
+     0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   1.0f, 1.0f,
+    -0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   0.0f, 1.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   0.0f, 0.0f,
+
+    -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
+    -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 1.0f,
+    -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
+    -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
+    -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 0.0f,
+    -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
+
+     0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
+     0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f,
+     0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
+     0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
+     0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 0.0f,
+     0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
+
+    -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 1.0f,
+     0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 1.0f,
+     0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f,
+     0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 0.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 1.0f,
+
+    -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f,
+     0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 1.0f,
+     0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f,
+     0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f,
+    -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 0.0f,
+    -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f
 };
+
 // clang-format on
