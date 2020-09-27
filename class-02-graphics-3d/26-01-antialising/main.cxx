@@ -327,7 +327,7 @@ struct scene
     std::unique_ptr<SDL_Window, void (*)(SDL_Window*)> window;
     std::unique_ptr<void, void (*)(void*)>             context;
 
-    gles30::shader qube_shader;
+    gles30::shader cube_shader;
     gles30::mesh   cube;
 };
 
@@ -440,8 +440,8 @@ scene::scene()
     : properties("res/runtime.properties.hxx")
     , window{ create_window(properties) }
     , context{ create_opengl_context(window.get()) }
-    , qube_shader("res/textured.vsh", "res/textured.fsh")
-    , cube{ create_mesh(cube_vertices, sizeof(cube_vertices) / 4 / 4, {}) }
+    , cube_shader("res/textured.vsh", "res/textured.fsh")
+    , cube{ create_mesh(cube_vertices, sizeof(cube_vertices) / 4 / 8, {}) }
 {
     create_camera(properties);
 
@@ -450,12 +450,19 @@ scene::scene()
 
 void scene::render([[maybe_unused]] float delta_time)
 {
+    camera.move_using_keyboard_wasd(delta_time);
+
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
 
     clear_back_buffer(properties.get_vec3("clear_color"));
 
-    camera.move_using_keyboard_wasd(delta_time);
+    cube_shader.use();
+    cube_shader.set_uniform("model", glm::mat4(1.f));
+    cube_shader.set_uniform("view", camera.view_matrix());
+    cube_shader.set_uniform("projection", camera.projection_matrix());
+
+    cube.draw(cube_shader);
 }
 
 int main(int /*argc*/, char* /*argv*/[])
