@@ -109,8 +109,8 @@ static void destroy_opengl_context(void* ptr)
     {
         // we want OpenGL Core 3.3 context
         ask_context.name          = "OpenGL Core";
-        ask_context.major_version = 3;
-        ask_context.minor_version = 3;
+        ask_context.major_version = 4;
+        ask_context.minor_version = 4;
         ask_context.profile_type  = SDL_GL_CONTEXT_PROFILE_CORE;
     }
     else
@@ -132,6 +132,21 @@ static void destroy_opengl_context(void* ptr)
     r = SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION,
                             ask_context.minor_version);
     SDL_assert_always(r == 0);
+
+    if (it != desktop_platforms.end())
+    {
+        // this works on desctop OpenGL
+        /*
+        r = SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
+        SDL_assert_always(r == 0);
+        r = SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
+        SDL_assert_always(r == 0);
+        */
+    }
+    else
+    {
+        // TODO
+    }
 
     unique_ptr<void, void (*)(void*)> gl_context(SDL_GL_CreateContext(window),
                                                  destroy_opengl_context);
@@ -168,6 +183,18 @@ static void destroy_opengl_context(void* ptr)
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_STENCIL_TEST);
+
+    if (it != desktop_platforms.end())
+    {
+
+#define GL_MULTISAMPLE 32925
+        glEnable(GL_MULTISAMPLE); // not working in GLES3.0
+#undef GL_MULTISAMPLE
+    }
+    else
+    {
+        // TODO
+    }
 
     glEnable(GL_DEBUG_OUTPUT);
     glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
