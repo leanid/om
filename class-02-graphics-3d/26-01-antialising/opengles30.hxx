@@ -6,7 +6,10 @@
 #include <iosfwd>
 #include <string_view>
 
+void windows_make_process_dpi_aware() noexcept(false);
 void initialize_opengles_3_2() noexcept(false);
+bool is_desktop();
+bool is_mobile();
 
 void APIENTRY callback_opengl_debug(GLenum                       source,
                                     GLenum                       type,

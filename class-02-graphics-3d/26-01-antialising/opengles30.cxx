@@ -5,6 +5,20 @@
 #include <iostream>
 #include <sstream>
 
+#if __has_include(<winuser.h>)
+#include <windows.h>
+void windows_make_process_dpi_aware() noexcept(false)
+{
+    const BOOL r = SetProcessDPIAware();
+    if (r == 0)
+    {
+        throw std::runtime_error("error: SetProcessDPIAware - failed");
+    }
+}
+#else
+void windows_make_process_dpi_aware() noexcept(false) {}
+#endif
+
 #if __has_include(<SDL.h>)
 #include <SDL.h>
 #else
@@ -149,6 +163,25 @@ void initialize_opengles_3_2() noexcept(false)
     {
         throw std::runtime_error("error: failed initialize GLES");
     }
+}
+
+bool is_desktop()
+{
+    using namespace std;
+    string_view platform_name = SDL_GetPlatform();
+
+    const array<string_view, 3> desktop_platforms{ "Windows"sv,
+                                                   "Mac OS X"sv,
+                                                   "Linux"sv };
+
+    auto it =
+        find(begin(desktop_platforms), end(desktop_platforms), platform_name);
+    return it != end(desktop_platforms);
+}
+
+bool is_mobile()
+{
+    return !is_desktop();
 }
 
 const std::array<std::pair<std::string_view, int>, 8> z_buf_operations{
