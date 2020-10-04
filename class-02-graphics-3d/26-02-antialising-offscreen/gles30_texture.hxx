@@ -29,7 +29,8 @@ public:
     {
         diffuse,
         specular,
-        cubemap
+        cubemap,
+        multisample2d
     };
 
     enum class opt
@@ -38,13 +39,21 @@ public:
         flip_y
     };
 
+    /// type in {diffuse, specular}
     texture(const type, size_t width, size_t height);
-    texture(const std::filesystem::path& path, const type,
+    /// type in {multisample2d}
+    texture(const type, size_t width, size_t height, size_t num_of_samples);
+    /// type in {diffuse, specular}
+    texture(const std::filesystem::path& path,
+            const type,
             const opt = opt::no_flip);
+    /// type in {cubemap}
     texture(const std::array<std::filesystem::path, 6>& faces,
             const opt = opt::no_flip);
 
     void bind();
+
+    void bind_to_framebuffer();
 
     void generate_mipmap();
 
@@ -65,6 +74,7 @@ public:
     texture& operator=(const texture&) = delete;
 
 private:
+    void gen_texture_and_bind_it();
     void gen_texture_set_filters_and_wrap();
     void set_default_wrap_and_filters();
     friend class framebuffer;

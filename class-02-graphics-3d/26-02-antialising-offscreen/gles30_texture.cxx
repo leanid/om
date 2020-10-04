@@ -18,6 +18,7 @@ texture::texture(const type tex_type, size_t width, size_t height)
     , texture_id{ 0 }
     , texture_type{ tex_type }
 {
+
     gen_texture_set_filters_and_wrap();
 
     GLint mipmap_level = 0;
@@ -34,6 +35,36 @@ texture::texture(const type tex_type, size_t width, size_t height)
                  nullptr);
 }
 
+texture::texture(const type tex_type,
+                 size_t     width,
+                 size_t     height,
+                 size_t     num_of_samples)
+    : file_name{ "from memory" }
+    , texture_id{ 0 }
+    , texture_type{ tex_type }
+{
+    glGenTextures(1, &texture_id);
+
+    glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, texture_id);
+    // glTexStorage2DMultisample // OpenGL ES 3.2 OpenGL 4.0
+    // glTexImage2DMultisample   // OpenGL 3.2
+    glTexStorage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE,
+                              static_cast<GLint>(num_of_samples),
+                              GL_RGB,
+                              width,
+                              height,
+                              GL_TRUE);
+}
+
+void texture::bind_to_framebuffer()
+{
+    glFramebufferTexture2D(GL_FRAMEBUFFER,
+                           GL_COLOR_ATTACHMENT0,
+                           GL_TEXTURE_2D_MULTISAMPLE,
+                           texture_id,
+                           0);
+}
+
 void texture::set_default_wrap_and_filters()
 {
     wrap_s(wrap::repeat);
@@ -45,11 +76,15 @@ void texture::set_default_wrap_and_filters()
     min_filter(filter::linear_mipmap_linear); // better rock model
 }
 
-void texture::gen_texture_set_filters_and_wrap()
+void gles30::texture::gen_texture_and_bind_it()
 {
     glGenTextures(1, &texture_id);
     glBindTexture(GL_TEXTURE_2D, texture_id);
+}
 
+void texture::gen_texture_set_filters_and_wrap()
+{
+    gen_texture_and_bind_it();
     set_default_wrap_and_filters();
 }
 
