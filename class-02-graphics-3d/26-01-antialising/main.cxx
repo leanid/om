@@ -163,7 +163,7 @@ static void destroy_opengl_context(void* ptr)
     if (is_desktop())
     {
 
-#define GL_MULTISAMPLE 32925 // or 0x809D
+#define GL_MULTISAMPLE 32925      // or 0x809D
         glEnable(GL_MULTISAMPLE); // not working in GLES3.0
 #undef GL_MULTISAMPLE
     }
@@ -274,6 +274,11 @@ std::unique_ptr<SDL_Window, void (*)(SDL_Window*)> create_window(
     {
         std::string err_message = SDL_GetError();
         clog << "error: failed call SDL_CreateWindow: " << err_message << endl;
+        clog << "if you on Linux with Wayland (like Fedora 32) switch to "
+                "Gnome on Xorg session. And antialising works. Double check "
+                "with:"
+                "[glxinfo]"
+             << std::endl;
         SDL_Quit();
         throw std::runtime_error(err_message);
     }
