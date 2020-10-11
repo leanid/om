@@ -363,8 +363,8 @@ struct scene
     gles30::framebuffer msaa_framebuffer;
     gles30::texture     msaa_texture;
 
-    gles30::framebuffer intermediate_framebuffer;
     gles30::texture     intermediate_screen_texture;
+    gles30::framebuffer intermediate_framebuffer;
 };
 
 void scene::create_uniform_buffer(const void*            buffer_ptr,
@@ -488,12 +488,12 @@ scene::scene()
     , msaa_texture(properties.get_uint("screen_width"),
                    properties.get_uint("screen_height"),
                    4)
-    , intermediate_framebuffer(properties.get_uint("screen_width"),
-                               properties.get_uint("screen_height"),
-                               gles30::generate_render_object::no)
     , intermediate_screen_texture(gles30::texture::type::diffuse,
                                   properties.get_uint("screen_width"),
                                   properties.get_uint("screen_height"))
+    , intermediate_framebuffer(properties.get_uint("screen_width"),
+                               properties.get_uint("screen_height"),
+                               gles30::generate_render_object::no)
 {
     // configure MSAA framebuffer
     msaa_framebuffer.color_attachment(msaa_texture);
@@ -551,7 +551,8 @@ void scene::render([[maybe_unused]] float delta_time)
     glClear(GL_COLOR_BUFFER_BIT);
     glDisable(GL_DEPTH_TEST);
     quad_shader.use();
-    quad_shader.set_uniform("material.diffuse", intermediate_screen_texture, 0);
+    quad_shader.set_uniform(
+        "material.tex_diffuse0", intermediate_screen_texture, 0);
     quad.draw(quad_shader);
 }
 

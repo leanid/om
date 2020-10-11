@@ -252,6 +252,10 @@ void texture::bind()
     {
         glBindTexture(GL_TEXTURE_CUBE_MAP, texture_id);
     }
+    else if (type::multisample2d == texture_type)
+    {
+        glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, texture_id);
+    }
     else
     {
         glBindTexture(GL_TEXTURE_2D, texture_id);
