@@ -359,6 +359,12 @@ struct scene
     gles30::mesh   cube;
     gles30::shader quad_shader;
     gles30::mesh   quad;
+
+    gles30::framebuffer msaa_framebuffer;
+    gles30::texture     msaa_texture;
+
+    gles30::framebuffer intermediate_framebuffer;
+    gles30::texture     intermediate_screen_texture;
 };
 
 void scene::create_uniform_buffer(const void*            buffer_ptr,
@@ -474,7 +480,39 @@ scene::scene()
     , cube{ create_mesh(cube_vertices, sizeof(cube_vertices) / 4 / 8, {}) }
     , quad_shader("res/quad.vsh", "res/quad.fsh")
     , quad{ create_mesh(quad_virtices, sizeof(quad_virtices) / 4 / 8, {}) }
+    , msaa_framebuffer(properties.get_float("screen_width"),
+                       properties.get_float("screen_height"),
+                       gles30::generate_render_object::yes,
+                       gles30::multisampling::enable,
+                       4)
+    , msaa_texture(properties.get_float("screen_width"),
+                   properties.get_float("screen_height"),
+                   4)
+    , intermediate_framebuffer(properties.get_float("screen_width"),
+                               properties.get_float("screen_height"),
+                               gles30::generate_render_object::no)
+    , intermediate_screen_texture(gles30::texture::type::diffuse,
+                                  properties.get_float("screen_width"),
+                                  properties.get_float("screen_height"))
 {
+    // configure MSAA framebuffer
+    msaa_framebuffer.color_attachment(msaa_texture);
+    if (!msaa_framebuffer.is_complete())
+    {
+        throw std::runtime_error("can't build ms_framebuffer: " +
+                                 msaa_framebuffer.get_status_message());
+    }
+    msaa_framebuffer.unbind();
+
+    // configure second post-processing framebuffer
+    intermediate_framebuffer.color_attachment(intermediate_screen_texture);
+    if (!intermediate_framebuffer.is_complete())
+    {
+        throw std::runtime_error("can't build intermediate_framebuffer: " +
+                                 intermediate_framebuffer.get_status_message());
+    }
+    intermediate_framebuffer.unbind();
+
     create_camera(properties);
 }
 
@@ -482,8 +520,9 @@ void scene::render([[maybe_unused]] float delta_time)
 {
     camera.move_using_keyboard_wasd(delta_time);
 
+    // 1. draw scene as normal in multisampled buffers
+    msaa_framebuffer.bind();
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_BLEND);
 
     clear_back_buffer(properties.get_vec3("clear_color"));
 
@@ -494,7 +533,25 @@ void scene::render([[maybe_unused]] float delta_time)
 
     cube.draw(cube_shader);
 
+    // 2. now blit multisampled buffer(s) to normal colorbuffer of intermediate
+    // FBO. Image is stored in intermediate_screen_texture
+    gles30::rect full_screen{ 0,
+                              0,
+                              properties.get_int("screen_width"),
+                              properties.get_int("screen_height") };
+    msaa_framebuffer.blit_to_framebuffer(intermediate_framebuffer,
+                                         full_screen,
+                                         full_screen,
+                                         GL_COLOR_BUFFER_BIT,
+                                         gles30::filter::nearest);
+
+    // 3. now render quad with scene's visuals as its texture image
+    msaa_framebuffer.unbind();
+    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+    glDisable(GL_DEPTH_TEST);
     quad_shader.use();
+    quad_shader.set_uniform("material.diffuse", intermediate_screen_texture, 0);
     quad.draw(quad_shader);
 }
 

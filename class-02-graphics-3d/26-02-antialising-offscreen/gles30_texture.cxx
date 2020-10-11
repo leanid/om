@@ -13,12 +13,21 @@
 
 namespace gles30
 {
+void gles30::texture::throw_exception_if_not_diffuse_or_specular()
+{
+    if (texture_type != type::diffuse && texture_type != type::specular)
+    {
+        throw std::runtime_error(
+            "error: invalid texture type used, expected: diffuse or specular");
+    }
+}
+
 texture::texture(const type tex_type, size_t width, size_t height)
     : file_name{ "from memory" }
     , texture_id{ 0 }
     , texture_type{ tex_type }
 {
-
+    throw_exception_if_not_diffuse_or_specular();
     gen_texture_set_filters_and_wrap();
 
     GLint mipmap_level = 0;
@@ -35,13 +44,10 @@ texture::texture(const type tex_type, size_t width, size_t height)
                  nullptr);
 }
 
-texture::texture(const type tex_type,
-                 size_t     width,
-                 size_t     height,
-                 size_t     num_of_samples)
+texture::texture(size_t width, size_t height, size_t num_of_samples)
     : file_name{ "from memory" }
     , texture_id{ 0 }
-    , texture_type{ tex_type }
+    , texture_type{ type::multisample2d }
 {
     glGenTextures(1, &texture_id);
 
@@ -95,6 +101,8 @@ texture::texture(const std::filesystem::path& path,
     , texture_id{ 0 }
     , texture_type{ tex_type }
 {
+    throw_exception_if_not_diffuse_or_specular();
+
     if (options == opt::flip_y)
     {
         stbi_set_flip_vertically_on_load(1);
@@ -255,40 +263,19 @@ void texture::generate_mipmap()
     glGenerateMipmap(GL_TEXTURE_2D);
 }
 
-static int to_gl_enum(const filter value)
-{
-    switch (value)
-    {
-        case filter::nearest:
-            return GL_NEAREST;
-        case filter::liner:
-            return GL_LINEAR;
-        case filter::nearest_mipmap_nearest:
-            return GL_NEAREST_MIPMAP_NEAREST;
-        case filter::nearest_mipmap_linear:
-            return GL_NEAREST_MIPMAP_LINEAR;
-        case filter::linear_mipmap_nearest:
-            return GL_LINEAR_MIPMAP_NEAREST;
-        case filter::linear_mipmap_linear:
-            return GL_LINEAR_MIPMAP_LINEAR;
-    }
-    throw std::runtime_error("bad filter value: " +
-                             std::to_string(static_cast<int>(value)));
-}
-
 void texture::min_filter(const filter value)
 {
-    GLint gl_filtering = to_gl_enum(value);
+    GLint gl_filtering = to_gl_filter_enum(value);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filtering);
 }
 
 void texture::max_filter(const filter value)
 {
-    GLint gl_filtering = to_gl_enum(value);
+    GLint gl_filtering = to_gl_filter_enum(value);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filtering);
 }
 
-static int to_gl_enum(const wrap value)
+static int to_gl_filter_enum(const wrap value)
 {
     switch (value)
     {
@@ -305,13 +292,13 @@ static int to_gl_enum(const wrap value)
 
 void texture::wrap_s(const wrap value)
 {
-    GLint gl_wrap = to_gl_enum(value);
+    GLint gl_wrap = to_gl_filter_enum(value);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, gl_wrap);
 }
 
 void texture::wrap_t(const wrap value)
 {
-    GLint gl_wrap = to_gl_enum(value);
+    GLint gl_wrap = to_gl_filter_enum(value);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, gl_wrap);
 }
 

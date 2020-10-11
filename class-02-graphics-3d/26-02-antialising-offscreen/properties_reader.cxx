@@ -155,7 +155,8 @@ private:
                 if (std::regex_search(rest_content.data(),
                                       rest_content.data() +
                                           rest_content.length(),
-                                      token_match, tok_regex.regex,
+                                      token_match,
+                                      tok_regex.regex,
                                       std::regex_constants::match_continuous))
                 {
                     auto first = token_match.cbegin();
@@ -356,7 +357,8 @@ struct parser_t
         ss << '\n' << from_start_to_token << '\n';
         size_t last_line_length = 0;
         for (auto back_char = &from_start_to_token.back();
-             *back_char != '\0' && *back_char != '\n'; --back_char)
+             *back_char != '\0' && *back_char != '\n';
+             --back_char)
         {
             ++last_line_length;
         }
@@ -492,8 +494,9 @@ struct parser_t
         throw std::runtime_error("error: parse failed:");
     }
 
-    static value_t apply(std::string_view operator_literal, const value_t& left,
-                         const value_t& right)
+    static value_t apply(std::string_view operator_literal,
+                         const value_t&   left,
+                         const value_t&   right)
     {
         if (std::holds_alternative<std::string>(left))
         {
@@ -611,15 +614,21 @@ public:
             uint32_t           count_matches = 0;
             if (size(key) < size(name))
             {
-                count_matches =
-                    std::inner_product(begin(key), end(key), begin(name), 0u,
-                                       std::plus<>(), std::equal_to<>());
+                count_matches = std::inner_product(begin(key),
+                                                   end(key),
+                                                   begin(name),
+                                                   0u,
+                                                   std::plus<>(),
+                                                   std::equal_to<>());
             }
             else
             {
-                count_matches =
-                    std::inner_product(begin(name), end(name), begin(key), 0u,
-                                       std::plus<>(), std::equal_to<>());
+                count_matches = std::inner_product(begin(name),
+                                                   end(name),
+                                                   begin(key),
+                                                   0u,
+                                                   std::plus<>(),
+                                                   std::equal_to<>());
             }
             if (count_matches > best_mathc_score)
             {
@@ -739,27 +748,39 @@ const Result& get_value_checked_type(const value_t*               ptr_value,
 
 const std::string& properties_reader::get_string(std::string_view key) const
 {
-    return get_value_checked_type<std::string>(ptr->get_value_t(key), key,
-                                               ptr->get_filepath());
+    return get_value_checked_type<std::string>(
+        ptr->get_value_t(key), key, ptr->get_filepath());
 }
 
 float properties_reader::get_float(std::string_view key) const
 {
-    return get_value_checked_type<float>(ptr->get_value_t(key), key,
-                                         ptr->get_filepath());
+    return get_value_checked_type<float>(
+        ptr->get_value_t(key), key, ptr->get_filepath());
 }
 
 const glm::vec3& properties_reader::get_vec3(std::string_view key) const
     noexcept(false)
 {
-    return get_value_checked_type<glm::vec3>(ptr->get_value_t(key), key,
-                                             ptr->get_filepath());
+    return get_value_checked_type<glm::vec3>(
+        ptr->get_value_t(key), key, ptr->get_filepath());
 }
 
 bool properties_reader::get_bool(std::string_view key) const
 {
-    return get_value_checked_type<bool>(ptr->get_value_t(key), key,
-                                        ptr->get_filepath());
+    return get_value_checked_type<bool>(
+        ptr->get_value_t(key), key, ptr->get_filepath());
+}
+
+int properties_reader::get_int(std::string_view name) const
+{
+    float f = get_float(name);
+    return static_cast<int>(f);
+}
+
+uint32_t properties_reader::get_uint(std::string_view name) const
+{
+    float f = get_float(name);
+    return static_cast<uint32_t>(f);
 }
 
 properties_reader::~properties_reader() {}

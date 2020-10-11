@@ -2,18 +2,10 @@
 
 #include <filesystem>
 
+#include "opengles30.hxx"
+
 namespace gles30
 {
-
-enum class filter
-{
-    liner,
-    nearest,
-    nearest_mipmap_nearest,
-    linear_mipmap_nearest,
-    nearest_mipmap_linear,
-    linear_mipmap_linear
-};
 
 enum class wrap
 {
@@ -42,7 +34,9 @@ public:
     /// type in {diffuse, specular}
     texture(const type, size_t width, size_t height);
     /// type in {multisample2d}
-    texture(const type, size_t width, size_t height, size_t num_of_samples);
+    texture(const size_t width,
+            const size_t height,
+            const size_t num_of_samples);
     /// type in {diffuse, specular}
     texture(const std::filesystem::path& path,
             const type,
@@ -77,6 +71,7 @@ private:
     void gen_texture_and_bind_it();
     void gen_texture_set_filters_and_wrap();
     void set_default_wrap_and_filters();
+    void throw_exception_if_not_diffuse_or_specular();
     friend class framebuffer;
 
     std::string   file_name;

@@ -166,6 +166,27 @@ void check_gl_error(std::string_view file, int line)
     }
 }
 
+int to_gl_filter_enum(const filter value)
+{
+    switch (value)
+    {
+        case filter::nearest:
+            return GL_NEAREST;
+        case filter::liner:
+            return GL_LINEAR;
+        case filter::nearest_mipmap_nearest:
+            return GL_NEAREST_MIPMAP_NEAREST;
+        case filter::nearest_mipmap_linear:
+            return GL_NEAREST_MIPMAP_LINEAR;
+        case filter::linear_mipmap_nearest:
+            return GL_LINEAR_MIPMAP_NEAREST;
+        case filter::linear_mipmap_linear:
+            return GL_LINEAR_MIPMAP_LINEAR;
+    }
+    throw std::runtime_error("bad filter value: " +
+                             std::to_string(static_cast<int>(value)));
+}
+
 void initialize_opengles_3_2() noexcept(false)
 {
     int result = gladLoadGLES2Loader(&SDL_GL_GetProcAddress);

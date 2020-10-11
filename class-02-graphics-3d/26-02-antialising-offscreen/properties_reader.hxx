@@ -25,6 +25,9 @@ public:
     [[nodiscard]] const glm::vec3& get_vec3(std::string_view name) const
         noexcept(false);
     [[nodiscard]] bool get_bool(std::string_view name) const noexcept(false);
+    [[nodiscard]] int  get_int(std::string_view name) const noexcept(false);
+    [[nodiscard]] uint32_t get_uint(std::string_view name) const
+        noexcept(false);
 
 private:
     class impl;
