@@ -56,7 +56,7 @@ texture::texture(size_t width, size_t height, size_t num_of_samples)
     // glTexImage2DMultisample   // OpenGL 3.2
     glTexStorage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE,
                               static_cast<GLint>(num_of_samples),
-                              GL_RGB,
+                              GL_RGB8, // with GL_RGB - error
                               width,
                               height,
                               GL_TRUE);
@@ -78,7 +78,7 @@ void texture::set_default_wrap_and_filters()
 
     // if you plan to use this texture in framebuffer object
     // do not set nothing else filter::liner (no min/mag mitmap can be used)
-    max_filter(filter::linear_mipmap_linear); // better rock model
+    max_filter(filter::liner);                // better rock model
     min_filter(filter::linear_mipmap_linear); // better rock model
 }
 
@@ -275,7 +275,7 @@ void texture::max_filter(const filter value)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filtering);
 }
 
-static int to_gl_filter_enum(const wrap value)
+static int to_gl_wrap_enum(const wrap value)
 {
     switch (value)
     {
@@ -292,13 +292,13 @@ static int to_gl_filter_enum(const wrap value)
 
 void texture::wrap_s(const wrap value)
 {
-    GLint gl_wrap = to_gl_filter_enum(value);
+    GLint gl_wrap = to_gl_wrap_enum(value);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, gl_wrap);
 }
 
 void texture::wrap_t(const wrap value)
 {
-    GLint gl_wrap = to_gl_filter_enum(value);
+    GLint gl_wrap = to_gl_wrap_enum(value);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, gl_wrap);
 }
 
