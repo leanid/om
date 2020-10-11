@@ -27,6 +27,7 @@
 
 static fps_camera camera;
 
+extern const float quad_virtices[6 * 8];
 extern const float cube_vertices[36 * 8];
 
 enum class render_options
@@ -94,6 +95,7 @@ static void destroy_opengl_context(void* ptr)
     SDL_Window* window)
 {
     using namespace std;
+    using namespace gles30;
     context_parameters ask_context;
 
     if (is_desktop())
@@ -163,7 +165,7 @@ static void destroy_opengl_context(void* ptr)
     if (is_desktop())
     {
 
-#define GL_MULTISAMPLE 32925 // or 0x809D
+#define GL_MULTISAMPLE 32925      // or 0x809D
         glEnable(GL_MULTISAMPLE); // not working in GLES3.0
 #undef GL_MULTISAMPLE
     }
@@ -218,9 +220,10 @@ static void destroy_window(SDL_Window* ptr)
 }
 
 std::unique_ptr<SDL_Window, void (*)(SDL_Window*)> create_window(
-    const properties_reader& properties)
+    const properties_reader& properties, gles30::multisampling multisampling)
 {
     using namespace std;
+    using namespace gles30;
     const int init_result = SDL_Init(SDL_INIT_EVERYTHING);
     if (init_result != 0)
     {
@@ -246,11 +249,13 @@ std::unique_ptr<SDL_Window, void (*)(SDL_Window*)> create_window(
     if (is_desktop())
     {
         // this works on desctop OpenGL
-
-        int r = SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
-        SDL_assert_always(r == 0);
-        r = SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
-        SDL_assert_always(r == 0);
+        if (multisampling::enable == multisampling)
+        {
+            int r = SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
+            SDL_assert_always(r == 0);
+            r = SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
+            SDL_assert_always(r == 0);
+        }
     }
     else
     {
@@ -352,6 +357,8 @@ struct scene
 
     gles30::shader cube_shader;
     gles30::mesh   cube;
+    gles30::shader quad_shader;
+    gles30::mesh   quad;
 };
 
 void scene::create_uniform_buffer(const void*            buffer_ptr,
@@ -452,7 +459,7 @@ void scene::pull_system_events(bool& continue_loop, int& current_effect)
                     screen_aspect = screen_width / screen_height;
                     camera.aspect(screen_aspect);
                     glViewport(0, 0, event.window.data1, event.window.data2);
-                    print_view_port();
+                    gles30::print_view_port();
                     break;
             }
         }
@@ -461,14 +468,14 @@ void scene::pull_system_events(bool& continue_loop, int& current_effect)
 
 scene::scene()
     : properties("res/runtime.properties.hxx")
-    , window{ create_window(properties) }
+    , window{ create_window(properties, gles30::multisampling::disable) }
     , context{ create_opengl_context(window.get()) }
     , cube_shader("res/textured.vsh", "res/textured.fsh")
     , cube{ create_mesh(cube_vertices, sizeof(cube_vertices) / 4 / 8, {}) }
+    , quad_shader("res/quad.vsh", "res/quad.fsh")
+    , quad{ create_mesh(quad_virtices, sizeof(quad_virtices) / 4 / 8, {}) }
 {
     create_camera(properties);
-
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 void scene::render([[maybe_unused]] float delta_time)
@@ -486,11 +493,14 @@ void scene::render([[maybe_unused]] float delta_time)
     cube_shader.set_uniform("projection", camera.projection_matrix());
 
     cube.draw(cube_shader);
+
+    quad_shader.use();
+    quad.draw(quad_shader);
 }
 
 int main(int /*argc*/, char* /*argv*/[])
 {
-    windows_make_process_dpi_aware();
+    gles30::windows_make_process_dpi_aware();
 
     {
         scene scene;
@@ -516,6 +526,17 @@ int main(int /*argc*/, char* /*argv*/[])
 }
 
 // clang-format off
+extern const float quad_virtices[6 * 8] = {
+ // positions         // normals          // texture coords
+-1.0f,  1.0f, 0.0f,   0.0f, 0.0f, 0.0f,   0.0f, 1.0f,
+-1.0f, -1.0f, 0.0f,   0.0f, 0.0f, 0.0f,   0.0f, 0.0f,
+ 1.0f, -1.0f, 0.0f,   0.0f, 0.0f, 0.0f,   1.0f, 0.0f,
+
+-1.0f,  1.0f, 0.0f,   0.0f, 0.0f, 0.0f,   0.0f, 1.0f,
+ 1.0f, -1.0f, 0.0f,   0.0f, 0.0f, 0.0f,   1.0f, 0.0f,
+ 1.0f,  1.0f, 0.0f,   0.0f, 0.0f, 0.0f,   1.0f, 1.0f
+};
+
 const float cube_vertices[36 * 8] = {
      // positions         // normals           // texture coords
     -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,

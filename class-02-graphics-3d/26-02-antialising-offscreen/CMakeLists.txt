@@ -97,6 +97,8 @@ target_sources(26-02-antialising-offscreen PRIVATE main.cxx
                                    res/instanced.fsh
                                    res/textured.vsh
                                    res/textured.fsh
+                                   res/quad.vsh
+                                   res/quad.fsh
                                    res/mars.png
                                    res/planet.mtl
                                    res/rock.mtl

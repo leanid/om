@@ -7,6 +7,9 @@
 
 #if __has_include(<winuser.h>)
 #include <windows.h>
+namespace gles30
+{
+
 void windows_make_process_dpi_aware() noexcept(false)
 {
     const BOOL r = SetProcessDPIAware();
@@ -15,8 +18,12 @@ void windows_make_process_dpi_aware() noexcept(false)
         throw std::runtime_error("error: SetProcessDPIAware - failed");
     }
 }
+} // end namespace gles30
 #else
+namespace gles30
+{
 void windows_make_process_dpi_aware() noexcept(false) {}
+} // namespace gles30
 #endif
 
 #if __has_include(<SDL.h>)
@@ -85,6 +92,9 @@ struct global_redirect_handler
 } global_var;
 
 #endif // __ANDROID__
+
+namespace gles30
+{
 
 std::string_view gl_err_to_s(GLenum err)
 {
@@ -335,19 +345,22 @@ int get_stensil_operation(std::string_view name)
     return get_gl_constant(stensil_operations, name);
 }
 
-bool operator==(const context_parameters& l, const context_parameters& r)
+bool operator==(const gles30::context_parameters& l,
+                const gles30::context_parameters& r)
 {
     return std::string_view(l.name) == r.name &&
            l.major_version == r.major_version && l.minor_version &&
            r.minor_version && l.profile_type && r.profile_type;
 }
 
-bool operator!=(const context_parameters& l, const context_parameters& r)
+bool operator!=(const gles30::context_parameters& l,
+                const gles30::context_parameters& r)
 {
     return !(l == r);
 }
 
-std::ostream& operator<<(std::ostream& out, const context_parameters& params)
+std::ostream& operator<<(std::ostream&                     out,
+                         const gles30::context_parameters& params)
 {
     out << params.name << ' ' << params.major_version << '.'
         << params.minor_version;
@@ -364,3 +377,5 @@ void print_view_port()
     clog << "view port is: x=" << view_port[0] << " y=" << view_port[1]
          << " w=" << view_port[2] << " h=" << view_port[3] << endl;
 }
+
+} // end namespace gles30

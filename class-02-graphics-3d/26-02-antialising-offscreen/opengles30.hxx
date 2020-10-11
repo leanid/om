@@ -6,6 +6,9 @@
 #include <iosfwd>
 #include <string_view>
 
+namespace gles30
+{
+
 void windows_make_process_dpi_aware() noexcept(false);
 void initialize_opengles_3_2() noexcept(false);
 bool is_desktop();
@@ -34,3 +37,11 @@ struct context_parameters
 std::ostream& operator<<(std::ostream& out, const context_parameters& params);
 bool operator==(const context_parameters& l, const context_parameters& r);
 bool operator!=(const context_parameters& l, const context_parameters& r);
+
+enum class multisampling
+{
+    enable,
+    disable
+};
+
+} // end namespace gles30
