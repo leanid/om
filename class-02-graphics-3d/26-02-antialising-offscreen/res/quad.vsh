@@ -8,13 +8,9 @@ out VS_OUT {
     vec2 uv;
 } vs_out;
 
-uniform mat4 projection;
-uniform mat4 view;
-uniform mat4 model;
-
 void main()
 {
     vs_out.normal = a_normal;
     vs_out.uv     = a_uv;
-    gl_Position = projection * view * model * vec4(a_position.x, a_position.y, a_position.z, 1.0);
+    gl_Position = vec4(a_position.x, a_position.y, a_position.z, 1.0);
 }

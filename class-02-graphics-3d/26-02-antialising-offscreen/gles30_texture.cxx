@@ -78,8 +78,8 @@ void texture::set_default_wrap_and_filters()
 
     // if you plan to use this texture in framebuffer object
     // do not set nothing else filter::liner (no min/mag mitmap can be used)
-    max_filter(filter::liner);                // better rock model
-    min_filter(filter::linear_mipmap_linear); // better rock model
+    max_filter(filter::liner); // better rock model
+    min_filter(filter::liner); // better rock model
 }
 
 void gles30::texture::gen_texture_and_bind_it()

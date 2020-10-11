@@ -165,7 +165,7 @@ static void destroy_opengl_context(void* ptr)
     if (is_desktop())
     {
 
-#define GL_MULTISAMPLE 32925      // or 0x809D
+#define GL_MULTISAMPLE 32925 // or 0x809D
         glEnable(GL_MULTISAMPLE); // not working in GLES3.0
 #undef GL_MULTISAMPLE
     }
@@ -547,8 +547,8 @@ void scene::render([[maybe_unused]] float delta_time)
 
     // 3. now render quad with scene's visuals as its texture image
     msaa_framebuffer.unbind();
-    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glDisable(GL_DEPTH_TEST);
     quad_shader.use();
     quad_shader.set_uniform(
