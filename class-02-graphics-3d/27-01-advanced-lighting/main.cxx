@@ -360,6 +360,8 @@ struct scene
     gles30::mesh   floor;
 
     gles30::texture wood_texture;
+
+    bool blinn = false;
 };
 
 void scene::create_uniform_buffer(const void*            buffer_ptr,
@@ -415,6 +417,7 @@ void scene::pull_system_events(bool& continue_loop, int& current_effect)
         {
             if (event.key.keysym.sym == SDLK_0)
             {
+                blinn = !blinn;
             }
             else if (event.key.keysym.sym == SDLK_1)
             {
@@ -491,6 +494,9 @@ void scene::render([[maybe_unused]] float delta_time)
     floor_shader.set_uniform("view", camera.view_matrix());
     floor_shader.set_uniform("projection", camera.projection_matrix());
     floor_shader.set_uniform("material.tex_diffuse0", wood_texture, 0);
+    floor_shader.set_uniform("view_pos", camera.position());
+    floor_shader.set_uniform("light_pos", glm::vec3(0.0f, 0.0f, 0.0f));
+    floor_shader.set_uniform("blinn", blinn);
 
     floor.draw(floor_shader);
 }
