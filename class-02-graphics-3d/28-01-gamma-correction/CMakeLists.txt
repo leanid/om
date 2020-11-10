@@ -36,10 +36,14 @@ elseif(MINGW)
 elseif(APPLE)
     add_executable(28-01-gamma-correction)
     find_package(SDL2 CONFIG REQUIRED)
-    target_link_libraries(15-01-model PRIVATE SDL2::SDL2main
-                                              SDL2::SDL2-static
-                                              "-framework OpenGL"
-                                              )
+    find_package(assimp REQUIRED)
+    find_package(glm REQUIRED)
+    target_link_libraries(28-01-gamma-correction PRIVATE SDL2::SDL2main
+                                                         SDL2::SDL2-static
+                                                         glm::glm
+                                                         assimp::assimp
+                                                         "-framework OpenGL"
+                                                         )
 elseif(UNIX)
     add_executable(28-01-gamma-correction)
     find_package(SDL2 REQUIRED)
