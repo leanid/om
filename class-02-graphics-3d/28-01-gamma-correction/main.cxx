@@ -101,6 +101,7 @@ static void destroy_opengl_context(void* ptr)
 
     if (is_desktop())
     {
+        // for MacOSX OpenGL version: https://support.apple.com/en-us/HT202823
         // we want OpenGL Core 3.3 context
         ask_context.name          = "OpenGL Core";
         ask_context.major_version = 3;
@@ -152,11 +153,8 @@ static void destroy_opengl_context(void* ptr)
     result           = SDL_GL_GetAttribute(SDL_GL_STENCIL_SIZE, &stensil_size);
     assert(result == 0);
 
-    if (ask_context != got_context)
-    {
-        clog << "Ask for " << ask_context << endl;
-        clog << "Receive " << got_context << endl;
-    }
+    clog << "Ask for " << ask_context << endl;
+    clog << "Receive " << got_context << endl;
 
     initialize_opengles_3_2();
 
@@ -176,11 +174,14 @@ static void destroy_opengl_context(void* ptr)
     }
 
     glEnable(GL_DEBUG_OUTPUT);
-    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-    glDebugMessageCallback(callback_opengl_debug, nullptr);
-    glDebugMessageControl(
-        GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
-
+    // on MacOS no such functional
+    if (glDebugMessageCallback != nullptr)
+    {
+        glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+        glDebugMessageCallback(callback_opengl_debug, nullptr);
+        glDebugMessageControl(
+            GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+    }
     if (is_desktop())
     {
 // we have to emulate OpenGL ES 3.2 so enable gl_PointSize

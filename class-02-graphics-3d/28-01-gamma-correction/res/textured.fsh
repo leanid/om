@@ -1,4 +1,5 @@
-#version 320 es
+//#version 320 es // works on Linux and Windows
+#version 330      // works on MacOSX
 precision mediump float;
 
 out vec4 frag_color;

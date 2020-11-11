@@ -38,6 +38,8 @@ elseif(APPLE)
     find_package(SDL2 CONFIG REQUIRED)
     find_package(assimp REQUIRED)
     find_package(glm REQUIRED)
+    # HACK enable debug
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0" )
     target_link_libraries(28-01-gamma-correction PRIVATE SDL2::SDL2main
                                                          SDL2::SDL2-static
                                                          glm::glm

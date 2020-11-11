@@ -25,7 +25,10 @@ std::ostream& operator<<(std::ostream&                      os,
                          const list_code_with_line_numbers& list)
 {
     using namespace std;
-    // example of error string: "0:22(2) initializer of type vec4 cannot..."
+    // example on MacOS:        "ERROR: 0:1: '' :  version '320' is not
+    // supported"
+    // example of error string: "0:22(2) initializer of type vec4
+    // cannot..."
     const char* open_braket = find(begin(list.err_msg), end(list.err_msg), ':');
     const char* close_braket = find(open_braket, end(list.err_msg), '(');
 
