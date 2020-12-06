@@ -362,7 +362,8 @@ struct scene
 
     gles30::texture wood_texture;
 
-    bool blinn = false;
+    bool blinn              = false;
+    bool enable_srgb_in_fsh = false;
 };
 
 void scene::create_uniform_buffer(const void*            buffer_ptr,
@@ -422,10 +423,31 @@ void scene::pull_system_events(bool& continue_loop, int& current_effect)
             }
             else if (event.key.keysym.sym == SDLK_1)
             {
+                // https://stackoverflow.com/questions/27024884/srgb-framebuffer-on-opengl-es-3-0
+                // OpenGL ES 3.0 - by default use RGB back_buffer and to change
+                // it you have to attach sRGB texture. On Desktop we
+                // can play with it in runtime
+                if (gles30::is_desktop())
+                {
+                    static bool is_enabled            = false;
+                    is_enabled                        = !is_enabled;
+                    constexpr int GL_FRAMEBUFFER_SRGB = 0x8DB9;
+                    if (is_enabled)
+                    {
+                        glEnable(GL_FRAMEBUFFER_SRGB);
+                    }
+                    else
+                    {
+                        glDisable(GL_FRAMEBUFFER_SRGB);
+                    }
+                    std::cout
+                        << "GL_FRAMEBUFFER_SRGB enabled: " << std::boolalpha
+                        << is_enabled << std::endl;
+                }
             }
             else if (event.key.keysym.sym == SDLK_2)
             {
-                current_effect = 2;
+                enable_srgb_in_fsh = !enable_srgb_in_fsh;
             }
             else if (event.key.keysym.sym == SDLK_3)
             {
@@ -498,6 +520,7 @@ void scene::render([[maybe_unused]] float delta_time)
     floor_shader.set_uniform("view_pos", camera.position());
     floor_shader.set_uniform("light_pos", glm::vec3(0.0f, 0.0f, 0.0f));
     floor_shader.set_uniform("blinn", blinn);
+    floor_shader.set_uniform("enable_srgb_in_fsh", enable_srgb_in_fsh);
 
     floor.draw(floor_shader);
 }

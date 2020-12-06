@@ -22,6 +22,7 @@ uniform nanosuit_material material;
 uniform vec3 light_pos;
 uniform vec3 view_pos;
 uniform bool blinn;
+uniform bool enable_srgb_in_fsh;
 
 void main()
 {
@@ -49,4 +50,10 @@ void main()
     }
     vec3 specular = vec3(0.3) * spec; // assuming bright white light color
     frag_color = vec4(ambient + diffuse + specular, 1.0);
+
+    if (enable_srgb_in_fsh)
+    {
+        float gamma = 2.2;
+        frag_color.rgb = pow(frag_color.rgb, vec3(1.0/gamma));
+    }
 }

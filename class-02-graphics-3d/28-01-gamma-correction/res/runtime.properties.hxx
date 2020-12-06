@@ -5,7 +5,7 @@
 // also you can update during runtime this values with
 // properties_reader.hxx
 
-std::string title         = "try 0,1,2,3,4 effect 5,6-cam";
+std::string title         = "try 0,1(srgb-hw),2(srgb-fsh),3,4 effect 5,6-cam";
 float       z_near        = 0.1f;
 float       z_far         = 100.f;
 float       fovy          = 45.f;
