@@ -2,10 +2,13 @@
 
 #include <algorithm>
 #include <array>
+#include <chrono>
 #include <exception>
+#include <filesystem>
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
+#include <thread>
 #include <vector>
 
 #include <SDL.h>
@@ -275,7 +278,15 @@ engine::~engine() {}
 #ifdef _WIN32
 #include <io.h>
 #include <windows.h>
+void fix_windows_console();
 #endif
+
+om::game* reload_game(om::game*   old,
+                      const char* library_name,
+                      const char* tmp_library_name,
+                      om::engine& engine,
+                      void*&      old_handle);
+
 // clang-format off
 #ifdef __cplusplus
 extern "C"
@@ -298,33 +309,7 @@ int main(int /*argc*/, char* /*argv*/[])
     if (!std::cout)
     {
 #ifdef _WIN32
-        const BOOL result = AttachConsole(ATTACH_PARENT_PROCESS);
-        if (!result)
-        {
-            if (!AllocConsole())
-            {
-                return EXIT_FAILURE;
-            }
-        }
-
-        FILE* f = std::freopen("CON", "w", stdout);
-        if (!f)
-        {
-            throw std::runtime_error("can't reopen stdout");
-        }
-        FILE* fe = std::freopen("CON", "w", stderr);
-        if (!fe)
-        {
-            throw std::runtime_error("can't reopen stderr");
-        }
-        std::cout.clear();
-        std::cout << "start app" << std::endl;
-        std::cerr << "start app" << std::endl;
-
-        if (!std::cout.good() || !std::cerr.good())
-        {
-            throw std::runtime_error("can't print with std::cout");
-        }
+        fix_windows_console();
 #endif
     }
 
@@ -333,42 +318,49 @@ int main(int /*argc*/, char* /*argv*/[])
     const char* library_name =
         SDL_GetPlatform() == "Windows"s ? "libgame-03-4.dll" : "game-03-4";
 
-    void* game_handle = SDL_LoadObject(library_name);
+    using namespace std::filesystem;
 
-    if (game_handle == nullptr)
-    {
-        std::cerr << SDL_GetError();
-        return EXIT_FAILURE;
-    }
+    const char* tmp_library_file = "temp.dll";
 
-    void* create_game_func_ptr = SDL_LoadFunction(game_handle, "create_game");
+    void*     game_library_handle{};
+    om::game* game = reload_game(
+        nullptr, library_name, tmp_library_file, *engine, game_library_handle);
 
-    if (create_game_func_ptr == nullptr)
-    {
-        std::cerr << SDL_GetError();
-        return EXIT_FAILURE;
-    }
-    // void* destroy_game_func_ptr = SDL_LoadFunction(game_handle,
-    // "destroy_game");
-
-    typedef decltype(&create_game) create_game_ptr;
-
-    auto create_game_func =
-        reinterpret_cast<create_game_ptr>(create_game_func_ptr);
-
-    om::game* game = create_game_func(engine.get());
-
-    if (game == nullptr)
-    {
-        std::cerr << "game == nullptr\n";
-        return EXIT_FAILURE;
-    }
+    auto time_during_loading = last_write_time(library_name);
 
     game->initialize();
 
     bool continue_loop = true;
     while (continue_loop)
     {
+        auto current_write_time = last_write_time(library_name);
+
+        if (current_write_time != time_during_loading)
+        {
+            file_time_type next_write_time;
+            // wait while library file fishish to changing
+            for (;;)
+            {
+                using namespace std::chrono;
+                std::this_thread::sleep_for(milliseconds(100));
+                next_write_time = last_write_time(library_name);
+                if (next_write_time != current_write_time)
+                {
+                    current_write_time = next_write_time;
+                }
+                else
+                {
+                    break;
+                }
+            };
+
+            game = reload_game(game,
+                               library_name,
+                               tmp_library_file,
+                               *engine,
+                               game_library_handle);
+        }
+
         om::event event;
 
         while (engine->read_input(event))
@@ -393,3 +385,85 @@ int main(int /*argc*/, char* /*argv*/[])
 
     return EXIT_SUCCESS;
 }
+
+om::game* reload_game(om::game*   old,
+                      const char* library_name,
+                      const char* tmp_library_name,
+                      om::engine& engine,
+                      void*&      old_handle)
+{
+    if (old)
+    {
+        SDL_UnloadObject(old_handle);
+    }
+
+    using namespace std::filesystem;
+
+    remove(tmp_library_name);
+
+    copy(library_name, tmp_library_name);
+
+    void* game_handle = SDL_LoadObject(tmp_library_name);
+
+    if (game_handle == nullptr)
+    {
+        throw std::runtime_error(SDL_GetError());
+    }
+
+    old_handle = game_handle;
+
+    void* create_game_func_ptr = SDL_LoadFunction(game_handle, "create_game");
+
+    if (create_game_func_ptr == nullptr)
+    {
+        throw std::runtime_error(SDL_GetError());
+    }
+    // void* destroy_game_func_ptr = SDL_LoadFunction(game_handle,
+    // "destroy_game");
+
+    typedef decltype(&create_game) create_game_ptr;
+
+    auto create_game_func =
+        reinterpret_cast<create_game_ptr>(create_game_func_ptr);
+
+    om::game* game = create_game_func(&engine);
+
+    if (game == nullptr)
+    {
+        throw std::runtime_error("game == nullptr\n");
+    }
+    return game;
+}
+
+#ifdef _WIN32
+void fix_windows_console()
+{
+    const BOOL result = AttachConsole(ATTACH_PARENT_PROCESS);
+    if (!result)
+    {
+        if (!AllocConsole())
+        {
+            throw std::runtime_error("can't allocate console");
+        }
+    }
+
+    FILE* f = std::freopen("CON", "w", stdout);
+    if (!f)
+    {
+        throw std::runtime_error("can't reopen stdout");
+    }
+    FILE* fe = std::freopen("CON", "w", stderr);
+    if (!fe)
+    {
+        throw std::runtime_error("can't reopen stderr");
+    }
+    std::cout.clear();
+    std::cout << " \b";
+    std::cerr << " \b";
+
+    if (!std::cout.good() || !std::cerr.good())
+    {
+        throw std::runtime_error("can't print with std::cout");
+    }
+}
+#endif
