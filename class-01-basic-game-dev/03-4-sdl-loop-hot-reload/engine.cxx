@@ -354,11 +354,14 @@ int main(int /*argc*/, char* /*argv*/[])
                 }
             };
 
+            std::cout << "reloading game" << std::endl;
             game = reload_game(game,
                                library_name,
                                tmp_library_file,
                                *engine,
                                game_library_handle);
+
+            time_during_loading = next_write_time;
         }
 
         om::event event;

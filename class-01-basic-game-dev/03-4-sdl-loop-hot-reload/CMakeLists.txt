@@ -14,7 +14,7 @@ set_target_properties(engine-03-4 PROPERTIES
 
 find_package(SDL2 REQUIRED)
 if(MINGW)
-    target_link_libraries(engine-03-4 PRIVATE -static -lmingw32)
+    target_link_libraries(engine-03-4 PRIVATE -lmingw32)
     add_custom_command ( TARGET engine-03-4 POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
         $<TARGET_FILE:SDL2::SDL2> $<TARGET_FILE_DIR:engine-03-4>

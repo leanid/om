@@ -1,9 +1,11 @@
 #include <algorithm>
 #include <array>
+#include <chrono>
 #include <cstdlib>
 #include <iostream>
 #include <memory>
 #include <string_view>
+#include <thread>
 
 #include "engine.hxx"
 
@@ -19,12 +21,15 @@ public:
     void on_event(om::event) override {}
     void update() override
     {
+        using namespace std;
         ++rotation_index;
         rotation_index %= rotations_chars.size();
+        using namespace std::chrono;
+        std::this_thread::sleep_for(milliseconds(20));
     }
     void render() const override
     {
-        const char current_symbol = '+'; //  rotations_chars.at(rotation_index);
+        const char current_symbol = rotations_chars.at(rotation_index);
         std::cout << "\b" << current_symbol << std::flush;
         std::cout << "\b\b\b" << current_symbol << current_symbol
                   << current_symbol << std::flush;
