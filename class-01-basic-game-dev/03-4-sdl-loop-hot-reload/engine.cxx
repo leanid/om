@@ -134,7 +134,7 @@ public:
                  << compiled << " " << linked << endl;
         }
 
-        const int init_result = SDL_Init(SDL_INIT_EVERYTHING);
+        const int init_result = SDL_Init(0);
         if (init_result != 0)
         {
             const char* err_message = SDL_GetError();
@@ -316,11 +316,11 @@ int main(int /*argc*/, char* /*argv*/[])
     using namespace std::string_literals;
     // mingw library name for windows
     const char* library_name =
-        SDL_GetPlatform() == "Windows"s ? "libgame-03-4.dll" : "game-03-4";
+        SDL_GetPlatform() == "Windows"s ? "libgame-03-4.dll" : "./libgame-03-4.so";
 
     using namespace std::filesystem;
 
-    const char* tmp_library_file = "temp.dll";
+    const char* tmp_library_file = "./temp.dll";
 
     void*     game_library_handle{};
     om::game* game = reload_game(
