@@ -315,8 +315,9 @@ int main(int /*argc*/, char* /*argv*/[])
 
     using namespace std::string_literals;
     // mingw library name for windows
-    const char* library_name =
-        SDL_GetPlatform() == "Windows"s ? "libgame-03-4.dll" : "./libgame-03-4.so";
+    const char* library_name = SDL_GetPlatform() == "Windows"s
+                                   ? "libgame-03-4.dll"
+                                   : "./libgame-03-4.so";
 
     using namespace std::filesystem;
 
@@ -361,6 +362,12 @@ int main(int /*argc*/, char* /*argv*/[])
                                *engine,
                                game_library_handle);
 
+            if (game == nullptr)
+            {
+                std::cerr << "next attemp to reload game..." << std::endl;
+                continue;
+            }
+
             time_during_loading = next_write_time;
         }
 
@@ -395,22 +402,37 @@ om::game* reload_game(om::game*   old,
                       om::engine& engine,
                       void*&      old_handle)
 {
+    using namespace std::filesystem;
+
     if (old)
     {
         SDL_UnloadObject(old_handle);
     }
 
-    using namespace std::filesystem;
+    if (0 != remove(tmp_library_name))
+    {
+        std::cerr << "error: can't remove: " << tmp_library_name << std::endl;
+        return nullptr;
+    }
 
-    remove(tmp_library_name);
-
-    copy(library_name, tmp_library_name);
+    try
+    {
+        copy(library_name, tmp_library_name); // throw on error
+    }
+    catch (const std::exception& ex)
+    {
+        std::cerr << "error: can't copy [" << library_name << "] to ["
+                  << tmp_library_name << "]" << std::endl;
+        return nullptr;
+    }
 
     void* game_handle = SDL_LoadObject(tmp_library_name);
 
     if (game_handle == nullptr)
     {
-        throw std::runtime_error(SDL_GetError());
+        std::cerr << "error: failed to load: [" << tmp_library_name << "] "
+                  << SDL_GetError() << std::endl;
+        return nullptr;
     }
 
     old_handle = game_handle;
@@ -419,7 +441,9 @@ om::game* reload_game(om::game*   old,
 
     if (create_game_func_ptr == nullptr)
     {
-        throw std::runtime_error(SDL_GetError());
+        std::cerr << "error: no function [create_game] in " << tmp_library_name
+                  << " " << SDL_GetError() << std::endl;
+        return nullptr;
     }
     // void* destroy_game_func_ptr = SDL_LoadFunction(game_handle,
     // "destroy_game");
@@ -433,7 +457,8 @@ om::game* reload_game(om::game*   old,
 
     if (game == nullptr)
     {
-        throw std::runtime_error("game == nullptr\n");
+        std::cerr << "error: func [create_game] returned: nullptr" << std::endl;
+        return nullptr;
     }
     return game;
 }
