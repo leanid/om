@@ -101,7 +101,9 @@ $ brew install cmake
 #### On Windows using MSYS2(https://www.msys2.org)
 1. from msys2 bash shell:
     - pacman -S base-devel mingw-w64-x86_64-toolchain mingw-w64-x86_64-SDL2
-2. from cmd.exe windows terminal program (g++ in PATH from msys2)
+2. (optional) full build development environment on windows using msys2:
+    - pacman -S base-devel mingw-w64-x86_64-toolchain git mingw-w64-x86_64-cmake mingw-w64-x86_64-qt-creator ninja
+3. from cmd.exe windows terminal program (g++ in PATH from msys2)
     - cd ~/om 
     - mkdir build 
     - cd build 
