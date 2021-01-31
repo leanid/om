@@ -409,10 +409,14 @@ om::game* reload_game(om::game*   old,
         SDL_UnloadObject(old_handle);
     }
 
-    if (0 != remove(tmp_library_name))
+    if (std::filesystem::exists(tmp_library_name))
     {
-        std::cerr << "error: can't remove: " << tmp_library_name << std::endl;
-        return nullptr;
+        if (0 != remove(tmp_library_name))
+        {
+            std::cerr << "error: can't remove: " << tmp_library_name
+                      << std::endl;
+            return nullptr;
+        }
     }
 
     try
