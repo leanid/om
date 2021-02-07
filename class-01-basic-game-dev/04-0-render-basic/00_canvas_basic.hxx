@@ -23,7 +23,7 @@ struct color
 
 const size_t buffer_size = width * height;
 
-class canvas : public std::array<color, buffer_size>
+class canvas
 {
 public:
     /// PPM - image format:
@@ -35,8 +35,8 @@ public:
         out_file.open(file_name, std::ios_base::binary);
         out_file << "P6\n" << width << ' ' << height << ' ' << 255 << '\n';
         std::streamsize buf_size =
-            static_cast<std::streamsize>(sizeof(color) * size());
-        out_file.write(reinterpret_cast<const char*>(this), buf_size);
+            static_cast<std::streamsize>(sizeof(color) * pixels.size());
+        out_file.write(reinterpret_cast<const char*>(pixels.data()), buf_size);
     }
 
     void load_image(const std::string& file_name)
@@ -50,14 +50,42 @@ public:
         std::string color_format;
         in_file >> header >> image_width >> image_height >> color_format >>
             std::ws;
-        if (size() != image_height * image_width)
+        if (pixels.size() != image_height * image_width)
         {
             throw std::runtime_error("image size not match");
         }
         std::streamsize buf_size =
-            static_cast<std::streamsize>(sizeof(color) * size());
-        in_file.read(reinterpret_cast<char*>(this), buf_size);
+            static_cast<std::streamsize>(sizeof(color) * pixels.size());
+        in_file.read(reinterpret_cast<char*>(pixels.data()), buf_size);
     }
+
+    void set_pixel(size_t x, size_t y, color col)
+    {
+        const size_t liner_index_in_buffer = width * y + x;
+        color&       target_pixel          = pixels.at(liner_index_in_buffer);
+        target_pixel                       = col;
+    }
+
+    color get_pixel(size_t x, size_t y) const
+    {
+        const size_t liner_index_in_buffer = width * y + x;
+        return pixels.at(liner_index_in_buffer);
+    }
+
+    bool operator==(const canvas& other) const
+    {
+        return pixels == other.pixels;
+    }
+
+    bool operator!=(const canvas& other) const { return !(*this == other); }
+
+    auto begin() { return pixels.begin(); }
+    auto end() { return pixels.end(); }
+
+    std::array<color, buffer_size>& get_pixels() { return pixels; }
+
+private:
+    std::array<color, buffer_size> pixels; // same: color pixels[buffer_size];
 };
 
 struct position

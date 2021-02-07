@@ -15,9 +15,12 @@ int main(int, char**)
         return EXIT_FAILURE;
     }
 
-    SDL_Window* window = SDL_CreateWindow(
-        "runtime soft render", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-        width, height, SDL_WINDOW_OPENGL);
+    SDL_Window* window = SDL_CreateWindow("runtime soft render",
+                                          SDL_WINDOWPOS_CENTERED,
+                                          SDL_WINDOWPOS_CENTERED,
+                                          width,
+                                          height,
+                                          SDL_WINDOW_OPENGL);
     if (window == nullptr)
     {
         cerr << SDL_GetError() << endl;
@@ -93,7 +96,7 @@ int main(int, char**)
                                     { 319, 239, 0, 0, 1, 319, 239, 0 } };
     std::vector<uint16_t> indexes_v{ 0, 1, 2 };
 
-    void*     pixels = image.data();
+    void*     pixels = image.get_pixels().data();
     const int depth  = sizeof(color) * 8;
     const int pitch  = width * sizeof(color);
     const int rmask  = 0x000000ff;

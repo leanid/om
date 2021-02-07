@@ -8,7 +8,7 @@ int main(int, char**)
 
     canvas image;
 
-    std::fill(begin(image), end(image), green);
+    std::fill(image.begin(), image.end(), green);
 
     const char* file_name = "00_green_image.ppm";
 

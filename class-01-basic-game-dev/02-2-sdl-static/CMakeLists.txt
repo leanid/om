@@ -4,9 +4,9 @@ project(02-sdl-static)
 add_executable(02-sdl-static main.cxx)
 target_compile_features(02-sdl-static PUBLIC cxx_std_17)
 
-find_package(sdl2 REQUIRED)
+find_package(SDL2 REQUIRED)
 target_include_directories(02-sdl-static PRIVATE ${SDL2_INCLUDE_DIRS})
-find_library(SDL2_LIB libSDL2.a)
+find_library(SDL2_LIB libSDL2d.a)
 ## if you need to link with our own compiled library you may point cmake to it.
 #find_library(SDL2_LIB
 #             NAMES libSDL2d.a

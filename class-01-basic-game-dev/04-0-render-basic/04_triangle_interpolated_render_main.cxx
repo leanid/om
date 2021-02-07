@@ -114,7 +114,7 @@ int main(int, char**)
         }
     } program02;
 
-    program02.set_texture(image);
+    program02.set_texture(image.get_pixels());
 
     interpolated_render.set_gfx_program(program02);
 

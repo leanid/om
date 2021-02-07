@@ -41,7 +41,7 @@ add_executable(04-0-render-basic-triangle-interpolated 04_triangle_interpolated_
                                                        )
 target_compile_features(04-0-render-basic-triangle-interpolated PUBLIC cxx_std_17)
 
-find_package(sdl2 REQUIRED)
+find_package(SDL2 REQUIRED)
 message(STATUS "SDL2_LIBRARIES[${SDL2_LIBRARIES}] "
     "SDL2_INCLUDE_DIRS[${SDL2_INCLUDE_DIRS}]")
 
@@ -69,9 +69,7 @@ add_executable(04-0-render-full-windowed  04-0-render-full-windowed.cxx
                                           )
 target_link_libraries(04-0-render-full-windowed PRIVATE ${SDL2_LIBRARIES})
 target_include_directories(04-0-render-full-windowed PRIVATE ${SDL2_INCLUDE_DIRS})
-if (MSVC)
-    target_link_libraries(04-0-render-full-windowed PRIVATE SDL2::SDL2 SDL2::SDL2main)
-endif()
+target_link_libraries(04-0-render-full-windowed PRIVATE SDL2::SDL2 SDL2::SDL2main)
 target_compile_features(04-0-render-full-windowed PUBLIC cxx_std_17)
 
 

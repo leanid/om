@@ -12,21 +12,12 @@ line_render::line_render(canvas& buffer_, size_t width, size_t height)
 
 void line_render::clear(color c)
 {
-    std::fill(begin(buffer), end(buffer), c);
+    std::fill(buffer.begin(), buffer.end(), c);
 }
 
 void line_render::set_pixel(position p, color c)
 {
-    const size_t i =
-        static_cast<unsigned>(p.y) * w + static_cast<unsigned>(p.x);
-    if (i >= buffer.size())
-    {
-        // just skip incorrect pixels out of border
-        // set breakpoit here to find out
-        return;
-    }
-    color& col = buffer[i];
-    col        = c;
+    buffer.set_pixel(p.x, p.y, c);
 }
 
 pixels line_render::pixels_positions(position start, position end)
