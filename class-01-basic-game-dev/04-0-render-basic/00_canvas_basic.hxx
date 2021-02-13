@@ -48,8 +48,9 @@ public:
         size_t      image_width  = 0;
         size_t      image_height = 0;
         std::string color_format;
+        char last_next_line = 0;
         in_file >> header >> image_width >> image_height >> color_format >>
-            std::ws;
+            last_next_line;
         if (pixels.size() != image_height * image_width)
         {
             throw std::runtime_error("image size not match");
