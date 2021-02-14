@@ -6,6 +6,7 @@
 #include <cstdlib>
 
 #include <algorithm>
+#include <chrono>
 #include <iostream>
 
 int main(int, char**)
@@ -113,7 +114,32 @@ int main(int, char**)
         }
     } program02;
 
-    std::array<gfx_program*, 2> programs{ &program01, &program02 };
+    struct rotate_image : program
+    {
+        vertex vertex_shader(const vertex& v_in) override
+        {
+            vertex out = v_in;
+            out.f0 -= (320 / 2);
+            out.f1 -= (240 / 2);
+
+            out.f0 *= 0.5;
+            out.f1 *= 0.5;
+
+            // rotate
+            double alpha = (3.14159 / 2) * uniforms_.f7 * -1;
+            double x     = out.f0;
+            double y     = out.f1;
+            out.f0       = x * std::cos(alpha) - y * std::sin(alpha);
+            out.f1       = x * std::sin(alpha) + y * std::cos(alpha);
+
+            out.f0 += (320 / 2);
+            out.f1 += (240 / 2);
+
+            return out;
+        }
+    } program03;
+
+    std::array<gfx_program*, 3> programs{ &program01, &program02, &program03 };
     size_t                      current_program_index = 0;
     gfx_program* current_program = programs.at(current_program_index);
 
@@ -168,8 +194,9 @@ int main(int, char**)
         }
 
         interpolated_render.clear(black);
+        double time_from_start = SDL_GetTicks() / 1000.0;
         current_program->set_uniforms(
-            uniforms{ 0, 0, 0, 0, 0, 0, 0, 0, &texture });
+            uniforms{ 0, 0, 0, 0, 0, 0, 0, time_from_start, &texture });
 
         interpolated_render.draw_triangles(triangle_v, indexes_v);
 
