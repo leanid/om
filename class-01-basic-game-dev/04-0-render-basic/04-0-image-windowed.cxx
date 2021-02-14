@@ -83,6 +83,40 @@ int main(int, char**)
         }
     } program01;
 
+    struct grayscale : program
+    {
+        color fragment_shader(const vertex& v_in) override
+        {
+            color out;
+
+            float tex_x = v_in.f5; // 0..1
+            float tex_y = v_in.f6; // 0..1
+
+            canvas* texture = uniforms_.texture0;
+
+            size_t tex_width  = texture->get_width();
+            size_t tex_height = texture->get_height();
+
+            size_t t_x = static_cast<size_t>((tex_width - 1) * tex_x);
+            size_t t_y = static_cast<size_t>((tex_height - 1) * tex_y);
+
+            out = texture->get_pixel(t_x, t_y);
+
+            uint8_t gray = static_cast<uint8_t>(
+                0.2125 * out.r + 0.7152 * out.g + 0.0721 * out.b);
+
+            out.r = gray;
+            out.g = gray;
+            out.b = gray;
+
+            return out;
+        }
+    } program02;
+
+    std::array<gfx_program*, 2> programs{ &program01, &program02 };
+    size_t                      current_program_index = 0;
+    gfx_program* current_program = programs.at(current_program_index);
+
     size_t w = width;
     size_t h = height;
 
@@ -103,7 +137,7 @@ int main(int, char**)
     const int bmask  = 0x00ff0000;
     const int amask  = 0;
 
-    interpolated_render.set_gfx_program(program01);
+    interpolated_render.set_gfx_program(*current_program);
 
     bool continue_loop = true;
 
@@ -117,6 +151,14 @@ int main(int, char**)
                 continue_loop = false;
                 break;
             }
+            else if (e.type == SDL_KEYUP)
+            {
+                current_program_index =
+                    (current_program_index + 1) % programs.size();
+                current_program = programs.at(current_program_index);
+
+                interpolated_render.set_gfx_program(*current_program);
+            }
             else if (e.type == SDL_MOUSEMOTION)
             {
             }
@@ -126,7 +168,8 @@ int main(int, char**)
         }
 
         interpolated_render.clear(black);
-        program01.set_uniforms(uniforms{ 0, 0, 0, 0, 0, 0, 0, 0, &texture });
+        current_program->set_uniforms(
+            uniforms{ 0, 0, 0, 0, 0, 0, 0, 0, &texture });
 
         interpolated_render.draw_triangles(triangle_v, indexes_v);
 
