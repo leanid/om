@@ -6,7 +6,10 @@ int main(int, char**)
 {
     const color green = { 0, 255, 0 };
 
-    canvas image;
+    size_t width  = 320;
+    size_t height = 240;
+
+    canvas image(width, height);
 
     std::fill(image.begin(), image.end(), green);
 
@@ -14,7 +17,7 @@ int main(int, char**)
 
     image.save_image(file_name);
 
-    canvas image_loaded;
+    canvas image_loaded(0, 0);
     image_loaded.load_image(file_name);
 
     if (image != image_loaded)

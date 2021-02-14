@@ -72,6 +72,19 @@ target_include_directories(04-0-render-full-windowed PRIVATE ${SDL2_INCLUDE_DIRS
 target_link_libraries(04-0-render-full-windowed PRIVATE SDL2::SDL2 SDL2::SDL2main)
 target_compile_features(04-0-render-full-windowed PUBLIC cxx_std_17)
 
+add_executable(04-0-render-image-windowed 04-0-image-windowed.cxx
+                                          04_triangle_interpolated_render.cxx
+                                          04_triangle_interpolated_render.hxx
+                                          00_canvas_basic.cxx
+                                          01_line_render.cxx
+                                          02_triangle_render.cxx
+                                          03_triangle_indexed_render.cxx
+                                          )
+target_link_libraries(04-0-render-image-windowed PRIVATE ${SDL2_LIBRARIES})
+target_include_directories(04-0-render-image-windowed PRIVATE ${SDL2_INCLUDE_DIRS})
+target_link_libraries(04-0-render-image-windowed PRIVATE SDL2::SDL2 SDL2::SDL2main)
+target_compile_features(04-0-render-image-windowed PUBLIC cxx_std_17)
+
 
 install(TARGETS 04-0-render-basic
         RUNTIME DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../../bin/tests

@@ -20,14 +20,15 @@ vertex interpolate(const vertex& v0, const vertex& v1, const double t);
 
 struct uniforms
 {
-    double f0 = 0;
-    double f1 = 0;
-    double f2 = 0;
-    double f3 = 0;
-    double f4 = 0;
-    double f5 = 0;
-    double f6 = 0;
-    double f7 = 0;
+    double  f0       = 0;
+    double  f1       = 0;
+    double  f2       = 0;
+    double  f3       = 0;
+    double  f4       = 0;
+    double  f5       = 0;
+    double  f6       = 0;
+    double  f7       = 0;
+    canvas* texture0 = nullptr;
 };
 
 struct gfx_program
@@ -46,7 +47,8 @@ struct triangle_interpolated : triangle_indexed_render
                         std::vector<uint16_t>& indexes);
 
 private:
-    std::vector<vertex> rasterize_triangle(const vertex& v0, const vertex& v1,
+    std::vector<vertex> rasterize_triangle(const vertex& v0,
+                                           const vertex& v1,
                                            const vertex& v2);
     std::vector<vertex> raster_horizontal_triangle(const vertex& single,
                                                    const vertex& left,

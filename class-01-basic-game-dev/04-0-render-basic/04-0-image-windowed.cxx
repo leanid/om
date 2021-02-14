@@ -2,7 +2,10 @@
 
 #include <SDL2/SDL.h>
 
+#include <cmath>
 #include <cstdlib>
+
+#include <algorithm>
 #include <iostream>
 
 int main(int, char**)
@@ -15,8 +18,8 @@ int main(int, char**)
         return EXIT_FAILURE;
     }
 
-    size_t width  = 320;
-    size_t height = 240;
+    constexpr size_t width  = 320;
+    constexpr size_t height = 240;
 
     SDL_Window* window = SDL_CreateWindow("runtime soft render",
                                           SDL_WINDOWPOS_CENTERED,
@@ -40,64 +43,57 @@ int main(int, char**)
 
     const color black = { 0, 0, 0 };
 
+    canvas texture(0, 0);
+    texture.load_image("leo.ppm");
+
     canvas image(width, height);
 
     triangle_interpolated interpolated_render(image, width, height);
 
     struct program : gfx_program
     {
-        double mouse_x{};
-        double mouse_y{};
-        double radius{};
-
-        void set_uniforms(const uniforms& a_uniforms) override
+        uniforms uniforms_;
+        void     set_uniforms(const uniforms& a_uniforms) override
         {
-            mouse_x = a_uniforms.f0;
-            mouse_y = a_uniforms.f1;
-            radius  = a_uniforms.f2;
+            uniforms_ = a_uniforms;
         }
         vertex vertex_shader(const vertex& v_in) override
         {
             vertex out = v_in;
-
-            double x = out.f0;
-            double y = out.f1;
-
-            out.f0 = x;
-            out.f1 = y;
-
             return out;
         }
         color fragment_shader(const vertex& v_in) override
         {
             color out;
-            out.r = static_cast<uint8_t>(v_in.f2 * 255);
-            out.g = static_cast<uint8_t>(v_in.f3 * 255);
-            out.b = static_cast<uint8_t>(v_in.f4 * 255);
 
-            double x  = v_in.f0;
-            double y  = v_in.f1;
-            double dx = mouse_x - x;
-            double dy = mouse_y - y;
-            if (dx * dx + dy * dy < radius * radius)
-            {
-                // make pixel gray if mouse cursor around current pixel with
-                // radius
-                // gray scale with formula: 0.21 R + 0.72 G + 0.07 B.
-                double gray = 0.21 * out.r + 0.72 * out.g + 0.07 * out.b;
-                out.r       = gray;
-                out.g       = gray;
-                out.b       = gray;
-            }
+            float tex_x = v_in.f5; // 0..1
+            float tex_y = v_in.f6; // 0..1
+
+            canvas* texture = uniforms_.texture0;
+
+            size_t tex_width  = texture->get_width();
+            size_t tex_height = texture->get_height();
+
+            size_t t_x = static_cast<size_t>((tex_width - 1) * tex_x);
+            size_t t_y = static_cast<size_t>((tex_height - 1) * tex_y);
+
+            out = texture->get_pixel(t_x, t_y);
 
             return out;
         }
     } program01;
 
-    std::vector<vertex>   triangle_v{ { 0, 0, 1, 0, 0, 0, 0, 0 },
-                                    { 0, 239, 0, 1, 0, 0, 239, 0 },
-                                    { 319, 239, 0, 0, 1, 319, 239, 0 } };
-    std::vector<uint16_t> indexes_v{ 0, 1, 2 };
+    size_t w = width;
+    size_t h = height;
+
+    // clang-format off
+    //                                x  y          r  g  b  tx ty
+    std::vector<vertex> triangle_v{ { 0, 0,         1, 1, 1, 0, 0, 0 },
+                                    { w - 1, h - 1, 1, 1, 1, 1, 1, 0 },
+                                    { 0, h - 1,     1, 1, 1, 0, 1, 0 },
+                                    { w - 1, 0,     1, 1, 1, 1, 0, 0 } };
+    // clang-format on
+    std::vector<uint16_t> indexes_v{ { 0, 1, 2, 0, 3, 1 } };
 
     void*     pixels = image.get_pixels().data();
     const int depth  = sizeof(color) * 8;
@@ -108,10 +104,6 @@ int main(int, char**)
     const int amask  = 0;
 
     interpolated_render.set_gfx_program(program01);
-
-    double mouse_x{};
-    double mouse_y{};
-    double radius{ 20.0 }; // 20 pixels radius
 
     bool continue_loop = true;
 
@@ -127,17 +119,14 @@ int main(int, char**)
             }
             else if (e.type == SDL_MOUSEMOTION)
             {
-                mouse_x = e.motion.x;
-                mouse_y = e.motion.y;
             }
             else if (e.type == SDL_MOUSEWHEEL)
             {
-                radius += e.wheel.y;
             }
         }
 
         interpolated_render.clear(black);
-        program01.set_uniforms(uniforms{ mouse_x, mouse_y, radius });
+        program01.set_uniforms(uniforms{ 0, 0, 0, 0, 0, 0, 0, 0, &texture });
 
         interpolated_render.draw_triangles(triangle_v, indexes_v);
 

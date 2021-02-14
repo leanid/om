@@ -5,7 +5,10 @@ int main(int, char**)
     const color black = { 0, 0, 0 };
     const color green = { 0, 255, 0 };
 
-    canvas image;
+    size_t width  = 320;
+    size_t height = 240;
+
+    canvas image(width, height);
 
     std::vector<position> vertex_buffer;
 
@@ -56,7 +59,7 @@ int main(int, char**)
 
     image.save_image("04_triangles_indexes.ppm");
 
-    canvas tex_image;
+    canvas tex_image(0, 0);
     tex_image.load_image("04_triangles_indexes.ppm");
 
     assert(image == tex_image);

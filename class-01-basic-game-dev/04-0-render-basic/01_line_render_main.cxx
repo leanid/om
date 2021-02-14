@@ -6,17 +6,20 @@ int main(int, char**)
     const color white = { 255, 255, 255 };
     const color green = { 0, 255, 0 };
 
-    canvas image;
+    size_t width  = 320;
+    size_t height = 240;
+
+    canvas image(width, height);
 
     line_render render(image, width, height);
 
     render.clear(black);
 
-    render.draw_line(position{ 0, 0 }, position{ height - 1, height - 1 },
-                     white);
+    render.draw_line(
+        position{ 0, 0 }, position{ height - 1, height - 1 }, white);
 
-    render.draw_line(position{ 0, height - 1 }, position{ height - 1, 0 },
-                     green);
+    render.draw_line(
+        position{ 0, height - 1 }, position{ height - 1, 0 }, green);
 
     for (size_t i = 0; i < 100; ++i)
     {

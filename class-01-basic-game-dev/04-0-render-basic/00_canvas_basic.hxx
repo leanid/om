@@ -8,9 +8,6 @@
 #include <iomanip>
 #include <vector>
 
-constexpr size_t width  = 320;
-constexpr size_t height = 240;
-
 #pragma pack(push, 1)
 struct color
 {
@@ -21,11 +18,15 @@ struct color
 };
 #pragma pack(pop)
 
-const size_t buffer_size = width * height;
-
 class canvas
 {
 public:
+    canvas(size_t w, size_t h)
+        : width{ w }
+        , height{ h }
+    {
+        pixels.resize(width * height);
+    }
     /// PPM - image format:
     /// https://ru.wikipedia.org/wiki/Portable_anymap#%D0%9F%D1%80%D0%B8%D0%BC%D0%B5%D1%80_PPM
     void save_image(const std::string& file_name)
@@ -45,13 +46,24 @@ public:
         in_file.exceptions(std::ios_base::failbit);
         in_file.open(file_name, std::ios_base::binary);
         std::string header;
-        size_t      image_width  = 0;
-        size_t      image_height = 0;
         std::string color_format;
-        char last_next_line = 0;
-        in_file >> header >> image_width >> image_height >> color_format >>
-            last_next_line;
-        if (pixels.size() != image_height * image_width)
+        char        last_next_line = 0;
+        // clang-format off
+        in_file >> header
+                >> width
+                >> height
+                >> color_format;
+        // clang-format on
+        in_file.read(&last_next_line, 1);
+
+        if (!iswspace(last_next_line))
+        {
+            throw std::runtime_error("expected witespace");
+        }
+
+        pixels.resize(width * height);
+
+        if (pixels.size() != width * height)
         {
             throw std::runtime_error("image size not match");
         }
@@ -83,10 +95,15 @@ public:
     auto begin() { return pixels.begin(); }
     auto end() { return pixels.end(); }
 
-    std::array<color, buffer_size>& get_pixels() { return pixels; }
+    std::vector<color>& get_pixels() { return pixels; }
+
+    size_t get_width() const { return width; }
+    size_t get_height() const { return height; }
 
 private:
-    std::array<color, buffer_size> pixels; // same: color pixels[buffer_size];
+    size_t             width  = 0;
+    size_t             height = 0;
+    std::vector<color> pixels; // same: color pixels[buffer_size];
 };
 
 struct position

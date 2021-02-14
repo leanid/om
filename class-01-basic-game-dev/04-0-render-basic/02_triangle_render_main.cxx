@@ -5,7 +5,10 @@ int main(int, char**)
     const color black = { 0, 0, 0 };
     const color green = { 0, 255, 0 };
 
-    canvas image;
+    size_t width  = 320;
+    size_t height = 240;
+
+    canvas image(width, height);
 
     triangle_render render_tri(image, width, height);
     render_tri.clear(black);

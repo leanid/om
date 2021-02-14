@@ -4,7 +4,10 @@ int main(int, char**)
 {
     const color black = { 0, 0, 0 };
 
-    canvas image;
+    constexpr size_t width  = 320;
+    constexpr size_t height = 240;
+
+    canvas image(width, height);
 
     triangle_interpolated interpolated_render(image, width, height);
 
@@ -57,7 +60,7 @@ int main(int, char**)
     // texture example
     struct program_tex : gfx_program
     {
-        std::array<color, buffer_size> texture;
+        std::vector<color> texture;
 
         void   set_uniforms(const uniforms&) override {}
         vertex vertex_shader(const vertex& v_in) override
@@ -99,10 +102,7 @@ int main(int, char**)
             return out;
         }
 
-        void set_texture(const std::array<color, buffer_size>& tex)
-        {
-            texture = tex;
-        }
+        void set_texture(const std::vector<color>& tex) { texture = tex; }
 
         color sample2d(double u_, double v_)
         {

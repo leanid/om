@@ -18,6 +18,9 @@ int main(int, char**)
         return EXIT_FAILURE;
     }
 
+    constexpr size_t width  = 320;
+    constexpr size_t height = 240;
+
     SDL_Window* window = SDL_CreateWindow("runtime soft render",
                                           SDL_WINDOWPOS_CENTERED,
                                           SDL_WINDOWPOS_CENTERED,
@@ -40,7 +43,7 @@ int main(int, char**)
 
     const color black = { 0, 0, 0 };
 
-    canvas image;
+    canvas image(width, height);
 
     triangle_interpolated interpolated_render(image, width, height);
 
