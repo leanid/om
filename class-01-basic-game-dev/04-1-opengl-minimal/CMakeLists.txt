@@ -15,7 +15,7 @@ if(WIN32)
 endif(WIN32)
 
 # use sdl >= 2.0.12 (with nice new cmake build file)
-find_package(sdl2 REQUIRED)
+find_package(SDL2 REQUIRED)
 if (MINGW)
     # find out what libraries are needed for dynamicaly linking with libSDL.so
     # using mingw64 cross-compiler

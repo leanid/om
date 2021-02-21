@@ -82,10 +82,21 @@ namespace om
 
 static std::array<std::string_view, 17> event_names = {
     { /// input events
-      "left_pressed", "left_released", "right_pressed", "right_released",
-      "up_pressed", "up_released", "down_pressed", "down_released",
-      "select_pressed", "select_released", "start_pressed", "start_released",
-      "button1_pressed", "button1_released", "button2_pressed",
+      "left_pressed",
+      "left_released",
+      "right_pressed",
+      "right_released",
+      "up_pressed",
+      "up_released",
+      "down_pressed",
+      "down_released",
+      "select_pressed",
+      "select_released",
+      "start_pressed",
+      "start_released",
+      "button1_pressed",
+      "button1_released",
+      "button2_pressed",
       "button2_released",
       /// virtual console events
       "turn_off" }
@@ -152,9 +163,13 @@ const std::array<bind, 8> keys{
       { SDLK_a, "left", event::left_pressed, event::left_released },
       { SDLK_s, "down", event::down_pressed, event::down_released },
       { SDLK_d, "right", event::right_pressed, event::right_released },
-      { SDLK_LCTRL, "button1", event::button1_pressed,
+      { SDLK_LCTRL,
+        "button1",
+        event::button1_pressed,
         event::button1_released },
-      { SDLK_SPACE, "button2", event::button2_pressed,
+      { SDLK_SPACE,
+        "button2",
+        event::button2_pressed,
         event::button2_released },
       { SDLK_ESCAPE, "select", event::select_pressed, event::select_released },
       { SDLK_RETURN, "start", event::start_pressed, event::start_released } }
@@ -250,12 +265,17 @@ std::string engine_impl::initialize(std::string_view)
         return serr.str();
     }
 
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
+
     // On Apple's OS X you must set the NSHighResolutionCapable Info.plist
     // property to YES, otherwise you will not receive a High DPI OpenGL canvas.
     // just read:
     // https://stackoverflow.com/questions/1596945/building-osx-app-bundle
-    window = SDL_CreateWindow("title", SDL_WINDOWPOS_CENTERED,
-                              SDL_WINDOWPOS_CENTERED, 640, 480,
+    window = SDL_CreateWindow("title",
+                              SDL_WINDOWPOS_CENTERED,
+                              SDL_WINDOWPOS_CENTERED,
+                              640,
+                              480,
                               SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI);
 
     if (window == nullptr)
@@ -266,6 +286,41 @@ std::string engine_impl::initialize(std::string_view)
         return serr.str();
     }
 
+    int gl_major_ver       = 3;
+    int gl_minor_ver       = 2;
+    int gl_context_profile = SDL_GL_CONTEXT_PROFILE_ES;
+
+    const char*      platform_from_sdl = SDL_GetPlatform();
+    std::string_view platform{ platform_from_sdl };
+    using namespace std::string_view_literals;
+    using namespace std;
+    auto list = { "Windows"sv, "Mac OS X"sv };
+    auto it   = find(begin(list), end(list), platform);
+    if (it != end(list))
+    {
+        gl_major_ver       = 4;
+        gl_minor_ver       = (platform == "Mac OS X") ? 1 : 3;
+        gl_context_profile = SDL_GL_CONTEXT_PROFILE_CORE;
+    }
+
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, gl_context_profile);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, gl_major_ver);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, gl_minor_ver);
+
+    SDL_GLContext gl_context = SDL_GL_CreateContext(window);
+    if (gl_context == nullptr)
+    {
+        gl_major_ver       = 3;
+        gl_minor_ver       = 2;
+        gl_context_profile = SDL_GL_CONTEXT_PROFILE_ES;
+
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, gl_context_profile);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, gl_major_ver);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, gl_minor_ver);
+        gl_context = SDL_GL_CreateContext(window);
+    }
+    assert(gl_context != nullptr);
+
     gl_context = SDL_GL_CreateContext(window);
     if (gl_context == nullptr)
     {
@@ -275,11 +330,9 @@ std::string engine_impl::initialize(std::string_view)
         return serr.str();
     }
 
-    int gl_major_ver = 0;
     int result =
         SDL_GL_GetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, &gl_major_ver);
     assert(result == 0);
-    int gl_minor_ver = 0;
     result = SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, &gl_minor_ver);
     assert(result == 0);
 
@@ -320,8 +373,9 @@ std::string engine_impl::initialize(std::string_view)
     GLuint vert_shader = glCreateShader(GL_VERTEX_SHADER);
     OM_GL_CHECK()
     string_view vertex_shader_src = R"(
-                                    attribute vec3 a_position;
-                                    varying vec4 v_position;
+                                    #version 300 es
+                                    in vec3 a_position;
+                                    out vec4 v_position;
 
                                     void main()
                                     {
@@ -362,18 +416,24 @@ std::string engine_impl::initialize(std::string_view)
     GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
     OM_GL_CHECK()
     string_view fragment_shader_src = R"(
-                      varying vec4 v_position;
+                      #version 300 es
+                      precision mediump float;
 
+                      in vec4 v_position;
+
+                      out vec4 frag_color;
+
+                      // try main_one function name on linux mesa drivers
                       void main()
                       {
                           if (v_position.z >= 0.0)
                           {
                               float light_green = 0.5 + v_position.z / 2.0;
-                              gl_FragColor = vec4(0.0, light_green, 0.0, 1.0);
+                              frag_color = vec4(0.0, light_green, 0.0, 1.0);
                           } else
                           {
                               float color = 0.5 - (v_position.z / -2.0);
-                              gl_FragColor = vec4(color, 0.0, 0.0, 1.0);
+                              frag_color = vec4(color, 0.0, 0.0, 1.0);
                           }
                       }
                       )";
@@ -393,8 +453,8 @@ std::string engine_impl::initialize(std::string_view)
         glGetShaderiv(fragment_shader, GL_INFO_LOG_LENGTH, &info_len);
         OM_GL_CHECK()
         std::vector<char> info_chars(static_cast<size_t>(info_len));
-        glGetShaderInfoLog(fragment_shader, info_len, nullptr,
-                           info_chars.data());
+        glGetShaderInfoLog(
+            fragment_shader, info_len, nullptr, info_chars.data());
         OM_GL_CHECK()
         glDeleteShader(fragment_shader);
         OM_GL_CHECK()
