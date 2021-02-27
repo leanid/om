@@ -9,7 +9,7 @@ if(WIN32)
   target_compile_definitions(engine-05-1 PRIVATE "-DOM_DECLSPEC=__declspec(dllexport)")
 endif(WIN32)
 
-find_package(sdl2 REQUIRED)
+find_package(SDL2 REQUIRED)
 target_include_directories(engine-05-1 PRIVATE ${SDL2_INCLUDE_DIRS})
 target_link_libraries(engine-05-1 PRIVATE ${SDL2_LIBRARIES})
 
@@ -27,7 +27,8 @@ elseif(APPLE)
              )
 elseif(UNIX)
     target_link_libraries(engine-05-1 PRIVATE
-               -lSDL2
+               SDL2::SDL2
+               SDL2::SDL2main
                -lGL
                )
 elseif(MSVC)
