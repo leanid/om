@@ -14,9 +14,9 @@
 #include <tuple>
 #include <vector>
 
-#include <SDL.h>
-#include <SDL_opengl.h>
-#include <SDL_opengl_glext.h>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_opengl.h>
+#include <SDL2/SDL_opengl_glext.h>
 
 #include "picopng.hxx"
 
@@ -187,7 +187,8 @@ class shader_gl_es20
 {
 public:
     shader_gl_es20(
-        std::string_view vertex_src, std::string_view fragment_src,
+        std::string_view                                      vertex_src,
+        std::string_view                                      fragment_src,
         const std::vector<std::tuple<GLuint, const GLchar*>>& attributes)
     {
         vert_shader = compile_shader(GL_VERTEX_SHADER, vertex_src);
@@ -337,10 +338,21 @@ private:
 
 static std::array<std::string_view, 17> event_names = {
     /// input events
-    { "left_pressed", "left_released", "right_pressed", "right_released",
-      "up_pressed", "up_released", "down_pressed", "down_released",
-      "select_pressed", "select_released", "start_pressed", "start_released",
-      "button1_pressed", "button1_released", "button2_pressed",
+    { "left_pressed",
+      "left_released",
+      "right_pressed",
+      "right_released",
+      "up_pressed",
+      "up_released",
+      "down_pressed",
+      "down_released",
+      "select_pressed",
+      "select_released",
+      "start_pressed",
+      "start_released",
+      "button1_pressed",
+      "button1_released",
+      "button2_pressed",
       "button2_released",
       /// virtual console events
       "turn_off" }
@@ -486,14 +498,20 @@ const std::array<bind, 8> keys{
       bind{ "left", SDLK_a, event::left_pressed, event::left_released },
       bind{ "down", SDLK_s, event::down_pressed, event::down_released },
       bind{ "right", SDLK_d, event::right_pressed, event::right_released },
-      bind{ "button1", SDLK_LCTRL, event::button1_pressed,
+      bind{ "button1",
+            SDLK_LCTRL,
+            event::button1_pressed,
             event::button1_released },
-      bind{ "button2", SDLK_SPACE, event::button2_pressed,
+      bind{ "button2",
+            SDLK_SPACE,
+            event::button2_pressed,
             event::button2_released },
-      bind{ "select", SDLK_ESCAPE, event::select_pressed,
+      bind{ "select",
+            SDLK_ESCAPE,
+            event::select_pressed,
             event::select_released },
-      bind{ "start", SDLK_RETURN, event::start_pressed,
-            event::start_released } }
+      bind{
+          "start", SDLK_RETURN, event::start_pressed, event::start_released } }
 };
 
 static bool check_input(const SDL_Event& e, const bind*& result)
@@ -572,8 +590,8 @@ public:
         shader00->use();
         shader00->set_uniform("u_color", c);
         // vertex coordinates
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(v0),
-                              &t.v[0].pos.x);
+        glVertexAttribPointer(
+            0, 2, GL_FLOAT, GL_FALSE, sizeof(v0), &t.v[0].pos.x);
         OM_GL_CHECK();
         glEnableVertexAttribArray(0);
         OM_GL_CHECK();
@@ -592,14 +610,14 @@ public:
     {
         shader01->use();
         // positions
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(t.v[0]),
-                              &t.v[0].pos);
+        glVertexAttribPointer(
+            0, 2, GL_FLOAT, GL_FALSE, sizeof(t.v[0]), &t.v[0].pos);
         OM_GL_CHECK();
         glEnableVertexAttribArray(0);
         OM_GL_CHECK();
         // colors
-        glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(t.v[0]),
-                              &t.v[0].c);
+        glVertexAttribPointer(
+            1, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(t.v[0]), &t.v[0].c);
         OM_GL_CHECK();
         glEnableVertexAttribArray(1);
         OM_GL_CHECK();
@@ -617,21 +635,21 @@ public:
         texture->bind();
         shader02->set_uniform("s_texture", texture);
         // positions
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(t.v[0]),
-                              &t.v[0].pos);
+        glVertexAttribPointer(
+            0, 2, GL_FLOAT, GL_FALSE, sizeof(t.v[0]), &t.v[0].pos);
         OM_GL_CHECK();
         glEnableVertexAttribArray(0);
         OM_GL_CHECK();
         // colors
-        glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(t.v[0]),
-                              &t.v[0].c);
+        glVertexAttribPointer(
+            1, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(t.v[0]), &t.v[0].c);
         OM_GL_CHECK();
         glEnableVertexAttribArray(1);
         OM_GL_CHECK();
 
         // texture coordinates
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(t.v[0]),
-                              &t.v[0].uv);
+        glVertexAttribPointer(
+            2, 2, GL_FLOAT, GL_FALSE, sizeof(t.v[0]), &t.v[0].uv);
         OM_GL_CHECK();
         glEnableVertexAttribArray(2);
         OM_GL_CHECK();
@@ -785,10 +803,10 @@ texture_gl_es20::texture_gl_es20(std::string_view path)
     }
 
     std::vector<unsigned char> image;
-    unsigned long              w = 0;
-    unsigned long              h = 0;
-    int error = decodePNG(image, w, h, &png_file_in_memory[0],
-                          png_file_in_memory.size(), false);
+    unsigned long              w     = 0;
+    unsigned long              h     = 0;
+    int                        error = decodePNG(
+        image, w, h, &png_file_in_memory[0], png_file_in_memory.size(), false);
 
     // if there's an error, display it
     if (error != 0)
@@ -806,8 +824,15 @@ texture_gl_es20::texture_gl_es20(std::string_view path)
     GLint   border       = 0;
     GLsizei width_       = static_cast<GLsizei>(w);
     GLsizei height_      = static_cast<GLsizei>(h);
-    glTexImage2D(GL_TEXTURE_2D, mipmap_level, GL_RGBA, width_, height_, border,
-                 GL_RGBA, GL_UNSIGNED_BYTE, &image[0]);
+    glTexImage2D(GL_TEXTURE_2D,
+                 mipmap_level,
+                 GL_RGBA,
+                 width_,
+                 height_,
+                 border,
+                 GL_RGBA,
+                 GL_UNSIGNED_BYTE,
+                 &image[0]);
     OM_GL_CHECK();
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -849,9 +874,12 @@ std::string engine_impl::initialize(std::string_view)
         return serr.str();
     }
 
-    window =
-        SDL_CreateWindow("title", SDL_WINDOWPOS_CENTERED,
-                         SDL_WINDOWPOS_CENTERED, 640, 480, ::SDL_WINDOW_OPENGL);
+    window = SDL_CreateWindow("title",
+                              SDL_WINDOWPOS_CENTERED,
+                              SDL_WINDOWPOS_CENTERED,
+                              640,
+                              480,
+                              ::SDL_WINDOW_OPENGL);
 
     if (window == nullptr)
     {

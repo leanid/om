@@ -34,7 +34,10 @@ public:
         std::ofstream out_file;
         out_file.exceptions(std::ios_base::failbit);
         out_file.open(file_name, std::ios_base::binary);
-        out_file << "P6\n" << width << ' ' << height << ' ' << 255 << '\n';
+        // clang-format off
+        out_file << "P6\n"
+                 << width << ' ' << height << ' ' << 255 << '\n';
+        // clang-format on
         std::streamsize buf_size =
             static_cast<std::streamsize>(sizeof(color) * pixels.size());
         out_file.write(reinterpret_cast<const char*>(pixels.data()), buf_size);
@@ -52,9 +55,11 @@ public:
         in_file >> header
                 >> width
                 >> height
-                >> color_format;
+                >> color_format
+                >> std::noskipws
+                >> last_next_line;
         // clang-format on
-        in_file.read(&last_next_line, 1);
+        // in_file.read(&last_next_line, 1);
 
         if (!iswspace(last_next_line))
         {
