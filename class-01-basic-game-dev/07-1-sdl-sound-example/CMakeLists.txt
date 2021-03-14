@@ -4,7 +4,7 @@ project(07-1-add-sound CXX)
 add_executable(sound_test-07-1 sound_test.cxx)
 target_compile_features(sound_test-07-1 PUBLIC cxx_std_20)
 
-find_package(sdl2 REQUIRED)
+find_package(SDL2 REQUIRED)
 target_include_directories(sound_test-07-1 PRIVATE ${SDL2_INCLUDE_DIRS})
 target_link_libraries(sound_test-07-1 PRIVATE ${SDL2_LIBRARIES})
 
@@ -16,7 +16,7 @@ if (MINGW)
                -mwindows
                -lopengl32
                )
-elseif(MSVC)
+elseif(MSVC OR UNIX)
     target_link_libraries(sound_test-07-1 PRIVATE SDL2::SDL2 SDL2::SDL2main)
 endif()
 

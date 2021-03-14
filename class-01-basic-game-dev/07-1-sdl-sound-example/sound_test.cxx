@@ -6,7 +6,7 @@
 #include <iomanip>
 #include <iostream>
 
-#include <SDL.h>
+#include <SDL2/SDL.h>
 
 constexpr int32_t AUDIO_FORMAT = AUDIO_S16LSB;
 
@@ -33,6 +33,15 @@ std::ostream& operator<<(std::ostream& o, const SDL_AudioSpec& spec);
 static auto     start         = std::chrono::high_resolution_clock::now();
 static auto     finish        = start;
 static uint32_t default_delay = 0;
+
+enum class play_channel
+{
+    left,
+    right,
+    left_and_right
+};
+
+static play_channel channels{ play_channel::left_and_right };
 
 int main(int /*argc*/, char* /*argv*/[])
 {
@@ -64,9 +73,11 @@ int main(int /*argc*/, char* /*argv*/[])
 
     clog << "loading sample buffer from file: " << file_name << endl;
 
-    SDL_AudioSpec* audio_spec =
-        SDL_LoadWAV_RW(file, auto_delete_file, &audio_spec_from_file,
-                       &sample_buffer_from_file, &sample_buffer_len_from_file);
+    SDL_AudioSpec* audio_spec = SDL_LoadWAV_RW(file,
+                                               auto_delete_file,
+                                               &audio_spec_from_file,
+                                               &sample_buffer_from_file,
+                                               &sample_buffer_len_from_file);
 
     if (audio_spec == nullptr)
     {
@@ -150,6 +161,8 @@ int main(int /*argc*/, char* /*argv*/[])
              << default_delay << " ms)\n"
              << "7. play note(current val: " << loaded_audio_buff.note.frequncy
              << ")\n"
+             << "8. play note on channel (0 - left, 1 - right, 2 "
+                "left_and_right)\n"
              << ">" << flush;
 
         int choise = 0;
@@ -211,6 +224,13 @@ int main(int /*argc*/, char* /*argv*/[])
                 cin >> loaded_audio_buff.note.frequncy;
             }
             break;
+            case 8:
+            {
+                clog << "input play_channel: " << flush;
+                int i{};
+                cin >> i;
+                channels = static_cast<play_channel>(i);
+            }
             default:
                 break;
         }
@@ -269,10 +289,33 @@ static void audio_callback(void* userdata, uint8_t* stream, int len)
                 std::numeric_limits<int16_t>::max() * sin(omega_t);
             int16_t curr_val = static_cast<int16_t>(curr_sample);
 
-            *output = curr_val;
-            output++;
-            *output = curr_val;
-            output++;
+            switch (channels)
+            {
+                case play_channel::left_and_right:
+                {
+                    *output = curr_val;
+                    output++;
+                    *output = curr_val;
+                    output++;
+                    break;
+                }
+                case play_channel::left:
+                {
+                    *output = curr_val;
+                    output++;
+                    *output = 0;
+                    output++;
+                    break;
+                }
+                case play_channel::right:
+                {
+                    *output = 0;
+                    output++;
+                    *output = curr_val;
+                    output++;
+                    break;
+                }
+            };
 
             audio_buff_data->note.time += dt;
         }
@@ -290,16 +333,19 @@ static void audio_callback(void* userdata, uint8_t* stream, int len)
 
             if (left_in_buffer > stream_len)
             {
-                SDL_MixAudioFormat(stream, current_sound_pos, AUDIO_FORMAT, len,
-                                   128);
+                SDL_MixAudioFormat(
+                    stream, current_sound_pos, AUDIO_FORMAT, len, 128);
                 audio_buff_data->current_pos += stream_len;
                 break;
             }
             else
             {
                 // first copy rest from buffer and repeat sound from begining
-                SDL_MixAudioFormat(stream, current_sound_pos, AUDIO_FORMAT,
-                                   left_in_buffer, 128);
+                SDL_MixAudioFormat(stream,
+                                   current_sound_pos,
+                                   AUDIO_FORMAT,
+                                   left_in_buffer,
+                                   128);
                 // start buffer from begining
                 audio_buff_data->current_pos = 0;
                 stream_len -= left_in_buffer;

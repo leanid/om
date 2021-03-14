@@ -10,7 +10,7 @@
 
 #include "engine.hxx"
 
-int main(int /*argc*/, char* /*argv*/ [])
+int main(int /*argc*/, char* /*argv*/[])
 {
     std::unique_ptr<om::engine, void (*)(om::engine*)> engine(
         om::create_engine(), om::destroy_engine);
@@ -50,6 +50,11 @@ int main(int /*argc*/, char* /*argv*/ [])
     }
 
     om::sound_buffer* s = engine->create_sound_buffer("t2_no_problemo.wav");
+    om::sound_buffer* music =
+        engine->create_sound_buffer("8-bit_detective.wav");
+    assert(music != nullptr);
+
+    music->play(om::sound_buffer::properties::looped);
 
     bool continue_loop = true;
 
