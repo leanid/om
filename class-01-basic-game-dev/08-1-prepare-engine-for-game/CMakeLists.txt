@@ -1,20 +1,19 @@
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 3.18)
 project(08-1-prepare-engine-for-game)
 
 add_library(engine-08-1 SHARED engine.cxx engine.hxx picopng.hxx)
 target_compile_features(engine-08-1 PUBLIC cxx_std_17)
 
-find_package(sdl2 REQUIRED)
-target_include_directories(engine-08-1 PRIVATE ${SDL2_INCLUDE_DIRS})
-target_link_libraries(engine-08-1 PRIVATE ${SDL2_LIBRARIES})
+#set(OpenGL_GL_PREFERENCE GLVND)
+find_package(OpenGL REQUIRED)
+find_package(SDL2 REQUIRED)
 
 if(WIN32)
   target_compile_definitions(engine-08-1 PRIVATE "-DOM_DECLSPEC=__declspec(dllexport)")
 endif(WIN32)
 
-find_library(SDL2_LIB NAMES SDL2)
-
 if (MINGW)
+    find_library(SDL2_LIB NAMES SDL2)
     target_link_libraries(engine-08-1 PRIVATE
                -lmingw32
                -lSDL2main
@@ -26,14 +25,12 @@ elseif(APPLE)
     target_link_libraries(engine-08-1 PRIVATE
               -Wl,-framework,OpenGL
               )
-elseif(UNIX)
+elseif(MSVC OR UNIX)
     target_link_libraries(engine-08-1 PRIVATE
-               -lSDL2
-               -lGL
-               )
-elseif(MSVC)
-    target_link_libraries(engine-08-1 PRIVATE SDL2::SDL2 SDL2::SDL2main
-                          opengl32)
+        SDL2::SDL2
+        SDL2::SDL2main
+        OpenGL::OpenGL
+        )
 endif()
 
 add_executable(game-08-1 game.cxx)

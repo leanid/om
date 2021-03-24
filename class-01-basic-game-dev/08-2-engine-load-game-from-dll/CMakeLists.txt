@@ -5,16 +5,15 @@ add_executable(engine-08-2 engine.cxx engine.hxx picopng.hxx)
 set_target_properties(engine-08-2 PROPERTIES ENABLE_EXPORTS TRUE)
 target_compile_features(engine-08-2 PUBLIC cxx_std_17)
 
-find_package(sdl2 REQUIRED)
-target_include_directories(engine-08-2 PRIVATE ${SDL2_INCLUDE_DIRS})
-target_link_libraries(engine-08-2 PRIVATE ${SDL2_LIBRARIES})
+find_package(OpenGL REQUIRED)
+find_package(SDL2 REQUIRED)
+#target_include_directories(engine-08-2 PRIVATE ${SDL2_INCLUDE_DIRS})
+#target_link_libraries(engine-08-2 PRIVATE ${SDL2_LIBRARIES})
 
 if(WIN32)
   target_compile_definitions(engine-08-2 PRIVATE "-DOM_DECLSPEC=__declspec(dllexport)")
   target_compile_definitions(engine-08-2 PRIVATE "-DOM_GAME=__declspec(dllimport)")  # for om_tat_sat import
 endif(WIN32)
-
-find_library(SDL2_LIB NAMES SDL2)
 
 if (MINGW)
     target_link_libraries(engine-08-2 PRIVATE
@@ -28,14 +27,11 @@ elseif(APPLE)
     target_link_libraries(engine-08-2 PRIVATE
               -Wl,-framework,OpenGL
               )
-elseif(UNIX)
-    target_link_libraries(engine-08-2 PRIVATE
-               -lSDL2
-               -lGL
-               )
-elseif(MSVC)
-    target_link_libraries(engine-08-2 PRIVATE SDL2::SDL2 SDL2::SDL2main
-                          opengl32)
+elseif(MSVC OR UNIX)
+  target_link_libraries(engine-08-2 PRIVATE
+    SDL2::SDL2
+    SDL2::SDL2main
+    OpenGL::OpenGL)
 endif()
 
 add_library(game-08-2 MODULE game.cxx)

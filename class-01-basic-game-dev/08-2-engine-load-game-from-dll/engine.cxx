@@ -258,8 +258,9 @@ std::vector<sound_buffer_impl*> sounds;
 class sound_buffer_impl final : public sound
 {
 public:
-    sound_buffer_impl(std::string_view path, SDL_AudioDeviceID device,
-                      SDL_AudioSpec audio_spec);
+    sound_buffer_impl(std::string_view  path,
+                      SDL_AudioDeviceID device,
+                      SDL_AudioSpec     audio_spec);
     ~sound_buffer_impl() final;
 
     void play(const effect prop) final
@@ -342,9 +343,12 @@ sound_buffer_impl::sound_buffer_impl(std::string_view  path,
         file_audio_spec.freq != device_audio_spec.freq)
     {
         SDL_AudioCVT cvt;
-        SDL_BuildAudioCVT(&cvt, file_audio_spec.format,
-                          file_audio_spec.channels, file_audio_spec.freq,
-                          device_audio_spec.format, device_audio_spec.channels,
+        SDL_BuildAudioCVT(&cvt,
+                          file_audio_spec.format,
+                          file_audio_spec.channels,
+                          file_audio_spec.freq,
+                          device_audio_spec.format,
+                          device_audio_spec.channels,
                           device_audio_spec.freq);
         SDL_assert(cvt.needed); // obviously, this one is always needed.
         // read your data into cvt.buf here.
@@ -409,7 +413,8 @@ class shader_gl_es20
 {
 public:
     shader_gl_es20(
-        std::string_view vertex_src, std::string_view fragment_src,
+        std::string_view                                      vertex_src,
+        std::string_view                                      fragment_src,
         const std::vector<std::tuple<GLuint, const GLchar*>>& attributes)
     {
         vert_shader = compile_shader(GL_VERTEX_SHADER, vertex_src);
@@ -579,10 +584,14 @@ private:
 
 std::ostream& operator<<(std::ostream& stream, const input_data& i)
 {
-    static const std::array<std::string_view, 8> key_names = {
-        { "left", "right", "up", "down", "select", "start", "button1",
-          "button2" }
-    };
+    static const std::array<std::string_view, 8> key_names = { { "left",
+                                                                 "right",
+                                                                 "up",
+                                                                 "down",
+                                                                 "select",
+                                                                 "start",
+                                                                 "button1",
+                                                                 "button2" } };
 
     const std::string_view& key_name = key_names[static_cast<size_t>(i.key)];
 
@@ -727,14 +736,14 @@ struct bind
     om::keys om_key;
 };
 
-const std::array<bind, 8> keys{
-    { bind{ "up", SDLK_w, keys::up }, bind{ "left", SDLK_a, keys::left },
-      bind{ "down", SDLK_s, keys::down }, bind{ "right", SDLK_d, keys::right },
-      bind{ "button1", SDLK_LCTRL, keys::button1 },
-      bind{ "button2", SDLK_SPACE, keys::button2 },
-      bind{ "select", SDLK_ESCAPE, keys::select },
-      bind{ "start", SDLK_RETURN, keys::start } }
-};
+const std::array<bind, 8> keys{ { bind{ "up", SDLK_w, keys::up },
+                                  bind{ "left", SDLK_a, keys::left },
+                                  bind{ "down", SDLK_s, keys::down },
+                                  bind{ "right", SDLK_d, keys::right },
+                                  bind{ "button1", SDLK_LCTRL, keys::button1 },
+                                  bind{ "button2", SDLK_SPACE, keys::button2 },
+                                  bind{ "select", SDLK_ESCAPE, keys::select },
+                                  bind{ "start", SDLK_RETURN, keys::start } } };
 
 static bool check_input(const SDL_Event& e, const bind*& result)
 {
@@ -855,14 +864,14 @@ void engine::render(const tri1& t)
 {
     shader01->use();
     // positions
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(t.v[0]),
-                          &t.v[0].pos);
+    glVertexAttribPointer(
+        0, 2, GL_FLOAT, GL_FALSE, sizeof(t.v[0]), &t.v[0].pos);
     OM_GL_CHECK();
     glEnableVertexAttribArray(0);
     OM_GL_CHECK();
     // colors
-    glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(t.v[0]),
-                          &t.v[0].c);
+    glVertexAttribPointer(
+        1, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(t.v[0]), &t.v[0].c);
     OM_GL_CHECK();
     glEnableVertexAttribArray(1);
     OM_GL_CHECK();
@@ -880,14 +889,14 @@ void engine::render(const tri2& t, texture* tex)
     texture->bind();
     shader02->set_uniform("s_texture", texture);
     // positions
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(t.v[0]),
-                          &t.v[0].pos);
+    glVertexAttribPointer(
+        0, 2, GL_FLOAT, GL_FALSE, sizeof(t.v[0]), &t.v[0].pos);
     OM_GL_CHECK();
     glEnableVertexAttribArray(0);
     OM_GL_CHECK();
     // colors
-    glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(t.v[0]),
-                          &t.v[0].c);
+    glVertexAttribPointer(
+        1, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(t.v[0]), &t.v[0].c);
     OM_GL_CHECK();
     glEnableVertexAttribArray(1);
     OM_GL_CHECK();
@@ -914,14 +923,14 @@ void engine::render(const tri2& t, texture* tex, const mat2x3& m)
     shader03->set_uniform("s_texture", texture);
     shader03->set_uniform("u_matrix", m);
     // positions
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(t.v[0]),
-                          &t.v[0].pos);
+    glVertexAttribPointer(
+        0, 2, GL_FLOAT, GL_FALSE, sizeof(t.v[0]), &t.v[0].pos);
     OM_GL_CHECK();
     glEnableVertexAttribArray(0);
     OM_GL_CHECK();
     // colors
-    glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(t.v[0]),
-                          &t.v[0].c);
+    glVertexAttribPointer(
+        1, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(t.v[0]), &t.v[0].c);
     OM_GL_CHECK();
     glEnableVertexAttribArray(1);
     OM_GL_CHECK();
@@ -1047,8 +1056,11 @@ engine::engine(std::string_view)
             }
         }
 
-        window = SDL_CreateWindow("title", SDL_WINDOWPOS_CENTERED,
-                                  SDL_WINDOWPOS_CENTERED, 640, 480,
+        window = SDL_CreateWindow("title",
+                                  SDL_WINDOWPOS_CENTERED,
+                                  SDL_WINDOWPOS_CENTERED,
+                                  640,
+                                  480,
                                   ::SDL_WINDOW_OPENGL);
 
         if (window == nullptr)
@@ -1261,7 +1273,8 @@ engine::engine(std::string_view)
         const int num_audio_devices = SDL_GetNumAudioDevices(SDL_FALSE);
         if (num_audio_devices > 0)
         {
-            default_audio_device_name = SDL_GetAudioDeviceName(num_audio_devices - 1, SDL_FALSE);
+            default_audio_device_name =
+                SDL_GetAudioDeviceName(num_audio_devices - 1, SDL_FALSE);
             for (int i = 0; i < num_audio_devices; ++i)
             {
                 std::cout << "audio device #" << i << ": "
@@ -1270,8 +1283,10 @@ engine::engine(std::string_view)
         }
         std::cout << std::flush;
 
-        audio_device = SDL_OpenAudioDevice(default_audio_device_name, 0,
-                                           &audio_device_spec, nullptr,
+        audio_device = SDL_OpenAudioDevice(default_audio_device_name,
+                                           0,
+                                           &audio_device_spec,
+                                           nullptr,
                                            SDL_AUDIO_ALLOW_ANY_CHANGE);
 
         if (audio_device == 0)
@@ -1400,9 +1415,10 @@ texture_gl_es20::texture_gl_es20(std::string_view path)
         throw std::runtime_error("can't load texture");
     }
 
-    const om::png_image img = decode_png_file_from_memory(
-        png_file_in_memory, convert_color::to_rgba32,
-        origin_point::bottom_left);
+    const om::png_image img =
+        decode_png_file_from_memory(png_file_in_memory,
+                                    convert_color::to_rgba32,
+                                    origin_point::bottom_left);
 
     // if there's an error, display it
     if (img.error != 0)
@@ -1420,8 +1436,15 @@ texture_gl_es20::texture_gl_es20(std::string_view path)
     GLint   border       = 0;
     GLsizei width        = static_cast<GLsizei>(img.width);
     GLsizei height       = static_cast<GLsizei>(img.height);
-    glTexImage2D(GL_TEXTURE_2D, mipmap_level, GL_RGBA, width, height, border,
-                 GL_RGBA, GL_UNSIGNED_BYTE, &img.raw_image[0]);
+    glTexImage2D(GL_TEXTURE_2D,
+                 mipmap_level,
+                 GL_RGBA,
+                 width,
+                 height,
+                 border,
+                 GL_RGBA,
+                 GL_UNSIGNED_BYTE,
+                 &img.raw_image[0]);
     OM_GL_CHECK();
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -1451,16 +1474,20 @@ void audio_callback(void*, uint8_t* stream, int stream_size)
             if (rest <= static_cast<uint32_t>(stream_size))
             {
                 // copy rest to buffer
-                SDL_MixAudioFormat(stream, current_buff,
-                                   audio_device_spec.format, rest,
+                SDL_MixAudioFormat(stream,
+                                   current_buff,
+                                   audio_device_spec.format,
+                                   rest,
                                    SDL_MIX_MAXVOLUME);
                 snd->current_index += rest;
             }
             else
             {
-                SDL_MixAudioFormat(
-                    stream, current_buff, audio_device_spec.format,
-                    static_cast<uint32_t>(stream_size), SDL_MIX_MAXVOLUME);
+                SDL_MixAudioFormat(stream,
+                                   current_buff,
+                                   audio_device_spec.format,
+                                   static_cast<uint32_t>(stream_size),
+                                   SDL_MIX_MAXVOLUME);
                 snd->current_index += static_cast<uint32_t>(stream_size);
             }
 

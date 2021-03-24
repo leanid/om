@@ -13,7 +13,9 @@ if(WIN32)
   target_compile_definitions(engine-08-3 PRIVATE "-DOM_DECLSPEC=__declspec(dllexport)")
 endif(WIN32)
 
-find_library(SDL2_LIB NAMES SDL2)
+find_package(OpenGL REQUIRED)
+find_package(SDL2 REQUIRED)
+#find_library(SDL2_LIB NAMES SDL2)
 
 if (MINGW)
     target_link_libraries(engine-08-3
@@ -23,15 +25,11 @@ if (MINGW)
                -mwindows
                -lopengl32
                )
-elseif(UNIX)
-    target_link_libraries(engine-08-3
-               -lSDL2
-               -lGL
-               )
-elseif(MSVC)
-    find_package(sdl2 REQUIRED)
-    target_link_libraries(engine-08-3 PRIVATE SDL2::SDL2 SDL2::SDL2main
-                          opengl32)
+elseif(MSVC OR UNIX)
+  target_link_libraries(engine-08-3 PRIVATE
+    SDL2::SDL2
+    SDL2::SDL2main
+    OpenGL::OpenGL)
 endif()
 
 add_library(game-08-3 SHARED game.cxx)
