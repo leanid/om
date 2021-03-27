@@ -5,6 +5,7 @@
 #include <sstream>
 #include <string>
 
+#include "om/engine.hxx"
 #include "om/math.hxx"
 
 enum class object_type
@@ -94,8 +95,9 @@ std::istream& operator>>(std::istream& stream, object_type& type)
     {
         std::stringstream ss;
         ss << "expected one of: ";
-        std::for_each(begin(types), end(types),
-                      [&ss](auto& kv) { ss << kv.first << ", "; });
+        std::for_each(begin(types), end(types), [&ss](auto& kv) {
+            ss << kv.first << ", ";
+        });
         ss << " but got: " << type_name;
         throw std::runtime_error(ss.str());
     }
