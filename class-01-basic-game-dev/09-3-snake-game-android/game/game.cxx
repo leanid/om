@@ -91,6 +91,9 @@ void snake_game::update_free_cells()
 void snake_game::on_initialize()
 {
     om::get_window_size(screen_width, screen_height);
+
+    std::cout << screen_width << ' ' << screen_height << std::endl;
+
     free_cells.reserve(28 * 28);
 
     debug_texture = om::create_texture("res/debug.png");
