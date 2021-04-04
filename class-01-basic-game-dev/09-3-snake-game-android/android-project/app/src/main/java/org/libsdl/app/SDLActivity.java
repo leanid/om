@@ -138,6 +138,8 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
         String library;
         String[] libraries = SDLActivity.mSingleton.getLibraries();
         if (libraries.length > 0) {
+            // we use -2 cause SDL_main in libengine-09-3.so
+            // see: getLibraries()
             library = "lib" + libraries[libraries.length - 2] + ".so";
         } else {
             library = "libmain.so";
