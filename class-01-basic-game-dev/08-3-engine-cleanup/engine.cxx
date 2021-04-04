@@ -259,8 +259,9 @@ std::vector<sound_buffer_impl*> sounds;
 class sound_buffer_impl final : public sound
 {
 public:
-    sound_buffer_impl(std::string_view path, SDL_AudioDeviceID device,
-                      SDL_AudioSpec audio_spec);
+    sound_buffer_impl(std::string_view  path,
+                      SDL_AudioDeviceID device,
+                      SDL_AudioSpec     audio_spec);
     ~sound_buffer_impl() final;
 
     void play(const effect prop) final
@@ -343,9 +344,12 @@ sound_buffer_impl::sound_buffer_impl(std::string_view  path,
         file_audio_spec.freq != device_audio_spec.freq)
     {
         SDL_AudioCVT cvt;
-        SDL_BuildAudioCVT(&cvt, file_audio_spec.format,
-                          file_audio_spec.channels, file_audio_spec.freq,
-                          device_audio_spec.format, device_audio_spec.channels,
+        SDL_BuildAudioCVT(&cvt,
+                          file_audio_spec.format,
+                          file_audio_spec.channels,
+                          file_audio_spec.freq,
+                          device_audio_spec.format,
+                          device_audio_spec.channels,
                           device_audio_spec.freq);
         SDL_assert(cvt.needed); // obviously, this one is always needed.
         // read your data into cvt.buf here.
@@ -410,7 +414,8 @@ class shader_gl_es20
 {
 public:
     shader_gl_es20(
-        std::string_view vertex_src, std::string_view fragment_src,
+        std::string_view                                      vertex_src,
+        std::string_view                                      fragment_src,
         const std::vector<std::tuple<GLuint, const GLchar*>>& attributes)
     {
         vert_shader = compile_shader(GL_VERTEX_SHADER, vertex_src);
@@ -581,10 +586,14 @@ private:
 
 std::ostream& operator<<(std::ostream& stream, const input_data& i)
 {
-    static const std::array<std::string_view, 8> key_names = {
-        { "left", "right", "up", "down", "select", "start", "button1",
-          "button2" }
-    };
+    static const std::array<std::string_view, 8> key_names = { { "left",
+                                                                 "right",
+                                                                 "up",
+                                                                 "down",
+                                                                 "select",
+                                                                 "start",
+                                                                 "button1",
+                                                                 "button2" } };
 
     const std::string_view& key_name = key_names[static_cast<size_t>(i.key)];
 
@@ -674,14 +683,14 @@ struct bind
     om::keys om_key;
 };
 
-const std::array<bind, 8> keys{
-    { bind{ "up", SDLK_w, keys::up }, bind{ "left", SDLK_a, keys::left },
-      bind{ "down", SDLK_s, keys::down }, bind{ "right", SDLK_d, keys::right },
-      bind{ "button1", SDLK_LCTRL, keys::button1 },
-      bind{ "button2", SDLK_SPACE, keys::button2 },
-      bind{ "select", SDLK_ESCAPE, keys::select },
-      bind{ "start", SDLK_RETURN, keys::start } }
-};
+const std::array<bind, 8> keys{ { bind{ "up", SDLK_w, keys::up },
+                                  bind{ "left", SDLK_a, keys::left },
+                                  bind{ "down", SDLK_s, keys::down },
+                                  bind{ "right", SDLK_d, keys::right },
+                                  bind{ "button1", SDLK_LCTRL, keys::button1 },
+                                  bind{ "button2", SDLK_SPACE, keys::button2 },
+                                  bind{ "select", SDLK_ESCAPE, keys::select },
+                                  bind{ "start", SDLK_RETURN, keys::start } } };
 
 static bool check_input(const SDL_Event& e, const bind*& result)
 {
@@ -785,13 +794,17 @@ void destroy_sound(sound* sound)
     delete sound;
 }
 
-static const std::array<GLenum, 6> primitive_types = {
-    { GL_LINES, GL_LINE_STRIP, GL_LINE_LOOP, GL_TRIANGLES, GL_TRIANGLE_STRIP,
-      GL_TRIANGLE_FAN }
-};
+static const std::array<GLenum, 6> primitive_types = { { GL_LINES,
+                                                         GL_LINE_STRIP,
+                                                         GL_LINE_LOOP,
+                                                         GL_TRIANGLES,
+                                                         GL_TRIANGLE_STRIP,
+                                                         GL_TRIANGLE_FAN } };
 
-void render(const primitives primitive_type, const vbo& buff,
-            const texture* tex, const matrix& m)
+void render(const primitives primitive_type,
+            const vbo&       buff,
+            const texture*   tex,
+            const matrix&    m)
 {
     shader03->use();
     const texture_gl_es20* texture = static_cast<const texture_gl_es20*>(tex);
@@ -806,8 +819,8 @@ void render(const primitives primitive_type, const vbo& buff,
     glEnableVertexAttribArray(0);
     OM_GL_CHECK();
     // colors
-    glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(vertex),
-                          &t->c);
+    glVertexAttribPointer(
+        1, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(vertex), &t->c);
     OM_GL_CHECK();
     glEnableVertexAttribArray(1);
     OM_GL_CHECK();
@@ -905,9 +918,12 @@ static void initialize_internal(std::string_view   title,
         int window_size_w = static_cast<int>(desired_window_mode.width);
         int window_size_h = static_cast<int>(desired_window_mode.heigth);
 
-        window = SDL_CreateWindow(title.data(), SDL_WINDOWPOS_CENTERED,
-                                  SDL_WINDOWPOS_CENTERED, window_size_w,
-                                  window_size_h, ::SDL_WINDOW_OPENGL);
+        window = SDL_CreateWindow(title.data(),
+                                  SDL_WINDOWPOS_CENTERED,
+                                  SDL_WINDOWPOS_CENTERED,
+                                  window_size_w,
+                                  window_size_h,
+                                  ::SDL_WINDOW_OPENGL);
 
         if (window == nullptr)
         {
@@ -1119,7 +1135,8 @@ static void initialize_internal(std::string_view   title,
         const int num_audio_devices = SDL_GetNumAudioDevices(SDL_FALSE);
         if (num_audio_devices > 0)
         {
-            default_audio_device_name = SDL_GetAudioDeviceName(num_audio_devices - 1, SDL_FALSE);
+            default_audio_device_name =
+                SDL_GetAudioDeviceName(num_audio_devices - 1, SDL_FALSE);
             for (int i = 0; i < num_audio_devices; ++i)
             {
                 std::cout << "audio device #" << i << ": "
@@ -1128,8 +1145,10 @@ static void initialize_internal(std::string_view   title,
         }
         std::cout << std::flush;
 
-        audio_device = SDL_OpenAudioDevice(default_audio_device_name, 0,
-                                           &audio_device_spec, nullptr,
+        audio_device = SDL_OpenAudioDevice(default_audio_device_name,
+                                           0,
+                                           &audio_device_spec,
+                                           nullptr,
                                            SDL_AUDIO_ALLOW_ANY_CHANGE);
 
         if (audio_device == 0)
@@ -1258,9 +1277,10 @@ texture_gl_es20::texture_gl_es20(std::string_view path)
         throw std::runtime_error("can't load texture");
     }
 
-    const om::png_image img = decode_png_file_from_memory(
-        png_file_in_memory, convert_color::to_rgba32,
-        origin_point::bottom_left);
+    const om::png_image img =
+        decode_png_file_from_memory(png_file_in_memory,
+                                    convert_color::to_rgba32,
+                                    origin_point::bottom_left);
 
     // if there's an error, display it
     if (img.error != 0)
@@ -1278,8 +1298,15 @@ texture_gl_es20::texture_gl_es20(std::string_view path)
     GLint   border       = 0;
     GLsizei width        = static_cast<GLsizei>(img.width);
     GLsizei height       = static_cast<GLsizei>(img.height);
-    glTexImage2D(GL_TEXTURE_2D, mipmap_level, GL_RGBA, width, height, border,
-                 GL_RGBA, GL_UNSIGNED_BYTE, &img.raw_image[0]);
+    glTexImage2D(GL_TEXTURE_2D,
+                 mipmap_level,
+                 GL_RGBA,
+                 width,
+                 height,
+                 border,
+                 GL_RGBA,
+                 GL_UNSIGNED_BYTE,
+                 &img.raw_image[0]);
     OM_GL_CHECK();
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -1309,16 +1336,20 @@ void audio_callback(void*, uint8_t* stream, int stream_size)
             if (rest <= static_cast<uint32_t>(stream_size))
             {
                 // copy rest to buffer
-                SDL_MixAudioFormat(stream, current_buff,
-                                   audio_device_spec.format, rest,
+                SDL_MixAudioFormat(stream,
+                                   current_buff,
+                                   audio_device_spec.format,
+                                   rest,
                                    SDL_MIX_MAXVOLUME);
                 snd->current_index += rest;
             }
             else
             {
-                SDL_MixAudioFormat(
-                    stream, current_buff, audio_device_spec.format,
-                    static_cast<uint32_t>(stream_size), SDL_MIX_MAXVOLUME);
+                SDL_MixAudioFormat(stream,
+                                   current_buff,
+                                   audio_device_spec.format,
+                                   static_cast<uint32_t>(stream_size),
+                                   SDL_MIX_MAXVOLUME);
                 snd->current_index += static_cast<uint32_t>(stream_size);
             }
 
@@ -1361,21 +1392,24 @@ int initialize_and_start_main_loop()
         ~start() { om::uninitialize(); }
     } guard;
 
-    std::vector<const char*> lib_names{ { "libgame.dll", "libgame.so",
-                                          "game.so", "./build/Debug/libgame.so",
+    std::vector<const char*> lib_names{ { "libgame.dll",
+                                          "libgame.so",
+                                          "game.so",
+                                          "./build/Debug/libgame.so",
                                           "./build-Debug/libgame-08-3.so" } };
 
     void* so_handle   = nullptr;
-    auto  lib_name_it = std::find_if(begin(lib_names), end(lib_names),
-                                    [&so_handle](const char* lib_name) {
-                                        so_handle = SDL_LoadObject(lib_name);
-                                        return so_handle != nullptr;
-                                    });
+    auto  lib_name_it = std::find_if(
+        begin(lib_names), end(lib_names), [&so_handle](const char* lib_name) {
+            so_handle = SDL_LoadObject(lib_name);
+            return so_handle != nullptr;
+        });
 
     if (so_handle == nullptr)
     {
         om::log << "can't load: ";
-        std::copy(begin(lib_names), end(lib_names),
+        std::copy(begin(lib_names),
+                  end(lib_names),
                   std::ostream_iterator<const char*>(om::log, ", "));
         om::log << std::endl;
         return EXIT_FAILURE;
@@ -1423,6 +1457,8 @@ int initialize_and_start_main_loop()
 
     game->on_initialize();
 
+    milli_sec frame_delta{};
+
     while (true)
     {
         time_point end_last_frame = timer.now();
@@ -1433,20 +1469,20 @@ int initialize_and_start_main_loop()
             game->on_event(event);
         }
 
-        milli_sec frame_delta =
+        game->on_update(frame_delta);
+        game->on_render();
+
+        om::swap_buffers();
+
+        frame_delta =
             std::chrono::duration_cast<milli_sec>(end_last_frame - start);
+        start = end_last_frame;
 
         if (frame_delta.count() < 15) // 1000 % 60 = 16.666 FPS
         {
             std::this_thread::yield(); // too fast, give other apps CPU time
             continue;                  // wait till more time
         }
-
-        game->on_update(frame_delta);
-        game->on_render();
-
-        om::swap_buffers();
-        start = end_last_frame;
     }
 
     return EXIT_SUCCESS;
