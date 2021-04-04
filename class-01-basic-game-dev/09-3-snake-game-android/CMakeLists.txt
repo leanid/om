@@ -28,6 +28,9 @@ if(WIN32)
 endif(WIN32)
 
 find_library(SDL2_LIB NAMES SDL2)
+if (NOT SDL2_SRC_DIR)
+    find_package(OpenGL REQUIRED)
+endif()
 
 if (MINGW)
     find_package(sdl2 REQUIRED)
@@ -40,7 +43,14 @@ if (MINGW)
 elseif(UNIX)
     if(SDL2_SRC_DIR)
         #target_include_directories( engine-09-3 PRIVATE ${SDL2_SRC_DIR}/include )
-        target_link_libraries( engine-09-3 PRIVATE SDL2 SDL2main )
+        target_link_libraries( engine-09-3 PRIVATE
+            SDL2
+            SDL2main
+            android
+            log
+            EGL
+            GLESv2
+            )
     else()
         target_link_libraries(engine-09-3 PRIVATE
                 SDL2

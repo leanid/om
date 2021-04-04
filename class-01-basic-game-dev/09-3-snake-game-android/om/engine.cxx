@@ -278,7 +278,7 @@ static std::size_t get_sound_format_size(uint16_t format_value)
 
 // Yes! Global variables! /////////////////////////////////////////////////////
 std::ostream&     log(std::cout);
-std::atomic<bool> already_exist = false;
+std::atomic<bool> already_exist{};
 SDL_Window*       window        = nullptr;
 SDL_GLContext     gl_context    = nullptr;
 
