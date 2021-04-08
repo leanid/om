@@ -107,8 +107,7 @@ int main(int /*argc*/, char* /*argv*/[])
             switch (sdl_event.type)
             {
                 case SDL_KEYDOWN:
-                    check_input(sdl_event);
-                    break;
+                    [[fallthrough]];
                 case SDL_KEYUP:
                     check_input(sdl_event);
                     break;

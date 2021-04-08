@@ -6,7 +6,6 @@
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
-#include <vector>
 
 #if __has_include(<SDL.h>)
 #include <SDL.h>
@@ -41,9 +40,10 @@ static std::array<std::string_view, 17> event_names = {
 
 std::ostream& operator<<(std::ostream& stream, const event e)
 {
-    std::uint32_t value   = static_cast<std::uint32_t>(e);
-    std::uint32_t minimal = static_cast<std::uint32_t>(event::left_pressed);
-    std::uint32_t maximal = static_cast<std::uint32_t>(event::turn_off);
+    auto value   = static_cast<std::uint32_t>(e);
+    auto minimal = static_cast<std::uint32_t>(event::left_pressed);
+    auto maximal = static_cast<std::uint32_t>(event::turn_off);
+
     if (value >= minimal && value <= maximal)
     {
         stream << event_names[value];
@@ -120,7 +120,7 @@ public:
         SDL_version compiled = { 0, 0, 0 };
         SDL_version linked   = { 0, 0, 0 };
 
-        SDL_VERSION(&compiled);
+        SDL_VERSION(&compiled)
         SDL_GetVersion(&linked);
 
         if (SDL_COMPILEDVERSION !=
@@ -207,7 +207,7 @@ engine* create_engine()
 
 void destroy_engine(engine* e)
 {
-    if (already_exist == false)
+    if (!already_exist)
     {
         throw std::runtime_error("engine not created");
     }
@@ -218,6 +218,6 @@ void destroy_engine(engine* e)
     delete e;
 }
 
-engine::~engine() {}
+engine::~engine() = default;
 
 } // end namespace om

@@ -20,7 +20,7 @@ else()
 endif()
 
 if (MINGW)
-    # find out what libraries are needed for staticaly linking with libSDL.a
+    # find out what libraries are needed for statically linking with libSDL.a
     # using mingw64 cross-compiler
 
     #$> $ /usr/x86_64-w64-mingw32/sys-root/mingw/bin/sdl2-config --static-libs
@@ -34,7 +34,7 @@ if (MINGW)
                #SDL2::SDL2main
                -lmingw32
                -lSDL2main
-               ${SDL2_LIB} # full path to libSDL2.a force to staticaly link with it
+               ${SDL2_LIB} # full path to libSDL2.a force to statically link with it
                -mwindows
                -Wl,--no-undefined
                -lm
@@ -55,14 +55,14 @@ if (MINGW)
                )
 elseif(UNIX)
     if(APPLE)
-      # find out what libraries are needed for staticcaly linking with libSDL.a on MacOS with HOMEBREW (currently clang++ not supported c++17)
+      # find out what libraries are needed for statically linking with libSDL.a on MacOS with HOMEBREW (currently clang++ not supported c++17)
       # $> /usr/local/bin/sdl2-config --static-libs
       # -L/usr/local/lib -lSDL2 -lm -liconv -Wl,-framework,CoreAudio
       # -Wl,-framework,AudioToolbox -Wl,-framework,ForceFeedback -lobjc -Wl,-framework,CoreVideo -Wl,-framework,Cocoa
       # -Wl,-framework,Carbon -Wl,-framework,IOKit
 
       target_link_libraries(02-sdl-static
-               "${SDL2_LIB}" # full path to libSDL2.a force to staticaly link with it
+               "${SDL2_LIB}" # full path to libSDL2.a force to statically link with it
                -lm
                -liconv
                -Wl,-framework,CoreAudio
@@ -77,13 +77,13 @@ elseif(UNIX)
                -Wl,-weak_framework,Metal
                )
     else()
-      # find out what libraries are needed for staticaly linking with libSDL.a on Linux
+      # find out what libraries are needed for statically linking with libSDL.a on Linux
       # using default linux compiler
       # $> sdl2-config --static-libs
       # -lSDL2 -Wl,--no-undefined -lm -ldl -lpthread -lrt
 
       target_link_libraries(02-sdl-static
-               ${SDL2_LIB} # full path to libSDL2.a force to staticaly link with it
+               ${SDL2_LIB} # full path to libSDL2.a force to statically link with it
                # -Wl,--no-undefined # not compiled on MacOS
                -lm
                -ldl

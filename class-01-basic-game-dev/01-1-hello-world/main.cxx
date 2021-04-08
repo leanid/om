@@ -1,6 +1,5 @@
 #include <algorithm>
 #include <cstdlib>
-#include <functional>
 #include <iostream>
 #include <string_view>
 
@@ -75,16 +74,18 @@ static std::string_view get_value(std::string_view key_value)
     {
         return "";
     }
-    return { it, static_cast<size_t>(end_it - it) };
+    return { &*it, static_cast<size_t>(end_it - it) };
 }
 
 static std::string_view get_user_name(char** env)
 {
     using namespace std;
-    using namespace std::placeholders;
 
     char** env_end = get_env_end(env);
-    auto   it      = find_if(env, env_end, bind(start_with, _1, "USER="));
+    auto   it      = find_if(env,
+                      env_end,
+                      [](const char* env_str)
+                      { return start_with(env_str, "USER="); });
 
     return it != env_end ? get_value(*it) : "unknown";
 }

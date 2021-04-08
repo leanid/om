@@ -9,7 +9,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${SDL2_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} PRIVATE ${SDL2_LIBRARIES})
 
 if (MINGW)
-    # find out what libraries are needed for staticaly linking with libSDL.a
+    # find out what libraries are needed for statically linking with libSDL.a
     # using mingw64 cross-compiler
     
     #$> $ /usr/x86_64-w64-mingw32/sys-root/mingw/bin/sdl2-config --static-libs
@@ -21,7 +21,7 @@ if (MINGW)
     target_link_libraries(${PROJECT_NAME} PRIVATE
                -lmingw32
                -lSDL2main 
-               "${SDL2_LIB}" # full path to libSDL2.a force to staticaly link with it
+               "${SDL2_LIB}" # full path to libSDL2.a force to statically link with it
                -mwindows
                -Wl,--no-undefined
                -lm

@@ -4,7 +4,7 @@
 
 namespace om
 {
-/// dendy gamepad emulation events
+/// Dendy gamepad emulation events
 enum class event
 {
     /// input events
@@ -28,7 +28,7 @@ enum class event
     turn_off
 };
 
-std::ostream& operator<<(std::ostream& stream, const event e);
+std::ostream& operator<<(std::ostream& stream, const event& e);
 
 class engine;
 
