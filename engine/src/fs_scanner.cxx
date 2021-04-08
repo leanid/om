@@ -246,9 +246,9 @@ file* scanner::impl::find_file_ptr(std::string_view s_path)
 std::string scanner::impl::get_directory_path(const directory* dir)
 {
     fs::path result;
-    for (directory* ptr = dir->parent; ptr; ptr = ptr->parent)
+    for (directory* ptr0 = dir->parent; ptr0; ptr0 = ptr0->parent)
     {
-        result = ptr->name / result;
+        result = ptr0->name / result;
     }
     result /= dir->name;
     return result.string();
@@ -257,9 +257,9 @@ std::string scanner::impl::get_directory_path(const directory* dir)
 std::string scanner::impl::get_file_path(const file* fl)
 {
     fs::path result;
-    for (directory* ptr = fl->parent; ptr; ptr = ptr->parent)
+    for (directory* ptr0 = fl->parent; ptr0; ptr0 = ptr0->parent)
     {
-        result = ptr->name / result;
+        result = ptr0->name / result;
     }
     result /= (fl->get_full_name());
     return result.string();

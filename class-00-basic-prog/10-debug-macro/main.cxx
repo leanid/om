@@ -11,6 +11,8 @@ constexpr bool g_optimized_build = true;
 constexpr bool g_optimized_build = false;
 #endif
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "Simplify"
 int main(int, char**)
 {
     using namespace std;
@@ -26,3 +28,4 @@ int main(int, char**)
 
     return cout.fail() ? EXIT_FAILURE : EXIT_SUCCESS;
 }
+#pragma clang diagnostic pop

@@ -1,13 +1,12 @@
 #include <algorithm>
 #include <csignal>
-#include <functional>
 #include <iostream>
 #include <numeric>
 #include <sstream>
 #include <string_view>
 
-extern std::stringstream          g_statistics;
-extern volatile std::sig_atomic_t g_sig_counters[16];
+static volatile std::sig_atomic_t g_sig_counters[16] = { 0 };
+static std::stringstream          g_statistics;
 
 extern "C" void custom_signal_handler(int signal_index);
 
@@ -151,7 +150,7 @@ void print_signal_statistics(std::string_view prefix)
 
     auto print_counter = [](int         signal_index,
                             string_view name) -> pair<string_view, size_t> {
-        size_t num_of_triggers =
+        auto num_of_triggers =
             static_cast<size_t>(g_sig_counters[signal_index]);
         return make_pair(name, num_of_triggers);
     };
@@ -168,35 +167,18 @@ void print_signal_statistics(std::string_view prefix)
 
     ostream& ref_to_stream = g_statistics;
 
-    inner_product(begin(signals), end(signals), begin(names),
-                  std::ref(ref_to_stream), print_stream, print_counter);
+    [[maybe_unused]] ostream& out = inner_product(begin(signals),
+                                                  end(signals),
+                                                  begin(names),
+                                                  std::ref(ref_to_stream),
+                                                  print_stream,
+                                                  print_counter);
 }
 
 extern "C" void custom_signal_handler(int signal_index)
 {
-    switch (signal_index)
-    {
-        case SIGABRT:
-            break;
-        case SIGFPE:
-            break;
-        case SIGILL:
-            break;
-        case SIGINT:
-            break;
-        case SIGSEGV:
-            break;
-        case SIGTERM:
-            break;
-        default:
-            break;
-    }
     if (signal_index < 16)
     {
         g_sig_counters[signal_index]++;
     }
 }
-
-volatile std::sig_atomic_t g_sig_counters[16] = { 0 };
-
-std::stringstream g_statistics;

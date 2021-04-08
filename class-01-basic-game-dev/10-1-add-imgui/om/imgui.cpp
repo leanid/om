@@ -736,7 +736,7 @@
        PushID("node");
        Button("Click");     // Label = "Click",  ID = hash of "node" + "Click"
          PushID(my_ptr);
-           Button("Click"); // Label = "Click",  ID = hash of "node" + ptr +
+           Button("Click"); // Label = "Click",  ID = hash of "node" + ptr0 +
  "Click" PopID(); PopID();
 
    - Tree nodes implicitly creates a scope for you by calling PushID().
