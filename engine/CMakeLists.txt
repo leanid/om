@@ -11,6 +11,8 @@ target_compile_features(scanner PRIVATE cxx_std_17)
 add_executable(scanner_test src/fs_scanner_unit_test.cxx)
 target_link_libraries(scanner_test scanner stdc++fs)
 target_compile_features(scanner_test PRIVATE cxx_std_17)
+find_path(DIRENT_INCLUDE_DIRS "dirent.h")
+target_include_directories(scanner_test PRIVATE ${DIRENT_INCLUDE_DIRS})
 
 add_executable(om     src/om/main.cxx 
                       src/om/engine_impl.cxx

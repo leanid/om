@@ -29,7 +29,7 @@ elseif(MSVC OR UNIX)
   target_link_libraries(engine-08-3 PRIVATE
     SDL2::SDL2
     SDL2::SDL2main
-    OpenGL::OpenGL)
+    OpenGL::GL)
 endif()
 
 add_library(game-08-3 SHARED game.cxx)

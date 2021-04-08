@@ -51,7 +51,7 @@ elseif(MSVC)
     add_executable(16-01-z-buffer)
     find_package(SDL2 CONFIG REQUIRED)
     find_package(glm CONFIG REQUIRED)
-    find_package(assimp REQUIRED)
+    find_package(assimp CONFIG REQUIRED)
     target_link_libraries(16-01-z-buffer PRIVATE glm
                                                   ${ASSIMP_LIBRARIES}
                                                   SDL2::SDL2main
