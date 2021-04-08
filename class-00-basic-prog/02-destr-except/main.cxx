@@ -24,14 +24,14 @@ void operator delete(void* p, std::size_t) noexcept(true)
 
 struct A
 {
-    A(int i)
+    explicit A(int i)
         : value(i)
     {
         std::cout << "constructor A" << std::endl;
     }
     [[noreturn]]~A() noexcept(false) {
         std::cout << "in destructor" << std::endl;
-        throw value;
+        throw value; // NOLINT(hicpp-exception-baseclass)
     }
 
     int value;

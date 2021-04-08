@@ -13,12 +13,12 @@ const bool_t false_{ reinterpret_cast<const bool_t&>(false_byte) };
 bool_t::bool_t()
     : value{ false_byte } {};
 
-bool_t::bool_t(const bool_t& other)
+bool_t::bool_t(const bool_t& other) noexcept
     : value{ other.value }
 {
 }
 
-bool_t::bool_t(bool_t&& other)
+bool_t::bool_t(bool_t&& other) noexcept
     : value{ other.value }
 {
 }
@@ -28,13 +28,9 @@ bool_t::~bool_t()
     value = false_byte;
 }
 
-bool_t& bool_t::operator=(const bool_t& other)
-{
-    value = other.value;
-    return *this;
-}
+bool_t& bool_t::operator=(const bool_t& other) = default;
 
-bool_t& bool_t::operator=(bool_t&& other)
+bool_t& bool_t::operator=(bool_t&& other) noexcept
 {
     value = other.value;
     return *this;

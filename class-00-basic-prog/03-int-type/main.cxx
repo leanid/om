@@ -1,7 +1,7 @@
-#include <climits>
 #include <cstddef>
 #include <iomanip>
 #include <iostream>
+#include <string>
 
 #include "bool.hxx"
 
@@ -17,22 +17,22 @@ public:
     u8_t()            = default;
     u8_t(const u8_t&) = default;
     u8_t(u8_t&&)      = default;
-    u8_t(std::byte v)
+    explicit u8_t(std::byte v)
         : value{ v }
     {
     }
     u8_t& operator=(const u8_t&) = default;
 
-    std::string  to_str() const;
-    std::int32_t to_int() const;
+    [[nodiscard]] std::string  to_str() const;
+    [[nodiscard]] std::int32_t to_int() const;
 
     friend u8_t operator+(const u8_t& l, const u8_t& r);
     friend u8_t operator-(const u8_t& l, const u8_t& r);
-    friend u8_t operator<(const u8_t& l, const u8_t& r);
+    // friend u8_t operator<(const u8_t& l, const u8_t& r);
 
 private:
     friend std::ostream& operator<<(std::ostream& stream, const u8_t&);
-    friend std::istream& operator>>(std::istream& stream, u8_t&);
+    // friend std::istream& operator>>(std::istream& stream, u8_t&);
 
     std::byte value{ 0 };
 };
@@ -64,7 +64,7 @@ u8_t operator+(const u8_t& l, const u8_t& r)
         std::cerr << "overflow result not fit into u8_t" << std::endl;
     }
 
-    return result;
+    return u8_t{ result };
 }
 
 u8_t operator-(const u8_t& l, const u8_t& r)
@@ -94,11 +94,8 @@ std::string u8_t::to_str() const
 
 std::int32_t u8_t::to_int() const
 {
-    std::int32_t i{ 0 };
-    // not all systems are little-endian
-    std::byte& ref_to_low_byte{ reinterpret_cast<std::byte&>(i) };
-    ref_to_low_byte = value;
-    return i;
+    std::int32_t result{ static_cast<int32_t>(value) };
+    return result;
 }
 
 } // end namespace om
@@ -117,7 +114,8 @@ int main()
                          0b10000000, 0b11111110, 0b11111111 };
 
     for (auto first = begin(plus_arg_a0), second = begin(plus_arg_a1);
-         first != end(plus_arg_a0); ++first, ++second)
+         first != end(plus_arg_a0);
+         ++first, ++second)
     {
 
         u8_t a0{ static_cast<byte>(*first) };
@@ -147,7 +145,8 @@ int main()
                           0b10000000, 0b11111110, 0b11111111 };
 
     for (auto first = begin(minus_arg_a0), second = begin(minus_arg_a1);
-         first != end(minus_arg_a0); ++first, ++second)
+         first != end(minus_arg_a0);
+         ++first, ++second)
     {
 
         u8_t a0{ static_cast<byte>(*first) };

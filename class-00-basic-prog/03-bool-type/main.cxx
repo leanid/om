@@ -1,5 +1,3 @@
-#include <climits>
-#include <cstddef>
 #include <iostream>
 
 #include "bool.hxx"

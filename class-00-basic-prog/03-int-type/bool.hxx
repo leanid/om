@@ -36,8 +36,8 @@ namespace om
 /// The value of sizeof(bool) is implementation defined and might differ from 1.
 struct bool_t
 {
-    bool_t();
-    bool_t(const bool_t& other);
+    bool_t() noexcept;
+    bool_t(const bool_t& other) noexcept;
     bool_t(bool_t&&) noexcept;
     ~bool_t();
     bool_t& operator=(const bool_t&);
@@ -52,12 +52,12 @@ private:
     std::byte value;
 };
 
-bool_t operator==(bool_t l, bool_t r);
-bool_t operator&&(bool_t l, bool_t r);
-bool_t operator||(bool_t l, bool_t r);
-bool_t operator^(bool_t l, bool_t r);
-bool_t operator!(bool_t b);
-bool_t operator~(bool_t b);
+bool_t operator==(const bool_t& l, const bool_t& r);
+bool_t operator&&(const bool_t& l, const bool_t& r);
+bool_t operator||(const bool_t& l, const bool_t& r);
+bool_t operator^(const bool_t& l, const bool_t& r);
+bool_t operator!(const bool_t& b);
+bool_t operator~(const bool_t& b);
 
 extern const bool_t true_;
 extern const bool_t false_;

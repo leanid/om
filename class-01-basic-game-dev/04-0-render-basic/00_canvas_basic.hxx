@@ -63,7 +63,7 @@ public:
 
         if (!iswspace(last_next_line))
         {
-            throw std::runtime_error("expected witespace");
+            throw std::runtime_error("expected whitespace");
         }
 
         pixels.resize(width * height);
