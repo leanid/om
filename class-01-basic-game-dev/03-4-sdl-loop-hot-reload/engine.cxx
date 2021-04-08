@@ -9,7 +9,6 @@
 #include <sstream>
 #include <stdexcept>
 #include <thread>
-#include <vector>
 
 #include <SDL.h>
 
@@ -40,8 +39,8 @@ static std::array<std::string_view, 17> event_names = {
 
 std::ostream& operator<<(std::ostream& stream, const event e)
 {
-    std::uint32_t value   = static_cast<std::uint32_t>(e);
-    std::uint32_t maximal = static_cast<std::uint32_t>(event::turn_off);
+    auto value   = static_cast<std::uint32_t>(e);
+    auto maximal = static_cast<std::uint32_t>(event::turn_off);
     if (value <= maximal)
     {
         stream << event_names[value];
@@ -63,7 +62,10 @@ static std::ostream& operator<<(std::ostream& out, const SDL_version& v)
 
 struct bind
 {
-    bind(SDL_Keycode k, std::string_view s, event pressed, event released)
+    bind(SDL_Keycode      k,
+         std::string_view s,
+         event            pressed,
+         event            released) noexcept
         : key(k)
         , name(s)
         , event_pressed(pressed)
@@ -72,7 +74,7 @@ struct bind
     }
 
     SDL_Keycode      key;
-    std::string_view name;
+    [[maybe_unused]] std::string_view name;
     event            event_pressed;
     event            event_released;
 };
@@ -98,9 +100,10 @@ static bool check_input(const SDL_Event& e, const bind*& result)
 {
     using namespace std;
 
-    const auto it = find_if(begin(keys), end(keys), [&](const bind& b) {
-        return b.key == e.key.keysym.sym;
-    });
+    const auto it =
+        find_if(begin(keys),
+                end(keys),
+                [&](const bind& b) { return b.key == e.key.keysym.sym; });
 
     if (it != end(keys))
     {
@@ -260,18 +263,21 @@ engine* create_engine()
 
 void destroy_engine(engine* e)
 {
-    if (already_exist == false)
+    if (already_exist)
+    {
+        if (nullptr == e)
+        {
+            throw std::runtime_error("e is nullptr");
+        }
+        delete e;
+    }
+    else
     {
         throw std::runtime_error("engine not created");
     }
-    if (nullptr == e)
-    {
-        throw std::runtime_error("e is nullptr");
-    }
-    delete e;
 }
 
-engine::~engine() {}
+engine::~engine() = default;
 
 } // end namespace om
 
@@ -339,7 +345,7 @@ int main(int /*argc*/, char* /*argv*/[])
         if (current_write_time != time_during_loading)
         {
             file_time_type next_write_time;
-            // wait while library file fishish to changing
+            // wait while library file finish to changing
             for (;;)
             {
                 using namespace std::chrono;
@@ -353,7 +359,7 @@ int main(int /*argc*/, char* /*argv*/[])
                 {
                     break;
                 }
-            };
+            }
 
             std::cout << "reloading game" << std::endl;
             game = reload_game(game,
@@ -364,7 +370,7 @@ int main(int /*argc*/, char* /*argv*/[])
 
             if (game == nullptr)
             {
-                std::cerr << "next attemp to reload game..." << std::endl;
+                std::cerr << "next attempt to reload game..." << std::endl;
                 continue;
             }
 
@@ -376,14 +382,14 @@ int main(int /*argc*/, char* /*argv*/[])
         while (engine->read_input(event))
         {
             std::cout << event << std::endl;
-            switch (event)
+            if (event == om::event::turn_off)
             {
-                case om::event::turn_off:
-                    continue_loop = false;
-                    break;
-                default:
-                    game->on_event(event);
-                    break;
+                continue_loop = false;
+                break;
+            }
+            else
+            {
+                game->on_event(event);
             }
         }
 

@@ -32,7 +32,7 @@ enum class event
     turn_off
 };
 
-OM_DECLSPEC std::ostream& operator<<(std::ostream& stream, const event e);
+OM_DECLSPEC std::ostream& operator<<(std::ostream& stream, const event& e);
 
 class engine;
 

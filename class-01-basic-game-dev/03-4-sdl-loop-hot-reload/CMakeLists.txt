@@ -1,11 +1,12 @@
 cmake_minimum_required(VERSION 3.16)
 project(03-4-sdl-loop-hot-reload)
 
-add_executable(engine-03-4 engine.cxx engine.hxx)
+add_executable(engine-03-4 engine.cxx engine.hxx engine.cxx)
 target_compile_features(engine-03-4 PUBLIC cxx_std_17)
 
 if(WIN32)
   target_compile_definitions(engine-03-4 PRIVATE "-DOM_DECLSPEC=__declspec(dllexport)")
+  target_compile_definitions(engine-03-4 PRIVATE _CRT_SECURE_NO_WARNINGS=1)
 endif(WIN32)
 
 set_target_properties(engine-03-4 PROPERTIES

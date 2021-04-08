@@ -1,10 +1,6 @@
-#include <algorithm>
 #include <array>
 #include <chrono>
-#include <cstdlib>
 #include <iostream>
-#include <memory>
-#include <string_view>
 #include <thread>
 
 #include "engine.hxx"
@@ -31,12 +27,13 @@ public:
     {
         const char current_symbol = rotations_chars.at(rotation_index);
         std::cout << "\b" << current_symbol << std::flush;
-        constexpr bool more = false;
-        if constexpr (more)
+
+        /*
         {
             std::cout << "\b\b\b" << current_symbol << current_symbol
                       << current_symbol << std::flush;
         }
+        */
     }
 
 private:
@@ -54,7 +51,7 @@ OM_DECLSPEC om::game* create_game(om::engine* engine)
     return nullptr;
 }
 
-OM_DECLSPEC void destroy_game(om::game* game)
+[[maybe_unused]] OM_DECLSPEC void destroy_game(om::game* game)
 {
     delete game;
 }

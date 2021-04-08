@@ -6,7 +6,6 @@
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
-#include <vector>
 
 #include <SDL.h>
 
@@ -15,10 +14,21 @@ namespace om
 
 static std::array<std::string_view, 17> event_names = {
     { /// input events
-      "left_pressed", "left_released", "right_pressed", "right_released",
-      "up_pressed", "up_released", "down_pressed", "down_released",
-      "select_pressed", "select_released", "start_pressed", "start_released",
-      "button1_pressed", "button1_released", "button2_pressed",
+      "left_pressed",
+      "left_released",
+      "right_pressed",
+      "right_released",
+      "up_pressed",
+      "up_released",
+      "down_pressed",
+      "down_released",
+      "select_pressed",
+      "select_released",
+      "start_pressed",
+      "start_released",
+      "button1_pressed",
+      "button1_released",
+      "button2_pressed",
       "button2_released",
       /// virtual console events
       "turn_off" }
@@ -26,9 +36,9 @@ static std::array<std::string_view, 17> event_names = {
 
 std::ostream& operator<<(std::ostream& stream, const event e)
 {
-    std::uint32_t value   = static_cast<std::uint32_t>(e);
-    std::uint32_t minimal = static_cast<std::uint32_t>(event::left_pressed);
-    std::uint32_t maximal = static_cast<std::uint32_t>(event::turn_off);
+    auto value   = static_cast<std::uint32_t>(e);
+    auto minimal = static_cast<std::uint32_t>(event::left_pressed);
+    auto maximal = static_cast<std::uint32_t>(event::turn_off);
     if (value >= minimal && value <= maximal)
     {
         stream << event_names[value];
@@ -50,7 +60,10 @@ static std::ostream& operator<<(std::ostream& out, const SDL_version& v)
 
 struct bind
 {
-    bind(SDL_Keycode k, std::string_view s, event pressed, event released)
+    bind(SDL_Keycode      k,
+         std::string_view s,
+         event            pressed,
+         event            released) noexcept
         : key(k)
         , name(s)
         , event_pressed(pressed)
@@ -69,9 +82,13 @@ const std::array<bind, 8> keys{
       { SDLK_a, "left", event::left_pressed, event::left_released },
       { SDLK_s, "down", event::down_pressed, event::down_released },
       { SDLK_d, "right", event::right_pressed, event::right_released },
-      { SDLK_LCTRL, "button1", event::button1_pressed,
+      { SDLK_LCTRL,
+        "button1",
+        event::button1_pressed,
         event::button1_released },
-      { SDLK_SPACE, "button2", event::button2_pressed,
+      { SDLK_SPACE,
+        "button2",
+        event::button2_pressed,
         event::button2_released },
       { SDLK_ESCAPE, "select", event::select_pressed, event::select_released },
       { SDLK_RETURN, "start", event::start_pressed, event::start_released } }
@@ -81,9 +98,10 @@ static bool check_input(const SDL_Event& e, const bind*& result)
 {
     using namespace std;
 
-    const auto it = find_if(begin(keys), end(keys), [&](const bind& b) {
-        return b.key == e.key.keysym.sym;
-    });
+    const auto it =
+        find_if(begin(keys),
+                end(keys),
+                [&](const bind& b) { return b.key == e.key.keysym.sym; });
 
     if (it != end(keys))
     {
@@ -125,9 +143,12 @@ public:
             return serr.str();
         }
 
-        SDL_Window* const window = SDL_CreateWindow(
-            "title", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480,
-            ::SDL_WINDOW_OPENGL);
+        SDL_Window* const window = SDL_CreateWindow("title",
+                                                    SDL_WINDOWPOS_CENTERED,
+                                                    SDL_WINDOWPOS_CENTERED,
+                                                    640,
+                                                    480,
+                                                    ::SDL_WINDOW_OPENGL);
 
         if (window == nullptr)
         {
@@ -139,7 +160,7 @@ public:
         }
 
         /* Open the first available controller. */
-        SDL_GameController* controller = NULL;
+        SDL_GameController* controller;
         for (int i = 0; i < SDL_NumJoysticks(); ++i)
         {
             if (SDL_IsGameController(i))
@@ -151,7 +172,9 @@ public:
                 }
                 else
                 {
-                    fprintf(stderr, "Could not open gamecontroller %i: %s\n", i,
+                    fprintf(stderr,
+                            "Could not open gamecontroller %i: %s\n",
+                            i,
                             SDL_GetError());
                 }
             }
@@ -237,7 +260,7 @@ engine* create_engine()
 
 void destroy_engine(engine* e)
 {
-    if (already_exist == false)
+    if (!already_exist)
     {
         throw std::runtime_error("engine not created");
     }
@@ -248,6 +271,6 @@ void destroy_engine(engine* e)
     delete e;
 }
 
-engine::~engine() {}
+engine::~engine() = default;
 
 } // end namespace om

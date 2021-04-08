@@ -33,7 +33,7 @@ enum class event
     turn_off
 };
 
-OM_DECLSPEC std::ostream& operator<<(std::ostream& stream, const event e);
+OM_DECLSPEC std::ostream& operator<<(std::ostream& stream, const event& e);
 
 class engine;
 
@@ -68,4 +68,4 @@ struct OM_DECLSPEC game
 /// You have to implement next functions in your code for engine
 /// to be able to load your library
 extern "C" OM_DECLSPEC om::game* create_game(om::engine*);
-extern "C" OM_DECLSPEC void      destroy_game(om::game*);
+extern "C" [[maybe_unused]] OM_DECLSPEC void      destroy_game(om::game*);
