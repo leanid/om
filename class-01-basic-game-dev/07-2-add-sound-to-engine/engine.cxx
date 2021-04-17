@@ -17,6 +17,8 @@
 #include <tuple>
 #include <vector>
 
+#include <mutex>
+
 #include <SDL.h>
 #include <SDL_opengl.h>
 #include <SDL_opengl_glext.h>
@@ -246,8 +248,9 @@ public:
 
     void play(const properties prop) final
     {
+      std::lock_guard<std::mutex> lock(audio_mutex);
         // Lock callback function
-        SDL_LockAudioDevice(device);
+      // SDL_LockAudioDevice(device);
 
         // here we can change properties
         // of sound and dont collade with multithreaded playing
@@ -256,7 +259,7 @@ public:
         is_looped     = (prop == properties::looped);
 
         // unlock callback for continue mixing of audio
-        SDL_UnlockAudioDevice(device);
+        //SDL_UnlockAudioDevice(device);
     }
 
     std::unique_ptr<uint8_t[]> tmp_buf;
@@ -270,7 +273,7 @@ public:
 #pragma pack(pop)
 
 sound_buffer_impl::sound_buffer_impl(std::string_view  path,
-                                     SDL_AudioDeviceID device_,
+                                     SDL_AudioeviceID device_,
                                      SDL_AudioSpec     device_audio_spec)
     : buffer(nullptr)
     , length(0)
@@ -824,9 +827,12 @@ public:
     {
         sound_buffer_impl* s =
             new sound_buffer_impl(path, audio_device, audio_device_spec);
-        SDL_LockAudioDevice(audio_device); // TODO fix lock only push_back
-        sounds.push_back(s);
-        SDL_UnlockAudioDevice(audio_device);
+        {
+        //SDL_LockAudioDevice(audio_device); // TODO fix lock only push_back
+            std::lock_guard<std::mutex> lock(audio_mutex);
+            sounds.push_back(s);
+        //SDL_UnlockAudioDevice(audio_device);
+        }
         return s;
     }
     void destroy_sound_buffer(sound_buffer* sound) final
@@ -1004,6 +1010,7 @@ private:
     SDL_AudioDeviceID               audio_device;
     SDL_AudioSpec                   audio_device_spec;
     std::vector<sound_buffer_impl*> sounds;
+    std::mutex                      audio_mutex;
 };
 #pragma pack(pop)
 
@@ -1477,6 +1484,7 @@ void engine_impl::audio_callback(void*    engine_ptr,
                                  uint8_t* stream,
                                  int      stream_size)
 {
+    std::lock_guard<std::mutex> lock(audio_mutex);
     // no sound default
     std::fill_n(stream, stream_size, '\0');
 
