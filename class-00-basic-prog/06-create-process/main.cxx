@@ -1,14 +1,14 @@
 #include <cstdlib>
 
-int main(int argc, char* argv[])
+int main(int, char*[])
 {
-  for(size_t i = 0; i < 1024; ++i)
+    for (size_t i = 0; i < 1024; ++i)
     {
-      int result = std::system("./hello");
-      if (result != 0)
+        int result = std::system("./hello");
+        if (result != 0)
         {
-          return result;
+            return result;
         }
     }
-  return 0;
+    return 0;
 }

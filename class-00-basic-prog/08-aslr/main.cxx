@@ -13,14 +13,14 @@ int main(int argc, char* argv[])
     cout << "&some_func = " << hex << reinterpret_cast<void*>(&some_func)
          << endl;
 
-    long your_gues = 0x401350;
+    long your_guess = 0x401350;
     if (reinterpret_cast<void*>(&some_func) ==
-        reinterpret_cast<void*>(your_gues))
+        reinterpret_cast<void*>(your_guess))
     {
         // you can try to call function if you know it's address
         // Linux x86_64 g++9.2 release build
-        void (*func_ptr)(void);
-        func_ptr = reinterpret_cast<typeof(func_ptr)>(0x401350);
+        void (*func_ptr)();
+        func_ptr = reinterpret_cast<decltype(func_ptr)>(0x401350);
         func_ptr();
         // as you can see, stack address every time different, but
         // function address every time the same

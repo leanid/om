@@ -19,7 +19,10 @@ int main(int, char**)
 
     if constexpr (g_optimized_build)
     {
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "UnreachableCode"
         cout << "optimized build\n";
+#pragma clang diagnostic pop
     }
     else
     {

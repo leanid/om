@@ -1,3 +1,5 @@
+#pragma clang diagnostic push
+#pragma ide diagnostic   ignored "Simplify"
 #include <iostream>
 
 #include "bool.hxx"
@@ -49,3 +51,5 @@ int main(int, char**)
 
     return 0;
 }
+
+#pragma clang diagnostic pop

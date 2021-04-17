@@ -5,8 +5,8 @@
 #include <sstream>
 #include <string_view>
 
-static volatile std::sig_atomic_t g_sig_counters[16] = { 0 };
-static std::stringstream          g_statistics;
+static volatile std::sig_atomic_t         g_sig_counters[16] = { 0 };
+static std::unique_ptr<std::stringstream> g_statistics;
 
 extern "C" void custom_signal_handler(int signal_index);
 
@@ -19,6 +19,8 @@ int main()
 {
     using namespace std;
 
+    g_statistics = make_unique<stringstream>();
+
     cout << "start" << endl;
 
     print_signal_statistics("during start");
@@ -26,11 +28,11 @@ int main()
     signal(SIGSEGV, SIG_IGN);
 
     int* bad_ptr = reinterpret_cast<int*>(0xBAD);
-    // here HW(processor) will signal OS about illegal adress access
+    // here HW(processor) will signal OS about illegal address access
     // then OS will generate signal for glibc(or std lib "C")
     // and finally we got signal to our handler (and do nothing)
-    // Our signal handler do not terminate programm, so
-    // standart library just go to next instaction
+    // Our signal handler do not terminate program, so
+    // standard library just go to next instruction
     cout << "just before bad pointer access" << endl;
     int value = *bad_ptr;
     cout << "right after bad pointer access" << endl;
@@ -57,7 +59,7 @@ int main()
 
     print_signal_statistics("before exit");
 
-    cout << g_statistics.str();
+    cout << g_statistics->str();
 
     return 0;
 }
@@ -146,7 +148,7 @@ void print_signal_statistics(std::string_view prefix)
 {
     using namespace std;
 
-    g_statistics << "statistics for: " << prefix << endl;
+    *g_statistics << "statistics for: " << prefix << endl;
 
     auto print_counter = [](int         signal_index,
                             string_view name) -> pair<string_view, size_t> {
@@ -165,7 +167,7 @@ void print_signal_statistics(std::string_view prefix)
     string_view names[]{ "SIGABRT", "SIGFPE",  "SIGILL",
                          "SIGINT",  "SIGSEGV", "SIGTERM" };
 
-    ostream& ref_to_stream = g_statistics;
+    ostream& ref_to_stream = *g_statistics;
 
     [[maybe_unused]] ostream& out = inner_product(begin(signals),
                                                   end(signals),
