@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 3.19)
 project(08-2-engine-load-game-from-dll)
 
 add_executable(engine-08-2 engine.cxx engine.hxx picopng.hxx)

@@ -34,7 +34,7 @@ static std::array<std::string_view, 17> event_names = {
       "turn_off" }
 };
 
-std::ostream& operator<<(std::ostream& stream, const event e)
+std::ostream& operator<<(std::ostream& stream, const event& e)
 {
     auto value   = static_cast<std::uint32_t>(e);
     auto minimal = static_cast<std::uint32_t>(event::left_pressed);
@@ -98,10 +98,9 @@ static bool check_input(const SDL_Event& e, const bind*& result)
 {
     using namespace std;
 
-    const auto it =
-        find_if(begin(keys),
-                end(keys),
-                [&](const bind& b) { return b.key == e.key.keysym.sym; });
+    const auto it = find_if(begin(keys), end(keys), [&](const bind& b) {
+        return b.key == e.key.keysym.sym;
+    });
 
     if (it != end(keys))
     {

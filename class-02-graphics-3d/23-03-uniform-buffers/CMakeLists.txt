@@ -17,6 +17,7 @@ include(ExternalProject)
 
 ExternalProject_Add(microsoft_gsl
   GIT_REPOSITORY    https://github.com/microsoft/GSL.git
+  GIT_TAG           main
   GIT_PROGRESS      TRUE
   CMAKE_CACHE_ARGS  -DGSL_CXX_STANDARD:STRING=c++17
                     -DGSL_TEST:STRING=OFF
@@ -56,7 +57,7 @@ elseif(UNIX)
     find_package(SDL2 REQUIRED)
     find_package(assimp REQUIRED)
     find_package(glm REQUIRED)
-    target_link_libraries(23-03-uniform-buffers PRIVATE SDL2
+    target_link_libraries(23-03-uniform-buffers PRIVATE SDL2::SDL2 SDL2::SDL2main
                                                   ${ASSIMP_LIBRARIES}
                                                   GL
                                                   stdc++fs

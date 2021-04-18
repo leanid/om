@@ -7,7 +7,7 @@ if(SDL2_SRC_DIR)  # Android build directly from source
                       ${SDL2_BUILD_DIR}_${ANDROID_ABI} )
 endif()
 
-project(08-01-basic-lighting-add-specular CXX)
+project(08-02-basic-lighting-add-specular CXX)
 
 if (SDL2_SRC_DIR) # Android
     add_library(${PROJECT_NAME} SHARED)
@@ -33,7 +33,8 @@ elseif(APPLE)
 elseif(UNIX)
     add_executable(${PROJECT_NAME})
     find_package(SDL2 REQUIRED)
-    target_link_libraries(${PROJECT_NAME} SDL2 GL stdc++fs)
+    target_link_libraries(${PROJECT_NAME} SDL2::SDL2
+        SDL2::SDL2main GL stdc++fs)
 elseif(MSVC)
     add_executable(${PROJECT_NAME})
     find_package(SDL2 CONFIG REQUIRED)

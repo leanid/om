@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <csignal>
 #include <iostream>
+#include <memory>
 #include <numeric>
 #include <sstream>
 #include <string_view>

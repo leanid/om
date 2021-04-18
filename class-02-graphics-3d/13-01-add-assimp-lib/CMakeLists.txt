@@ -55,7 +55,9 @@ elseif(APPLE)
 elseif(UNIX)
     add_executable(${PROJECT_NAME})
     find_package(SDL2 REQUIRED)
-    target_link_libraries(${PROJECT_NAME} PRIVATE SDL2 GL stdc++fs)
+    target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2
+        SDL2::SDL2main
+        GL stdc++fs)
 elseif(MSVC)
     add_executable(${PROJECT_NAME})
     find_package(SDL2 CONFIG REQUIRED)

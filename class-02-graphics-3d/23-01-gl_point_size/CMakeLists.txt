@@ -41,7 +41,7 @@ elseif(UNIX)
     find_package(SDL2 REQUIRED)
     find_package(assimp REQUIRED)
     find_package(glm REQUIRED)
-    target_link_libraries(23-01-gl_point_size PRIVATE SDL2
+    target_link_libraries(23-01-gl_point_size PRIVATE SDL2::SDL2 SDL2::SDL2main
                                                   ${ASSIMP_LIBRARIES}
                                                   GL
                                                   stdc++fs

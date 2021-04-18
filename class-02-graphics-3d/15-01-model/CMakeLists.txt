@@ -67,7 +67,7 @@ elseif(APPLE)
 elseif(UNIX)
     add_executable(15-01-model)
     find_package(SDL2 REQUIRED)
-    target_link_libraries(15-01-model PRIVATE SDL2
+    target_link_libraries(15-01-model PRIVATE SDL2::SDL2 SDL2::SDL2main
                                                   GL
                                                   stdc++fs
                                                   -lz

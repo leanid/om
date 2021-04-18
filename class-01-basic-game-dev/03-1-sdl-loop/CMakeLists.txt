@@ -1,48 +1,13 @@
 cmake_minimum_required(VERSION 3.16)
 project(03-sdl-loop)
 
-add_executable(${PROJECT_NAME} main.cxx)
-target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
+add_executable(03-sdl-loop main.cxx)
+target_compile_features(03-sdl-loop PUBLIC cxx_std_17)
 
-find_package(sdl2 REQUIRED)
-target_include_directories(${PROJECT_NAME} PRIVATE ${SDL2_INCLUDE_DIRS})
-target_link_libraries(${PROJECT_NAME} PRIVATE ${SDL2_LIBRARIES})
+find_package(SDL2 REQUIRED)
 
-if (MINGW)
-    # find out what libraries are needed for statically linking with libSDL.a
-    # using mingw64 cross-compiler
-    
-    #$> $ /usr/x86_64-w64-mingw32/sys-root/mingw/bin/sdl2-config --static-libs
-    #-L/usr/x86_64-w64-mingw32/sys-root/mingw/lib -lmingw32 -lSDL2main 
-    #-lSDL2 -mwindows -Wl,--no-undefined -lm -ldinput8 -ldxguid -ldxerr8 -luser32 
-    #-lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lshell32 -lversion -luuid 
-    #-static-libgcc
-    
-    target_link_libraries(${PROJECT_NAME} PRIVATE
-               -lmingw32
-               -lSDL2main 
-               "${SDL2_LIB}" # full path to libSDL2.a force to statically link with it
-               -mwindows
-               -Wl,--no-undefined
-               -lm
-               -ldinput8
-               -ldxguid
-               -ldxerr8
-               -luser32 
-               -lgdi32
-               -lwinmm
-               -limm32
-               -lole32
-               -loleaut32
-               -lshell32
-               -lversion
-               -luuid
-               -static-libgcc
-               )
-elseif(MSVC)
-    find_package(sdl2 REQUIRED)
-    target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2 SDL2::SDL2main)
-endif()
+target_link_libraries(03-sdl-loop PRIVATE SDL2::SDL2 SDL2::SDL2main)
+
 
 install(TARGETS ${PROJECT_NAME} 
         RUNTIME DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../../bin/tests

@@ -36,10 +36,11 @@ if (MINGW)
                opengl32
                )
 elseif(UNIX)
-    target_link_libraries(engine-10-1
-               SDL2
-               GL
-               )
+    find_package(SDL2 REQUIRED)
+    find_package(OpenGL REQUIRED)
+    target_link_libraries(engine-10-1 SDL2::SDL2
+        SDL2::SDL2main
+        OpenGL::GL)
 elseif(MSVC)
     find_package(sdl2 REQUIRED)
     target_link_libraries(engine-10-1 PRIVATE SDL2::SDL2 SDL2::SDL2main

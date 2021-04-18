@@ -27,6 +27,7 @@ if(WIN32)
   target_compile_definitions(engine-09-3 PRIVATE "-DOM_DECLSPEC=__declspec(dllexport)")
 endif(WIN32)
 
+find_package(SDL2 REQUIRED)
 find_library(SDL2_LIB NAMES SDL2)
 if (NOT SDL2_SRC_DIR)
     find_package(OpenGL REQUIRED)
@@ -53,9 +54,9 @@ elseif(UNIX)
             )
     else()
         target_link_libraries(engine-09-3 PRIVATE
-                SDL2
-                GL
-                #-lstdc++fs
+                SDL2::SDL2
+                SDL2::SDL2main
+                OpenGL::GL
                 )
     endif()
 elseif(MSVC)

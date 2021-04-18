@@ -38,7 +38,7 @@ static std::array<std::string_view, 17> event_names = {
       "turn_off" }
 };
 
-std::ostream& operator<<(std::ostream& stream, const event e)
+std::ostream& operator<<(std::ostream& stream, const event& e)
 {
     auto value   = static_cast<std::uint32_t>(e);
     auto minimal = static_cast<std::uint32_t>(event::left_pressed);

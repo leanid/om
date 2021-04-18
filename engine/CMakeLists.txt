@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.9)
 project(engine LANGUAGES CXX)
 
-find_library(SDL2_LIB SDL2)
+find_package(SDL2 REQUIRED)
 
 add_library(scanner SHARED src/fs_scanner.hxx
 							src/fs_scanner.cxx)
@@ -21,7 +21,8 @@ add_executable(om     src/om/main.cxx
                                                  
 set_target_properties(om PROPERTIES ENABLE_EXPORTS TRUE)
 target_include_directories(om PRIVATE include)
-target_link_libraries(om PRIVATE ${SDL2_LIB}
+target_link_libraries(om PRIVATE SDL2::SDL2
+                                 SDL2::SDL2main
                                   stdc++fs)
 target_compile_features(om PRIVATE cxx_std_17)
 

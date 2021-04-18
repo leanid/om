@@ -45,7 +45,7 @@ elseif(UNIX)
     find_package(SDL2 REQUIRED)
     find_package(assimp REQUIRED)
     find_package(glm REQUIRED)
-    target_link_libraries(24-01-geometry-shader-house PRIVATE SDL2
+    target_link_libraries(24-01-geometry-shader-house PRIVATE SDL2::SDL2 SDL2::SDL2main
                                                   ${ASSIMP_LIBRARIES}
                                                   GL
                                                   stdc++fs

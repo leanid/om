@@ -10,6 +10,8 @@ static const std::byte true_byte{ 0b00000001 };
 const bool_t true_{ reinterpret_cast<const bool_t&>(true_byte) };
 const bool_t false_{ reinterpret_cast<const bool_t&>(false_byte) };
 
+bool_t::bool_t() noexcept = default;
+
 bool_t::bool_t(const bool_t& other) noexcept = default;
 
 bool_t::bool_t(bool_t&& other) noexcept
