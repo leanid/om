@@ -45,11 +45,12 @@ pipelines:
           - make
           - ./02-sdl-dynamic
 
-          - git clean -df
-          - cmake -configure class-01-basic-game-dev/02-2-sdl-static/
-          - cmake -generate class-01-basic-game-dev/02-2-sdl-static/
-          - make
-          - ./02-sdl-static
+          # Static version of libSDL2d.a - not exist on build machine. Leave it only to check locally.
+          #- git clean -df
+          #- cmake -configure class-01-basic-game-dev/02-2-sdl-static/
+          #- cmake -generate class-01-basic-game-dev/02-2-sdl-static/
+          #- make
+          #- ./02-sdl-static
 
           - git clean -df
           - mingw64-cmake -configure class-01-basic-game-dev/02-1-sdl-dynamic/
@@ -57,10 +58,11 @@ pipelines:
           - mingw64-make
           #- WINEPATH=/usr/x86_64-w64-mingw32/sys-root/mingw/bin wine ./02-sdl-dynamic.exe # too long 30 seconds
 
-          - git clean -df
-          - mingw64-cmake -configure class-01-basic-game-dev/02-2-sdl-static/
-          - mingw64-cmake -generate class-01-basic-game-dev/02-2-sdl-static/
-          - mingw64-make
+          # Static version of libSDL2d.a - not exist on build machine. Leave it only to check locally.
+          #- git clean -df
+          #- mingw64-cmake -configure class-01-basic-game-dev/02-2-sdl-static/
+          #- mingw64-cmake -generate class-01-basic-game-dev/02-2-sdl-static/
+          #- mingw64-make
           #- WINEPATH=/usr/x86_64-w64-mingw32/sys-root/mingw/bin wine ./02-sdl-static.exe # too long 30 seconds
          
           - git clean -df

@@ -6,6 +6,8 @@ target_compile_features(02-sdl-static PUBLIC cxx_std_17)
 
 find_package(SDL2 REQUIRED)
 target_include_directories(02-sdl-static PRIVATE ${SDL2_INCLUDE_DIRS})
+# We want to link with our own debug version on SDL2 lib statically
+# So before try it you have to build locally SDL2 and install it (usually to /usr/local)
 find_library(SDL2_LIB libSDL2d.a)
 ## if you need to link with our own compiled library you may point cmake to it.
 #find_library(SDL2_LIB
