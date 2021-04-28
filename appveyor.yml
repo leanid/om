@@ -13,7 +13,9 @@ configuration:
   - Debug
 
 before_build:
-  - cmake -DCMAKE_TOOLCHAIN_FILE=c:/tools/vcpkg/scripts/buildsystems/vcpkg.cmake -G "Visual Studio 16 2019" -A x64 class-01-basic-game-dev
+  - cmake -DCMAKE_TOOLCHAIN_FILE=c:/tools/vcpkg/scripts/buildsystems/vcpkg.cmake -G "Visual Studio 16 2019" -A x64 class-01-basic-game-dev/01-1-hello-world/
+  # next command will bild every tutorial it is too much and very slow. Let only first one simple and fast test.
+  #- cmake -DCMAKE_TOOLCHAIN_FILE=c:/tools/vcpkg/scripts/buildsystems/vcpkg.cmake -G "Visual Studio 16 2019" -A x64 class-01-basic-game-dev
 
 build:
   project: $(APPVEYOR_BUILD_FOLDER)\01-basic-game-dev.sln
