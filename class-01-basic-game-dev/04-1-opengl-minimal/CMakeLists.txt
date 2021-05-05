@@ -16,6 +16,8 @@ endif(WIN32)
 
 # use sdl >= 2.0.12 (with nice new cmake build file)
 find_package(SDL2 REQUIRED)
+find_package(OpenGL REQUIRED)
+
 if (MINGW)
     # find out what libraries are needed for dynamicaly linking with libSDL.so
     # using mingw64 cross-compiler
@@ -23,10 +25,13 @@ if (MINGW)
     #$> /usr/x86_64-w64-mingw32/sys-root/mingw/bin/sdl2-config --libs
     #-L/usr/x86_64-w64-mingw32/sys-root/mingw/lib -lmingw32 -lSDL2main -lSDL2 -mwindows
     target_link_libraries(engine-04-1 PRIVATE
-               mingw32
-               SDL2main
-               SDL2
-               -mwindows
+               SDL2::SDL2
+               SDL2::SDL2main
+               OpenGL::GL
+               #mingw32
+               #SDL2main
+               #SDL2
+               #-mwindows
                )
     target_include_directories(engine-04-1 PRIVATE ${SDL2_INCLUDE_DIRS})
 else()

@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
+cmake_policy(SET CMP0012 NEW)
+
 project(all-curses CXX)
 
 # my curses

@@ -8,15 +8,15 @@ find_package(SDL2 REQUIRED)
 target_include_directories(02-sdl-static PRIVATE ${SDL2_INCLUDE_DIRS})
 # We want to link with our own debug version on SDL2 lib statically
 # So before try it you have to build locally SDL2 and install it (usually to /usr/local)
-find_library(SDL2_LIB libSDL2d.a)
+#find_library(SDL2_LIB libSDL2d.a)
 ## if you need to link with our own compiled library you may point cmake to it.
 #find_library(SDL2_LIB
 #             NAMES libSDL2d.a
 #             PATHS /usr/local /usr/local/lib /usr/local/lib
 #             )
 
-if(NOT SDL2_LIB AND NOT MSVC)
-    message(FATAL_ERROR "Error: find_library(...) did not find libSDL2.a")
+if(NOT TARGET SDL2::SDL2-static)
+    message(FATAL_ERROR "Error: find_library(...) did not find libSDL2d.a")
 else()
     message(STATUS "path to static libSDL2.a [${SDL2_LIB}]")
 endif()
@@ -32,11 +32,10 @@ if (MINGW)
     #-static-libgcc
 
     target_link_libraries(02-sdl-static
-               #SDL2::SDL2-static
-               #SDL2::SDL2main
+               SDL2::SDL2-static
+               SDL2::SDL2main
                -lmingw32
-               -lSDL2main
-               ${SDL2_LIB} # full path to libSDL2.a force to statically link with it
+               # old style ${SDL2_LIB} # full path to libSDL2d.a force to statically link with it
                -mwindows
                -Wl,--no-undefined
                -lm
@@ -94,8 +93,7 @@ elseif(UNIX)
                )
     endif()
 elseif(MSVC)
-    find_package(sdl2 REQUIRED)
-    target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2 SDL2::SDL2main)
+    target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2-static SDL2::SDL2main)
 endif()
 
 install(TARGETS ${PROJECT_NAME}

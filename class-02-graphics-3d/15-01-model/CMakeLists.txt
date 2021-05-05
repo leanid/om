@@ -19,7 +19,7 @@ set(ASSIMP_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/build/assimp_root)
 ExternalProject_Add(assimp_proj_15_1
   PREFIX            ${ASSIMP_BUILD_DIR}
   GIT_REPOSITORY    https://github.com/assimp/assimp.git
-  GIT_TAG           v.5.0.0.rc1
+  GIT_TAG           v4.1.0 #v.5.0.0.rc1
   GIT_PROGRESS      TRUE
   CMAKE_CACHE_ARGS  -DBUILD_SHARED_LIBS:STRING=OFF
                     -DASSIMP_NO_EXPORT:STRING=ON
@@ -28,6 +28,7 @@ ExternalProject_Add(assimp_proj_15_1
                     -DASSIMP_INSTALL_PDB:STRING=OFF
                     -DINJECT_DEBUG_POSTFIX:STRING=OFF
                     -DCMAKE_INSTALL_PREFIX:PATH=${ASSIMP_BUILD_DIR}_install/
+                    -DCMAKE_CXX_FLAGS:STRING=-fpermissive
 )
 
 ExternalProject_Add(glm_proj_15_1
@@ -51,12 +52,11 @@ if (SDL2_SRC_DIR) # Android
 elseif(MINGW)
     add_executable(15-01-model)
     find_package(SDL2 CONFIG REQUIRED)
-    target_link_libraries(15-01-model PRIVATE mingw32
-                                                  SDL2main
-                                                  SDL2
-                                                  opengl32
-                                                  -mwindows
-                                                  )
+    find_package(OpenGL REQUIRED)
+    target_link_libraries(15-01-model PRIVATE SDL2::SDL2main
+                                              SDL2::SDL2
+                                              OpenGL::GL
+                                              )
 elseif(APPLE)
     add_executable(15-01-model)
     find_package(SDL2 CONFIG REQUIRED)

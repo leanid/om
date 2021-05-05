@@ -10,16 +10,21 @@ if(WIN32)
 endif(WIN32)
 
 find_package(SDL2 REQUIRED)
+find_package(OpenGL REQUIRED)
+
 target_include_directories(engine-05-1 PRIVATE ${SDL2_INCLUDE_DIRS})
 target_link_libraries(engine-05-1 PRIVATE ${SDL2_LIBRARIES})
 
 if (MINGW)
     target_link_libraries(engine-05-1 PRIVATE
-               -lmingw32
-               -lSDL2main
-               -lSDL2
-               -mwindows
-               -lopengl32
+               SDL2::SDL2
+               SDL2::SDL2main
+               OpenGL::GL
+               #-lmingw32
+               #-lSDL2main
+               #-lSDL2
+               #-mwindows
+               #-lopengl32
                )
 elseif(APPLE)
     target_link_libraries(engine-05-1 PRIVATE

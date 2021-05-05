@@ -23,11 +23,12 @@ if (SDL2_SRC_DIR) # Android
 elseif(MINGW)
     add_executable(21-03-cubemap-reflection)
     find_package(SDL2 CONFIG REQUIRED)
-    target_link_libraries(15-01-model PRIVATE mingw32
-                                                  SDL2main
-                                                  SDL2
-                                                  opengl32
-                                                  -mwindows
+    find_package(SDL2 REQUIRED)
+    target_link_libraries(15-01-model PRIVATE #mingw32
+                                                  SDL2::SDL2main
+                                                  SDL2::SDL2
+                                                  OpenGL::GL
+                                                  #-mwindows
                                                   )
 elseif(APPLE)
     add_executable(21-03-cubemap-reflection)

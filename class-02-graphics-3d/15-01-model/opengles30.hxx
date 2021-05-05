@@ -9,9 +9,9 @@
 #else
 #include <SDL2/SDL.h>
 #define GL_GLEXT_PROTOTYPES 1
-#include <SDL2/SDL_opengles2.h>
-#define glGenVertexArrays glGenVertexArraysOES
-#define glBindVertexArray glBindVertexArrayOES
+#include <SDL2/SDL_opengl.h>
+//#define glGenVertexArrays glGenVertexArraysOES
+//#define glBindVertexArray glBindVertexArrayOES
 //#include <GLES3/gl3.h> // TODO need for glGenVertexArrays
 #endif
 

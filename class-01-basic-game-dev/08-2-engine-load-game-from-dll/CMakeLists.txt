@@ -17,11 +17,14 @@ endif(WIN32)
 
 if (MINGW)
     target_link_libraries(engine-08-2 PRIVATE
-               -lmingw32
-               -lSDL2main
-               -lSDL2
-               -mwindows
-               -lopengl32
+               SDL2::SDL2
+               SDL2::SDL2main
+               OpenGL::GL
+               #-lmingw32
+               #-lSDL2main
+               #-lSDL2
+               #-mwindows
+               #-lopengl32
                )
 elseif(APPLE)
     target_link_libraries(engine-08-2 PRIVATE

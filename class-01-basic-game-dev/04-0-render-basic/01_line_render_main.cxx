@@ -6,8 +6,8 @@ int main(int, char**)
     const color white = { 255, 255, 255 };
     const color green = { 0, 255, 0 };
 
-    size_t width  = 320;
-    size_t height = 240;
+    int32_t width  = 320;
+    int32_t height = 240;
 
     canvas image(width, height);
 

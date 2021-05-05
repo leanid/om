@@ -5,6 +5,8 @@ add_library(engine-07-2 SHARED engine.cxx engine.hxx picopng.hxx)
 target_compile_features(engine-07-2 PUBLIC cxx_std_17)
 
 find_package(SDL2 REQUIRED)
+find_package(OpenGL REQUIRED)
+
 target_include_directories(engine-07-2 PRIVATE ${SDL2_INCLUDE_DIRS})
 target_link_libraries(engine-07-2 PRIVATE ${SDL2_LIBRARIES})
 
@@ -16,11 +18,14 @@ find_library(SDL2_LIB NAMES SDL2)
 
 if (MINGW)
     target_link_libraries(engine-07-2 PRIVATE
-               -lmingw32
-               -lSDL2main
-               -lSDL2
-               -mwindows
-               -lopengl32
+               SDL2::SDL2
+               SDL2::SDL2main
+               OpenGL::GL
+               #-lmingw32
+               #-lSDL2main
+               #-lSDL2
+               #-mwindows
+               #-lopengl32
                )
 elseif(APPLE)
     target_link_libraries(engine-07-2 PRIVATE
@@ -30,12 +35,11 @@ elseif(UNIX)
     target_link_libraries(engine-07-2 PRIVATE
                SDL2::SDL2
                SDL2::SDL2main
-               -lGL
+               OpenGL::GL
                )
 elseif(MSVC)
-    find_package(sdl2 REQUIRED)
     target_link_libraries(engine-07-2 PRIVATE SDL2::SDL2 SDL2::SDL2main
-                          opengl32)
+                          OpenGL::GL)
 endif()
 
 add_executable(game-07-2 game.cxx)
