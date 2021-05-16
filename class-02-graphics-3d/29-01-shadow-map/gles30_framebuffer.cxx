@@ -63,6 +63,35 @@ void framebuffer::color_attachment(texture& tex)
     }
 }
 
+void framebuffer::depth_attachment(texture& tex)
+{
+    bind();
+    tex.bind();
+    const int level{ 0 };
+
+    if (tex.get_type() != texture::type::depth_component)
+    {
+        throw std::runtime_error("error: wrong texture type");
+    }
+
+    glFramebufferTexture2D(GL_FRAMEBUFFER,
+                           GL_DEPTH_ATTACHMENT,
+                           GL_TEXTURE_2D,
+                           tex.texture_id,
+                           level);
+}
+
+void framebuffer::disable_draw_buffer()
+{
+    const GLenum bufs[1]{ GL_NONE };
+    glDrawBuffers(1, bufs);
+}
+
+void framebuffer::disable_read_buffer()
+{
+    glReadBuffer(GL_NONE);
+}
+
 bool framebuffer::is_complete()
 {
     bind();

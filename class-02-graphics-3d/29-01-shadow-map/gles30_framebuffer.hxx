@@ -22,6 +22,9 @@ public:
                 multisampling          ms_value = multisampling::disable,
                 uint32_t               multisample_count = 1);
     void        color_attachment(texture&);
+    void        depth_attachment(texture&);
+    void        disable_draw_buffer();
+    void        disable_read_buffer();
     bool        is_complete();
     std::string get_status_message();
     void        bind();

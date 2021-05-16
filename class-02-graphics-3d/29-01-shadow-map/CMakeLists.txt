@@ -108,6 +108,8 @@ target_sources(29-01-shadow-map PRIVATE main.cxx
                                    res/mars.png
                                    res/planet.mtl
                                    res/rock.mtl
+                                   res/depth.vsh
+                                   res/depth.fsh
 
                                    res/runtime.properties.hxx
                                    )

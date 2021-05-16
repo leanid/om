@@ -209,7 +209,8 @@ void clear_back_buffer(const glm::vec3 clear_color)
     float alpha = 0.f;
 
     glClearColor(red, green, blue, alpha);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT |
+            GL_DEPTH_BUFFER_BIT /*| GL_STENCIL_BUFFER_BIT*/);
 }
 
 static void destroy_window(SDL_Window* ptr)
@@ -358,6 +359,7 @@ struct scene
     std::unique_ptr<void, void (*)(void*)>             context;
 
     gles30::shader floor_shader;
+    gles30::shader depth_shader;
     gles30::mesh   floor;
 
     gles30::texture     depth_texture;
@@ -500,7 +502,8 @@ scene::scene()
     : properties("res/runtime.properties.hxx")
     , window{ create_window(properties, gles30::multisampling::disable) }
     , context{ create_opengl_context(window.get()) }
-    , floor_shader("res/textured.vsh", "res/textured.fsh")
+    , floor_shader{ "res/textured.vsh", "res/textured.fsh" }
+    , depth_shader{ "res/depth.vsh", "res/depth.fsh" }
     , floor{ create_mesh(plane_vertices, sizeof(plane_vertices) / 4 / 8, {}) }
     , depth_texture{ gles30::texture::type::depth_component,
                      1024,
@@ -509,6 +512,13 @@ scene::scene()
     , depth_fbo{ 1024, 1024, gles30::generate_render_object::no }
     , wood_texture("res/wood.png", gles30::texture::type::diffuse)
 {
+    depth_fbo.depth_attachment(depth_texture);
+    if (!depth_fbo.is_complete())
+    {
+        throw std::runtime_error("depth_fbo not complete");
+    }
+    depth_fbo.unbind();
+
     create_camera(properties);
 }
 
@@ -518,7 +528,29 @@ void scene::render([[maybe_unused]] float delta_time)
 
     glEnable(GL_DEPTH_TEST);
 
+    /// 1. render depth to texture
+    depth_texture.bind();
+    depth_fbo.bind();
+
     clear_back_buffer(properties.get_vec3("clear_color"));
+
+    depth_shader.use();
+    depth_shader.set_uniform("model", glm::mat4(1.f));
+    depth_shader.set_uniform("view", camera.view_matrix());
+    depth_shader.set_uniform("projection", camera.projection_matrix());
+
+    glViewport(0, 0, 1024, 1024);
+
+    floor.draw(depth_shader);
+
+    depth_fbo.unbind();
+
+    /// 2. render texture with debug quad
+
+    glViewport(0, 0, screen_width, screen_height);
+    clear_back_buffer(properties.get_vec3("clear_color"));
+
+    wood_texture.bind();
 
     floor_shader.use();
     floor_shader.set_uniform("model", glm::mat4(1.f));
