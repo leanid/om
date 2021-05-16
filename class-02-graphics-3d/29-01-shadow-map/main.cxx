@@ -360,6 +360,9 @@ struct scene
     gles30::shader floor_shader;
     gles30::mesh   floor;
 
+    gles30::texture     depth_texture;
+    gles30::framebuffer depth_fbo;
+
     gles30::texture wood_texture;
 
     bool blinn              = false;
@@ -499,6 +502,11 @@ scene::scene()
     , context{ create_opengl_context(window.get()) }
     , floor_shader("res/textured.vsh", "res/textured.fsh")
     , floor{ create_mesh(plane_vertices, sizeof(plane_vertices) / 4 / 8, {}) }
+    , depth_texture{ gles30::texture::type::depth_component,
+                     1024,
+                     1024,
+                     gles30::texture::pixel_type::gl_float }
+    , depth_fbo{ 1024, 1024, gles30::generate_render_object::no }
     , wood_texture("res/wood.png", gles30::texture::type::diffuse)
 {
     create_camera(properties);

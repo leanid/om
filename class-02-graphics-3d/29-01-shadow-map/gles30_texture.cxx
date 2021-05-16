@@ -13,12 +13,21 @@
 
 namespace gles30
 {
-void gles30::texture::throw_exception_if_not_diffuse_or_specular()
+void texture::throw_exception_if_not_diffuse_or_specular()
 {
     if (texture_type != type::diffuse && texture_type != type::specular)
     {
         throw std::runtime_error(
             "error: invalid texture type used, expected: diffuse or specular");
+    }
+}
+
+void texture::throw_exception_if_not_depth_component()
+{
+    if (texture_type != type::depth_component)
+    {
+        throw std::runtime_error(
+            "error: invalid texture type used, expected: depth_component");
     }
 }
 
@@ -244,6 +253,55 @@ texture::texture(const std::array<std::filesystem::path, 6>& faces,
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+}
+
+static GLenum to_gl_type(texture::pixel_type type)
+{
+    switch (type)
+    {
+        case texture::pixel_type::gl_float:
+            return GL_FLOAT;
+        case texture::pixel_type::gl_unsigned_byte:
+            return GL_UNSIGNED_BYTE;
+        default:
+            throw std::runtime_error("not implemented yet");
+    }
+}
+
+texture::texture(const type tex_type,
+                 size_t     width,
+                 size_t     height,
+                 pixel_type pixel_data_type)
+    : file_name{ "from memory" }
+    , texture_id{ 0 }
+    , texture_type{ tex_type }
+{
+    throw_exception_if_not_depth_component();
+
+    gen_texture_and_bind_it();
+
+    wrap_s(wrap::repeat);
+    wrap_t(wrap::repeat);
+
+    // if you plan to use this texture in framebuffer object
+    // do not set nothing else filter::liner (no min/mag mitmap can be used)
+    max_filter(filter::nearest);
+    min_filter(filter::nearest);
+
+    GLint  mipmap_level = 0;
+    GLint  border       = 0;
+    GLenum pixel_type   = to_gl_type(pixel_data_type);
+
+    // allocate memory for texture
+    glTexImage2D(GL_TEXTURE_2D,
+                 mipmap_level,
+                 GL_DEPTH_COMPONENT,
+                 width,
+                 height,
+                 border,
+                 GL_DEPTH_COMPONENT,
+                 pixel_type,
+                 nullptr);
 }
 
 void texture::bind()

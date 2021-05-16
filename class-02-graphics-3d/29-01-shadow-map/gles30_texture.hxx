@@ -22,13 +22,20 @@ public:
         diffuse,
         specular,
         cubemap,
-        multisample2d
+        multisample2d,
+        depth_component
     };
 
     enum class opt
     {
         no_flip,
         flip_y
+    };
+
+    enum class pixel_type
+    {
+        gl_float,
+        gl_unsigned_byte
     };
 
     /// type in {diffuse, specular}
@@ -44,6 +51,11 @@ public:
     /// type in {cubemap}
     texture(const std::array<std::filesystem::path, 6>& faces,
             const opt = opt::no_flip);
+    /// type in {depth_component}
+    texture(const type,
+            size_t     width,
+            size_t     height,
+            pixel_type pixel_data_type);
 
     void bind();
 
@@ -72,6 +84,7 @@ private:
     void gen_texture_set_filters_and_wrap();
     void set_default_wrap_and_filters();
     void throw_exception_if_not_diffuse_or_specular();
+    void throw_exception_if_not_depth_component();
     friend class framebuffer;
 
     std::string   file_name;
