@@ -75,7 +75,8 @@ void mesh::draw(shader& shader) const
 
         int32_t is_ok = 0;
 
-        if (type == texture::type::diffuse)
+        if (type == texture::type::diffuse ||
+            type == texture::type::depth_component)
         {
             is_ok = snprintf(str, sizeof(str), "tex_diffuse%u", diffuse_index);
             assert(is_ok > 0);

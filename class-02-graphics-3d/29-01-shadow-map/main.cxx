@@ -360,9 +360,12 @@ struct scene
 
     gles30::shader floor_shader;
     gles30::shader depth_shader;
+    gles30::shader quad_shader;
     gles30::mesh   floor;
 
-    gles30::texture     depth_texture;
+    gles30::texture depth_texture;
+    gles30::mesh    debug_quad;
+
     gles30::framebuffer depth_fbo;
 
     gles30::texture wood_texture;
@@ -504,11 +507,14 @@ scene::scene()
     , context{ create_opengl_context(window.get()) }
     , floor_shader{ "res/textured.vsh", "res/textured.fsh" }
     , depth_shader{ "res/depth.vsh", "res/depth.fsh" }
+    , quad_shader{ "res/quad.vsh", "res/quad.fsh" }
     , floor{ create_mesh(plane_vertices, sizeof(plane_vertices) / 4 / 8, {}) }
     , depth_texture{ gles30::texture::type::depth_component,
                      1024,
                      1024,
                      gles30::texture::pixel_type::gl_float }
+    , debug_quad{ create_mesh(
+          quad_virtices, sizeof(quad_virtices) / 4 / 8, { &depth_texture }) }
     , depth_fbo{ 1024, 1024, gles30::generate_render_object::no }
     , wood_texture("res/wood.png", gles30::texture::type::diffuse)
 {
@@ -550,19 +556,24 @@ void scene::render([[maybe_unused]] float delta_time)
     glViewport(0, 0, screen_width, screen_height);
     clear_back_buffer(properties.get_vec3("clear_color"));
 
-    wood_texture.bind();
+    quad_shader.use();
+    quad_shader.set_uniform("near_plane", 1.f);
+    quad_shader.set_uniform("far_plane", 7.5f);
+    debug_quad.draw(quad_shader);
 
-    floor_shader.use();
-    floor_shader.set_uniform("model", glm::mat4(1.f));
-    floor_shader.set_uniform("view", camera.view_matrix());
-    floor_shader.set_uniform("projection", camera.projection_matrix());
-    floor_shader.set_uniform("material.tex_diffuse0", wood_texture, 0);
-    floor_shader.set_uniform("view_pos", camera.position());
-    floor_shader.set_uniform("light_pos", glm::vec3(0.0f, 0.0f, 0.0f));
-    floor_shader.set_uniform("blinn", blinn);
-    floor_shader.set_uniform("enable_srgb_in_fsh", enable_srgb_in_fsh);
+    //    wood_texture.bind();
 
-    floor.draw(floor_shader);
+    //    floor_shader.use();
+    //    floor_shader.set_uniform("model", glm::mat4(1.f));
+    //    floor_shader.set_uniform("view", camera.view_matrix());
+    //    floor_shader.set_uniform("projection", camera.projection_matrix());
+    //    floor_shader.set_uniform("material.tex_diffuse0", wood_texture, 0);
+    //    floor_shader.set_uniform("view_pos", camera.position());
+    //    floor_shader.set_uniform("light_pos", glm::vec3(0.0f, 0.0f, 0.0f));
+    //    floor_shader.set_uniform("blinn", blinn);
+    //    floor_shader.set_uniform("enable_srgb_in_fsh", enable_srgb_in_fsh);
+
+    //    floor.draw(floor_shader);
 }
 
 int main(int /*argc*/, char* /*argv*/[])
