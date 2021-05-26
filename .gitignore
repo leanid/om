@@ -27,3 +27,5 @@ tests/11-2-android-port/android-project/app/.*
 tests/11-2-android-port/android-project/local.properties
 tests/11-2-android-port/android-project/app/build/*
 tests/11-2-android-port/android-project/build/*
+.cxx/
+*.aab
