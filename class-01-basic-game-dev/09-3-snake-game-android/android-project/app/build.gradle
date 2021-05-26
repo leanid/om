@@ -51,7 +51,7 @@ android {
 
         externalNativeBuild {
 	        cmake {
-                version "3.19.7"  // double check your ENV variable PATH have cmake with correct version
+                version "3.18.1"  // double check your ENV variable PATH have cmake with correct version
                                  // or you have to set path to it in local.properties like:
                                  // # If you set this property, Gradle no longer uses PATH to find CMake.
                                  // # gradle works only with canonical cmake from cmake.org
@@ -86,6 +86,7 @@ android {
 
     externalNativeBuild {
        cmake {
+           version "3.18.1"
            path '../../CMakeLists.txt'
        }
     }
