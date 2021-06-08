@@ -25,13 +25,13 @@ if (MINGW)
     #$> /usr/x86_64-w64-mingw32/sys-root/mingw/bin/sdl2-config --libs
     #-L/usr/x86_64-w64-mingw32/sys-root/mingw/lib -lmingw32 -lSDL2main -lSDL2 -mwindows
     target_link_libraries(engine-04-1 PRIVATE
-               SDL2::SDL2
-               SDL2::SDL2main
-               OpenGL::GL
-               #mingw32
-               #SDL2main
-               #SDL2
-               #-mwindows
+               #SDL2::SDL2                     # not working on mingw64-make
+               #SDL2::SDL2main
+               #OpenGL::GL
+               mingw32
+               SDL2main
+               SDL2
+               -mwindows
                )
     target_include_directories(engine-04-1 PRIVATE ${SDL2_INCLUDE_DIRS})
 else()
