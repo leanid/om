@@ -28,9 +28,8 @@ android {
     def sdl2BuildDir = properties.getProperty('sdl2_build.dir')
 
     defaultConfig {
-        if (buildAsApplication) {
-            applicationId "org.libsdl.app"
-        }
+        applicationId "org.home.leo"
+
         minSdkVersion 21    // 21 - is minimal to work for dlopen with new NDK
                             // or you have to build SDL-static, SDLmain, and link it into you .SO
                             // and in SDL_android.c directly call SDL_main without dlopen, dsym, etc
