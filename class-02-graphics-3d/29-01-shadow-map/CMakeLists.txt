@@ -54,8 +54,8 @@ elseif(UNIX)
     target_link_libraries(29-01-shadow-map PRIVATE SDL2
                                                   ${ASSIMP_LIBRARIES}
                                                   GL
-                                                  stdc++fs
-                                                  -lz
+                                                  #stdc++fs
+                                                  #-lz
                                                   )
     target_include_directories(29-01-shadow-map PRIVATE ${SDL2_INCLUDE_DIRS})
 elseif(MSVC)
