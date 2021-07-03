@@ -358,6 +358,7 @@ struct scene
     gles30::shader quad_shader;
 
     gles30::mesh   mesh_floor;
+    gles30::mesh   mesh_cube;
 
     gles30::texture depth_texture;
     gles30::mesh    mesh_quad;
@@ -475,6 +476,7 @@ scene::scene()
     , depth_shader{ "res/depth.vsh", "res/depth.fsh" }
     , quad_shader{ "res/quad.vsh", "res/quad.fsh" }
     , mesh_floor{ create_mesh(plane_vertices, sizeof(plane_vertices) / 4 / 8, {}) }
+    , mesh_cube{create_mesh(cube_vertices, sizeof(cube_vertices) / 4 / 8, {})}
     , depth_texture{ gles30::texture::type::depth_component,
                      fbo_width,
                      fbo_height,
@@ -514,6 +516,7 @@ void scene::render([[maybe_unused]] float delta_time)
     glViewport(0, 0, fbo_width, fbo_height);
 
     mesh_floor.draw(depth_shader);
+    mesh_cube.draw(depth_shader);
 
     depth_fbo.unbind();
 
