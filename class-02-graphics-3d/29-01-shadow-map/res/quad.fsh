@@ -16,6 +16,7 @@ struct mesh_material
 
 uniform mesh_material material;
 
+uniform bool use_perspective_matrix;
 uniform float near_plane;
 uniform float far_plane;
 
@@ -29,6 +30,14 @@ float linearize_depth(float depth)
 void main()
 {
     float depth_value = texture(material.tex_diffuse0, vs_out.uv).r;
-    frag_color = vec4(vec3(linearize_depth(depth_value) / far_plane), 1.0); // perspective
-    //frag_color = vec4(vec3(depth_value), 1.0); // ortogonal
+
+    if (use_perspective_matrix)
+    {
+        // perspective
+        frag_color = vec4(vec3(linearize_depth(depth_value) / far_plane), 1.0);
+    } else
+    {
+        // ortogonal
+        frag_color = vec4(vec3(depth_value), 1.0);
+    }
 }

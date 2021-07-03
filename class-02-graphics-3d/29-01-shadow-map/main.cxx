@@ -366,6 +366,8 @@ struct scene
     gles30::framebuffer depth_fbo;
 
     gles30::texture wood_texture;
+
+    bool use_perspective_matrix = true;
 };
 
 void scene::pull_system_events(bool& continue_loop)
@@ -399,6 +401,7 @@ void scene::pull_system_events(bool& continue_loop)
         {
             if (event.key.keysym.sym == SDLK_0)
             {
+                use_perspective_matrix = !use_perspective_matrix;
             }
             else if (event.key.keysym.sym == SDLK_1)
             {
@@ -508,10 +511,24 @@ void scene::render([[maybe_unused]] float delta_time)
 
     clear_back_buffer(properties.get_vec3("clear_color"));
 
+    float near_plane = 1.0f, far_plane = 7.5f;
+    glm::mat4 light_projection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
+
+    glm::mat4 light_view = glm::lookAt(glm::vec3(-2.0f, 4.0f, -1.0f),
+                                  glm::vec3( 0.0f, 0.0f,  0.0f),
+                                  glm::vec3( 0.0f, 1.0f,  0.0f));
+
     depth_shader.use();
     depth_shader.set_uniform("model", glm::mat4(1.f));
-    depth_shader.set_uniform("view", camera.view_matrix());
-    depth_shader.set_uniform("projection", camera.projection_matrix());
+    if (use_perspective_matrix)
+    {
+        depth_shader.set_uniform("view", camera.view_matrix());
+        depth_shader.set_uniform("projection", camera.projection_matrix());
+    } else
+    {
+        depth_shader.set_uniform("view", camera.view_matrix());
+        depth_shader.set_uniform("projection", light_projection);
+    }
 
     glViewport(0, 0, fbo_width, fbo_height);
 
@@ -526,8 +543,15 @@ void scene::render([[maybe_unused]] float delta_time)
     clear_back_buffer(properties.get_vec3("clear_color"));
 
     quad_shader.use();
-    quad_shader.set_uniform("near_plane", 1.f);
-    quad_shader.set_uniform("far_plane", 7.5f);
+
+    quad_shader.set_uniform("use_perspective_matrix", use_perspective_matrix);
+
+    if (use_perspective_matrix)
+    {
+        quad_shader.set_uniform("near_plane", 1.f);
+        quad_shader.set_uniform("far_plane", 7.5f);
+    }
+
     mesh_quad.draw(quad_shader);
 }
 
