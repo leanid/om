@@ -344,59 +344,30 @@ struct scene
 {
     scene();
     void render(float delta_time);
-    void create_uniform_buffer(const void*            buffer_ptr,
-                               const size_t           buffer_size,
-                               const std::string_view block_name,
-                               const uint32_t         binding_point,
-                               gles30::shader&        shader,
-                               uint32_t&              ubo_handle);
-    void pull_system_events(bool& continue_loop, int& current_effect);
-    void regenerate_rock_matrixes();
+    void pull_system_events(bool& continue_loop);
+
+    static constexpr size_t fbo_width = 1024;
+    static constexpr size_t fbo_height = 1024;
 
     properties_reader properties;
 
     std::unique_ptr<SDL_Window, void (*)(SDL_Window*)> window;
     std::unique_ptr<void, void (*)(void*)>             context;
 
-    gles30::shader floor_shader;
     gles30::shader depth_shader;
     gles30::shader quad_shader;
-    gles30::mesh   floor;
+
+    gles30::mesh   mesh_floor;
 
     gles30::texture depth_texture;
-    gles30::mesh    debug_quad;
+    gles30::mesh    mesh_quad;
 
     gles30::framebuffer depth_fbo;
 
     gles30::texture wood_texture;
-
-    bool blinn              = false;
-    bool enable_srgb_in_fsh = false;
 };
 
-void scene::create_uniform_buffer(const void*            buffer_ptr,
-                                  const size_t           buffer_size,
-                                  const std::string_view block_name,
-                                  const uint32_t         binding_point,
-                                  gles30::shader&        shader,
-                                  uint32_t&              ubo_handle)
-{
-    glGenBuffers(1, &ubo_handle);
-    glBindBuffer(GL_UNIFORM_BUFFER, ubo_handle);
-    glBufferData(GL_UNIFORM_BUFFER,
-                 buffer_size,
-                 buffer_ptr,
-                 GL_STATIC_DRAW); // allocate "buffer_size" bytes of memory
-
-    shader.bind_uniform_block(block_name, binding_point);
-
-    // bind UBO buffer to Binding Point "binding_point"
-    glBindBufferBase(GL_UNIFORM_BUFFER, binding_point, ubo_handle);
-
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
-}
-
-void scene::pull_system_events(bool& continue_loop, int& current_effect)
+void scene::pull_system_events(bool& continue_loop)
 {
     using namespace std;
     SDL_Event event;
@@ -427,7 +398,6 @@ void scene::pull_system_events(bool& continue_loop, int& current_effect)
         {
             if (event.key.keysym.sym == SDLK_0)
             {
-                blinn = !blinn;
             }
             else if (event.key.keysym.sym == SDLK_1)
             {
@@ -455,15 +425,12 @@ void scene::pull_system_events(bool& continue_loop, int& current_effect)
             }
             else if (event.key.keysym.sym == SDLK_2)
             {
-                enable_srgb_in_fsh = !enable_srgb_in_fsh;
             }
             else if (event.key.keysym.sym == SDLK_3)
             {
-                current_effect = 3;
             }
             else if (event.key.keysym.sym == SDLK_4)
             {
-                current_effect = 4;
             }
             else if (event.key.keysym.sym == SDLK_5)
             {
@@ -505,17 +472,16 @@ scene::scene()
     : properties("res/runtime.properties.hxx")
     , window{ create_window(properties, gles30::multisampling::disable) }
     , context{ create_opengl_context(window.get()) }
-    , floor_shader{ "res/textured.vsh", "res/textured.fsh" }
     , depth_shader{ "res/depth.vsh", "res/depth.fsh" }
     , quad_shader{ "res/quad.vsh", "res/quad.fsh" }
-    , floor{ create_mesh(plane_vertices, sizeof(plane_vertices) / 4 / 8, {}) }
+    , mesh_floor{ create_mesh(plane_vertices, sizeof(plane_vertices) / 4 / 8, {}) }
     , depth_texture{ gles30::texture::type::depth_component,
-                     1024,
-                     1024,
+                     fbo_width,
+                     fbo_height,
                      gles30::texture::pixel_type::gl_float }
-    , debug_quad{ create_mesh(
+    , mesh_quad{ create_mesh(
           quad_virtices, sizeof(quad_virtices) / 4 / 8, { &depth_texture }) }
-    , depth_fbo{ 1024, 1024, gles30::generate_render_object::no }
+    , depth_fbo{ fbo_width, fbo_height, gles30::generate_render_object::no }
     , wood_texture("res/wood.png", gles30::texture::type::diffuse)
 {
     depth_fbo.depth_attachment(depth_texture);
@@ -545,9 +511,9 @@ void scene::render([[maybe_unused]] float delta_time)
     depth_shader.set_uniform("view", camera.view_matrix());
     depth_shader.set_uniform("projection", camera.projection_matrix());
 
-    glViewport(0, 0, 1024, 1024);
+    glViewport(0, 0, fbo_width, fbo_height);
 
-    floor.draw(depth_shader);
+    mesh_floor.draw(depth_shader);
 
     depth_fbo.unbind();
 
@@ -559,21 +525,7 @@ void scene::render([[maybe_unused]] float delta_time)
     quad_shader.use();
     quad_shader.set_uniform("near_plane", 1.f);
     quad_shader.set_uniform("far_plane", 7.5f);
-    debug_quad.draw(quad_shader);
-
-    //    wood_texture.bind();
-
-    //    floor_shader.use();
-    //    floor_shader.set_uniform("model", glm::mat4(1.f));
-    //    floor_shader.set_uniform("view", camera.view_matrix());
-    //    floor_shader.set_uniform("projection", camera.projection_matrix());
-    //    floor_shader.set_uniform("material.tex_diffuse0", wood_texture, 0);
-    //    floor_shader.set_uniform("view_pos", camera.position());
-    //    floor_shader.set_uniform("light_pos", glm::vec3(0.0f, 0.0f, 0.0f));
-    //    floor_shader.set_uniform("blinn", blinn);
-    //    floor_shader.set_uniform("enable_srgb_in_fsh", enable_srgb_in_fsh);
-
-    //    floor.draw(floor_shader);
+    mesh_quad.draw(quad_shader);
 }
 
 int main(int /*argc*/, char* /*argv*/[])
@@ -584,7 +536,6 @@ int main(int /*argc*/, char* /*argv*/[])
         scene scene;
 
         float last_frame_time      = 0.0f; // Time of last frame
-        int   current_post_process = 0;
 
         for (bool continue_loop = true; continue_loop;)
         {
@@ -592,7 +543,7 @@ int main(int /*argc*/, char* /*argv*/[])
 
             scene.properties.update_changes();
 
-            scene.pull_system_events(continue_loop, current_post_process);
+            scene.pull_system_events(continue_loop);
 
             scene.render(delta_time);
 
