@@ -355,7 +355,7 @@ struct scene
     std::unique_ptr<void, void (*)(void*)>             context;
 
     gles30::shader depth_shader;
-    gles30::shader quad_shader;
+    gles30::shader shader_textured;
 
     gles30::mesh   mesh_floor;
     gles30::mesh   mesh_cube;
@@ -477,9 +477,9 @@ scene::scene()
     , window{ create_window(properties, gles30::multisampling::disable) }
     , context{ create_opengl_context(window.get()) }
     , depth_shader{ "res/depth.vsh", "res/depth.fsh" }
-    , quad_shader{ "res/quad.vsh", "res/quad.fsh" }
-    , mesh_floor{ create_mesh(plane_vertices, sizeof(plane_vertices) / 4 / 8, {}) }
-    , mesh_cube{create_mesh(cube_vertices, sizeof(cube_vertices) / 4 / 8, {})}
+    , shader_textured{ "res/textured.vsh", "res/textured.fsh" }
+    , mesh_floor{ create_mesh(plane_vertices, sizeof(plane_vertices) / 4 / 8, {&wood_texture}) }
+    , mesh_cube{create_mesh(cube_vertices, sizeof(cube_vertices) / 4 / 8, {&wood_texture})}
     , depth_texture{ gles30::texture::type::depth_component,
                      fbo_width,
                      fbo_height,
@@ -522,15 +522,18 @@ void scene::render([[maybe_unused]] float delta_time)
     depth_shader.set_uniform("model", glm::mat4(1.f));
     if (use_perspective_matrix)
     {
-        depth_shader.set_uniform("view", camera.view_matrix());
+        depth_shader.set_uniform("view", light_view);
         depth_shader.set_uniform("projection", camera.projection_matrix());
     } else
     {
-        depth_shader.set_uniform("view", camera.view_matrix());
+        depth_shader.set_uniform("view", light_view);
         depth_shader.set_uniform("projection", light_projection);
     }
 
     glViewport(0, 0, fbo_width, fbo_height);
+
+    mesh_floor.textures_disable();
+    mesh_cube.textures_disable();
 
     mesh_floor.draw(depth_shader);
     mesh_cube.draw(depth_shader);
@@ -542,17 +545,22 @@ void scene::render([[maybe_unused]] float delta_time)
     glViewport(0, 0, screen_width, screen_height);
     clear_back_buffer(properties.get_vec3("clear_color"));
 
-    quad_shader.use();
+    shader_textured.use();
 
-    quad_shader.set_uniform("use_perspective_matrix", use_perspective_matrix);
+    shader_textured.set_uniform("view", camera.view_matrix());
+    shader_textured.set_uniform("projection", camera.projection_matrix());
+    shader_textured.set_uniform("model", glm::mat4(1.f));
 
-    if (use_perspective_matrix)
-    {
-        quad_shader.set_uniform("near_plane", 1.f);
-        quad_shader.set_uniform("far_plane", 7.5f);
-    }
+    shader_textured.set_uniform("light_pos", camera.position());
+    shader_textured.set_uniform("view_pos", camera.position());
+    shader_textured.set_uniform("blinn", false);
+    shader_textured.set_uniform("enable_srgb_in_fsh", false);
 
-    mesh_quad.draw(quad_shader);
+    mesh_floor.textures_enable();
+    mesh_cube.textures_enable();
+
+    mesh_floor.draw(shader_textured);
+    mesh_cube.draw(shader_textured);
 }
 
 int main(int /*argc*/, char* /*argv*/[])

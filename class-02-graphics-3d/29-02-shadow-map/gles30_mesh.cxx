@@ -62,7 +62,7 @@ void mesh::draw(shader& shader) const
     uint32_t diffuse_index  = 0;
     uint32_t specular_index = 0;
     uint32_t cubemap_index  = 0;
-    for (uint32_t i = 0; i < textures.size(); i++)
+    for (uint32_t i = 0; i < textures.size() && !disable_textures; i++)
     {
         // activate proper texture unit before binding
         glActiveTexture(GL_TEXTURE0 + i);
@@ -126,7 +126,7 @@ void mesh::draw_instanced(shader&               shader,
     uint32_t diffuse_index  = 0;
     uint32_t specular_index = 0;
     uint32_t cubemap_index  = 0;
-    for (uint32_t i = 0; i < textures.size(); i++)
+    for (uint32_t i = 0; i < textures.size() && !disable_textures; i++)
     {
         // activate proper texture unit before binding
         glActiveTexture(GL_TEXTURE0 + i);

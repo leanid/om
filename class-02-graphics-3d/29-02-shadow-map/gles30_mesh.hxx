@@ -51,6 +51,9 @@ public:
     void      set_primitive_type(primitive value);
     primitive get_primitive_type() const;
 
+    void textures_enable();
+    void textures_disable();
+
 private:
     friend void swap(mesh& l, mesh& r) noexcept;
     void        setup();
@@ -64,6 +67,8 @@ private:
     uint32_t ebo{ 0 }; // element buffer object (index)
 
     primitive primitive_type{};
+
+    bool disable_textures{false};
 };
 
 inline mesh::mesh(std::vector<vertex>   a_vertices,
@@ -85,6 +90,16 @@ inline void mesh::set_primitive_type(primitive value)
 inline primitive mesh::get_primitive_type() const
 {
     return primitive_type;
+}
+
+inline void mesh::textures_disable()
+{
+    disable_textures = true;
+}
+
+inline void mesh::textures_enable()
+{
+    disable_textures = false;
 }
 
 } // namespace gles30
