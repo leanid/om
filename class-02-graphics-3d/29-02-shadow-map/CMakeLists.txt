@@ -110,6 +110,8 @@ target_sources(29-02-shadow-map PRIVATE main.cxx
                                    res/rock.mtl
                                    res/depth.vsh
                                    res/depth.fsh
+                                   res/shadow.vsh
+                                   res/shadow.fsh
 
                                    res/runtime.properties.hxx
                                    )

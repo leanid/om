@@ -164,7 +164,7 @@ static void destroy_opengl_context(void* ptr)
     if (is_desktop())
     {
 
-#define GL_MULTISAMPLE 32925 // or 0x809D
+#define GL_MULTISAMPLE 32925      // or 0x809D
         glEnable(GL_MULTISAMPLE); // not working in GLES3.0
 #undef GL_MULTISAMPLE
     }
@@ -346,7 +346,7 @@ struct scene
     void render(float delta_time);
     void pull_system_events(bool& continue_loop);
 
-    static constexpr size_t fbo_width = 1024;
+    static constexpr size_t fbo_width  = 1024;
     static constexpr size_t fbo_height = 1024;
 
     properties_reader properties;
@@ -355,10 +355,10 @@ struct scene
     std::unique_ptr<void, void (*)(void*)>             context;
 
     gles30::shader depth_shader;
-    gles30::shader shader_textured;
+    gles30::shader shader_shadow;
 
-    gles30::mesh   mesh_floor;
-    gles30::mesh   mesh_cube;
+    gles30::mesh mesh_floor;
+    gles30::mesh mesh_cube;
 
     gles30::texture depth_texture;
     gles30::mesh    mesh_quad;
@@ -477,9 +477,11 @@ scene::scene()
     , window{ create_window(properties, gles30::multisampling::disable) }
     , context{ create_opengl_context(window.get()) }
     , depth_shader{ "res/depth.vsh", "res/depth.fsh" }
-    , shader_textured{ "res/textured.vsh", "res/textured.fsh" }
-    , mesh_floor{ create_mesh(plane_vertices, sizeof(plane_vertices) / 4 / 8, {&wood_texture}) }
-    , mesh_cube{create_mesh(cube_vertices, sizeof(cube_vertices) / 4 / 8, {&wood_texture})}
+    , shader_shadow{ "res/shadow.vsh", "res/shadow.fsh" }
+    , mesh_floor{ create_mesh(
+          plane_vertices, sizeof(plane_vertices) / 4 / 8, { &wood_texture }) }
+    , mesh_cube{ create_mesh(
+          cube_vertices, sizeof(cube_vertices) / 4 / 8, { &wood_texture }) }
     , depth_texture{ gles30::texture::type::depth_component,
                      fbo_width,
                      fbo_height,
@@ -511,12 +513,14 @@ void scene::render([[maybe_unused]] float delta_time)
 
     clear_back_buffer(properties.get_vec3("clear_color"));
 
-    float near_plane = 1.0f, far_plane = 7.5f;
-    glm::mat4 light_projection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
+    float     near_plane = 1.0f, far_plane = 7.5f;
+    glm::mat4 light_projection =
+        glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
 
-    glm::mat4 light_view = glm::lookAt(glm::vec3(-2.0f, 4.0f, -1.0f),
-                                  glm::vec3( 0.0f, 0.0f,  0.0f),
-                                  glm::vec3( 0.0f, 1.0f,  0.0f));
+    glm::vec3 light_pos = glm::vec3(-2.0f, 4.0f, -1.0f) * 2.f;
+
+    glm::mat4 light_view = glm::lookAt(
+        light_pos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
     depth_shader.use();
     depth_shader.set_uniform("model", glm::mat4(1.f));
@@ -524,7 +528,8 @@ void scene::render([[maybe_unused]] float delta_time)
     {
         depth_shader.set_uniform("view", light_view);
         depth_shader.set_uniform("projection", camera.projection_matrix());
-    } else
+    }
+    else
     {
         depth_shader.set_uniform("view", light_view);
         depth_shader.set_uniform("projection", light_projection);
@@ -545,22 +550,24 @@ void scene::render([[maybe_unused]] float delta_time)
     glViewport(0, 0, screen_width, screen_height);
     clear_back_buffer(properties.get_vec3("clear_color"));
 
-    shader_textured.use();
+    shader_shadow.use();
 
-    shader_textured.set_uniform("view", camera.view_matrix());
-    shader_textured.set_uniform("projection", camera.projection_matrix());
-    shader_textured.set_uniform("model", glm::mat4(1.f));
+    shader_shadow.set_uniform("view", camera.view_matrix());
+    shader_shadow.set_uniform("projection", camera.projection_matrix());
+    shader_shadow.set_uniform("model", glm::mat4(1.f));
+    shader_shadow.set_uniform("light_space_matrix",
+                              light_projection * light_view);
+    shader_shadow.set_uniform("light_pos", light_pos);
+    shader_shadow.set_uniform("view_pos", camera.position());
 
-    shader_textured.set_uniform("light_pos", camera.position());
-    shader_textured.set_uniform("view_pos", camera.position());
-    shader_textured.set_uniform("blinn", false);
-    shader_textured.set_uniform("enable_srgb_in_fsh", false);
+    // we need set by hand third texture - shadow_map - see res/shadow.fsh
+    shader_shadow.set_uniform("tex_shadow_map", depth_texture, 2);
 
     mesh_floor.textures_enable();
     mesh_cube.textures_enable();
 
-    mesh_floor.draw(shader_textured);
-    mesh_cube.draw(shader_textured);
+    mesh_floor.draw(shader_shadow);
+    mesh_cube.draw(shader_shadow);
 }
 
 int main(int /*argc*/, char* /*argv*/[])
@@ -570,7 +577,7 @@ int main(int /*argc*/, char* /*argv*/[])
     {
         scene scene;
 
-        float last_frame_time      = 0.0f; // Time of last frame
+        float last_frame_time = 0.0f; // Time of last frame
 
         for (bool continue_loop = true; continue_loop;)
         {
