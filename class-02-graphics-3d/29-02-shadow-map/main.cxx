@@ -164,7 +164,7 @@ static void destroy_opengl_context(void* ptr)
     if (is_desktop())
     {
 
-#define GL_MULTISAMPLE 32925      // or 0x809D
+#define GL_MULTISAMPLE 32925 // or 0x809D
         glEnable(GL_MULTISAMPLE); // not working in GLES3.0
 #undef GL_MULTISAMPLE
     }
@@ -367,7 +367,7 @@ struct scene
 
     gles30::texture wood_texture;
 
-    bool use_perspective_matrix = true;
+    bool use_perspective_matrix = false;
 };
 
 void scene::pull_system_events(bool& continue_loop)
@@ -517,15 +517,17 @@ void scene::render([[maybe_unused]] float delta_time)
     glm::mat4 light_projection =
         glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
 
-    glm::vec3 light_pos = glm::vec3(-2.0f, 4.0f, -1.0f) * 2.f;
+    light_pos     = properties.get_vec3("light_pos");
+    light_look_at = properties.get_vec3("light_look_at");
 
-    glm::mat4 light_view = glm::lookAt(
-        light_pos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    glm::mat4 light_view =
+        glm::lookAt(light_pos, light_look_at, glm::vec3(0.0f, 1.0f, 0.0f));
 
     depth_shader.use();
     depth_shader.set_uniform("model", glm::mat4(1.f));
     if (use_perspective_matrix)
     {
+        // shadow not working for camera.projection_matrix() - why?
         depth_shader.set_uniform("view", light_view);
         depth_shader.set_uniform("projection", camera.projection_matrix());
     }
@@ -566,8 +568,8 @@ void scene::render([[maybe_unused]] float delta_time)
     mesh_floor.textures_enable();
     mesh_cube.textures_enable();
 
-    mesh_floor.draw(shader_shadow);
     mesh_cube.draw(shader_shadow);
+    mesh_floor.draw(shader_shadow);
 }
 
 int main(int /*argc*/, char* /*argv*/[])
@@ -579,7 +581,8 @@ int main(int /*argc*/, char* /*argv*/[])
 
         float last_frame_time = 0.0f; // Time of last frame
 
-        for (bool continue_loop = true; continue_loop;)
+        for (bool continue_loop = true; continue_loop;
+             SDL_GL_SwapWindow(scene.window.get()))
         {
             float delta_time = update_delta_time(last_frame_time);
 
@@ -588,8 +591,6 @@ int main(int /*argc*/, char* /*argv*/[])
             scene.pull_system_events(continue_loop);
 
             scene.render(delta_time);
-
-            SDL_GL_SwapWindow(scene.window.get());
         }
     }
 

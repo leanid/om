@@ -13,11 +13,15 @@ float       screen_width  = 1024.f;
 float       screen_height = 768.f;
 float       screen_aspect = screen_width / screen_height;
 
-glm::vec3 cam_pos = { 0.f, 0.f, 3.f };
+glm::vec3 cam_pos = { 0.f, 1.f, 3.f };
 glm::vec3 cam_dir = { 0.f, 0.f, -1.f };
 // to understand normal transform - try rotate cube
 float     angle       = 0.000f;
 glm::vec3 rotate_axis = { 0.f, 1.f, 0.f };
+
+glm::vec3 light_pos     = { -2.0f, 2.0f, -2.0f };
+glm::vec3 light_look_at = { 0.f, 0.f, 0.f };
+glm::vec3 cube_pos      = { 0.f, 0.f, 0.f };
 
 glm::vec3 clear_color = { 0.2f, 0.1f, 0.1f };
 
