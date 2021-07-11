@@ -17,13 +17,14 @@ static void get_stack_min_and_max_adresses(size_t& min, size_t& max)
 #include <string_view>
 
 #include <fcntl.h>
+#include <sys/resource.h>
 #include <unistd.h>
 
 bool find_stack_min_and_max_adresses(const std::string_view& line,
                                      size_t&                 min,
                                      size_t&                 max)
 {
-    size_t index = line.find("[stack]");
+    size_t index = line.find(std::string_view{ "[stack]", 7 });
     if (std::string_view::npos == index)
     {
         return false;
@@ -55,6 +56,14 @@ bool find_stack_min_and_max_adresses(const std::string_view& line,
     {
         return false;
     }
+
+    struct rlimit rl;
+    int           result_rl = getrlimit(RLIMIT_STACK, &rl);
+    if (result_rl == 0)
+    {
+        min = max - rl.rlim_cur;
+    }
+
     return true;
 }
 
@@ -68,11 +77,11 @@ static void get_stack_min_and_max_adresses(size_t& min, size_t& max)
         return;
     }
 
-    std::array<char, 512> line;
-    ssize_t               status{ 0 };
+    std::array<char, 1024> line;
+    ssize_t                status{ 0 };
 
     status = read(fd, line.data(), line.size());
-    if (status == 0)
+    if (status <= 0)
     {
         // end of file
         min = max = 0;
@@ -104,7 +113,7 @@ static void get_stack_min_and_max_adresses(size_t& min, size_t& max)
             ssize_t next_status =
                 read(fd, line.data() + status, line.size() - status);
             status += next_status;
-            if (next_status == 0)
+            if (next_status <= 0)
             {
                 min = max = 0;
                 close(fd);
@@ -131,8 +140,7 @@ size_t stack_info::get_stack_size() const
 
 size_t stack_info::get_current_stack_position() const
 {
-    size_t tmp;
-    return address_max - reinterpret_cast<size_t>(&tmp);
+    return address_max - reinterpret_cast<size_t>(this);
 }
 
 size_t stack_info::get_free_stack_memory_size() const
