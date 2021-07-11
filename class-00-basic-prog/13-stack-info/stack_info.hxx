@@ -4,6 +4,11 @@
 
 namespace om
 {
+/// This is payground.
+/// Tested on Windows 10
+/// On Linux g++ supports -fsplit-stack (unlimited stack size)
+/// http://gcc.gnu.org/wiki/SplitStacks On Linux you can find default stack size
+/// limint by: ulimit -s - result in kB example: 8192 (on my Fedora 34 - 8MB)
 class stack_info
 {
 public:
