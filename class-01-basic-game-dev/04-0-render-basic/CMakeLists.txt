@@ -85,7 +85,9 @@ target_include_directories(04-0-render-image-windowed PRIVATE ${SDL2_INCLUDE_DIR
 target_link_libraries(04-0-render-image-windowed PRIVATE SDL2::SDL2 SDL2::SDL2main)
 target_compile_features(04-0-render-image-windowed PUBLIC cxx_std_17)
 
-add_executable(04-06-ray-tracing-basic 06_ray_tracing_basic.cxx)
+add_executable(04-06-ray-tracing-basic 06_ray_tracing_basic.cxx
+                                       00_canvas_basic.hxx
+                                       00_canvas_basic.cxx)
 target_compile_features(04-06-ray-tracing-basic PRIVATE cxx_std_17)
 
 install(TARGETS 04-0-render-basic
