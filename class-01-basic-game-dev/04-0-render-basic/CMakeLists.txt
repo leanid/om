@@ -100,6 +100,11 @@ add_executable(04-08-ray-tracing-basic 08_ray_tracing_basic.cxx
                                        00_canvas_basic.cxx)
 target_compile_features(04-08-ray-tracing-basic PRIVATE cxx_std_17)
 
+add_executable(04-09-ray-tracing-basic 09_ray_tracing_basic.cxx
+                                       00_canvas_basic.hxx
+                                       00_canvas_basic.cxx)
+target_compile_features(04-09-ray-tracing-basic PRIVATE cxx_std_17)
+
 
 install(TARGETS 04-0-render-basic
         RUNTIME DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../../bin/tests
