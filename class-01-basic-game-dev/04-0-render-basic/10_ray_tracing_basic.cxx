@@ -18,6 +18,9 @@ const float Vw{ d }; /// viewport width in 3D space
 const float Vh{ d }; /// viewport height in 3D space
 
 const float inf{ std::numeric_limits<float>::infinity() }; /// c++ infinity
+/// we have to make epsilon large like 0.01 or we need to skip self-collisions
+/// currently I deside to skip self collisions directly in code
+const float epsilon{ 0.000000f };
 
 /// position in 3D space of pixel from canvas
 glm::vec3 canvas_to_viewport(int pixel_x, int pixel_y)
@@ -30,7 +33,7 @@ using color_t = glm::vec3;
 constexpr color_t red{ 1.f, 0.f, 0.f };
 constexpr color_t green{ 0.f, 1.f, 0.f };
 constexpr color_t blue{ 0.f, 0.f, 1.f };
-constexpr color_t background{ 1.f, 1.f, 1.f };
+constexpr color_t background{ 0.f, 0.f, 0.f };
 constexpr color_t yellow{ 1.f, 1.f, 0.f };
 
 struct sphere_t
@@ -39,6 +42,7 @@ struct sphere_t
     color_t   color;
     float     radius;
     float     spec_reflection_exp; // if < 0 skip
+    float     reflective;          // 0 <= r <= 1
 };
 
 struct light_t
@@ -77,7 +81,9 @@ color_t ray_trace(const glm::vec3&             origin,
                   const float&                 start_t,
                   const float&                 end_t,
                   const std::vector<sphere_t>& objects,
-                  const std::vector<light_t>&  lights);
+                  const std::vector<light_t>&  lights,
+                  const sphere_t&              self,
+                  const size_t&                recursion_depth);
 
 // return light intensity
 float compute_lighting(const glm::vec3&             P,
@@ -85,7 +91,8 @@ float compute_lighting(const glm::vec3&             P,
                        const glm::vec3&             V,
                        const float                  specular_reflection_exp,
                        const std::vector<sphere_t>& objects, // to check shadows
-                       const std::vector<light_t>&  lights);
+                       const std::vector<light_t>&  lights,
+                       const sphere_t&              self);
 
 struct intersection_sphere
 {
@@ -97,7 +104,10 @@ intersection_sphere closest_intersection(const glm::vec3&             origin,
                                          const glm::vec3&             direction,
                                          const float&                 t_min,
                                          const float&                 t_max,
-                                         const std::vector<sphere_t>& objects);
+                                         const std::vector<sphere_t>& objects,
+                                         const sphere_t&              self);
+
+glm::vec3 reflect_ray(const glm::vec3& ray, const glm::vec3& normal);
 
 void canvas_put_pixel(int x, int y, color_t col, canvas& image)
 {
@@ -122,11 +132,14 @@ int main(int argc, char** argv)
 
     std::vector<sphere_t> scene;
 
-    scene.push_back(sphere_t{ glm::vec3{ 0.f, -1.f, 3.f }, red, 1.f, 500.f });
-    scene.push_back(sphere_t{ glm::vec3{ 2.f, 0.f, 4.f }, blue, 1.f, 500.f });
-    scene.push_back(sphere_t{ glm::vec3{ -2.f, 0.f, 4.f }, green, 1.f, 10.f });
     scene.push_back(
-        sphere_t{ glm::vec3{ 0.f, -5001.f, 0.f }, yellow, 5000.f, 1000.f });
+        sphere_t{ glm::vec3{ 0.f, -1.f, 3.f }, red, 1.f, 500.f, 0.2f });
+    scene.push_back(
+        sphere_t{ glm::vec3{ 2.f, 0.f, 4.f }, blue, 1.f, 500.f, 0.3f });
+    scene.push_back(
+        sphere_t{ glm::vec3{ -2.f, 0.f, 4.f }, green, 1.f, 10.f, 0.4f });
+    scene.push_back(sphere_t{
+        glm::vec3{ 0.f, -5001.f, 0.f }, yellow, 5000.f, 1000.f, 0.5f });
 
     std::vector<light_t> lights;
 
@@ -140,13 +153,15 @@ int main(int argc, char** argv)
     {
         for (int y = -Ch / 2; y < Ch / 2; ++y)
         {
-            glm::vec3 Direction{ canvas_to_viewport(x, y) };
-            auto      color{ ray_trace(O, Direction, 1.f, inf, scene, lights) };
+            glm::vec3      Direction{ canvas_to_viewport(x, y) };
+            const sphere_t tmp_sphere{};
+            auto           color{ ray_trace(
+                O, Direction, 1.f, inf, scene, lights, tmp_sphere, 3) };
             canvas_put_pixel(x, y, color, image);
         }
     }
 
-    image.save_image("09_ray_tracing_basic.ppm");
+    image.save_image("10_ray_tracing_basic.ppm");
     return 0;
 }
 
@@ -162,17 +177,17 @@ intersection ray_intersect_sphere(const glm::vec3& ray_start,
 {
     const glm::vec3 T{ ray_start - sphere.center_position };
     const float     a = glm::dot(ray_direction, ray_direction);
-    const float     b = 2 * glm::dot(T, ray_direction);
+    const float     b = 2.f * glm::dot(T, ray_direction);
     const float     c = glm::dot(T, T) - sphere.radius * sphere.radius;
 
-    const float discriminant = b * b - 4 * a * c;
-    if (discriminant < 0)
+    const float discriminant = b * b - 4.f * a * c;
+    if (discriminant < 0.f)
     {
         return intersection{ inf, inf };
     }
 
-    const float t1 = (-b + std::sqrt(discriminant)) / (2 * a);
-    const float t2 = (-b - std::sqrt(discriminant)) / (2 * a);
+    const float t1 = (-b + std::sqrt(discriminant)) / (2.f * a);
+    const float t2 = (-b - std::sqrt(discriminant)) / (2.f * a);
 
     return intersection{ t1, t2 };
 }
@@ -181,13 +196,19 @@ intersection_sphere closest_intersection(const glm::vec3&             origin,
                                          const glm::vec3&             direction,
                                          const float&                 t_min,
                                          const float&                 t_max,
-                                         const std::vector<sphere_t>& objects)
+                                         const std::vector<sphere_t>& objects,
+                                         const sphere_t&              self)
 {
     const sphere_t* closest   = nullptr;
     float           closest_t = inf;
 
     for (const sphere_t& sphere : objects)
     {
+        // hack to fix strange pixels with lighter colors then should be
+        if (&sphere == &self)
+        {
+            continue;
+        }
         const auto [t1, t2] = ray_intersect_sphere(origin, direction, sphere);
         if (t1 >= t_min && t1 <= t_max && t1 < closest_t)
         {
@@ -210,23 +231,54 @@ color_t ray_trace(const glm::vec3&             origin,
                   const float&                 start_t,
                   const float&                 end_t,
                   const std::vector<sphere_t>& objects,
-                  const std::vector<light_t>&  lights)
+                  const std::vector<light_t>&  lights,
+                  const sphere_t&              self,
+                  const size_t&                recursion_depth)
 {
     const intersection_sphere closest =
-        closest_intersection(origin, direction, start_t, inf, objects);
+        closest_intersection(origin, direction, start_t, end_t, objects, self);
     if (closest.sphere == nullptr)
     {
         return background;
     }
 
-    const glm::vec3 P = origin + closest.t * direction;
+    const glm::vec3 P = origin + (closest.t * direction);
     const glm::vec3 N = glm::normalize(P - closest.sphere->center_position);
     const glm::vec3 V = -direction; // to Viewer
 
-    const float intensity = compute_lighting(
-        P, N, V, closest.sphere->spec_reflection_exp, objects, lights);
+    const float intensity =
+        compute_lighting(P,
+                         N,
+                         V,
+                         closest.sphere->spec_reflection_exp,
+                         objects,
+                         lights,
+                         *closest.sphere);
 
-    return closest.sphere->color * intensity;
+    const glm::vec3 local_color = closest.sphere->color * intensity;
+
+    const float r = closest.sphere->reflective;
+
+    // no more bounce or object not reflective
+    if (recursion_depth <= 0 || r <= 0.f)
+    {
+        return local_color;
+    }
+
+    // return local_color;
+
+    const glm::vec3 R = reflect_ray(-direction, N);
+
+    const color_t reflected_color = ray_trace(P,
+                                              R,
+                                              epsilon,
+                                              inf,
+                                              objects,
+                                              lights,
+                                              *closest.sphere,
+                                              recursion_depth - 1);
+
+    return local_color * (1.f - r) + reflected_color * r;
 }
 
 float compute_lighting(const glm::vec3&             P,
@@ -234,7 +286,8 @@ float compute_lighting(const glm::vec3&             P,
                        const glm::vec3&             V,
                        const float                  specular_reflection_exp,
                        const std::vector<sphere_t>& objects,
-                       const std::vector<light_t>&  lights)
+                       const std::vector<light_t>&  lights,
+                       const sphere_t&              self)
 {
     float intensity = 0.f;
     for (const light_t& light : lights)
@@ -267,7 +320,7 @@ float compute_lighting(const glm::vec3&             P,
 
             // find if beetwin point P and light source exist other object
             const intersection_sphere closest =
-                closest_intersection(P, L, 0.001f, t_max, objects);
+                closest_intersection(P, L, epsilon, t_max, objects, self);
             if (closest.sphere != nullptr)
             {
                 // P in shadow of closest.sphere
@@ -284,7 +337,7 @@ float compute_lighting(const glm::vec3&             P,
 
             // Specular lighting
             // R - reflection vector
-            const glm::vec3 R       = 2.f * N * glm::dot(N, L) - L;
+            const glm::vec3 R       = reflect_ray(L, N);
             const float     cos_R_V = glm::dot(R, V);
 
             if (cos_R_V > 0.f)
@@ -297,4 +350,9 @@ float compute_lighting(const glm::vec3&             P,
     } // end for light
     intensity = std::clamp(intensity, 0.f, 1.f);
     return intensity;
+}
+
+glm::vec3 reflect_ray(const glm::vec3& ray, const glm::vec3& normal)
+{
+    return 2.f * normal * glm::dot(normal, ray) - ray;
 }
