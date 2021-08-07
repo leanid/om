@@ -112,7 +112,7 @@ glm::vec3 reflect_ray(const glm::vec3& ray, const glm::vec3& normal);
 
 struct camera_t
 {
-    glm::mat4 direction;
+    glm::mat4 rotation;
     glm::vec3 position;
 };
 
@@ -158,11 +158,11 @@ int main(int argc, char** argv)
 
     camera_t camera{ glm::mat4{ 1.f }, glm::vec3{ 0, 0, 0 } };
     float    rotate_around_y = glm::radians(15.f);
-    camera.direction         = glm::rotate(
-        camera.direction, rotate_around_y, glm::vec3{ 0.f, 1.f, 0.f });
+    camera.rotation          = glm::rotate(
+        camera.rotation, rotate_around_y, glm::vec3{ 0.f, 1.f, 0.f });
     float rotate_around_x = glm::radians(45.f);
-    camera.direction      = glm::rotate(
-        camera.direction, rotate_around_x, glm::vec3{ 1.f, 0.f, 0.f });
+    camera.rotation       = glm::rotate(
+        camera.rotation, rotate_around_x, glm::vec3{ 1.f, 0.f, 0.f });
     camera.position = glm::vec3{ -2.f, 5.f, -2.f };
 
     for (int x = -Cw / 2; x < Cw / 2; ++x)
@@ -170,7 +170,7 @@ int main(int argc, char** argv)
         for (int y = -Ch / 2; y < Ch / 2; ++y)
         {
             glm::vec4 direction =
-                camera.direction * glm::vec4{ canvas_to_viewport(x, y), 0.f };
+                camera.rotation * glm::vec4{ canvas_to_viewport(x, y), 0.f };
             const sphere_t tmp_sphere{};
             auto           color{ ray_trace(camera.position,
                                   direction,
