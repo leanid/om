@@ -74,8 +74,8 @@ struct light_t
 
 color_t ray_trace(const glm::vec3&             origin,
                   const glm::vec3&             direction,
-                  float                        start,
-                  float                        inf,
+                  const float&                 start_t,
+                  const float&                 end_t,
                   const std::vector<sphere_t>& objects,
                   const std::vector<light_t>&  lights);
 
@@ -101,17 +101,17 @@ intersection_sphere closest_intersection(const glm::vec3&             origin,
 
 void canvas_put_pixel(int x, int y, color_t col, canvas& image)
 {
-    size_t image_x = (Cw / 2) + x;
-    size_t image_y = (Ch / 2) - y;
+    const size_t image_x = (Cw / 2) + x;
+    const size_t image_y = (Ch / 2) - y;
 
     if (image_x < 0 || image_x >= Cw || image_y < 0 || image_y >= Ch)
     {
         return;
     }
 
-    color c{ static_cast<uint8_t>(col.r * 255),
-             static_cast<uint8_t>(col.g * 255),
-             static_cast<uint8_t>(col.b * 255) };
+    const color c{ static_cast<uint8_t>(col.r * 255),
+                   static_cast<uint8_t>(col.g * 255),
+                   static_cast<uint8_t>(col.b * 255) };
 
     image.set_pixel(image_x, image_y, c);
 }
@@ -161,18 +161,18 @@ intersection ray_intersect_sphere(const glm::vec3& ray_start,
                                   const sphere_t&  sphere)
 {
     const glm::vec3 T{ ray_start - sphere.center_position };
-    float           a = glm::dot(ray_direction, ray_direction);
-    float           b = 2 * glm::dot(T, ray_direction);
-    float           c = glm::dot(T, T) - sphere.radius * sphere.radius;
+    const float     a = glm::dot(ray_direction, ray_direction);
+    const float     b = 2 * glm::dot(T, ray_direction);
+    const float     c = glm::dot(T, T) - sphere.radius * sphere.radius;
 
-    float discriminant = b * b - 4 * a * c;
+    const float discriminant = b * b - 4 * a * c;
     if (discriminant < 0)
     {
         return intersection{ inf, inf };
     }
 
-    float t1 = (-b + std::sqrt(discriminant)) / (2 * a);
-    float t2 = (-b - std::sqrt(discriminant)) / (2 * a);
+    const float t1 = (-b + std::sqrt(discriminant)) / (2 * a);
+    const float t2 = (-b - std::sqrt(discriminant)) / (2 * a);
 
     return intersection{ t1, t2 };
 }
@@ -207,13 +207,13 @@ intersection_sphere closest_intersection(const glm::vec3&             origin,
 
 color_t ray_trace(const glm::vec3&             origin,
                   const glm::vec3&             direction,
-                  float                        start,
-                  float                        inf,
+                  const float&                 start_t,
+                  const float&                 end_t,
                   const std::vector<sphere_t>& objects,
                   const std::vector<light_t>&  lights)
 {
-    intersection_sphere closest =
-        closest_intersection(origin, direction, 1.f, inf, objects);
+    const intersection_sphere closest =
+        closest_intersection(origin, direction, start_t, inf, objects);
     if (closest.sphere == nullptr)
     {
         return background;

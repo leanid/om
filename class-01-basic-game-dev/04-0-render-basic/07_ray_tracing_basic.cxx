@@ -84,17 +84,17 @@ float compute_lighting(const glm::vec3             P,
 
 void canvas_put_pixel(int x, int y, color_t col, canvas& image)
 {
-    size_t image_x = (Cw / 2) + x;
-    size_t image_y = (Ch / 2) - y;
+    const size_t image_x = (Cw / 2) + x;
+    const size_t image_y = (Ch / 2) - y;
 
     if (image_x < 0 || image_x >= Cw || image_y < 0 || image_y >= Ch)
     {
         return;
     }
 
-    color c{ static_cast<uint8_t>(col.r * 255),
-             static_cast<uint8_t>(col.g * 255),
-             static_cast<uint8_t>(col.b * 255) };
+    const color c{ static_cast<uint8_t>(col.r * 255),
+                   static_cast<uint8_t>(col.g * 255),
+                   static_cast<uint8_t>(col.b * 255) };
 
     image.set_pixel(image_x, image_y, c);
 }

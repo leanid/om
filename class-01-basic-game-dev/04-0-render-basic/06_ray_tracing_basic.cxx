@@ -28,6 +28,7 @@ using color_t = glm::vec3;
 constexpr color_t red{ 1.f, 0.f, 0.f };
 constexpr color_t green{ 0.f, 1.f, 0.f };
 constexpr color_t blue{ 0.f, 0.f, 1.f };
+constexpr color_t yellow{ 1.f, 1.f, 0.f };
 constexpr color_t background{ 1.f, 1.f, 1.f };
 
 struct sphere_t
@@ -45,17 +46,17 @@ color_t ray_trace(const glm::vec3&             origin,
 
 void canvas_put_pixel(int x, int y, color_t col, canvas& image)
 {
-    size_t image_x = (Cw / 2) + x;
-    size_t image_y = (Ch / 2) - y;
+    const size_t image_x = (Cw / 2) + x;
+    const size_t image_y = (Ch / 2) - y;
 
     if (image_x < 0 || image_x >= Cw || image_y < 0 || image_y >= Ch)
     {
         return;
     }
 
-    color c{ static_cast<uint8_t>(col.r * 255),
-             static_cast<uint8_t>(col.g * 255),
-             static_cast<uint8_t>(col.b * 255) };
+    const color c{ static_cast<uint8_t>(col.r * 255),
+                   static_cast<uint8_t>(col.g * 255),
+                   static_cast<uint8_t>(col.b * 255) };
 
     image.set_pixel(image_x, image_y, c);
 }
@@ -69,13 +70,14 @@ int main(int argc, char** argv)
     scene.push_back(sphere_t{ glm::vec3{ 0.f, -1.f, 3.f }, red, 1.f });
     scene.push_back(sphere_t{ glm::vec3{ 2.f, 0.f, 4.f }, blue, 1.f });
     scene.push_back(sphere_t{ glm::vec3{ -2.f, 0.f, 4.f }, green, 1.f });
+    scene.push_back(sphere_t{ glm::vec3{ 0.f, -5001.f, 0.f }, yellow, 5000.f });
 
     for (int x = -Cw / 2; x < Cw / 2; ++x)
     {
         for (int y = -Ch / 2; y < Ch / 2; ++y)
         {
-            glm::vec3 Direction{ canvas_to_viewport(x, y) };
-            auto      color{ ray_trace(O, Direction, 1.f, inf, scene) };
+            const glm::vec3 Direction{ canvas_to_viewport(x, y) };
+            const auto      color{ ray_trace(O, Direction, 1.f, inf, scene) };
             canvas_put_pixel(x, y, color, image);
         }
     }
@@ -113,8 +115,8 @@ intersection ray_intersect_sphere(const glm::vec3& ray_start,
 
 color_t ray_trace(const glm::vec3&             origin,
                   const glm::vec3&             direction,
-                  float                        start,
-                  float                        inf,
+                  float                        start_t,
+                  float                        end_t,
                   const std::vector<sphere_t>& objects)
 {
     const sphere_t* closest   = nullptr;
@@ -123,12 +125,12 @@ color_t ray_trace(const glm::vec3&             origin,
     for (const sphere_t& sphere : objects)
     {
         const auto [t1, t2] = ray_intersect_sphere(origin, direction, sphere);
-        if (t1 < inf && t1 < closest_t)
+        if (t1 >= start_t && t1 <= end_t && t1 < closest_t)
         {
             closest   = &sphere;
             closest_t = t1;
         }
-        if (t2 < t1 && t2 < closest_t)
+        if (t2 >= start_t && t2 <= end_t && t2 < closest_t)
         {
             closest   = &sphere;
             closest_t = t2;
