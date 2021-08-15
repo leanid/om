@@ -4,14 +4,14 @@
 
 struct vertex
 {
-    double f0 = 0; /// x
-    double f1 = 0; /// y
-    double f2 = 0; /// r
-    double f3 = 0; /// g
-    double f4 = 0; /// b
-    double f5 = 0; /// u (texture coordinate)
-    double f6 = 0; /// v (texture coordinate)
-    double f7 = 0; /// ?
+    double x  = 0; /// x
+    double y  = 0; /// y
+    double z  = 0; /// z
+    double f3 = 0; /// r
+    double f4 = 0; /// g
+    double f5 = 0; /// b
+    double f6 = 0; /// u (texture coordinate)
+    double f7 = 0; /// v (texture coordinate)
 };
 
 double interpolate(const double f0, const double f1, const double t);

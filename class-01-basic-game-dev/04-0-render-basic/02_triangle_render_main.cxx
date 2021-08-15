@@ -15,8 +15,9 @@ int main(int, char**)
 
     std::vector<position> triangle;
     triangle.push_back(position{ 0, 0 });
-    triangle.push_back(position{ width - 1, height - 1 });
-    triangle.push_back(position{ 0, height - 1 });
+    triangle.push_back(
+        position{ static_cast<int>(width - 1), static_cast<int>(height - 1) });
+    triangle.push_back(position{ 0, static_cast<int>(height - 1) });
 
     render_tri.draw_triangles(triangle, 3, green);
 

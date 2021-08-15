@@ -60,23 +60,23 @@ int main(int, char**)
         {
             vertex out = v_in;
 
-            double x = out.f0;
-            double y = out.f1;
+            double x = out.x;
+            double y = out.y;
 
-            out.f0 = x;
-            out.f1 = y;
+            out.x = x;
+            out.y = y;
 
             return out;
         }
         color fragment_shader(const vertex& v_in) override
         {
             color out;
-            out.r = static_cast<uint8_t>(v_in.f2 * 255);
-            out.g = static_cast<uint8_t>(v_in.f3 * 255);
-            out.b = static_cast<uint8_t>(v_in.f4 * 255);
+            out.r = static_cast<uint8_t>(v_in.f3 * 255);
+            out.g = static_cast<uint8_t>(v_in.f4 * 255);
+            out.b = static_cast<uint8_t>(v_in.f5 * 255);
 
-            double x  = v_in.f0;
-            double y  = v_in.f1;
+            double x  = v_in.x;
+            double y  = v_in.y;
             double dx = mouse_x - x;
             double dy = mouse_y - y;
             if (dx * dx + dy * dy < radius * radius)

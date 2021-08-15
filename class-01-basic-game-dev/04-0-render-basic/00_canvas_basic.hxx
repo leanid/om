@@ -18,6 +18,10 @@ struct color
 };
 #pragma pack(pop)
 
+constexpr color color_red{ 255, 0, 0 };
+constexpr color color_green{ 0, 255, 0 };
+constexpr color color_blue{ 0, 0, 255 };
+
 class canvas
 {
 public:

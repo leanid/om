@@ -119,21 +119,21 @@ int main(int, char**)
         vertex vertex_shader(const vertex& v_in) override
         {
             vertex out = v_in;
-            out.f0 -= (320 / 2);
-            out.f1 -= (240 / 2);
+            out.x -= (320 / 2);
+            out.y -= (240 / 2);
 
-            out.f0 *= 0.5;
-            out.f1 *= 0.5;
+            out.x *= 0.5;
+            out.y *= 0.5;
 
             // rotate
             double alpha = (3.14159 / 2) * uniforms_.f7 * -1;
-            double x     = out.f0;
-            double y     = out.f1;
-            out.f0       = x * std::cos(alpha) - y * std::sin(alpha);
-            out.f1       = x * std::sin(alpha) + y * std::cos(alpha);
+            double x     = out.x;
+            double y     = out.y;
+            out.x        = x * std::cos(alpha) - y * std::sin(alpha);
+            out.y        = x * std::sin(alpha) + y * std::cos(alpha);
 
-            out.f0 += (320 / 2);
-            out.f1 += (240 / 2);
+            out.x += (320 / 2);
+            out.y += (240 / 2);
 
             return out;
         }
@@ -147,11 +147,11 @@ int main(int, char**)
     size_t h = height;
 
     // clang-format off
-    //                                x  y          r  g  b  tx ty
-    std::vector<vertex> triangle_v{ { 0, 0,         1, 1, 1, 0, 0, 0 },
-                                    { w - 1, h - 1, 1, 1, 1, 1, 1, 0 },
-                                    { 0, h - 1,     1, 1, 1, 0, 1, 0 },
-                                    { w - 1, 0,     1, 1, 1, 1, 0, 0 } };
+    //                                x  y              r  g  b  tx ty
+    std::vector<vertex> triangle_v{ { 0, 0,             1, 1, 1, 0, 0, 0 },
+                                    { w - 1.0, h - 1.0, 1, 1, 1, 1, 1, 0 },
+                                    { 0, h - 1.0,       1, 1, 1, 0, 1, 0 },
+                                    { w - 1.0, 0,       1, 1, 1, 1, 0, 0 } };
     // clang-format on
     std::vector<uint16_t> indexes_v{ { 0, 1, 2, 0, 3, 1 } };
 

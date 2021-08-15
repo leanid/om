@@ -20,27 +20,27 @@ int main(int, char**)
 
             // rotate
             double alpha = 3.14159 / 6; // 30 degree
-            double x     = out.f0;
-            double y     = out.f1;
-            out.f0       = x * std::cos(alpha) - y * std::sin(alpha);
-            out.f1       = x * std::sin(alpha) + y * std::cos(alpha);
+            double x     = out.x;
+            double y     = out.y;
+            out.x        = x * std::cos(alpha) - y * std::sin(alpha);
+            out.y        = x * std::sin(alpha) + y * std::cos(alpha);
 
             // scale into 3 times
-            out.f0 *= 0.3;
-            out.f1 *= 0.3;
+            out.x *= 0.3;
+            out.y *= 0.3;
 
             // move
-            out.f0 += (width / 2);
-            out.f1 += (height / 2);
+            out.x += (width / 2);
+            out.y += (height / 2);
 
             return out;
         }
         color fragment_shader(const vertex& v_in) override
         {
             color out;
-            out.r = static_cast<uint8_t>(v_in.f2 * 255);
-            out.g = static_cast<uint8_t>(v_in.f3 * 255);
-            out.b = static_cast<uint8_t>(v_in.f4 * 255);
+            out.r = static_cast<uint8_t>(v_in.f3 * 255);
+            out.g = static_cast<uint8_t>(v_in.f4 * 255);
+            out.b = static_cast<uint8_t>(v_in.f5 * 255);
             return out;
         }
     } program01;
@@ -91,9 +91,9 @@ int main(int, char**)
         {
             color out;
 
-            out.r = static_cast<uint8_t>(v_in.f2 * 255);
-            out.g = static_cast<uint8_t>(v_in.f3 * 255);
-            out.b = static_cast<uint8_t>(v_in.f4 * 255);
+            out.r = static_cast<uint8_t>(v_in.f3 * 255);
+            out.g = static_cast<uint8_t>(v_in.f4 * 255);
+            out.b = static_cast<uint8_t>(v_in.f5 * 255);
 
             color from_texture = sample2d(v_in.f5, v_in.f6);
             out.r += from_texture.r;
