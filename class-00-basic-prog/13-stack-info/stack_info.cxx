@@ -91,10 +91,10 @@ static void get_stack_min_and_max_adresses(size_t& min, size_t& max)
     while (true)
     {
         std::string_view str(line.data(), static_cast<size_t>(status));
-        size_t           index = str.find('\n');
-        if (index != std::string_view::npos)
+        size_t           new_line_index = str.find('\n');
+        if (new_line_index != std::string_view::npos)
         {
-            std::string_view next_line(line.data(), index);
+            std::string_view next_line(line.data(), new_line_index);
             if (find_stack_min_and_max_adresses(next_line, min, max))
             {
                 close(fd);
@@ -103,8 +103,8 @@ static void get_stack_min_and_max_adresses(size_t& min, size_t& max)
             else
             {
                 // skip current line
-                std::shift_left(line.begin(), line.end(), index + 1);
-                status -= index + 1;
+                std::shift_left(line.begin(), line.end(), new_line_index + 1);
+                status -= new_line_index + 1;
             }
         }
         else
