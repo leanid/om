@@ -13,6 +13,7 @@ local.properties
 *.user
 imgui.ini
 
+.cache/
 build/
 cmake-build-debug/
 build-Debug/
