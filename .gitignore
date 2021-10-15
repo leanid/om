@@ -1,5 +1,6 @@
 .project
 .cproject
+.dir-locals.el
 .idea
 .settings
 .user
