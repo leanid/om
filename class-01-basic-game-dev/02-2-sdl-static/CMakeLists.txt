@@ -1,11 +1,11 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.20)
 project(02-sdl-static)
 
 add_executable(02-sdl-static main.cxx)
 target_compile_features(02-sdl-static PUBLIC cxx_std_17)
 
 find_package(SDL2 REQUIRED)
-target_include_directories(02-sdl-static PRIVATE ${SDL2_INCLUDE_DIRS})
+#target_include_directories(02-sdl-static PRIVATE ${SDL2_INCLUDE_DIRS})
 # We want to link with our own debug version on SDL2 lib statically
 # So before try it you have to build locally SDL2 and install it (usually to /usr/local)
 #find_library(SDL2_LIB libSDL2d.a)
@@ -14,11 +14,14 @@ target_include_directories(02-sdl-static PRIVATE ${SDL2_INCLUDE_DIRS})
 #             NAMES libSDL2d.a
 #             PATHS /usr/local /usr/local/lib /usr/local/lib
 #             )
+# if you just want to install system package with static version of SDL2 libs
+# >sudo dnf install SDL2-static (on Fedora)
 
-if(NOT TARGET SDL2::SDL2-static)
-    message(FATAL_ERROR "Error: find_library(...) did not find libSDL2d.a")
+if(TARGET SDL2::SDL2-static)
+    get_target_property(PATH_TO_SDL2_STATIC SDL2::SDL2-static LOCATION)
+    message(STATUS "path to static libSDL2.a [${PATH_TO_SDL2_STATIC}]")
 else()
-    message(STATUS "path to static libSDL2.a [${SDL2_LIB}]")
+    message(FATAL_ERROR "Error: find_library(...) did not find libSDL2d.a")
 endif()
 
 if (MINGW)
@@ -31,7 +34,7 @@ if (MINGW)
     #-lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lshell32 -lversion -luuid
     #-static-libgcc
 
-    target_link_libraries(02-sdl-static
+    target_link_libraries(02-sdl-static PRIVATE
                SDL2::SDL2-static
                SDL2::SDL2main
                -lmingw32
@@ -62,7 +65,7 @@ elseif(UNIX)
       # -Wl,-framework,AudioToolbox -Wl,-framework,ForceFeedback -lobjc -Wl,-framework,CoreVideo -Wl,-framework,Cocoa
       # -Wl,-framework,Carbon -Wl,-framework,IOKit
 
-      target_link_libraries(02-sdl-static
+      target_link_libraries(02-sdl-static PRIVATE
                "${SDL2_LIB}" # full path to libSDL2.a force to statically link with it
                -lm
                -liconv
@@ -83,14 +86,12 @@ elseif(UNIX)
       # $> sdl2-config --static-libs
       # -lSDL2 -Wl,--no-undefined -lm -ldl -lpthread -lrt
 
-      target_link_libraries(02-sdl-static
-               ${SDL2_LIB} # full path to libSDL2.a force to statically link with it
-               # -Wl,--no-undefined # not compiled on MacOS
-               -lm
-               -ldl
-               -lpthread
-               -lrt
+      target_link_libraries(02-sdl-static PRIVATE
+               SDL2::SDL2-static
+               SDL2::SDL2main
+               #-static # fully static build don't work on Fedora (you should recompile some packages yourself)
                )
+      set_property(TARGET 02-sdl-static PROPERTY POSITION_INDEPENDENT_CODE TRUE)
     endif()
 elseif(MSVC)
     target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2-static SDL2::SDL2main)
