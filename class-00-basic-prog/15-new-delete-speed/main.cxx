@@ -5,6 +5,8 @@
 #include <limits>
 #include <map>
 #include <numeric>
+#include <string_view>
+#include <utility>
 
 class timer
 {
