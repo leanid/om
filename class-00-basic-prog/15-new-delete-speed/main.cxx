@@ -6,7 +6,7 @@
 #include <map>
 #include <numeric>
 
-class timer_t
+class timer
 {
 private:
     // Type aliases to make accessing nested type easier
@@ -16,7 +16,7 @@ private:
     std::chrono::time_point<clock_type> m_beg;
 
 public:
-    timer_t()
+    timer()
         : m_beg{ clock_type::now() }
     {
     }
@@ -36,7 +36,7 @@ struct measure
 {
     static std::pair<double, RetType> call(Func func, ArgType num_bytes)
     {
-        timer_t timer;
+        timer   timer;
         RetType ptr     = func(num_bytes);
         double  seconds = timer.elapsed();
         return std::pair{ seconds, ptr };
@@ -54,35 +54,42 @@ void print_timings_key_val(const std::map<double, size_t>& timings)
 void print_max_elements(const std::string_view          prefix,
                         const std::map<double, size_t>& timings)
 {
-    const auto it = max_element(
-        begin(timings), end(timings), [](const auto& left, const auto& right) {
-            // find most common case
-            return left.second < right.second;
-        });
+    const auto it = max_element(begin(timings),
+                                end(timings),
+                                [](const auto& left, const auto& right)
+                                {
+                                    // find most common case
+                                    return left.second < right.second;
+                                });
 
     if (it != end(timings))
     {
-        std::cout << prefix << it->first << " " << it->second << '\n';
+        std::cout << prefix << " min: " << it->first << " " << it->second
+                  << '\n';
     }
 
-    const auto it2 = max_element(
-        begin(timings), end(timings), [](const auto& left, const auto& right) {
-            // find most common case
-            return left.first < right.first;
-        });
+    const auto it2 = max_element(begin(timings),
+                                 end(timings),
+                                 [](const auto& left, const auto& right)
+                                 {
+                                     // find most common case
+                                     return left.first < right.first;
+                                 });
 
     if (it2 != end(timings))
     {
-        std::cout << prefix << it2->first << " " << it2->second << '\n';
+        std::cout << prefix << " max: " << it2->first << " " << it2->second
+                  << '\n';
     }
 }
 
 double accumulate_total_time(const std::map<double, size_t>& timings)
 {
-    return accumulate(
-        begin(timings), end(timings), 0.0, [](double accum, const auto& entry) {
-            return accum + entry.first;
-        });
+    return accumulate(begin(timings),
+                      end(timings),
+                      0.0,
+                      [](double accum, const auto& entry)
+                      { return accum + entry.first; });
 }
 
 int main([[maybe_unused]] int argc, [[maybe_unused]] char** argv)
@@ -93,7 +100,8 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char** argv)
         return new byte[num_bytes];
     };
 
-    auto dealloc_bytes = [](byte* ptr) -> void* {
+    auto dealloc_bytes = [](byte* ptr) -> void*
+    {
         delete[] ptr;
         return nullptr;
     };
@@ -141,8 +149,8 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char** argv)
          << endl;
     print_timings_key_val(timings_delete);
 
-    print_max_elements("max_element new: ", timings_new);
-    print_max_elements("max_element del: ", timings_delete);
+    print_max_elements("element new ", timings_new);
+    print_max_elements("element del ", timings_delete);
 
     cout << "total time for new: " << accumulate_total_time(timings_new)
          << " seconds\n";
