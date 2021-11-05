@@ -11,8 +11,9 @@ int main(int, char**)
     // You can do a lot more with terminal:
     // https://en.wikipedia.org/wiki/Ncurses
     using namespace std::literals;
-    const char* term       = std::getenv("TERM");
-    const char* color_term = std::getenv("COLORTERM");
+    using namespace std;
+    const char* term       = getenv("TERM");
+    const char* color_term = getenv("COLORTERM");
 
     const bool colored_terminal_supported =
         (term != nullptr && term == "xterm"sv) ||
@@ -27,30 +28,30 @@ int main(int, char**)
         // [48 - meen change apply to background
         // 2 - TrueColor space
         // 0;255;0 - r;g;b - color (green)
-        std::cout << "\033[48;2;0;255;0m"; // background 24-bit (green)
+        cout << "\033[48;2;0;255;0m"; // background 24-bit (green)
         // [38 - meen change apply to foreground (text)
         // 255;0;0 - r;g;b - color (red)
-        std::cout << "\033[38;2;255;0;0m"; // foreground 24-bit (red)
-        std::cout << "\033[1m";            // bold text
+        cout << "\033[38;2;255;0;0m"; // foreground 24-bit (red)
+        cout << "\033[1m";            // bold text
     }
     else
     {
-        std::cout << "unknown terminal - disable colored output\n";
-        std::cout << "TERM=" << (term != nullptr ? term : "") << '\n';
-        std::cout << "COLORTERM=" << (color_term != nullptr ? color_term : "")
-                  << '\n';
+        cout << "unknown terminal - disable colored output\n";
+        cout << "TERM=" << (term != nullptr ? term : "") << '\n';
+        cout << "COLORTERM=" << (color_term != nullptr ? color_term : "")
+             << '\n';
     }
 
-    std::cout << "hello world";
+    cout << "hello world";
 
     if (colored_terminal_supported)
     {
-        std::cout << "\033[0m"; // reset to default
-        std::cout << "\x1b[0m"; // this is the same as abome! You know why?
+        cout << "\033[0m"; // reset to default
+        cout << "\x1b[0m"; // this is the same as abome! You know why?
         char array[] = { 27, 91, 48, 109, 0 };
-        std::cout << array; // this is the same too! You know what is ASCII is?
+        cout << array; // this is the same too! You know what is ASCII is?
     }
 
-    std::cout << std::endl; // flush to device from internal buffer
-    return std::cout.good() ? 0 : 1;
+    cout << endl; // flush to device from internal buffer
+    return cout.good() ? 0 : 1;
 }
