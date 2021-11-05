@@ -6,11 +6,17 @@ int main(int, char**)
 {
     // This example works on Windows 10 in MinGW terminal (tested in
     // MSys2/MinGW64 shell)
+    // Also tested on Fedora 35 in Gnome-Terminal.
+
+    // You can do a lot more with terminal:
+    // https://en.wikipedia.org/wiki/Ncurses
     using namespace std::literals;
-    const char* term = std::getenv("TERM");
+    const char* term       = std::getenv("TERM");
+    const char* color_term = std::getenv("COLORTERM");
 
     const bool colored_terminal_supported =
-        term != nullptr && term == "xterm"sv;
+        (term != nullptr && term == "xterm"sv) ||
+        (color_term != nullptr && color_term == "truecolor"sv);
 
     if (colored_terminal_supported)
     {
@@ -30,7 +36,9 @@ int main(int, char**)
     else
     {
         std::cout << "unknown terminal - disable colored output\n";
-        std::cout << "TERM=" << term << '\n';
+        std::cout << "TERM=" << (term != nullptr ? term : "") << '\n';
+        std::cout << "COLORTERM=" << (color_term != nullptr ? color_term : "")
+                  << '\n';
     }
 
     std::cout << "hello world";
