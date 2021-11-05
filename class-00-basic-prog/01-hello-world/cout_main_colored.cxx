@@ -30,6 +30,7 @@ int main(int, char**)
     else
     {
         std::cout << "unknown terminal - disable colored output\n";
+        std::cout << "TERM=" << term << '\n';
     }
 
     std::cout << "hello world";
