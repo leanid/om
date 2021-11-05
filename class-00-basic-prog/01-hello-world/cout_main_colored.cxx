@@ -7,6 +7,8 @@ int main(int, char**)
     // This example works on Windows 10 in MinGW terminal (tested in
     // MSys2/MinGW64 shell)
     // Also tested on Fedora 35 in Gnome-Terminal.
+    // On MacOS use iTerm - it support TrueColor (default Terminal only 256
+    // colors even in Monterey)
 
     // You can do a lot more with terminal:
     // https://en.wikipedia.org/wiki/Ncurses
