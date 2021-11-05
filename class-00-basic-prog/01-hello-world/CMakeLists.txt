@@ -21,3 +21,9 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
     target_sources(hello_asm PRIVATE syscall.s hack_asm_main.cxx)
     target_link_options(hello_asm PRIVATE -nostartfiles -nostdlib)
 endif()
+
+if (UNIX OR MINGW) # BONUS for curious (works only in xterm, gnome-terminal
+                   # or in Konsole
+    add_executable(hello_cout_colored cout_main_colored.cxx)
+    target_compile_features(hello_cout_colored PRIVATE cxx_std_17)
+endif(UNIX OR MINGW)
