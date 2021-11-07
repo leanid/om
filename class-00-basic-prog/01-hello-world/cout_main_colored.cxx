@@ -70,23 +70,38 @@ int main(int, char**)
 void get_terminal_size(int& width, int& height)
 {
     using namespace std;
-    char tmp_array[L_tmpnam];
-    if (tmpnam(tmp_array) == nullptr)
-    {
-        cerr << "error can't generate tmp name\n";
-    }
-    string cmd_get_terminal_size = "stty size > ";
-    cmd_get_terminal_size.append(tmp_array);
 
-    system(cmd_get_terminal_size.c_str());
+    string_view tmp_file_name         = "tmp.txt";
+    string      cmd_get_terminal_size = "stty size > ";
+    cmd_get_terminal_size.append(tmp_file_name);
+
+    cout << flush; // need before std::system see:
+                   // https://en.cppreference.com/w/cpp/utility/program/system
+
+    int result = system(cmd_get_terminal_size.c_str());
+    if (result == 0) // on most OS is OK
+    {
+    }
+    else
+    {
+        cmd_get_terminal_size = "/usr/bin/stty size > ";
+        cmd_get_terminal_size.append(tmp_file_name);
+
+        result = system(cmd_get_terminal_size.c_str());
+
+        if (result != 0)
+        {
+            cerr << "error: can't get screen size (use default)\n";
+        }
+    }
 
     // expected file with content like: xxx yyy
     // where xxx - rows, yyy - columns in decimal format
-    ifstream file_with_terminal_size(tmp_array);
+    ifstream file_with_terminal_size(tmp_file_name.data());
     file_with_terminal_size >> height >> width;
     file_with_terminal_size.close();
 
-    remove(tmp_array); // remove tmp file
+    remove(tmp_file_name.data()); // remove tmp file
 }
 
 bool is_terminal_support_truecolor()
