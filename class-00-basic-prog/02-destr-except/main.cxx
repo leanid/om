@@ -1,5 +1,6 @@
 #include <cstdlib>
 #include <iostream>
+#include <memory>
 #include <new>
 
 static int global_counter = 0;
@@ -22,40 +23,65 @@ void operator delete(void* p, std::size_t) noexcept(true)
     --global_counter;
 }
 
+struct B
+{
+    B() { std::cout << "constructor B" << std::endl; }
+    ~B() { std::cout << "destructor B" << std::endl; }
+
+    void some_method(int arg)
+    {
+        std::cout << "B is alive and it's this == 0x" << this
+                  << " and arg == " << arg << std::endl;
+    }
+};
+
 struct A
 {
     explicit A(int i)
         : value(i)
     {
-        std::cout << "constructor A" << std::endl;
+        std::cout << "constructor A start" << std::endl;
+        ptrB = std::make_unique<B>();
+        std::cout << "constructor A finish" << std::endl;
     }
-    [[noreturn]]~A() noexcept(false) {
-        std::cout << "in destructor" << std::endl;
-        throw value; // NOLINT(hicpp-exception-baseclass)
+    ~A() noexcept(false)
+    {
+        std::cout << "destructor A start" << std::endl;
+        ptrB->some_method(1);
+        if (rand() > 0) // always works without seed initialization
+        {
+            throw value; // NOLINT(hicpp-exception-baseclass)
+        }
+        ptrB->some_method(2);
+        std::cout << "destructor A finish normally" << std::endl;
     }
 
-    int value;
+    std::unique_ptr<B> ptrB;
+    int                value;
 };
 
 int main(int, char**)
 {
-    std::cout << "start global_counter = " << global_counter << std::endl;
+    using namespace std;
+    cout << "start program [global_counter = " << global_counter << "]" << endl;
     {
         try
         {
             // A a1();
             A* a2{ new A(2) };
-            std::cout << "before ex global_counter = " << global_counter
-                      << std::endl;
+            cout << "after constructor a2 [global_counter = " << global_counter
+                 << "]" << endl;
             delete a2;
+            cout << "after destructor a2" << endl;
         }
         catch (int i)
         {
-            std::cout << "in catch ex global_counter = " << global_counter
-                      << std::endl;
-            std::cout << "exception value: " << i << std::endl;
+            cout << "inside catch i [global_counter = " << global_counter << "]"
+                 << endl;
+            cout << "inside catch exception value: " << i << endl;
         }
     }
-    std::cout << "end global_counter = " << global_counter << std::endl;
+    cout << "finish program [global_counter = " << global_counter << "]"
+         << endl;
     return 0;
 }
