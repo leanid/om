@@ -28,3 +28,32 @@
    - перемещение по видимым буферам через alt+0..9
    - максимизация текущего буфера и обратно его минимизация через ctrl+x 1
    - дерево файлов доступно через alt+0
+## 2. можно:
+   - добавляем в .spacemacs 
+        (cmake :variables cmake-backend 'lsp
+                          cmake-enable-cmake-ide-support t)
+   - создаем файл .dir-locals.el в корне проекта:
+   ((nil . ((cmake-ide-cmake-args . ("-DCMAKE_BUILD_TYPE=Debug"
+                                  "-DCMAKE_CXX_COMPILER=clang++"
+                                  "-DCMAKE_CXX_STANDARD=17"
+                                  "-DCMAKE_CXX_EXTENSIONS=OFF"
+                                  "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"))
+         (cmake-ide-build-dir . "~/fun/om/build/")
+         (cmake-ide-project-dir . "~/fun/om/")
+         )))
+   - открываем файл CMakeLists.txt и выполняем cmake-ide-run-cmake 
+   - собираем проект cmake-ide-compile
+## 3. можно: добавляем примерно такое содержимое в .spacemacs
+          (c-c++ :variables
+            c-c++-backend 'lsp-clangd
+            ;;c-c++-dap-adapters '(dap-lldb)
+            c-c++-dap-adapters '(dap-cpptools)
+            dap-lldb-debug-program '("/usr/bin/lldb-vscode")
+            c-c++-enable-clang-format-on-save t
+            c-c++-lsp-enable-semantic-highlight t)
+## 4. можно: навигация, поиск
+   - открыть-закрыть treemacs: (M-m f t)
+   - найти файл в проекте по регулярному: helm-projectile-find-file (M-m p f)
+   - перейти по текущему символу под курсором (ctrl+.) - обратно (ctrl+,)
+   - искать текст по всему проекту: (M-m /) - по всем файлам которые НЕ игнорирует git
+   - что бы искать только по нужному типу файлов после (M-m /) нужно написать пример (-tcmake find_package)
