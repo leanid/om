@@ -1,10 +1,13 @@
 
+#include <filesystem>
+#include <fstream>
+#include <limits>
+
 #define CATCH_CONFIG_MAIN
 
 #include "catch.hpp"
 #include "fs_scanner.hxx"
-#include <filesystem>
-#include <fstream>
+
 #include <locale.h>
 
 namespace fs = std::filesystem;
@@ -109,17 +112,18 @@ TEST_CASE("scanner test")
         }
         SECTION("invalid request")
         {
-            REQUIRE(scnr.get_file_size("engine/src/scanner") == -1);
+            size_t bad = std::numeric_limits<size_t>::max();
+            REQUIRE(scnr.get_file_size("engine/src/scanner") == bad);
             // no extension present
-            REQUIRE(scnr.get_file_size("readme") == -1);
+            REQUIRE(scnr.get_file_size("readme") == bad);
             // no extension present
-            REQUIRE(scnr.get_file_size("") == -1);
+            REQUIRE(scnr.get_file_size("") == bad);
             // no name and extension present
-            REQUIRE(scnr.get_file_size(".hxx") == -1);
+            REQUIRE(scnr.get_file_size(".hxx") == bad);
             //  no name present
-            REQUIRE(scnr.get_file_size("game/game.bkp") == -1);
+            REQUIRE(scnr.get_file_size("game/game.bkp") == bad);
             // file not found, game.bkp is a folder.
-            REQUIRE(scnr.get_file_size("main.cxx") == -1);
+            REQUIRE(scnr.get_file_size("main.cxx") == bad);
             // file not found
         }
     }
