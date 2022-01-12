@@ -17,6 +17,7 @@ public:
     size_t get_stack_size() const;
     size_t get_current_stack_position() const;
     size_t get_free_stack_memory_size() const;
+    size_t get_quard_size() const;
 
     size_t get_address_min() const { return address_min; }
     size_t get_address_max() const { return address_max; }
@@ -26,7 +27,7 @@ private:
     void* operator new(size_t);
     void  operator delete(void*);
 
-    size_t address_min;
-    size_t address_max;
+    size_t address_min; // low adress
+    size_t address_max; // top of the stack
 };
 } // namespace om

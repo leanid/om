@@ -1,10 +1,19 @@
+#include <chrono>
+#include <condition_variable>
 #include <iostream>
 #include <memory>
+#include <mutex>
 #include <numeric>
+#include <sstream>
+#include <string_view>
+#include <thread>
 
 #include "stack_info.hxx"
 
 constexpr size_t stack_frame_size = 512 * 10;
+
+std::mutex              m;
+std::condition_variable cv;
 
 std::ostream& operator<<(std::ostream& stream, const om::stack_info& stack_info)
 {
@@ -20,7 +29,8 @@ size_t recursive_stack_checking(std::array<char, stack_frame_size>& prev,
                                 size_t                              frame_index,
                                 size_t          dump_every_nth_frame,
                                 om::stack_info& prev_stack_info,
-                                size_t          any_value)
+                                size_t          any_value,
+                                size_t          thread_index)
 {
     std::array<char, stack_frame_size> tmp_one_kb;
 
@@ -43,16 +53,21 @@ size_t recursive_stack_checking(std::array<char, stack_frame_size>& prev,
     size_t frame_size =
         reinterpret_cast<char*>(&prev) - reinterpret_cast<char*>(&tmp_one_kb);
 
-    size_t page_size = 4096;
+    size_t guard_size = current_stack_info.get_quard_size() > 0
+                            ? current_stack_info.get_quard_size()
+                            : 4096;
 
-    size_t validation_limit = frame_size > page_size ? frame_size : page_size;
+    size_t validation_limit = frame_size + guard_size;
 
     if (current_stack_info.get_current_stack_position() + validation_limit >=
         current_stack_info.get_stack_size())
     {
-        std::cout << "frame_size: " << frame_size << '\n'
-                  << "page_size: " << page_size << '\n'
-                  << "validation_limit: " << validation_limit << std::endl;
+        std::cout << thread_index << " frame_size: " << frame_size << '\n'
+                  << thread_index << " guard_size: " << guard_size << '\n'
+                  << thread_index << " validation_limit: " << validation_limit
+                  << '\n'
+                  << thread_index << " frame_index: " << frame_index
+                  << std::endl;
         return frame_index;
     }
 
@@ -60,16 +75,48 @@ size_t recursive_stack_checking(std::array<char, stack_frame_size>& prev,
                                     frame_index + 1,
                                     dump_every_nth_frame,
                                     current_stack_info,
-                                    any_value_local);
+                                    any_value_local,
+                                    thread_index);
 }
 
-int main(int argc, char**)
+void print_stack_info(const om::stack_info& info, size_t thread_index)
 {
+    using namespace std;
+    stringstream ss;
+    ss << thread_index << " " << info << " " << fixed
+       << (info.get_stack_size() / (1024.0 * 1024.0)) << "MB" << endl;
+    cout << ss.str();
+}
+
+void thread_stack_check(size_t index)
+{
+    using namespace std;
+
     om::stack_info stack_info;
 
-    std::cout << stack_info << " "
-              << (stack_info.get_stack_size() / (1024 * 1024)) << "MB"
-              << std::endl;
+    print_stack_info(stack_info, index);
+
+    array<char, stack_frame_size> one_frame_size;
+    size_t                        max_stack_frame =
+        recursive_stack_checking(one_frame_size, 1, 100, stack_info, 0, index);
+
+    stringstream ss;
+    ss << "thread " << index << " max stack frame: " << max_stack_frame << endl;
+
+    {
+        // std::unique_lock lock(m);
+        // cv.wait_for(lock, std::chrono::minutes(10));
+    }
+    cout << ss.str(); // try to do it atomically
+}
+
+int main(int argc, const char** argv)
+{
+    using namespace std;
+
+    om::stack_info stack_info;
+
+    print_stack_info(stack_info, 0);
 
     char  a;
     char* a_ptr = &a;
@@ -79,38 +126,54 @@ int main(int argc, char**)
 
     if (stack_info.get_stack_size() != stack_info_next.get_stack_size())
     {
-        std::cout << "Why!!! On same stack frame different stack size?\n";
+        cout << "Why!!! On same stack frame different stack size?\n";
     }
 
-    if (argc > 2) // experiment - write below stack
+    if (argv[argc - 1] == "below"sv) // experiment - write below stack
     {
         // lets write some byte below current stack! And check stack again!
         char* ptr = reinterpret_cast<char*>(stack_info.get_address_min());
         ptr -= 1024; // lets move 1kb below
 
-        *ptr = 'A';
+        *ptr = 'A'; // Segmentation fault (core dumped)
+                    // term>coredumpctl debug (on Fedora)
 
         // now lets check again stack size
         om::stack_info stack_info_after_write_below;
 
-        std::cout << stack_info_after_write_below << std::endl;
+        cout << stack_info_after_write_below << endl;
 
         if (stack_info.get_stack_size() !=
             stack_info_after_write_below.get_stack_size())
         {
-            std::cout
-                << "as you can see on Linux OS system dynamically increase "
-                   "stack segment for current thread\n";
+            cout << "as you can see on Linux OS system dynamically increase "
+                    "stack segment for current thread\n";
         }
     }
 
-    if (argc > 1)
+    if (argv[argc - 1] == "recursive"sv)
     {
-        std::array<char, stack_frame_size> one_frame_size;
-        size_t                             max_stack_frame =
-            recursive_stack_checking(one_frame_size, 1, 100, stack_info, 0);
-        std::cout << "max stack frame: " << max_stack_frame << std::endl;
+        array<char, stack_frame_size> one_frame_size;
+        size_t                        max_stack_frame =
+            recursive_stack_checking(one_frame_size, 1, 100, stack_info, 0, 0);
+        cout << "max stack frame: " << max_stack_frame << endl;
     }
 
-    return std::cout.fail() ? EXIT_FAILURE : EXIT_SUCCESS;
+    if (argv[argc - 1] == "recursive_threads"sv)
+    {
+        // create 3 more threads to check it's stack size and
+        // position in memory process
+        array<thread, 3> threads = { thread(thread_stack_check, 1),
+                                     thread(thread_stack_check, 2),
+                                     thread(thread_stack_check, 3) };
+
+        thread_stack_check(0); // current main thread stack checking
+
+        for (auto& t : threads)
+        {
+            t.join();
+        }
+    }
+
+    return cout.fail() ? EXIT_FAILURE : EXIT_SUCCESS;
 }

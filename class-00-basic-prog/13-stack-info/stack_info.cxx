@@ -14,9 +14,13 @@ static void get_stack_min_and_max_adresses(size_t& min, size_t& max)
 #include <array>
 #include <charconv>
 #include <cstddef>
+#include <cstring>
+#include <iostream>
+#include <limits>
 #include <string_view>
 
 #include <fcntl.h>
+#include <pthread.h>
 #include <sys/resource.h>
 #include <unistd.h>
 
@@ -69,6 +73,36 @@ bool find_stack_min_and_max_adresses(const std::string_view& line,
 
 static void get_stack_min_and_max_adresses(size_t& min, size_t& max)
 {
+
+    pthread_attr_t attr;
+    pthread_t      self = pthread_self();
+    int            err  = pthread_getattr_np(self, &attr);
+    if (0 == err)
+    {
+        void*  stack_start_addr;
+        size_t stack_size;
+        err = pthread_attr_getstack(&attr, &stack_start_addr, &stack_size);
+
+        if (0 == err)
+        {
+            min = reinterpret_cast<size_t>(stack_start_addr);
+            max = min + stack_size;
+        }
+
+        err = pthread_attr_destroy(&attr);
+
+        if (err)
+        {
+            std::cerr << "pthread_attr_destroy failed: " << std::strerror(err);
+        }
+        return;
+    }
+    else
+    {
+        std::cerr << "pthread_getaddr_np failed errno=" << std::strerror(err);
+    }
+
+    // fallback implementation
     int fd = open("/proc/self/maps", O_RDONLY);
 
     if (fd < 0)
@@ -122,6 +156,32 @@ static void get_stack_min_and_max_adresses(size_t& min, size_t& max)
         }
     }
 }
+
+static size_t get_stack_quard_size()
+{
+    size_t         guard_size = std::numeric_limits<size_t>::max(); // bad value
+    pthread_attr_t attr;
+    pthread_t      self = pthread_self();
+    int            err  = pthread_getattr_np(self, &attr);
+    if (0 == err)
+    {
+        size_t guard_size_tmp;
+        err = pthread_attr_getguardsize(&attr, &guard_size_tmp);
+
+        if (0 == err)
+        {
+            guard_size = guard_size_tmp;
+        }
+
+        err = pthread_attr_destroy(&attr);
+
+        if (err)
+        {
+            std::cerr << "pthread_attr_destroy failed: " << std::strerror(err);
+        }
+    }
+    return guard_size;
+}
 #endif
 
 #include "stack_info.hxx"
@@ -140,12 +200,19 @@ size_t stack_info::get_stack_size() const
 
 size_t stack_info::get_current_stack_position() const
 {
-    return address_max - reinterpret_cast<size_t>(this);
+    char              c;
+    const char* const ptr = &c;
+    return address_max - reinterpret_cast<size_t>(ptr);
 }
 
 size_t stack_info::get_free_stack_memory_size() const
 {
     return get_stack_size() - get_current_stack_position();
+}
+
+size_t stack_info::get_quard_size() const
+{
+    return get_stack_quard_size();
 }
 
 } // namespace om
