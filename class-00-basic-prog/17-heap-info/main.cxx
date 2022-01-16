@@ -20,7 +20,7 @@ void dump_mem_info(const char* file_name)
     out << in.rdbuf();
 }
 
-int main(int argc, char** argv)
+int main([[maybe_unused]] int argc, [[maybe_unused]] char** argv)
 {
     using namespace std;
 
