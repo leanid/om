@@ -21,7 +21,7 @@ uniform sampler2D tex_shadow_map;
 uniform vec3 light_pos;
 uniform vec3 view_pos;
 
-float ShadowCalculation(vec4 frag_pos_light_space)
+float ShadowCalculation(vec4 frag_pos_light_space, vec3 normal, vec3 light_dir)
 {
     // perform perspective divide
     vec3 proj_coords = frag_pos_light_space.xyz / frag_pos_light_space.w;
@@ -36,7 +36,9 @@ float ShadowCalculation(vec4 frag_pos_light_space)
 
     float current_depth = proj_coords.z;
 
-    float shadow = current_depth > closest_depth  ? 1.0 : 0.0;
+    float bias = max(0.05 * (1.0 - dot(normal, light_dir)), 0.005);
+
+    float shadow = (current_depth - bias) > closest_depth  ? 1.0 : 0.0;
     return shadow;
 }
 
@@ -58,7 +60,7 @@ void main()
     spec = pow(max(dot(normal, halfway_dir), 0.0), 64.0);
     vec3 specular = spec * light_color;
     // calculate shadow
-    float shadow = ShadowCalculation(fs_in.frag_pos_light_space);
+    float shadow = ShadowCalculation(fs_in.frag_pos_light_space, normal, light_dir);
     vec3 lighting = (ambient + (1.0 - shadow) * (diffuse + specular)) * color;
 
     frag_color = vec4(lighting, 1.0);

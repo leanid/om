@@ -164,7 +164,7 @@ static void destroy_opengl_context(void* ptr)
     if (is_desktop())
     {
 
-#define GL_MULTISAMPLE 32925 // or 0x809D
+#define GL_MULTISAMPLE 32925      // or 0x809D
         glEnable(GL_MULTISAMPLE); // not working in GLES3.0
 #undef GL_MULTISAMPLE
     }
@@ -476,8 +476,8 @@ scene::scene()
     : properties("res/runtime.properties.hxx")
     , window{ create_window(properties, gles30::multisampling::disable) }
     , context{ create_opengl_context(window.get()) }
-    , depth_shader{ "res/depth.vsh", "res/depth.fsh" }
-    , shader_shadow{ "res/shadow.vsh", "res/shadow.fsh" }
+    , depth_shader{ "res/depth.vert", "res/depth.frag" }
+    , shader_shadow{ "res/shadow.vert", "res/shadow.frag" }
     , mesh_floor{ create_mesh(
           plane_vertices, sizeof(plane_vertices) / 4 / 8, { &wood_texture }) }
     , mesh_cube{ create_mesh(

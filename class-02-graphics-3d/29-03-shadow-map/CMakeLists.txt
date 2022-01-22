@@ -99,19 +99,19 @@ target_sources(29-03-shadow-map PRIVATE main.cxx
 
                                    stb_image.h
 
-                                   res/instanced.vsh
-                                   res/instanced.fsh
-                                   res/textured.vsh
-                                   res/textured.fsh
-                                   res/quad.vsh
-                                   res/quad.fsh
+                                   res/instanced.vert
+                                   res/instanced.frag
+                                   res/textured.vert
+                                   res/textured.frag
+                                   res/quad.vert
+                                   res/quad.frag
                                    res/mars.png
                                    res/planet.mtl
                                    res/rock.mtl
-                                   res/depth.vsh
-                                   res/depth.fsh
-                                   res/shadow.vsh
-                                   res/shadow.fsh
+                                   res/depth.vert
+                                   res/depth.frag
+                                   res/shadow.vert
+                                   res/shadow.frag
 
                                    res/runtime.properties.hxx
                                    )
