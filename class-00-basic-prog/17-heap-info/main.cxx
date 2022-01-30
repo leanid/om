@@ -24,7 +24,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char** argv)
 {
     using namespace std;
 
-    dump_mem_info("mem_info_start");
+    dump_mem_info(".mem_info_start");
 
     auto heap_info = om::heap_info::get_heap_process_segment_layout();
 
@@ -39,7 +39,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char** argv)
         cout << "error: found space in empty resized string\n";
     }
 
-    dump_mem_info("mem_info_after_100mb.txt");
+    dump_mem_info(".mem_info_after_100mb.txt");
 
     heap_info = om::heap_info::get_heap_process_segment_layout();
 
