@@ -31,14 +31,20 @@ float ShadowCalculation(vec4 frag_pos_light_space, vec3 normal, vec3 light_dir)
     // we transform the NDC coordinates to the range [0,1]:
     proj_coords = proj_coords * 0.5 + 0.5;
 
+    // All object far from far_plane - have no shadow
+    if (proj_coords.z > 1.0)
+    {
+        return 0.0;
+    }
+
     // closest depth from light point of view
     float closest_depth = texture(tex_shadow_map, proj_coords.xy).r;
 
     float current_depth = proj_coords.z;
 
-    float bias = max(0.05 * (1.0 - dot(normal, light_dir)), 0.005);
+    float bias = max(0.05 * (1.0 - dot(normal, light_dir)), 0.003);
 
-    float shadow = (current_depth - bias) > closest_depth  ? 1.0 : 0.0;
+    float shadow = (current_depth - bias) >= closest_depth  ? 1.0 : 0.0;
     return shadow;
 }
 

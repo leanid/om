@@ -11,7 +11,13 @@ enum class wrap
 {
     repeat,
     mirrored_repeat,
-    clamp_to_edge
+    clamp_to_edge, //< Clamps the coordinates between 0 and 1.
+                   //< The result is that higher coordinates
+                   //< become clamped to the edge, resulting
+                   //< in a streatched edge pattern
+
+    clamp_to_border //< Coordinates outside the range are now
+                    //< given a user-specified border color.
 };
 
 class texture
@@ -68,6 +74,8 @@ public:
 
     void wrap_s(const wrap);
     void wrap_t(const wrap);
+
+    void set_border_color(float r, float g, float b, float a);
 
     void set_type(const type);
     type get_type() const;

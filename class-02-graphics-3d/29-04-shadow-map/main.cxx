@@ -514,6 +514,9 @@ void scene::render([[maybe_unused]] float delta_time)
 
     /// 1. render depth to texture
     depth_texture.bind();
+    depth_texture.wrap_s(gles30::wrap::clamp_to_border);
+    depth_texture.wrap_t(gles30::wrap::clamp_to_border);
+    depth_texture.set_border_color(1.0f, 1.0f, 1.0f, 1.0f);
     depth_fbo.bind();
 
     clear_back_buffer(properties.get_vec3("clear_color"));
@@ -551,6 +554,7 @@ void scene::render([[maybe_unused]] float delta_time)
     // and only solid objects like @cube benifit from glCullFace(GL_FRONT)
     // but even @cube shadow incorrect if shadow reciver are too close
     // so we still need to play with bias in .frag shader
+    glDisable(GL_CULL_FACE);
     mesh_floor.draw(depth_shader);
 
     glEnable(GL_CULL_FACE);
@@ -558,11 +562,9 @@ void scene::render([[maybe_unused]] float delta_time)
 
     mesh_cube.draw(depth_shader);
 
-    glCullFace(GL_BACK);
-
     depth_fbo.unbind();
 
-    /// 2. render texture with debug quad
+    /// 2. render floor and cube with shadow
 
     glViewport(0, 0, screen_width, screen_height);
     clear_back_buffer(properties.get_vec3("clear_color"));
@@ -585,10 +587,11 @@ void scene::render([[maybe_unused]] float delta_time)
 
     glDisable(GL_CULL_FACE);
 
-    // glCullFace(GL_BACK);
+    // glCullFace(GL_BACK); // floor is only one quad
     mesh_floor.draw(shader_shadow);
 
-    // glCullFace(GL_BACK);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
     mesh_cube.draw(shader_shadow);
 }
 

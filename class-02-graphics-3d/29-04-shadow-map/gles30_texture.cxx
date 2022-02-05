@@ -185,7 +185,8 @@ static std::string join_strings_with_spaces(
     std::accumulate(begin(faces),
                     end(faces),
                     result,
-                    [](std::string result, const std::filesystem::path& p) {
+                    [](std::string result, const std::filesystem::path& p)
+                    {
                         if (!result.empty())
                         {
                             result.push_back(' ');
@@ -347,6 +348,8 @@ static int to_gl_wrap_enum(const wrap value)
             return GL_MIRRORED_REPEAT;
         case wrap::clamp_to_edge:
             return GL_CLAMP_TO_EDGE;
+        case wrap::clamp_to_border:
+            return GL_CLAMP_TO_BORDER;
     }
     throw std::runtime_error("bad wrap value: " +
                              std::to_string(static_cast<int>(value)));
@@ -362,6 +365,12 @@ void texture::wrap_t(const wrap value)
 {
     GLint gl_wrap = to_gl_wrap_enum(value);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, gl_wrap);
+}
+
+void texture::set_border_color(float r, float g, float b, float a)
+{
+    float border_color[] = { r, g, b, a };
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, border_color);
 }
 
 texture::~texture()
