@@ -45,15 +45,15 @@ with section("format"):
 
   # If an argument group contains more than this many sub-groups (parg or kwarg
   # groups) then force it to a vertical layout.
-  max_subgroups_hwrap = 2
+  max_subgroups_hwrap = 1
 
   # If a positional argument group contains more than this many arguments, then
   # force it to a vertical layout.
-  max_pargs_hwrap = 6
+  max_pargs_hwrap = 2
 
   # If a cmdline positional group consumes more than this many lines without
   # nesting, then invalidate the layout (and nest)
-  max_rows_cmdline = 2
+  max_rows_cmdline = 1
 
   # If true, separate flow control names from their parentheses with a space
   separate_ctrl_name_with_space = False
@@ -63,7 +63,7 @@ with section("format"):
 
   # If a statement is wrapped to more than one line, than dangle the closing
   # parenthesis on its own line.
-  dangle_parens = False
+  dangle_parens = True
 
   # If the trailing parenthesis must be 'dangled' on its on line, then align it
   # to this reference: `prefix`: the start of the statement,  `prefix-indent`:
@@ -82,7 +82,7 @@ with section("format"):
 
   # If a candidate layout is wrapped horizontally but it exceeds this many
   # lines, then reject the layout.
-  max_lines_hwrap = 2
+  max_lines_hwrap = 1
 
   # What style line endings to use in the output.
   line_ending = 'unix'
@@ -91,7 +91,7 @@ with section("format"):
   command_case = 'lower'
 
   # Format keywords consistently as 'lower' or 'upper' case
-  keyword_case = 'lower'
+  keyword_case = 'UPPER'
 
   # A list of command names which should always be wrapped
   always_wrap = []
@@ -102,7 +102,7 @@ with section("format"):
 
   # If true, the parsers may infer whether or not an argument list is sortable
   # (without annotation).
-  autosort = False
+  autosort = True
 
   # By default, if cmake-format cannot successfully fit everything into the
   # desired linewidth it will apply the last, most agressive attempt that it
