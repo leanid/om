@@ -522,8 +522,9 @@ void scene::render([[maybe_unused]] float delta_time)
     clear_back_buffer(properties.get_vec3("clear_color"));
 
     float     near_plane = 1.0f, far_plane = 7.5f;
-    glm::mat4 light_projection =
+    glm::mat4 light_orto_projection =
         glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
+    glm::mat4 light_perspective_projection = camera.projection_matrix();
 
     light_pos     = properties.get_vec3("light_pos");
     light_look_at = properties.get_vec3("light_look_at");
@@ -535,14 +536,13 @@ void scene::render([[maybe_unused]] float delta_time)
     depth_shader.set_uniform("model", glm::mat4(1.f));
     if (use_perspective_matrix)
     {
-        // shadow not working for camera.projection_matrix() - why?
         depth_shader.set_uniform("view", light_view);
-        depth_shader.set_uniform("projection", camera.projection_matrix());
+        depth_shader.set_uniform("projection", light_perspective_projection);
     }
     else
     {
         depth_shader.set_uniform("view", light_view);
-        depth_shader.set_uniform("projection", light_projection);
+        depth_shader.set_uniform("projection", light_orto_projection);
     }
 
     glViewport(0, 0, fbo_width, fbo_height);
@@ -574,8 +574,17 @@ void scene::render([[maybe_unused]] float delta_time)
     shader_shadow.set_uniform("view", camera.view_matrix());
     shader_shadow.set_uniform("projection", camera.projection_matrix());
     shader_shadow.set_uniform("model", glm::mat4(1.f));
-    shader_shadow.set_uniform("light_space_matrix",
-                              light_projection * light_view);
+    if (use_perspective_matrix)
+    {
+        shader_shadow.set_uniform("light_space_matrix",
+                                  light_perspective_projection * light_view);
+    }
+    else
+    {
+        shader_shadow.set_uniform("light_space_matrix",
+                                  light_orto_projection * light_view);
+    }
+
     shader_shadow.set_uniform("light_pos", light_pos);
     shader_shadow.set_uniform("view_pos", camera.position());
 
