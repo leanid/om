@@ -37,14 +37,23 @@ float ShadowCalculation(vec4 frag_pos_light_space, vec3 normal, vec3 light_dir)
         return 0.0;
     }
 
-    // closest depth from light point of view
-    float closest_depth = texture(tex_shadow_map, proj_coords.xy).r;
-
     float current_depth = proj_coords.z;
-
     float bias = max(0.05 * (1.0 - dot(normal, light_dir)), 0.003);
+    float shadow = 0.0;
+    vec2 texel_size = 1.0 / textureSize(tex_shadow_map, 0);
+    for(int x = -1; x <= 1; ++x)
+    {
+        for(int y= -1; y<=1; ++y)
+        {
+            // closest depth from light point of view
+            vec2 coord = proj_coords.xy + vec2(x, y) * texel_size;
+            // PCF depth
+            float closest_depth = texture(tex_shadow_map, coord).r;
+            shadow += (current_depth - bias) >= closest_depth  ? 1.0 : 0.0;
+        }
+    }
+    shadow /= 9.0;
 
-    float shadow = (current_depth - bias) >= closest_depth  ? 1.0 : 0.0;
     return shadow;
 }
 
