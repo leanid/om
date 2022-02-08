@@ -70,7 +70,7 @@ void snake_game::update_free_cells()
     free_cells.clear();
 
     auto is_cell_empty = [this](uint32_t i) { return !cell_state.at(i); };
-#if __has_include(<ranges>)
+#if __has_include(<ranges>) && !defined(__clang__)
     using namespace std;
     using namespace std::views;
 
@@ -112,7 +112,8 @@ void snake_game::on_initialize()
 
     level >> objects_num;
 
-    std::copy_n(std::istream_iterator<game_object>(level), objects_num,
+    std::copy_n(std::istream_iterator<game_object>(level),
+                objects_num,
                 std::back_inserter(objects));
 
     snake_.reset(
@@ -238,8 +239,8 @@ void snake_game::on_render() const
                 om::render(om::primitives::triangls, vbo, texture, m);
                 if (debug_texture)
                 {
-                    om::render(om::primitives::line_loop, vbo, debug_texture,
-                               m);
+                    om::render(
+                        om::primitives::line_loop, vbo, debug_texture, m);
                 }
             }
         }
@@ -249,10 +250,10 @@ void snake_game::on_render() const
 
     static const std::vector<object_type> render_order = { object_type::level };
 
-    auto it =
-        std::find_if(begin(objects), end(objects), [](const game_object& obj) {
-            return obj.type == object_type::level;
-        });
+    auto it = std::find_if(begin(objects),
+                           end(objects),
+                           [](const game_object& obj)
+                           { return obj.type == object_type::level; });
 
     if (it == end(objects))
     {
@@ -261,10 +262,12 @@ void snake_game::on_render() const
 
     const om::vec2 world_size = it->size;
 
-    std::for_each(
-        begin(render_order), end(render_order), [&](object_type type) {
-            std::for_each(begin(objects), end(objects), draw(type, world_size));
-        });
+    std::for_each(begin(render_order),
+                  end(render_order),
+                  [&](object_type type) {
+                      std::for_each(
+                          begin(objects), end(objects), draw(type, world_size));
+                  });
 
     if (fruit_)
     {
@@ -308,13 +311,17 @@ om::vbo* load_mesh_from_file_with_scale(const std::string_view path,
 
     vertexes.reserve(num_of_vertexes);
 
-    std::copy_n(std::istream_iterator<om::vertex>(file), num_of_vertexes,
+    std::copy_n(std::istream_iterator<om::vertex>(file),
+                num_of_vertexes,
                 std::back_inserter(vertexes));
 
     om::matrix scale_mat = om::matrix::scale(scale.x, scale.y);
 
-    std::transform(begin(vertexes), end(vertexes), begin(vertexes),
-                   [&scale_mat](om::vertex v) {
+    std::transform(begin(vertexes),
+                   end(vertexes),
+                   begin(vertexes),
+                   [&scale_mat](om::vertex v)
+                   {
                        v.pos = v.pos * scale_mat;
                        return v;
                    });
