@@ -24,7 +24,7 @@ struct context_parameters
     int32_t     minor_version = 0;
     int32_t     profile_type  = 0;
 };
-#pragma pop
+#pragma pack(pop)
 
 std::ostream& operator<<(std::ostream& out, const context_parameters& params)
 {
@@ -57,8 +57,11 @@ void update_vertex_attributes()
     int stride =
         (3 + 3 + 2) * sizeof(float); // step in bytes from one attribute to next
     void* start_of_data_offset = nullptr; // we start from begin of buffer
-    glVertexAttribPointer(location_of_vertex_attribute, size_of_attribute,
-                          type_of_data, normalize_data, stride,
+    glVertexAttribPointer(location_of_vertex_attribute,
+                          size_of_attribute,
+                          type_of_data,
+                          normalize_data,
+                          stride,
                           start_of_data_offset);
     gl_check();
 
@@ -70,8 +73,11 @@ void update_vertex_attributes()
     type_of_data                 = GL_FLOAT;
     normalize_data               = GL_FALSE;
     start_of_data_offset         = reinterpret_cast<void*>(3 * sizeof(float));
-    glVertexAttribPointer(location_of_vertex_attribute, size_of_attribute,
-                          type_of_data, normalize_data, stride,
+    glVertexAttribPointer(location_of_vertex_attribute,
+                          size_of_attribute,
+                          type_of_data,
+                          normalize_data,
+                          stride,
                           start_of_data_offset);
     gl_check();
 
@@ -83,8 +89,11 @@ void update_vertex_attributes()
     type_of_data                 = GL_FLOAT;
     normalize_data               = GL_FALSE;
     start_of_data_offset         = reinterpret_cast<void*>(6 * sizeof(float));
-    glVertexAttribPointer(location_of_vertex_attribute, size_of_attribute,
-                          type_of_data, normalize_data, stride,
+    glVertexAttribPointer(location_of_vertex_attribute,
+                          size_of_attribute,
+                          type_of_data,
+                          normalize_data,
+                          stride,
                           start_of_data_offset);
     gl_check();
 
@@ -110,8 +119,11 @@ int main(int /*argc*/, char* /*argv*/[])
     const std::string title = properties.get_string("title");
 
     unique_ptr<SDL_Window, void (*)(SDL_Window*)> window(
-        SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_CENTERED,
-                         SDL_WINDOWPOS_CENTERED, 640, 480,
+        SDL_CreateWindow(title.c_str(),
+                         SDL_WINDOWPOS_CENTERED,
+                         SDL_WINDOWPOS_CENTERED,
+                         640,
+                         480,
                          ::SDL_WINDOW_OPENGL | ::SDL_WINDOW_RESIZABLE),
         SDL_DestroyWindow);
 
@@ -218,8 +230,8 @@ int main(int /*argc*/, char* /*argv*/[])
     uint32_t cube_indexes[36];
     std::iota(begin(cube_indexes), end(cube_indexes), 0);
 
-    glBufferData(GL_ARRAY_BUFFER, sizeof(cube_vertices), cube_vertices,
-                 GL_STATIC_DRAW);
+    glBufferData(
+        GL_ARRAY_BUFFER, sizeof(cube_vertices), cube_vertices, GL_STATIC_DRAW);
     gl_check();
 
     uint32_t EBO; // ElementBufferObject - indices buffer
@@ -229,7 +241,9 @@ int main(int /*argc*/, char* /*argv*/[])
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     gl_check();
 
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cube_indexes), cube_indexes,
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+                 sizeof(cube_indexes),
+                 cube_indexes,
                  GL_STATIC_DRAW);
     gl_check();
 
@@ -240,7 +254,8 @@ int main(int /*argc*/, char* /*argv*/[])
     float deltaTime = 0.0f; // Time between current frame and last frame
     float lastFrame = 0.0f; // Time of last frame
 
-    camera = fps_camera(/*pos*/ { 0, 0, 1 }, /*dir*/ { 0, 0, -1 },
+    camera = fps_camera(/*pos*/ { 0, 0, 1 },
+                        /*dir*/ { 0, 0, -1 },
                         /*up*/ { 0, 1, 0 });
 
     fovy = properties.get_float("fovy");
@@ -325,8 +340,8 @@ int main(int /*argc*/, char* /*argv*/[])
                              << event.window.data2 << ' ';
                         // play with it to understand OpenGL origin point
                         // for window screen coordinate system
-                        glViewport(0, 0, event.window.data1,
-                                   event.window.data2);
+                        glViewport(
+                            0, 0, event.window.data1, event.window.data2);
                         gl_check();
                         print_view_port();
                         break;
@@ -389,8 +404,8 @@ int main(int /*argc*/, char* /*argv*/[])
         {
             model       = glm::translate(model, pos);
             float angle = 20.0f * i++;
-            model       = glm::rotate(model, glm::radians(angle),
-                                glm::vec3(1.0f, 0.3f, 0.5f));
+            model       = glm::rotate(
+                model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
             shader.set_uniform("model", model);
 
             glDrawElements(primitive_render_mode, 36, GL_UNSIGNED_INT, nullptr);

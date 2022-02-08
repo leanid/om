@@ -25,7 +25,7 @@ struct context_parameters
     int32_t     minor_version = 0;
     int32_t     profile_type  = 0;
 };
-#pragma pop
+#pragma pack(pop)
 
 std::ostream& operator<<(std::ostream& out, const context_parameters& params)
 {

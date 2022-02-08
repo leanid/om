@@ -85,7 +85,7 @@ namespace fs = std::filesystem;
  *
  * 2) ...
  */
-constexpr unsigned int initial_file_list_size = 8;
+[[maybe_unused]] constexpr unsigned int initial_file_list_size = 8;
 
 namespace om
 {
@@ -213,9 +213,10 @@ directory* scanner::impl::find_directory_ptr(std::string_view sv_path)
     fs::path   fs_path(sv_path);
     for (auto& p : fs_path)
     {
-        auto it = std::find_if(
-            result->child_folders.begin(), result->child_folders.end(),
-            [&p](const directory* dir) { return dir->name == p; });
+        auto it =
+            std::find_if(result->child_folders.begin(),
+                         result->child_folders.end(),
+                         [&p](const directory* dir) { return dir->name == p; });
         if (it == result->child_folders.end())
         {
             return nullptr;
@@ -374,9 +375,10 @@ directory* scanner::impl::find_directory_ptr(std::string_view sv_path)
             count = seek_pos - begin_index;
 
         std::string_view tmp(sv_path.data() + begin_index, count);
-        auto             it = std::find_if(
-            result->child_folders.begin(), result->child_folders.end(),
-            [&tmp](const directory* dir) { return dir->name == tmp; });
+        auto             it = std::find_if(result->child_folders.begin(),
+                               result->child_folders.end(),
+                               [&tmp](const directory* dir)
+                               { return dir->name == tmp; });
         if (it == result->child_folders.end())
         {
             return nullptr;
