@@ -65,6 +65,8 @@ $ bin/engine --test
 $ dnf search SDL2
 # search by file in package
 $ dnf provides /usr/lib/libSDL2.so
+# search by part of file name
+$ dnf provides "*/libSDL2.so"
 ```
 2. To list package contents (files list)
 ```sh
@@ -126,7 +128,23 @@ RUN dnf update -y
 RUN dnf upgrade -y
 RUN dnf install -y gcc-c++ make cmake mingw64-gcc mingw64-gcc-c++ clang wine git SDL2-devel SDL2-static mingw64-SDL2 mingw64-SDL2-static libstdc++-static glibc-static ninja-build
 ```
+### Tools 
+Simple configuration for doom-emacs per-project c++ cmake.
+1. create in project root file: .dir-locals.el
+2. place next code into it.
+3. edit it if you need add some cmake flags or change test-command
+```elisp
+;;; Directory Local Variables
+;;; For more information see (info "(emacs) Directory Variables")
 
+((nil . ((projectile--cmake-manual-command-alist . ((:configure-command . "cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -S . -B build")
+                                                    (:compile-command . "cmake --build build")
+                                                    (:test-command . "./build/30-1-point-shadow"))))))
+```
+4. also you may want to disable warning about every opened file in project. Place next into: "~/.doom.d/config.el"
+```elisp
+(put 'projectile--cmake-manual-command-alist 'safe-local-variable (lambda (_) t))
+```
 ### Todos
 
  - write better readme.md about installation SDL on all platforms
