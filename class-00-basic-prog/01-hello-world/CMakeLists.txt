@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.22)
 
 project(01-hello-world CXX)
 
@@ -6,10 +6,10 @@ add_executable(hello_cout_dynamic cout_main.cxx)
 
 message(VERBOSE "${CMAKE_SYSTEM_NAME}")
 
-if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     message(VERBOSE "use gcc/linux specific code here")
-    # install static version of standard libraries
-    #>sudo dnf install libstdc++-static glibc-static
+    # install static version of standard libraries >sudo dnf install
+    # libstdc++-static glibc-static
     add_executable(hello_cout_static cout_main.cxx)
     target_link_options(hello_cout_static PRIVATE -static)
 
@@ -19,11 +19,15 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
     enable_language(ASM)
     add_executable(hello_asm)
     target_sources(hello_asm PRIVATE syscall.s hack_asm_main.cxx)
-    target_link_options(hello_asm PRIVATE -nostartfiles -nostdlib)
+    target_link_options(
+        hello_asm
+        PRIVATE
+        -nostartfiles
+        -nostdlib)
 endif()
 
-if (UNIX OR MINGW) # BONUS for curious (works only in xterm, gnome-terminal
-                   # or in Konsole
+if(UNIX OR MINGW) # BONUS for curious (works only in xterm, gnome-terminal or in
+                  # Konsole
     add_executable(hello_cout_colored cout_main_colored.cxx)
     target_compile_features(hello_cout_colored PRIVATE cxx_std_17)
 endif(UNIX OR MINGW)

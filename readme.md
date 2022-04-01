@@ -145,6 +145,7 @@ Simple configuration for doom-emacs per-project c++ cmake.
 ```elisp
 (put 'projectile--cmake-manual-command-alist 'safe-local-variable (lambda (_) t))
 ```
+5. one more hint! Place .projectile file in root of your project to force doom-emacs use this directory as root
 ### Todos
 
  - write better readme.md about installation SDL on all platforms
