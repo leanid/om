@@ -4,11 +4,10 @@ project(01-1-hello-world CXX)
 add_executable(01-1-hello-world main.cxx)
 target_compile_features(01-1-hello-world PUBLIC cxx_std_20)
 
-install(
-    TARGETS ${PROJECT_NAME}
-    RUNTIME DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../../../bin/tests
-    LIBRARY DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../../../bin/tests
-    ARCHIVE DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../../../bin/tests)
+install(TARGETS ${PROJECT_NAME}
+        RUNTIME DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../../../bin/tests
+        LIBRARY DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../../../bin/tests
+        ARCHIVE DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../../../bin/tests)
 
 include(CTest)
 
