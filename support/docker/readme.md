@@ -10,5 +10,5 @@
  - call ```sudo systemctl start docker```
  - call ```sudo docker pull fedora:latest```
  - call ```sudo docker build -t leanid/fedora_latest .```
- - call ```sudo docker login
+ - call ```sudo docker login```
  - call ```sudo docker push leanid/fedora_latest```
