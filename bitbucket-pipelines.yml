@@ -8,9 +8,9 @@ pipelines:
           - cmake --build .
           - ./01-1-hello-world
           
-          - git clean -df
-          - mingw64-cmake class-01-basic-game-dev/01-1-hello-world/
-          - mingw64-cmake --build .
+          #- git clean -df
+          #- mingw64-cmake class-01-basic-game-dev/01-1-hello-world/
+          #- mingw64-cmake --build .
           #- WINEPATH=/usr/x86_64-w64-mingw32/sys-root/mingw/bin wine ./01-1-hello-world.exe # too long 30 seconds
           
           - git clean -df
@@ -23,9 +23,9 @@ pipelines:
           - cmake --build .
           - hello_bin/hello-bin-static
           
-          - git clean -df
-          - mingw64-cmake class-01-basic-game-dev/01-2-hello-lib/
-          - mingw64-cmake --build .
+          #- git clean -df
+          #- mingw64-cmake class-01-basic-game-dev/01-2-hello-lib/
+          #- mingw64-cmake --build .
           #- WINEPATH=/usr/x86_64-w64-mingw32/sys-root/mingw/bin wine hello_bin/hello-bin # too long 30 seconds
           
           - git clean -df
@@ -45,9 +45,9 @@ pipelines:
           #- make
           #- ./02-sdl-static
 
-          - git clean -df
-          - mingw64-cmake class-01-basic-game-dev/02-1-sdl-dynamic/
-          - mingw64-cmake --build .
+          #- git clean -df
+          #- mingw64-cmake class-01-basic-game-dev/02-1-sdl-dynamic/
+          #- mingw64-cmake --build .
           #- WINEPATH=/usr/x86_64-w64-mingw32/sys-root/mingw/bin wine ./02-sdl-dynamic.exe # too long 30 seconds
 
           # Static version of libSDL2d.a - not exist on build machine. Leave it only to check locally.
@@ -69,9 +69,9 @@ pipelines:
           - cmake class-01-basic-game-dev/03-3-sdl-loop-to-engine-dll/
           - cmake --build .
 
-          - git clean -df
-          - mingw64-cmake class-01-basic-game-dev/04-1-opengl-minimal/
-          - mingw64-cmake --build .
+          #- git clean -df
+          #- mingw64-cmake class-01-basic-game-dev/04-1-opengl-minimal/
+          #- mingw64-cmake --build .
           #- WINEPATH=/usr/x86_64-w64-mingw32/sys-root/mingw/bin wine ./game.exe # run opengl minimal on linux with wine (works)
 
           - git clean -df
