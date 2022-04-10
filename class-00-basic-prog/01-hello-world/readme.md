@@ -27,11 +27,11 @@ g++ -c hack_main.cxx
 ld hack_main.o /usr/lib64/libc.a
 ./a.out
 9. it should print "hello world"
-
 10. Android example:
 ~/Android/Sdk/platform-tools/adb push YOUR_BINARY /data/local/tmp
 ~/Android/Sdk/platform-tools/adb shell
 chmod +x /data/local/tmp/YOUR_BINARY
 /data/local/tmp/YOUR_BINARY
-
+11. compare c++ vs python vs rust - hello world programs using files **main.py**, **main.rs**
+If you redirect default output to /dev/video0 - python and rust - show error c++ - not
 
