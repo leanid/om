@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.20..3.22)
 project(03-0-sdl-input-terminal)
 
 add_executable(03-0-sdl-input-terminal main.cxx)
@@ -8,8 +8,7 @@ find_package(SDL2 REQUIRED)
 
 target_link_libraries(03-0-sdl-input-terminal PRIVATE SDL2::SDL2 SDL2::SDL2main)
 
-
 install(TARGETS ${PROJECT_NAME}
-  RUNTIME DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../../bin/tests
-  LIBRARY DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../../bin/tests
-  ARCHIVE DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../../bin/tests)
+        RUNTIME DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../../bin/tests
+        LIBRARY DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../../bin/tests
+        ARCHIVE DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../../bin/tests)
