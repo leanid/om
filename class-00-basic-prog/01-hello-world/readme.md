@@ -42,3 +42,5 @@ If you redirect default output to /dev/video0 - python and rust - show error c++
 14. To build Main.java example:
 ```javac Main.java```
 ```java Main```
+15. (optional) install java and javac if needed 
+```sudo dnf install java-openjdk-devel```
