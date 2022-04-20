@@ -35,3 +35,10 @@ chmod +x /data/local/tmp/YOUR_BINARY
 11. compare c++ vs python vs rust - hello world programs using files **main.py**, **main.rs**
 If you redirect default output to /dev/video0 - python and rust - show error c++ - not
 
+12. To build main.go example:
+```go build main.go```
+13. To build main.rs example:
+```rustc main.rs```
+14. To build Main.java example:
+```javac Main.java```
+```java Main```
