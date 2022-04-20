@@ -10,26 +10,9 @@ if(WIN32)
 endif(WIN32)
 
 find_package(SDL2 REQUIRED)
+find_package(OpenGL REQUIRED)
 
-target_link_libraries(engine-04-2 PRIVATE SDL2::SDL2 SDL2::SDL2main)
-
-# if you want to link with OpenGL library yourself you can skip glad.{h,c} from
-# previous example and directly add link libraries for your platform
-if(MINGW)
-    target_link_libraries(
-        engine-04-2
-        PRIVATE -lmingw32
-                -lSDL2main
-                -lSDL2
-                -mwindows
-                -lopengl32)
-elseif(APPLE)
-    target_link_libraries(engine-04-2 PRIVATE -Wl,-framework,OpenGL)
-elseif(UNIX)
-    target_link_libraries(engine-04-2 PRIVATE GL)
-elseif(MSVC)
-    target_link_libraries(engine-04-2 PRIVATE opengl32)
-endif()
+target_link_libraries(engine-04-2 PRIVATE SDL2::SDL2 SDL2::SDL2main OpenGL::GL)
 
 add_executable(game-04-2 game.cxx)
 target_compile_features(game-04-2 PUBLIC cxx_std_17)
