@@ -53,9 +53,9 @@ int main(int, char**)
     }
     else if (color_256_supported)
     {
-        cout << "\033[48;5;2m";  // set background to green color
-        cout << "\033[38;5;1m]"; // set foreground to red color
-        cout << "\033[2J";       // clear entire screen
+        cout << "\033[48;5;2m"; // set background to green color
+        cout << "\033[38;5;1m"; // set foreground to red color
+        cout << "\033[2J";      // clear entire screen
         cout << "\033[" << (screen_height / 2) << ";"
              << (screen_width / 2 - output_text.size() / 2)
              << "H"; // move cursor to center
