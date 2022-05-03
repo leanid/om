@@ -118,7 +118,7 @@ bool is_terminal_support_truecolor()
 
     if (!colored_terminal_supported)
     {
-        cerr << "unsupported terminal - disable colored output\n";
+        cerr << "error: truecolor not supported in this terminal!\n";
         cerr << "TERM=" << (term != nullptr ? term : "") << '\n';
         cerr << "COLORTERM=" << (color_term != nullptr ? color_term : "")
              << '\n';
