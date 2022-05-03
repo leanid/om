@@ -5,6 +5,7 @@
 
 void get_terminal_size(int& width, int& height);
 bool is_terminal_support_truecolor();
+bool is_terminal_support_256color();
 
 int main(int, char**)
 {
@@ -24,11 +25,12 @@ int main(int, char**)
 
     get_terminal_size(screen_width, screen_height);
 
-    const bool colored_terminal_supported = is_terminal_support_truecolor();
+    const bool truecolor_supported = is_terminal_support_truecolor();
+    const bool color_256_supported = is_terminal_support_256color();
 
     string_view output_text = "hello world";
 
-    if (colored_terminal_supported)
+    if (truecolor_supported)
     {
         // read more here:
         // https://en.wikipedia.org/wiki/ANSI_escape_code
@@ -49,10 +51,19 @@ int main(int, char**)
         cout << "\033[" << (screen_height / 2) << ";"
              << (screen_width / 2 - output_text.size() / 2) << "H";
     }
+    else if (color_256_supported)
+    {
+        cout << "\033[48;5;2m";  // set background to green color
+        cout << "\033[38;5;1m]"; // set foreground to red color
+        cout << "\033[2J";       // clear entire screen
+        cout << "\033[" << (screen_height / 2) << ";"
+             << (screen_width / 2 - output_text.size() / 2)
+             << "H"; // move cursor to center
+    }
 
     cout << output_text;
 
-    if (colored_terminal_supported)
+    if (truecolor_supported || color_256_supported)
     {
         // move cursor to last line
         cout << "\033[" << screen_height << ";1H";
@@ -124,4 +135,21 @@ bool is_terminal_support_truecolor()
              << '\n';
     }
     return colored_terminal_supported;
+}
+
+bool is_terminal_support_256color()
+{
+    using namespace std;
+    using namespace std::literals;
+
+    const char* term = getenv("TERM");
+
+    const bool colored_256 = (term != nullptr && term == "xterm-256color"sv);
+
+    if (!colored_256)
+    {
+        cerr << "error: 256 color not supported in this terminal!\n";
+        cerr << "TERM=" << (term != nullptr ? term : "") << '\n';
+    }
+    return colored_256;
 }
