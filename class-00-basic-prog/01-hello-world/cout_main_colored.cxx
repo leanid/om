@@ -144,7 +144,16 @@ bool is_terminal_support_256color()
 
     const char* term = getenv("TERM");
 
-    const bool colored_256 = (term != nullptr && term == "xterm-256color"sv);
+    bool colored_256 = (term != nullptr && term == "xterm-256color"sv);
+    if (!colored_256)
+    {
+        const char* os_env_var = getenv("OS");
+        if (os_env_var != nullptr && "Windows_NT"sv == os_env_var)
+        {
+            colored_256 = true; // people say on Windows 10 it may works!
+            // I tested and it works not perfectly but some how
+        }
+    }
 
     if (!colored_256)
     {
