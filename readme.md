@@ -146,6 +146,20 @@ RUN dnf install -y gcc-c++ make cmake mingw64-gcc mingw64-gcc-c++ clang wine git
 (put 'projectile--cmake-manual-command-alist 'safe-local-variable (lambda (_) t))
 ```
 5. one more hint! Place **.projectile** file in root of your project to force doom-emacs use this directory as root
+#### Want latest and fastest emacs? Ok.
+1. on fedora install build dependencies to build emacs from source:
+```sh
+sudo dnf install gtk+-devel libXaw-devel libjpeg-devel libpng-devel giflib-devel libtiff-devel gnutls-devel ncurses-devel Xaw3d-devel libgccjit-devel harfbuzz-devel jansson-devel cairo-devel ripgrep fd-find libtool
+```
+2. build emacs with native-compilation enabled
+```sh
+# configure emacs for native-compilation like next:
+../emacs-28.1/configure --with-native-compilation --with-mailutils
+```
+3. after installing just fresh emacs call sync to regenerate-compile elisp packages for  doom-emacs 
+```sh
+~/.doom.d/bin/doom sync
+```
 ### Todos
 
  - write better readme.md about installation SDL on all platforms
