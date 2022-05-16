@@ -9,6 +9,15 @@ set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(CMAKE_VISIBILITY_INLINES_HIDDEN ON)
 set(CMAKE_ENABLE_EXPORTS OFF)
 
-add_executable(main main.cxx)
-target_link_libraries(main
+add_executable(main_std_stacktrace main_std_stacktrace.cxx)
+target_link_libraries(main_std_stacktrace
                       PRIVATE $<$<CXX_COMPILER_ID:GNU>:stdc++_libbacktrace>)
+
+# set(CMAKE_CXX_VISIBILITY_PRESET)
+# set(CMAKE_VISIBILITY_INLINES_HIDDEN OFF)
+# set(CMAKE_ENABLE_EXPORTS ON)
+
+# find_package(Boost REQUIRED COMPONENTS stacktrace)
+add_executable(main_boost_stacktrace main_boost_stacktrace.cxx)
+target_link_libraries(main_boost_stacktrace PRIVATE $<$<PLATFORM_ID:Linux>:dl>)
+# target_link_libraries(main_boost_stacktrace PRIVATE Boost::stacktrace)
