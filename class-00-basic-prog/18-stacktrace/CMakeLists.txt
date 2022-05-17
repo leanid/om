@@ -10,8 +10,11 @@ set(CMAKE_VISIBILITY_INLINES_HIDDEN ON)
 set(CMAKE_ENABLE_EXPORTS OFF)
 
 add_executable(main_std_stacktrace main_std_stacktrace.cxx)
-target_link_libraries(main_std_stacktrace
-                      PRIVATE $<$<CXX_COMPILER_ID:GNU>:stdc++_libbacktrace>)
+target_link_libraries(
+    main_std_stacktrace
+    PRIVATE
+        $<$<AND:$<VERSION_GREATER_EQUAL:${CMAKE_CXX_COMPILER_VERSION},12.1.1>,$<CXX_COMPILER_ID:GNU>>:stdc++_libbacktrace>
+    )
 
 # set(CMAKE_CXX_VISIBILITY_PRESET)
 # set(CMAKE_VISIBILITY_INLINES_HIDDEN OFF)
