@@ -1,6 +1,8 @@
 #include "gles30_texture.hxx"
 
 #include <algorithm>
+#include <array>
+#include <filesystem>
 #include <numeric>
 
 #pragma GCC diagnostic push
@@ -23,8 +25,15 @@ texture::texture(const type tex_type, size_t width, size_t height)
     GLint mipmap_level = 0;
     GLint border       = 0;
     // allocate memory for texture
-    glTexImage2D(GL_TEXTURE_2D, mipmap_level, GL_RGB, width, height, border,
-                 GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+    glTexImage2D(GL_TEXTURE_2D,
+                 mipmap_level,
+                 GL_RGB,
+                 width,
+                 height,
+                 border,
+                 GL_RGB,
+                 GL_UNSIGNED_BYTE,
+                 nullptr);
 }
 
 void texture::set_default_wrap_and_filters()
@@ -46,8 +55,9 @@ void texture::gen_texture_set_filters_and_wrap()
     set_default_wrap_and_filters();
 }
 
-texture::texture(const std::filesystem::path& path, const type tex_type,
-                 const opt options)
+texture::texture(const std::filesystem::path& path,
+                 const type                   tex_type,
+                 const opt                    options)
     : file_name{ path.u8string() }
     , texture_id{ 0 }
     , texture_type{ tex_type }
@@ -64,7 +74,10 @@ texture::texture(const std::filesystem::path& path, const type tex_type,
     const int prefered_channels_count = 0; // same as in texture
 
     std::unique_ptr<uint8_t, void (*)(void*)> data(
-        stbi_load(file_name.c_str(), &width, &height, &channels,
+        stbi_load(file_name.c_str(),
+                  &width,
+                  &height,
+                  &channels,
                   prefered_channels_count),
         &stbi_image_free);
 
@@ -80,13 +93,27 @@ texture::texture(const std::filesystem::path& path, const type tex_type,
     GLint border       = 0;
     if (3 == channels)
     {
-        glTexImage2D(GL_TEXTURE_2D, mipmap_level, GL_RGB, width, height, border,
-                     GL_RGB, GL_UNSIGNED_BYTE, data.get());
+        glTexImage2D(GL_TEXTURE_2D,
+                     mipmap_level,
+                     GL_RGB,
+                     width,
+                     height,
+                     border,
+                     GL_RGB,
+                     GL_UNSIGNED_BYTE,
+                     data.get());
     }
     else if (4 == channels)
     {
-        glTexImage2D(GL_TEXTURE_2D, mipmap_level, GL_RGBA, width, height,
-                     border, GL_RGBA, GL_UNSIGNED_BYTE, data.get());
+        glTexImage2D(GL_TEXTURE_2D,
+                     mipmap_level,
+                     GL_RGBA,
+                     width,
+                     height,
+                     border,
+                     GL_RGBA,
+                     GL_UNSIGNED_BYTE,
+                     data.get());
 
         // RBG + A - should be clamped on border color to border not
         // reverse side pixel (or leave 1px on boarder on texture)
@@ -105,8 +132,11 @@ static std::string join_strings_with_spaces(
     const std::array<std::filesystem::path, 6>& faces)
 {
     std::string result;
-    std::accumulate(begin(faces), end(faces), result,
-                    [](std::string& result, const std::filesystem::path& p) {
+    std::accumulate(begin(faces),
+                    end(faces),
+                    result,
+                    [](std::string& result, const std::filesystem::path& p)
+                    {
                         if (!result.empty())
                         {
                             result.push_back(' ');
@@ -145,7 +175,10 @@ texture::texture(const std::array<std::filesystem::path, 6>& faces,
         int32_t     num_channels{};
         const int   prefered_channels_count = 0; // same as in texture
         std::unique_ptr<unsigned char, void (*)(void*)> data{
-            stbi_load(path.c_str(), &width, &height, &num_channels,
+            stbi_load(path.c_str(),
+                      &width,
+                      &height,
+                      &num_channels,
                       prefered_channels_count),
             stbi_image_free
         };
@@ -155,8 +188,15 @@ texture::texture(const std::array<std::filesystem::path, 6>& faces,
         }
         const int32_t mipmap_level = 0;
         const int32_t boarder      = 0;
-        glTexImage2D(type, mipmap_level, GL_RGB, width, height, boarder, GL_RGB,
-                     GL_UNSIGNED_BYTE, data.get());
+        glTexImage2D(type,
+                     mipmap_level,
+                     GL_RGB,
+                     width,
+                     height,
+                     boarder,
+                     GL_RGB,
+                     GL_UNSIGNED_BYTE,
+                     data.get());
     }
 
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);

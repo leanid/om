@@ -1,5 +1,6 @@
 #include "opengles30.hxx"
 
+#include <algorithm>
 #include <array>
 #include <csignal>
 #include <iostream>
@@ -281,9 +282,8 @@ int get_gl_constant(
 {
     auto it = std::find_if(begin(operations),
                            end(operations),
-                           [&name](const std::pair<std::string_view, int>& p) {
-                               return p.first == name;
-                           });
+                           [&name](const std::pair<std::string_view, int>& p)
+                           { return p.first == name; });
     if (it == end(operations))
     {
         throw std::out_of_range(std::string("operation not found: ") +
