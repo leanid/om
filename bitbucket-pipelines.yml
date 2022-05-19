@@ -4,84 +4,84 @@ pipelines:
     - step:
         script:
           - git clean -df
-          - cmake class-01-basic-game-dev/01-1-hello-world/
+          - cmake 01-basic-game-dev/01-1-hello-world/
           - cmake --build .
           - ./01-1-hello-world
           
           #- git clean -df
-          #- mingw64-cmake class-01-basic-game-dev/01-1-hello-world/
+          #- mingw64-cmake 01-basic-game-dev/01-1-hello-world/
           #- mingw64-cmake --build .
           #- WINEPATH=/usr/x86_64-w64-mingw32/sys-root/mingw/bin wine ./01-1-hello-world.exe # too long 30 seconds
           
           - git clean -df
-          - CXX=clang++ cmake class-01-basic-game-dev/01-1-hello-world/
+          - CXX=clang++ cmake 01-basic-game-dev/01-1-hello-world/
           - CXX=clang++ cmake --build .
           - ./01-1-hello-world
 
           - git clean -df
-          - cmake class-01-basic-game-dev/01-2-hello-lib/
+          - cmake 01-basic-game-dev/01-2-hello-lib/
           - cmake --build .
           - hello_bin/hello-bin-static
           
           #- git clean -df
-          #- mingw64-cmake class-01-basic-game-dev/01-2-hello-lib/
+          #- mingw64-cmake 01-basic-game-dev/01-2-hello-lib/
           #- mingw64-cmake --build .
           #- WINEPATH=/usr/x86_64-w64-mingw32/sys-root/mingw/bin wine hello_bin/hello-bin # too long 30 seconds
           
           - git clean -df
-          - CXX=clang++ cmake class-01-basic-game-dev/01-2-hello-lib/
+          - CXX=clang++ cmake 01-basic-game-dev/01-2-hello-lib/
           - CXX=clang++ cmake --build .
           - hello_bin/hello-bin-dynamic
 
           - git clean -df
-          - cmake class-01-basic-game-dev/02-1-sdl-dynamic/
+          - cmake 01-basic-game-dev/02-1-sdl-dynamic/
           - cmake --build .
           - ./02-sdl-dynamic
 
           # Static version of libSDL2d.a - not exist on build machine. Leave it only to check locally.
           #- git clean -df
-          #- cmake -configure class-01-basic-game-dev/02-2-sdl-static/
-          #- cmake -generate class-01-basic-game-dev/02-2-sdl-static/
+          #- cmake -configure 01-basic-game-dev/02-2-sdl-static/
+          #- cmake -generate 01-basic-game-dev/02-2-sdl-static/
           #- make
           #- ./02-sdl-static
 
           #- git clean -df
-          #- mingw64-cmake class-01-basic-game-dev/02-1-sdl-dynamic/
+          #- mingw64-cmake 01-basic-game-dev/02-1-sdl-dynamic/
           #- mingw64-cmake --build .
           #- WINEPATH=/usr/x86_64-w64-mingw32/sys-root/mingw/bin wine ./02-sdl-dynamic.exe # too long 30 seconds
 
           # Static version of libSDL2d.a - not exist on build machine. Leave it only to check locally.
           #- git clean -df
-          #- mingw64-cmake -configure class-01-basic-game-dev/02-2-sdl-static/
-          #- mingw64-cmake -generate class-01-basic-game-dev/02-2-sdl-static/
+          #- mingw64-cmake -configure 01-basic-game-dev/02-2-sdl-static/
+          #- mingw64-cmake -generate 01-basic-game-dev/02-2-sdl-static/
           #- mingw64-make
           #- WINEPATH=/usr/x86_64-w64-mingw32/sys-root/mingw/bin wine ./02-sdl-static.exe # too long 30 seconds
          
           - git clean -df
-          - cmake class-01-basic-game-dev/03-1-sdl-loop/
+          - cmake 01-basic-game-dev/03-1-sdl-loop/
           - cmake --build .
 
           - git clean -df
-          - cmake class-01-basic-game-dev/03-2-sdl-loop-to-engine/
+          - cmake 01-basic-game-dev/03-2-sdl-loop-to-engine/
           - cmake --build .
 
           - git clean -df
-          - cmake class-01-basic-game-dev/03-3-sdl-loop-to-engine-dll/
+          - cmake 01-basic-game-dev/03-3-sdl-loop-to-engine-dll/
           - cmake --build .
 
           #- git clean -df
-          #- mingw64-cmake class-01-basic-game-dev/04-1-opengl-minimal/
+          #- mingw64-cmake 01-basic-game-dev/04-1-opengl-minimal/
           #- mingw64-cmake --build .
           #- WINEPATH=/usr/x86_64-w64-mingw32/sys-root/mingw/bin wine ./game.exe # run opengl minimal on linux with wine (works)
 
           - git clean -df
-          - cmake class-01-basic-game-dev/04-2-opengl-triangle/
+          - cmake 01-basic-game-dev/04-2-opengl-triangle/
           - cmake --build .
 
           - git clean -df
-          - cmake class-01-basic-game-dev/05-1-vertex-morphing/
+          - cmake 01-basic-game-dev/05-1-vertex-morphing/
           - cmake --build .
 
           - git clean -df
-          - cmake class-01-basic-game-dev/05-2-texture-loading/
+          - cmake 01-basic-game-dev/05-2-texture-loading/
           - cmake --build .
