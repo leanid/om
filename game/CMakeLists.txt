@@ -14,7 +14,3 @@ add_library(game SHARED game.cxx)
 
 target_compile_features(game PRIVATE cxx_std_17)
 target_link_libraries(game PRIVATE om)
-
-install(TARGETS game RUNTIME DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../bin
-        LIBRARY DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../bin
-        ARCHIVE DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../bin)
