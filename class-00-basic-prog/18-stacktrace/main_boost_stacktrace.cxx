@@ -1,4 +1,5 @@
 #include <boost/stacktrace.hpp>
+#include <boost/version.hpp>
 #include <iostream>
 
 void some_other_func()
@@ -15,6 +16,8 @@ void some_func_one()
 
 int main(int argc, char** argv)
 {
+    std::cerr << "boost compilation lib version: " << BOOST_LIB_VERSION
+              << std::endl;
     some_func_one();
     return 0;
 }

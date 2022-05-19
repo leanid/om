@@ -5,6 +5,7 @@ project(18-stacktrace CXX)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(CMAKE_VISIBILITY_INLINES_HIDDEN ON)
 set(CMAKE_ENABLE_EXPORTS OFF)
@@ -20,7 +21,11 @@ target_link_libraries(
 # set(CMAKE_VISIBILITY_INLINES_HIDDEN OFF)
 # set(CMAKE_ENABLE_EXPORTS ON)
 
-# find_package(Boost REQUIRED COMPONENTS stacktrace)
+find_package(Boost REQUIRED)
 add_executable(main_boost_stacktrace main_boost_stacktrace.cxx)
 target_link_libraries(main_boost_stacktrace PRIVATE $<$<PLATFORM_ID:Linux>:dl>)
+# target_compile_definitions(main_boost_stacktrace
+# PRIVATE BOOST_STACKTRACE_USE_BACKTRACE)
+target_compile_definitions(main_boost_stacktrace
+                           PRIVATE BOOST_STACKTRACE_USE_ADDR2LINE)
 # target_link_libraries(main_boost_stacktrace PRIVATE Boost::stacktrace)
