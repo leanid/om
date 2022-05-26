@@ -37,7 +37,7 @@ static std::array<std::string_view, 17> event_names = {
       "turn_off" }
 };
 
-std::ostream& operator<<(std::ostream& stream, const event e)
+std::ostream& operator<<(std::ostream& stream, const event& e)
 {
     auto value   = static_cast<std::uint32_t>(e);
     auto maximal = static_cast<std::uint32_t>(event::turn_off);
@@ -73,10 +73,10 @@ struct bind
     {
     }
 
-    SDL_Keycode      key;
+    SDL_Keycode                       key;
     [[maybe_unused]] std::string_view name;
-    event            event_pressed;
-    event            event_released;
+    event                             event_pressed;
+    event                             event_released;
 };
 
 const std::array<bind, 8> keys{

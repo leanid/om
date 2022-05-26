@@ -28,12 +28,10 @@ public:
         const char current_symbol = rotations_chars.at(rotation_index);
         std::cout << "\b" << current_symbol << std::flush;
 
-        /*
-        {
-            std::cout << "\b\b\b" << current_symbol << current_symbol
-                      << current_symbol << std::flush;
-        }
-        */
+        // {
+        //     std::cout << "\b\b\b" << current_symbol << current_symbol
+        //               << current_symbol << std::flush;
+        // }
     }
 
 private:
