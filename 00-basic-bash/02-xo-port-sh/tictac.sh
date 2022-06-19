@@ -9,10 +9,12 @@ field=(_ _ _ \
 function print_field()
 {
     i=0
-    #for ((i=0; i<3; i++))  # Bash old code
     while [ "$i" -lt 3 ] # while i "less then" 3
     do
-        echo ${field[((3*i))]} "|" ${field[(((3*i)+1))]} "|" ${field[(((3*i)+2))]}
+        i0=`expr 3 \* $i` # we have to backslash * symbol
+        i1=`expr 3 \* $i + 1`
+        i2=`expr 3 \* $i + 2`
+        echo ${field[$i0]} "|" ${field[$i1]} "|" ${field[$i2]}
         i=`expr $i + 1`
     done
 }
