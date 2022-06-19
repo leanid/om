@@ -1,5 +1,6 @@
 #include "opengles30.hxx"
 
+#include <algorithm>
 #include <array>
 #include <csignal>
 #include <iostream>
