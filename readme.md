@@ -13,29 +13,28 @@ Linux x64        | ![Linux x64](https://img.shields.io/bitbucket/pipelines/b_y/o
 Om is a nice 2d game engine for multy platform using. Use it and develop it if you like next principals:
 
   - Environmental friendliness (take less do more with c++)
-  - Modern IT technology (c++17, cmake-3.14, gradle)
+  - Modern IT technology (c++20, cmake-3.23, gradle)
   - Creativity (create funny tools with imgui library)
 
-# Planed Features!
+# Planed Features
 
   - multi platform (linux, windows, mac os, android, ios)
-  - 2d on top of OpenGL 2.0 ES
-  - last c++17 standard
+  - 2d on top of OpenGL 2.0 ES (3.0 ES)
+  - last c++20(c++23) standard
   - STL enabled, no custom monkey coding
-  - easy building with cmake
+  - easy building with modern cmake
 
 ### Tech
 
 Om project uses a number of open source projects to work properly:
 
-* [SDL2] - best crossplatform game library
+* [SDL2] - best crossplatform low level game library
 
- Om Project is open source with a public repository [om](https://bitbucket.org/b_y/om)
- on BitBucket.
+ Om Project is open source with a public repository [om](https://bitbucket.org/b_y/om) on BitBucket.
 
 ### Installation
 
-Om requires [SDL2](http://libsdl.org/) v2.0.9+ to run.
+Om requires [SDL2](http://libsdl.org/) v2.23.0+ to run.
 
 Install the dependencies to build engine on linux.
 
@@ -91,7 +90,7 @@ $ brew install cmake
 ```
 
 ### On Windows
-#### for Visual Studio (2017 with c++17 support)
+#### for Visual Studio (2022 with c++23 support)
 1. install vcpkg from (https://github.com/Microsoft/vcpkg)
 2. install SDL2 in vcpgk: ```vcpkg install sdl2```
 3. make directory build in om/tests. move into it and there:
@@ -145,7 +144,7 @@ RUN dnf install -y gcc-c++ make cmake mingw64-gcc mingw64-gcc-c++ clang wine git
 ```elisp
 (put 'projectile--cmake-manual-command-alist 'safe-local-variable (lambda (_) t))
 ```
-5. one more hint! Place **.projectile** file in root of your project to force doom-emacs use this directory as root
+5. one more hint. Place **.projectile** file in root of your project to force doom-emacs use this directory as root
 #### Want latest and fastest emacs? Ok.
 1. on fedora install build dependencies to build emacs from source:
 ```sh
