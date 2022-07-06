@@ -10,11 +10,12 @@ Linux x64        | ![Linux x64](https://img.shields.io/bitbucket/pipelines/b_y/o
 
 
 
-Om is a nice 2d game engine for multy platform using. Use it and develop it if you like next principals:
+Om is a nice 2d game engine for multy platform studing. 
 
   - Environmental friendliness (take less do more with c++)
   - Modern IT technology (c++20, cmake-3.23, gradle)
   - Creativity (create funny tools with imgui library)
+  - Fun 🤣 
 
 # Planed Features
 
