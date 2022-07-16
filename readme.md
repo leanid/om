@@ -38,22 +38,22 @@ Install the dependencies to build engine on linux.
 #### On Ununtu linux
 
 ```sh
-$ git clone git@bitbucket.org:b_y/om.git
-$ sudo apt install libsdl2-dev
-$ cmake -G"Makefiles"
-$ make -j 4
-$ bin/engine --test
+git clone git@bitbucket.org:b_y/om.git
+sudo apt install libsdl2-dev
+cmake -G"Makefiles"
+make -j 4
+bin/engine --test
 ```
 
 #### On Fedora linux
 
 ```sh
-$ git clone git@bitbucket.org:b_y/om.git
-$ sudo dnf install SDL2
-$ sudo dnf install SDL2-static
-$ cmake -G"Makefiles"
-$ make -j 4
-$ bin/engine --test
+git clone git@bitbucket.org:b_y/om.git
+sudo dnf install SDL2
+sudo dnf install SDL2-static
+cmake -G"Makefiles"
+make -j 4
+bin/engine --test
 ```
 
 ##### hints on Fedora
@@ -62,41 +62,41 @@ $ bin/engine --test
 
     ```sh
     # search by package name
-    $ dnf search SDL2
+    dnf search SDL2
     # search by file in package
-    $ dnf provides /usr/lib/libSDL2.so
+    dnf provides /usr/lib/libSDL2.so
     # search by part of file name
-    $ dnf provides "*/libSDL2.so"
+    dnf provides "*/libSDL2.so"
     ```
 
 1. To list package contents (files list)
 
     ```sh
-    $ dnf repoquery -l SDL2
-    $ rpm -ql SDL2
+    dnf repoquery -l SDL2
+    rpm -ql SDL2
     ```
 
 1. To show compile/link/version of installed version
 
     ```sh
-    $ sdl2-config --version
-    $ sdl2-config --libs
-    $ sdl2-config --static-libs
+    sdl2-config --version
+    sdl2-config --libs
+    sdl2-config --static-libs
     ```
 
 ### On Mac OS (with gcc)
 
 #### using g++ from Homebrew (need c++17 support)
 
-on Mac OS for c++17 compiler you have to install latest gcc from
+On Mac OS for c++17 compiler you have to install latest gcc from
 Homebrew and then use it
 
-    ```sh
-    $ /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-    $ brew install gcc
-    $ brew install SDL2
-    $ brew install cmake
-    ```
+```sh
+/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+brew install gcc
+brew install SDL2
+brew install cmake
+```
 
 ### On Windows
 
@@ -123,11 +123,14 @@ Homebrew and then use it
     `pacman -S base-devel mingw-w64-x86_64-toolchain \
     git mingw-w64-x86_64-cmake mingw-w64-x86_64-qt-creator ninja`
 1. from cmd.exe windows terminal program (g++ in PATH from msys2)
-    `cd ~/om
+
+    ```
+    cd ~/om
     mkdir build
     cd build
     cmake ../tests
-    cmake --build .`
+    cmake --build .
+    ```
 
 ### Generate Docker image (for bitbucket pipelines)
 
