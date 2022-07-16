@@ -103,13 +103,9 @@ Homebrew and then use it
 #### for Visual Studio (2022 with c++23 support)
 
 1. install vcpkg from [vcpkg](https://github.com/Microsoft/vcpkg)
-1. install SDL2 in vcpgk: ```vcpkg install sdl2```
+1. install SDL2 in vcpgk: `vcpkg install sdl2`
 1. make directory build in om/tests. move into it and there:
-
-   ```
-   cmake .. -DCMAKE_TOOLCHAIN_FILE={YOUR_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake
-   ```
-
+   `cmake .. -DCMAKE_TOOLCHAIN_FILE={YOUR_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake`
 1. build all using:
 
    ```
@@ -119,19 +115,19 @@ Homebrew and then use it
 
 ### Building
 
-#### On Windows using MSYS2(https://www.msys2.org)
+#### On Windows using [MSYS2](https://www.msys2.org)
 
 1. from msys2 bash shell:
-    pacman -S base-devel mingw-w64-x86_64-toolchain mingw-w64-x86_64-SDL2
+    `pacman -S base-devel mingw-w64-x86_64-toolchain mingw-w64-x86_64-SDL2`
 1. (optional) full build development environment on windows using msys2:
-    pacman -S base-devel mingw-w64-x86_64-toolchain \
-    git mingw-w64-x86_64-cmake mingw-w64-x86_64-qt-creator ninja
+    `pacman -S base-devel mingw-w64-x86_64-toolchain \
+    git mingw-w64-x86_64-cmake mingw-w64-x86_64-qt-creator ninja`
 1. from cmd.exe windows terminal program (g++ in PATH from msys2)
-    cd ~/om
+    `cd ~/om
     mkdir build
     cd build
     cmake ../tests
-    cmake --build .
+    cmake --build .`
 
 ### Generate Docker image (for bitbucket pipelines)
 
@@ -158,8 +154,8 @@ libstdc++-static glibc-static ninja-build
 #### Simple configuration for **doom-emacs** per-project c++ cmake
 
 1. create in project root file: **.dir-locals.el**
-2. place next code into it.
-3. edit it if you need add some cmake flags or change test-command
+1. place next code into it.
+1. edit it if you need add some cmake flags or change test-command
 
     ```elisp
     ;;; Directory Local Variables
@@ -170,14 +166,15 @@ libstdc++-static glibc-static ninja-build
                                                         (:test-command . "./build/30-1-point-shadow"))))))
     ```
 
-4. also you may want to disable warning about every opened file in project.
+1. also you may want to disable warning about every opened file in project.
    Place next into: **~/.doom.d/config.el**
 
     ```elisp
     (put 'projectile--cmake-manual-command-alist 'safe-local-variable (lambda (_) t))
     ```
 
-5. one more hint. Place **.projectile** file in root of your project to force doom-emacs use this directory as root
+1. one more hint. Place **.projectile** file in root of your
+   project to force doom-emacs use this directory as root
 
 #### Want latest and fastest emacs? Ok
 
