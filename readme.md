@@ -60,29 +60,29 @@ $ bin/engine --test
 
 1. To search package
 
-```sh
-# search by package name
-$ dnf search SDL2
-# search by file in package
-$ dnf provides /usr/lib/libSDL2.so
-# search by part of file name
-$ dnf provides "*/libSDL2.so"
-```
+    ```sh
+    # search by package name
+    $ dnf search SDL2
+    # search by file in package
+    $ dnf provides /usr/lib/libSDL2.so
+    # search by part of file name
+    $ dnf provides "*/libSDL2.so"
+    ```
 
-2. To list package contents (files list)
+1. To list package contents (files list)
 
-```sh
-$ dnf repoquery -l SDL2
-$ rpm -ql SDL2
-```
+    ```sh
+    $ dnf repoquery -l SDL2
+    $ rpm -ql SDL2
+    ```
 
-3. To show compile/link/version of installed version
+1. To show compile/link/version of installed version
 
-```sh
-$ sdl2-config --version
-$ sdl2-config --libs
-$ sdl2-config --static-libs
-```
+    ```sh
+    $ sdl2-config --version
+    $ sdl2-config --libs
+    $ sdl2-config --static-libs
+    ```
 
 ### On Mac OS (with gcc)
 
@@ -91,12 +91,12 @@ $ sdl2-config --static-libs
 on Mac OS for c++17 compiler you have to install latest gcc from
 Homebrew and then use it
 
-```sh
-$ /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-$ brew install gcc
-$ brew install SDL2
-$ brew install cmake
-```
+    ```sh
+    $ /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+    $ brew install gcc
+    $ brew install SDL2
+    $ brew install cmake
+    ```
 
 ### On Windows
 
@@ -106,11 +106,11 @@ $ brew install cmake
 1. install SDL2 in vcpgk: ```vcpkg install sdl2```
 1. make directory build in om/tests. move into it and there:
 
-```cmake .. -DCMAKE_TOOLCHAIN_FILE={YOUR_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake```
+   ```cmake .. -DCMAKE_TOOLCHAIN_FILE={YOUR_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake```
 
 1. build all using:
 
-```"C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin\MSBuild.exe" all-tests-build.sln```
+   ```"C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin\MSBuild.exe" all-tests-build.sln```
 
 ### Building
 
@@ -119,7 +119,8 @@ $ brew install cmake
 1. from msys2 bash shell:
     pacman -S base-devel mingw-w64-x86_64-toolchain mingw-w64-x86_64-SDL2
 1. (optional) full build development environment on windows using msys2:
-    pacman -S base-devel mingw-w64-x86_64-toolchain git mingw-w64-x86_64-cmake mingw-w64-x86_64-qt-creator ninja
+    pacman -S base-devel mingw-w64-x86_64-toolchain \
+    git mingw-w64-x86_64-cmake mingw-w64-x86_64-qt-creator ninja
 1. from cmd.exe windows terminal program (g++ in PATH from msys2)
     cd ~/om
     mkdir build
@@ -154,34 +155,50 @@ libstdc++-static glibc-static ninja-build
 1. create in project root file: **.dir-locals.el**
 2. place next code into it.
 3. edit it if you need add some cmake flags or change test-command
-```elisp
-;;; Directory Local Variables
-;;; For more information see (info "(emacs) Directory Variables")
 
-((nil . ((projectile--cmake-manual-command-alist . ((:configure-command . "cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -S . -B build")
-                                                    (:compile-command . "cmake --build build")
-                                                    (:test-command . "./build/30-1-point-shadow"))))))
-```
+    ```elisp
+    ;;; Directory Local Variables
+    ;;; For more information see (info "(emacs) Directory Variables")
+
+    ((nil . ((projectile--cmake-manual-command-alist . ((:configure-command . "cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -S . -B build")
+                                                        (:compile-command . "cmake --build build")
+                                                        (:test-command . "./build/30-1-point-shadow"))))))
+    ```
+
 4. also you may want to disable warning about every opened file in project.
    Place next into: **~/.doom.d/config.el**
-```elisp
-(put 'projectile--cmake-manual-command-alist 'safe-local-variable (lambda (_) t))
-```
+
+    ```elisp
+    (put 'projectile--cmake-manual-command-alist 'safe-local-variable (lambda (_) t))
+    ```
+
 5. one more hint. Place **.projectile** file in root of your project to force doom-emacs use this directory as root
-#### Want latest and fastest emacs? Ok.
+
+#### Want latest and fastest emacs? Ok
+
 1. on fedora install build dependencies to build emacs from source:
-```sh
-sudo dnf install gtk+-devel libXaw-devel libjpeg-devel libpng-devel giflib-devel libtiff-devel gnutls-devel ncurses-devel Xaw3d-devel libgccjit-devel harfbuzz-devel jansson-devel cairo-devel ripgrep fd-find libtool
-```
-2. build emacs with native-compilation enabled
-```sh
-# configure emacs for native-compilation like next:
-../emacs-28.1/configure --with-native-compilation --with-mailutils
-```
-3. after installing just fresh emacs call sync to regenerate-compile elisp packages for  doom-emacs 
-```sh
-~/.doom.d/bin/doom sync
-```
+
+    ```sh
+    sudo dnf install gtk+-devel libXaw-devel libjpeg-devel libpng-devel \
+    giflib-devel libtiff-devel gnutls-devel ncurses-devel Xaw3d-devel \
+    libgccjit-devel harfbuzz-devel jansson-devel cairo-devel \
+    ripgrep fd-find libtool
+    ```
+
+1. build emacs with native-compilation enabled
+
+    ```sh
+    # configure emacs for native-compilation like next:
+    ../emacs-28.1/configure --with-native-compilation --with-mailutils
+    ```
+
+1. after installing just fresh emacs call sync
+   to regenerate-compile elisp packages for doom-emacs
+
+    ```sh
+    ~/.doom.d/bin/doom sync
+    ```
+
 ### Todos
 
 - write better readme.md about installation SDL on all platforms
