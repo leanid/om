@@ -106,11 +106,16 @@ Homebrew and then use it
 1. install SDL2 in vcpgk: ```vcpkg install sdl2```
 1. make directory build in om/tests. move into it and there:
 
-   ```cmake .. -DCMAKE_TOOLCHAIN_FILE={YOUR_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake```
+   ```
+   cmake .. -DCMAKE_TOOLCHAIN_FILE={YOUR_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake
+   ```
 
 1. build all using:
 
-   ```"C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin\MSBuild.exe" all-tests-build.sln```
+   ```
+   "C:\Program Files (x86)\Microsoft Visual Studio\ \
+   2017\Community\MSBuild\15.0\Bin\MSBuild.exe" all-tests-build.sln
+   ```
 
 ### Building
 
