@@ -1,0 +1,124 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "presentation": {"echo": true, "reveal": "always", "focus": true, "panel": "shared", "clear": true},
+    "problemMatcher": [],
+    "settings": {
+        "options": {
+            "build_tests": "OFF"
+        },
+    },
+    "tasks": [
+        {
+            "label": "Configure CMake build",
+            "type": "shell",
+            "detail": "Invokes CMake configure action",
+            "windows": {
+                "command": "cmake",
+                "args": [
+                    "..", 
+                    "-G", "${input:WindowsCmakeGenerators}",
+                    "-DCMAKE_BUILD_TYPE=${input:buildConfig}",
+                    "-DOPTION_BUILD_TESTS=${settings:options.build_tests}",
+                ]
+            },
+            "linux": {
+                "command": "cmake",
+                "args": [
+                    "..", 
+                    "-G", "${input:UNIXCmakeGenerators}",
+                    "-DCMAKE_BUILD_TYPE=${input:buildConfig}",
+                    "-DOPTION_BUILD_TESTS=${settings:options.build_tests}",
+                ]
+            },
+            "options": {
+                "cwd": "${workspaceFolder}/build"
+            },
+            "problemMatcher": [],
+            // "dependsOn": ["Clean folder"]
+        },
+        {
+            "label": "Clean folder",
+            "type": "shell",
+            "detail": "Clean selected folder",
+            "command": "rm",
+            "args": [
+                "-rf", "${workspaceFolder}/${input:FolderToDelete}"
+            ],
+        },
+        {
+            "label": "Build",
+            "type": "shell",
+            "detail": "Builds binaries",
+            "command": "cmake",
+            "args": [
+                "--build", ".",
+                "--target", "${input:buildTarget}",
+                "--config", "${input:buildConfig}",
+                "-j12"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/build"
+            },
+            "problemMatcher": []
+        },
+    ],
+    "inputs": [
+        {
+            "type": "pickString",
+            "id": "WindowsCmakeGenerators",
+            "description": "List of the Cmake Generators",
+            "options": [
+                "Visual Studio 17 2022",
+                "Visual Studio 16 2019",
+                "Visual Studio 15 2017"
+            ],
+            "default": "Visual Studio 16 2019"
+        },
+        {
+            "type": "pickString",
+            "id": "UNIXCmakeGenerators",
+            "description": "List of the Cmake Generators",
+            "options": [
+                "Unix Makefiles",
+                "Ninja",
+                "Eclipse CDT4 - Unix Makefiles"
+            ],
+            "default": "Unix Makefiles"
+        },
+        {
+            "type": "pickString",
+            "id": "buildTarget",
+            "description": "Target to build",
+            "options": [
+                {"label" : "All"        , "value" : "all"},
+                {"label" : "Engine"     , "value" : "om"},
+                {"label" : "Game"       , "value" : "game"},
+                // {"label" : "Build tests", "value" : "tests"},
+            ],
+            "default": "all"
+        },
+        {
+            "type": "pickString",
+            "id": "buildConfig",
+            "description": "Build type",
+            "options": [
+                "RelWithDebInfo",
+                "Release",
+                "Debug"
+            ],
+            "default": "Debug"
+        },
+        {
+            "type": "pickString",
+            "id": "FolderToDelete",
+            "description": "Folder to delete",
+            "options": [
+                // "/build/installer/*",
+                "/build/*",
+            ],
+            "default": "/build/*"
+        },
+    ]
+}
