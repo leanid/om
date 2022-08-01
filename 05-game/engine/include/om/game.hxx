@@ -11,6 +11,10 @@
 #endif
 #endif
 
+#if !defined(OM_GAME)
+#define OM_GAME
+#endif
+
 namespace om
 {
 struct event;
@@ -31,4 +35,4 @@ struct OM_EXP game
 
 } // end namespace om
 
-extern std::unique_ptr<om::game> create_game(om::engine&);
+extern std::unique_ptr<om::game> OM_GAME create_game(om::engine&);

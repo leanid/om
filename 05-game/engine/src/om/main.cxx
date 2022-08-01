@@ -78,7 +78,9 @@ std::string_view get_cxx_mangled_name()
 #elif defined(_MSC_VER)
 std::string_view get_cxx_mangled_name()
 {
-    return "create_game::om::engine";
+    // how to get it:
+    // c:\Program Files (x86)\Microsoft Visual Studio\2019\Professional>dumpbin /exports C:\build-dir\om\05-game\engine\Debug\game.dll
+    return "?create_game@@YA?AV?$unique_ptr@Ugame@om@@U?$default_delete@Ugame@om@@@std@@@std@@AEAUengine@om@@@Z";
 }
 #else
 #error "add mangled name for your compiler"

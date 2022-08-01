@@ -23,7 +23,7 @@ private:
     double              fps      = 1.0 / 12;
 };
 
-std::unique_ptr<om::game> create_game(om::engine& e)
+std::unique_ptr<om::game> OM_GAME create_game(om::engine& e)
 {
     return std::make_unique<tic_tac_toe>(e);
 }
@@ -47,34 +47,24 @@ void tic_tac_toe::process_input(om::event&) {}
 
 void tic_tac_toe::update(om::milliseconds frame_delta)
 {
-    const double dt = static_cast<double>(frame_delta.count()) * 0.001; // seconds
+    const double dt =
+        static_cast<double>(frame_delta.count()) * 0.001; // seconds
     fps -= dt;
     if (fps <= 0)
     {
-        std::cout << '\b';
-        std::cout << '\b';
-        std::cout << '\b';
-        std::cout << '\b';
-        std::cout << '\b';
-        std::cout << '\b';
+        constexpr int count_lines = 4;
+        int back_chars  = count_lines;
+        while (back_chars--)
+        {
+            std::cout << '\b';
+        }
 
-        index = (index + 1) % anim.size();
-        std::cout << anim[index] << std::flush;
-
-        index = (index + 1) % anim.size();
-        std::cout << anim[index] << std::flush;
-
-        index = (index + 1) % anim.size();
-        std::cout << anim[index] << std::flush;
-
-        index = (index + 1) % anim.size();
-        std::cout << anim[index] << std::flush;
-
-        index = (index + 1) % anim.size();
-        std::cout << anim[index] << std::flush;
-
-        index = (index + 1) % anim.size();
-        std::cout << anim[index] << std::flush;
+        int lines = count_lines;
+        while (lines--)
+        {
+            index = (index + 1) % anim.size();
+            std::cout << anim[index] << std::flush;
+        }
 
         fps += fps_base;
     }
