@@ -41,8 +41,8 @@
  *	time: 1542 non-cached, 1490 cached
  */
 
-#define USE_DIRENT
-//#define USE_STD_FILESYSTEM
+//#define USE_DIRENT
+#define USE_STD_FILESYSTEM
 
 #ifdef USE_DIRENT
 #include <dirent.h>
@@ -94,26 +94,25 @@ struct file;
 
 struct directory
 {
-    directory(){};
     directory*              parent = nullptr;
     std::vector<directory*> child_folders{};
     std::vector<file*>      child_files{};
-    std::string             name{};
+    std::u8string             name{};
 };
 
 struct file
 {
     size_t      size = 0;
-    std::string name;
-    std::string extension;
+    std::u8string name;
+    std::u8string extension;
     directory*  parent = nullptr;
 
-    std::string get_full_name() const;
+    std::u8string get_full_name() const;
 };
 
-std::string file::get_full_name() const
+std::u8string file::get_full_name() const
 {
-    std::string result = name;
+    std::u8string result = name;
     if (!extension.empty())
     {
         result += '.';
@@ -125,22 +124,23 @@ std::string file::get_full_name() const
 class scanner::impl
 {
 public:
-    impl(){};
+    impl(){}
     ~impl();
 
     void        scan();
-    std::string get_directory_path(const directory*);
-    std::string get_file_path(const file*);
-    directory*  find_directory_ptr(std::string_view);
-    file*       find_file_ptr(std::string_view);
+    std::u8string get_directory_path(const directory*);
+    std::u8string get_file_path(const file*);
+    directory*  find_directory_ptr(std::u8string_view);
+    file*       find_file_ptr(std::u8string_view);
 
     om::directory             root;
     std::vector<directory*>   folders;
     std::vector<file*>        files;
-    bool                      is_initialized{ false };
     size_t                    total_files{ 0 };
     size_t                    total_folders{ 0 };
     std::chrono::milliseconds scan_time{ 0 };
+    bool                      is_initialized{ false };
+    std::byte                 padding[7] = {};
 };
 
 scanner::impl::~impl()
@@ -186,7 +186,7 @@ void scanner::impl::scan()
                 tmp->name      = p.path().stem().u8string();
                 if (!tmp->extension.empty())
                 {
-                    if (tmp->extension == ".")
+                    if (tmp->extension == u8".")
                         tmp->name += '.';
                     tmp->extension.erase(0, 1);
                 }
@@ -207,7 +207,7 @@ void scanner::impl::scan()
     return;
 }
 
-directory* scanner::impl::find_directory_ptr(std::string_view sv_path)
+directory* scanner::impl::find_directory_ptr(std::u8string_view sv_path)
 {
     directory* result = &root;
     fs::path   fs_path(sv_path);
@@ -226,16 +226,16 @@ directory* scanner::impl::find_directory_ptr(std::string_view sv_path)
     return result;
 }
 
-file* scanner::impl::find_file_ptr(std::string_view s_path)
+file* scanner::impl::find_file_ptr(std::u8string_view s_path)
 {
     file*      result = nullptr;
     fs::path   fs_path(s_path);
-    directory* dir = find_directory_ptr(fs_path.parent_path().string());
+    directory* dir = find_directory_ptr(fs_path.parent_path().u8string());
     if (dir)
     {
-        for (auto& p : dir->child_files)
+        for (const auto& p : dir->child_files)
         {
-            if (p->get_full_name() == fs_path.filename().string())
+            if (p->get_full_name() == fs_path.filename().u8string())
             {
                 result = p;
             }
@@ -244,7 +244,7 @@ file* scanner::impl::find_file_ptr(std::string_view s_path)
     return result;
 }
 
-std::string scanner::impl::get_directory_path(const directory* dir)
+std::u8string scanner::impl::get_directory_path(const directory* dir)
 {
     fs::path result;
     for (directory* ptr0 = dir->parent; ptr0; ptr0 = ptr0->parent)
@@ -252,10 +252,10 @@ std::string scanner::impl::get_directory_path(const directory* dir)
         result = ptr0->name / result;
     }
     result /= dir->name;
-    return result.string();
+    return result.u8string();
 }
 
-std::string scanner::impl::get_file_path(const file* fl)
+std::u8string scanner::impl::get_file_path(const file* fl)
 {
     fs::path result;
     for (directory* ptr0 = fl->parent; ptr0; ptr0 = ptr0->parent)
@@ -263,10 +263,10 @@ std::string scanner::impl::get_file_path(const file* fl)
         result = ptr0->name / result;
     }
     result /= (fl->get_full_name());
-    return result.string();
+    return result.u8string();
 }
 
-scanner::scanner(std::string_view path_)
+scanner::scanner(std::u8string_view path_)
     : pImpl(new scanner::impl)
 {
     fs::path path(path_);
@@ -553,23 +553,23 @@ scanner::~scanner()
     pImpl = nullptr;
 }
 
-size_t scanner::get_file_size(std::string_view name) const
+size_t scanner::get_file_size(std::u8string_view name) const
 {
-    size_t result = -1;
+    size_t result = std::numeric_limits<size_t>::max();
     file*  fl     = pImpl->find_file_ptr(name);
     if (fl)
         result = fl->size;
     return result;
 }
 
-bool scanner::is_file_exists(std::string_view path) const
+bool scanner::is_file_exists(std::u8string_view path) const
 {
     file* fl = pImpl->find_file_ptr(path);
     return fl ? true : false;
 }
 
 std::vector<file_info> scanner::get_files_with_extension(
-    std::string_view path, std::string_view extn) const
+    std::u8string_view path, std::u8string_view extn) const
 {
     std::vector<file_info> result;
     // if (extn.front() == '.')  was supposed for user request like ".cxx"
@@ -592,8 +592,8 @@ std::vector<file_info> scanner::get_files_with_extension(
     return result;
 }
 
-std::vector<file_info> scanner::get_files_with_name(std::string_view path,
-                                                    std::string_view name) const
+std::vector<file_info> scanner::get_files_with_name(std::u8string_view path,
+                                                    std::u8string_view name) const
 {
     std::vector<file_info> result;
     if (name.empty())
@@ -615,7 +615,7 @@ std::vector<file_info> scanner::get_files_with_name(std::string_view path,
     return result;
 }
 
-std::vector<file_info> scanner::get_files(std::string_view path) const
+std::vector<file_info> scanner::get_files(std::u8string_view path) const
 {
     std::vector<file_info> result;
     directory*             dir = pImpl->find_directory_ptr(path);
@@ -648,7 +648,7 @@ std::vector<file_info> scanner::get_all_files() const
 scanner_report scanner::get_report() const
 {
     scanner_report result;
-    result.scan_time     = pImpl->scan_time.count();
+    result.scan_time     = static_cast<size_t>(pImpl->scan_time.count());
     result.initialized   = pImpl->is_initialized;
     result.total_files   = pImpl->total_files;
     result.total_folders = pImpl->total_folders;
