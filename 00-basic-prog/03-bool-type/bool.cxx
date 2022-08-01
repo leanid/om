@@ -2,6 +2,9 @@
 
 #include <iostream>
 
+#define or ||
+#define and &&
+
 namespace om
 {
 static const std::byte false_byte{ 0b00000000 };

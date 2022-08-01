@@ -1,11 +1,18 @@
 #if defined(_WIN32)
 #define _WIN32_WINNT 0x0602
+#include <windows.h>
 #include <processthreadsapi.h>
 
 static void get_stack_min_and_max_adresses(size_t& min, size_t& max)
 {
     // works if Windows version >= 8
     GetCurrentThreadStackLimits(&min, &max);
+}
+
+static size_t get_stack_quard_size()
+{
+    // TODO: return proper value
+    return 0;
 }
 
 #else
