@@ -8,4 +8,4 @@ add_subdirectory(01-basic-game-dev)
 add_subdirectory(02-graphics-3d)
 
 # my start sample project
-add_subdirectory(game)
+add_subdirectory(05-game)
