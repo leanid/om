@@ -11,3 +11,8 @@ add_library(game SHARED game.cxx)
 
 target_compile_features(game PRIVATE cxx_std_20)
 target_link_libraries(game PRIVATE om)
+add_custom_command(
+  TARGET game
+  POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:game>" "$<TARGET_FILE_DIR:om>"
+)
