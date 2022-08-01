@@ -2,19 +2,16 @@
 #include "om/game.hxx"
 
 #include <cstdlib>
-//#if __has_include(<filesystem>)
-//#include <filesystem>
-// namespace fs = std::filesystem;
-//#elif __has_include("experimental/filesystem")
-#include <experimental/filesystem>
-namespace fs = std::experimental::filesystem;
-//#endif
+#include <filesystem>
+namespace fs = std::filesystem;
+
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <thread>
+#include <format>
 
-#include <SDL2/SDL_loadso.h>
+#include <SDL_loadso.h>
 
 namespace om
 {
@@ -22,7 +19,7 @@ struct event
 {
 };
 
-game::~game() {}
+game::~game() = default;
 }
 
 void             init_minimal_log_system();
@@ -184,7 +181,7 @@ void start_game(om::engine_impl& e)
 
     game->initialize();
 
-    auto proccess_events = [&game]() {
+    auto process_events = [&game]() {
         om::event event;
         while (pool_event(event))
         {
@@ -195,8 +192,7 @@ void start_game(om::engine_impl& e)
     fs::path           path       = get_game_library_path(e);
     fs::file_time_type last_write = fs::last_write_time(path);
 
-    std::time_t cftime = fs::file_time_type::clock::to_time_t(last_write);
-    std::cout << std::asctime(std::localtime(&cftime)) << std::endl;
+    std::cout << std::format("{}", last_write) << std::endl;
 
     double timeout_reload_game  = 0.0; // seconds
     bool   reload_timer_started = false;
@@ -214,7 +210,7 @@ void start_game(om::engine_impl& e)
             continue;                  // wait till more time
         }
 
-        proccess_events();
+        process_events();
 
         game->update(frame_delta);
         game->draw();
