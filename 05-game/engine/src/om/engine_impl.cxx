@@ -3,15 +3,13 @@
 namespace om
 {
 
-engine::~engine()
-{
-}
+engine::~engine() = default;
 
 engine_impl::engine_impl(int, char**)
 {
 }
 
-void engine_impl::initialize(engine::params)
+void engine_impl::initialize(params)
 {
 }
 

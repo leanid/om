@@ -3,15 +3,15 @@
 
 #include <cstdlib>
 #include <filesystem>
-namespace fs = std::filesystem;
-
+#include <format>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <thread>
-#include <format>
 
 #include <SDL_loadso.h>
+
+namespace fs = std::filesystem;
 
 namespace om
 {
@@ -20,7 +20,7 @@ struct event
 };
 
 game::~game() = default;
-}
+} // namespace om
 
 void             init_minimal_log_system();
 void             start_game(om::engine_impl&);
@@ -112,10 +112,11 @@ std::unique_ptr<om::game> call_create_game(om::engine_impl& e)
 
     auto game_so_name = get_game_library_path(e);
     std::clog << "base game dll: " << game_so_name << std::endl;
-    auto tmp_game     = game_so_name;
+    auto tmp_game = game_so_name;
     tmp_game.replace(tmp_game.find("game"), 4, "tmp_game");
 
-    try{
+    try
+    {
         std::ifstream src_so;
         std::ofstream dst_so;
 
@@ -125,10 +126,11 @@ std::unique_ptr<om::game> call_create_game(om::engine_impl& e)
         src_so.open(game_so_name, std::ios::binary);
         dst_so.open(tmp_game, std::ios::binary);
         dst_so << src_so.rdbuf();
-    }catch(std::exception& ex)
+    }
+    catch (std::exception& ex)
     {
-    	std::clog << "can't copy dll: " << ex.what();
-    	throw;
+        std::clog << "can't copy dll: " << ex.what();
+        throw;
     }
 
     void* so_handle = SDL_LoadObject(tmp_game.c_str());
@@ -142,9 +144,9 @@ std::unique_ptr<om::game> call_create_game(om::engine_impl& e)
 
     std::string_view func_name = get_cxx_mangled_name();
 
-    void* func_addres = SDL_LoadFunction(so_handle, func_name.data());
+    void* func_address = SDL_LoadFunction(so_handle, func_name.data());
 
-    if (nullptr == func_addres)
+    if (nullptr == func_address)
     {
         throw std::runtime_error(
             "can't find "s +
@@ -154,7 +156,7 @@ std::unique_ptr<om::game> call_create_game(om::engine_impl& e)
 
     std::unique_ptr<om::game> (*func_ptr)(om::engine&);
     func_ptr = reinterpret_cast<std::unique_ptr<om::game> (*)(om::engine&)>(
-        func_addres);
+        func_address);
 
     std::unique_ptr<om::game> game = func_ptr(e);
     return game;
@@ -175,21 +177,20 @@ void start_game(om::engine_impl& e)
     using nano_sec    = time::nanoseconds;
     using time_point  = time::time_point<clock_timer, nano_sec>;
 
-    clock_timer timer;
-
-    time_point start = timer.now();
+    time_point start = clock_timer::now();
 
     game->initialize();
 
-    auto process_events = [&game]() {
+    auto process_events = [&game]()
+    {
         om::event event;
         while (pool_event(event))
         {
-            game->proccess_input(event);
+            game->process_input(event);
         }
     };
 
-    fs::path           path       = get_game_library_path(e);
+    const fs::path     path       = get_game_library_path(e);
     fs::file_time_type last_write = fs::last_write_time(path);
 
     std::cout << std::format("{}", last_write) << std::endl;
@@ -199,7 +200,7 @@ void start_game(om::engine_impl& e)
 
     while (!game->is_closed())
     {
-        time_point end_last_frame = timer.now();
+        time_point end_last_frame = clock_timer::now();
 
         auto frame_delta =
             time::duration_cast<om::milliseconds>(end_last_frame - start);
@@ -225,7 +226,8 @@ void start_game(om::engine_impl& e)
 
         if (reload_timer_started)
         {
-            timeout_reload_game -= frame_delta.count() * 0.001;
+            timeout_reload_game -=
+                static_cast<double>(frame_delta.count()) * 0.001;
             if (timeout_reload_game >= 0)
             {
                 std::cout << "reloading library!" << std::endl;

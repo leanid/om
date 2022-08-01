@@ -20,11 +20,11 @@ using milliseconds = std::chrono::milliseconds;
 
 struct OM_EXP game
 {
-    virtual void initialize()                     = 0;
-    virtual void proccess_input(event& e)         = 0;
-    virtual void update(milliseconds frame_delta) = 0;
-    virtual void draw() const                     = 0;
-    virtual bool is_closed() const                = 0;
+    virtual void               initialize()                     = 0;
+    virtual void               process_input(event& e)         = 0;
+    virtual void               update(milliseconds frame_delta) = 0;
+    virtual void               draw() const                     = 0;
+    [[nodiscard]] virtual bool is_closed() const                = 0;
 
     virtual ~game();
 };

@@ -41,33 +41,14 @@
  *	time: 1542 non-cached, 1490 cached
  */
 
-//#define USE_DIRENT
-#define USE_STD_FILESYSTEM
-
-#ifdef USE_DIRENT
-#include <dirent.h>
-#include <sstream>
-#include <string.h>
-#include <sys/stat.h>
-#if defined(__unix__)
-#include <unistd.h> //for getcwd()
-#elif defined(WIN32)
-#include <direct.h> //for getcwd()
-#endif
-#endif
-
-#ifdef USE_STD_FILESYSTEM
+#include <chrono>
 #include <filesystem>
 #include <queue>
+#include <vector>
+
 namespace fs = std::filesystem;
-#endif
 
 #include "fs_scanner.hxx"
-#include <algorithm>
-#include <assert.h>
-#include <chrono>
-#include <string_view>
-#include <vector>
 
 /* TODO On Windows failed skip directories with access denied. Even with
  * fs::directory_options::skip_permission_denied option scanner tries to
@@ -97,17 +78,17 @@ struct directory
     directory*              parent = nullptr;
     std::vector<directory*> child_folders{};
     std::vector<file*>      child_files{};
-    std::u8string             name{};
+    std::u8string           name{};
 };
 
 struct file
 {
-    size_t      size = 0;
+    size_t        size = 0;
     std::u8string name;
     std::u8string extension;
-    directory*  parent = nullptr;
+    directory*    parent = nullptr;
 
-    std::u8string get_full_name() const;
+    [[nodiscard]] std::u8string get_full_name() const;
 };
 
 std::u8string file::get_full_name() const
@@ -124,16 +105,20 @@ std::u8string file::get_full_name() const
 class scanner::impl
 {
 public:
-    impl(){}
+    impl()            = default;
+    impl(const impl&) = delete;
+    impl(impl&&)      = delete;
+    impl& operator=(const impl&) = delete;
+    impl& operator=(impl&&) = delete;
     ~impl();
 
-    void        scan();
-    std::u8string get_directory_path(const directory*);
-    std::u8string get_file_path(const file*);
-    directory*  find_directory_ptr(std::u8string_view);
-    file*       find_file_ptr(std::u8string_view);
+    void                 scan();
+    static std::u8string get_directory_path(const directory*);
+    static std::u8string get_file_path(const file*);
+    directory*           find_directory_ptr(std::u8string_view);
+    file*                find_file_ptr(std::u8string_view);
 
-    om::directory             root;
+    directory                 root;
     std::vector<directory*>   folders;
     std::vector<file*>        files;
     size_t                    total_files{ 0 };
@@ -145,20 +130,19 @@ public:
 
 scanner::impl::~impl()
 {
-    for (auto& p : folders)
+    for (const auto& p : folders)
     {
         delete p;
     }
-    for (auto& p : files)
+    for (const auto& p : files)
     {
         delete p;
     }
 }
 
-#ifdef USE_STD_FILESYSTEM
 void scanner::impl::scan()
 {
-    auto start = std::chrono::system_clock::now();
+    const auto start = std::chrono::system_clock::now();
     std::queue<std::pair<fs::path, om::directory*>> recursion_queue;
     fs::path                                        path(root.name);
     recursion_queue.push(std::make_pair(path, &root));
@@ -170,7 +154,7 @@ void scanner::impl::scan()
         {
             if (fs::is_directory(p))
             {
-                om::directory* tmp = new om::directory;
+                auto tmp = new om::directory;
                 folders.push_back(tmp);
                 tmp->name   = p.path().filename().u8string();
                 tmp->parent = pair.second;
@@ -198,13 +182,12 @@ void scanner::impl::scan()
             }
         }
     }
-    auto finish = std::chrono::system_clock::now();
+    const auto finish = std::chrono::system_clock::now();
     scan_time =
         std::chrono::duration_cast<std::chrono::milliseconds>(finish - start);
     is_initialized = true;
     //  std::cout << "next sizes " << file_pool.get_next_size() << " "
     //            << directory_pool.get_next_size() << std::endl;
-    return;
 }
 
 directory* scanner::impl::find_directory_ptr(std::u8string_view sv_path)
@@ -213,10 +196,9 @@ directory* scanner::impl::find_directory_ptr(std::u8string_view sv_path)
     fs::path   fs_path(sv_path);
     for (auto& p : fs_path)
     {
-        auto it =
-            std::find_if(result->child_folders.begin(),
-                         result->child_folders.end(),
-                         [&p](const directory* dir) { return dir->name == p; });
+        auto it = std::ranges::find_if(result->child_folders,
+                                       [&p](const directory* dir)
+                                       { return dir->name == p; });
         if (it == result->child_folders.end())
         {
             return nullptr;
@@ -228,9 +210,9 @@ directory* scanner::impl::find_directory_ptr(std::u8string_view sv_path)
 
 file* scanner::impl::find_file_ptr(std::u8string_view s_path)
 {
-    file*      result = nullptr;
-    fs::path   fs_path(s_path);
-    directory* dir = find_directory_ptr(fs_path.parent_path().u8string());
+    file*          result = nullptr;
+    const fs::path fs_path(s_path);
+    directory*     dir = find_directory_ptr(fs_path.parent_path().u8string());
     if (dir)
     {
         for (const auto& p : dir->child_files)
@@ -280,266 +262,14 @@ scanner::scanner(std::u8string_view path_)
     pImpl->root.name = path.u8string();
     pImpl->scan();
 }
-#endif
 
-#ifdef USE_DIRENT
-void scanner::impl::scan()
-{
-
-    std::vector<om::directory*> recursion_stack;
-    recursion_stack.reserve(64);
-    recursion_stack.push_back(&root);
-    errno    = 0;
-    DIR* dir = nullptr;
-
-    while (!recursion_stack.empty())
-    {
-        om::directory* tmp = recursion_stack.back();
-        recursion_stack.pop_back();
-
-        dir = opendir(get_directory_path(tmp).c_str());
-
-        if (dir)
-        {
-            struct dirent* entry = nullptr;
-            while ((entry = readdir(dir)) != nullptr)
-            {
-                if (DT_DIR == entry->d_type)
-                {
-                    if (strcmp(entry->d_name, ".") == 0 ||
-                        strcmp(entry->d_name, "..") == 0)
-                        continue;
-                    om::directory* dir = new om::directory;
-                    folders.push_back(dir);
-                    dir->name   = entry->d_name;
-                    dir->parent = tmp;
-                    tmp->child_folders.push_back(dir);
-                    recursion_stack.push_back(dir);
-                    ++total_folders;
-                }
-                else if (DT_REG == entry->d_type)
-                {
-                    file* fl = new om::file;
-                    files.push_back(fl);
-                    fl->name      = entry->d_name;
-                    int split_pos = fl->name.find_last_of('.');
-                    if (split_pos > 0 &&
-                        (split_pos != int(fl->name.length() - 1)))
-                    {
-                        fl->extension =
-                            fl->name.substr(split_pos + 1, fl->name.length());
-                        fl->name.resize(split_pos);
-                    }
-                    fl->parent = tmp;
-                    struct stat statbuf;
-                    if (0 == stat(get_file_path(fl).c_str(), &statbuf))
-                        fl->size = statbuf.st_size;
-                    tmp->child_files.push_back(fl);
-                    ++total_files;
-                }
-            }
-            closedir(dir);
-        }
-        else if (errno == EACCES)
-        {
-            continue;
-            // if access denied we just skip directory
-        }
-        else
-        {
-            return;
-            // unspecified error
-        }
-    }
-    is_initialized = true;
-    return;
-}
-
-directory* scanner::impl::find_directory_ptr(std::string_view sv_path)
-{
-
-    directory* result = &root;
-    if (sv_path.empty())
-        return result;
-    int begin_index = 0;
-    int seek_pos    = 0;
-    int count       = 0;
-
-    while (seek_pos >= 0)
-    {
-        seek_pos = sv_path.find_first_of('/', begin_index);
-
-        if (seek_pos < 0)
-            count = sv_path.length() - begin_index;
-        else
-            count = seek_pos - begin_index;
-
-        std::string_view tmp(sv_path.data() + begin_index, count);
-        auto             it = std::find_if(result->child_folders.begin(),
-                               result->child_folders.end(),
-                               [&tmp](const directory* dir)
-                               { return dir->name == tmp; });
-        if (it == result->child_folders.end())
-        {
-            return nullptr;
-        }
-        result      = *it;
-        begin_index = seek_pos + 1;
-    }
-    return result;
-}
-
-file* scanner::impl::find_file_ptr(std::string_view sv_path)
-{
-    file* result = nullptr;
-
-    int filename_starts_from = 0;
-    int pathname_ends_at     = 0;
-    int seek_pos             = sv_path.find_last_of('/');
-    if (seek_pos > 0)
-    // at least 3 characters needed to specify
-    // relative file path ("c/a"), so seek_pos
-    // must be at least 1 (not 0);
-    {
-        filename_starts_from = seek_pos + 1;
-        pathname_ends_at     = seek_pos;
-    }
-
-    std::string_view filename(sv_path.data() + filename_starts_from,
-                              sv_path.length() - filename_starts_from);
-    std::string_view path(sv_path.data(), pathname_ends_at);
-    directory*       dir = find_directory_ptr(path);
-    if (dir)
-    {
-        for (auto& p : dir->child_files)
-        {
-            if (p->get_full_name() == filename)
-            {
-                result = p;
-            }
-        }
-    }
-    return result;
-}
-
-std::string scanner::impl::get_directory_path(const directory* dir)
-{
-
-    char ch_path[PATH_MAX];
-    int  write_pos     = PATH_MAX - 1;
-    ch_path[write_pos] = '\0';
-    --write_pos;
-    while (dir)
-    {
-        for (auto p = dir->name.rbegin(); p != dir->name.rend(); ++p)
-        {
-            ch_path[write_pos] = *p;
-            --write_pos;
-        }
-        ch_path[write_pos] = '/';
-        --write_pos;
-        dir = dir->parent;
-    }
-    std::string result(ch_path + write_pos + 1 + 1);
-    // plus one because of last decrement and
-    // one more plus for last '/' symbol
-    return result;
-}
-
-std::string scanner::impl::get_file_path(const file* fl)
-{
-    char ch_path[PATH_MAX];
-    int  write_pos     = PATH_MAX - 1;
-    ch_path[write_pos] = '\0';
-    --write_pos;
-    if (!fl->extension.empty())
-    {
-        for (auto p = fl->extension.rbegin(); p != fl->extension.rend(); ++p)
-        {
-            ch_path[write_pos] = *p;
-            --write_pos;
-        }
-        ch_path[write_pos] = '.';
-        --write_pos;
-    }
-    for (auto p = fl->name.rbegin(); p != fl->name.rend(); ++p)
-    {
-        ch_path[write_pos] = *p;
-        --write_pos;
-    }
-    ch_path[write_pos] = '/';
-    --write_pos;
-    om::directory* dir = fl->parent;
-    while (dir)
-    {
-        for (auto p = dir->name.rbegin(); p != dir->name.rend(); ++p)
-        {
-            ch_path[write_pos] = *p;
-            --write_pos;
-        }
-        ch_path[write_pos] = '/';
-        --write_pos;
-        dir = dir->parent;
-    }
-    std::string result(ch_path + (write_pos + 1 + 1));
-    return result;
-}
-
-scanner::scanner(std::string_view sv_path)
-    : pImpl(new scanner::impl)
-{
-    bool absolute = false;
-#if defined(__unix__)
-    if (sv_path.size() > 1)
-    {
-        if (sv_path.front() == '/')
-        {
-            absolute = true;
-        }
-    }
-#elif defined(WIN32)
-    if (sv_path.size() > 2)
-    {
-        if ((sv_path.at(2) == '/') && (sv_path.at(1) == ':') &&
-            isupper(sv_path.at(0)) && isalpha(sv_path.at(0)))
-        {
-            absolute = true;
-        }
-    }
-#endif
-    if (!absolute)
-    {
-        char        cwd[PATH_MAX];
-        const char* path = getcwd(cwd, sizeof(cwd));
-        if (!path)
-            return;
-        pImpl->root.name = path;
-        if (!sv_path.empty())
-        {
-            pImpl->root.name += "/";
-            pImpl->root.name += sv_path;
-        }
-    }
-    else
-    {
-        pImpl->root.name = sv_path;
-    }
-    auto start = std::chrono::system_clock::now();
-    pImpl->scan();
-    auto finish = std::chrono::system_clock::now();
-    pImpl->scan_time =
-        std::chrono::duration_cast<std::chrono::milliseconds>(finish - start);
-}
-
-#endif
-
-scanner::scanner(scanner&& scnr)
+scanner::scanner(scanner&& scnr) noexcept
     : pImpl{ scnr.pImpl }
 {
     scnr.pImpl = nullptr;
 }
 
-scanner& scanner::operator=(scanner&& scnr)
+scanner& scanner::operator=(scanner&& scnr) noexcept
 {
     delete pImpl;
     pImpl      = scnr.pImpl;
@@ -569,18 +299,18 @@ bool scanner::is_file_exists(std::u8string_view path) const
 }
 
 std::vector<file_info> scanner::get_files_with_extension(
-    std::u8string_view path, std::u8string_view extn) const
+    std::u8string_view path, std::u8string_view ext) const
 {
     std::vector<file_info> result;
-    // if (extn.front() == '.')  was supposed for user request like ".cxx"
+    // if (ext.front() == '.')  was supposed for user request like ".cxx"
     // with dot forward
-    //    extn.erase(0, 1);
+    //    ext.erase(0, 1);
     directory* dir = pImpl->find_directory_ptr(path);
     if (dir)
     {
-        for (auto& p : dir->child_files)
+        for (const auto& p : dir->child_files)
         {
-            if (extn == p->extension)
+            if (ext == p->extension)
             {
                 file_info tmp;
                 tmp.size     = p->size;
@@ -592,16 +322,18 @@ std::vector<file_info> scanner::get_files_with_extension(
     return result;
 }
 
-std::vector<file_info> scanner::get_files_with_name(std::u8string_view path,
-                                                    std::u8string_view name) const
+std::vector<file_info> scanner::get_files_with_name(
+    std::u8string_view path, std::u8string_view name) const
 {
     std::vector<file_info> result;
     if (name.empty())
+    {
         return result;
+    }
     directory* dir = pImpl->find_directory_ptr(path);
     if (dir)
     {
-        for (auto& p : dir->child_files)
+        for (const auto& p : dir->child_files)
         {
             if (name == p->name)
             {
@@ -621,7 +353,7 @@ std::vector<file_info> scanner::get_files(std::u8string_view path) const
     directory*             dir = pImpl->find_directory_ptr(path);
     if (dir)
     {
-        for (auto& p : dir->child_files)
+        for (const auto& p : dir->child_files)
         {
             file_info tmp;
             tmp.size     = p->size;
@@ -635,7 +367,7 @@ std::vector<file_info> scanner::get_files(std::u8string_view path) const
 std::vector<file_info> scanner::get_all_files() const
 {
     std::vector<file_info> result;
-    for (auto& p : pImpl->files)
+    for (const auto& p : pImpl->files)
     {
         file_info tmp;
         tmp.size     = p->size;

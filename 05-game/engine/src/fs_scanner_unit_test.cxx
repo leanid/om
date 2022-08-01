@@ -1,4 +1,5 @@
 
+#include <clocale>
 #include <filesystem>
 #include <fstream>
 #include <limits>
@@ -8,10 +9,7 @@
 #include "catch.hpp"
 #include "fs_scanner.hxx"
 
-#include <clocale>
-
 namespace fs = std::filesystem;
-using Catch::Matchers::Contains;
 
 TEST_CASE("scanner test")
 {
@@ -99,174 +97,167 @@ TEST_CASE("scanner test")
 
     SECTION("get_file_size test")
     {
-        om::scanner scnr(u8"test-folder");
+        om::scanner scanner(u8"test-folder");
 
         SECTION("valid request")
         {
-            REQUIRE(scnr.get_file_size(u8"game/game.cxx") == 47);
-            REQUIRE(scnr.get_file_size(u8"appveyor.yml") == 43);
-            REQUIRE(scnr.get_file_size(u8"русский/файл") == 94);
-            REQUIRE(scnr.get_file_size(
+            REQUIRE(scanner.get_file_size(u8"game/game.cxx") == 47);
+            REQUIRE(scanner.get_file_size(u8"appveyor.yml") == 43);
+            REQUIRE(scanner.get_file_size(u8"русский/файл") == 94);
+            REQUIRE(scanner.get_file_size(
                         u8"engine/src/scanner/~.scanner/.gitignore") == 295);
-            REQUIRE(scnr.get_file_size(u8"game/game.bkp/c++") == 183);
+            REQUIRE(scanner.get_file_size(u8"game/game.bkp/c++") == 183);
         }
         SECTION("invalid request")
         {
-            size_t bad = std::numeric_limits<size_t>::max();
-            REQUIRE(scnr.get_file_size(u8"engine/src/scanner") == bad);
+            constexpr size_t bad = std::numeric_limits<size_t>::max();
+            REQUIRE(scanner.get_file_size(u8"engine/src/scanner") == bad);
             // no extension present
-            REQUIRE(scnr.get_file_size(u8"readme") == bad);
+            REQUIRE(scanner.get_file_size(u8"readme") == bad);
             // no extension present
-            REQUIRE(scnr.get_file_size(u8"") == bad);
+            REQUIRE(scanner.get_file_size(u8"") == bad);
             // no name and extension present
-            REQUIRE(scnr.get_file_size(u8".hxx") == bad);
+            REQUIRE(scanner.get_file_size(u8".hxx") == bad);
             //  no name present
-            REQUIRE(scnr.get_file_size(u8"game/game.bkp") == bad);
+            REQUIRE(scanner.get_file_size(u8"game/game.bkp") == bad);
             // file not found, game.bkp is a folder.
-            REQUIRE(scnr.get_file_size(u8"main.cxx") == bad);
+            REQUIRE(scanner.get_file_size(u8"main.cxx") == bad);
             // file not found
         }
     }
 
     SECTION("is_file_exists test")
     {
-        om::scanner scnr(u8"test-folder");
+        om::scanner scanner(u8"test-folder");
 
         SECTION("valid request")
         {
-            REQUIRE(scnr.is_file_exists(u8"game/game.cxx") == true);
-            REQUIRE(scnr.is_file_exists(u8"game/game.bkp") == false);
-            REQUIRE(scnr.is_file_exists(u8"appveyor.yml") == true);
-            REQUIRE(scnr.is_file_exists(u8"main.cxx") == false);
-            REQUIRE(scnr.is_file_exists(
+            REQUIRE(scanner.is_file_exists(u8"game/game.cxx") == true);
+            REQUIRE(scanner.is_file_exists(u8"game/game.bkp") == false);
+            REQUIRE(scanner.is_file_exists(u8"appveyor.yml") == true);
+            REQUIRE(scanner.is_file_exists(u8"main.cxx") == false);
+            REQUIRE(scanner.is_file_exists(
                         u8"engine/src/scanner/~.scanner/.gitignore") == true);
-            REQUIRE(scnr.is_file_exists(u8"русский/файл") == true);
+            REQUIRE(scanner.is_file_exists(u8"русский/файл") == true);
         }
         SECTION("invalid request")
         {
-            REQUIRE(scnr.is_file_exists(u8"engine/src/scanner") == false);
+            REQUIRE(scanner.is_file_exists(u8"engine/src/scanner") == false);
             // no such file as scanner, only has engine/src/scanner.hxx
-            REQUIRE(scnr.is_file_exists(u8"readme") == false);
+            REQUIRE(scanner.is_file_exists(u8"readme") == false);
             // no such file as readme, only has readme.md
-            REQUIRE(scnr.is_file_exists(u8".md") == false);
+            REQUIRE(scanner.is_file_exists(u8".md") == false);
             // no such file as .md, only has readme.md
-            REQUIRE(scnr.is_file_exists(u8"") == false);
+            REQUIRE(scanner.is_file_exists(u8"") == false);
             // no name and extension present
         }
     }
 
     SECTION("get_all_files_with_extension test")
     {
-        om::scanner scnr(u8"test-folder");
+        om::scanner scanner(u8"test-folder");
 
         SECTION("valid request")
         {
-            std::vector<om::file_info> inf;
+            std::vector<om::file_info> files;
 
-            inf = scnr.get_files_with_extension(u8"engine/src", u8"wtf");
-            REQUIRE(inf.size() == 0);
-            REQUIRE(inf.empty());
-            inf = scnr.get_files_with_extension(u8"engine/src", u8"cxx");
-            REQUIRE(inf.size() == 2);
-            REQUIRE_FALSE(inf.empty());
-            inf = scnr.get_files_with_extension(u8"", u8"yml");
-            REQUIRE(inf.size() == 1);
-            REQUIRE_FALSE(inf.empty());
-            inf = scnr.get_files_with_extension(u8"engine/src", u8"");
-            REQUIRE(inf.size() == 0);
-            inf = scnr.get_files_with_extension(u8"русский", u8"");
-            REQUIRE(inf.size() == 1);
-            inf = scnr.get_files_with_extension(u8"game", u8"bkp");
-            REQUIRE(inf.size() == 0);
-            inf = scnr.get_files_with_extension(u8"engine/src/scanner/~.scanner",
-                                                u8"gitignore");
-            REQUIRE(inf.size() == 0);
-            inf = scnr.get_files_with_extension(u8"game/game.bkp", u8"");
-            REQUIRE(inf.size() == 1);
+            files = scanner.get_files_with_extension(u8"engine/src", u8"wtf");
+            REQUIRE(files.empty());
+            files = scanner.get_files_with_extension(u8"engine/src", u8"cxx");
+            REQUIRE(files.size() == 2);
+            REQUIRE_FALSE(files.empty());
+            files = scanner.get_files_with_extension(u8"", u8"yml");
+            REQUIRE(files.size() == 1);
+            REQUIRE_FALSE(files.empty());
+            files = scanner.get_files_with_extension(u8"engine/src", u8"");
+            REQUIRE(files.empty());
+            files = scanner.get_files_with_extension(u8"русский", u8"");
+            REQUIRE(files.size() == 1);
+            files = scanner.get_files_with_extension(u8"game", u8"bkp");
+            REQUIRE(files.empty());
+            files = scanner.get_files_with_extension(
+                u8"engine/src/scanner/~.scanner", u8"gitignore");
+            REQUIRE(files.empty());
+            files = scanner.get_files_with_extension(u8"game/game.bkp", u8"");
+            REQUIRE(files.size() == 1);
         }
         SECTION("invalid request")
         {
             std::vector<om::file_info> inf;
 
-            inf = scnr.get_files_with_extension(u8"engine/src/one.cxx", u8"cxx");
-            REQUIRE(inf.size() == 0);
+            inf =
+                scanner.get_files_with_extension(u8"engine/src/one.cxx", u8"cxx");
+            REQUIRE(inf.empty());
             // incorrect path, one.cxx is interpreted as a path's part.
-            inf = scnr.get_files_with_extension(u8"engine/no_dir", u8"cxx");
-            REQUIRE(inf.size() == 0);
+            inf = scanner.get_files_with_extension(u8"engine/no_dir", u8"cxx");
+            REQUIRE(inf.empty());
             // path not exists
-
-            /* XXX
-             * inf = scnr.get_all_files_with_extension("engine//src","cxx");
-             * REQUIRE(inf.size() == 0);
-             * double "/" - This has implementation-dependent behavior.
-             * std::filesystem and boost::filesystem can resolve "//" as
-             * path separator, while dirent.h can not.
-             */
         }
     }
 
     SECTION("get_all_files_with_name test")
     {
-        om::scanner scnr(u8"test-folder");
+        om::scanner scanner(u8"test-folder");
 
         SECTION("valid request")
         {
 
             std::vector<om::file_info> inf;
-            inf = scnr.get_files_with_name(u8"engine/src", u8"wtf");
+            inf = scanner.get_files_with_name(u8"engine/src", u8"wtf");
             REQUIRE(inf.empty());
-            inf = scnr.get_files_with_name(u8"engine/src", u8"one");
+            inf = scanner.get_files_with_name(u8"engine/src", u8"one");
             REQUIRE(inf.size() == 2);
             REQUIRE_FALSE(inf.empty());
-            inf = scnr.get_files_with_name(u8"", u8"appveyor");
+            inf = scanner.get_files_with_name(u8"", u8"appveyor");
             REQUIRE(inf.size() == 1);
             REQUIRE_FALSE(inf.empty());
-            inf = scnr.get_files_with_name(u8"engine/src/scanner/~.scanner",
+            inf = scanner.get_files_with_name(u8"engine/src/scanner/~.scanner",
                                            u8".gitignore");
             REQUIRE(inf.size() == 1);
-            inf = scnr.get_files_with_name(u8"русский", u8"файл");
+            inf = scanner.get_files_with_name(u8"русский", u8"файл");
             REQUIRE(inf.size() == 1);
         }
         SECTION("invalid request")
         {
-            std::vector<om::file_info> inf;
-            inf = scnr.get_files_with_name(u8"engine/src/scanner.hxx", u8"readme");
-            REQUIRE(inf.size() == 0);
+            std::vector<om::file_info> files;
+            files = scanner.get_files_with_name(u8"engine/src/scanner.hxx",
+                                           u8"readme");
+            REQUIRE(files.empty());
             // incorrect path, scanner.hxx interpreted as a path's part
-            inf = scnr.get_files_with_name(u8"engine/no_dir", u8"readme");
+            files = scanner.get_files_with_name(u8"engine/no_dir", u8"readme");
             // path not exists
-            REQUIRE(inf.size() == 0);
-            inf = scnr.get_files_with_name(u8"engine/src", u8"");
+            REQUIRE(files.empty());
+            files = scanner.get_files_with_name(u8"engine/src", u8"");
             // empty name. All the files DO have names. ".gitignore" - is name!
-            REQUIRE(inf.size() == 0);
-            inf = scnr.get_files_with_name(u8"", u8"");
-            REQUIRE(inf.size() == 0);
+            REQUIRE(files.empty());
+            files = scanner.get_files_with_name(u8"", u8"");
+            REQUIRE(files.empty());
         }
     }
 
     SECTION("get_all_files test")
     {
-        om::scanner scnr(u8"test-folder");
+        om::scanner scanner(u8"test-folder");
 
         SECTION("valid request")
         {
             std::vector<om::file_info> inf;
-            inf = scnr.get_files(u8"engine/src");
+            inf = scanner.get_files(u8"engine/src");
             REQUIRE(inf.size() == 4);
-            inf = scnr.get_files(u8"");
+            inf = scanner.get_files(u8"");
             REQUIRE(inf.size() == 2);
-            inf = scnr.get_files(u8"engine");
-            REQUIRE(inf.size() == 0);
+            inf = scanner.get_files(u8"engine");
+            REQUIRE(inf.empty());
         }
         SECTION("invalid request")
         {
             std::vector<om::file_info> inf;
-            inf = scnr.get_files(u8"//\nqwerty~=30 l,.-0k3///asd");
-            REQUIRE(inf.size() == 0);
+            inf = scanner.get_files(u8"//\nqwerty~=30 l,.-0k3///asd");
+            REQUIRE(inf.empty());
             // invalid input
-            inf = scnr.get_files(u8"engine/no_dir");
+            inf = scanner.get_files(u8"engine/no_dir");
             // path not exists
-            REQUIRE(inf.size() == 0);
+            REQUIRE(inf.empty());
         }
     }
 

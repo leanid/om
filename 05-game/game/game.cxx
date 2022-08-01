@@ -9,11 +9,11 @@ class tic_tac_toe final : public om::game
 public:
     explicit tic_tac_toe(om::engine&);
 
-    void initialize() final;
-    void proccess_input(om::event& e) final;
-    void update(om::milliseconds frame_delta) final;
-    void draw() const final;
-    bool is_closed() const final;
+    void               initialize() override;
+    void               process_input(om::event& e) override;
+    void               update(om::milliseconds frame_delta) override;
+    void               draw() const override;
+    [[nodiscard]] bool is_closed() const override;
 
 private:
     om::engine&         e;
@@ -43,11 +43,11 @@ tic_tac_toe::tic_tac_toe(om::engine& e_)
 
 void tic_tac_toe::initialize() {}
 
-void tic_tac_toe::proccess_input(om::event&) {}
+void tic_tac_toe::process_input(om::event&) {}
 
 void tic_tac_toe::update(om::milliseconds frame_delta)
 {
-    double dt = frame_delta.count() * 0.001; // seconds
+    const double dt = static_cast<double>(frame_delta.count()) * 0.001; // seconds
     fps -= dt;
     if (fps <= 0)
     {
