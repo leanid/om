@@ -1,6 +1,6 @@
-cmake_minimum_required(VERSION 3.22)
+cmake_minimum_required(VERSION 3.23)
 
-project(all-curses CXX)
+project(gamedev_study CXX)
 
 set(OM_BUILD_CURSES OFF CACHE BOOL "turn ON if need to build curses")
 
