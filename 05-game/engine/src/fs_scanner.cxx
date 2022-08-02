@@ -41,6 +41,7 @@
  *	time: 1542 non-cached, 1490 cached
  */
 
+#include <algorithm>
 #include <chrono>
 #include <filesystem>
 #include <queue>
@@ -196,9 +197,10 @@ directory* scanner::impl::find_directory_ptr(std::u8string_view sv_path)
     fs::path   fs_path(sv_path);
     for (auto& p : fs_path)
     {
-        auto it = std::ranges::find_if(result->child_folders,
-                                       [&p](const directory* dir)
-                                       { return dir->name == p; });
+        auto it =
+            std::find_if(begin(result->child_folders),
+                         end(result->child_folders),
+                         [&p](const directory* dir) { return dir->name == p; });
         if (it == result->child_folders.end())
         {
             return nullptr;

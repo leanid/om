@@ -1,13 +1,16 @@
 #include "engine_impl.hxx"
 #include "om/game.hxx"
 
+#include <bits/chrono.h>
+#include <chrono>
 #include <cstdlib>
 #include <filesystem>
-#include <format>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <thread>
+
+#include <fmt/chrono.h>
 
 #include <SDL_loadso.h>
 
@@ -79,8 +82,10 @@ std::string_view get_cxx_mangled_name()
 std::string_view get_cxx_mangled_name()
 {
     // how to get it:
-    // c:\Program Files (x86)\Microsoft Visual Studio\2019\Professional>dumpbin /exports C:\build-dir\om\05-game\engine\Debug\game.dll
-    return "?create_game@@YA?AV?$unique_ptr@Ugame@om@@U?$default_delete@Ugame@om@@@std@@@std@@AEAUengine@om@@@Z";
+    // c:\Program Files (x86)\Microsoft Visual Studio\2019\Professional>dumpbin
+    // /exports C:\build-dir\om\05-game\engine\Debug\game.dll
+    return "?create_game@@YA?AV?$unique_ptr@Ugame@om@@U?$default_delete@Ugame@"
+           "om@@@std@@@std@@AEAUengine@om@@@Z";
 }
 #else
 #error "add mangled name for your compiler"
@@ -192,10 +197,11 @@ void start_game(om::engine_impl& e)
         }
     };
 
-    const fs::path     path       = get_game_library_path(e);
-    fs::file_time_type last_write = fs::last_write_time(path);
+    const fs::path path       = get_game_library_path(e);
+    auto           last_write = fs::last_write_time(path);
 
-    std::cout << std::format("{}", last_write) << std::endl;
+    // next line not working on g++12 so just skip it for now
+    //    std::cout << fmt::format("{}", last_write) << std::endl;
 
     double timeout_reload_game  = 0.0; // seconds
     bool   reload_timer_started = false;

@@ -24,7 +24,7 @@ add_executable(
 
 set_target_properties(om PROPERTIES ENABLE_EXPORTS TRUE)
 target_include_directories(om PUBLIC include)
-target_link_libraries(om PRIVATE SDL2::SDL2 SDL2::SDL2main)
+target_link_libraries(om PRIVATE SDL2::SDL2 SDL2::SDL2main fmt::fmt)
 target_compile_features(om PRIVATE cxx_std_20)
 
 set_target_properties(

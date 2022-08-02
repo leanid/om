@@ -16,5 +16,15 @@ fetchcontent_declare(
 
 fetchcontent_makeavailable(sdl2)
 
+fetchcontent_declare(
+  fmt
+  GIT_REPOSITORY "https://github.com/fmtlib/fmt.git"
+  GIT_TAG "master"
+  GIT_PROGRESS ON
+  GIT_SHALLOW ON
+)
+
+fetchcontent_makeavailable(fmt)
+
 add_subdirectory(engine)
 add_subdirectory(game)
