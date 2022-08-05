@@ -1,7 +1,6 @@
 #include "engine_impl.hxx"
 #include "om/game.hxx"
 
-#include <bits/chrono.h>
 #include <chrono>
 #include <cstdlib>
 #include <filesystem>
@@ -107,8 +106,7 @@ std::string get_game_library_path(om::engine&)
     return "./libgame.so";
 }
 #else
-std::string get_game_library_path(om::engine&)
-{
+std::string get_game_library_path(om::engine&){
 #error implement it
 }
 #endif
