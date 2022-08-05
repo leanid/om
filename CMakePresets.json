@@ -1,0 +1,86 @@
+{
+  "version": 5,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 23,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "ninja",
+      "displayName": "Ninja",
+      "description": "build using Ninja generator",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/ninja",
+      "cacheVariables": {
+        "FIRST_CACHE_VARIABLE": {
+          "type": "BOOL",
+          "value": "OFF"
+        },
+        "SECOND_CACHE_VARIABLE": "ON"
+      },
+      "environment": {
+        "MY_ENVIRONMENT_VARIABLE": "Test",
+        "PATH": "$env{HOME}/ninja/bin:$penv{PATH}"
+      },
+      "vendor": {
+        "example.com/ExampleIDE/1.0": {
+          "autoFormat": true
+        }
+      }
+    },
+    {
+      "name": "vs2022",
+      "inherits": "ninja",
+      "generator": "Visual Studio 17 2022",
+      "displayName": "Visual Studio 17 2022",
+      "description": "build using Visual Studio 17 2022 generator",
+      "binaryDir": "${sourceDir}/build/vs2022",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
+    },
+    {
+      "name": "vs2019",
+      "inherits": "vs2022",
+      "displayName": "Visual Studio 16 2019",
+      "description": "This build Visual Studio 16 2019 on Windows",
+      "generator": "Visual Studio 16 2019",
+      "binaryDir": "${sourceDir}/build/vs2019",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
+    },
+    {
+      "name": "mingw",
+      "inherits": "ninja",
+      "displayName": "MinGW Makefiles",
+      "binaryDir": "${sourceDir}/build/mingw",
+      "description": "This build MinGW Makefiles on Windows",
+      "generator": "MinGW Makefiles"
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "ninja",
+      "configurePreset": "ninja"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "ninja",
+      "configurePreset": "ninja",
+      "output": {"outputOnFailure": true},
+      "execution": {"noTestsAction": "error", "stopOnFailure": true}
+    }
+  ],
+  "vendor": {
+    "example.com/ExampleIDE/1.0": {
+      "autoFormat": false
+    }
+  }
+}
