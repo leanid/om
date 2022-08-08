@@ -13,11 +13,10 @@
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/ninja",
       "cacheVariables": {
-        "FIRST_CACHE_VARIABLE": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": {
           "type": "BOOL",
-          "value": "OFF"
-        },
-        "SECOND_CACHE_VARIABLE": "ON"
+          "value": "ON"
+        }
       },
       "environment": {
         "MY_ENVIRONMENT_VARIABLE": "Test",
