@@ -85,6 +85,10 @@
     {
       "name": "ninja",
       "configurePreset": "ninja"
+    },
+    {
+      "name": "xcode",
+      "configurePreset": "xcode"
     }
   ],
   "testPresets": [
