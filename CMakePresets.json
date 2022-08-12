@@ -29,6 +29,24 @@
       }
     },
     {
+      "name": "xcode",
+      "displayName": "xcode",
+      "description": "build using Xcode generator",
+      "generator": "Xcode",
+      "binaryDir": "${sourceDir}/build/xcode",
+      "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": {
+          "type": "BOOL",
+          "value": "ON"
+        }
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Darwin"
+      }
+    },
+    {
       "name": "vs2022",
       "inherits": "ninja",
       "generator": "Visual Studio 17 2022",
