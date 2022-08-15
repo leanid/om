@@ -10,7 +10,7 @@ function print_field()
 {
     for ((i=0; i<3; i++))
     do
-        echo ${field[((3*i))]} "|" ${field[(((3*i)+1))]} "|" ${field[(((3*i)+2))]}
+        echo "${field[((3*i))]}" "|" "${field[(((3*i)+1))]}" "|" "${field[(((3*i)+2))]}"
     done
 }
 
@@ -24,13 +24,13 @@ function check_3_indexes()
     v1=${field[((i1))]}
     v2=${field[((i2))]}
 
-    if [ $v0 == $v1 ] && [ $v1 == $v2 ]
+    if [ "$v0" == "$v1" ] && [ "$v1" == "$v2" ]
     then
-        if [ $v0 == "X" ]
+        if [ "$v0" == "X" ]
         then
             echo "X - won!!!"
             return 0;
-        elif [ $v0 == "O" ]
+        elif [ "$v0" == "O" ]
         then
             echo "O - won!!!"
             return 0;
@@ -95,15 +95,15 @@ function check_win_state()
 
 print_field
 
-while [ true ]
+while true
 do
     echo "Where to put X? (1-9)"
-    read position
+    read -r position
     field[((position-1))]="X"
     print_field
     check_win_state
     echo "Where to put O? (1-9)"
-    read position
+    read -r position
     field[((position-1))]="O"
     print_field
     check_win_state
