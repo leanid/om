@@ -13,3 +13,4 @@ target_link_options(20-asan-tutorial PRIVATE -fsanitize=address)
 # 4. on Windows you can use MSYS2 with CLANG64
 #   4.1 install `pacboy -S clang:c cmake:c ninja:c`
 #   4.2 check `clang++ --version && cmake --version && ninja --version`
+# 5. To get nicer stack traces in error messages add -fno-omit-frame-pointer
