@@ -14,7 +14,7 @@ add_executable(scanner_test src/fs_scanner_unit_test.cxx)
 target_link_libraries(scanner_test scanner)
 target_compile_features(scanner_test PRIVATE cxx_std_20)
 
-include(FindVulkan)
+find_package(Vulkan)
 if(NOT Vulkan_FOUND)
 	message(SEND_ERROR, "Vulkan SDK wasn't found. Please install: https://vulkan.lunarg.com/sdk/home")
 endif()
