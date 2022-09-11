@@ -13,6 +13,8 @@
 
 #include <SDL_loadso.h>
 
+#include <vulkan/vulkan.hpp>
+
 namespace fs = std::filesystem;
 
 namespace om
@@ -36,6 +38,11 @@ int main(int argc, char* argv[])
         init_minimal_log_system();
 
         om::engine_impl engine(argc, argv);
+
+        const int32_t VkVersion = vk::enumerateInstanceVersion();
+        std::cout << "Vulkan version: " << VK_VERSION_MAJOR(VkVersion) << "."
+                  << VK_VERSION_MINOR(VkVersion) << "."
+                  << VK_VERSION_PATCH(VkVersion) << std::endl;
 
         start_game(engine);
 
