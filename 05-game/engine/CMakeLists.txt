@@ -14,13 +14,8 @@ add_executable(scanner_test src/fs_scanner_unit_test.cxx)
 target_link_libraries(scanner_test scanner)
 target_compile_features(scanner_test PRIVATE cxx_std_20)
 
-find_package(Vulkan)
-if(NOT DEFINED Vulkan_FOUND)
-    message(
-        FATAL_ERROR
-            "Vulkan SDK wasn't found. Please install: https://vulkan.lunarg.com/sdk/home"
-        )
-endif()
+find_package(Vulkan REQUIRED)
+# Vulkan SDK wasn't found. Please install: https://vulkan.lunarg.com/sdk/home
 
 add_executable(
     om
