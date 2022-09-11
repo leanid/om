@@ -15,7 +15,7 @@ target_link_libraries(scanner_test scanner)
 target_compile_features(scanner_test PRIVATE cxx_std_20)
 
 find_package(Vulkan)
-if(NOT Vulkan_FOUND)
+if(NOT DEFINED Vulkan_FOUND)
 	message(SEND_ERROR, "Vulkan SDK wasn't found. Please install: https://vulkan.lunarg.com/sdk/home")
 endif()
 
@@ -32,11 +32,13 @@ target_include_directories(om PUBLIC include)
 target_link_libraries(om PRIVATE Vulkan::Vulkan SDL2::SDL2 SDL2::SDL2main fmt::fmt)
 target_compile_features(om PRIVATE cxx_std_20)
 
+if(WIN32)
 add_custom_command(
   TARGET om
   POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:SDL2>" "$<TARGET_FILE_DIR:om>"
 )
+endif()
 
 set_target_properties(
   om PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "$<TARGET_FILE_DIR:om>"
