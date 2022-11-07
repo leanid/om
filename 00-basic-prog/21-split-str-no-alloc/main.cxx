@@ -4,7 +4,7 @@
 #include <string_view>
 #include <utility>
 
-struct split_words
+struct split_by_spaces
 {
     std::string_view      text;
     static constexpr char delim = ' ';
@@ -77,13 +77,13 @@ int main(int argc, char** argv)
                "  contaner                  for intermediate words  "sv;
 
     auto comma = "";
-    for (std::string_view word : split_words{ str })
+    for (std::string_view word : split_by_spaces{ str })
     {
         std::cout << std::exchange(comma, ",") << std::quoted(word);
     }
 
     auto only_spaces = "                   "sv;
-    for (std::string_view word : split_words{ only_spaces })
+    for (std::string_view word : split_by_spaces{ only_spaces })
     {
         std::cout << "you will not see this line in output" << std::endl;
     }
