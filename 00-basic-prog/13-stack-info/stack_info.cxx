@@ -7,7 +7,10 @@ static void get_stack_min_and_max_adresses(size_t& min, size_t& max)
     // works if Windows version >= 8
     GetCurrentThreadStackLimits(&min, &max);
 }
-
+static size_t get_stack_quard_size()
+{
+    return 0;
+}
 #else
 
 #include <algorithm> // c++20 std::shift_left
