@@ -16,7 +16,10 @@ Add to configuration
 
 SPC+/
 
-### Search Project File by type
-
+### Search Project Text in files by type
+SPC+/
+example: opengl -- -tcmake
+         ^^^^^^^^^^^^^^^^^ search "opengl" only in 
+         files with "type" cmake (*.cmake, CMakeLists.txt)
 
 
