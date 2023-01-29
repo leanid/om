@@ -17,15 +17,6 @@
           "type": "BOOL",
           "value": "ON"
         }
-      },
-      "environment": {
-        "MY_ENVIRONMENT_VARIABLE": "Test",
-        "PATH": "$env{HOME}/ninja/bin:$penv{PATH}"
-      },
-      "vendor": {
-        "example.com/ExampleIDE/1.0": {
-          "autoFormat": true
-        }
       }
     },
     {
@@ -98,10 +89,5 @@
       "output": {"outputOnFailure": true},
       "execution": {"noTestsAction": "error", "stopOnFailure": true}
     }
-  ],
-  "vendor": {
-    "example.com/ExampleIDE/1.0": {
-      "autoFormat": false
-    }
-  }
+  ]
 }

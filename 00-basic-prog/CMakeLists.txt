@@ -21,3 +21,4 @@ add_subdirectory(13-stack-info)
 add_subdirectory(14-cxx17-fs)
 
 add_subdirectory(21-split-str-no-alloc)
+add_subdirectory(22-no-alloc-memory)
