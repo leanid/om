@@ -2,10 +2,10 @@ cmake_minimum_required(VERSION 3.16)
 
 project(08-aslr CXX)
 add_executable(08-aslr "main.cxx")
-target_compile_features(08-aslr PRIVATE cxx_std_17)
+target_compile_features(08-aslr PRIVATE cxx_std_20)
 
 add_executable(08-aslr-test "check_aslr_repeat.cxx")
-target_compile_features(08-aslr-test PRIVATE cxx_std_17)
+target_compile_features(08-aslr-test PRIVATE cxx_std_20)
 
 add_library(08-exec-stream STATIC exec-stream.h exec-stream.cpp)
 

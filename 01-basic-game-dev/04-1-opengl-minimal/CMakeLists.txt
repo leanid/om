@@ -9,7 +9,7 @@ add_library(
   glad/glad.h
   glad/glad.c
 )
-target_compile_features(engine-04-1 PUBLIC cxx_std_17)
+target_compile_features(engine-04-1 PUBLIC cxx_std_20)
 target_include_directories(engine-04-1 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 if(WIN32)
@@ -42,5 +42,5 @@ else()
 endif()
 
 add_executable(game-04-1 game.cxx)
-target_compile_features(game-04-1 PUBLIC cxx_std_17)
+target_compile_features(game-04-1 PUBLIC cxx_std_20)
 target_link_libraries(game-04-1 PRIVATE engine-04-1)

@@ -11,7 +11,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char** argv)
 
     for (auto const& dir_entry : fs::recursive_directory_iterator{ cwd })
     {
-        std::cout << dir_entry.path().u8string() << '\n';
+        std::cout << dir_entry.path() << '\n';
     }
     return 0;
 }

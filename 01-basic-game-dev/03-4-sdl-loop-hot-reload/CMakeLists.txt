@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16...3.23)
 project(03-4-sdl-loop-hot-reload)
 
 add_executable(engine-03-4 engine.cxx engine.hxx engine.cxx)
-target_compile_features(engine-03-4 PUBLIC cxx_std_17)
+target_compile_features(engine-03-4 PUBLIC cxx_std_20)
 
 target_compile_definitions(engine-03-4 PRIVATE $<$<PLATFORM_ID:Windows>: OM_DECLSPEC=__declspec(dllexport) >)
 target_compile_definitions(engine-03-4 PRIVATE $<$<PLATFORM_ID:Windows>:_CRT_SECURE_NO_WARNINGS=1>)
@@ -27,5 +27,5 @@ add_library(game-03-4 SHARED game.cxx)
 
 target_compile_definitions(game-03-4 PRIVATE $<$<PLATFORM_ID:Windows>:OM_DECLSPEC=__declspec(dllexport) >)
 
-target_compile_features(game-03-4 PUBLIC cxx_std_17)
+target_compile_features(game-03-4 PUBLIC cxx_std_20)
 target_link_libraries(game-03-4 PRIVATE engine-03-4)

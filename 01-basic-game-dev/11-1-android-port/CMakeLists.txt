@@ -21,7 +21,7 @@ add_executable(engine om/engine.cxx
                       om/engine.hxx 
                       om/picopng.hxx)
 set_target_properties(engine PROPERTIES ENABLE_EXPORTS TRUE)
-target_compile_features(engine PRIVATE cxx_std_17)
+target_compile_features(engine PRIVATE cxx_std_20)
 
 if(WIN32)
   target_compile_definitions(engine PRIVATE "-DOM_DECLSPEC=__declspec(dllexport)")
@@ -54,6 +54,6 @@ add_library(game SHARED game/game.cxx
                         game/configuration_loader.hxx
                         game/game_object.hxx)
 target_include_directories(game PRIVATE .)
-target_compile_features(game PRIVATE cxx_std_17)
+target_compile_features(game PRIVATE cxx_std_20)
 
 target_link_libraries(game engine)

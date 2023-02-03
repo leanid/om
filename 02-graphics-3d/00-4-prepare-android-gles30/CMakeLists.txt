@@ -12,7 +12,7 @@ endif()
 project(00-4-prepare-android-gles30 CXX)
 
 add_library(${PROJECT_NAME} SHARED main.cxx)
-#target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
+#target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
 
 find_library(SDL2_LIB NAMES SDL2)
 

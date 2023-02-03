@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.18)
 project(08-1-prepare-engine-for-game)
 
 add_library(engine-08-1 SHARED engine.cxx engine.hxx picopng.hxx)
-target_compile_features(engine-08-1 PUBLIC cxx_std_17)
+target_compile_features(engine-08-1 PUBLIC cxx_std_20)
 
 #set(OpenGL_GL_PREFERENCE GLVND)
 find_package(OpenGL REQUIRED)
@@ -34,7 +34,7 @@ elseif(MSVC OR UNIX)
 endif()
 
 add_executable(game-08-1 game.cxx)
-target_compile_features(game-08-1 PUBLIC cxx_std_17)
+target_compile_features(game-08-1 PUBLIC cxx_std_20)
 
 target_link_libraries(game-08-1 PRIVATE engine-08-1)
 

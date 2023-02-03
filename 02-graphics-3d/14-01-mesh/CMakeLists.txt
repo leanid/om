@@ -71,7 +71,7 @@ elseif(MSVC)
     set(ASSIMP_POSTFIX "-vc140-mtd.lib")
 endif()
 
-target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
+target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
 target_sources(${PROJECT_NAME} PRIVATE main.cxx
                                        gles30_shader.hxx
                                        gles30_shader.cxx

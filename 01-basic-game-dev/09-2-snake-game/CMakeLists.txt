@@ -6,7 +6,7 @@ add_executable(engine-09-2 om/engine.cxx
                            om/stb_image.h
                            om/math.hxx)
 set_target_properties(engine-09-2 PROPERTIES ENABLE_EXPORTS TRUE)
-target_compile_features(engine-09-2 PRIVATE cxx_std_17)
+target_compile_features(engine-09-2 PRIVATE cxx_std_20)
 
 if(WIN32)
   target_compile_definitions(engine-09-2 PRIVATE "-DOM_DECLSPEC=__declspec(dllexport)")
@@ -46,7 +46,7 @@ add_library(game-09-2 SHARED game/game.cxx
                              game/snake.hxx
                              game/fruit.hxx)
 target_include_directories(game-09-2 PRIVATE .)
-target_compile_features(game-09-2 PRIVATE cxx_std_17)
+target_compile_features(game-09-2 PRIVATE cxx_std_20)
 target_link_libraries(game-09-2 PRIVATE engine-09-2)
 
 if(MSVC)

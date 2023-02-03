@@ -86,7 +86,7 @@ elseif(MSVC)
     set(ASSIMP_POSTFIX "-vc140-mtd.lib")
 endif()
 
-target_compile_features(15-01-model PUBLIC cxx_std_17)
+target_compile_features(15-01-model PUBLIC cxx_std_20)
 
 file(GLOB MODEL_PNG_FILES
      RELATIVE ${CMAKE_CURRENT_LIST_DIR}

@@ -5,7 +5,7 @@ add_executable(
   04-0-render-basic 00_canvas_basic.cxx 00_canvas_basic.hxx
   00_canvas_basic_main.cxx
 )
-target_compile_features(04-0-render-basic PUBLIC cxx_std_17)
+target_compile_features(04-0-render-basic PUBLIC cxx_std_20)
 
 add_executable(
   04-0-render-basic-line
@@ -14,7 +14,7 @@ add_executable(
   01_line_render.hxx
   01_line_render_main.cxx
 )
-target_compile_features(04-0-render-basic-line PUBLIC cxx_std_17)
+target_compile_features(04-0-render-basic-line PUBLIC cxx_std_20)
 
 add_executable(
   04-0-render-basic-triangle
@@ -24,7 +24,7 @@ add_executable(
   02_triangle_render.hxx
   02_triangle_render_main.cxx
 )
-target_compile_features(04-0-render-basic-triangle PUBLIC cxx_std_17)
+target_compile_features(04-0-render-basic-triangle PUBLIC cxx_std_20)
 
 add_executable(
   04-0-render-basic-triangle-indexed
@@ -35,7 +35,7 @@ add_executable(
   03_triangle_indexed_render.hxx
   03_triangle_indexed_render_main.cxx
 )
-target_compile_features(04-0-render-basic-triangle-indexed PUBLIC cxx_std_17)
+target_compile_features(04-0-render-basic-triangle-indexed PUBLIC cxx_std_20)
 
 add_executable(
   04-0-render-basic-triangle-interpolated
@@ -49,7 +49,7 @@ add_executable(
 )
 target_compile_features(
   04-0-render-basic-triangle-interpolated
-  PUBLIC cxx_std_17
+  PUBLIC cxx_std_20
 )
 
 find_package(SDL2 REQUIRED)
@@ -77,7 +77,7 @@ target_link_libraries(
   04-0-render-basic-windowed PRIVATE SDL2::SDL2
   SDL2::SDL2main
 )
-target_compile_features(04-0-render-basic-windowed PUBLIC cxx_std_17)
+target_compile_features(04-0-render-basic-windowed PUBLIC cxx_std_20)
 
 add_executable(
   04-0-render-full-windowed
@@ -98,7 +98,7 @@ target_link_libraries(
   04-0-render-full-windowed PRIVATE SDL2::SDL2
   SDL2::SDL2main
 )
-target_compile_features(04-0-render-full-windowed PUBLIC cxx_std_17)
+target_compile_features(04-0-render-full-windowed PUBLIC cxx_std_20)
 
 add_executable(
   04-0-render-image-windowed
@@ -119,43 +119,43 @@ target_link_libraries(
   04-0-render-image-windowed PRIVATE SDL2::SDL2
   SDL2::SDL2main
 )
-target_compile_features(04-0-render-image-windowed PUBLIC cxx_std_17)
+target_compile_features(04-0-render-image-windowed PUBLIC cxx_std_20)
 
 add_executable(
   04-06-ray-tracing-basic 00_canvas_basic.cxx 00_canvas_basic.hxx
   06_ray_tracing_basic.cxx
 )
-target_compile_features(04-06-ray-tracing-basic PRIVATE cxx_std_17)
+target_compile_features(04-06-ray-tracing-basic PRIVATE cxx_std_20)
 
 add_executable(
   04-07-ray-tracing-basic 00_canvas_basic.cxx 00_canvas_basic.hxx
   07_ray_tracing_basic.cxx
 )
-target_compile_features(04-07-ray-tracing-basic PRIVATE cxx_std_17)
+target_compile_features(04-07-ray-tracing-basic PRIVATE cxx_std_20)
 
 add_executable(
   04-08-ray-tracing-basic 00_canvas_basic.cxx 00_canvas_basic.hxx
   08_ray_tracing_basic.cxx
 )
-target_compile_features(04-08-ray-tracing-basic PRIVATE cxx_std_17)
+target_compile_features(04-08-ray-tracing-basic PRIVATE cxx_std_20)
 
 add_executable(
   04-09-ray-tracing-basic 00_canvas_basic.cxx 00_canvas_basic.hxx
   09_ray_tracing_basic.cxx
 )
-target_compile_features(04-09-ray-tracing-basic PRIVATE cxx_std_17)
+target_compile_features(04-09-ray-tracing-basic PRIVATE cxx_std_20)
 
 add_executable(
   04-10-ray-tracing-basic 00_canvas_basic.cxx 00_canvas_basic.hxx
   10_ray_tracing_basic.cxx
 )
-target_compile_features(04-10-ray-tracing-basic PRIVATE cxx_std_17)
+target_compile_features(04-10-ray-tracing-basic PRIVATE cxx_std_20)
 
 add_executable(
   04-11-ray-tracing-basic 00_canvas_basic.cxx 00_canvas_basic.hxx
   11_ray_tracing_basic.cxx
 )
-target_compile_features(04-11-ray-tracing-basic PRIVATE cxx_std_17)
+target_compile_features(04-11-ray-tracing-basic PRIVATE cxx_std_20)
 
 add_executable(
   04-12-rasterize_cube
@@ -171,4 +171,4 @@ add_executable(
   04_triangle_interpolated_render.hxx
   12_rasterize_cube.cxx
 )
-target_compile_features(04-12-rasterize_cube PRIVATE cxx_std_17)
+target_compile_features(04-12-rasterize_cube PRIVATE cxx_std_20)
