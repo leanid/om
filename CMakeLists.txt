@@ -10,6 +10,8 @@ set(OM_BUILD_COURSE_GRAPHICS_3D OFF
     CACHE BOOL "turn ON if need to build 02-graphics-3d")
 set(OM_BUILD_GAME_EXAMPLE OFF CACHE BOOL "turn ON if need to build 05-game")
 
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 # curses
 if(${OM_BUILD_COURSE_BASIC_PROG})
     add_subdirectory(00-basic-prog)
