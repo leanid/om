@@ -7,7 +7,7 @@ add_executable(engine-08-3 engine.cxx
                            configuration_loader.hxx
                            game_object.hxx)
 set_target_properties(engine-08-3 PROPERTIES ENABLE_EXPORTS TRUE)
-target_compile_features(engine-08-3 PUBLIC cxx_std_17)
+target_compile_features(engine-08-3 PUBLIC cxx_std_20)
 
 if(WIN32)
   target_compile_definitions(engine-08-3 PRIVATE "-DOM_DECLSPEC=__declspec(dllexport)")
@@ -33,7 +33,7 @@ elseif(MSVC OR UNIX)
 endif()
 
 add_library(game-08-3 SHARED game.cxx)
-target_compile_features(game-08-3 PUBLIC cxx_std_17)
+target_compile_features(game-08-3 PUBLIC cxx_std_20)
 target_link_libraries(game-08-3 PRIVATE engine-08-3)
 
 if(MSVC)

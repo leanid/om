@@ -63,7 +63,7 @@ elseif(MSVC)
     set(ASSIMP_POSTFIX "-vc140-mtd.lib")
 endif()
 
-target_compile_features(19-01-face-culling PUBLIC cxx_std_17)
+target_compile_features(19-01-face-culling PUBLIC cxx_std_20)
 
 target_sources(19-01-face-culling PRIVATE main.cxx
                                    gles30_shader.hxx

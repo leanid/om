@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.19.7...3.22)
 project(02-sdl-dynamic)
 
 add_executable(02-sdl-dynamic main.cxx)
-target_compile_features(02-sdl-dynamic PUBLIC cxx_std_17)
+target_compile_features(02-sdl-dynamic PUBLIC cxx_std_20)
 
 # MacOSX - brew install sdl2
 # MinGW  - pacman -s sdl2

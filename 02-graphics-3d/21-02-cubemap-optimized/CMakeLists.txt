@@ -65,7 +65,7 @@ elseif(MSVC)
     set(ASSIMP_POSTFIX "-vc140-mtd.lib")
 endif()
 
-target_compile_features(21-02-cubemap-optimized PUBLIC cxx_std_17)
+target_compile_features(21-02-cubemap-optimized PUBLIC cxx_std_20)
 
 target_sources(21-02-cubemap-optimized PRIVATE main.cxx
                                    gles30_shader.hxx

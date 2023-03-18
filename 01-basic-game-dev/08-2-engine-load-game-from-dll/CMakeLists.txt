@@ -3,7 +3,7 @@ project(08-2-engine-load-game-from-dll)
 
 add_executable(engine-08-2 engine.cxx engine.hxx picopng.hxx)
 set_target_properties(engine-08-2 PROPERTIES ENABLE_EXPORTS TRUE)
-target_compile_features(engine-08-2 PUBLIC cxx_std_17)
+target_compile_features(engine-08-2 PUBLIC cxx_std_20)
 
 find_package(OpenGL REQUIRED)
 find_package(SDL2 REQUIRED)
@@ -38,7 +38,7 @@ elseif(MSVC OR UNIX)
 endif()
 
 add_library(game-08-2 MODULE game.cxx)
-target_compile_features(game-08-2 PUBLIC cxx_std_17)
+target_compile_features(game-08-2 PUBLIC cxx_std_20)
 
 target_link_libraries(game-08-2 PRIVATE engine-08-2)
 

@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.20)
 project(02-sdl-static)
 
 add_executable(02-sdl-static main.cxx)
-target_compile_features(02-sdl-static PUBLIC cxx_std_17)
+target_compile_features(02-sdl-static PUBLIC cxx_std_20)
 
 find_package(SDL2 REQUIRED)
 #target_include_directories(02-sdl-static PRIVATE ${SDL2_INCLUDE_DIRS})

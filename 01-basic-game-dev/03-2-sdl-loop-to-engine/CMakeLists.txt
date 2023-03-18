@@ -5,7 +5,7 @@ add_executable(03-sdl-loop-to-engine
     main.cxx
     engine.cxx
     engine.hxx)
-target_compile_features(03-sdl-loop-to-engine PUBLIC cxx_std_17)
+target_compile_features(03-sdl-loop-to-engine PUBLIC cxx_std_20)
 
 find_package(SDL2 REQUIRED)
 

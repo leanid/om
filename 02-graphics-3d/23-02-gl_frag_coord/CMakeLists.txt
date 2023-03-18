@@ -68,7 +68,7 @@ elseif(MSVC)
     set(ASSIMP_POSTFIX "-vc140-mtd.lib")
 endif()
 
-target_compile_features(23-02-gl_frag_coord PUBLIC cxx_std_17)
+target_compile_features(23-02-gl_frag_coord PUBLIC cxx_std_20)
 
 target_sources(23-02-gl_frag_coord PRIVATE main.cxx
                                    gles30_shader.hxx

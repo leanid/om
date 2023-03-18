@@ -22,4 +22,14 @@ example: opengl -- -tcmake
          ^^^^^^^^^^^^^^^^^ search "opengl" only in 
          files with "type" cmake (*.cmake, CMakeLists.txt)
 
-
+### Search and replace in full project
+TL;DR:
+for ivy module users
+```
+SPC s p foo C-c C-e :%s/foo/bar/g RET Z Z
+```
+for vertico module users (I use it most of the time)
+```
+SPC s p foo C-; E C-c C-p :%s/foo/bar/g RET Z Z
+```
+Entering those keys will replace “foo” with “bar” in your whole project. 
