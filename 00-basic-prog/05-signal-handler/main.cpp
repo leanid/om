@@ -184,6 +184,8 @@ extern "C" void custom_signal_handler(int signal_index)
 {
     if (signal_index < 16)
     {
-        g_sig_counters[signal_index] += 1;
+        int v = g_sig_counters[signal_index];
+        ++v;
+        g_sig_counters[signal_index] = v;
     }
 }
