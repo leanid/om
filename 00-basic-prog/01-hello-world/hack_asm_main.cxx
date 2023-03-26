@@ -1,6 +1,6 @@
 extern "C" long syscall(long call_index, ...);
 
-constexpr long SYS_write = 1; // from <sys/syscall.h>
+constexpr long SYS_write = 1;  // from <sys/syscall.h>
 constexpr long SYS_exit  = 60; // from <sys/syscall.h>
 
 int print(const char* message, int size)
@@ -9,7 +9,7 @@ int print(const char* message, int size)
     return static_cast<int>(exit_code);
 }
 
-int main(int /*argc*/, char* /*argv*/ [])
+int main(int /*argc*/, char* /*argv*/[])
 {
     return print("hello world\n", 12);
 }
