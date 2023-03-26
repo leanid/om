@@ -31,7 +31,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 
     enable_language(ASM)
     add_executable(hello_asm)
-    target_sources(hello_asm PRIVATE syscall.s hack_asm_main.cxx)
+    target_sources(hello_asm PRIVATE syscall_x86_64.s hack_asm_main.cxx)
     target_link_options(
         hello_asm
         PRIVATE
