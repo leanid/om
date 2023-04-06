@@ -1,11 +1,7 @@
 #include <cstdlib>
 #include <iostream>
 
-#if __has_include(<SDL_version.h>)
-#include <SDL_version.h>
-#else
-#include <SDL2/SDL_version.h>
-#endif
+#include <SDL3/SDL_version.h>
 
 std::ostream& operator<<(std::ostream& out, const SDL_version& v)
 {
