@@ -31,10 +31,10 @@ const std::array<std::pair<std::string_view, int>, 8> z_buf_operations{
 
 int get_z_buf_operation(std::string_view name)
 {
-    auto it = std::find_if(begin(z_buf_operations), end(z_buf_operations),
-                           [&name](const std::pair<std::string_view, int>& p) {
-                               return p.first == name;
-                           });
+    auto it = std::find_if(begin(z_buf_operations),
+                           end(z_buf_operations),
+                           [&name](const std::pair<std::string_view, int>& p)
+                           { return p.first == name; });
     if (it == end(z_buf_operations))
     {
         throw std::out_of_range(std::string("z_buf_operation not found: ") +
@@ -86,8 +86,10 @@ void print_view_port()
 extern const float cube_vertices[36 * 8];
 extern const float plane_vertices[6 * 8];
 
-void render_mesh(gles30::shader& cube_shader, const fps_camera& camera,
-                 const gles30::mesh& mesh, glm::vec3 position,
+void render_mesh(gles30::shader&          cube_shader,
+                 const fps_camera&        camera,
+                 const gles30::mesh&      mesh,
+                 glm::vec3                position,
                  const properties_reader& properties)
 {
     // also draw the lamp object(s)
@@ -120,7 +122,8 @@ void render_mesh(gles30::shader& cube_shader, const fps_camera& camera,
 
     string_view platform_name = SDL_GetPlatform();
 
-    const array<string_view, 3> desktop_platforms{ "Windows", "Mac OS X",
+    const array<string_view, 3> desktop_platforms{ "Windows",
+                                                   "Mac OS X",
                                                    "Linux" };
 
     auto it =
@@ -321,8 +324,11 @@ std::unique_ptr<SDL_Window, void (*)(SDL_Window*)> create_window(
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
     unique_ptr<SDL_Window, void (*)(SDL_Window*)> window(
-        SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_CENTERED,
-                         SDL_WINDOWPOS_CENTERED, screen_width, screen_height,
+        SDL_CreateWindow(title.c_str(),
+                         SDL_WINDOWPOS_CENTERED,
+                         SDL_WINDOWPOS_CENTERED,
+                         screen_width,
+                         screen_height,
                          ::SDL_WINDOW_OPENGL | ::SDL_WINDOW_RESIZABLE),
         SDL_DestroyWindow);
 
@@ -337,7 +343,8 @@ std::unique_ptr<SDL_Window, void (*)(SDL_Window*)> create_window(
     return window;
 }
 
-gles30::mesh create_mesh(const float* vertices, size_t count_vert,
+gles30::mesh create_mesh(const float*     vertices,
+                         size_t           count_vert,
                          gles30::texture* texture)
 {
     using namespace std;
@@ -371,7 +378,8 @@ void create_camera(const properties_reader& properties)
     cam_pos = properties.get_vec3("cam_pos");
     cam_dir = properties.get_vec3("cam_dir");
 
-    camera = fps_camera(cam_pos, cam_dir,
+    camera = fps_camera(cam_pos,
+                        cam_dir,
                         /*up*/ { 0, 1, 0 });
 
     fovy = properties.get_float("fovy");
@@ -428,13 +436,22 @@ int main(int /*argc*/, char* /*argv*/[])
 
         clear_back_buffer(properties.get_vec3("clear_color"));
 
-        render_mesh(cube_shader, camera, plane_metal,
-                    glm::vec3(0.0f, 0.0f, 0.0f), properties);
+        render_mesh(cube_shader,
+                    camera,
+                    plane_metal,
+                    glm::vec3(0.0f, 0.0f, 0.0f),
+                    properties);
 
-        render_mesh(cube_shader, camera, cube_marble,
-                    glm::vec3(-1.0f, 0.0f, -1.0f), properties);
-        render_mesh(cube_shader, camera, cube_metal,
-                    glm::vec3(2.0f, 0.0f, 0.0f), properties);
+        render_mesh(cube_shader,
+                    camera,
+                    cube_marble,
+                    glm::vec3(-1.0f, 0.0f, -1.0f),
+                    properties);
+        render_mesh(cube_shader,
+                    camera,
+                    cube_metal,
+                    glm::vec3(2.0f, 0.0f, 0.0f),
+                    properties);
 
         SDL_GL_SwapWindow(window.get());
     }

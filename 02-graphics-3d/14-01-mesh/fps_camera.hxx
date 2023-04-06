@@ -23,8 +23,8 @@ public:
     /// \param a_up vector in world space
     ///
     fps_camera(glm::vec3 a_position, glm::vec3 a_direction, glm::vec3 a_up);
-    fps_camera()                  = default;
-    fps_camera(const fps_camera&) = default;
+    fps_camera()                             = default;
+    fps_camera(const fps_camera&)            = default;
     fps_camera& operator=(const fps_camera&) = default;
 
     glm::mat4 view_matrix() const;
@@ -114,7 +114,8 @@ inline glm::mat4 fps_camera::projection_matrix() const
     return glm::perspective(glm::radians(fovy_), aspect_, z_near_, z_far_);
 }
 
-inline fps_camera::fps_camera(glm::vec3 a_position, glm::vec3 a_direction,
+inline fps_camera::fps_camera(glm::vec3 a_position,
+                              glm::vec3 a_direction,
                               glm::vec3 a_up)
 {
     a_direction = glm::normalize(a_direction);

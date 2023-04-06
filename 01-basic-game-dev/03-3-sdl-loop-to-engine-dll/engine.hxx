@@ -38,7 +38,7 @@ class engine;
 
 /// return not null on success
 OM_DECLSPEC engine* create_engine();
-OM_DECLSPEC void destroy_engine(engine* e);
+OM_DECLSPEC void    destroy_engine(engine* e);
 
 class OM_DECLSPEC engine
 {

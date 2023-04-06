@@ -32,7 +32,7 @@ struct OM_DECLSPEC mat2x3
     vec2          delta;
 };
 
-OM_DECLSPEC vec2 operator*(const vec2& v, const mat2x3& m);
+OM_DECLSPEC vec2   operator*(const vec2& v, const mat2x3& m);
 OM_DECLSPEC mat2x3 operator*(const mat2x3& m1, const mat2x3& m2);
 
 /// dendy gamepad emulation events
@@ -208,7 +208,8 @@ public:
     virtual void render(const tri2&, texture*)                         = 0;
     virtual void render(const tri2&, texture*, const mat2x3& m)        = 0;
     virtual void render(const vertex_buffer&, texture*, const mat2x3&) = 0;
-    virtual void render(const vertex_buffer* buff, const index_buffer* indexes,
+    virtual void render(const vertex_buffer* buff,
+                        const index_buffer*  indexes,
                         const texture*       tex,
                         const std::uint16_t* start_vertex_index,
                         size_t               num_vertexes)                           = 0;

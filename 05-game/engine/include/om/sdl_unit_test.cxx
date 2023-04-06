@@ -15,8 +15,8 @@ TEST_CASE("sdl wrapper test") // LEVEL 0
     SDL_Init(SDL_INIT_VIDEO);
     om::video   video;
     std::string test_window_name = "test window";
-    om::window  w = video.create_window(test_window_name.c_str(), { 640, 480 },
-                                       {}, om::window::mode::opengl);
+    om::window  w                = video.create_window(
+        test_window_name.c_str(), { 640, 480 }, {}, om::window::mode::opengl);
 
     SECTION("video test section") // LEVEL 1
     {

@@ -133,7 +133,8 @@ static std::string join_strings_with_spaces(
     std::accumulate(begin(faces),
                     end(faces),
                     result,
-                    [](std::string result, const std::filesystem::path& p) {
+                    [](std::string result, const std::filesystem::path& p)
+                    {
                         if (!result.empty())
                         {
                             result.push_back(' ');

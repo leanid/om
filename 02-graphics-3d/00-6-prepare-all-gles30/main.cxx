@@ -14,6 +14,7 @@ class android_redirected_buf : public std::streambuf
 {
 public:
     android_redirected_buf() = default;
+
 private:
     // This android_redirected_buf buffer has no buffer. So every character
     // "overflows" and can be put directly into the teed buffers.
@@ -28,8 +29,8 @@ private:
             if (c == '\n')
             {
                 // android log function add '\n' on every print itself
-                __android_log_print(ANDROID_LOG_ERROR, "OM", "%s",
-                                    message.c_str());
+                __android_log_print(
+                    ANDROID_LOG_ERROR, "OM", "%s", message.c_str());
                 message.clear();
             }
             else
@@ -47,21 +48,21 @@ private:
 
 struct global_redirect_handler
 {
-   android_redirected_buf logcat;
-   std::streambuf* clog_buf = nullptr;
+    android_redirected_buf logcat;
+    std::streambuf*        clog_buf = nullptr;
 
-   global_redirect_handler()
-   {
-       using namespace std;
+    global_redirect_handler()
+    {
+        using namespace std;
 
-       clog_buf = clog.rdbuf();
-       clog.rdbuf(&logcat);
-   }
-   ~global_redirect_handler()
-   {
-       using namespace std;
-       clog.rdbuf(clog_buf);
-   }
+        clog_buf = clog.rdbuf();
+        clog.rdbuf(&logcat);
+    }
+    ~global_redirect_handler()
+    {
+        using namespace std;
+        clog.rdbuf(clog_buf);
+    }
 } global_var;
 #else
 #include <SDL2/SDL.h>
@@ -70,19 +71,20 @@ struct global_redirect_handler
 
 struct context_parameters
 {
-  const char* name = nullptr;
-  int32_t major_version = 0;
-  int32_t minor_version = 0;
-  int32_t profile_type = 0;
+    const char* name          = nullptr;
+    int32_t     major_version = 0;
+    int32_t     minor_version = 0;
+    int32_t     profile_type  = 0;
 };
 
 std::ostream& operator<<(std::ostream& out, const context_parameters& params)
 {
-  out << params.name << ' ' << params.major_version << '.' << params.minor_version;
-  return out;
+    out << params.name << ' ' << params.major_version << '.'
+        << params.minor_version;
+    return out;
 }
 
-int main(int /*argc*/, char* /*argv*/ [])
+int main(int /*argc*/, char* /*argv*/[])
 {
     using namespace std;
     const int init_result = SDL_Init(SDL_INIT_EVERYTHING);
@@ -95,8 +97,12 @@ int main(int /*argc*/, char* /*argv*/ [])
     }
 
     unique_ptr<SDL_Window, void (*)(SDL_Window*)> window(
-        SDL_CreateWindow("title", SDL_WINDOWPOS_CENTERED,
-                         SDL_WINDOWPOS_CENTERED, 640, 480, ::SDL_WINDOW_OPENGL),
+        SDL_CreateWindow("title",
+                         SDL_WINDOWPOS_CENTERED,
+                         SDL_WINDOWPOS_CENTERED,
+                         640,
+                         480,
+                         ::SDL_WINDOW_OPENGL),
         SDL_DestroyWindow);
 
     if (window == nullptr)
@@ -107,53 +113,56 @@ int main(int /*argc*/, char* /*argv*/ [])
         return -1;
     }
 
-    int r;
+    int                r;
     context_parameters ask_context;
 
     using namespace std::string_literals;
-    
+
     const char* platform_name = SDL_GetPlatform();
     if (platform_name == "Windows"s || platform_name == "Mac OS X"s)
     {
         // we want OpenGL Core 3.3 context
-        ask_context.name = "OpenGL Core";
-	    ask_context.major_version = 3;
-	    ask_context.minor_version = 3;
-	    ask_context.profile_type = SDL_GL_CONTEXT_PROFILE_CORE;
+        ask_context.name          = "OpenGL Core";
+        ask_context.major_version = 3;
+        ask_context.minor_version = 3;
+        ask_context.profile_type  = SDL_GL_CONTEXT_PROFILE_CORE;
     }
     else
     {
         // we want OpenGL ES 3.0 context
-        ask_context.name = "OpenGL ES";
-	    ask_context.major_version = 3;
-	    ask_context.minor_version = 0;
-	    ask_context.profile_type = SDL_GL_CONTEXT_PROFILE_ES;
+        ask_context.name          = "OpenGL ES";
+        ask_context.major_version = 3;
+        ask_context.minor_version = 0;
+        ask_context.profile_type  = SDL_GL_CONTEXT_PROFILE_ES;
     }
 
     r = SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
                             ask_context.profile_type);
     SDL_assert_always(r == 0);
-    r = SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, ask_context.major_version);
+    r = SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION,
+                            ask_context.major_version);
     SDL_assert_always(r == 0);
-    r = SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, ask_context.minor_version);
+    r = SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION,
+                            ask_context.minor_version);
     SDL_assert_always(r == 0);
 
     unique_ptr<void, void (*)(void*)> gl_context(
         SDL_GL_CreateContext(window.get()), SDL_GL_DeleteContext);
     if (nullptr == gl_context)
     {
-        clog << "Failed to create: " << ask_context << " error: " << SDL_GetError()
-        << endl;
+        clog << "Failed to create: " << ask_context
+             << " error: " << SDL_GetError() << endl;
         SDL_Quit();
         return -1;
     }
 
     context_parameters got_context = ask_context;
 
-    int result =
-        SDL_GL_GetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, &got_context.major_version);
+    int result = SDL_GL_GetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION,
+                                     &got_context.major_version);
     SDL_assert_always(result == 0);
-    result = SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, &got_context.minor_version);
+    result = SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION,
+                                 &got_context.minor_version);
     SDL_assert_always(result == 0);
 
     clog << "Ask for " << ask_context << endl;
@@ -169,10 +178,11 @@ int main(int /*argc*/, char* /*argv*/ [])
             {
                 continue_loop = false;
                 break;
-            }else if (SDL_QUIT == event.type)
+            }
+            else if (SDL_QUIT == event.type)
             {
-		        continue_loop = false;
-		        break;
+                continue_loop = false;
+                break;
             }
         }
 
@@ -187,7 +197,7 @@ int main(int /*argc*/, char* /*argv*/ [])
 
         SDL_GL_SwapWindow(window.get());
     }
-    
+
     SDL_Quit();
 
     return 0;

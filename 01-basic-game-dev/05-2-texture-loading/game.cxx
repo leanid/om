@@ -9,8 +9,9 @@
 
 #include "engine.hxx"
 
-om::vertex blend_vertex(const om::vertex& vl, const om::vertex& vr,
-                        const float a)
+om::vertex blend_vertex(const om::vertex& vl,
+                        const om::vertex& vr,
+                        const float       a)
 {
     om::vertex r;
     r.x = (1.0f - a) * vl.x + a * vr.x;
@@ -18,8 +19,9 @@ om::vertex blend_vertex(const om::vertex& vl, const om::vertex& vr,
     return r;
 }
 
-om::triangle blend(const om::triangle& tl, const om::triangle& tr,
-                   const float a)
+om::triangle blend(const om::triangle& tl,
+                   const om::triangle& tr,
+                   const float         a)
 {
     om::triangle r;
     r.v[0] = blend_vertex(tl.v[0], tr.v[0], a);
@@ -28,7 +30,7 @@ om::triangle blend(const om::triangle& tl, const om::triangle& tr,
     return r;
 }
 
-int main(int /*argc*/, char* /*argv*/ [])
+int main(int /*argc*/, char* /*argv*/[])
 {
     std::unique_ptr<om::engine, void (*)(om::engine*)> engine(
         om::create_engine(), om::destroy_engine);

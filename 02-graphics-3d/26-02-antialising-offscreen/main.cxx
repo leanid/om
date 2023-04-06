@@ -165,7 +165,7 @@ static void destroy_opengl_context(void* ptr)
     if (is_desktop())
     {
 
-#define GL_MULTISAMPLE 32925 // or 0x809D
+#define GL_MULTISAMPLE 32925      // or 0x809D
         glEnable(GL_MULTISAMPLE); // not working in GLES3.0
 #undef GL_MULTISAMPLE
     }

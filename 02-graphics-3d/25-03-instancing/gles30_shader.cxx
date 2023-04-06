@@ -70,7 +70,9 @@ static uint32_t compile_shader(std::string_view src,
     GLint array_of_string_lengths[1];
     array_of_string_lengths[0] = static_cast<GLint>(src.size());
 
-    glShaderSource(shader, 1, array_of_pointers_to_strings_with_src,
+    glShaderSource(shader,
+                   1,
+                   array_of_pointers_to_strings_with_src,
                    array_of_string_lengths);
 
     // compile vertex shader
@@ -239,8 +241,9 @@ void shader::set_uniform(std::string_view name, float value)
     GLint uniform_index = get_uniform_index(name, program_id);
     glUniform1f(uniform_index, value);
 }
-void shader::set_uniform(std::string_view name, texture& tex,
-                         std::uint32_t index)
+void shader::set_uniform(std::string_view name,
+                         texture&         tex,
+                         std::uint32_t    index)
 {
     GLint uniform_index = get_uniform_index(name, program_id);
     glActiveTexture(GL_TEXTURE0 + index);

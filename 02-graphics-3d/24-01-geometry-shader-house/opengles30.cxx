@@ -31,8 +31,8 @@ private:
             if (c == '\n')
             {
                 // android log function add '\n' on every print itself
-                __android_log_print(ANDROID_LOG_ERROR, "OM", "%s",
-                                    message.c_str());
+                __android_log_print(
+                    ANDROID_LOG_ERROR, "OM", "%s", message.c_str());
                 message.clear();
             }
             else

@@ -58,10 +58,10 @@ int get_gl_constant(
     const std::array<std::pair<std::string_view, int>, 8>& operations,
     std::string_view                                       name)
 {
-    auto it = std::find_if(begin(operations), end(operations),
-                           [&name](const std::pair<std::string_view, int>& p) {
-                               return p.first == name;
-                           });
+    auto it = std::find_if(begin(operations),
+                           end(operations),
+                           [&name](const std::pair<std::string_view, int>& p)
+                           { return p.first == name; });
     if (it == end(operations))
     {
         throw std::out_of_range(std::string("operation not found: ") +
@@ -134,8 +134,11 @@ enum class render_options
     only_pro_view
 };
 
-void render_mesh(gles30::shader& shader, const fps_camera& camera,
-                 const gles30::mesh& mesh, glm::vec3 position, float scale,
+void render_mesh(gles30::shader&          shader,
+                 const fps_camera&        camera,
+                 const gles30::mesh&      mesh,
+                 glm::vec3                position,
+                 float                    scale,
                  const properties_reader& properties,
                  const render_options     options)
 {
@@ -249,9 +252,14 @@ static const char* severity_to_strv(GLenum severity)
 // 30Kb on my system, too much for stack
 static std::array<char, GL_MAX_DEBUG_MESSAGE_LENGTH> local_log_buff;
 
-static void APIENTRY callback_opengl_debug(
-    GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length,
-    const GLchar* message, [[maybe_unused]] const void* userParam)
+static void APIENTRY
+callback_opengl_debug(GLenum                       source,
+                      GLenum                       type,
+                      GLuint                       id,
+                      GLenum                       severity,
+                      GLsizei                      length,
+                      const GLchar*                message,
+                      [[maybe_unused]] const void* userParam)
 {
     // The memory formessageis owned and managed by the GL, and should onlybe
     // considered valid for the duration of the function call.The behavior of
@@ -262,9 +270,15 @@ static void APIENTRY callback_opengl_debug(
     // detail.
 
     auto& buff{ local_log_buff };
-    int   num_chars = std::snprintf(
-        buff.data(), buff.size(), "%s %s %d %s %.*s\n", source_to_strv(source),
-        type_to_strv(type), id, severity_to_strv(severity), length, message);
+    int   num_chars = std::snprintf(buff.data(),
+                                  buff.size(),
+                                  "%s %s %d %s %.*s\n",
+                                  source_to_strv(source),
+                                  type_to_strv(type),
+                                  id,
+                                  severity_to_strv(severity),
+                                  length,
+                                  message);
 
     if (num_chars > 0)
     {
@@ -284,7 +298,8 @@ static void APIENTRY callback_opengl_debug(
 
     string_view platform_name = SDL_GetPlatform();
 
-    const array<string_view, 3> desktop_platforms{ "Windows", "Mac OS X",
+    const array<string_view, 3> desktop_platforms{ "Windows",
+                                                   "Mac OS X",
                                                    "Linux" };
 
     auto it =
@@ -357,8 +372,8 @@ static void APIENTRY callback_opengl_debug(
     glEnable(GL_DEBUG_OUTPUT);
     glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
     glDebugMessageCallback(callback_opengl_debug, nullptr);
-    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr,
-                          GL_TRUE);
+    glDebugMessageControl(
+        GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
 
     if (got_context.name == "OpenGL Core")
     {
@@ -511,8 +526,10 @@ std::unique_ptr<SDL_Window, void (*)(SDL_Window*)> create_window(
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
 
     unique_ptr<SDL_Window, void (*)(SDL_Window*)> window(
-        SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_CENTERED,
-                         SDL_WINDOWPOS_CENTERED, static_cast<int>(screen_width),
+        SDL_CreateWindow(title.c_str(),
+                         SDL_WINDOWPOS_CENTERED,
+                         SDL_WINDOWPOS_CENTERED,
+                         static_cast<int>(screen_width),
                          static_cast<int>(screen_height),
                          ::SDL_WINDOW_OPENGL | ::SDL_WINDOW_RESIZABLE),
         destroy_window);
@@ -528,7 +545,8 @@ std::unique_ptr<SDL_Window, void (*)(SDL_Window*)> create_window(
     return window;
 }
 
-gles30::mesh create_mesh(const float* vertices, size_t count_vert,
+gles30::mesh create_mesh(const float*                  vertices,
+                         size_t                        count_vert,
                          std::vector<gles30::texture*> textures)
 {
     using namespace std;
@@ -554,8 +572,8 @@ gles30::mesh create_mesh(const float* vertices, size_t count_vert,
     vector<uint32_t> indexes(count_vert);
     std::iota(begin(indexes), end(indexes), 0);
 
-    return gles30::mesh(std::move(vert), std::move(indexes),
-                        std::move(textures));
+    return gles30::mesh(
+        std::move(vert), std::move(indexes), std::move(textures));
 }
 
 void create_camera(const properties_reader& properties)
@@ -563,7 +581,8 @@ void create_camera(const properties_reader& properties)
     cam_pos = properties.get_vec3("cam_pos");
     cam_dir = properties.get_vec3("cam_dir");
 
-    camera = fps_camera(cam_pos, cam_dir,
+    camera = fps_camera(cam_pos,
+                        cam_dir,
                         /*up*/ { 0, 1, 0 });
 
     fovy = properties.get_float("fovy");
@@ -602,16 +621,18 @@ scene::scene()
     , cube_shader("res/cube.vsh", "res/cube.fsh")
     , tex_marble("res/marble.jpg", gles30::texture::type::diffuse)
     , tex_metal("res/metal.png", gles30::texture::type::diffuse)
-    , tex_grass("res/grass.png", gles30::texture::type::diffuse,
+    , tex_grass("res/grass.png",
+                gles30::texture::type::diffuse,
                 gles30::texture::opt::no_flip)
     , tex_window("res/blending_transparent_window.png",
-                 gles30::texture::type::diffuse, gles30::texture::opt::no_flip)
+                 gles30::texture::type::diffuse,
+                 gles30::texture::opt::no_flip)
     , tex_color_buffer(gles30::texture::type::diffuse,
                        properties.get_float("screen_width"),
                        properties.get_float("screen_height"))
     , tex_cubemap(faces, gles30::texture::opt::no_flip)
-    , cube_mesh{ create_mesh(cube_vertices, sizeof(cube_vertices) / 4 / 8,
-                             { &tex_metal }) }
+    , cube_mesh{ create_mesh(
+          cube_vertices, sizeof(cube_vertices) / 4 / 8, { &tex_metal }) }
 {
     create_camera(properties);
     cube_mesh.set_primitive_type(gles30::primitive::triangles);
@@ -633,8 +654,13 @@ void scene::render(float delta_time)
     cube_shader.use();
     cube_shader.set_uniform("screen_size",
                             glm::vec2(screen_width, screen_height));
-    render_mesh(cube_shader, camera, cube_mesh, glm::vec3(0.0f, 0.0f, 0.0f),
-                scale, properties, render_options::only_pro_view_model);
+    render_mesh(cube_shader,
+                camera,
+                cube_mesh,
+                glm::vec3(0.0f, 0.0f, 0.0f),
+                scale,
+                properties,
+                render_options::only_pro_view_model);
 }
 
 int main(int /*argc*/, char* /*argv*/[])

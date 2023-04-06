@@ -39,7 +39,8 @@ public:
     };
 
     texture(const type, size_t width, size_t height);
-    texture(const std::filesystem::path& path, const type,
+    texture(const std::filesystem::path& path,
+            const type,
             const opt = opt::no_flip);
     texture(const std::array<std::filesystem::path, 6>& faces,
             const opt = opt::no_flip);
@@ -61,7 +62,7 @@ public:
     texture(texture&&);
     texture& operator=(texture&&);
 
-    texture(const texture&) = delete;
+    texture(const texture&)            = delete;
     texture& operator=(const texture&) = delete;
 
 private:

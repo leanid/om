@@ -33,8 +33,7 @@ public:
     }
 };
 
-template <class Func, class ArgType, class RetType>
-struct measure
+template <class Func, class ArgType, class RetType> struct measure
 {
     static std::pair<double, RetType> call(Func func, ArgType num_bytes)
     {
@@ -98,9 +97,8 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char** argv)
 {
     using namespace std;
 
-    auto alloc_bytes = [](size_t num_bytes) -> byte* {
-        return new byte[num_bytes];
-    };
+    auto alloc_bytes = [](size_t num_bytes) -> byte*
+    { return new byte[num_bytes]; };
 
     auto dealloc_bytes = [](byte* ptr) -> void*
     {

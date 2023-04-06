@@ -491,15 +491,19 @@ void scene::render([[maybe_unused]] float delta_time)
         std::cout << validation_result << std::endl;
     }
 
-    quad.draw_instanced(instanced_shader, num_instances, [&] {
-        // explain data for OpenGL
-        glEnableVertexAttribArray(3);
-        glBindBuffer(GL_ARRAY_BUFFER, instance_vbo);
-        glVertexAttribPointer(
-            3, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glVertexAttribDivisor(3, 1);
-    });
+    quad.draw_instanced(
+        instanced_shader,
+        num_instances,
+        [&]
+        {
+            // explain data for OpenGL
+            glEnableVertexAttribArray(3);
+            glBindBuffer(GL_ARRAY_BUFFER, instance_vbo);
+            glVertexAttribPointer(
+                3, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
+            glVertexAttribDivisor(3, 1);
+        });
 }
 
 int main(int /*argc*/, char* /*argv*/[])

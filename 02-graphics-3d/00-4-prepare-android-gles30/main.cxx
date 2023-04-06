@@ -28,8 +28,8 @@ private:
             {
 #ifdef __ANDROID__
                 // android log function add '\n' on every print itself
-                __android_log_print(ANDROID_LOG_ERROR, "OM", "%s",
-                                    message.c_str());
+                __android_log_print(
+                    ANDROID_LOG_ERROR, "OM", "%s", message.c_str());
 #else
                 std::printf("%s\n", message.c_str()); // TODO test only
 #endif
@@ -48,8 +48,7 @@ private:
     std::string message;
 };
 
-
-int main(int /*argc*/, char* /*argv*/ [])
+int main(int /*argc*/, char* /*argv*/[])
 {
     using namespace std;
 
@@ -69,8 +68,12 @@ int main(int /*argc*/, char* /*argv*/ [])
     }
 
     unique_ptr<SDL_Window, void (*)(SDL_Window*)> window(
-        SDL_CreateWindow("title", SDL_WINDOWPOS_CENTERED,
-                         SDL_WINDOWPOS_CENTERED, 640, 480, ::SDL_WINDOW_OPENGL),
+        SDL_CreateWindow("title",
+                         SDL_WINDOWPOS_CENTERED,
+                         SDL_WINDOWPOS_CENTERED,
+                         640,
+                         480,
+                         ::SDL_WINDOW_OPENGL),
         SDL_DestroyWindow);
 
     if (window == nullptr)
@@ -109,8 +112,7 @@ int main(int /*argc*/, char* /*argv*/ [])
     SDL_assert_always(result == 0);
 
     clog << "Ask for OpenGL ES 3.0" << endl;
-    clog << "Receive OpenGL ES " << gl_major_ver << '.' << gl_minor_ver
-         << endl;
+    clog << "Receive OpenGL ES " << gl_major_ver << '.' << gl_minor_ver << endl;
 
     bool continue_loop = true;
     while (continue_loop)

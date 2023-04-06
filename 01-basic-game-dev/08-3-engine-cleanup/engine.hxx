@@ -35,7 +35,7 @@ struct OM_DECLSPEC matrix
     vec2          row2;
 };
 
-OM_DECLSPEC vec2 operator*(const vec2& v, const matrix& m);
+OM_DECLSPEC vec2   operator*(const vec2& v, const matrix& m);
 OM_DECLSPEC matrix operator*(const matrix& m1, const matrix& m2);
 
 /// Dendy gamepad emulation events
@@ -184,7 +184,9 @@ enum class primitives
     trianglfan
 };
 
-OM_DECLSPEC void render(const primitives, const vbo&, const texture*,
+OM_DECLSPEC void render(const primitives,
+                        const vbo&,
+                        const texture*,
                         const matrix&);
 
 OM_DECLSPEC void exit(int return_code);

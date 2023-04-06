@@ -9,7 +9,7 @@
 
 #include "engine.hxx"
 
-int main(int /*argc*/, char* /*argv*/ [])
+int main(int /*argc*/, char* /*argv*/[])
 {
     std::unique_ptr<om::engine, void (*)(om::engine*)> engine(
         om::create_engine(), om::destroy_engine);

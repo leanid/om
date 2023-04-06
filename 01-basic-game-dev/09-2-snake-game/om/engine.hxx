@@ -162,7 +162,9 @@ enum class primitives
     trianglfan
 };
 
-OM_DECLSPEC void render(const primitives, const vbo&, const texture*,
+OM_DECLSPEC void render(const primitives,
+                        const vbo&,
+                        const texture*,
                         const matrix&);
 
 OM_DECLSPEC [[noreturn]] void exit(int return_code);

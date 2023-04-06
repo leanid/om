@@ -50,7 +50,7 @@ public:
     texture(texture&&);
     texture& operator=(texture&&);
 
-    texture(const texture&) = delete;
+    texture(const texture&)            = delete;
     texture& operator=(const texture&) = delete;
 
 private:

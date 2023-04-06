@@ -35,7 +35,7 @@ void print_view_port()
          << " w=" << view_port[2] << " h=" << view_port[3] << endl;
 }
 
-int main(int /*argc*/, char* /*argv*/ [])
+int main(int /*argc*/, char* /*argv*/[])
 {
     using namespace std;
     using namespace std::chrono;
@@ -52,8 +52,11 @@ int main(int /*argc*/, char* /*argv*/ [])
 
     unique_ptr<SDL_Window, void (*)(SDL_Window*)> window(
         SDL_CreateWindow("1-triangles, 2-lines, 3-line-strip, 4-line-loop",
-                         SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640,
-                         480, ::SDL_WINDOW_OPENGL | ::SDL_WINDOW_RESIZABLE),
+                         SDL_WINDOWPOS_CENTERED,
+                         SDL_WINDOWPOS_CENTERED,
+                         640,
+                         480,
+                         ::SDL_WINDOW_OPENGL | ::SDL_WINDOW_RESIZABLE),
         SDL_DestroyWindow);
 
     if (window == nullptr)
@@ -175,8 +178,8 @@ int main(int /*argc*/, char* /*argv*/ [])
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     gl_check();
 
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices,
-                 GL_STATIC_DRAW);
+    glBufferData(
+        GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
     gl_check();
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
@@ -190,8 +193,11 @@ int main(int /*argc*/, char* /*argv*/ [])
     // to [0, 1] - for unsigned and to [-1, 1] for signed values
     int stride = 3 * sizeof(float); // step in bytes from one attribute to next
     void* start_of_data_offset = nullptr; // we start from begin of buffer
-    glVertexAttribPointer(location_of_vertex_attribute, size_of_attribute,
-                          type_of_data, normalize_data, stride,
+    glVertexAttribPointer(location_of_vertex_attribute,
+                          size_of_attribute,
+                          type_of_data,
+                          normalize_data,
+                          stride,
                           start_of_data_offset);
     gl_check();
 
@@ -246,8 +252,8 @@ int main(int /*argc*/, char* /*argv*/ [])
                              << event.window.data2 << ' ';
                         // play with it to understand OpenGL origin point
                         // for window screen coordinate system
-                        glViewport(0, 0, event.window.data1,
-                                   event.window.data2);
+                        glViewport(
+                            0, 0, event.window.data1, event.window.data2);
                         gl_check();
                         print_view_port();
                         break;

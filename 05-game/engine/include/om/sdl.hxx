@@ -13,7 +13,9 @@ namespace om
 struct rect
 {
     rect(){};
-    rect(std::int32_t in_x, std::int32_t in_y, std::int32_t in_w,
+    rect(std::int32_t in_x,
+         std::int32_t in_y,
+         std::int32_t in_w,
          std::int32_t in_h)
         : x{ in_x }
         , y{ in_y }
@@ -124,10 +126,10 @@ public:
     };
 
 public:
-    window()              = delete;
-    window(const window&) = delete;
+    window()                         = delete;
+    window(const window&)            = delete;
     window& operator=(const window&) = delete;
-    window& operator=(window&&) = delete;
+    window& operator=(window&&)      = delete;
 
     window(window&&);
 
@@ -195,8 +197,10 @@ public:
     virtual ~window();
 
 private:
-    window(const char* title, size window_size, position window_position,
-           mode window_mode);
+    window(const char* title,
+           size        window_size,
+           position    window_position,
+           mode        window_mode);
     class impl;
     std::unique_ptr<impl> data;
 
@@ -206,9 +210,9 @@ private:
 class gl_context
 {
 public:
-    gl_context(const gl_context&) = delete;
+    gl_context(const gl_context&)            = delete;
     gl_context& operator=(const gl_context&) = delete;
-    gl_context& operator=(gl_context&&) = delete;
+    gl_context& operator=(gl_context&&)      = delete;
 
     gl_context(gl_context&&);
     ~gl_context();
@@ -235,7 +239,8 @@ public:
     void                                 init(const char* driver_name);
     void                                 quit();
 
-    window     create_window(const char* title, const window::size window_size,
+    window     create_window(const char*                     title,
+                             const window::size              window_size,
                              std::optional<window::position> window_position,
                              std::optional<window::mode>     window_mode);
     gl_context gl_create_context(const window&);
@@ -348,7 +353,7 @@ struct sdlxx
 {
     explicit sdlxx();
     ~sdlxx();
-    sdlxx(const sdlxx&) = delete;
+    sdlxx(const sdlxx&)            = delete;
     sdlxx& operator=(const sdlxx&) = delete;
 
 }; // end sdlxx

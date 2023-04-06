@@ -33,7 +33,7 @@ struct OM_DECLSPEC matrix
     vec2          row2;
 };
 
-vec2 OM_DECLSPEC operator*(const vec2& v, const matrix& m);
+vec2 OM_DECLSPEC   operator*(const vec2& v, const matrix& m);
 matrix OM_DECLSPEC operator*(const matrix& m1, const matrix& m2);
 
 } // end namespace om

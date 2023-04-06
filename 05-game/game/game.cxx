@@ -53,7 +53,7 @@ void tic_tac_toe::update(om::milliseconds frame_delta)
     if (fps <= 0)
     {
         constexpr int count_lines = 4;
-        int back_chars  = count_lines;
+        int           back_chars  = count_lines;
         while (back_chars--)
         {
             std::cout << '\b';

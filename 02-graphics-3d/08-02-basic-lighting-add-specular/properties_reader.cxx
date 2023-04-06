@@ -128,7 +128,8 @@ private:
                 if (std::regex_search(rest_content.data(),
                                       rest_content.data() +
                                           rest_content.length(),
-                                      token_match, tok_regex.regex,
+                                      token_match,
+                                      tok_regex.regex,
                                       std::regex_constants::match_continuous))
                 {
                     auto first = token_match.cbegin();
@@ -329,7 +330,8 @@ struct parser_t
         ss << '\n' << from_start_to_token << '\n';
         size_t last_line_length = 0;
         for (auto back_char = &from_start_to_token.back();
-             *back_char != '\0' && *back_char != '\n'; --back_char)
+             *back_char != '\0' && *back_char != '\n';
+             --back_char)
         {
             ++last_line_length;
         }
@@ -464,8 +466,9 @@ struct parser_t
         throw std::runtime_error("error: parse failed:");
     }
 
-    static value_t apply(std::string_view operator_literal, const value_t& left,
-                         const value_t& right)
+    static value_t apply(std::string_view operator_literal,
+                         const value_t&   left,
+                         const value_t&   right)
     {
         if (std::holds_alternative<std::string>(left))
         {

@@ -40,7 +40,7 @@ public:
     mesh& operator=(mesh&&) noexcept;
     ~mesh() noexcept;
 
-    mesh(const mesh&) = delete;
+    mesh(const mesh&)            = delete;
     mesh& operator=(const mesh&) = delete;
 
     void draw(shader& shader) const;
@@ -68,7 +68,7 @@ private:
 
     primitive primitive_type{};
 
-    bool disable_textures{false};
+    bool disable_textures{ false };
 };
 
 inline mesh::mesh(std::vector<vertex>   a_vertices,

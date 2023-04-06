@@ -4,8 +4,9 @@
 #include <array>
 #include <iterator>
 
-static const std::array<om::vec2, 4> steps{ om::vec2(-10, 0), om::vec2(0, 10),
-                                            om::vec2(10, 0), om::vec2(0, -10) };
+static const std::array<om::vec2, 4> steps{
+    om::vec2(-10, 0), om::vec2(0, 10), om::vec2(10, 0), om::vec2(0, -10)
+};
 
 constexpr std::array<snake::direction, 4> next_left{ snake::direction::down,
                                                      snake::direction::left,
@@ -19,7 +20,8 @@ constexpr std::array<snake::direction, 4> next_right{ snake::direction::up,
 constexpr float                pi = 3.14159f;
 constexpr std::array<float, 4> angles{ pi, -pi / 2.0f, 0, -3.f * pi / 2.f };
 
-snake::snake(om::vec2 pos, snake::direction direction,
+snake::snake(om::vec2                        pos,
+             snake::direction                direction,
              const std::vector<game_object>& sprites)
     : sprites_(sprites)
 {
@@ -28,7 +30,8 @@ snake::snake(om::vec2 pos, snake::direction direction,
     constexpr unsigned body_index = 3;
     constexpr unsigned tail_index = 2;
 
-    auto gen_part = [&](unsigned game_object_index, om::vec2 pos) {
+    auto gen_part = [&](unsigned game_object_index, om::vec2 pos)
+    {
         snake_part part;
         part.dir               = direction;
         part.game_obj          = sprites_.at(game_object_index);

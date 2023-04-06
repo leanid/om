@@ -12,15 +12,15 @@ constexpr bool g_optimized_build = false;
 #endif
 
 #pragma clang diagnostic push
-#pragma ide diagnostic ignored "Simplify"
-int main(int, char**)
+#pragma ide diagnostic   ignored "Simplify"
+int                      main(int, char**)
 {
     using namespace std;
 
     if constexpr (g_optimized_build)
     {
 #pragma clang diagnostic push
-#pragma ide diagnostic ignored "UnreachableCode"
+#pragma ide diagnostic   ignored "UnreachableCode"
         cout << "optimized build\n";
 #pragma clang diagnostic pop
     }

@@ -69,8 +69,7 @@ static PFNGLGETATTRIBLOCATIONPROC        glGetAttribLocation        = nullptr;
 static PFNGLDELETEBUFFERSPROC            glDeleteBuffers            = nullptr;
 static PFNGLDETACHSHADERPROC             glDetachShader             = nullptr;
 
-template <typename T>
-static void load_gl_func(const char* func_name, T& result)
+template <typename T> static void load_gl_func(const char* func_name, T& result)
 {
     void* gl_pointer = SDL_GL_GetProcAddress(func_name);
     if (nullptr == gl_pointer)
@@ -683,9 +682,10 @@ static bool check_input(const SDL_Event& e, const bind*& result)
 {
     using namespace std;
 
-    const auto it = find_if(begin(keys), end(keys), [&](const bind& b) {
-        return b.key == e.key.keysym.sym;
-    });
+    const auto it =
+        find_if(begin(keys),
+                end(keys),
+                [&](const bind& b) { return b.key == e.key.keysym.sym; });
 
     if (it != end(keys))
     {
@@ -750,9 +750,9 @@ public:
     bool is_key_down(const enum keys key) final
     {
         const auto it =
-            std::find_if(begin(keys), end(keys), [&](const bind& b) {
-                return b.om_key == key;
-            });
+            std::find_if(begin(keys),
+                         end(keys),
+                         [&](const bind& b) { return b.om_key == key; });
 
         if (it != end(keys))
         {

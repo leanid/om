@@ -28,7 +28,8 @@ pixels line_render::pixels_positions(position start, position end)
     int    x1 = end.x;
     int    y1 = end.y;
 
-    auto plot_line_low = [&](int x0, int y0, int x1, int y1) {
+    auto plot_line_low = [&](int x0, int y0, int x1, int y1)
+    {
         int dx = x1 - x0;
         int dy = y1 - y0;
         int yi = 1;
@@ -52,7 +53,8 @@ pixels line_render::pixels_positions(position start, position end)
         }
     };
 
-    auto plot_line_high = [&](int x0, int y0, int x1, int y1) {
+    auto plot_line_high = [&](int x0, int y0, int x1, int y1)
+    {
         int dx = x1 - x0;
         int dy = y1 - y0;
         int xi = 1;

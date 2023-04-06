@@ -185,8 +185,8 @@ TEST_CASE("scanner test")
         {
             std::vector<om::file_info> inf;
 
-            inf =
-                scanner.get_files_with_extension(u8"engine/src/one.cxx", u8"cxx");
+            inf = scanner.get_files_with_extension(u8"engine/src/one.cxx",
+                                                   u8"cxx");
             REQUIRE(inf.empty());
             // incorrect path, one.cxx is interpreted as a path's part.
             inf = scanner.get_files_with_extension(u8"engine/no_dir", u8"cxx");
@@ -212,7 +212,7 @@ TEST_CASE("scanner test")
             REQUIRE(inf.size() == 1);
             REQUIRE_FALSE(inf.empty());
             inf = scanner.get_files_with_name(u8"engine/src/scanner/~.scanner",
-                                           u8".gitignore");
+                                              u8".gitignore");
             REQUIRE(inf.size() == 1);
             inf = scanner.get_files_with_name(u8"русский", u8"файл");
             REQUIRE(inf.size() == 1);
@@ -221,7 +221,7 @@ TEST_CASE("scanner test")
         {
             std::vector<om::file_info> files;
             files = scanner.get_files_with_name(u8"engine/src/scanner.hxx",
-                                           u8"readme");
+                                                u8"readme");
             REQUIRE(files.empty());
             // incorrect path, scanner.hxx interpreted as a path's part
             files = scanner.get_files_with_name(u8"engine/no_dir", u8"readme");

@@ -22,11 +22,11 @@ namespace om
 class window::impl
 {
 public:
-    impl()            = default;
-    impl(const impl&) = delete;
+    impl()                       = default;
+    impl(const impl&)            = delete;
     impl& operator=(const impl&) = delete;
-    impl& operator=(impl&&) = delete;
-    impl(impl&&)            = delete;
+    impl& operator=(impl&&)      = delete;
+    impl(impl&&)                 = delete;
 
     SDL_Window* window = nullptr;
     ~impl();
@@ -790,7 +790,8 @@ void video::quit()
 }
 
 window video::create_window(
-    const char* title, const window::size window_size,
+    const char*                     title,
+    const window::size              window_size,
     std::optional<window::position> window_position = {},
     std::optional<window::mode>     window_mode     = {})
 {

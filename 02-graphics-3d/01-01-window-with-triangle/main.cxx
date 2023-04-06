@@ -31,7 +31,7 @@ void print_view_port()
          << " w=" << view_port[2] << " h=" << view_port[3] << endl;
 }
 
-int main(int /*argc*/, char* /*argv*/ [])
+int main(int /*argc*/, char* /*argv*/[])
 {
     using namespace std;
     const int init_result = SDL_Init(SDL_INIT_EVERYTHING);
@@ -43,8 +43,11 @@ int main(int /*argc*/, char* /*argv*/ [])
     }
 
     unique_ptr<SDL_Window, void (*)(SDL_Window*)> window(
-        SDL_CreateWindow("title", SDL_WINDOWPOS_CENTERED,
-                         SDL_WINDOWPOS_CENTERED, 640, 480,
+        SDL_CreateWindow("title",
+                         SDL_WINDOWPOS_CENTERED,
+                         SDL_WINDOWPOS_CENTERED,
+                         640,
+                         480,
                          ::SDL_WINDOW_OPENGL | ::SDL_WINDOW_RESIZABLE),
         SDL_DestroyWindow);
 
@@ -177,8 +180,8 @@ int main(int /*argc*/, char* /*argv*/ [])
 
     if (0 == success)
     {
-        glGetShaderInfoLog(fragment_shader, sizeof(info_log), nullptr,
-                           info_log);
+        glGetShaderInfoLog(
+            fragment_shader, sizeof(info_log), nullptr, info_log);
         gl_check();
 
         clog << "error: in fragment shader: " << info_log << endl;
@@ -206,8 +209,8 @@ int main(int /*argc*/, char* /*argv*/ [])
 
     if (0 == success)
     {
-        glGetProgramInfoLog(shader_program, sizeof(info_log), nullptr,
-                            info_log);
+        glGetProgramInfoLog(
+            shader_program, sizeof(info_log), nullptr, info_log);
         gl_check();
 
         clog << "error: linking: " << info_log << endl;
@@ -265,8 +268,11 @@ int main(int /*argc*/, char* /*argv*/ [])
     // to [0, 1] - for unsigned and to [-1, 1] for signed values
     int stride = 3 * sizeof(float); // step in bytes from one attribute to next
     void* start_of_data_offset = nullptr; // we start from begin of buffer
-    glVertexAttribPointer(location_of_vertex_attribute, size_of_attribute,
-                          type_of_data, normalize_data, stride,
+    glVertexAttribPointer(location_of_vertex_attribute,
+                          size_of_attribute,
+                          type_of_data,
+                          normalize_data,
+                          stride,
                           start_of_data_offset);
     gl_check();
 
@@ -297,8 +303,8 @@ int main(int /*argc*/, char* /*argv*/ [])
                         clog << "windows resized: " << event.window.data1 << ' '
                              << event.window.data2 << ' ';
                         // play with it to understand OpenGL origin point
-                        glViewport(0, 0, event.window.data1,
-                                   event.window.data2);
+                        glViewport(
+                            0, 0, event.window.data1, event.window.data2);
                         gl_check();
                         print_view_port();
                         break;

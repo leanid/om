@@ -31,7 +31,7 @@ struct OM_DECLSPEC mat2x3
     vec2          delta;
 };
 
-OM_DECLSPEC vec2 operator*(const vec2& v, const mat2x3& m);
+OM_DECLSPEC vec2   operator*(const vec2& v, const mat2x3& m);
 OM_DECLSPEC mat2x3 operator*(const mat2x3& m1, const mat2x3& m2);
 
 /// dendy gamepad emulation events

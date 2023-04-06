@@ -38,7 +38,8 @@ struct snake
     float                           step_timer          = 1.0f; // seconds
     bool                            is_alive_           = true;
 
-    snake(om::vec2 pos, snake::direction head_direction,
+    snake(om::vec2                        pos,
+          snake::direction                head_direction,
           const std::vector<game_object>& sprites);
 
     void                             update(float dt);

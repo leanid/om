@@ -1,7 +1,7 @@
 import hello;
 
-int main (void)
+int main(void)
 {
-  ask::greeter("world");
-  return 0;
+    ask::greeter("world");
+    return 0;
 }

@@ -1,3 +1,4 @@
+#include <array>
 #include <chrono>
 #include <cstdlib>
 #include <iostream>
@@ -5,7 +6,6 @@
 #include <numeric>
 #include <string>
 #include <vector>
-#include <array>
 
 #include "fps_camera.hxx"
 #include "gles30_shader.hxx"
@@ -58,8 +58,11 @@ void update_vertex_attributes()
     int stride =
         (3 + 3 + 2) * sizeof(float); // step in bytes from one attribute to next
     void* start_of_data_offset = nullptr; // we start from begin of buffer
-    glVertexAttribPointer(location_of_vertex_attribute, size_of_attribute,
-                          type_of_data, normalize_data, stride,
+    glVertexAttribPointer(location_of_vertex_attribute,
+                          size_of_attribute,
+                          type_of_data,
+                          normalize_data,
+                          stride,
                           start_of_data_offset);
     gl_check();
 
@@ -71,8 +74,11 @@ void update_vertex_attributes()
     type_of_data                 = GL_FLOAT;
     normalize_data               = GL_FALSE;
     start_of_data_offset         = reinterpret_cast<void*>(3 * sizeof(float));
-    glVertexAttribPointer(location_of_vertex_attribute, size_of_attribute,
-                          type_of_data, normalize_data, stride,
+    glVertexAttribPointer(location_of_vertex_attribute,
+                          size_of_attribute,
+                          type_of_data,
+                          normalize_data,
+                          stride,
                           start_of_data_offset);
     gl_check();
 
@@ -84,8 +90,11 @@ void update_vertex_attributes()
     type_of_data                 = GL_FLOAT;
     normalize_data               = GL_FALSE;
     start_of_data_offset         = reinterpret_cast<void*>(6 * sizeof(float));
-    glVertexAttribPointer(location_of_vertex_attribute, size_of_attribute,
-                          type_of_data, normalize_data, stride,
+    glVertexAttribPointer(location_of_vertex_attribute,
+                          size_of_attribute,
+                          type_of_data,
+                          normalize_data,
+                          stride,
                           start_of_data_offset);
     gl_check();
     glEnableVertexAttribArray(2);
@@ -109,8 +118,11 @@ int main(int /*argc*/, char* /*argv*/[])
     const std::string title = properties.get_string("title");
 
     unique_ptr<SDL_Window, void (*)(SDL_Window*)> window(
-        SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_CENTERED,
-                         SDL_WINDOWPOS_CENTERED, 640, 480,
+        SDL_CreateWindow(title.c_str(),
+                         SDL_WINDOWPOS_CENTERED,
+                         SDL_WINDOWPOS_CENTERED,
+                         640,
+                         480,
                          ::SDL_WINDOW_OPENGL | ::SDL_WINDOW_RESIZABLE),
         SDL_DestroyWindow);
 
@@ -229,7 +241,9 @@ int main(int /*argc*/, char* /*argv*/[])
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     gl_check();
 
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cube_indexes), cube_indexes,
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+                 sizeof(cube_indexes),
+                 cube_indexes,
                  GL_STATIC_DRAW);
     gl_check();
 
@@ -245,8 +259,8 @@ int main(int /*argc*/, char* /*argv*/[])
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     gl_check();
     // set the vertex attributes (only position data for our lamp)
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, (3 + 3 + 2) * sizeof(float),
-                          nullptr);
+    glVertexAttribPointer(
+        0, 3, GL_FLOAT, GL_FALSE, (3 + 3 + 2) * sizeof(float), nullptr);
     gl_check();
     glEnableVertexAttribArray(0);
     gl_check();
@@ -260,7 +274,8 @@ int main(int /*argc*/, char* /*argv*/[])
     float deltaTime = 0.0f; // Time between current frame and last frame
     float lastFrame = 0.0f; // Time of last frame
 
-    camera = fps_camera(/*pos*/ { 0, 0, 1 }, /*dir*/ { 0, 0, -1 },
+    camera = fps_camera(/*pos*/ { 0, 0, 1 },
+                        /*dir*/ { 0, 0, -1 },
                         /*up*/ { 0, 1, 0 });
 
     fovy = properties.get_float("fovy");
@@ -348,8 +363,8 @@ int main(int /*argc*/, char* /*argv*/[])
                              << event.window.data2 << ' ';
                         // play with it to understand OpenGL origin point
                         // for window screen coordinate system
-                        glViewport(0, 0, event.window.data1,
-                                   event.window.data2);
+                        glViewport(
+                            0, 0, event.window.data1, event.window.data2);
                         gl_check();
                         print_view_port();
                         break;
@@ -425,14 +440,17 @@ int main(int /*argc*/, char* /*argv*/[])
             std::array<size_t, std::size(pointLightPositions)> indexes;
             std::iota(begin(indexes), end(indexes), 0);
             std::for_each(
-                begin(indexes), end(indexes),
-                [&material, &pointLightPositions, &names](size_t index) {
+                begin(indexes),
+                end(indexes),
+                [&material, &pointLightPositions, &names](size_t index)
+                {
                     char   i        = static_cast<char>('0' + index);
                     size_t zero_pos = names.front().find('[') + 1;
 
-                    std::for_each(
-                        begin(names), end(names),
-                        [i, zero_pos](std::string& v) { v[zero_pos] = i; });
+                    std::for_each(begin(names),
+                                  end(names),
+                                  [i, zero_pos](std::string& v)
+                                  { v[zero_pos] = i; });
 
                     material.set_uniform(names[0], pointLightPositions[index]);
                     material.set_uniform(names[1], { 0.05f, 0.05f, 0.05f });
@@ -470,12 +488,12 @@ int main(int /*argc*/, char* /*argv*/[])
                 glm::mat4 model = glm::mat4(1.0f);
                 model           = glm::translate(model, cubePositions[i]);
                 float angle     = 20.0f * i;
-                model           = glm::rotate(model, glm::radians(angle),
-                                    glm::vec3(1.0f, 0.3f, 0.5f));
+                model           = glm::rotate(
+                    model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
                 material.set_uniform("model", model);
 
-                glDrawElements(primitive_render_mode, 36, GL_UNSIGNED_INT,
-                               nullptr);
+                glDrawElements(
+                    primitive_render_mode, 36, GL_UNSIGNED_INT, nullptr);
                 gl_check();
             }
 

@@ -12,7 +12,7 @@
 #include <SDL2/SDL_opengles2.h>
 #define glGenVertexArrays glGenVertexArraysOES
 #define glBindVertexArray glBindVertexArrayOES
-//#include <GLES3/gl3.h> // TODO need for glGenVertexArrays
+// #include <GLES3/gl3.h> // TODO need for glGenVertexArrays
 #endif
 
 const char* gl_err_to_s(GLenum err);

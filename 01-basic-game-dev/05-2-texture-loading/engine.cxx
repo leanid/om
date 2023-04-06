@@ -40,8 +40,7 @@ PFNGLGETUNIFORMLOCATIONPROC      glGetUniformLocation      = nullptr;
 PFNGLUNIFORM1IPROC               glUniform1i               = nullptr;
 PFNGLACTIVETEXTUREPROC           glActiveTexture_          = nullptr;
 
-template <typename T>
-static void load_gl_func(const char* func_name, T& result)
+template <typename T> static void load_gl_func(const char* func_name, T& result)
 {
     void* gl_pointer = SDL_GL_GetProcAddress(func_name);
     if (nullptr == gl_pointer)
@@ -85,10 +84,21 @@ namespace om
 
 static std::array<std::string_view, 17> event_names = {
     { /// input events
-      "left_pressed", "left_released", "right_pressed", "right_released",
-      "up_pressed", "up_released", "down_pressed", "down_released",
-      "select_pressed", "select_released", "start_pressed", "start_released",
-      "button1_pressed", "button1_released", "button2_pressed",
+      "left_pressed",
+      "left_released",
+      "right_pressed",
+      "right_released",
+      "up_pressed",
+      "up_released",
+      "down_pressed",
+      "down_released",
+      "select_pressed",
+      "select_released",
+      "start_pressed",
+      "start_released",
+      "button1_pressed",
+      "button1_released",
+      "button2_pressed",
       "button2_released",
       /// virtual console events
       "turn_off" }
@@ -150,9 +160,13 @@ const std::array<bind, 8> keys{
       { SDLK_a, "left", event::left_pressed, event::left_released },
       { SDLK_s, "down", event::down_pressed, event::down_released },
       { SDLK_d, "right", event::right_pressed, event::right_released },
-      { SDLK_LCTRL, "button1", event::button1_pressed,
+      { SDLK_LCTRL,
+        "button1",
+        event::button1_pressed,
         event::button1_released },
-      { SDLK_SPACE, "button2", event::button2_pressed,
+      { SDLK_SPACE,
+        "button2",
+        event::button2_pressed,
         event::button2_released },
       { SDLK_ESCAPE, "select", event::select_pressed, event::select_released },
       { SDLK_RETURN, "start", event::start_pressed, event::start_released } }
@@ -162,9 +176,10 @@ static bool check_input(const SDL_Event& e, const bind*& result)
 {
     using namespace std;
 
-    const auto it = find_if(begin(keys), end(keys), [&](const bind& b) {
-        return b.key == e.key.keysym.sym;
-    });
+    const auto it =
+        find_if(begin(keys),
+                end(keys),
+                [&](const bind& b) { return b.key == e.key.keysym.sym; });
 
     if (it != end(keys))
     {
@@ -206,8 +221,11 @@ public:
             return serr.str();
         }
 
-        window = SDL_CreateWindow("title", SDL_WINDOWPOS_CENTERED,
-                                  SDL_WINDOWPOS_CENTERED, 640, 480,
+        window = SDL_CreateWindow("title",
+                                  SDL_WINDOWPOS_CENTERED,
+                                  SDL_WINDOWPOS_CENTERED,
+                                  640,
+                                  480,
                                   ::SDL_WINDOW_OPENGL);
 
         if (window == nullptr)
@@ -299,8 +317,8 @@ void main()
             glGetShaderiv(vert_shader, GL_INFO_LOG_LENGTH, &info_len);
             OM_GL_CHECK()
             std::vector<char> info_chars(static_cast<size_t>(info_len));
-            glGetShaderInfoLog(vert_shader, info_len, nullptr,
-                               info_chars.data());
+            glGetShaderInfoLog(
+                vert_shader, info_len, nullptr, info_chars.data());
             OM_GL_CHECK()
             glDeleteShader(vert_shader);
             OM_GL_CHECK()
@@ -340,8 +358,8 @@ void main()
             glGetShaderiv(fragment_shader, GL_INFO_LOG_LENGTH, &info_len);
             OM_GL_CHECK()
             std::vector<char> info_chars(static_cast<size_t>(info_len));
-            glGetShaderInfoLog(fragment_shader, info_len, nullptr,
-                               info_chars.data());
+            glGetShaderInfoLog(
+                fragment_shader, info_len, nullptr, info_chars.data());
             OM_GL_CHECK()
             glDeleteShader(fragment_shader);
             OM_GL_CHECK()
@@ -486,10 +504,14 @@ void main()
         }
 
         std::vector<std::byte> image;
-        unsigned long          w = 0;
-        unsigned long          h = 0;
-        int error = decodePNG(image, w, h, &png_file_in_memory[0],
-                              png_file_in_memory.size(), false);
+        unsigned long          w     = 0;
+        unsigned long          h     = 0;
+        int                    error = decodePNG(image,
+                              w,
+                              h,
+                              &png_file_in_memory[0],
+                              png_file_in_memory.size(),
+                              false);
 
         // if there's an error, display it
         if (error != 0)
@@ -528,15 +550,15 @@ void main()
     void render_triangle(const triangle& t) final
     {
         // vertex coordinates
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(vertex),
-                              &t.v[0].x);
+        glVertexAttribPointer(
+            0, 2, GL_FLOAT, GL_FALSE, sizeof(vertex), &t.v[0].x);
         OM_GL_CHECK()
         glEnableVertexAttribArray(0);
         OM_GL_CHECK()
 
         // texture coordinates
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(vertex),
-                              &t.v[0].tx);
+        glVertexAttribPointer(
+            1, 2, GL_FLOAT, GL_FALSE, sizeof(vertex), &t.v[0].tx);
         OM_GL_CHECK()
         glEnableVertexAttribArray(1);
         OM_GL_CHECK()

@@ -49,8 +49,8 @@ int main(int, char**)
     interpolated_render.set_gfx_program(program01);
 
     std::vector<vertex>   triangle_v{ { 0, 0, 1, 0, 0, 0, 0, 0 },
-                                    { 0, 239, 0, 1, 0, 0, 239, 0 },
-                                    { 319, 239, 0, 0, 1, 319, 239, 0 } };
+                                      { 0, 239, 0, 1, 0, 0, 239, 0 },
+                                      { 319, 239, 0, 0, 1, 319, 239, 0 } };
     std::vector<uint16_t> indexes_v{ 0, 1, 2 };
 
     interpolated_render.draw_triangles(triangle_v, indexes_v);

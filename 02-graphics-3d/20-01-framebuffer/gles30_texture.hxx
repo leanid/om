@@ -38,7 +38,8 @@ public:
     };
 
     texture(const type, size_t width, size_t height);
-    explicit texture(const std::filesystem::path& path, const type,
+    explicit texture(const std::filesystem::path& path,
+                     const type,
                      const opt = opt::no_flip);
 
     void bind();
@@ -58,7 +59,7 @@ public:
     texture(texture&&);
     texture& operator=(texture&&);
 
-    texture(const texture&) = delete;
+    texture(const texture&)            = delete;
     texture& operator=(const texture&) = delete;
 
 private:

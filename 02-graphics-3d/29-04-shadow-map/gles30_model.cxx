@@ -14,18 +14,20 @@ namespace gles30
 
 void model::draw(shader& shader) const
 {
-    std::for_each(begin(meshes), end(meshes), [&shader](const mesh& m) {
-        m.draw(shader);
-    });
+    std::for_each(begin(meshes),
+                  end(meshes),
+                  [&shader](const mesh& m) { m.draw(shader); });
 }
 
 void model::draw_instanced(shader&               shader,
                            size_t                instance_count,
                            std::function<void()> bind_custom_buffer) const
 {
-    std::for_each(begin(meshes), end(meshes), [&](const mesh& m) {
-        m.draw_instanced(shader, instance_count, bind_custom_buffer);
-    });
+    std::for_each(
+        begin(meshes),
+        end(meshes),
+        [&](const mesh& m)
+        { m.draw_instanced(shader, instance_count, bind_custom_buffer); });
 }
 
 static void                  process_node(const aiNode*      node,
@@ -72,18 +74,23 @@ static void process_node(const aiNode*      node,
     auto begin_mesh = &node->mMeshes[0];
     auto end_mesh   = begin_mesh + node->mNumMeshes;
 
-    std::for_each(begin_mesh, end_mesh, [&](auto mesh_index) {
-        const aiMesh* assimp_mesh = scene->mMeshes[mesh_index];
-        gles30::mesh  mesh        = process_mesh(assimp_mesh, scene, directory);
-        meshes.push_back(std::move(mesh));
-    });
+    std::for_each(begin_mesh,
+                  end_mesh,
+                  [&](auto mesh_index)
+                  {
+                      const aiMesh* assimp_mesh = scene->mMeshes[mesh_index];
+                      gles30::mesh  mesh =
+                          process_mesh(assimp_mesh, scene, directory);
+                      meshes.push_back(std::move(mesh));
+                  });
 
     auto beg_child = &node->mChildren[0];
     auto end_child = beg_child + node->mNumChildren;
 
-    std::for_each(beg_child, end_child, [&](aiNode* sub_node) {
-        process_node(sub_node, scene, meshes, directory);
-    });
+    std::for_each(beg_child,
+                  end_child,
+                  [&](aiNode* sub_node)
+                  { process_node(sub_node, scene, meshes, directory); });
 }
 
 static mesh process_mesh(const aiMesh*      mesh,

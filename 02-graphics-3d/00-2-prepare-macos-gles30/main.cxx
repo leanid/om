@@ -5,7 +5,7 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengles2.h>
 
-int main(int /*argc*/, char* /*argv*/ [])
+int main(int /*argc*/, char* /*argv*/[])
 {
     using namespace std;
 
@@ -23,8 +23,12 @@ int main(int /*argc*/, char* /*argv*/ [])
     }
 
     unique_ptr<SDL_Window, void (*)(SDL_Window*)> window(
-        SDL_CreateWindow("title", SDL_WINDOWPOS_CENTERED,
-                         SDL_WINDOWPOS_CENTERED, 640, 480, ::SDL_WINDOW_OPENGL),
+        SDL_CreateWindow("title",
+                         SDL_WINDOWPOS_CENTERED,
+                         SDL_WINDOWPOS_CENTERED,
+                         640,
+                         480,
+                         ::SDL_WINDOW_OPENGL),
         SDL_DestroyWindow);
 
     if (window == nullptr)
@@ -61,7 +65,8 @@ int main(int /*argc*/, char* /*argv*/ [])
     SDL_assert_always(result == 0);
 
     clog << "Ask for OpenGL Core 3.3" << endl;
-    clog << "Receive OpenGL Core " << gl_major_ver << '.' << gl_minor_ver << endl;
+    clog << "Receive OpenGL Core " << gl_major_ver << '.' << gl_minor_ver
+         << endl;
 
     bool continue_loop = true;
     while (continue_loop)

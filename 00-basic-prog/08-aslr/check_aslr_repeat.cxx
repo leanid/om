@@ -85,20 +85,24 @@ static void run_program_while_find_same_stack_adress()
 
     vector<future<size_t>> jobs(num_cores);
 
-    for_each(begin(jobs), end(jobs),
+    for_each(begin(jobs),
+             end(jobs),
              [](future<size_t>& num_iter) { num_iter = async(thread_func); });
 
     cout << "all thread are running..." << endl;
 
-    size_t iter_count =
-        accumulate(begin(jobs), end(jobs), 0UL,
-                   [](size_t current, future<size_t>& num_iter) {
-                       static size_t thread_index = 0;
-                       size_t        iter_count   = num_iter.get();
-                       std::cout << "thread " << thread_index++ << " complete "
-                                 << iter_count << " iterations" << std::endl;
-                       return current + iter_count;
-                   });
+    size_t iter_count = accumulate(begin(jobs),
+                                   end(jobs),
+                                   0UL,
+                                   [](size_t current, future<size_t>& num_iter)
+                                   {
+                                       static size_t thread_index = 0;
+                                       size_t iter_count = num_iter.get();
+                                       std::cout << "thread " << thread_index++
+                                                 << " complete " << iter_count
+                                                 << " iterations" << std::endl;
+                                       return current + iter_count;
+                                   });
 
     cout << "we found match in " << iter_count << " iterations\n"
          << "running same program(" << program_to_run << ")" << endl

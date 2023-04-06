@@ -34,7 +34,7 @@ class engine;
 
 /// return not null on success
 engine* create_engine();
-void destroy_engine(engine* e);
+void    destroy_engine(engine* e);
 
 class engine
 {

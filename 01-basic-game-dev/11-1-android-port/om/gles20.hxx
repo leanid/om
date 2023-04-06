@@ -2,17 +2,17 @@
 
 #include <iostream>
 
-//#undef GL_GLEXT_PROTOTYPES
-//#include <SDL2/SDL_opengl.h>
-// on Fedora linux I have nice GL ES 2 and 3 headers in system
+// #undef GL_GLEXT_PROTOTYPES
+// #include <SDL2/SDL_opengl.h>
+//  on Fedora linux I have nice GL ES 2 and 3 headers in system
 #if defined(__ANDROID__) || defined(__LINUX__)
 #define GL_GLES_PROTOTYPES 0
 #include <GLES2/gl2.h>
 #elif defined(__MINGW32__)
 #undef GL_GLEXT_PROTOTYPES
 #include <GL/glcorearb.h>
-//#include <GL/gl.h>
-//#include <GL/glext.h>
+// #include <GL/gl.h>
+// #include <GL/glext.h>
 #else
 #error "add platform headers for OpenGL ES 2.0"
 #endif

@@ -83,8 +83,8 @@ void mesh::draw(shader& shader) const
         }
 
         char tex_uniform_name[64];
-        is_ok = snprintf(tex_uniform_name, sizeof(tex_uniform_name),
-                         "material.%s", str);
+        is_ok = snprintf(
+            tex_uniform_name, sizeof(tex_uniform_name), "material.%s", str);
         assert(is_ok > 0);
 
         shader.set_uniform(tex_uniform_name, static_cast<int32_t>(i));
@@ -93,8 +93,10 @@ void mesh::draw(shader& shader) const
     // draw mesh
     glBindVertexArray(vao);
     gl_check();
-    glDrawElements(GL_TRIANGLES, static_cast<signed>(indices.size()),
-                   GL_UNSIGNED_INT, nullptr);
+    glDrawElements(GL_TRIANGLES,
+                   static_cast<signed>(indices.size()),
+                   GL_UNSIGNED_INT,
+                   nullptr);
     gl_check();
     glBindVertexArray(0);
     gl_check();
@@ -120,14 +122,16 @@ void mesh::setup()
 
     glBufferData(GL_ARRAY_BUFFER,
                  static_cast<signed>(vertices.size() * sizeof(vertex)),
-                 vertices.data(), GL_STATIC_DRAW);
+                 vertices.data(),
+                 GL_STATIC_DRAW);
     gl_check();
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
     gl_check();
     glBufferData(GL_ELEMENT_ARRAY_BUFFER,
                  static_cast<signed>(indices.size() * sizeof(uint32_t)),
-                 indices.data(), GL_STATIC_DRAW);
+                 indices.data(),
+                 GL_STATIC_DRAW);
     gl_check();
 
     // vertex positions
@@ -138,13 +142,21 @@ void mesh::setup()
     // vertex normals
     glEnableVertexAttribArray(1);
     gl_check();
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(vertex),
+    glVertexAttribPointer(1,
+                          3,
+                          GL_FLOAT,
+                          GL_FALSE,
+                          sizeof(vertex),
                           reinterpret_cast<void*>(offsetof(vertex, normal)));
     gl_check();
     // vertex texture coords
     glEnableVertexAttribArray(2);
     gl_check();
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(vertex),
+    glVertexAttribPointer(2,
+                          2,
+                          GL_FLOAT,
+                          GL_FALSE,
+                          sizeof(vertex),
                           reinterpret_cast<void*>(offsetof(vertex, uv)));
     gl_check();
 

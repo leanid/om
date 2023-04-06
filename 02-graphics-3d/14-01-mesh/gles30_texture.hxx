@@ -48,20 +48,20 @@ public:
     void wrap_s(const wrap);
     void wrap_t(const wrap);
 
-    void set_type(const uv_type);
+    void    set_type(const uv_type);
     uv_type get_type() const;
 
     ~texture();
     texture(texture&&);
     texture& operator=(texture&&);
 
-    texture(const texture&) = delete;
+    texture(const texture&)            = delete;
     texture& operator=(const texture&) = delete;
 
 private:
     std::string   file_name;
     std::uint32_t texture_id;
-    uv_type          texture_type = uv_type::diffuse;
+    uv_type       texture_type = uv_type::diffuse;
 };
 
 inline void texture::set_type(const uv_type t)

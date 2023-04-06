@@ -30,8 +30,8 @@ struct scanner_report
 class SCNR_EXP scanner final
 {
 public:
-    scanner()               = delete;
-    scanner(const scanner&) = delete;
+    scanner()                          = delete;
+    scanner(const scanner&)            = delete;
     scanner& operator=(const scanner&) = delete;
 
     scanner(scanner&&) noexcept;
@@ -62,8 +62,8 @@ public:
     // w/o extension. Incorrect parameters (i.e. invalid path
     // or incorrect extension) will return an empty container.
 
-    [[nodiscard]] std::vector<file_info> get_files_with_name(std::u8string_view path,
-                                               std::u8string_view name) const;
+    [[nodiscard]] std::vector<file_info> get_files_with_name(
+        std::u8string_view path, std::u8string_view name) const;
 
     // Function return a file_list container, which holds file_info
     // structures for given requirements. List will be empty if
@@ -71,7 +71,8 @@ public:
     // root directory.  Empty name is an incorrect value.
     // Incorrect parameters will return an empty container.
 
-    [[nodiscard]] std::vector<file_info> get_files(std::u8string_view path) const;
+    [[nodiscard]] std::vector<file_info> get_files(
+        std::u8string_view path) const;
 
     // Function return a file_list container, which holds file_info
     // structure for all files in a  given path. List will be empty

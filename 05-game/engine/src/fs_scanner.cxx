@@ -106,11 +106,11 @@ std::u8string file::get_full_name() const
 class scanner::impl
 {
 public:
-    impl()            = default;
-    impl(const impl&) = delete;
-    impl(impl&&)      = delete;
+    impl()                       = default;
+    impl(const impl&)            = delete;
+    impl(impl&&)                 = delete;
     impl& operator=(const impl&) = delete;
-    impl& operator=(impl&&) = delete;
+    impl& operator=(impl&&)      = delete;
     ~impl();
 
     void                 scan();

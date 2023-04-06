@@ -61,8 +61,9 @@ void print_view_port()
 extern const float     cube_vertices[36 * 8];
 extern const glm::vec3 light_positions[4];
 
-void render_light_cubes(gles30::shader&   light_cube_shader,
-                        const fps_camera& camera, const gles30::mesh& mesh)
+void render_light_cubes(gles30::shader&     light_cube_shader,
+                        const fps_camera&   camera,
+                        const gles30::mesh& mesh)
 {
     // also draw the lamp object(s)
     light_cube_shader.use();
@@ -88,7 +89,8 @@ void render_light_cubes(gles30::shader&   light_cube_shader,
 
     string_view platform_name = SDL_GetPlatform();
 
-    const array<string_view, 3> desktop_platforms{ "Windows", "Mac OS X",
+    const array<string_view, 3> desktop_platforms{ "Windows",
+                                                   "Mac OS X",
                                                    "Linux" };
 
     auto it =
@@ -275,8 +277,11 @@ std::unique_ptr<SDL_Window, void (*)(SDL_Window*)> create_window(
     screen_height = properties.get_float("screen_height");
 
     unique_ptr<SDL_Window, void (*)(SDL_Window*)> window(
-        SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_CENTERED,
-                         SDL_WINDOWPOS_CENTERED, screen_width, screen_height,
+        SDL_CreateWindow(title.c_str(),
+                         SDL_WINDOWPOS_CENTERED,
+                         SDL_WINDOWPOS_CENTERED,
+                         screen_width,
+                         screen_height,
                          ::SDL_WINDOW_OPENGL | ::SDL_WINDOW_RESIZABLE),
         SDL_DestroyWindow);
 
@@ -316,7 +321,8 @@ void create_camera(const properties_reader& properties)
     cam_pos = properties.get_vec3("cam_pos");
     cam_dir = properties.get_vec3("cam_dir");
 
-    camera = fps_camera(cam_pos, cam_dir,
+    camera = fps_camera(cam_pos,
+                        cam_dir,
                         /*up*/ { 0, 1, 0 });
 
     fovy = properties.get_float("fovy");

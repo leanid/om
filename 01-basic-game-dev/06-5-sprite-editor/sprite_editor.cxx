@@ -177,13 +177,15 @@ int main(int /*argc*/, char* /*argv*/[])
         ImGui::SetNextWindowSize(ImVec2(screen_size.x, 0));
 
         bool is_propetries_window_open = true;
-        if (ImGui::Begin("sprite properties", &is_propetries_window_open,
+        if (ImGui::Begin("sprite properties",
+                         &is_propetries_window_open,
                          ImGuiWindowFlags_NoMove))
         {
-            ImGui::InputText("texture_cache_file: ", texture_cache_file.data(),
+            ImGui::InputText("texture_cache_file: ",
+                             texture_cache_file.data(),
                              texture_cache_file.size());
-            ImGui::InputText("texture: ", texture_path.data(),
-                             texture_path.capacity());
+            ImGui::InputText(
+                "texture: ", texture_path.data(), texture_path.capacity());
             ImGui::InputText("spr_id: ", sprite_id.data(), sprite_id.size());
 
             if (ImGui::Button("load texture"))
@@ -221,7 +223,8 @@ int main(int /*argc*/, char* /*argv*/[])
                 ImGui::Image(
                     texture,
                     ImVec2(texture->get_width(), texture->get_height()),
-                    ImVec2(0, 1), ImVec2(1, 0));
+                    ImVec2(0, 1),
+                    ImVec2(1, 0));
 
                 if (start_drag_pos.x >= image_screen_start_pos.x &&
                     start_drag_pos.y >= image_screen_start_pos.y &&
@@ -238,19 +241,25 @@ int main(int /*argc*/, char* /*argv*/[])
                     float  sel_w = end_drag_pos.x - start_drag_pos.x;
                     float  sel_h = end_drag_pos.y - start_drag_pos.y;
                     ImGui::GetWindowDrawList()->AddLine(
-                        p, ImVec2(p.x + sel_w, p.y), IM_COL32(255, 0, 0, 255),
+                        p,
+                        ImVec2(p.x + sel_w, p.y),
+                        IM_COL32(255, 0, 0, 255),
                         3.0f);
                     ImGui::GetWindowDrawList()->AddLine(
-                        p, ImVec2(p.x, p.y + sel_h), IM_COL32(255, 0, 0, 255),
+                        p,
+                        ImVec2(p.x, p.y + sel_h),
+                        IM_COL32(255, 0, 0, 255),
                         3.0f);
                     ImGui::GetWindowDrawList()->AddLine(
                         ImVec2(p.x + sel_w, p.y),
                         ImVec2(p.x + sel_w, p.y + sel_h),
-                        IM_COL32(255, 0, 0, 255), 3.0f);
+                        IM_COL32(255, 0, 0, 255),
+                        3.0f);
                     ImGui::GetWindowDrawList()->AddLine(
                         ImVec2(p.x, p.y + sel_h),
                         ImVec2(p.x + sel_w, p.y + sel_h),
-                        IM_COL32(255, 0, 0, 255), 3.0f);
+                        IM_COL32(255, 0, 0, 255),
+                        3.0f);
 
                     // update rect
                     if (is_left_mouse_holded)
@@ -284,8 +293,11 @@ int main(int /*argc*/, char* /*argv*/[])
                     if (ImGui::Button("save to cache"))
                     {
                         vector<sprite> sprites;
-                        sprites.emplace_back(sprite_id.c_str(), texture,
-                                             spr_rect, spr_center_pos, spr_size,
+                        sprites.emplace_back(sprite_id.c_str(),
+                                             texture,
+                                             spr_rect,
+                                             spr_center_pos,
+                                             spr_size,
                                              angle);
 
                         sprite_reader reader;
@@ -312,8 +324,12 @@ int main(int /*argc*/, char* /*argv*/[])
             from_pixels_to_relative.size.y /= texture->get_height();
         }
 
-        sprite spr(sprite_id.c_str(), texture, from_pixels_to_relative,
-                   spr_center_pos, spr_size, angle);
+        sprite spr(sprite_id.c_str(),
+                   texture,
+                   from_pixels_to_relative,
+                   spr_center_pos,
+                   spr_size,
+                   angle);
 
         spr.draw(engine);
 

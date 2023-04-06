@@ -164,7 +164,7 @@ static void destroy_opengl_context(void* ptr)
     if (is_desktop())
     {
 
-#define GL_MULTISAMPLE 32925 // or 0x809D
+#define GL_MULTISAMPLE 32925      // or 0x809D
         glEnable(GL_MULTISAMPLE); // not working in GLES3.0
 #undef GL_MULTISAMPLE
     }
@@ -346,7 +346,7 @@ struct scene
     void render(float delta_time);
     void pull_system_events(bool& continue_loop);
 
-    static constexpr size_t fbo_width = 1024;
+    static constexpr size_t fbo_width  = 1024;
     static constexpr size_t fbo_height = 1024;
 
     properties_reader properties;
@@ -357,8 +357,8 @@ struct scene
     gles30::shader depth_shader;
     gles30::shader quad_shader;
 
-    gles30::mesh   mesh_floor;
-    gles30::mesh   mesh_cube;
+    gles30::mesh mesh_floor;
+    gles30::mesh mesh_cube;
 
     gles30::texture depth_texture;
     gles30::mesh    mesh_quad;
@@ -478,8 +478,9 @@ scene::scene()
     , context{ create_opengl_context(window.get()) }
     , depth_shader{ "res/depth.vsh", "res/depth.fsh" }
     , quad_shader{ "res/quad.vsh", "res/quad.fsh" }
-    , mesh_floor{ create_mesh(plane_vertices, sizeof(plane_vertices) / 4 / 8, {}) }
-    , mesh_cube{create_mesh(cube_vertices, sizeof(cube_vertices) / 4 / 8, {})}
+    , mesh_floor{ create_mesh(
+          plane_vertices, sizeof(plane_vertices) / 4 / 8, {}) }
+    , mesh_cube{ create_mesh(cube_vertices, sizeof(cube_vertices) / 4 / 8, {}) }
     , depth_texture{ gles30::texture::type::depth_component,
                      fbo_width,
                      fbo_height,
@@ -511,12 +512,13 @@ void scene::render([[maybe_unused]] float delta_time)
 
     clear_back_buffer(properties.get_vec3("clear_color"));
 
-    float near_plane = 1.0f, far_plane = 7.5f;
-    glm::mat4 light_projection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
+    float     near_plane = 1.0f, far_plane = 7.5f;
+    glm::mat4 light_projection =
+        glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
 
     glm::mat4 light_view = glm::lookAt(glm::vec3(-2.0f, 4.0f, -1.0f),
-                                  glm::vec3( 0.0f, 0.0f,  0.0f),
-                                  glm::vec3( 0.0f, 1.0f,  0.0f));
+                                       glm::vec3(0.0f, 0.0f, 0.0f),
+                                       glm::vec3(0.0f, 1.0f, 0.0f));
 
     depth_shader.use();
     depth_shader.set_uniform("model", glm::mat4(1.f));
@@ -524,7 +526,8 @@ void scene::render([[maybe_unused]] float delta_time)
     {
         depth_shader.set_uniform("view", camera.view_matrix());
         depth_shader.set_uniform("projection", camera.projection_matrix());
-    } else
+    }
+    else
     {
         depth_shader.set_uniform("view", camera.view_matrix());
         depth_shader.set_uniform("projection", light_projection);
@@ -562,7 +565,7 @@ int main(int /*argc*/, char* /*argv*/[])
     {
         scene scene;
 
-        float last_frame_time      = 0.0f; // Time of last frame
+        float last_frame_time = 0.0f; // Time of last frame
 
         for (bool continue_loop = true; continue_loop;)
         {

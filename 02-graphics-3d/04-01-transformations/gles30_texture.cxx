@@ -22,7 +22,10 @@ texture::texture(const std::filesystem::path& path)
     const int prefered_channels_count = 4;
 
     std::unique_ptr<uint8_t, void (*)(void*)> data(
-        stbi_load(path.u8string().c_str(), &width, &height, &channels,
+        stbi_load(path.u8string().c_str(),
+                  &width,
+                  &height,
+                  &channels,
                   prefered_channels_count),
         &stbi_image_free);
 
@@ -48,14 +51,28 @@ texture::texture(const std::filesystem::path& path)
     GLint border       = 0;
     if (3 == prefered_channels_count)
     {
-        glTexImage2D(GL_TEXTURE_2D, mipmap_level, GL_RGB, width, height, border,
-                     GL_RGB, GL_UNSIGNED_BYTE, data.get());
+        glTexImage2D(GL_TEXTURE_2D,
+                     mipmap_level,
+                     GL_RGB,
+                     width,
+                     height,
+                     border,
+                     GL_RGB,
+                     GL_UNSIGNED_BYTE,
+                     data.get());
         gl_check();
     }
     else if (4 == prefered_channels_count)
     {
-        glTexImage2D(GL_TEXTURE_2D, mipmap_level, GL_RGBA, width, height,
-                     border, GL_RGBA, GL_UNSIGNED_BYTE, data.get());
+        glTexImage2D(GL_TEXTURE_2D,
+                     mipmap_level,
+                     GL_RGBA,
+                     width,
+                     height,
+                     border,
+                     GL_RGBA,
+                     GL_UNSIGNED_BYTE,
+                     data.get());
         gl_check();
     }
     else

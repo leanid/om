@@ -1,7 +1,8 @@
 #include "03_triangle_indexed_render.hxx"
 
-triangle_indexed_render::triangle_indexed_render(canvas& buffer, size_t width,
-                                                 size_t height)
+triangle_indexed_render::triangle_indexed_render(canvas& buffer,
+                                                 size_t  width,
+                                                 size_t  height)
     : triangle_render(buffer, width, height)
 {
 }

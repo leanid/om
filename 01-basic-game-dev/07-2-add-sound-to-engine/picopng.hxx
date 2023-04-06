@@ -108,9 +108,9 @@ png_image decode_png_file_from_memory(const std::vector<uint8_t>& png_file,
     const size_t   in_size = png_file.size();
 
     static const uint32_t LENBASE[29]  = { 3,   4,   5,   6,   7,  8,  9,  10,
-                                          11,  13,  15,  17,  19, 23, 27, 31,
-                                          35,  43,  51,  59,  67, 83, 99, 115,
-                                          131, 163, 195, 227, 258 };
+                                           11,  13,  15,  17,  19, 23, 27, 31,
+                                           35,  43,  51,  59,  67, 83, 99, 115,
+                                           131, 163, 195, 227, 258 };
     static const uint32_t LENEXTRA[29] = { 0, 0, 0, 0, 0, 0, 0, 0, 1, 1,
                                            1, 1, 2, 2, 2, 2, 3, 3, 3, 3,
                                            4, 4, 4, 4, 5, 5, 5, 5, 0 };
@@ -134,8 +134,9 @@ png_image decode_png_file_from_memory(const std::vector<uint8_t>& png_file,
             bitp++;
             return result;
         }
-        static uint32_t readBitsFromStream(size_t& bitp, const uint8_t* bits,
-                                           size_t nbits)
+        static uint32_t readBitsFromStream(size_t&        bitp,
+                                           const uint8_t* bits,
+                                           size_t         nbits)
         {
             uint32_t result = 0;
             for (size_t i = 0; i < nbits; i++)
@@ -194,8 +195,10 @@ png_image decode_png_file_from_memory(const std::vector<uint8_t>& png_file,
                     }
                 return 0;
             }
-            int decode(bool& decoded, uint32_t& result, size_t& treepos,
-                       uint32_t bit) const
+            int decode(bool&     decoded,
+                       uint32_t& result,
+                       size_t&   treepos,
+                       uint32_t  bit) const
             { // Decodes a symbol from the tree
                 uint32_t numcodes = static_cast<uint32_t>(tree2d.size()) / 2;
                 if (treepos >= numcodes)
@@ -214,7 +217,8 @@ png_image decode_png_file_from_memory(const std::vector<uint8_t>& png_file,
         {
             int  error;
             void inflate(std::vector<uint8_t>&       out,
-                         const std::vector<uint8_t>& in, size_t inpos = 0)
+                         const std::vector<uint8_t>& in,
+                         size_t                      inpos = 0)
             {
                 size_t bp = 0, pos = 0; // bit pointer and byte pointer
                 error           = 0;
@@ -235,11 +239,11 @@ png_image decode_png_file_from_memory(const std::vector<uint8_t>& png_file,
                         return;
                     } // error: invalid BTYPE
                     else if (BTYPE == 0)
-                        inflateNoCompression(out, &in[inpos], bp, pos,
-                                             in.size());
+                        inflateNoCompression(
+                            out, &in[inpos], bp, pos, in.size());
                     else
-                        inflateHuffmanBlock(out, &in[inpos], bp, pos, in.size(),
-                                            BTYPE);
+                        inflateHuffmanBlock(
+                            out, &in[inpos], bp, pos, in.size(), BTYPE);
                 }
                 if (!error)
                     out.resize(pos); // Only now we know the true size of out,
@@ -262,7 +266,8 @@ png_image decode_png_file_from_memory(const std::vector<uint8_t>& png_file,
             HuffmanTree codetree, codetreeD,
                 codelengthcodetree; // the code tree for Huffman codes, dist
                                     // codes, and code length codes
-            uint32_t huffmanDecodeSymbol(const uint8_t* in, size_t& bp,
+            uint32_t huffmanDecodeSymbol(const uint8_t*     in,
+                                         size_t&            bp,
                                          const HuffmanTree& codetree_,
                                          size_t             inlength)
             { // decode a single symbol from given list of bits with given code
@@ -276,17 +281,19 @@ png_image decode_png_file_from_memory(const std::vector<uint8_t>& png_file,
                         error = 10;
                         return 0;
                     } // error: end reached without endcode
-                    error = codetree_.decode(decoded, ct, treepos,
-                                             readBitFromStream(bp, in));
+                    error = codetree_.decode(
+                        decoded, ct, treepos, readBitFromStream(bp, in));
                     if (error)
                         return 0; // stop, an error happened
                     if (decoded)
                         return ct;
                 }
             }
-            void getTreeInflateDynamic(HuffmanTree& tree, HuffmanTree& treeD,
-                                       const uint8_t* in, size_t& bp,
-                                       size_t inlength)
+            void getTreeInflateDynamic(HuffmanTree&   tree,
+                                       HuffmanTree&   treeD,
+                                       const uint8_t* in,
+                                       size_t&        bp,
+                                       size_t         inlength)
             { // get the tree of a deflated block with dynamic tree, the tree
                 // itself is also Huffman compressed with a known tree
                 std::vector<uint32_t> bitlen(288, 0), bitlenD(32, 0);
@@ -418,8 +425,11 @@ png_image decode_png_file_from_memory(const std::vector<uint8_t>& png_file,
                     return;
             }
             void inflateHuffmanBlock(std::vector<uint8_t>& out,
-                                     const uint8_t* in, size_t& bp, size_t& pos,
-                                     size_t inlength, uint32_t btype)
+                                     const uint8_t*        in,
+                                     size_t&               bp,
+                                     size_t&               pos,
+                                     size_t                inlength,
+                                     uint32_t              btype)
             {
                 if (btype == 1)
                 {
@@ -427,8 +437,8 @@ png_image decode_png_file_from_memory(const std::vector<uint8_t>& png_file,
                 }
                 else if (btype == 2)
                 {
-                    getTreeInflateDynamic(codetree, codetreeD, in, bp,
-                                          inlength);
+                    getTreeInflateDynamic(
+                        codetree, codetreeD, in, bp, inlength);
                     if (error)
                         return;
                 }
@@ -486,8 +496,10 @@ png_image decode_png_file_from_memory(const std::vector<uint8_t>& png_file,
                 }
             }
             void inflateNoCompression(std::vector<uint8_t>& out,
-                                      const uint8_t* in, size_t& bp,
-                                      size_t& pos, size_t inlength)
+                                      const uint8_t*        in,
+                                      size_t&               bp,
+                                      size_t&               pos,
+                                      size_t                inlength)
             {
                 while ((bp & 0x7) != 0)
                     bp++; // go to first boundary of byte
@@ -566,8 +578,11 @@ png_image decode_png_file_from_memory(const std::vector<uint8_t>& png_file,
 
         } info;
         int  error;
-        void decode(std::vector<uint8_t>& out, const uint8_t* in, size_t size,
-                    bool convert_to_rgba32, bool origin_top_left)
+        void decode(std::vector<uint8_t>& out,
+                    const uint8_t*        in,
+                    size_t                size,
+                    bool                  convert_to_rgba32,
+                    bool                  origin_top_left)
         {
             error = 0;
             if (size == 0 || in == 0)
@@ -611,8 +626,8 @@ png_image decode_png_file_from_memory(const std::vector<uint8_t>& png_file,
                     in[pos + 3] ==
                         'T') // IDAT chunk, containing compressed image data
                 {
-                    idat.insert(idat.end(), &in[pos + 4],
-                                &in[pos + 4 + chunkLength]);
+                    idat.insert(
+                        idat.end(), &in[pos + 4], &in[pos + 4 + chunkLength]);
                     pos += (4 + chunkLength);
                 }
                 else if (in[pos + 0] == 'I' && in[pos + 1] == 'E' &&
@@ -738,9 +753,12 @@ png_image decode_png_file_from_memory(const std::vector<uint8_t>& png_file,
                                 (y == 0)
                                     ? 0
                                     : &out_[(y - 1) * info.width * bytewidth];
-                            unFilterScanline(
-                                &out_[linestart - y], &scanlines[linestart + 1],
-                                prevline, bytewidth, filterType, linelength);
+                            unFilterScanline(&out_[linestart - y],
+                                             &scanlines[linestart + 1],
+                                             prevline,
+                                             bytewidth,
+                                             filterType,
+                                             linelength);
                             if (error)
                                 return;
                             linestart +=
@@ -760,8 +778,12 @@ png_image decode_png_file_from_memory(const std::vector<uint8_t>& png_file,
                             uint8_t* cur_line =
                                 &out_[(info.height - y - 1) * line_size];
 
-                            unFilterScanline(cur_line, cur_scanline, prevline,
-                                             bytewidth, filterType, linelength);
+                            unFilterScanline(cur_line,
+                                             cur_scanline,
+                                             prevline,
+                                             bytewidth,
+                                             filterType,
+                                             linelength);
                             if (error)
                             {
                                 return;
@@ -789,13 +811,17 @@ png_image decode_png_file_from_memory(const std::vector<uint8_t>& png_file,
                             (y == 0) ? 0
                                      : &out_[(y - 1) * info.width * bytewidth];
                         unFilterScanline(&templine[0],
-                                         &scanlines[linestart + 1], prevline,
-                                         bytewidth, filterType, linelength);
+                                         &scanlines[linestart + 1],
+                                         prevline,
+                                         bytewidth,
+                                         filterType,
+                                         linelength);
                         if (error)
                             return;
                         for (size_t bp = 0; bp < info.width * bpp;)
                             setBitOfReversedStream(
-                                obp, out_,
+                                obp,
+                                out_,
                                 readBitFromReversedStream(bp, &templine[0]));
                         linestart +=
                             (1 + linelength); // go to start of next scanline
@@ -832,10 +858,18 @@ png_image decode_png_file_from_memory(const std::vector<uint8_t>& png_file,
                     scanlinen((info.width * bpp + 7) /
                               8); //"old" and "new" scanline
                 for (int i = 0; i < 7; i++)
-                    adam7Pass(&out_[0], &scanlinen[0], &scanlineo[0],
-                              &scanlines[passstart[i]], info.width, pattern[i],
-                              pattern[i + 7], pattern[i + 14], pattern[i + 21],
-                              passw[i], passh[i], bpp);
+                    adam7Pass(&out_[0],
+                              &scanlinen[0],
+                              &scanlineo[0],
+                              &scanlines[passstart[i]],
+                              info.width,
+                              pattern[i],
+                              pattern[i + 7],
+                              pattern[i + 14],
+                              pattern[i + 21],
+                              passw[i],
+                              passh[i],
+                              bpp);
             }
             if (convert_to_rgba32 && (info.colorType != 6 ||
                                       info.bitDepth != 8)) // conversion needed
@@ -891,9 +925,12 @@ png_image decode_png_file_from_memory(const std::vector<uint8_t>& png_file,
               // specification
             error = checkColorValidity(info.colorType, info.bitDepth);
         }
-        void unFilterScanline(uint8_t* recon, const uint8_t* scanline,
-                              const uint8_t* precon, size_t bytewidth,
-                              uint32_t filterType, size_t length)
+        void unFilterScanline(uint8_t*       recon,
+                              const uint8_t* scanline,
+                              const uint8_t* precon,
+                              size_t         bytewidth,
+                              uint32_t       filterType,
+                              size_t         length)
         {
             switch (filterType)
             {
@@ -939,10 +976,10 @@ png_image decode_png_file_from_memory(const std::vector<uint8_t>& png_file,
                             recon[i] =
                                 scanline[i] + paethPredictor(0, precon[i], 0);
                         for (size_t i = bytewidth; i < length; i++)
-                            recon[i] =
-                                scanline[i] +
-                                paethPredictor(recon[i - bytewidth], precon[i],
-                                               precon[i - bytewidth]);
+                            recon[i] = scanline[i] +
+                                       paethPredictor(recon[i - bytewidth],
+                                                      precon[i],
+                                                      precon[i - bytewidth]);
                     }
                     else
                     {
@@ -959,10 +996,18 @@ png_image decode_png_file_from_memory(const std::vector<uint8_t>& png_file,
                     return; // error: unexisting filter type given
             }
         }
-        void adam7Pass(uint8_t* out, uint8_t* linen, uint8_t* lineo,
-                       const uint8_t* in, uint32_t w, size_t passleft,
-                       size_t passtop, size_t spacex, size_t spacey,
-                       size_t passw, size_t passh, uint32_t bpp)
+        void adam7Pass(uint8_t*       out,
+                       uint8_t*       linen,
+                       uint8_t*       lineo,
+                       const uint8_t* in,
+                       uint32_t       w,
+                       size_t         passleft,
+                       size_t         passtop,
+                       size_t         spacex,
+                       size_t         spacey,
+                       size_t         passw,
+                       size_t         passh,
+                       uint32_t       bpp)
         { // filter and reposition the pixels into the output when the image is
             // Adam7 interlaced. This function can only do it after the full
             // image
@@ -977,8 +1022,12 @@ png_image decode_png_file_from_memory(const std::vector<uint8_t>& png_file,
             {
                 uint8_t filterType = in[y * linelength],
                         *prevline  = (y == 0) ? 0 : lineo;
-                unFilterScanline(linen, &in[y * linelength + 1], prevline,
-                                 bytewidth, filterType, (w * bpp + 7) / 8);
+                unFilterScanline(linen,
+                                 &in[y * linelength + 1],
+                                 prevline,
+                                 bytewidth,
+                                 filterType,
+                                 (w * bpp + 7) / 8);
                 if (error)
                     return;
                 if (bpp >= 8)
@@ -996,7 +1045,8 @@ png_image decode_png_file_from_memory(const std::vector<uint8_t>& png_file,
                                bp = i * bpp;
                         for (size_t b = 0; b < bpp; b++)
                             setBitOfReversedStream(
-                                obp, out,
+                                obp,
+                                out,
                                 readBitFromReversedStream(bp, &linen[0]));
                     }
                 uint8_t* temp = linen;
@@ -1068,8 +1118,11 @@ png_image decode_png_file_from_memory(const std::vector<uint8_t>& png_file,
             else
                 return info_.bitDepth;
         }
-        int convert(std::vector<uint8_t>& out, const uint8_t* in, Info& infoIn,
-                    uint32_t w, uint32_t h)
+        int convert(std::vector<uint8_t>& out,
+                    const uint8_t*        in,
+                    Info&                 infoIn,
+                    uint32_t              w,
+                    uint32_t              h)
         { // converts from any color type to 32-bit. return value = LodePNG
             // error code
             size_t numpixels = w * h, bp = 0;
@@ -1189,21 +1242,23 @@ png_image decode_png_file_from_memory(const std::vector<uint8_t>& png_file,
             return 0;
         }
         uint8_t paethPredictor(
-            short a, short b,
+            short a,
+            short b,
             short c) // Paeth predicter, used by PNG filter type 4
         {
             short p = a + b - c, pa = p > a ? (p - a) : (a - p),
                   pb = p > b ? (p - b) : (b - p),
                   pc = p > c ? (p - c) : (c - p);
-            return static_cast<uint8_t>(
-                (pa <= pb && pa <= pc) ? a : pb <= pc ? b : c);
+            return static_cast<uint8_t>((pa <= pb && pa <= pc) ? a
+                                        : pb <= pc             ? b
+                                                               : c);
         }
     };
 
     bool origin_tom_left = origin == origin_point::top_left;
     PNG  decoder;
-    decoder.decode(result.raw_image, in_png, in_size, convert_to_rgba32,
-                   origin_tom_left);
+    decoder.decode(
+        result.raw_image, in_png, in_size, convert_to_rgba32, origin_tom_left);
     if (decoder.error == 0)
     {
         result.width  = decoder.info.width;

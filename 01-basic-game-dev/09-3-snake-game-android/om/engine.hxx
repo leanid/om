@@ -2,11 +2,11 @@
 
 #include <chrono>
 #include <iosfwd>
+#include <iostream>
 #include <memory>
 #include <string>
 #include <string_view>
 #include <variant>
-#include <iostream>
 
 #ifndef OM_DECLSPEC
 #define OM_DECLSPEC
@@ -165,7 +165,9 @@ enum class primitives
     trianglfan
 };
 
-OM_DECLSPEC void render(const primitives, const vbo&, const texture*,
+OM_DECLSPEC void render(const primitives,
+                        const vbo&,
+                        const texture*,
                         const matrix&);
 
 OM_DECLSPEC void exit(int return_code);
@@ -181,65 +183,65 @@ struct OM_DECLSPEC lila
     virtual void on_render() const                                = 0;
 };
 
-    struct OM_DECLSPEC membuf : public std::streambuf
+struct OM_DECLSPEC membuf : public std::streambuf
+{
+    membuf()
+        : std::streambuf()
+        , buf()
+        , buf_size(0)
     {
-        membuf()
-                : std::streambuf()
-                , buf()
-                , buf_size(0)
+    }
+    membuf(std::unique_ptr<char[]> buffer, size_t size)
+        : std::streambuf()
+        , buf(std::move(buffer))
+        , buf_size(size)
+    {
+        char* beg_ptr = buf.get();
+        char* end_ptr = beg_ptr + buf_size;
+        setg(beg_ptr, beg_ptr, end_ptr);
+        setp(beg_ptr, end_ptr);
+    }
+    membuf(membuf&& other)
+    {
+        setp(nullptr, nullptr);
+        setg(nullptr, nullptr, nullptr);
+
+        other.swap(*this);
+
+        buf      = std::move(other.buf);
+        buf_size = other.buf_size;
+
+        other.buf_size = 0;
+    }
+
+    pos_type seekoff(off_type               pos,
+                     std::ios_base::seekdir seek_dir,
+                     std::ios_base::openmode) override
+    {
+        // TODO implement it in correct way
+        if (seek_dir == std::ios_base::beg)
         {
+            return 0 + pos;
         }
-        membuf(std::unique_ptr<char[]> buffer, size_t size)
-                : std::streambuf()
-                , buf(std::move(buffer))
-                , buf_size(size)
+        else if (seek_dir == std::ios_base::end)
         {
-            char* beg_ptr = buf.get();
-            char* end_ptr = beg_ptr + buf_size;
-            setg(beg_ptr, beg_ptr, end_ptr);
-            setp(beg_ptr, end_ptr);
+            return buf_size + pos;
         }
-        membuf(membuf&& other)
+        else
         {
-            setp(nullptr, nullptr);
-            setg(nullptr, nullptr, nullptr);
-
-            other.swap(*this);
-
-            buf      = std::move(other.buf);
-            buf_size = other.buf_size;
-
-            other.buf_size = 0;
+            return egptr() - gptr();
         }
+    }
 
-        pos_type seekoff(off_type pos, std::ios_base::seekdir seek_dir,
-                         std::ios_base::openmode) override
-        {
-            // TODO implement it in correct way
-            if (seek_dir == std::ios_base::beg)
-            {
-                return 0 + pos;
-            }
-            else if (seek_dir == std::ios_base::end)
-            {
-                return buf_size + pos;
-            }
-            else
-            {
-                return egptr() - gptr();
-            }
-        }
+    char*  begin() const { return eback(); }
+    size_t size() const { return buf_size; }
 
-        char*  begin() const { return eback(); }
-        size_t size() const { return buf_size; }
+private:
+    std::unique_ptr<char[]> buf;
+    size_t                  buf_size;
+};
 
-    private:
-        std::unique_ptr<char[]> buf;
-        size_t                  buf_size;
-    };
-
-
-    OM_DECLSPEC membuf load_file(std::string_view path);
+OM_DECLSPEC membuf load_file(std::string_view path);
 
 } // end namespace om
 

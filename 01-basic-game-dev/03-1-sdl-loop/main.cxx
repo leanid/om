@@ -39,9 +39,10 @@ void check_input(const SDL_Event& e)
                                    { SDLK_ESCAPE, "select" },
                                    { SDLK_RETURN, "start" } } };
 
-    const auto it = find_if(begin(keys), end(keys), [&](const ::bind& b) {
-        return b.key == e.key.keysym.sym;
-    });
+    const auto it =
+        find_if(begin(keys),
+                end(keys),
+                [&](const ::bind& b) { return b.key == e.key.keysym.sym; });
 
     if (it != end(keys))
     {

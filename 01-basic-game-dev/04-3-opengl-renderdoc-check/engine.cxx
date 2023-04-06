@@ -42,8 +42,7 @@ PFNGLBINDVERTEXARRAYPROC glBindVertexArray = nullptr;
 PFNGLBUFFERDATAPROC      glBufferData      = nullptr;
 // RENDER_DOC//////////////////////
 
-template <typename T>
-static void load_gl_func(const char* func_name, T& result)
+template <typename T> static void load_gl_func(const char* func_name, T& result)
 {
     void* gl_pointer = SDL_GL_GetProcAddress(func_name);
     if (nullptr == gl_pointer)
@@ -89,10 +88,21 @@ namespace om
 
 static std::array<std::string_view, 17> event_names = {
     { /// input events
-      "left_pressed", "left_released", "right_pressed", "right_released",
-      "up_pressed", "up_released", "down_pressed", "down_released",
-      "select_pressed", "select_released", "start_pressed", "start_released",
-      "button1_pressed", "button1_released", "button2_pressed",
+      "left_pressed",
+      "left_released",
+      "right_pressed",
+      "right_released",
+      "up_pressed",
+      "up_released",
+      "down_pressed",
+      "down_released",
+      "select_pressed",
+      "select_released",
+      "start_pressed",
+      "start_released",
+      "button1_pressed",
+      "button1_released",
+      "button2_pressed",
       "button2_released",
       /// virtual console events
       "turn_off" }
@@ -164,9 +174,13 @@ const std::array<bind, 8> keys{
       { SDLK_a, "left", event::left_pressed, event::left_released },
       { SDLK_s, "down", event::down_pressed, event::down_released },
       { SDLK_d, "right", event::right_pressed, event::right_released },
-      { SDLK_LCTRL, "button1", event::button1_pressed,
+      { SDLK_LCTRL,
+        "button1",
+        event::button1_pressed,
         event::button1_released },
-      { SDLK_SPACE, "button2", event::button2_pressed,
+      { SDLK_SPACE,
+        "button2",
+        event::button2_pressed,
         event::button2_released },
       { SDLK_ESCAPE, "select", event::select_pressed, event::select_released },
       { SDLK_RETURN, "start", event::start_pressed, event::start_released } }
@@ -176,9 +190,10 @@ static bool check_input(const SDL_Event& e, const bind*& result)
 {
     using namespace std;
 
-    const auto it = find_if(begin(keys), end(keys), [&](const bind& b) {
-        return b.key == e.key.keysym.sym;
-    });
+    const auto it =
+        find_if(begin(keys),
+                end(keys),
+                [&](const bind& b) { return b.key == e.key.keysym.sym; });
 
     if (it != end(keys))
     {
@@ -262,9 +277,12 @@ std::string engine_impl::initialize(std::string_view)
         return serr.str();
     }
 
-    window =
-        SDL_CreateWindow("title", SDL_WINDOWPOS_CENTERED,
-                         SDL_WINDOWPOS_CENTERED, 640, 480, ::SDL_WINDOW_OPENGL);
+    window = SDL_CreateWindow("title",
+                              SDL_WINDOWPOS_CENTERED,
+                              SDL_WINDOWPOS_CENTERED,
+                              640,
+                              480,
+                              ::SDL_WINDOW_OPENGL);
 
     if (window == nullptr)
     {
@@ -434,8 +452,8 @@ std::string engine_impl::initialize(std::string_view)
         glGetShaderiv(fragment_shader, GL_INFO_LOG_LENGTH, &info_len);
         OM_GL_CHECK()
         std::vector<char> info_chars(static_cast<size_t>(info_len));
-        glGetShaderInfoLog(fragment_shader, info_len, nullptr,
-                           info_chars.data());
+        glGetShaderInfoLog(
+            fragment_shader, info_len, nullptr, info_chars.data());
         OM_GL_CHECK()
         glDeleteShader(fragment_shader);
         OM_GL_CHECK()
@@ -541,7 +559,11 @@ void engine_impl::render_triangle(const triangle& t)
     GLintptr position_attr_offset = 0;
 
     OM_GL_CHECK()
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex),
+    glVertexAttribPointer(0,
+                          3,
+                          GL_FLOAT,
+                          GL_FALSE,
+                          sizeof(vertex),
                           reinterpret_cast<void*>(position_attr_offset));
     OM_GL_CHECK()
     glEnableVertexAttribArray(1);
@@ -549,7 +571,11 @@ void engine_impl::render_triangle(const triangle& t)
 
     GLintptr color_attr_offset = sizeof(float) * 3;
 
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(vertex),
+    glVertexAttribPointer(1,
+                          3,
+                          GL_FLOAT,
+                          GL_FALSE,
+                          sizeof(vertex),
                           reinterpret_cast<void*>(color_attr_offset));
     OM_GL_CHECK()
     glValidateProgram(program_id_);

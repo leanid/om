@@ -40,7 +40,7 @@ public:
     mesh& operator=(mesh&&) noexcept;
     ~mesh() noexcept;
 
-    mesh(const mesh&) = delete;
+    mesh(const mesh&)            = delete;
     mesh& operator=(const mesh&) = delete;
 
     void draw(shader& shader) const;

@@ -82,7 +82,8 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char** argv)
     }
 
     auto only_spaces = "                   "sv;
-    for ([[maybe_unused]] std::string_view word : split_by_spaces{ only_spaces })
+    for ([[maybe_unused]] std::string_view word :
+         split_by_spaces{ only_spaces })
     {
         std::cout << "you will not see this line in output" << std::endl;
     }

@@ -27,7 +27,7 @@ om::tri0 blend(const om::tri0& tl, const om::tri0& tr, const float a)
     return r;
 }
 
-int main(int /*argc*/, char* /*argv*/ [])
+int main(int /*argc*/, char* /*argv*/[])
 {
     std::unique_ptr<om::engine, void (*)(om::engine*)> engine(
         om::create_engine(), om::destroy_engine);

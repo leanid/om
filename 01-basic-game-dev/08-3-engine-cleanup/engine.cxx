@@ -52,8 +52,7 @@ static PFNGLACTIVETEXTUREPROC            glActiveTexture_           = nullptr;
 static PFNGLUNIFORM4FVPROC               glUniform4fv               = nullptr;
 static PFNGLUNIFORMMATRIX3FVPROC         glUniformMatrix3fv         = nullptr;
 
-template <typename T>
-static void load_gl_func(const char* func_name, T& result)
+template <typename T> static void load_gl_func(const char* func_name, T& result)
 {
     void* gl_pointer = SDL_GL_GetProcAddress(func_name);
     if (nullptr == gl_pointer)
@@ -696,9 +695,10 @@ static bool check_input(const SDL_Event& e, const bind*& result)
 {
     using namespace std;
 
-    const auto it = find_if(begin(keys), end(keys), [&](const bind& b) {
-        return b.key == e.key.keysym.sym;
-    });
+    const auto it =
+        find_if(begin(keys),
+                end(keys),
+                [&](const bind& b) { return b.key == e.key.keysym.sym; });
 
     if (it != end(keys))
     {
@@ -1399,11 +1399,13 @@ int initialize_and_start_main_loop()
                                           "./build-Debug/libgame-08-3.so" } };
 
     void* so_handle   = nullptr;
-    auto  lib_name_it = std::find_if(
-        begin(lib_names), end(lib_names), [&so_handle](const char* lib_name) {
-            so_handle = SDL_LoadObject(lib_name);
-            return so_handle != nullptr;
-        });
+    auto  lib_name_it = std::find_if(begin(lib_names),
+                                    end(lib_names),
+                                    [&so_handle](const char* lib_name)
+                                    {
+                                        so_handle = SDL_LoadObject(lib_name);
+                                        return so_handle != nullptr;
+                                    });
 
     if (so_handle == nullptr)
     {

@@ -156,7 +156,8 @@ struct OM_DECLSPEC membuf : public std::streambuf
         other.buf_size = 0;
     }
 
-    pos_type seekoff(off_type pos, std::ios_base::seekdir seek_dir,
+    pos_type seekoff(off_type               pos,
+                     std::ios_base::seekdir seek_dir,
                      std::ios_base::openmode) override
     {
         // TODO implement it in correct way
@@ -206,13 +207,13 @@ bool OM_DECLSPEC pool_event(event& e);
 bool OM_DECLSPEC is_key_down(const enum keys);
 
 texture* OM_DECLSPEC create_texture(std::string_view path);
-void OM_DECLSPEC destroy_texture(texture* t);
+void OM_DECLSPEC     destroy_texture(texture* t);
 
 vbo* OM_DECLSPEC create_vbo(const vertex*, std::size_t);
 void OM_DECLSPEC destroy_vbo(vbo*);
 
 sound* OM_DECLSPEC create_sound(std::string_view path);
-void OM_DECLSPEC destroy_sound(sound*);
+void OM_DECLSPEC   destroy_sound(sound*);
 
 enum class primitives
 {
@@ -224,7 +225,9 @@ enum class primitives
     trianglfan
 };
 
-void OM_DECLSPEC render(const enum primitives, const vbo&, const texture*,
+void OM_DECLSPEC render(const enum primitives,
+                        const vbo&,
+                        const texture*,
                         const matrix&);
 
 void OM_DECLSPEC exit(int return_code);

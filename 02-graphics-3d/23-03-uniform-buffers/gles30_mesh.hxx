@@ -32,13 +32,14 @@ enum class primitive
 class mesh
 {
 public:
-    mesh(std::vector<vertex> a_vertices, std::vector<uint32_t> a_indices,
+    mesh(std::vector<vertex>   a_vertices,
+         std::vector<uint32_t> a_indices,
          std::vector<texture*> a_textures);
     mesh(mesh&&) noexcept;
     mesh& operator=(mesh&&) noexcept;
     ~mesh() noexcept;
 
-    mesh(const mesh&) = delete;
+    mesh(const mesh&)            = delete;
     mesh& operator=(const mesh&) = delete;
 
     void draw(shader& shader) const;

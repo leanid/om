@@ -15,8 +15,8 @@ framebuffer::framebuffer(uint32_t width, uint32_t height)
 
     glGenFramebuffers(1, &fbo);
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,
-                              GL_RENDERBUFFER, rbo);
+    glFramebufferRenderbuffer(
+        GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
 }
 
 void framebuffer::color_attachment(texture& tex)
@@ -24,8 +24,11 @@ void framebuffer::color_attachment(texture& tex)
     bind();
     tex.bind();
     int level = 0; // Specifies the mipmap level of texture to attach
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
-                           tex.texture_id, level);
+    glFramebufferTexture2D(GL_FRAMEBUFFER,
+                           GL_COLOR_ATTACHMENT0,
+                           GL_TEXTURE_2D,
+                           tex.texture_id,
+                           level);
 }
 
 bool framebuffer::is_complete()

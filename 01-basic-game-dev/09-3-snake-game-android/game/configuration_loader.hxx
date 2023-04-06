@@ -8,8 +8,8 @@ std::stringstream filter_comments(std::string_view file)
 {
     std::stringstream out;
     std::string       line;
-    //std::ifstream     in(file.data(), std::ios_base::binary);
-    om::membuf buf = om::load_file(file);
+    // std::ifstream     in(file.data(), std::ios_base::binary);
+    om::membuf   buf = om::load_file(file);
     std::istream in(&buf);
 
     if (!in)

@@ -10,7 +10,7 @@ class properties_reader
 {
 public:
     explicit properties_reader(const std::filesystem::path& path);
-    properties_reader(const properties_reader&) = delete;
+    properties_reader(const properties_reader&)            = delete;
     properties_reader& operator=(const properties_reader&) = delete;
     ~properties_reader();
 

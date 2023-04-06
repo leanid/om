@@ -10,8 +10,9 @@
 
 namespace gles30
 {
-texture::texture(const std::filesystem::path& path, const type tex_type,
-                 const opt options)
+texture::texture(const std::filesystem::path& path,
+                 const type                   tex_type,
+                 const opt                    options)
     : file_name{ path.u8string() }
     , texture_id{ 0 }
     , texture_type{ tex_type }
@@ -28,7 +29,10 @@ texture::texture(const std::filesystem::path& path, const type tex_type,
     const int prefered_channels_count = 0; // same as in texture
 
     std::unique_ptr<uint8_t, void (*)(void*)> data(
-        stbi_load(file_name.c_str(), &width, &height, &channels,
+        stbi_load(file_name.c_str(),
+                  &width,
+                  &height,
+                  &channels,
                   prefered_channels_count),
         &stbi_image_free);
 
@@ -54,14 +58,28 @@ texture::texture(const std::filesystem::path& path, const type tex_type,
     GLint border       = 0;
     if (3 == channels)
     {
-        glTexImage2D(GL_TEXTURE_2D, mipmap_level, GL_RGB, width, height, border,
-                     GL_RGB, GL_UNSIGNED_BYTE, data.get());
+        glTexImage2D(GL_TEXTURE_2D,
+                     mipmap_level,
+                     GL_RGB,
+                     width,
+                     height,
+                     border,
+                     GL_RGB,
+                     GL_UNSIGNED_BYTE,
+                     data.get());
         gl_check();
     }
     else if (4 == channels)
     {
-        glTexImage2D(GL_TEXTURE_2D, mipmap_level, GL_RGBA, width, height,
-                     border, GL_RGBA, GL_UNSIGNED_BYTE, data.get());
+        glTexImage2D(GL_TEXTURE_2D,
+                     mipmap_level,
+                     GL_RGBA,
+                     width,
+                     height,
+                     border,
+                     GL_RGBA,
+                     GL_UNSIGNED_BYTE,
+                     data.get());
         gl_check();
         // RBG + A - should be clamped on border color to border not
         // reverse side pixel (or leave 1px on boarder on texture)

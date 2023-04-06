@@ -5,7 +5,8 @@ triangle_render::triangle_render(canvas& buffer, size_t width, size_t height)
 {
 }
 
-pixels triangle_render::pixels_positions_triangle(position v0, position v1,
+pixels triangle_render::pixels_positions_triangle(position v0,
+                                                  position v1,
                                                   position v2)
 {
     using namespace std;
@@ -23,7 +24,8 @@ pixels triangle_render::pixels_positions_triangle(position v0, position v1,
 }
 
 void triangle_render::draw_triangles(std::vector<position>& vertexes,
-                                     size_t num_vertexes, color c)
+                                     size_t                 num_vertexes,
+                                     color                  c)
 {
     pixels triangles_edge_pixels;
 

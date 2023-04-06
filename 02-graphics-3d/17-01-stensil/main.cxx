@@ -44,10 +44,10 @@ int get_gl_constant(
     const std::array<std::pair<std::string_view, int>, 8>& operations,
     std::string_view                                       name)
 {
-    auto it = std::find_if(begin(operations), end(operations),
-                           [&name](const std::pair<std::string_view, int>& p) {
-                               return p.first == name;
-                           });
+    auto it = std::find_if(begin(operations),
+                           end(operations),
+                           [&name](const std::pair<std::string_view, int>& p)
+                           { return p.first == name; });
     if (it == end(operations))
     {
         throw std::out_of_range(std::string("operation not found: ") +
@@ -109,8 +109,11 @@ void print_view_port()
 extern const float cube_vertices[36 * 8];
 extern const float plane_vertices[6 * 8];
 
-void render_mesh(gles30::shader& shader, const fps_camera& camera,
-                 const gles30::mesh& mesh, glm::vec3 position, float scale,
+void render_mesh(gles30::shader&          shader,
+                 const fps_camera&        camera,
+                 const gles30::mesh&      mesh,
+                 glm::vec3                position,
+                 float                    scale,
                  const properties_reader& properties)
 {
     // also draw the lamp object(s)
@@ -146,7 +149,8 @@ void render_mesh(gles30::shader& shader, const fps_camera& camera,
 
     string_view platform_name = SDL_GetPlatform();
 
-    const array<string_view, 3> desktop_platforms{ "Windows", "Mac OS X",
+    const array<string_view, 3> desktop_platforms{ "Windows",
+                                                   "Mac OS X",
                                                    "Linux" };
 
     auto it =
@@ -355,8 +359,10 @@ std::unique_ptr<SDL_Window, void (*)(SDL_Window*)> create_window(
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
     unique_ptr<SDL_Window, void (*)(SDL_Window*)> window(
-        SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_CENTERED,
-                         SDL_WINDOWPOS_CENTERED, static_cast<int>(screen_width),
+        SDL_CreateWindow(title.c_str(),
+                         SDL_WINDOWPOS_CENTERED,
+                         SDL_WINDOWPOS_CENTERED,
+                         static_cast<int>(screen_width),
                          static_cast<int>(screen_height),
                          ::SDL_WINDOW_OPENGL | ::SDL_WINDOW_RESIZABLE),
         SDL_DestroyWindow);
@@ -372,7 +378,8 @@ std::unique_ptr<SDL_Window, void (*)(SDL_Window*)> create_window(
     return window;
 }
 
-gles30::mesh create_mesh(const float* vertices, size_t count_vert,
+gles30::mesh create_mesh(const float*                  vertices,
+                         size_t                        count_vert,
                          std::vector<gles30::texture*> textures)
 {
     using namespace std;
@@ -406,7 +413,8 @@ void create_camera(const properties_reader& properties)
     cam_pos = properties.get_vec3("cam_pos");
     cam_dir = properties.get_vec3("cam_dir");
 
-    camera = fps_camera(cam_pos, cam_dir,
+    camera = fps_camera(cam_pos,
+                        cam_dir,
                         /*up*/ { 0, 1, 0 });
 
     fovy = properties.get_float("fovy");
@@ -432,10 +440,10 @@ int main(int /*argc*/, char* /*argv*/[])
     texture tex_marble("res/marble.jpg", texture::type::diffuse);
     texture tex_metal("res/metal.png", texture::type::diffuse);
 
-    mesh cube_marble = create_mesh(cube_vertices, sizeof(cube_vertices) / 4 / 8,
-                                   { &tex_marble });
-    mesh cube_metal  = create_mesh(cube_vertices, sizeof(cube_vertices) / 4 / 8,
-                                  { &tex_metal });
+    mesh cube_marble = create_mesh(
+        cube_vertices, sizeof(cube_vertices) / 4 / 8, { &tex_marble });
+    mesh cube_metal = create_mesh(
+        cube_vertices, sizeof(cube_vertices) / 4 / 8, { &tex_metal });
 
     mesh cube_marble_no_tex =
         create_mesh(cube_vertices, sizeof(cube_vertices) / 4 / 8, {});
@@ -480,8 +488,12 @@ int main(int /*argc*/, char* /*argv*/[])
         gl_check();
 
         float scale = 1.0f;
-        render_mesh(cube_shader, camera, plane_metal,
-                    glm::vec3(0.0f, 0.0f, 0.0f), scale, properties);
+        render_mesh(cube_shader,
+                    camera,
+                    plane_metal,
+                    glm::vec3(0.0f, 0.0f, 0.0f),
+                    scale,
+                    properties);
 
         // enable stensil writing
         GLenum sfail  = static_cast<GLenum>(get_stensil_operation(
@@ -507,10 +519,18 @@ int main(int /*argc*/, char* /*argv*/[])
         glStencilMask(0xFF); // enable writing to the stencil buffer
         gl_check();
 
-        render_mesh(cube_shader, camera, cube_marble,
-                    glm::vec3(-1.0f, 0.0f, -1.0f), scale, properties);
-        render_mesh(cube_shader, camera, cube_metal,
-                    glm::vec3(2.0f, 0.0f, 0.0f), scale, properties);
+        render_mesh(cube_shader,
+                    camera,
+                    cube_marble,
+                    glm::vec3(-1.0f, 0.0f, -1.0f),
+                    scale,
+                    properties);
+        render_mesh(cube_shader,
+                    camera,
+                    cube_metal,
+                    glm::vec3(2.0f, 0.0f, 0.0f),
+                    scale,
+                    properties);
 
         // disable stensil test
         glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
@@ -529,10 +549,18 @@ int main(int /*argc*/, char* /*argv*/[])
         outline.set_uniform("color", color);
         scale = properties.get_float("object_scale_outline");
 
-        render_mesh(outline, camera, cube_marble_no_tex,
-                    glm::vec3(-1.0f, 0.0f, -1.0f), scale, properties);
-        render_mesh(outline, camera, cube_metal_no_tex,
-                    glm::vec3(2.0f, 0.0f, 0.0f), scale, properties);
+        render_mesh(outline,
+                    camera,
+                    cube_marble_no_tex,
+                    glm::vec3(-1.0f, 0.0f, -1.0f),
+                    scale,
+                    properties);
+        render_mesh(outline,
+                    camera,
+                    cube_metal_no_tex,
+                    glm::vec3(2.0f, 0.0f, 0.0f),
+                    scale,
+                    properties);
 
         glEnable(GL_DEPTH_TEST);
         gl_check();

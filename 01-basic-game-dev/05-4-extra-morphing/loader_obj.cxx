@@ -24,7 +24,8 @@ std::vector<std::string_view> split_line_into_words(std::string_view line,
 
     size_t i = 0;
 
-    auto copy_space_index = [&start_next_word, &i, delimeter](char value) {
+    auto copy_space_index = [&start_next_word, &i, delimeter](char value)
+    {
         ++i;
         if (value == delimeter)
         {
@@ -37,11 +38,12 @@ std::vector<std::string_view> split_line_into_words(std::string_view line,
     vector<string_view> result;
     result.reserve(count_spaces + 1);
 
-    transform(begin(start_next_word), --end(start_next_word),
-              ++begin(start_next_word), back_inserter(result),
-              [&line](size_t first_index, size_t last_index) {
-                  return line.substr(first_index, --last_index - first_index);
-              });
+    transform(begin(start_next_word),
+              --end(start_next_word),
+              ++begin(start_next_word),
+              back_inserter(result),
+              [&line](size_t first_index, size_t last_index)
+              { return line.substr(first_index, --last_index - first_index); });
 
     auto last_word = line.substr(start_next_word.back());
     result.push_back(last_word);

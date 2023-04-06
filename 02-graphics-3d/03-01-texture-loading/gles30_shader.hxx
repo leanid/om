@@ -31,7 +31,7 @@ public:
     shader& operator=(shader&&) noexcept;
     ~shader() noexcept;
 
-    shader(const shader&) = delete;
+    shader(const shader&)            = delete;
     shader& operator=(const shader&) = delete;
 
 private:

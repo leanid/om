@@ -26,7 +26,9 @@ shader::shader(std::string_view vertex_shader_src,
     GLint array_of_string_lengths[1];
     array_of_string_lengths[0] = static_cast<GLint>(vertex_shader_src.size());
 
-    glShaderSource(vertex_shader, 1, array_of_pointers_to_strings_with_src,
+    glShaderSource(vertex_shader,
+                   1,
+                   array_of_pointers_to_strings_with_src,
                    array_of_string_lengths);
     gl_check();
 
@@ -56,7 +58,9 @@ shader::shader(std::string_view vertex_shader_src,
     // load fragment shader source code
     array_of_pointers_to_strings_with_src[0] = fragment_shader_src.data();
     array_of_string_lengths[0] = static_cast<GLint>(fragment_shader_src.size());
-    glShaderSource(fragment_shader, 1, array_of_pointers_to_strings_with_src,
+    glShaderSource(fragment_shader,
+                   1,
+                   array_of_pointers_to_strings_with_src,
                    array_of_string_lengths);
     gl_check();
 
@@ -69,8 +73,8 @@ shader::shader(std::string_view vertex_shader_src,
 
     if (0 == success)
     {
-        glGetShaderInfoLog(fragment_shader, sizeof(info_log), nullptr,
-                           info_log);
+        glGetShaderInfoLog(
+            fragment_shader, sizeof(info_log), nullptr, info_log);
         gl_check();
 
         std::stringstream ss;
