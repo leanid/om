@@ -1,6 +1,5 @@
 #include <iomanip>
 #include <iostream>
-#include <iterator>
 #include <string_view>
 #include <utility>
 
@@ -69,12 +68,12 @@ struct split_by_spaces
     }
 };
 
-int main(int argc, char** argv)
+int main([[maybe_unused]] int argc, [[maybe_unused]] char** argv)
 {
     using namespace std::literals;
     auto str = " there should be no memory allocation during parsing"
-               "  into words this line and you   should'n create any"
-               "  contaner                  for intermediate words  "sv;
+               "  into words this line and you   shouldn't create any"
+               "  container                  for intermediate words  "sv;
 
     auto comma = "";
     for (std::string_view word : split_by_spaces{ str })
@@ -83,7 +82,7 @@ int main(int argc, char** argv)
     }
 
     auto only_spaces = "                   "sv;
-    for (std::string_view word : split_by_spaces{ only_spaces })
+    for ([[maybe_unused]] std::string_view word : split_by_spaces{ only_spaces })
     {
         std::cout << "you will not see this line in output" << std::endl;
     }
