@@ -8986,8 +8986,8 @@ bool ImGui::TreeNodeBehavior(ImGuiID            id,
 
     // Render
     const ImU32  col = GetColorU32((held && hovered) ? ImGuiCol_HeaderActive
-                                   : hovered         ? ImGuiCol_HeaderHovered
-                                                     : ImGuiCol_Header);
+                                  : hovered         ? ImGuiCol_HeaderHovered
+                                                    : ImGuiCol_Header);
     const ImVec2 text_pos = bb.Min + ImVec2(text_offset_x, text_base_offset_y);
     if (display_frame)
     {
@@ -10666,8 +10666,8 @@ void ImGui::PlotEx(ImGuiPlotType plot_type,
                                     : 1.0f); // Where does the zero line stands
 
         const ImU32 col_base    = GetColorU32((plot_type == ImGuiPlotType_Lines)
-                                                  ? ImGuiCol_PlotLines
-                                                  : ImGuiCol_PlotHistogram);
+                                               ? ImGuiCol_PlotLines
+                                               : ImGuiCol_PlotHistogram);
         const ImU32 col_hovered = GetColorU32(
             (plot_type == ImGuiPlotType_Lines) ? ImGuiCol_PlotLinesHovered
                                                : ImGuiCol_PlotHistogramHovered);
@@ -11285,10 +11285,10 @@ static bool STB_TEXTEDIT_INSERTCHARS(STB_TEXTEDIT_STRING* obj,
 
 // We don't use an enum so we can build even with conflicting symbols (if
 // another user of stb_textedit.h leak their STB_TEXTEDIT_K_* symbols)
-#define STB_TEXTEDIT_K_LEFT 0x10000 // keyboard input to move cursor left
+#define STB_TEXTEDIT_K_LEFT 0x10000  // keyboard input to move cursor left
 #define STB_TEXTEDIT_K_RIGHT 0x10001 // keyboard input to move cursor right
-#define STB_TEXTEDIT_K_UP 0x10002 // keyboard input to move cursor up
-#define STB_TEXTEDIT_K_DOWN 0x10003 // keyboard input to move cursor down
+#define STB_TEXTEDIT_K_UP 0x10002    // keyboard input to move cursor up
+#define STB_TEXTEDIT_K_DOWN 0x10003  // keyboard input to move cursor down
 #define STB_TEXTEDIT_K_LINESTART                                               \
     0x10004 // keyboard input to move cursor to start of line
 #define STB_TEXTEDIT_K_LINEEND                                                 \
@@ -13428,7 +13428,7 @@ bool ImGui::BeginMenu(const char* label, bool enabled)
         float w = label_size.x;
         pressed = Selectable(label,
                              menu_is_open,
-                             ImGuiSelectableFlags_Menu |
+                             static_cast<int>(ImGuiSelectableFlags_Menu) |
                                  ImGuiSelectableFlags_DontClosePopups |
                                  (!enabled ? ImGuiSelectableFlags_Disabled : 0),
                              ImVec2(w, 0.0f));
@@ -13452,7 +13452,7 @@ bool ImGui::BeginMenu(const char* label, bool enabled)
         float extra_w = ImMax(0.0f, GetContentRegionAvail().x - w);
         pressed       = Selectable(label,
                              menu_is_open,
-                             ImGuiSelectableFlags_Menu |
+                             static_cast<int>(ImGuiSelectableFlags_Menu) |
                                  ImGuiSelectableFlags_DontClosePopups |
                                  ImGuiSelectableFlags_DrawFillAvailWidth |
                                  (!enabled ? ImGuiSelectableFlags_Disabled : 0),
@@ -16197,7 +16197,7 @@ void ImGui::ShowMetricsWindow(bool* p_open)
                     bool       pcmd_node_open = ImGui::TreeNode(
                         (void*)(pcmd - draw_list->CmdBuffer.begin()),
                         "Draw %-4d %s vtx, tex = %p, clip_rect = "
-                        "(%.0f,%.0f)..(%.0f,%.0f)",
+                              "(%.0f,%.0f)..(%.0f,%.0f)",
                         pcmd->ElemCount,
                         draw_list->IdxBuffer.Size > 0 ? "indexed"
                                                             : "non-indexed",

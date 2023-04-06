@@ -64,7 +64,7 @@ elseif(MSVC)
     set(ASSIMP_POSTFIX "-vc140-mtd.lib")
 endif()
 
-target_compile_features(23-01-gl_point_size PUBLIC cxx_std_17)
+target_compile_features(23-01-gl_point_size PUBLIC cxx_std_20)
 
 target_sources(23-01-gl_point_size PRIVATE main.cxx
                                    gles30_shader.hxx

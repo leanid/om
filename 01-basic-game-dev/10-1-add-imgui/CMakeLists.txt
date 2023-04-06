@@ -18,7 +18,7 @@ add_executable(engine-10-1 om/engine.cxx
                            om/stb_textedit.h
                            om/stb_truetype.h)
 set_target_properties(engine-10-1 PROPERTIES ENABLE_EXPORTS TRUE)
-target_compile_features(engine-10-1 PRIVATE cxx_std_17)
+target_compile_features(engine-10-1 PRIVATE cxx_std_20)
 
 if(WIN32)
   target_compile_definitions(engine-10-1 PRIVATE "-DOM_DECLSPEC=__declspec(dllexport)")
@@ -51,7 +51,7 @@ add_library(game-10-1 SHARED game/game.cxx
                         game/configuration_loader.hxx
                         game/game_object.hxx)
 target_include_directories(game-10-1 PRIVATE .)
-target_compile_features(game-10-1 PRIVATE cxx_std_17)
+target_compile_features(game-10-1 PRIVATE cxx_std_20)
 
 target_link_libraries(game-10-1 engine-10-1)
 

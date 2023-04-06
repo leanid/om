@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.9)
 project(00-3-prepare-mingw-gles30)
 
 add_executable(${PROJECT_NAME} main.cxx)
-target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
+target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
 
 find_package(SDL2 CONFIG REQUIRED)
 

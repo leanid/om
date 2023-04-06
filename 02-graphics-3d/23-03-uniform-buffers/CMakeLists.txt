@@ -84,7 +84,7 @@ add_dependencies(23-03-uniform-buffers microsoft_gsl)
 
 target_include_directories(23-03-uniform-buffers SYSTEM PRIVATE ${CMAKE_BINARY_DIR}/gsl_inc)
 
-target_compile_features(23-03-uniform-buffers PUBLIC cxx_std_17)
+target_compile_features(23-03-uniform-buffers PUBLIC cxx_std_20)
 
 target_sources(23-03-uniform-buffers PRIVATE main.cxx
                                    gles30_shader.hxx

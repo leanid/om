@@ -6,7 +6,7 @@ add_executable(engine-09-1 om/engine.cxx
                            om/picopng.hxx
                            om/math.hxx)
 set_target_properties(engine-09-1 PROPERTIES ENABLE_EXPORTS TRUE)
-target_compile_features(engine-09-1 PRIVATE cxx_std_17)
+target_compile_features(engine-09-1 PRIVATE cxx_std_20)
 
 if(WIN32)
   target_compile_definitions(engine-09-1 PRIVATE "-DOM_DECLSPEC=__declspec(dllexport)")
@@ -45,7 +45,7 @@ add_library(game-09-1 SHARED game/game.cxx
                         res/tank.png
                         )
 target_include_directories(game-09-1 PRIVATE .)
-target_compile_features(game-09-1 PRIVATE cxx_std_17)
+target_compile_features(game-09-1 PRIVATE cxx_std_20)
 target_link_libraries(game-09-1 PRIVATE engine-09-1)
 
 if(MSVC)

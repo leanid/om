@@ -2,6 +2,6 @@
 
 int main(int, char**)
 {
-    std::cout << "hello world" << std::endl;
-    return std::cout.good() ? 0 : 1;
+    std::cout << "hello world, from c++" << std::endl;
+    return std::cout.fail();
 }

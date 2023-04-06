@@ -16,7 +16,7 @@ if (SDL2_SRC_DIR) # Android
     target_link_libraries(${PROJECT_NAME} SDL2 SDL2main )
 elseif(MINGW)
     add_executable(${PROJECT_NAME} main.cxx)
-    target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
+    target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
     find_package(SDL2 CONFIG REQUIRED)
     target_link_libraries(${PROJECT_NAME} PRIVATE mingw32
                                                   SDL2main
@@ -47,7 +47,7 @@ elseif(MSVC)
                                                   )    
 endif()
 
-target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
+target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
 
 
 if(MSVC)

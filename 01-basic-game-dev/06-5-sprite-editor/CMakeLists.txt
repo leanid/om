@@ -6,7 +6,7 @@ add_library(engine-06-5 SHARED engine.cxx
                                picopng.hxx
                                catch.hpp
                                stb_image.h)
-target_compile_features(engine-06-5 PUBLIC cxx_std_17)
+target_compile_features(engine-06-5 PUBLIC cxx_std_20)
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/imgui-src)
 target_link_libraries(engine-06-5 PUBLIC imgui_editor)
@@ -55,7 +55,7 @@ add_executable(06-5-sprite-editor sprite_editor.cxx
                                   sprite.hxx
                                   sprite_reader.hxx
                                   )
-target_compile_features(06-5-sprite-editor PUBLIC cxx_std_17)
+target_compile_features(06-5-sprite-editor PUBLIC cxx_std_20)
 target_link_libraries(06-5-sprite-editor PRIVATE engine-06-5)
 add_executable(06-5-test-spr-loader sprite_reader.cxx
                                     sprite.cxx

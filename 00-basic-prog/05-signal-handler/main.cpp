@@ -152,14 +152,16 @@ void print_signal_statistics(std::string_view prefix)
     *g_statistics << "statistics for: " << prefix << endl;
 
     auto print_counter = [](int         signal_index,
-                            string_view name) -> pair<string_view, size_t> {
+                            string_view name) -> pair<string_view, size_t>
+    {
         auto num_of_triggers =
             static_cast<size_t>(g_sig_counters[signal_index]);
         return make_pair(name, num_of_triggers);
     };
 
     auto print_stream = [](ostream&                  out,
-                           pair<string_view, size_t> p) -> ostream& {
+                           pair<string_view, size_t> p) -> ostream&
+    {
         out << p.first << ": " << p.second << std::endl;
         return out;
     };
@@ -182,6 +184,8 @@ extern "C" void custom_signal_handler(int signal_index)
 {
     if (signal_index < 16)
     {
-        g_sig_counters[signal_index]++;
+        int v = g_sig_counters[signal_index];
+        ++v;
+        g_sig_counters[signal_index] = v;
     }
 }
