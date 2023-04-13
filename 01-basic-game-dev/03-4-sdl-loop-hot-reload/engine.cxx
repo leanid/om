@@ -458,7 +458,7 @@ om::game* reload_game(om::game*   old,
     // void* destroy_game_func_ptr = SDL_LoadFunction(game_handle,
     // "destroy_game");
 
-    typedef decltype(&create_game) create_game_ptr;
+    using create_game_ptr = decltype(&create_game);
 
     auto create_game_func =
         reinterpret_cast<create_game_ptr>(create_game_func_ptr);
