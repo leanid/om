@@ -21,7 +21,7 @@ public:
         ++rotation_index;
         rotation_index %= rotations_chars.size();
         using namespace std::chrono;
-        std::this_thread::sleep_for(milliseconds(20));
+        std::this_thread::sleep_for(milliseconds(40));
     }
     void render() const override
     {

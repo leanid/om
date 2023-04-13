@@ -11,6 +11,7 @@ add_subdirectory(02-2-sdl-static)
 add_subdirectory(03-1-sdl-loop)
 add_subdirectory(03-2-sdl-loop-to-engine)
 add_subdirectory(03-3-sdl-loop-to-engine-dll)
+add_subdirectory(03-4-sdl-loop-hot-reload)
 
 add_subdirectory(04-0-render-basic)
 add_subdirectory(04-1-opengl-minimal)
@@ -39,5 +40,3 @@ add_subdirectory(09-2-snake-game)
 add_subdirectory(09-3-snake-game-android)
 
 add_subdirectory(10-1-add-imgui)
-
-
