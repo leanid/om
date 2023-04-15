@@ -4,11 +4,19 @@ project(02-sdl-dynamic)
 add_executable(02-sdl-dynamic main.cxx)
 target_compile_features(02-sdl-dynamic PUBLIC cxx_std_20)
 
-# MacOSX - brew install sdl2
-# MinGW  - pacman -s sdl2
-# MSVC   - vcpkg install sdl2
-# Fedora - dnf install sdl2-devel sdl2-static
-# set(SDL2_DIR /usr/local/lib64/cmake/SDL3) # uncomment for local SDL2 build
+# MacOSX - brew install sdl3
+# MinGW  - pacman -s sdl3
+# MSVC   - vcpkg install sdl3
+# Fedora - dnf install sdl3-devel sdl3-static
+# set(SDL3_DIR /usr/local/lib64/cmake/SDL3) # uncomment for local SDL3 build
+# -----------------
+# Or build yourself fresh SDL3 and install it.
+# On Fedora better use `sudo dnf install pipewire-devel` and SDL_PIPEWIRE=ON SDL_PIPEWIRE_SHARED=ON
+# To test audio ./test/testaudioinfo - checkout all audio drivers and output devices
+# To test pipewire `SDL_AUDIO_DRIVER=PIPEWIRE ./test/testaudioinfo`
+# To test Window Manager `./test/testwm --video X11` or `./test/testwm --video wayland`
+# -----------------
+# Also on Fedora I installed: libxkbcommon-devel, libdrm-devel, pulseaudio-libs-devel, pipewire-devel
 find_package(SDL3 REQUIRED)
 
 if(MINGW)
