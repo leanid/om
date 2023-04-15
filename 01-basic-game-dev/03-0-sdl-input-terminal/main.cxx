@@ -11,8 +11,15 @@ int main(int argc, char** argv)
     // [-nw] - key to drop window creation (for test purpuses)
     const bool no_window = (argc >= 2 && "-nw"s == argv[1]) ? true : false;
 
-    const int init_result = SDL_Init(SDL_INIT_EVENTS | SDL_INIT_JOYSTICK |
-                                     SDL_INIT_GAMEPAD | SDL_INIT_VIDEO);
+    // If you have problems with Window creation try play with SDL3/test
+    // Check X11 driver working on your system
+    // SDL_VIDEO_DRIVER=x11 ./test/testwm
+    // Check Wayland driver working on your system
+    // SDL_VIDEO_DRIVER=wayland ./test/testwm
+    // Then you can play same with your binary to find out which works best
+    // Everything works as expected with 'SDL_VIDEO_DRIVER=x11
+    // ./03-0-sdl-input-terminal'
+    const int init_result = SDL_Init(SDL_INIT_VIDEO);
 
     if (init_result != 0)
     {

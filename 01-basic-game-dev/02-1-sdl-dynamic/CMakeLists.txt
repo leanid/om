@@ -16,21 +16,14 @@ target_compile_features(02-sdl-dynamic PUBLIC cxx_std_20)
 # To test pipewire `SDL_AUDIO_DRIVER=PIPEWIRE ./test/testaudioinfo`
 # To test Window Manager `./test/testwm --video X11` or `./test/testwm --video wayland`
 # -----------------
-# Also on Fedora I installed: libxkbcommon-devel, libdrm-devel, pulseaudio-libs-devel, pipewire-devel
+# Full list of all packages I install on Fedora 37 is:
+# `sudo yum install gcc git-core make cmake autoconf automake libtool alsa-lib-devel \
+#  pulseaudio-libs-devel nas-devel pipewire-devel libX11-devel libXext-devel \
+#  libXrandr-devel libXcursor-devel libXfixes-devel libXi-devel libXScrnSaver-devel \
+#  dbus-devel ibus-devel fcitx-devel systemd-devel mesa-libGL-devel libxkbcommon-devel \
+#  mesa-libGLES-devel mesa-libEGL-devel vulkan-devel wayland-devel wayland-protocols-devel \
+#  libdrm-devel mesa-libgbm-devel libusb1-devel libdecor-devel libsamplerate-devel \
+#  pipewire-jack-audio-connection-kit-devel`
 find_package(SDL3 REQUIRED)
 
-if(MINGW)
-    # find out what libraries are needed for dynamically linking with libSDL.so
-    # using mingw64 cross-compiler
-
-    #$> /usr/x86_64-w64-mingw32/sys-root/mingw/bin/sdl2-config --libs
-    #-L/usr/x86_64-w64-mingw32/sys-root/mingw/lib -lmingw32 -lSDL2main -lSDL2 -mwindows
-    target_link_libraries(
-        02-sdl-dynamic
-        PRIVATE -lmingw32
-                -lSDL2main
-                -lSDL2
-                -mwindows)
-else()
-    target_link_libraries(02-sdl-dynamic PRIVATE SDL3::SDL3-shared)
-endif()
+target_link_libraries(02-sdl-dynamic PRIVATE SDL3::SDL3-shared)
