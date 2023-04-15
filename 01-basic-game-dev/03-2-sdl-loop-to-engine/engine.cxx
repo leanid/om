@@ -7,11 +7,7 @@
 #include <sstream>
 #include <stdexcept>
 
-#if __has_include(<SDL.h>)
-#include <SDL.h>
-#else
-#include <SDL2/SDL.h>
-#endif
+#include <SDL3/SDL.h>
 
 namespace om
 {
@@ -139,12 +135,8 @@ public:
             return serr.str();
         }
 
-        SDL_Window* const window = SDL_CreateWindow("title",
-                                                    SDL_WINDOWPOS_CENTERED,
-                                                    SDL_WINDOWPOS_CENTERED,
-                                                    640,
-                                                    480,
-                                                    ::SDL_WINDOW_OPENGL);
+        SDL_Window* const window =
+            SDL_CreateWindow("title", 640, 480, ::SDL_WINDOW_OPENGL);
 
         if (window == nullptr)
         {
@@ -153,6 +145,20 @@ public:
                  << endl;
             SDL_Quit();
             return serr.str();
+        }
+        if (window != nullptr)
+        {
+            // We have to create renderer cause without it
+            // Window not visible on Wayland video driver
+            SDL_Renderer* renderer =
+                SDL_CreateRenderer(window, "opengl", SDL_RENDERER_ACCELERATED);
+            if (renderer == nullptr)
+            {
+                cerr << SDL_GetError() << endl;
+                SDL_Quit();
+                return "error see stderr";
+            }
+            SDL_RenderPresent(renderer);
         }
         return "";
     }
@@ -166,12 +172,12 @@ public:
         {
             const bind* binding = nullptr;
 
-            if (sdl_event.type == SDL_QUIT)
+            if (sdl_event.type == SDL_EVENT_QUIT)
             {
                 e = event::turn_off;
                 return true;
             }
-            else if (sdl_event.type == SDL_KEYDOWN)
+            else if (sdl_event.type == SDL_EVENT_KEY_DOWN)
             {
                 if (check_input(sdl_event, binding))
                 {
@@ -179,7 +185,7 @@ public:
                     return true;
                 }
             }
-            else if (sdl_event.type == SDL_KEYUP)
+            else if (sdl_event.type == SDL_EVENT_KEY_UP)
             {
                 if (check_input(sdl_event, binding))
                 {

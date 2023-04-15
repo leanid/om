@@ -12,16 +12,16 @@ set_target_properties(
   ENABLE_EXPORTS 1 # we need to be able to link to exe functions from game
 )
 
-find_package(SDL2 REQUIRED)
+find_package(SDL3 REQUIRED)
 if(MINGW)
   target_link_libraries(engine-03-4 PRIVATE -lmingw32)
   add_custom_command(
     TARGET engine-03-4 POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    $<TARGET_FILE:SDL2::SDL2> $<TARGET_FILE_DIR:engine-03-4>
+    $<TARGET_FILE:SDL3::SDL3> $<TARGET_FILE_DIR:engine-03-4>
   )
 endif()
-target_link_libraries(engine-03-4 PRIVATE SDL2::SDL2main SDL2::SDL2)
+target_link_libraries(engine-03-4 PRIVATE SDL3::SDL3-shared)
 
 add_library(game-03-4 SHARED game.cxx)
 

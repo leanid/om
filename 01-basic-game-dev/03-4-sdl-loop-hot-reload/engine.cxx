@@ -10,7 +10,7 @@
 #include <stdexcept>
 #include <thread>
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 
 namespace om
 {
@@ -133,7 +133,7 @@ public:
         if (SDL_COMPILEDVERSION !=
             SDL_VERSIONNUM(linked.major, linked.minor, linked.patch))
         {
-            serr << "warning: SDL2 compiled and linked version mismatch: "
+            serr << "warning: SDL3 compiled and linked version mismatch: "
                  << compiled << " " << linked << endl;
         }
 
@@ -196,12 +196,12 @@ public:
         {
             const bind* binding = nullptr;
 
-            if (sdl_event.type == SDL_QUIT)
+            if (sdl_event.type == SDL_EVENT_QUIT)
             {
                 e = event::turn_off;
                 return true;
             }
-            else if (sdl_event.type == SDL_KEYDOWN)
+            else if (sdl_event.type == SDL_EVENT_KEY_DOWN)
             {
                 if (check_input(sdl_event, binding))
                 {
@@ -209,7 +209,7 @@ public:
                     return true;
                 }
             }
-            else if (sdl_event.type == SDL_KEYUP)
+            else if (sdl_event.type == SDL_EVENT_KEY_UP)
             {
                 if (check_input(sdl_event, binding))
                 {
@@ -217,22 +217,22 @@ public:
                     return true;
                 }
             }
-            else if (sdl_event.type == SDL_CONTROLLERDEVICEADDED)
+            else if (sdl_event.type == SDL_EVENT_GAMEPAD_ADDED)
             {
                 // TODO map controller to user
                 std::cerr << "controller added" << std::endl;
                 // continue with next event in queue
                 return read_input(e);
             }
-            else if (sdl_event.type == SDL_CONTROLLERDEVICEREMOVED)
+            else if (sdl_event.type == SDL_EVENT_GAMEPAD_REMOVED)
             {
                 std::cerr << "controller removed" << std::endl;
             }
-            else if (sdl_event.type == SDL_CONTROLLERBUTTONDOWN ||
-                     sdl_event.type == SDL_CONTROLLERBUTTONUP)
+            else if (sdl_event.type == SDL_EVENT_GAMEPAD_BUTTON_DOWN ||
+                     sdl_event.type == SDL_EVENT_GAMEPAD_BUTTON_UP)
             {
                 // TODO finish implementation
-                if (sdl_event.cbutton.state == SDL_PRESSED)
+                if (sdl_event.button.state == SDL_PRESSED)
                 {
                     e = event::button1_pressed;
                 }
@@ -447,7 +447,8 @@ om::game* reload_game(om::game*   old,
 
     old_handle = game_handle;
 
-    void* create_game_func_ptr = SDL_LoadFunction(game_handle, "create_game");
+    SDL_FunctionPointer create_game_func_ptr =
+        SDL_LoadFunction(game_handle, "create_game");
 
     if (create_game_func_ptr == nullptr)
     {

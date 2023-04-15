@@ -7,7 +7,7 @@
 #include <sstream>
 #include <stdexcept>
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 
 namespace om
 {
@@ -143,12 +143,8 @@ public:
             return serr.str();
         }
 
-        SDL_Window* const window = SDL_CreateWindow("title",
-                                                    SDL_WINDOWPOS_CENTERED,
-                                                    SDL_WINDOWPOS_CENTERED,
-                                                    640,
-                                                    480,
-                                                    ::SDL_WINDOW_OPENGL);
+        SDL_Window* const window =
+            SDL_CreateWindow("title", 640, 480, ::SDL_WINDOW_OPENGL);
 
         if (window == nullptr)
         {
@@ -158,14 +154,26 @@ public:
             SDL_Quit();
             return serr.str();
         }
-
-        /* Open the first available controller. */
-        SDL_GameController* controller;
-        for (int i = 0; i < SDL_NumJoysticks(); ++i)
+        // We have to create renderer cause without it
+        // Window not visible on Wayland video driver
+        SDL_Renderer* renderer =
+            SDL_CreateRenderer(window, "opengl", SDL_RENDERER_ACCELERATED);
+        if (renderer == nullptr)
         {
-            if (SDL_IsGameController(i))
+            cerr << SDL_GetError() << endl;
+            SDL_Quit();
+            return "error see stderr";
+        }
+        SDL_RenderPresent(renderer);
+        /* Open the first available controller. */
+        int             num_connected_gamepads = 0;
+        SDL_Gamepad*    controller             = nullptr;
+        SDL_JoystickID* joysticks = SDL_GetGamepads(&num_connected_gamepads);
+        for (int i = 0; i < num_connected_gamepads; ++i)
+        {
+            if (SDL_IsGamepad(i))
             {
-                controller = SDL_GameControllerOpen(i);
+                controller = SDL_OpenGamepad(i);
                 if (controller)
                 {
                     break;
@@ -193,12 +201,12 @@ public:
         {
             const bind* binding = nullptr;
 
-            if (sdl_event.type == SDL_QUIT)
+            if (sdl_event.type == SDL_EVENT_QUIT)
             {
                 e = event::turn_off;
                 return true;
             }
-            else if (sdl_event.type == SDL_KEYDOWN)
+            else if (sdl_event.type == SDL_EVENT_KEY_DOWN)
             {
                 if (check_input(sdl_event, binding))
                 {
@@ -206,7 +214,7 @@ public:
                     return true;
                 }
             }
-            else if (sdl_event.type == SDL_KEYUP)
+            else if (sdl_event.type == SDL_EVENT_KEY_UP)
             {
                 if (check_input(sdl_event, binding))
                 {
@@ -214,22 +222,22 @@ public:
                     return true;
                 }
             }
-            else if (sdl_event.type == SDL_CONTROLLERDEVICEADDED)
+            else if (sdl_event.type == SDL_EVENT_GAMEPAD_ADDED)
             {
                 // TODO map controller to user
                 std::cerr << "controller added" << std::endl;
                 // continue with next event in queue
                 return read_input(e);
             }
-            else if (sdl_event.type == SDL_CONTROLLERDEVICEREMOVED)
+            else if (sdl_event.type == SDL_EVENT_GAMEPAD_REMOVED)
             {
                 std::cerr << "controller removed" << std::endl;
             }
-            else if (sdl_event.type == SDL_CONTROLLERBUTTONDOWN ||
-                     sdl_event.type == SDL_CONTROLLERBUTTONUP)
+            else if (sdl_event.type == SDL_EVENT_GAMEPAD_BUTTON_DOWN ||
+                     sdl_event.type == SDL_EVENT_GAMEPAD_BUTTON_UP)
             {
                 // TODO finish implementation
-                if (sdl_event.cbutton.state == SDL_PRESSED)
+                if (sdl_event.button.state == SDL_PRESSED)
                 {
                     e = event::button1_pressed;
                 }

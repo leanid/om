@@ -4,11 +4,7 @@
 #include <iostream>
 #include <string_view>
 
-#if __has_include(<SDL.h>)
-#include <SDL.h>
-#else
-#include <SDL2/SDL.h>
-#endif
+#include <SDL3/SDL.h>
 
 std::ostream& operator<<(std::ostream& out, const SDL_version& v)
 {
@@ -47,7 +43,7 @@ void check_input(const SDL_Event& e)
     if (it != end(keys))
     {
         cout << it->name << ' ';
-        if (e.type == SDL_KEYDOWN)
+        if (e.type == SDL_EVENT_KEY_DOWN)
         {
             cout << "is pressed" << endl;
         }
@@ -83,12 +79,8 @@ int main(int /*argc*/, char* /*argv*/[])
         return EXIT_FAILURE;
     }
 
-    SDL_Window* const window = SDL_CreateWindow("title",
-                                                SDL_WINDOWPOS_CENTERED,
-                                                SDL_WINDOWPOS_CENTERED,
-                                                640,
-                                                480,
-                                                ::SDL_WINDOW_OPENGL);
+    SDL_Window* const window =
+        SDL_CreateWindow("title", 640, 480, ::SDL_WINDOW_OPENGL);
 
     if (window == nullptr)
     {
@@ -97,7 +89,19 @@ int main(int /*argc*/, char* /*argv*/[])
         SDL_Quit();
         return EXIT_FAILURE;
     }
-
+    if (window != nullptr)
+    {
+        // We have to create renderer cause without it
+        // Window not visible on Wayland video driver
+        SDL_Renderer* renderer =
+            SDL_CreateRenderer(window, "opengl", SDL_RENDERER_ACCELERATED);
+        if (renderer == nullptr)
+        {
+            cerr << SDL_GetError() << endl;
+            return EXIT_FAILURE;
+        }
+        SDL_RenderPresent(renderer);
+    }
     bool continue_loop = true;
     while (continue_loop)
     {
@@ -107,12 +111,12 @@ int main(int /*argc*/, char* /*argv*/[])
         {
             switch (sdl_event.type)
             {
-                case SDL_KEYDOWN:
+                case SDL_EVENT_KEY_DOWN:
                     [[fallthrough]];
-                case SDL_KEYUP:
+                case SDL_EVENT_KEY_UP:
                     check_input(sdl_event);
                     break;
-                case SDL_QUIT:
+                case SDL_EVENT_QUIT:
                     continue_loop = false;
                     break;
                 default:
