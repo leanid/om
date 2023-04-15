@@ -1,4 +1,4 @@
-#include <SDL2/SDL.h>
+#include <SDL3/SDL.h>
 
 #include <cstdlib>
 #include <iostream>
@@ -12,7 +12,7 @@ int main(int argc, char** argv)
     const bool no_window = (argc >= 2 && "-nw"s == argv[1]) ? true : false;
 
     const int init_result = SDL_Init(SDL_INIT_EVENTS | SDL_INIT_JOYSTICK |
-                                     SDL_INIT_GAMECONTROLLER | SDL_INIT_VIDEO);
+                                     SDL_INIT_GAMEPAD | SDL_INIT_VIDEO);
 
     if (init_result != 0)
     {
@@ -21,14 +21,9 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
 
-    SDL_Window* const window = !no_window
-                                   ? SDL_CreateWindow("title",
-                                                      SDL_WINDOWPOS_CENTERED,
-                                                      SDL_WINDOWPOS_CENTERED,
-                                                      640,
-                                                      480,
-                                                      ::SDL_WINDOW_OPENGL)
-                                   : nullptr;
+    SDL_Window* const window =
+        !no_window ? SDL_CreateWindow("title", 640, 480, SDL_WINDOW_OPENGL)
+                   : nullptr;
 
     if (!no_window && window == nullptr)
     {
@@ -47,12 +42,12 @@ int main(int argc, char** argv)
         {
             switch (sdl_event.type)
             {
-                case SDL_KEYDOWN:
+                case SDL_EVENT_KEY_DOWN:
                     [[fallthrough]];
-                case SDL_KEYUP:
+                case SDL_EVENT_KEY_UP:
                     cerr << sdl_event.key.keysym.sym << endl;
                     break;
-                case SDL_QUIT:
+                case SDL_EVENT_QUIT:
                     continue_loop = false;
                     break;
                 default:

@@ -8,6 +8,7 @@ add_subdirectory(01-2-hello-lib)
 add_subdirectory(02-1-sdl-dynamic)
 add_subdirectory(02-2-sdl-static)
 
+add_subdirectory(03-0-sdl-input-terminal)
 add_subdirectory(03-1-sdl-loop)
 add_subdirectory(03-2-sdl-loop-to-engine)
 add_subdirectory(03-3-sdl-loop-to-engine-dll)
