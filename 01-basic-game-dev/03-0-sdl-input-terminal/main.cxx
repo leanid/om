@@ -40,6 +40,20 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
 
+    if (window != nullptr)
+    {
+        // We have to create renderer cause without it
+        // Window not visible on Wayland video driver
+        SDL_Renderer* renderer =
+            SDL_CreateRenderer(window, "opengl", SDL_RENDERER_ACCELERATED);
+        if (renderer == nullptr)
+        {
+            cerr << SDL_GetError() << endl;
+            return EXIT_FAILURE;
+        }
+        SDL_RenderPresent(renderer);
+    }
+
     bool continue_loop = true;
     while (continue_loop)
     {
