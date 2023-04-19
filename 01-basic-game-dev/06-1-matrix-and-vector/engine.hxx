@@ -1,3 +1,4 @@
+#include <cstdint>
 #include <iosfwd>
 #include <string>
 #include <string_view>
