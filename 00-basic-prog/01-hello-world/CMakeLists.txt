@@ -35,6 +35,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     target_link_options(
         hello_asm
         PRIVATE
+        -z noexecstack # fix linking warning on g++13
         -nostartfiles
         -nostdlib)
 endif()
