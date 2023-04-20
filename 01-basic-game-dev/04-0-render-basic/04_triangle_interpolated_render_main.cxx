@@ -30,8 +30,8 @@ int main(int, char**)
             out.y *= 0.3;
 
             // move
-            out.x += (width / 2);
-            out.y += (height / 2);
+            out.x += (width / 2.0);
+            out.y += (height / 2.0);
 
             return out;
         }
