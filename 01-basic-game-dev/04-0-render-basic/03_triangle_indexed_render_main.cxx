@@ -2,21 +2,21 @@
 
 int main(int, char**)
 {
-    const color black = { 0, 0, 0 };
-    const color green = { 0, 255, 0 };
+    constexpr color black = { 0, 0, 0 };
+    constexpr color green = { 0, 255, 0 };
 
-    size_t width  = 320;
-    size_t height = 240;
+    constexpr size_t width  = 320;
+    constexpr size_t height = 240;
 
     canvas image(width, height);
 
     std::vector<position> vertex_buffer;
 
-    size_t max_x = 10;
-    size_t max_y = 10;
+    constexpr size_t max_x = 10;
+    constexpr size_t max_y = 10;
 
-    int32_t step_x = (width - 1) / max_x;
-    int32_t step_y = (height - 1) / max_y;
+    constexpr int32_t step_x = (width - 1) / max_x;
+    constexpr int32_t step_y = (height - 1) / max_y;
 
     for (size_t i = 0; i <= max_y; ++i)
     {

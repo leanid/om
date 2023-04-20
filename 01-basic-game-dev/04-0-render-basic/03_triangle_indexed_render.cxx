@@ -1,4 +1,5 @@
 #include "03_triangle_indexed_render.hxx"
+#include "00_canvas_basic.hxx"
 
 triangle_indexed_render::triangle_indexed_render(canvas& buffer,
                                                  size_t  width,
@@ -23,10 +24,10 @@ void triangle_indexed_render::draw_triangles(std::vector<position>& vertexes,
         position v1 = vertexes.at(index1);
         position v2 = vertexes.at(index2);
 
-        for (auto pixel_pos : pixels_positions_triangle(v0, v1, v2))
-        {
-            triangles_edge_pixels.push_back(pixel_pos);
-        }
+        pixels lines = pixels_positions_triangle(v0, v1, v2);
+
+        triangles_edge_pixels.insert(
+            std::end(triangles_edge_pixels), lines.begin(), lines.end());
     }
 
     // apply color to every pixel position

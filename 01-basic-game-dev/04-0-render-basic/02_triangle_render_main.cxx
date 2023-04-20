@@ -31,7 +31,7 @@ int main(int, char**)
     constexpr int32_t step_y = (height - 1) / max_y;
 
     std::vector<position> triangles;
-    triangles.reserve(max_x * max_y * 2);
+    triangles.reserve(max_x * max_y * 3 * 2);
 
     for (size_t i = 0; i < max_x; ++i)
     {
