@@ -20,3 +20,8 @@ bool operator==(const position& left, const position& right)
 {
     return left.x == right.x && left.y == right.y;
 }
+
+position position::generate_random(int width, int height)
+{
+    return { rand() % width, rand() % height };
+}

@@ -123,6 +123,7 @@ struct position
     friend bool     operator==(const position& left, const position& right);
     int32_t         x = 0;
     int32_t         y = 0;
+    static position generate_random(int width, int height);
 };
 
 using pixels = std::vector<position>;

@@ -1,3 +1,4 @@
+#include "00_canvas_basic.hxx"
 #include "01_line_render.hxx"
 
 int main(int, char**)
@@ -23,10 +24,8 @@ int main(int, char**)
 
     for (size_t i = 0; i < 100; ++i)
     {
-        position start{ rand() % static_cast<int>(width),
-                        rand() % static_cast<int>(height) };
-        position end{ rand() % static_cast<int>(width),
-                      rand() % static_cast<int>(height) };
+        position start{ position::generate_random(width, height) };
+        position end{ position::generate_random(width, height) };
         color    color{ static_cast<uint8_t>(rand() % 256),
                      static_cast<uint8_t>(rand() % 256),
                      static_cast<uint8_t>(rand() % 256) };
