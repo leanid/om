@@ -45,7 +45,7 @@ int main(int, char**)
     const color black = { 0, 0, 0 };
 
     canvas texture(0, 0);
-    texture.load_image("leo.ppm");
+    texture.load_image("./01-basic-game-dev/04-0-render-basic/leo.ppm");
 
     canvas image(width, height);
 
