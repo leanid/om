@@ -5,38 +5,38 @@ int main(int, char**)
     const color black = { 0, 0, 0 };
     const color green = { 0, 255, 0 };
 
-    size_t width  = 320;
-    size_t height = 240;
+    constexpr size_t width  = 320;
+    constexpr size_t height = 240;
 
     canvas image(width, height);
 
     triangle_render render_tri(image, width, height);
     render_tri.clear(black);
 
-    std::vector<position> triangle;
-    triangle.push_back(position{ 0, 0 });
-    triangle.push_back(
+    std::vector<position> triangle_vertices;
+    triangle_vertices.push_back(position{ 0, 0 });
+    triangle_vertices.push_back(
         position{ static_cast<int>(width - 1), static_cast<int>(height - 1) });
-    triangle.push_back(position{ 0, static_cast<int>(height - 1) });
+    triangle_vertices.push_back(position{ 0, static_cast<int>(height - 1) });
 
-    render_tri.draw_triangles(triangle, 3, green);
+    render_tri.draw_triangles(triangle_vertices, 3, green);
 
     image.save_image("02_triangle.ppm");
 
     render_tri.clear(black);
 
-    size_t max_x = 10;
-    size_t max_y = 10;
+    constexpr size_t  max_x  = 10;
+    constexpr size_t  max_y  = 10;
+    constexpr int32_t step_x = (width - 1) / max_x;
+    constexpr int32_t step_y = (height - 1) / max_y;
 
     std::vector<position> triangles;
+    triangles.reserve(max_x * max_y * 2);
 
     for (size_t i = 0; i < max_x; ++i)
     {
         for (size_t j = 0; j < max_y; ++j)
         {
-            int32_t step_x = (width - 1) / max_x;
-            int32_t step_y = (height - 1) / max_y;
-
             position v0{ 0 + static_cast<int>(i) * step_x,
                          0 + static_cast<int>(j) * step_y };
             position v1{ v0.x + step_x, v0.y + step_y };

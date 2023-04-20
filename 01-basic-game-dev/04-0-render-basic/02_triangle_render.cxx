@@ -1,4 +1,5 @@
 #include "02_triangle_render.hxx"
+#include "00_canvas_basic.hxx"
 
 triangle_render::triangle_render(canvas& buffer, size_t width, size_t height)
     : line_render(buffer, width, height)
@@ -14,10 +15,8 @@ pixels triangle_render::pixels_positions_triangle(position v0,
 
     for (auto [start, end] : { pair{ v0, v1 }, pair{ v1, v2 }, pair{ v2, v0 } })
     {
-        for (auto pos : line_render::pixels_positions(start, end))
-        {
-            pixels_pos.push_back(pos);
-        }
+        pixels line = line_render::pixels_positions(start, end);
+        pixels_pos.insert(std::end(pixels_pos), line.begin(), line.end());
     }
 
     return pixels_pos;
