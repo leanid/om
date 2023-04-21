@@ -46,7 +46,7 @@ function check_horizontal()
     i1=$((i0+1))
     i2=$((i0+2))
 
-    if check_3_indexes $i0 $i1 $i2
+    if check_3_indexes "$i0" "$i1" "$i2"
     then
         return 0
     fi
@@ -59,7 +59,7 @@ function check_vertical()
     i1=$((i0+3))
     i2=$((i0+6))
 
-    if check_3_indexes $i0 $i1 $i2
+    if check_3_indexes "$i0" "$i1" "$i2"
     then
         return 0
     fi
