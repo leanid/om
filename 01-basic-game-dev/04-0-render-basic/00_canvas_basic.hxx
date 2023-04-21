@@ -9,6 +9,8 @@
 #include <iomanip>
 #include <vector>
 
+; // fix for clangd
+  // https://stackoverflow.com/questions/72456118/why-does-clang-give-a-warning-unterminated-pragma-pack-push-at-end-of-f
 #pragma pack(push, 1)
 struct color
 {

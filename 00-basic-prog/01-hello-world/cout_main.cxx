@@ -2,6 +2,8 @@
 
 int main(int, char**)
 {
-    std::cout << "hello world, from c++" << std::endl;
-    return std::cout.fail();
+    using std::cout;
+    using std::endl;
+    cout << "hello world, from c++" << endl;
+    return cout.fail();
 }

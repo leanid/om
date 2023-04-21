@@ -52,11 +52,7 @@ target_compile_features(
   PUBLIC cxx_std_20
 )
 
-find_package(SDL2 REQUIRED)
-message(
-  STATUS "SDL2_LIBRARIES[${SDL2_LIBRARIES}] "
-  "SDL2_INCLUDE_DIRS[${SDL2_INCLUDE_DIRS}]"
-)
+find_package(SDL3 REQUIRED)
 
 add_executable(
   04-0-render-basic-windowed
@@ -68,15 +64,7 @@ add_executable(
   04_triangle_interpolated_render.hxx
   05-0-render-basic-windowed.cxx
 )
-target_link_libraries(04-0-render-basic-windowed PRIVATE ${SDL2_LIBRARIES})
-target_include_directories(
-  04-0-render-basic-windowed
-  PRIVATE ${SDL2_INCLUDE_DIRS}
-)
-target_link_libraries(
-  04-0-render-basic-windowed PRIVATE SDL2::SDL2
-  SDL2::SDL2main
-)
+target_link_libraries(04-0-render-basic-windowed PRIVATE SDL3::SDL3-shared)
 target_compile_features(04-0-render-basic-windowed PUBLIC cxx_std_20)
 
 add_executable(
@@ -89,15 +77,7 @@ add_executable(
   04_triangle_interpolated_render.cxx
   04_triangle_interpolated_render.hxx
 )
-target_link_libraries(04-0-render-full-windowed PRIVATE ${SDL2_LIBRARIES})
-target_include_directories(
-  04-0-render-full-windowed
-  PRIVATE ${SDL2_INCLUDE_DIRS}
-)
-target_link_libraries(
-  04-0-render-full-windowed PRIVATE SDL2::SDL2
-  SDL2::SDL2main
-)
+target_link_libraries(04-0-render-full-windowed PRIVATE SDL3::SDL3-shared)
 target_compile_features(04-0-render-full-windowed PUBLIC cxx_std_20)
 
 add_executable(
@@ -110,15 +90,7 @@ add_executable(
   04_triangle_interpolated_render.cxx
   04_triangle_interpolated_render.hxx
 )
-target_link_libraries(04-0-render-image-windowed PRIVATE ${SDL2_LIBRARIES})
-target_include_directories(
-  04-0-render-image-windowed
-  PRIVATE ${SDL2_INCLUDE_DIRS}
-)
-target_link_libraries(
-  04-0-render-image-windowed PRIVATE SDL2::SDL2
-  SDL2::SDL2main
-)
+target_link_libraries(04-0-render-image-windowed PRIVATE SDL3::SDL3-shared)
 target_compile_features(04-0-render-image-windowed PUBLIC cxx_std_20)
 
 find_package(glm REQUIRED) # sudo dnf install glm-devel

@@ -1,7 +1,8 @@
 #include "04_triangle_interpolated_render.hxx"
 
-#include <SDL2/SDL.h>
+#include <SDL3/SDL.h>
 
+#include <SDL3/SDL_pixels.h>
 #include <cstdlib>
 #include <iostream>
 
@@ -18,12 +19,8 @@ int main(int, char**)
     size_t width  = 320;
     size_t height = 240;
 
-    SDL_Window* window = SDL_CreateWindow("runtime soft render",
-                                          SDL_WINDOWPOS_CENTERED,
-                                          SDL_WINDOWPOS_CENTERED,
-                                          width,
-                                          height,
-                                          SDL_WINDOW_OPENGL);
+    SDL_Window* window = SDL_CreateWindow(
+        "runtime soft render", width, height, SDL_WINDOW_OPENGL);
     if (window == nullptr)
     {
         cerr << SDL_GetError() << endl;
@@ -31,7 +28,7 @@ int main(int, char**)
     }
 
     SDL_Renderer* renderer =
-        SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+        SDL_CreateRenderer(window, nullptr, SDL_RENDERER_ACCELERATED);
     if (renderer == nullptr)
     {
         cerr << SDL_GetError() << endl;
@@ -120,17 +117,17 @@ int main(int, char**)
         SDL_Event e;
         while (SDL_PollEvent(&e))
         {
-            if (e.type == SDL_QUIT)
+            if (e.type == SDL_EVENT_QUIT)
             {
                 continue_loop = false;
                 break;
             }
-            else if (e.type == SDL_MOUSEMOTION)
+            else if (e.type == SDL_EVENT_MOUSE_MOTION)
             {
                 mouse_x = e.motion.x;
                 mouse_y = e.motion.y;
             }
-            else if (e.type == SDL_MOUSEWHEEL)
+            else if (e.type == SDL_EVENT_MOUSE_WHEEL)
             {
                 radius += e.wheel.y;
             }
@@ -141,8 +138,8 @@ int main(int, char**)
 
         interpolated_render.draw_triangles(triangle_v, indexes_v);
 
-        SDL_Surface* bitmapSurface = SDL_CreateRGBSurfaceFrom(
-            pixels, width, height, depth, pitch, rmask, gmask, bmask, amask);
+        SDL_Surface* bitmapSurface = SDL_CreateSurfaceFrom(
+            pixels, width, height, pitch, SDL_PIXELFORMAT_RGB24);
         if (bitmapSurface == nullptr)
         {
             cerr << SDL_GetError() << endl;
@@ -155,10 +152,10 @@ int main(int, char**)
             cerr << SDL_GetError() << endl;
             return EXIT_FAILURE;
         }
-        SDL_FreeSurface(bitmapSurface);
+        SDL_DestroySurface(bitmapSurface);
 
         SDL_RenderClear(renderer);
-        SDL_RenderCopy(renderer, bitmapTex, nullptr, nullptr);
+        SDL_RenderTexture(renderer, bitmapTex, nullptr, nullptr);
         SDL_RenderPresent(renderer);
 
         SDL_DestroyTexture(bitmapTex);
