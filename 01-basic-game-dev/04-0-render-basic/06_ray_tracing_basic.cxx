@@ -1,6 +1,6 @@
 #include <vector>
 
-#include <glm/glm.hpp>
+#include <glm/glm.hpp> // sudo dnf install glm-devel
 
 #include "00_canvas_basic.hxx"
 

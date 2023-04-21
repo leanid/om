@@ -121,10 +121,13 @@ target_link_libraries(
 )
 target_compile_features(04-0-render-image-windowed PUBLIC cxx_std_20)
 
+find_package(glm REQUIRED) # sudo dnf install glm-devel
+
 add_executable(
   04-06-ray-tracing-basic 00_canvas_basic.cxx 00_canvas_basic.hxx
   06_ray_tracing_basic.cxx
 )
+target_link_libraries(04-06-ray-tracing-basic PRIVATE glm::glm)
 target_compile_features(04-06-ray-tracing-basic PRIVATE cxx_std_20)
 
 add_executable(
