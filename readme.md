@@ -2,16 +2,16 @@
 
 [![Om](https://bitbucket.org/account/user/b_y/projects/OM/avatar/32)](https://bitbucket.org/account/user/b_y/projects/OM)
 
-Build Platform   | Status (tests only)
----------------- | ----------------------
-MSVC 2017 x64    | ![MSVC 2017 Build](https://ci.appveyor.com/api/projects/status/bitbucket/b_y/om)
-Linux x64        | ![Linux x64](https://img.shields.io/bitbucket/pipelines/b_y/om.svg)
+| Build Platform | Status (tests only)                                                              |
+|----------------|----------------------------------------------------------------------------------|
+| MSVC 2017 x64  | ![MSVC 2017 Build](https://ci.appveyor.com/api/projects/status/bitbucket/b_y/om) |
+| Linux x64      | ![Linux x64](https://img.shields.io/bitbucket/pipelines/b_y/om.svg)              |
 
 Om is a nice 2d game engine for multiplatform studying.
 
 - Environmental friendliness (take less do more with c++)
-- Modern IT technology (c++20, cmake-3.23, gradle)
-- Creativity (create funny tools with imgui library)
+- Modern IT technology (**c++20**, **cmake-3.26**, **gradle**)
+- Creativity (create funny tools with **imgui** library)
 - Fun 🤣
 
 ## Planed Features
@@ -50,8 +50,8 @@ bin/engine --test
 
 ```sh
 git clone git@bitbucket.org:b_y/om.git
-sudo dnf install SDL2
-sudo dnf install SDL2-static
+sudo dnf install SDL3
+sudo dnf install SDL3-static
 cmake -G"Makefiles"
 make -j 4
 bin/engine --test
@@ -63,21 +63,21 @@ bin/engine --test
 
     ```sh
     # search by package name
-    dnf search SDL2
+    dnf search SDL3
     # search by file in package
-    dnf provides /usr/lib/libSDL2.so
+    dnf provides /usr/lib/libSDL3.so
     # search by part of file name
-    dnf provides "*/libSDL2.so"
+    dnf provides "*/libSDL3.so"
     ```
 
-1. To list package contents (files list)
+2. To list package contents (files list)
 
     ```sh
-    dnf repoquery -l SDL2
-    rpm -ql SDL2
+    dnf repoquery -l SDL3
+    rpm -ql SDL3
     ```
 
-1. To show compile/link/version of installed version
+3. To show compile/link/version of installed version
 
     ```sh
     sdl2-config --version
@@ -89,13 +89,13 @@ bin/engine --test
 
 #### using g++ from Homebrew (need c++17 support)
 
-On Mac OS for c++17 compiler you have to install latest gcc from
+On macOS for c++17 compiler you have to install latest gcc from
 Homebrew and then use it
 
 ```sh
 /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 brew install gcc
-brew install SDL2
+brew install SDL3
 brew install cmake
 ```
 
@@ -104,10 +104,10 @@ brew install cmake
 #### for Visual Studio (2022 with c++23 support)
 
 1. install **vcpkg** from [vcpkg](https://github.com/Microsoft/vcpkg)
-1. install SDL3 in **vcpkg**: `vcpkg install sdl2`
-1. make directory build in om/tests. move into it and there:
+2. install **SDL3** in **vcpkg**: `vcpkg install sdl3`
+3. make directory build in **om/tests**. move into it and there:
    `cmake .. -DCMAKE_TOOLCHAIN_FILE={YOUR_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake`
-1. build all using:
+4. build all using:
 
    ```cmd
    "C:\Program Files (x86)\Microsoft Visual Studio\ \
@@ -119,11 +119,11 @@ brew install cmake
 #### On Windows using [MSYS2](https://www.msys2.org)
 
 1. from **msys2** bash shell:
-    `pacman -S base-devel mingw-w64-x86_64-toolchain mingw-w64-x86_64-SDL2`
-1. (optional) full build development environment on windows using msys2:
+    `pacman -S base-devel mingw-w64-x86_64-toolchain mingw-w64-x86_64-SDL3`
+2. (optional) full build development environment on windows using msys2:
     `pacman -S base-devel mingw-w64-x86_64-toolchain \
     git mingw-w64-x86_64-cmake mingw-w64-x86_64-qt-creator ninja`
-1. from **cmd.exe** windows terminal program (g++ in PATH from msys2)
+3. from **cmd.exe** Windows terminal program (g++ in PATH from msys2)
 
     ```
     cd ~/om
@@ -149,7 +149,7 @@ FROM fedora:latest
 RUN dnf update -y
 RUN dnf upgrade -y
 RUN dnf install -y gcc-c++ make cmake mingw64-gcc mingw64-gcc-c++ \
-clang wine git SDL2-devel SDL2-static mingw64-SDL2 mingw64-SDL2-static \
+clang wine git SDL3-devel SDL3-static mingw64-SDL3 mingw64-SDL3-static \
 libstdc++-static glibc-static ninja-build
 ```
 
@@ -158,8 +158,8 @@ libstdc++-static glibc-static ninja-build
 #### Simple configuration for **doomemacs** per-project c++ cmake
 
 1. create in project root file: **.dir-locals.el**
-1. place next code into it.
-1. edit it if you need add some cmake flags or change test-command
+2. place next code into it.
+3. edit it if you need add some cmake flags or change test-command
 
     ```elisp
     ;;; Directory Local Variables
@@ -170,14 +170,14 @@ libstdc++-static glibc-static ninja-build
                                                         (:test-command . "./build/30-1-point-shadow"))))))
     ```
 
-1. also you may want to disable warning about every opened file in project.
+4. also you may want to disable warning about every opened file in project.
    Place next into: **~/.doom.d/config.el** or **~/.config/doom/config.el**
 
     ```elisp
     (put 'projectile--cmake-manual-command-alist 'safe-local-variable (lambda (_) t))
     ```
 
-1. one more hint. Place **.projectile** file in root of your
+5. one more hint. Place **.projectile** file in root of your
    project to force doomemacs use this directory as root
 
 #### Want latest and fastest Emacs?
@@ -191,14 +191,14 @@ libstdc++-static glibc-static ninja-build
     ripgrep fd-find libtool
     ```
 
-1. build Emacs with native-compilation enabled
+2. build Emacs with native-compilation enabled
 
     ```sh
     # configure emacs for native-compilation like next:
     ../emacs-28.1/configure --with-native-compilation --with-mailutils
     ```
 
-1. after installing just fresh Emacs call sync
+3. after installing just fresh Emacs call sync
    to regenerate-compile elisp packages for doomemacs
 
     ```sh
