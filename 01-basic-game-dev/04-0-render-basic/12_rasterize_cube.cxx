@@ -86,8 +86,8 @@ position project_vertex(const vertex& in)
 
 position viewport_to_canvas(const vertex& in)
 {
-    const double canvas_width  = 320 / 2;
-    const double canvas_height = 240 / 2;
+    const double canvas_width  = 320 / 2.0;
+    const double canvas_height = 240 / 2.0;
 
     const double viewport_width  = 1.0;
     const double viewport_height = 1.0;

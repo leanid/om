@@ -60,7 +60,8 @@ int main(int /*argc*/, char* /*argv*/[])
             }
         }
 
-        std::ifstream file("vert_and_tex_coord.txt");
+        std::ifstream file(
+            "./01-basic-game-dev/05-2-texture-loading/vert_and_tex_coord.txt");
         assert(!!file);
 
         om::triangle tr1;

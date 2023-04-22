@@ -10,37 +10,11 @@ if(WIN32)
   target_compile_definitions(engine-05-2 PRIVATE "-DOM_DECLSPEC=__declspec(dllexport)")
 endif(WIN32)
 
-find_package(SDL2 REQUIRED)
+find_package(SDL3 REQUIRED)
 find_package(OpenGL REQUIRED)
 
-target_include_directories(engine-05-2 PRIVATE ${SDL2_INCLUDE_DIRS})
-target_link_libraries(engine-05-2 PRIVATE ${SDL2_LIBRARIES})
-
-if (MINGW)
-    target_link_libraries(engine-05-2 PRIVATE
-               SDL2::SDL2
-               SDL2::SDL2main
-               OpenGL::GL
-               #mingw32
-               #SDL2main
-               #SDL2
-               #opengl32
-               #-mwindows
-               )
-elseif(APPLE)
-    target_link_libraries(engine-05-2 PRIVATE
-            -Wl,-framework,OpenGL
-            )
-elseif(UNIX)
-    target_link_libraries(engine-05-2 PRIVATE
-               SDL2::SDL2
-               SDL2::SDL2main
-               OpenGL::GL
-               )
-elseif(MSVC)
-    target_link_libraries(engine-05-2 PRIVATE SDL2::SDL2 SDL2::SDL2main
+target_link_libraries(engine-05-2 PRIVATE SDL3::SDL3-shared
                          OpenGL::GL)
-endif()
 
 add_executable(game-05-2 game.cxx)
 target_compile_features(game-05-2 PUBLIC cxx_std_20)
@@ -53,9 +27,3 @@ if(MSVC)
 else()
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -Werror")
 endif()
-
-install(TARGETS engine-05-2 game-05-2
-        RUNTIME DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../../bin/tests
-        LIBRARY DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../../bin/tests
-        ARCHIVE DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../../bin/tests)
-

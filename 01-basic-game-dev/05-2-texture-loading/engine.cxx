@@ -1,5 +1,6 @@
 #include "engine.hxx"
 
+#include <SDL3/SDL_stdinc.h>
 #include <algorithm>
 #include <array>
 #include <cassert>
@@ -12,9 +13,9 @@
 #include <string_view>
 #include <vector>
 
-#include <SDL.h>
-#include <SDL_opengl.h>
-#include <SDL_opengl_glext.h>
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_opengl.h>
+#include <SDL3/SDL_opengl_glext.h>
 
 #include "picopng.hxx"
 
@@ -43,7 +44,7 @@ PFNGLACTIVETEXTUREPROC           glActiveTexture_          = nullptr;
 
 template <typename T> static void load_gl_func(const char* func_name, T& result)
 {
-    void* gl_pointer = SDL_GL_GetProcAddress(func_name);
+    SDL_FunctionPointer gl_pointer = SDL_GL_GetProcAddress(func_name);
     if (nullptr == gl_pointer)
     {
         throw std::runtime_error(std::string("can't load GL function") +
@@ -222,12 +223,7 @@ public:
             return serr.str();
         }
 
-        window = SDL_CreateWindow("title",
-                                  SDL_WINDOWPOS_CENTERED,
-                                  SDL_WINDOWPOS_CENTERED,
-                                  640,
-                                  480,
-                                  ::SDL_WINDOW_OPENGL);
+        window = SDL_CreateWindow("title", 640, 480, ::SDL_WINDOW_OPENGL);
 
         if (window == nullptr)
         {
@@ -421,7 +417,7 @@ void main()
         glActiveTexture_(GL_TEXTURE0 + texture_unit);
         OM_GL_CHECK()
 
-        if (!load_texture("tank.png"))
+        if (!load_texture("./01-basic-game-dev/05-2-texture-loading/tank.png"))
         {
             return "failed load texture\n";
         }
@@ -455,12 +451,12 @@ void main()
         {
             const bind* binding = nullptr;
 
-            if (sdl_event.type == SDL_QUIT)
+            if (sdl_event.type == SDL_EVENT_QUIT)
             {
                 e = event::turn_off;
                 return true;
             }
-            else if (sdl_event.type == SDL_KEYDOWN)
+            else if (sdl_event.type == SDL_EVENT_KEY_DOWN)
             {
                 if (check_input(sdl_event, binding))
                 {
@@ -468,7 +464,7 @@ void main()
                     return true;
                 }
             }
-            else if (sdl_event.type == SDL_KEYUP)
+            else if (sdl_event.type == SDL_EVENT_KEY_UP)
             {
                 if (check_input(sdl_event, binding))
                 {
