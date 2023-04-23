@@ -2,7 +2,6 @@
 
 #include <SDL3/SDL.h>
 
-#include <SDL3/SDL_pixels.h>
 #include <cstdlib>
 #include <iostream>
 
