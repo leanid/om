@@ -1,45 +1,25 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.26)
 project(04-1-opengl-minimal CXX C)
 
 add_library(
-  engine-04-1 SHARED
-  engine.cxx
-  engine.hxx
-  KHR/khrplatform.h
-  glad/glad.h
-  glad/glad.c
-)
+    engine-04-1 SHARED
+    engine.cxx
+    engine.hxx
+    glad/glad.c
+    glad/glad.h
+    KHR/khrplatform.h)
 target_compile_features(engine-04-1 PUBLIC cxx_std_20)
 target_include_directories(engine-04-1 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 if(WIN32)
-  target_compile_definitions(engine-04-1 PRIVATE "-DOM_DECLSPEC=__declspec(dllexport)")
+    target_compile_definitions(engine-04-1
+                               PRIVATE "-DOM_DECLSPEC=__declspec(dllexport)")
 endif(WIN32)
 
-# use sdl >= 2.0.12 (with nice new cmake build file)
-find_package(SDL2 REQUIRED)
+find_package(SDL3 REQUIRED)
 find_package(OpenGL REQUIRED)
 
-if(MINGW)
-  # find out what libraries are needed for dynamicaly linking with libSDL.so
-  # using mingw64 cross-compiler
-
-  #$> /usr/x86_64-w64-mingw32/sys-root/mingw/bin/sdl2-config --libs
-  #-L/usr/x86_64-w64-mingw32/sys-root/mingw/lib -lmingw32 -lSDL2main -lSDL2 -mwindows
-  target_link_libraries(
-    engine-04-1 PRIVATE
-    #SDL2::SDL2                     # not working on mingw64-make
-    #SDL2::SDL2main
-    #OpenGL::GL
-    mingw32
-    SDL2main
-    SDL2
-    -mwindows
-  )
-  target_include_directories(engine-04-1 PRIVATE ${SDL2_INCLUDE_DIRS})
-else()
-  target_link_libraries(engine-04-1 PRIVATE SDL2::SDL2 SDL2::SDL2main)
-endif()
+target_link_libraries(engine-04-1 PRIVATE SDL3::SDL3-shared)
 
 add_executable(game-04-1 game.cxx)
 target_compile_features(game-04-1 PUBLIC cxx_std_20)

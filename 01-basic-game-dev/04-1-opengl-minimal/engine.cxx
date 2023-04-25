@@ -1,5 +1,7 @@
 #include "engine.hxx"
 
+#include <SDL3/SDL_stdinc.h>
+#include <SDL3/SDL_video.h>
 #include <algorithm>
 #include <array>
 #include <cassert>
@@ -12,7 +14,7 @@
 #include <string_view>
 #include <vector>
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 
 #include "glad/glad.h"
 
@@ -193,12 +195,7 @@ public:
 
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
 
-        window = SDL_CreateWindow("title",
-                                  SDL_WINDOWPOS_CENTERED,
-                                  SDL_WINDOWPOS_CENTERED,
-                                  640,
-                                  480,
-                                  ::SDL_WINDOW_OPENGL);
+        window = SDL_CreateWindow("title", 640, 480, ::SDL_WINDOW_OPENGL);
 
         if (window == nullptr)
         {
@@ -263,7 +260,14 @@ public:
 
         std::clog << "OpenGl " << gl_major_ver << '.' << gl_minor_ver << '\n';
 
-        if (gladLoadGLES2Loader(SDL_GL_GetProcAddress) == 0)
+        auto load_gl_pointer = [](const char* function_name)
+        {
+            SDL_FunctionPointer function_ptr =
+                SDL_GL_GetProcAddress(function_name);
+            return reinterpret_cast<void*>(function_ptr);
+        };
+
+        if (gladLoadGLES2Loader(load_gl_pointer) == 0)
         {
             std::clog << "error: failed to initialize glad" << std::endl;
         }
@@ -289,12 +293,12 @@ public:
         {
             const bind* binding = nullptr;
 
-            if (sdl_event.type == SDL_QUIT)
+            if (sdl_event.type == SDL_EVENT_QUIT)
             {
                 e = event::turn_off;
                 return true;
             }
-            else if (sdl_event.type == SDL_KEYDOWN)
+            else if (sdl_event.type == SDL_EVENT_KEY_DOWN)
             {
                 if (check_input(sdl_event, binding))
                 {
@@ -302,7 +306,7 @@ public:
                     return true;
                 }
             }
-            else if (sdl_event.type == SDL_KEYUP)
+            else if (sdl_event.type == SDL_EVENT_KEY_UP)
             {
                 if (check_input(sdl_event, binding))
                 {

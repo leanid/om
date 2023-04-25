@@ -712,24 +712,24 @@ bool pool_event(event& e)
 
         const bind* binding = nullptr;
 
-        if (sdl_event.type == SDL_QUIT)
+        if (sdl_event.type == SDL_EVENT_QUIT)
         {
             e.info      = om::hardware_data{ true };
             e.timestamp = sdl_event.common.timestamp * 0.001;
             e.type      = om::event_type::hardware;
             return true;
         }
-        else if (sdl_event.type == SDL_KEYDOWN || sdl_event.type == SDL_KEYUP)
+        else if (sdl_event.type == SDL_EVENT_KEY_DOWN || sdl_event.type == SDL_EVENT_KEY_UP)
         {
             if (developer_mode && sdl_event.key.keysym.sym == SDLK_BACKSPACE &&
-                sdl_event.type == SDL_KEYUP)
+                sdl_event.type == SDL_EVENT_KEY_UP)
             {
                 reload_game = true;
             }
 
             if (check_input(sdl_event, binding))
             {
-                bool is_down = sdl_event.type == SDL_KEYDOWN;
+                bool is_down = sdl_event.type == SDL_EVENT_KEY_DOWN;
                 e.info       = om::input_data{ binding->om_key, is_down };
                 e.timestamp  = sdl_event.common.timestamp * 0.001;
                 e.type       = om::event_type::input_key;

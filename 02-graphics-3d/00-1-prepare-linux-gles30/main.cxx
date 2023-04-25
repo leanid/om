@@ -74,7 +74,7 @@ int main(int /*argc*/, char* /*argv*/[])
         SDL_Event event;
         while (SDL_PollEvent(&event))
         {
-            if (SDL_QUIT == event.type)
+            if (SDL_EVENT_QUIT == event.type)
             {
                 continue_loop = false;
                 break;

@@ -298,7 +298,7 @@ int main(int /*argc*/, char* /*argv*/[])
                 continue_loop = false;
                 break;
             }
-            else if (SDL_QUIT == event.type)
+            else if (SDL_EVENT_QUIT == event.type)
             {
                 continue_loop = false;
                 break;
@@ -309,7 +309,7 @@ int main(int /*argc*/, char* /*argv*/[])
                 float ypos = event.motion.yrel;
                 mouse_callback(xpos, ypos);
             }
-            else if (SDL_MOUSEWHEEL == event.type)
+            else if (SDL_EVENT_MOUSE_WHEEL == event.type)
             {
                 if (fovy >= 1.0f && fovy <= 45.0f)
                     fovy -= event.wheel.y;
@@ -318,7 +318,7 @@ int main(int /*argc*/, char* /*argv*/[])
                 if (fovy >= 45.0f)
                     fovy = 45.0f;
             }
-            else if (SDL_KEYUP == event.type)
+            else if (SDL_EVENT_KEY_UP == event.type)
             {
                 // OpenGL ES 3.0 did't have glPolygonMode
                 // so we try to emulate it with next render primitive types

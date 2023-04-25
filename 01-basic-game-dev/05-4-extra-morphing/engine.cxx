@@ -483,12 +483,12 @@ public:
         {
             const bind* binding = nullptr;
 
-            if (sdl_event.type == SDL_QUIT)
+            if (sdl_event.type == SDL_EVENT_QUIT)
             {
                 e = event::turn_off;
                 return true;
             }
-            else if (sdl_event.type == SDL_KEYDOWN)
+            else if (sdl_event.type == SDL_EVENT_KEY_DOWN)
             {
                 if (check_input(sdl_event, binding))
                 {
@@ -496,7 +496,7 @@ public:
                     return true;
                 }
             }
-            else if (sdl_event.type == SDL_KEYUP)
+            else if (sdl_event.type == SDL_EVENT_KEY_UP)
             {
                 if (check_input(sdl_event, binding))
                 {

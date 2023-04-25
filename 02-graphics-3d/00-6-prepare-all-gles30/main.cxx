@@ -179,7 +179,7 @@ int main(int /*argc*/, char* /*argv*/[])
                 continue_loop = false;
                 break;
             }
-            else if (SDL_QUIT == event.type)
+            else if (SDL_EVENT_QUIT == event.type)
             {
                 continue_loop = false;
                 break;

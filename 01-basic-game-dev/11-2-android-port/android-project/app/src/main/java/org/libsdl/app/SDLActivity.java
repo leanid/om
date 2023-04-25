@@ -665,7 +665,7 @@ public class SDLActivity extends Activity {
 
     public static boolean isTextInputEvent(KeyEvent event) {
       
-        // Key pressed with Ctrl should be sent as SDL_KEYDOWN/SDL_KEYUP and not SDL_TEXTINPUT
+        // Key pressed with Ctrl should be sent as SDL_EVENT_KEY_DOWN/SDL_EVENT_KEY_UP and not SDL_EVENT_TEXT_INPUT
         if (android.os.Build.VERSION.SDK_INT >= 11) {
             if (event.isCtrlPressed()) {
                 return false;

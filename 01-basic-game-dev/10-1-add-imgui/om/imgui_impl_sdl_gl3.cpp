@@ -287,7 +287,7 @@ bool ImGui_ImplSdlGL3_ProcessEvent(SDL_Event* event)
     ImGuiIO& io = ImGui::GetIO();
     switch (event->type)
     {
-        case SDL_MOUSEWHEEL:
+        case SDL_EVENT_MOUSE_WHEEL:
         {
             if (event->wheel.y > 0)
                 g_MouseWheel = 1;
@@ -295,7 +295,7 @@ bool ImGui_ImplSdlGL3_ProcessEvent(SDL_Event* event)
                 g_MouseWheel = -1;
             return true;
         }
-        case SDL_MOUSEBUTTONDOWN:
+        case SDL_EVENT_MOUSE_BUTTON_DOWN:
         {
             if (event->button.button == SDL_BUTTON_LEFT)
                 g_MousePressed[0] = true;
@@ -305,20 +305,20 @@ bool ImGui_ImplSdlGL3_ProcessEvent(SDL_Event* event)
                 g_MousePressed[2] = true;
             return true;
         }
-        case SDL_TEXTINPUT:
+        case SDL_EVENT_TEXT_INPUT:
         {
             io.AddInputCharactersUTF8(event->text.text);
             return true;
         }
-        case SDL_KEYDOWN:
-        case SDL_KEYUP:
+        case SDL_EVENT_KEY_DOWN:
+        case SDL_EVENT_KEY_UP:
         {
             int key          = event->key.keysym.sym & ~SDLK_SCANCODE_MASK;
-            io.KeysDown[key] = (event->type == SDL_KEYDOWN);
-            io.KeyShift      = ((SDL_GetModState() & KMOD_SHIFT) != 0);
-            io.KeyCtrl       = ((SDL_GetModState() & KMOD_CTRL) != 0);
-            io.KeyAlt        = ((SDL_GetModState() & KMOD_ALT) != 0);
-            io.KeySuper      = ((SDL_GetModState() & KMOD_GUI) != 0);
+            io.KeysDown[key] = (event->type == SDL_EVENT_KEY_DOWN);
+            io.KeyShift      = ((SDL_GetModState() & SDL_KMOD_SHIFT) != 0);
+            io.KeyCtrl       = ((SDL_GetModState() & SDL_KMOD_CTRL) != 0);
+            io.KeyAlt        = ((SDL_GetModState() & SDL_KMOD_ALT) != 0);
+            io.KeySuper      = ((SDL_GetModState() & SDL_KMOD_GUI) != 0);
             return true;
         }
     }

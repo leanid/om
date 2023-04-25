@@ -392,7 +392,7 @@ void scene::pull_system_events(bool& continue_loop, int& current_effect)
             continue_loop = false;
             break;
         }
-        else if (SDL_QUIT == event.type)
+        else if (SDL_EVENT_QUIT == event.type)
         {
             continue_loop = false;
             break;
@@ -404,11 +404,11 @@ void scene::pull_system_events(bool& continue_loop, int& current_effect)
             const float delta_pitch = -1.f * event.motion.yrel * sensivity;
             camera.rotate(delta_yaw, delta_pitch);
         }
-        else if (SDL_MOUSEWHEEL == event.type)
+        else if (SDL_EVENT_MOUSE_WHEEL == event.type)
         {
             camera.zoom(-event.wheel.y);
         }
-        else if (SDL_KEYUP == event.type)
+        else if (SDL_EVENT_KEY_UP == event.type)
         {
             if (event.key.keysym.sym == SDLK_0)
             {

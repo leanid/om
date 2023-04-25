@@ -1,5 +1,6 @@
 #include "engine.hxx"
 
+#include <SDL3/SDL_stdinc.h>
 #include <algorithm>
 #include <array>
 #include <cassert>
@@ -14,9 +15,9 @@
 #include <tuple>
 #include <vector>
 
-#include <SDL.h>
-#include <SDL_opengl.h>
-#include <SDL_opengl_glext.h>
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_opengl.h>
+#include <SDL3/SDL_opengl_glext.h>
 
 #include "picopng.hxx"
 
@@ -52,7 +53,7 @@ static PFNGLBUFFERSUBDATAPROC            glBufferSubData            = nullptr;
 
 template <typename T> static void load_gl_func(const char* func_name, T& result)
 {
-    void* gl_pointer = SDL_GL_GetProcAddress(func_name);
+    SDL_FunctionPointer gl_pointer = SDL_GL_GetProcAddress(func_name);
     if (nullptr == gl_pointer)
     {
         throw std::runtime_error(std::string("can't load GL function") +
@@ -651,12 +652,12 @@ public:
         {
             const bind* binding = nullptr;
 
-            if (sdl_event.type == SDL_QUIT)
+            if (sdl_event.type == SDL_EVENT_QUIT)
             {
                 e = event::turn_off;
                 return true;
             }
-            else if (sdl_event.type == SDL_KEYDOWN)
+            else if (sdl_event.type == SDL_EVENT_KEY_DOWN)
             {
                 if (check_input(sdl_event, binding))
                 {
@@ -664,7 +665,7 @@ public:
                     return true;
                 }
             }
-            else if (sdl_event.type == SDL_KEYUP)
+            else if (sdl_event.type == SDL_EVENT_KEY_UP)
             {
                 if (check_input(sdl_event, binding))
                 {
@@ -1082,12 +1083,7 @@ std::string engine_impl::initialize(std::string_view)
         return serr.str();
     }
 
-    window = SDL_CreateWindow("title",
-                              SDL_WINDOWPOS_CENTERED,
-                              SDL_WINDOWPOS_CENTERED,
-                              800,
-                              600,
-                              ::SDL_WINDOW_OPENGL);
+    window = SDL_CreateWindow("title", 800, 600, ::SDL_WINDOW_OPENGL);
 
     if (window == nullptr)
     {

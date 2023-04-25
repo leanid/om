@@ -1,5 +1,7 @@
 #include "engine.hxx"
 
+#include <SDL3/SDL_mouse.h>
+#include <SDL3/SDL_stdinc.h>
 #include <algorithm>
 #include <array>
 #include <cassert>
@@ -15,10 +17,11 @@
 #include <tuple>
 #include <vector>
 
-#include <SDL.h>
-#include <SDL_opengl.h>
-#include <SDL_opengl_glext.h>
-#include <SDL_syswm.h>
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_opengl.h>
+#include <SDL3/SDL_opengl_glext.h>
+#include <SDL3/SDL_syswm.h>
+#include <SDL3/SDL_video.h>
 
 #include "picopng.hxx"
 
@@ -71,7 +74,7 @@ static PFNGLDETACHSHADERPROC             glDetachShader             = nullptr;
 
 template <typename T> static void load_gl_func(const char* func_name, T& result)
 {
-    void* gl_pointer = SDL_GL_GetProcAddress(func_name);
+    SDL_FunctionPointer gl_pointer = SDL_GL_GetProcAddress(func_name);
     if (nullptr == gl_pointer)
     {
         throw std::runtime_error(std::string("can't load GL function: ") +
@@ -722,12 +725,12 @@ public:
 
             const bind* binding = nullptr;
 
-            if (sdl_event.type == SDL_QUIT)
+            if (sdl_event.type == SDL_EVENT_QUIT)
             {
                 e = event::turn_off;
                 return true;
             }
-            else if (sdl_event.type == SDL_KEYDOWN)
+            else if (sdl_event.type == SDL_EVENT_KEY_DOWN)
             {
                 if (check_input(sdl_event, binding))
                 {
@@ -735,7 +738,7 @@ public:
                     return true;
                 }
             }
-            else if (sdl_event.type == SDL_KEYUP)
+            else if (sdl_event.type == SDL_EVENT_KEY_UP)
             {
                 if (check_input(sdl_event, binding))
                 {
@@ -1254,12 +1257,7 @@ std::string engine_impl::initialize(std::string_view)
         return serr.str();
     }
 
-    window = SDL_CreateWindow("title",
-                              SDL_WINDOWPOS_CENTERED,
-                              SDL_WINDOWPOS_CENTERED,
-                              800,
-                              600,
-                              ::SDL_WINDOW_OPENGL);
+    window = SDL_CreateWindow("title", 800, 600, ::SDL_WINDOW_OPENGL);
 
     if (window == nullptr)
     {
@@ -1625,7 +1623,7 @@ bool ImGui_ImplSdlGL3_ProcessEvent(const SDL_Event* event)
     ImGuiIO& io = ImGui::GetIO();
     switch (event->type)
     {
-        case SDL_MOUSEWHEEL:
+        case SDL_EVENT_MOUSE_WHEEL:
         {
             if (event->wheel.y > 0)
                 g_MouseWheel = 1;
@@ -1633,7 +1631,7 @@ bool ImGui_ImplSdlGL3_ProcessEvent(const SDL_Event* event)
                 g_MouseWheel = -1;
             return true;
         }
-        case SDL_MOUSEBUTTONDOWN:
+        case SDL_EVENT_MOUSE_BUTTON_DOWN:
         {
             if (event->button.button == SDL_BUTTON_LEFT)
                 g_MousePressed[0] = true;
@@ -1643,21 +1641,21 @@ bool ImGui_ImplSdlGL3_ProcessEvent(const SDL_Event* event)
                 g_MousePressed[2] = true;
             return true;
         }
-        case SDL_TEXTINPUT:
+        case SDL_EVENT_TEXT_INPUT:
         {
             io.AddInputCharactersUTF8(event->text.text);
             return true;
         }
-        case SDL_KEYDOWN:
-        case SDL_KEYUP:
+        case SDL_EVENT_KEY_DOWN:
+        case SDL_EVENT_KEY_UP:
         {
             int key          = event->key.keysym.sym & ~SDLK_SCANCODE_MASK;
-            io.KeysDown[key] = (event->type == SDL_KEYDOWN);
+            io.KeysDown[key] = (event->type == SDL_EVENT_KEY_DOWN);
             uint32_t mod_keys_mask = SDL_GetModState();
-            io.KeyShift            = ((mod_keys_mask & KMOD_SHIFT) != 0);
-            io.KeyCtrl             = ((mod_keys_mask & KMOD_CTRL) != 0);
-            io.KeyAlt              = ((mod_keys_mask & KMOD_ALT) != 0);
-            io.KeySuper            = ((mod_keys_mask & KMOD_GUI) != 0);
+            io.KeyShift            = ((mod_keys_mask & SDL_KMOD_SHIFT) != 0);
+            io.KeyCtrl             = ((mod_keys_mask & SDL_KMOD_CTRL) != 0);
+            io.KeyAlt              = ((mod_keys_mask & SDL_KMOD_ALT) != 0);
+            io.KeySuper            = ((mod_keys_mask & SDL_KMOD_GUI) != 0);
             return true;
         }
     }
@@ -1842,7 +1840,7 @@ void ImGui_ImplSdlGL3_NewFrame(SDL_Window* window)
     int w, h;
     int display_w, display_h;
     SDL_GetWindowSize(window, &w, &h);
-    SDL_GL_GetDrawableSize(window, &display_w, &display_h);
+    SDL_GetWindowSizeInPixels(window, &display_w, &display_h);
     io.DisplaySize             = ImVec2(float(w), float(h));
     io.DisplayFramebufferScale = ImVec2(w > 0 ? float(display_w / w) : 0.f,
                                         h > 0 ? float(display_h / h) : 0.f);
@@ -1860,10 +1858,10 @@ void ImGui_ImplSdlGL3_NewFrame(SDL_Window* window)
     // Setup inputs
     // (we already got mouse wheel, keyboard keys & characters from
     // SDL_PollEvent())
-    int    mx, my;
+    float  mx, my;
     Uint32 mouseMask = SDL_GetMouseState(&mx, &my);
     if (SDL_GetWindowFlags(window) & SDL_WINDOW_MOUSE_FOCUS)
-        io.MousePos = ImVec2(float(mx), float(my));
+        io.MousePos = ImVec2(mx, my);
     else
         io.MousePos = ImVec2(-FLT_MAX, -FLT_MAX);
 
@@ -1883,7 +1881,14 @@ void ImGui_ImplSdlGL3_NewFrame(SDL_Window* window)
     g_MouseWheel  = 0.0f;
 
     // Hide OS mouse cursor if ImGui is drawing it
-    SDL_ShowCursor(io.MouseDrawCursor ? 0 : 1);
+    if (io.MouseDrawCursor)
+    {
+        SDL_ShowCursor();
+    }
+    else
+    {
+        SDL_HideCursor();
+    }
 
     // Start the frame. This call will update the io.WantCaptureMouse,
     // io.WantCaptureKeyboard flag that you can use to dispatch inputs (or not)
