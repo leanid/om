@@ -80,9 +80,9 @@ bin/engine --test
 3. To show compile/link/version of installed version
 
     ```sh
-    sdl2-config --version
-    sdl2-config --libs
-    sdl2-config --static-libs
+    sdl3-config --version
+    sdl3-config --libs
+    sdl3-config --static-libs
     ```
 
 ### On Mac OS (with gcc)
