@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <array>
-#undef NDEBUG
 #include <cassert>
 #include <cmath>
 #include <cstddef>
@@ -1413,6 +1412,17 @@ sound_buffer_impl::sound_buffer_impl(std::string_view  path,
         file_audio_spec.format != device_audio_spec.format ||
         file_audio_spec.freq != device_audio_spec.freq)
     {
+        // TODO
+        SDL_ConvertAudioSamples(SDL_AudioFormat src_format,
+                                Uint8           src_channels,
+                                int             src_rate,
+                                const Uint8*    src_data,
+                                int             src_len,
+                                SDL_AudioFormat dst_format,
+                                Uint8           dst_channels,
+                                int             dst_rate,
+                                Uint8**         dst_data,
+                                int*            dst_len);
         SDL_AudioCVT cvt;
         SDL_BuildAudioCVT(&cvt,
                           file_audio_spec.format,
