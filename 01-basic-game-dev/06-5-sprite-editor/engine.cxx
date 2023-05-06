@@ -16,10 +16,10 @@
 #include <unordered_map>
 #include <vector>
 
-#include <SDL.h>
-#include <SDL_opengl.h>
-#include <SDL_opengl_glext.h>
-#include <SDL_syswm.h>
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_opengl.h>
+#include <SDL3/SDL_opengl_glext.h>
+#include <SDL3/SDL_syswm.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #ifdef __GNUG__
@@ -811,7 +811,7 @@ public:
                     return true;
                 }
             }
-            else if (sdl_event.type == SDL_MOUSEBUTTONUP)
+            else if (sdl_event.type == SDL_EVENT_MOUSE_BUTTON_UP)
             {
                 if (sdl_event.button.button == SDL_BUTTON_LEFT)
                 {
@@ -819,7 +819,7 @@ public:
                     return true;
                 }
             }
-            else if (sdl_event.type == SDL_MOUSEMOTION)
+            else if (sdl_event.type == SDL_EVENT_MOUSE_MOTION)
             {
                 e = event::mouse_moved;
                 return true;
@@ -846,10 +846,9 @@ public:
 
     vec2 mouse_pos() final
     {
-        int x;
-        int y;
-        SDL_GetMouseState(&x, &y);
-        return vec2(static_cast<float>(x), static_cast<float>(y));
+        vec2 pos;
+        SDL_GetMouseState(&pos.x, &pos.y);
+        return pos;
     }
 
     texture* create_texture(std::string_view path) final
@@ -1366,12 +1365,7 @@ std::string engine_impl::initialize(std::string_view)
         return serr.str();
     }
 
-    window = SDL_CreateWindow("title",
-                              SDL_WINDOWPOS_CENTERED,
-                              SDL_WINDOWPOS_CENTERED,
-                              1024,
-                              768,
-                              ::SDL_WINDOW_OPENGL);
+    window = SDL_CreateWindow("title", 1024, 768, ::SDL_WINDOW_OPENGL);
 
     if (window == nullptr)
     {
