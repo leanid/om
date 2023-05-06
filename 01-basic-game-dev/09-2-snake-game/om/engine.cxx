@@ -20,15 +20,9 @@
 #include <tuple>
 #include <vector>
 
-#ifdef WIN32
-#include <SDL.h>
-#include <SDL_opengl.h>
-#include <SDL_opengl_glext.h>
-#else
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_opengl.h>
-#include <SDL2/SDL_opengl_glext.h>
-#endif // WIN32
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_opengl.h>
+#include <SDL3/SDL_opengl_glext.h>
 
 // #include "picopng.hxx"
 
@@ -247,8 +241,7 @@ static std::string_view get_sound_format_name(uint16_t format_value)
 {
     static const std::map<uint16_t, std::string_view> format = {
         { AUDIO_U8, "AUDIO_U8" },         { AUDIO_S8, "AUDIO_S8" },
-        { AUDIO_U16LSB, "AUDIO_U16LSB" }, { AUDIO_S16LSB, "AUDIO_S16LSB" },
-        { AUDIO_U16MSB, "AUDIO_U16MSB" }, { AUDIO_S16MSB, "AUDIO_S16MSB" },
+        { AUDIO_S16LSB, "AUDIO_S16LSB" }, { AUDIO_S16MSB, "AUDIO_S16MSB" },
         { AUDIO_S32LSB, "AUDIO_S32LSB" }, { AUDIO_S32MSB, "AUDIO_S32MSB" },
         { AUDIO_F32LSB, "AUDIO_F32LSB" }, { AUDIO_F32MSB, "AUDIO_F32MSB" },
     };
@@ -772,7 +765,8 @@ bool pool_event(event& e)
             e.type      = om::event_type::hardware;
             return true;
         }
-        else if (sdl_event.type == SDL_EVENT_KEY_DOWN || sdl_event.type == SDL_EVENT_KEY_UP)
+        else if (sdl_event.type == SDL_EVENT_KEY_DOWN ||
+                 sdl_event.type == SDL_EVENT_KEY_UP)
         {
             if (developer_mode && sdl_event.key.keysym.sym == SDLK_BACKSPACE &&
                 sdl_event.type == SDL_EVENT_KEY_UP)

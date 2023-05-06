@@ -223,10 +223,9 @@ static std::string_view get_sound_format_name(uint16_t format_value)
 static std::size_t get_sound_format_size(uint16_t format_value)
 {
     static const std::map<uint16_t, std::size_t> format = {
-        { AUDIO_U8, 1 },     { AUDIO_S8, 1 },     { AUDIO_U16LSB, 2 },
-        { AUDIO_S16LSB, 2 }, { AUDIO_U16MSB, 2 }, { AUDIO_S16MSB, 2 },
-        { AUDIO_S32LSB, 4 }, { AUDIO_S32MSB, 4 }, { AUDIO_F32LSB, 4 },
-        { AUDIO_F32MSB, 4 },
+        { AUDIO_U8, 1 },     { AUDIO_S8, 1 },     { AUDIO_S16LSB, 2 },
+        { AUDIO_S16MSB, 2 }, { AUDIO_S32LSB, 4 }, { AUDIO_S32MSB, 4 },
+        { AUDIO_F32LSB, 4 }, { AUDIO_F32MSB, 4 },
     };
 
     auto it = format.find(format_value);

@@ -1,5 +1,8 @@
 #include "engine.hxx"
 
+#include <SDL3/SDL_audio.h>
+#include <SDL3/SDL_init.h>
+#include <SDL3/SDL_stdinc.h>
 #include <algorithm>
 #include <array>
 #include <atomic>
@@ -391,7 +394,7 @@ sound_buffer_impl::~sound_buffer_impl()
 {
     if (!tmp_buf)
     {
-        SDL_FreeWAV(buffer);
+        SDL_free(buffer);
     }
     buffer = nullptr;
     length = 0;
@@ -915,7 +918,7 @@ static void initialize_internal(std::string_view   title,
 
         const int init_result = SDL_Init(
             SDL_INIT_TIMER | SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_EVENTS |
-            SDL_INIT_JOYSTICK | SDL_INIT_HAPTIC | SDL_INIT_GAMECONTROLLER);
+            SDL_INIT_JOYSTICK | SDL_INIT_HAPTIC | SDL_INIT_GAMEPAD);
         if (init_result != 0)
         {
             const char* err_message = SDL_GetError();
@@ -947,12 +950,8 @@ static void initialize_internal(std::string_view   title,
         int window_size_w = static_cast<int>(desired_window_mode.width);
         int window_size_h = static_cast<int>(desired_window_mode.heigth);
 
-        window = SDL_CreateWindow(title.data(),
-                                  SDL_WINDOWPOS_CENTERED,
-                                  SDL_WINDOWPOS_CENTERED,
-                                  window_size_w,
-                                  window_size_h,
-                                  ::SDL_WINDOW_OPENGL);
+        window = SDL_CreateWindow(
+            title.data(), window_size_w, window_size_h, ::SDL_WINDOW_OPENGL);
 
         if (window == nullptr)
         {
@@ -1147,17 +1146,16 @@ static void initialize_internal(std::string_view   title,
         std::cout << std::flush;
 
         // TODO on windows 10 only "directsound" - works for me
-        if (std::string_view("Windows") == SDL_GetPlatform())
-        {
-            const char* selected_audio_driver = SDL_GetAudioDriver(1);
-            std::cout << "selected_audio_driver: " << selected_audio_driver
-                      << std::endl;
-
-            if (0 != SDL_AudioInit(selected_audio_driver))
-            {
-                std::cout << "can't initialize SDL audio\n" << std::flush;
-            }
-        }
+        // if (std::string_view("Windows") == SDL_GetPlatform())
+        // {
+        //     const char* selected_audio_driver = SDL_GetAudioDriver(1);
+        //     std::cout << "selected_audio_driver: " << selected_audio_driver
+        //               << std::endl;
+        //     if (0 != SDL_AudioInit(selected_audio_driver))
+        //     {
+        //         std::cout << "can't initialize SDL audio\n" << std::flush;
+        //     }
+        // }
 
         const char* default_audio_device_name = nullptr;
 
@@ -1199,7 +1197,7 @@ static void initialize_internal(std::string_view   title,
                       << std::flush;
 
             // unpause device and start audio thread
-            SDL_PauseAudioDevice(audio_device, SDL_FALSE);
+            SDL_PlayAudioDevice(audio_device);
         }
     }
 
@@ -1475,7 +1473,8 @@ int initialize_and_start_main_loop()
 #error "add mangled name for your compiler"
 #endif
 
-    void* func_addres = SDL_LoadFunction(so_handle, om_tat_sat_func.data());
+    SDL_FunctionPointer func_addres =
+        SDL_LoadFunction(so_handle, om_tat_sat_func.data());
 
     if (func_addres == nullptr)
     {
