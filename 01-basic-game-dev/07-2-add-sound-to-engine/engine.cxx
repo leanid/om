@@ -1,5 +1,7 @@
 #include "engine.hxx"
 
+#include <SDL3/SDL_error.h>
+#include <SDL3/SDL_stdinc.h>
 #include <algorithm>
 #include <array>
 #include <cassert>
@@ -53,7 +55,7 @@ static PFNGLUNIFORMMATRIX3FVPROC         glUniformMatrix3fv         = nullptr;
 
 template <typename T> static void load_gl_func(const char* func_name, T& result)
 {
-    void* gl_pointer = SDL_GL_GetProcAddress(func_name);
+    SDL_FunctionPointer gl_pointer = SDL_GL_GetProcAddress(func_name);
     if (nullptr == gl_pointer)
     {
         throw std::runtime_error(std::string("can't load GL function") +
@@ -1412,52 +1414,33 @@ sound_buffer_impl::sound_buffer_impl(std::string_view  path,
         file_audio_spec.format != device_audio_spec.format ||
         file_audio_spec.freq != device_audio_spec.freq)
     {
-        // TODO
-        SDL_ConvertAudioSamples(SDL_AudioFormat src_format,
-                                Uint8           src_channels,
-                                int             src_rate,
-                                const Uint8*    src_data,
-                                int             src_len,
-                                SDL_AudioFormat dst_format,
-                                Uint8           dst_channels,
-                                int             dst_rate,
-                                Uint8**         dst_data,
-                                int*            dst_len);
-        SDL_AudioCVT cvt;
-        SDL_BuildAudioCVT(&cvt,
-                          file_audio_spec.format,
-                          file_audio_spec.channels,
-                          file_audio_spec.freq,
-                          device_audio_spec.format,
-                          device_audio_spec.channels,
-                          device_audio_spec.freq);
-        if (cvt.needed) // obviously, this one is always needed.
-        {
-            // read your data into cvt.buf here.
-            cvt.len = static_cast<int>(length);
-            // we have to make buffer for inplace conversion
-            size_t new_buffer_size =
-                static_cast<size_t>(cvt.len * cvt.len_mult);
-            tmp_buf.reset(new uint8_t[new_buffer_size]);
-            uint8_t* buf_tmp = tmp_buf.get();
-            // copy old buffer to new memory
-            std::copy_n(buffer, length, buf_tmp);
-            // cvt.buf has cvt.len_cvt bytes of converted data now.
-            SDL_FreeWAV(buffer);
-            cvt.buf = buf_tmp;
-            if (0 != SDL_ConvertAudio(&cvt))
-            {
-                std::cout << "failed to convert audio from file: " << path
-                          << " to audio device format" << std::endl;
-            }
+        Uint8* output_bytes;
+        int    output_length;
 
-            buffer = tmp_buf.get();
-            length = static_cast<uint32_t>(cvt.len_cvt);
-        }
-        else
+        int convert_status = SDL_ConvertAudioSamples(file_audio_spec.format,
+                                                     file_audio_spec.channels,
+                                                     file_audio_spec.freq,
+                                                     buffer,
+                                                     static_cast<int>(length),
+                                                     device_audio_spec.format,
+                                                     device_audio_spec.channels,
+                                                     device_audio_spec.freq,
+                                                     &output_bytes,
+                                                     &output_length);
+        if (0 != convert_status)
         {
-            // TODO no need to convert buffer, use as is
+            std::stringstream message;
+            message << "failed to convert WAV byte stream: " << SDL_GetError();
+            throw std::runtime_error(message.str());
         }
+
+        SDL_free(buffer);
+        buffer = output_bytes;
+        length = static_cast<uint32_t>(output_length);
+    }
+    else
+    {
+        // no need to convert buffer, use as is
     }
 }
 
@@ -1465,7 +1448,7 @@ sound_buffer_impl::~sound_buffer_impl()
 {
     if (!tmp_buf)
     {
-        SDL_FreeWAV(buffer);
+        SDL_free(buffer);
     }
     buffer = nullptr;
     length = 0;

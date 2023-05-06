@@ -1,5 +1,8 @@
 #include "engine.hxx"
 
+#include <SDL3/SDL_mouse.h>
+#include <SDL3/SDL_stdinc.h>
+#include <SDL3/SDL_video.h>
 #include <algorithm>
 #include <array>
 #include <cassert>
@@ -82,7 +85,7 @@ static PFNGLDETACHSHADERPROC             glDetachShader             = nullptr;
 
 template <typename T> static void load_gl_func(const char* func_name, T& result)
 {
-    void* gl_pointer = SDL_GL_GetProcAddress(func_name);
+    SDL_FunctionPointer gl_pointer = SDL_GL_GetProcAddress(func_name);
     if (nullptr == gl_pointer)
     {
         throw std::runtime_error(std::string("can't load GL function: ") +
@@ -1927,7 +1930,7 @@ void ImGui_ImplSdlGL3_NewFrame(SDL_Window* window)
     int w, h;
     int display_w, display_h;
     SDL_GetWindowSize(window, &w, &h);
-    SDL_GL_GetDrawableSize(window, &display_w, &display_h);
+    SDL_GetWindowSizeInPixels(window, &display_w, &display_h);
     io.DisplaySize             = ImVec2(float(w), float(h));
     io.DisplayFramebufferScale = ImVec2(w > 0 ? float(display_w / w) : 0.f,
                                         h > 0 ? float(display_h / h) : 0.f);
@@ -1942,11 +1945,11 @@ void ImGui_ImplSdlGL3_NewFrame(SDL_Window* window)
     }
     g_Time = current_time;
 
-    int      mx, my;
-    uint32_t mouse_state = SDL_GetMouseState(&mx, &my);
+    ImVec2   mouse_pos(-FLT_MAX, -FLT_MAX);
+    uint32_t mouse_state = SDL_GetMouseState(&mouse_pos.x, &mouse_pos.y);
     if (SDL_GetWindowFlags(window) & SDL_WINDOW_MOUSE_FOCUS)
     {
-        io.MousePos = ImVec2(float(mx), float(my));
+        io.MousePos = mouse_pos;
     }
     else
     {
@@ -1963,5 +1966,14 @@ void ImGui_ImplSdlGL3_NewFrame(SDL_Window* window)
     g_MouseWheel  = 0.0f;
 
     // Hide OS mouse cursor if ImGui is drawing it
-    SDL_ShowCursor(io.MouseDrawCursor ? 0 : 1);
+    if (io.MouseDrawCursor)
+    {
+
+        SDL_ShowCursor();
+    }
+    else
+    {
+
+        SDL_HideCursor();
+    }
 }
