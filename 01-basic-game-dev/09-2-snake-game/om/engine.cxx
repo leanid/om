@@ -1,5 +1,7 @@
 #include "engine.hxx"
 
+#include <SDL3/SDL_audio.h>
+#include <SDL3/SDL_stdinc.h>
 #include <algorithm>
 #include <array>
 #include <atomic>
@@ -64,7 +66,7 @@ static PFNGLUNIFORMMATRIX3FVPROC         glUniformMatrix3fv         = nullptr;
 
 template <typename T> static void load_gl_func(const char* func_name, T& result)
 {
-    void* gl_pointer = SDL_GL_GetProcAddress(func_name);
+    SDL_FunctionPointer gl_pointer = SDL_GL_GetProcAddress(func_name);
     if (nullptr == gl_pointer)
     {
         throw std::runtime_error(std::string("can't load GL function") +
@@ -253,10 +255,9 @@ static std::string_view get_sound_format_name(uint16_t format_value)
 static std::size_t get_sound_format_size(uint16_t format_value)
 {
     static const std::map<uint16_t, std::size_t> format = {
-        { AUDIO_U8, 1 },     { AUDIO_S8, 1 },     { AUDIO_U16LSB, 2 },
-        { AUDIO_S16LSB, 2 }, { AUDIO_U16MSB, 2 }, { AUDIO_S16MSB, 2 },
-        { AUDIO_S32LSB, 4 }, { AUDIO_S32MSB, 4 }, { AUDIO_F32LSB, 4 },
-        { AUDIO_F32MSB, 4 },
+        { AUDIO_U8, 1 },     { AUDIO_S8, 1 },     { AUDIO_S16LSB, 2 },
+        { AUDIO_S16MSB, 2 }, { AUDIO_S32LSB, 4 }, { AUDIO_S32MSB, 4 },
+        { AUDIO_F32LSB, 4 }, { AUDIO_F32MSB, 4 },
     };
 
     auto it = format.find(format_value);
@@ -374,31 +375,33 @@ sound_buffer_impl::sound_buffer_impl(std::string_view  path,
         file_audio_spec.format != device_audio_spec.format ||
         file_audio_spec.freq != device_audio_spec.freq)
     {
-        SDL_AudioCVT cvt;
-        SDL_BuildAudioCVT(&cvt,
-                          file_audio_spec.format,
-                          file_audio_spec.channels,
-                          file_audio_spec.freq,
-                          device_audio_spec.format,
-                          device_audio_spec.channels,
-                          device_audio_spec.freq);
-        SDL_assert(cvt.needed); // obviously, this one is always needed.
-        // read your data into cvt.buf here.
-        cvt.len = length;
-        // we have to make buffer for inplace conversion
-        tmp_buf.reset(new uint8_t[cvt.len * cvt.len_mult]);
-        uint8_t* buf = tmp_buf.get();
-        std::copy_n(buffer, length, buf);
-        cvt.buf = buf;
-        if (0 != SDL_ConvertAudio(&cvt))
+        Uint8* output_bytes;
+        int    output_length;
+
+        int convert_status = SDL_ConvertAudioSamples(file_audio_spec.format,
+                                                     file_audio_spec.channels,
+                                                     file_audio_spec.freq,
+                                                     buffer,
+                                                     static_cast<int>(length),
+                                                     device_audio_spec.format,
+                                                     device_audio_spec.channels,
+                                                     device_audio_spec.freq,
+                                                     &output_bytes,
+                                                     &output_length);
+        if (0 != convert_status)
         {
-            std::cout << "failed to convert audio from file: " << path
-                      << " to audio device format" << std::endl;
+            std::stringstream message;
+            message << "failed to convert WAV byte stream: " << SDL_GetError();
+            throw std::runtime_error(message.str());
         }
-        // cvt.buf has cvt.len_cvt bytes of converted data now.
-        SDL_FreeWAV(buffer);
-        buffer = tmp_buf.get();
-        length = cvt.len_cvt;
+
+        SDL_free(buffer);
+        buffer = output_bytes;
+        length = static_cast<uint32_t>(output_length);
+    }
+    else
+    {
+        // no need to convert buffer, use as is
     }
 }
 
@@ -408,7 +411,7 @@ sound_buffer_impl::~sound_buffer_impl()
 {
     if (!tmp_buf)
     {
-        SDL_FreeWAV(buffer);
+        SDL_free(buffer);
     }
     buffer = nullptr;
     length = 0;
@@ -929,7 +932,7 @@ static void initialize_internal(std::string_view   title,
 
         const int init_result = SDL_Init(
             SDL_INIT_TIMER | SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_EVENTS |
-            SDL_INIT_JOYSTICK | SDL_INIT_HAPTIC | SDL_INIT_GAMECONTROLLER);
+            SDL_INIT_JOYSTICK | SDL_INIT_HAPTIC | SDL_INIT_GAMEPAD);
         if (init_result != 0)
         {
             const char* err_message = SDL_GetError();
@@ -961,12 +964,8 @@ static void initialize_internal(std::string_view   title,
         int window_size_w = static_cast<int>(desired_window_mode.width);
         int window_size_h = static_cast<int>(desired_window_mode.heigth);
 
-        window = SDL_CreateWindow(title.data(),
-                                  SDL_WINDOWPOS_CENTERED,
-                                  SDL_WINDOWPOS_CENTERED,
-                                  window_size_w,
-                                  window_size_h,
-                                  ::SDL_WINDOW_OPENGL);
+        window = SDL_CreateWindow(
+            title.data(), window_size_w, window_size_h, ::SDL_WINDOW_OPENGL);
 
         if (window == nullptr)
         {
@@ -1161,17 +1160,17 @@ static void initialize_internal(std::string_view   title,
         std::cout << std::flush;
 
         // TODO on windows 10 only "directsound" - works for me
-        if (std::string_view("Windows") == SDL_GetPlatform())
-        {
-            const char* selected_audio_driver = SDL_GetAudioDriver(1);
-            std::cout << "selected_audio_driver: " << selected_audio_driver
-                      << std::endl;
+        // if (std::string_view("Windows") == SDL_GetPlatform())
+        // {
+        //     const char* selected_audio_driver = SDL_GetAudioDriver(1);
+        //     std::cout << "selected_audio_driver: " << selected_audio_driver
+        //               << std::endl;
 
-            if (0 != SDL_AudioInit(selected_audio_driver))
-            {
-                std::cout << "can't initialize SDL audio\n" << std::flush;
-            }
-        }
+        //     if (0 != SDL_AudioInit(selected_audio_driver))
+        //     {
+        //         std::cout << "can't initialize SDL audio\n" << std::flush;
+        //     }
+        // }
 
         const char* default_audio_device_name = nullptr;
 
@@ -1213,7 +1212,7 @@ static void initialize_internal(std::string_view   title,
                       << std::flush;
 
             // unpause device
-            SDL_PauseAudioDevice(audio_device, SDL_FALSE);
+            SDL_PlayAudioDevice(audio_device);
         }
     }
 
@@ -1489,7 +1488,8 @@ int initialize_and_start_main_loop()
 #error "add mangled name for your compiler"
 #endif
 
-    void* func_addres = SDL_LoadFunction(so_handle, om_tat_sat_func.data());
+    SDL_FunctionPointer func_addres =
+        SDL_LoadFunction(so_handle, om_tat_sat_func.data());
 
     if (func_addres == nullptr)
     {

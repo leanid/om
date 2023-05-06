@@ -22,7 +22,7 @@
 
 #include "picopng.hxx"
 
-#include <SDL2/SDL.h>
+#include <SDL3/SDL.h>
 
 #include "gles20.hxx"
 
@@ -192,8 +192,7 @@ static std::string_view get_sound_format_name(uint16_t format_value)
 {
     static const std::map<uint16_t, std::string_view> format = {
         { AUDIO_U8, "AUDIO_U8" },         { AUDIO_S8, "AUDIO_S8" },
-        { AUDIO_U16LSB, "AUDIO_U16LSB" }, { AUDIO_S16LSB, "AUDIO_S16LSB" },
-        { AUDIO_U16MSB, "AUDIO_U16MSB" }, { AUDIO_S16MSB, "AUDIO_S16MSB" },
+        { AUDIO_S16LSB, "AUDIO_S16LSB" }, { AUDIO_S16MSB, "AUDIO_S16MSB" },
         { AUDIO_S32LSB, "AUDIO_S32LSB" }, { AUDIO_S32MSB, "AUDIO_S32MSB" },
         { AUDIO_F32LSB, "AUDIO_F32LSB" }, { AUDIO_F32MSB, "AUDIO_F32MSB" },
     };
@@ -205,10 +204,9 @@ static std::string_view get_sound_format_name(uint16_t format_value)
 static std::size_t get_sound_format_size(uint16_t format_value)
 {
     static const std::map<uint16_t, std::size_t> format = {
-        { AUDIO_U8, 1 },     { AUDIO_S8, 1 },     { AUDIO_U16LSB, 2 },
-        { AUDIO_S16LSB, 2 }, { AUDIO_U16MSB, 2 }, { AUDIO_S16MSB, 2 },
-        { AUDIO_S32LSB, 4 }, { AUDIO_S32MSB, 4 }, { AUDIO_F32LSB, 4 },
-        { AUDIO_F32MSB, 4 },
+        { AUDIO_U8, 1 },     { AUDIO_S8, 1 },     { AUDIO_S16LSB, 2 },
+        { AUDIO_S16MSB, 2 }, { AUDIO_S32LSB, 4 }, { AUDIO_S32MSB, 4 },
+        { AUDIO_F32LSB, 4 }, { AUDIO_F32MSB, 4 },
     };
 
     auto it = format.find(format_value);
@@ -719,7 +717,8 @@ bool pool_event(event& e)
             e.type      = om::event_type::hardware;
             return true;
         }
-        else if (sdl_event.type == SDL_EVENT_KEY_DOWN || sdl_event.type == SDL_EVENT_KEY_UP)
+        else if (sdl_event.type == SDL_EVENT_KEY_DOWN ||
+                 sdl_event.type == SDL_EVENT_KEY_UP)
         {
             if (developer_mode && sdl_event.key.keysym.sym == SDLK_BACKSPACE &&
                 sdl_event.type == SDL_EVENT_KEY_UP)
