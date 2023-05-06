@@ -20,14 +20,16 @@
 #include "imgui.h"
 
 // SDL,GL3W
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_syswm.h>
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_mouse.h>
+#include <SDL3/SDL_syswm.h>
+#include <SDL3/SDL_video.h>
 
 #include "gles20.hxx"
-//#include <GL/gl3w.h>    // This example is using gl3w to access OpenGL
-// functions (because it is small). You may use glew/glad/glLoadGen/etc.
-// whatever
-// already works for you.
+// #include <GL/gl3w.h>    // This example is using gl3w to access OpenGL
+//  functions (because it is small). You may use glew/glad/glLoadGen/etc.
+//  whatever
+//  already works for you.
 
 // Data
 static double g_Time            = 0.0f;
@@ -147,8 +149,8 @@ void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
     };
     glUseProgram(g_ShaderHandle);
     glUniform1i(g_AttribLocationTex, 0);
-    glUniformMatrix4fv(g_AttribLocationProjMtx, 1, GL_FALSE,
-                       &ortho_projection[0][0]);
+    glUniformMatrix4fv(
+        g_AttribLocationProjMtx, 1, GL_FALSE, &ortho_projection[0][0]);
 
     OM_GL_CHECK();
 
@@ -164,14 +166,16 @@ void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
         OM_GL_CHECK();
         glBufferData(GL_ARRAY_BUFFER,
                      (GLsizeiptr)cmd_list->VtxBuffer.Size * sizeof(ImDrawVert),
-                     (const GLvoid*)cmd_list->VtxBuffer.Data, GL_STREAM_DRAW);
+                     (const GLvoid*)cmd_list->VtxBuffer.Data,
+                     GL_STREAM_DRAW);
         OM_GL_CHECK();
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_ElementsHandle);
         OM_GL_CHECK();
         glBufferData(GL_ELEMENT_ARRAY_BUFFER,
                      (GLsizeiptr)cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx),
-                     (const GLvoid*)cmd_list->IdxBuffer.Data, GL_STREAM_DRAW);
+                     (const GLvoid*)cmd_list->IdxBuffer.Data,
+                     GL_STREAM_DRAW);
         OM_GL_CHECK();
 
         glEnableVertexAttribArray(g_AttribLocationPosition);
@@ -181,16 +185,25 @@ void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
         glEnableVertexAttribArray(g_AttribLocationColor);
         OM_GL_CHECK();
 
-        glVertexAttribPointer(g_AttribLocationPosition, 2, GL_FLOAT, GL_FALSE,
+        glVertexAttribPointer(g_AttribLocationPosition,
+                              2,
+                              GL_FLOAT,
+                              GL_FALSE,
                               sizeof(ImDrawVert),
                               (GLvoid*)IM_OFFSETOF(ImDrawVert, pos));
         OM_GL_CHECK();
-        glVertexAttribPointer(g_AttribLocationUV, 2, GL_FLOAT, GL_FALSE,
+        glVertexAttribPointer(g_AttribLocationUV,
+                              2,
+                              GL_FLOAT,
+                              GL_FALSE,
                               sizeof(ImDrawVert),
                               (GLvoid*)IM_OFFSETOF(ImDrawVert, uv));
         OM_GL_CHECK();
-        glVertexAttribPointer(g_AttribLocationColor, 4, GL_UNSIGNED_BYTE,
-                              GL_TRUE, sizeof(ImDrawVert),
+        glVertexAttribPointer(g_AttribLocationColor,
+                              4,
+                              GL_UNSIGNED_BYTE,
+                              GL_TRUE,
+                              sizeof(ImDrawVert),
                               (GLvoid*)IM_OFFSETOF(ImDrawVert, col));
         OM_GL_CHECK();
 
@@ -210,7 +223,8 @@ void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
                           (int)(pcmd->ClipRect.z - pcmd->ClipRect.x),
                           (int)(pcmd->ClipRect.w - pcmd->ClipRect.y));
                 OM_GL_CHECK();
-                glDrawElements(GL_TRIANGLES, (GLsizei)pcmd->ElemCount,
+                glDrawElements(GL_TRIANGLES,
+                               (GLsizei)pcmd->ElemCount,
                                sizeof(ImDrawIdx) == 2 ? GL_UNSIGNED_SHORT
                                                       : GL_UNSIGNED_INT,
                                idx_buffer_offset);
@@ -232,8 +246,10 @@ void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
     glBindBuffer(GL_ARRAY_BUFFER, last_array_buffer);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, last_element_array_buffer);
     glBlendEquationSeparate(last_blend_equation_rgb, last_blend_equation_alpha);
-    glBlendFuncSeparate(last_blend_src_rgb, last_blend_dst_rgb,
-                        last_blend_src_alpha, last_blend_dst_alpha);
+    glBlendFuncSeparate(last_blend_src_rgb,
+                        last_blend_dst_rgb,
+                        last_blend_src_alpha,
+                        last_blend_dst_alpha);
     OM_GL_CHECK();
     if (last_enable_blend)
         glEnable(GL_BLEND);
@@ -256,11 +272,15 @@ void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
     // no in opengl es 2.0
     // glPolygonMode(GL_FRONT_AND_BACK, last_polygon_mode[0]);
     OM_GL_CHECK();
-    glViewport(last_viewport[0], last_viewport[1], (GLsizei)last_viewport[2],
+    glViewport(last_viewport[0],
+               last_viewport[1],
+               (GLsizei)last_viewport[2],
                (GLsizei)last_viewport[3]);
     OM_GL_CHECK();
-    glScissor(last_scissor_box[0], last_scissor_box[1],
-              (GLsizei)last_scissor_box[2], (GLsizei)last_scissor_box[3]);
+    glScissor(last_scissor_box[0],
+              last_scissor_box[1],
+              (GLsizei)last_scissor_box[2],
+              (GLsizei)last_scissor_box[3]);
     OM_GL_CHECK();
 }
 
@@ -350,8 +370,15 @@ void ImGui_ImplSdlGL3_CreateFontsTexture()
     OM_GL_CHECK();
     glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
     OM_GL_CHECK();
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA,
-                 GL_UNSIGNED_BYTE, pixels);
+    glTexImage2D(GL_TEXTURE_2D,
+                 0,
+                 GL_RGBA,
+                 width,
+                 height,
+                 0,
+                 GL_RGBA,
+                 GL_UNSIGNED_BYTE,
+                 pixels);
     OM_GL_CHECK();
 
     // Store our identifier
@@ -451,15 +478,24 @@ bool ImGui_ImplSdlGL3_CreateDeviceObjects()
     glEnableVertexAttribArray(g_AttribLocationColor);
     OM_GL_CHECK();
 
-    glVertexAttribPointer(g_AttribLocationPosition, 2, GL_FLOAT, GL_FALSE,
+    glVertexAttribPointer(g_AttribLocationPosition,
+                          2,
+                          GL_FLOAT,
+                          GL_FALSE,
                           sizeof(ImDrawVert),
                           (GLvoid*)IM_OFFSETOF(ImDrawVert, pos));
     OM_GL_CHECK();
-    glVertexAttribPointer(g_AttribLocationUV, 2, GL_FLOAT, GL_FALSE,
+    glVertexAttribPointer(g_AttribLocationUV,
+                          2,
+                          GL_FLOAT,
+                          GL_FALSE,
                           sizeof(ImDrawVert),
                           (GLvoid*)IM_OFFSETOF(ImDrawVert, uv));
     OM_GL_CHECK();
-    glVertexAttribPointer(g_AttribLocationColor, 4, GL_UNSIGNED_BYTE, GL_TRUE,
+    glVertexAttribPointer(g_AttribLocationColor,
+                          4,
+                          GL_UNSIGNED_BYTE,
+                          GL_TRUE,
                           sizeof(ImDrawVert),
                           (GLvoid*)IM_OFFSETOF(ImDrawVert, col));
     OM_GL_CHECK();
@@ -576,7 +612,7 @@ void ImGui_ImplSdlGL3_NewFrame(SDL_Window* window)
     int w, h;
     int display_w, display_h;
     SDL_GetWindowSize(window, &w, &h);
-    SDL_GL_GetDrawableSize(window, &display_w, &display_h);
+    SDL_GetWindowSizeInPixels(window, &display_w, &display_h);
     io.DisplaySize             = ImVec2((float)w, (float)h);
     io.DisplayFramebufferScale = ImVec2(w > 0 ? ((float)display_w / w) : 0,
                                         h > 0 ? ((float)display_h / h) : 0);
@@ -591,19 +627,19 @@ void ImGui_ImplSdlGL3_NewFrame(SDL_Window* window)
     // Setup inputs
     // (we already got mouse wheel, keyboard keys & characters from
     // SDL_PollEvent())
-    int    mx, my;
+    float  mx, my;
     Uint32 mouseMask = SDL_GetMouseState(&mx, &my);
     if (SDL_GetWindowFlags(window) & SDL_WINDOW_MOUSE_FOCUS)
-        io.MousePos = ImVec2((float)mx, (float)my);
+        io.MousePos = ImVec2(mx, my);
     else
         io.MousePos = ImVec2(-FLT_MAX, -FLT_MAX);
 
-    io.MouseDown[0] = g_MousePressed[0] ||
-                      (mouseMask & SDL_BUTTON(SDL_BUTTON_LEFT)) !=
-                          0; // If a mouse press event came, always pass it as
-                             // "mouse held this frame", so we don't miss
-                             // click-release events that are shorter than 1
-                             // frame.
+    io.MouseDown[0] =
+        g_MousePressed[0] || (mouseMask & SDL_BUTTON(SDL_BUTTON_LEFT)) !=
+                                 0; // If a mouse press event came, always pass
+                                    // it as "mouse held this frame", so we
+                                    // don't miss click-release events that are
+                                    // shorter than 1 frame.
     io.MouseDown[1] =
         g_MousePressed[1] || (mouseMask & SDL_BUTTON(SDL_BUTTON_RIGHT)) != 0;
     io.MouseDown[2] =
@@ -614,7 +650,14 @@ void ImGui_ImplSdlGL3_NewFrame(SDL_Window* window)
     g_MouseWheel  = 0.0f;
 
     // Hide OS mouse cursor if ImGui is drawing it
-    SDL_ShowCursor(io.MouseDrawCursor ? 0 : 1);
+    if (io.MouseDrawCursor)
+    {
+        SDL_HideCursor();
+    }
+    else
+    {
+        SDL_ShowCursor();
+    }
 
     // Start the frame. This call will update the io.WantCaptureMouse,
     // io.WantCaptureKeyboard flag that you can use to dispatch inputs (or not)
