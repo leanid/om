@@ -39,7 +39,8 @@ int main(int /*argc*/, char* /*argv*/[])
             }
         }
 
-        std::ifstream file("vertexes.txt");
+        std::ifstream file(
+            "./01-basic-game-dev/04-3-opengl-renderdoc-check/vertexes.txt");
         if (!file)
         {
             std::cerr << "can't open file: vertexes.txt" << std::endl;

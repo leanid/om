@@ -39,7 +39,8 @@ int main(int /*argc*/, char* /*argv*/[])
             }
         }
 
-        std::ifstream file("vertexes.txt");
+        std::ifstream file(
+            "./01-basic-game-dev/04-2-opengl-triangle/vertexes.txt");
         assert(!!file);
 
         om::triangle tr;

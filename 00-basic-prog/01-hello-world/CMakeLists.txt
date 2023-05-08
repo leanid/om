@@ -19,8 +19,9 @@ message(VERBOSE "${CMAKE_SYSTEM_NAME}")
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     message(VERBOSE "use gcc/linux specific code here")
-    # install static version of standard libraries >sudo dnf install
-    # libstdc++-static glibc-static
+    # ~~~
+    # install static version of standard libraries
+    # >sudo dnf install libstdc++-static glibc-static
     add_executable(hello_cout_static cout_main.cxx)
     target_link_options(hello_cout_static PRIVATE -static)
     target_compile_features(hello_cout_static PRIVATE cxx_std_20)
@@ -35,7 +36,8 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     target_link_options(
         hello_asm
         PRIVATE
-        -z noexecstack # fix linking warning on g++13
+        -z
+        noexecstack # fix linking warning on g++13
         -nostartfiles
         -nostdlib)
 endif()

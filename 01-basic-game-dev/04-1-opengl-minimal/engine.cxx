@@ -463,7 +463,7 @@ callback_opengl_debug(GLenum                       source,
 
     if (num_chars > 0)
     {
-        // TODO use https://en.cppreference.com/w/cpp/io/basic_osyncstream
+        // Use https://en.cppreference.com/w/cpp/io/basic_osyncstream
         // to fix possible data races
         // now we use GL_DEBUG_OUTPUT_SYNCHRONOUS to garantie call in main
         // thread

@@ -2,7 +2,6 @@
 # Options affecting listfile parsing
 # ----------------------------------
 with section("parse"):
-
     # Specify structure for custom cmake functions
     additional_commands = {
         "foo": {
@@ -24,7 +23,6 @@ with section("parse"):
 # Options affecting formatting.
 # -----------------------------
 with section("format"):
-
     # Disable formatting entirely, making cmake-format a no-op
     disable = False
 
@@ -49,7 +47,7 @@ with section("format"):
 
     # If an argument group contains more than this many sub-groups (parg or kwarg
     # groups) then force it to a vertical layout.
-    max_subgroups_hwrap = 5
+    max_subgroups_hwrap = 3
 
     # If a positional argument group contains more than this many arguments, then
     # force it to a vertical layout.
@@ -86,7 +84,7 @@ with section("format"):
 
     # If a candidate layout is wrapped horizontally but it exceeds this many
     # lines, then reject the layout.
-    max_lines_hwrap = 5
+    max_lines_hwrap = 10
 
     # What style line endings to use in the output.
     line_ending = "unix"
@@ -122,7 +120,6 @@ with section("format"):
 # Options affecting comment reflow and formatting.
 # ------------------------------------------------
 with section("markup"):
-
     # What character to use for bulleted lists
     bullet_char = "*"
 
@@ -166,7 +163,6 @@ with section("markup"):
 # Options affecting the linter
 # ----------------------------
 with section("lint"):
-
     # a list of lint codes to disable
     disabled_codes = []
 
@@ -223,7 +219,6 @@ with section("lint"):
 # Options affecting file encoding
 # -------------------------------
 with section("encode"):
-
     # If true, emit the unicode byte-order mark (BOM) at the start of the file
     emit_byteorder_mark = False
 
@@ -238,7 +233,6 @@ with section("encode"):
 # Miscellaneous configurations options.
 # -------------------------------------
 with section("misc"):
-
     # A dictionary containing any per-command configuration overrides. Currently
     # only `command_case` is supported.
     per_command = {}
