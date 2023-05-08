@@ -8,7 +8,7 @@ target_compile_features(engine-04-2 PUBLIC cxx_std_20)
 target_compile_definitions(
     engine-04-2
     PRIVATE
-        $<$<PLATFORM_ID:Windows>:OM_DECLSPEC=__declspec(dllexport)>)
+        $<$<PLATFORM_ID:Windows>:OM_DECLSPEC=__declspec(dllexport) >)
 # cmake-format: on
 
 find_package(SDL3 REQUIRED)
