@@ -22,6 +22,7 @@ add_subdirectory(04-3-opengl-renderdoc-check)
 add_subdirectory(05-1-vertex-morphing)
 add_subdirectory(05-2-texture-loading)
 add_subdirectory(05-3-graphics-update)
+add_subdirectory(05-4-extra-morphing)
 
 add_subdirectory(06-1-matrix-and-vector)
 add_subdirectory(06-2-shader-multiply-matrix)

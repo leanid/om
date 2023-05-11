@@ -51,11 +51,13 @@ om::tri0 to_om_triangle(const loader_obj&       mesh_data,
 
 int main(int /*argc*/, char* /*argv*/[])
 {
-    std::ifstream file("circle.obj", std::ios::binary);
+    std::ifstream file("./01-basic-game-dev/05-4-extra-morphing/circle.obj",
+                       std::ios::binary);
 
     loader_obj circle_data(file);
 
-    std::ifstream file_next("hart.obj", std::ios::binary);
+    std::ifstream file_next("./01-basic-game-dev/05-4-extra-morphing/hart.obj",
+                            std::ios::binary);
     loader_obj    hart_data(file_next);
 
     // for morphing animation
@@ -72,7 +74,8 @@ int main(int /*argc*/, char* /*argv*/[])
         return EXIT_FAILURE;
     }
 
-    om::texture* texture = engine->create_texture("tank.png");
+    om::texture* texture = engine->create_texture(
+        "./01-basic-game-dev/05-4-extra-morphing/tank.png");
     if (nullptr == texture)
     {
         std::cerr << "failed load texture\n";

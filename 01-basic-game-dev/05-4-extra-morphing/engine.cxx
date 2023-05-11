@@ -1,5 +1,6 @@
 #include "engine.hxx"
 
+#include <SDL3/SDL_stdinc.h>
 #include <algorithm>
 #include <array>
 #include <cassert>
@@ -13,15 +14,9 @@
 #include <tuple>
 #include <vector>
 
-#if __has_include(<SDL.h>)
-#include <SDL.h>
-#include <SDL_opengl.h>
-#include <SDL_opengl_glext.h>
-#else
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_opengl.h>
-#include <SDL2/SDL_opengl_glext.h>
-#endif
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_opengl.h>
+#include <SDL3/SDL_opengl_glext.h>
 
 #include "picopng.hxx"
 
@@ -52,7 +47,7 @@ static PFNGLUNIFORM4FVPROC               glUniform4fv               = nullptr;
 
 template <typename T> static void load_gl_func(const char* func_name, T& result)
 {
-    void* gl_pointer = SDL_GL_GetProcAddress(func_name);
+    SDL_FunctionPointer gl_pointer = SDL_GL_GetProcAddress(func_name);
     if (nullptr == gl_pointer)
     {
         throw std::runtime_error(std::string("can't load GL function") +
@@ -812,12 +807,7 @@ std::string engine_impl::initialize(std::string_view)
         return serr.str();
     }
 
-    window = SDL_CreateWindow("title",
-                              SDL_WINDOWPOS_CENTERED,
-                              SDL_WINDOWPOS_CENTERED,
-                              640,
-                              480,
-                              ::SDL_WINDOW_OPENGL);
+    window = SDL_CreateWindow("title", 640, 480, ::SDL_WINDOW_OPENGL);
 
     if (window == nullptr)
     {

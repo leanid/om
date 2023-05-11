@@ -43,7 +43,8 @@ int main(int /*argc*/, char* /*argv*/[])
         return EXIT_FAILURE;
     }
 
-    std::ifstream file("vertexes.txt", std::ios_base::binary);
+    std::ifstream file("./01-basic-game-dev/05-1-vertex-morphing/vertexes.txt",
+                       std::ios_base::binary);
     assert(!!file);
 
     om::triangle tr1q;
