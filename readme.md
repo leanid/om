@@ -89,7 +89,7 @@ bin/engine --test
 
 #### using g++ from Homebrew (need c++17 support)
 
-On macOS for c++17 compiler you have to install latest gcc from
+On Mac OS X for c++17 compiler you have to install latest gcc from
 Homebrew and then use it
 
 ```sh
