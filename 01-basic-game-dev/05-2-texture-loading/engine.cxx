@@ -505,7 +505,7 @@ void main()
         int                    error = decodePNG(image,
                               w,
                               h,
-                              &png_file_in_memory[0],
+                              png_file_in_memory.data(),
                               png_file_in_memory.size(),
                               false);
 
