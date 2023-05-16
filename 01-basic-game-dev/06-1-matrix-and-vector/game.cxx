@@ -39,7 +39,8 @@ int main(int /*argc*/, char* /*argv*/[])
         return EXIT_FAILURE;
     }
 
-    om::texture* texture = engine->create_texture("tank.png");
+    om::texture* texture = engine->create_texture(
+        "./01-basic-game-dev/06-1-matrix-and-vector/tank.png");
     if (nullptr == texture)
     {
         std::cerr << "failed load texture\n";
@@ -81,7 +82,8 @@ int main(int /*argc*/, char* /*argv*/[])
 
         if (current_shader == 0)
         {
-            std::ifstream file("vert_pos.txt");
+            std::ifstream file(
+                "./01-basic-game-dev/06-1-matrix-and-vector/vert_pos.txt");
             assert(!!file);
 
             om::tri0 tr1;
@@ -103,7 +105,8 @@ int main(int /*argc*/, char* /*argv*/[])
 
         if (current_shader == 1)
         {
-            std::ifstream file("vert_pos_color.txt");
+            std::ifstream file("./01-basic-game-dev/06-1-matrix-and-vector/"
+                               "vert_pos_color.txt");
             assert(!!file);
 
             om::tri1 tr1;
@@ -117,7 +120,8 @@ int main(int /*argc*/, char* /*argv*/[])
 
         if (current_shader == 2)
         {
-            std::ifstream file("vert_tex_color.txt");
+            std::ifstream file("./01-basic-game-dev/06-1-matrix-and-vector/"
+                               "vert_tex_color.txt");
             assert(!!file);
 
             om::tri2 tr1;
@@ -130,13 +134,11 @@ int main(int /*argc*/, char* /*argv*/[])
             float c    = std::cos(time);
 
             // animate one triangle texture coordinates
-            /*
-            for (auto& v : tr1.v)
-            {
-                v.uv.x += c;
-                v.uv.y += s;
-            }
-*/
+            // for (auto& v : tr1.v)
+            // {
+            //     v.uv.x += c;
+            //     v.uv.y += s;
+            // }
 
             //          engine->render(tr1, texture);
 
@@ -146,9 +148,9 @@ int main(int /*argc*/, char* /*argv*/[])
             aspect.col1.x = 0.f;
             aspect.col1.y = 1.f;
 
-            om::mat2 m = om::mat2::rotation(time * 0.5f) * aspect;
-            /**
-                     om::mat2::scale(std::sin(time))*/
+            om::mat2 scale = om::mat2::scale(2.0);
+
+            om::mat2 m = scale * om::mat2::rotation(time * 0.5f) * aspect;
 
             for (auto& v : tr2.v)
             {
