@@ -88,12 +88,12 @@ int main(int /*argc*/, char* /*argv*/[])
         else if (engine->is_key_down(om::keys::up))
         {
             current_tank_pos.y += 0.01f;
-            current_tank_direction = 0.f;
+            current_tank_direction = -pi;
         }
         else if (engine->is_key_down(om::keys::down))
         {
             current_tank_pos.y -= 0.01f;
-            current_tank_direction = -pi;
+            current_tank_direction = 0;
         }
 
         om::mat2x3 move   = om::mat2x3::move(current_tank_pos);
