@@ -22,7 +22,8 @@ int main(int /*argc*/, char* /*argv*/[])
         return EXIT_FAILURE;
     }
 
-    om::texture* texture = engine->create_texture("tank.png");
+    om::texture* texture =
+        engine->create_texture("01-basic-game-dev/06-4-add-imgui/tank.png");
     if (nullptr == texture)
     {
         std::cerr << "failed load texture\n";
@@ -31,7 +32,7 @@ int main(int /*argc*/, char* /*argv*/[])
 
     om::vertex_buffer* vertex_buf = nullptr;
 
-    std::ifstream file("vert_tex_color.txt");
+    std::ifstream file("01-basic-game-dev/06-4-add-imgui/vert_tex_color.txt");
     if (!file)
     {
         std::cerr << "can't load vert_tex_color.txt\n";
