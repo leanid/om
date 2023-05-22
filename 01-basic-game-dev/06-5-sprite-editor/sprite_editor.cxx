@@ -88,7 +88,8 @@ int main(int /*argc*/, char* /*argv*/[])
     vector<sprite> sprites_for_animation;
     ifstream       ifile;
     ifile.exceptions(ios::badbit | ios::failbit);
-    ifile.open("spr_cache.yaml", ios::binary);
+    ifile.open("./01-basic-game-dev/06-5-sprite-editor/spr_cache.yaml",
+               ios::binary);
     loader_of_sprites.load_sprites(sprites_for_animation, ifile, engine);
 
     ani2d animation;
@@ -97,7 +98,9 @@ int main(int /*argc*/, char* /*argv*/[])
 
     ifstream explosion_file;
     explosion_file.exceptions(ios::badbit | ios::failbit);
-    explosion_file.open("res/explosion.yaml", ios::binary);
+    explosion_file.open(
+        "./01-basic-game-dev/06-5-sprite-editor/res/explosion.yaml",
+        ios::binary);
     vector<sprite> explosion_sprites;
     loader_of_sprites.load_sprites(explosion_sprites, explosion_file, engine);
 

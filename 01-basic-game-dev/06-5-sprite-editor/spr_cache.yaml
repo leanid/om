@@ -1,12 +1,12 @@
 id:         tank01
-texture:    tank.png
+texture:    01-basic-game-dev/06-5-sprite-editor/tank.png
 uv_rect:    0.000   0.000   1.000   1.000  
 world_pos:  0.000 0.000
 size:       1.000 1.000
 angle:      0.000
 
 id:         tank02
-texture:    tank.png
+texture:    01-basic-game-dev/06-5-sprite-editor/tank.png
 uv_rect:    0.000   0.000   1.000   1.000
 world_pos:  0.000 0.000
 size:       1.000 1.000

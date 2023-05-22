@@ -1,47 +1,47 @@
 id:         exp00
-texture:    res/explosion00.png
+texture:    01-basic-game-dev/06-5-sprite-editor/res/explosion00.png
 uv_rect:    0.000   0.000   1.000   1.000  
 world_pos:  0.000 0.000
 size:       1.000 1.000
 angle:      0.000
 
 id:         exp01
-texture:    res/explosion01.png
+texture:    01-basic-game-dev/06-5-sprite-editor/res/explosion01.png
 uv_rect:    0.000   0.000   1.000   1.000  
 world_pos:  0.000 0.000
 size:       1.000 1.000
 angle:      0.000
 
 id:         exp02
-texture:    res/explosion02.png
+texture:    01-basic-game-dev/06-5-sprite-editor/res/explosion02.png
 uv_rect:    0.000   0.000   1.000   1.000  
 world_pos:  0.000 0.000
 size:       1.000 1.000
 angle:      0.000
 
 id:         exp03
-texture:    res/explosion03.png
+texture:    01-basic-game-dev/06-5-sprite-editor/res/explosion03.png
 uv_rect:    0.000   0.000   1.000   1.000  
 world_pos:  0.000 0.000
 size:       1.000 1.000
 angle:      0.000
 
 id:         exp04
-texture:    res/explosion04.png
+texture:    01-basic-game-dev/06-5-sprite-editor/res/explosion04.png
 uv_rect:    0.000   0.000   1.000   1.000  
 world_pos:  0.000 0.000
 size:       1.000 1.000
 angle:      0.000
 
 id:         exp05
-texture:    res/explosion05.png
+texture:    01-basic-game-dev/06-5-sprite-editor/res/explosion05.png
 uv_rect:    0.000   0.000   1.000   1.000  
 world_pos:  0.000 0.000
 size:       1.000 1.000
 angle:      0.000
 
 id:         exp06
-texture:    res/explosion06.png
+texture:    01-basic-game-dev/06-5-sprite-editor/res/explosion06.png
 uv_rect:    0.000   0.000   1.000   1.000  
 world_pos:  0.000 0.000
 size:       1.000 1.000
