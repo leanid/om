@@ -32,9 +32,3 @@ set_target_properties(
     game-05-4
     PROPERTIES MACOSX_BUNDLE TRUE MACOSX_FRAMEWORK_IDENTIFIER om.game-05-4
                RESOURCE "${RESOURCE_FILES}")
-
-install(
-    TARGETS engine-05-4 game-05-4
-    RUNTIME DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../../bin/tests
-    LIBRARY DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../../bin/tests
-    ARCHIVE DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../../bin/tests)
