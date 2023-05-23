@@ -1968,12 +1968,10 @@ void ImGui_ImplSdlGL3_NewFrame(SDL_Window* window)
     // Hide OS mouse cursor if ImGui is drawing it
     if (io.MouseDrawCursor)
     {
-
-        SDL_ShowCursor();
+        SDL_HideCursor();
     }
     else
     {
-
-        SDL_HideCursor();
+        SDL_ShowCursor();
     }
 }
