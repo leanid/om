@@ -1,4 +1,5 @@
 
+#include <exception>
 #define CATCH_CONFIG_MAIN
 
 #include "catch.hpp"
@@ -19,8 +20,10 @@ TEST_CASE("save and load one sprite")
     const om::vec2 pos(0.123f, 0.123f);
     const om::vec2 size(1.0f, 0.3f);
     const float    angle{ 270 };
-    const string   texture_name{ "tank.png" };
-    const string   tank_name{ "tank_spr" };
+    const string   texture_name{
+        "01-basic-game-dev/06-5-sprite-editor/tank.png"
+    };
+    const string tank_name{ "tank_spr" };
 
     stringstream ss;
     ss << left << setw(12) << "id: " << tank_name << '\n';
@@ -42,23 +45,46 @@ TEST_CASE("save and load one sprite")
 
     om::engine&    texture_cache = *e;
     vector<sprite> sprites;
-    loader.load_sprites(sprites, ss, texture_cache);
+    try
+    {
+        loader.load_sprites(sprites, ss, texture_cache);
+    }
+    catch (const exception& e)
+    {
+        cerr << e.what() << endl;
+        REQUIRE(false);
+    }
 
     cout << ss.str() << endl << "num_sprites: " << sprites.size() << endl;
 
-    if (sprites.empty())
-    {
-        REQUIRE(false);
-        return;
-    }
+    REQUIRE(sprites.size() == 1);
+
     const sprite& spr_ref = sprites.at(0);
     sprite        spr(spr_ref);
 
     stringstream ssave;
-    loader.save_sprites(sprites, ssave);
+
+    try
+    {
+        loader.save_sprites(sprites, ssave);
+        cout << ssave.str() << endl;
+    }
+    catch (const exception& e)
+    {
+        cerr << e.what() << endl;
+        REQUIRE(false);
+    }
     // now load from just saved stream back
     vector<sprite> sprites_saved;
-    loader.load_sprites(sprites_saved, ssave, texture_cache);
+    try
+    {
+        loader.load_sprites(sprites_saved, ssave, texture_cache);
+    }
+    catch (const exception& e)
+    {
+        cerr << e.what() << endl;
+        REQUIRE(false);
+    }
 
     REQUIRE(sprites.size() == 1);
     REQUIRE(spr.uv_rect() == r);
