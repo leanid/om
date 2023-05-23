@@ -1746,9 +1746,8 @@ bool ImGui_ImplSdlGL3_Init(SDL_Window* window)
     // g_Window    = window;
 
     // Setup back-end capabilities flags
-    //    io.BackendFlags |=
-    //        ImGuiBackendFlags_HasMouseCursors; // We can honor
-    //        GetMouseCursor()
+    // io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors; // We can honor
+    // GetMouseCursor()
     //                                           // values (optional)
     //    io.BackendFlags |=
     //        ImGuiBackendFlags_HasSetMousePos; // We can honor
@@ -1883,11 +1882,11 @@ void ImGui_ImplSdlGL3_NewFrame(SDL_Window* window)
     // Hide OS mouse cursor if ImGui is drawing it
     if (io.MouseDrawCursor)
     {
-        SDL_ShowCursor();
+        SDL_HideCursor();
     }
     else
     {
-        SDL_HideCursor();
+        SDL_ShowCursor();
     }
 
     // Start the frame. This call will update the io.WantCaptureMouse,
