@@ -4,8 +4,6 @@
 #include <iomanip>
 #include <iostream>
 
-sprite_reader::sprite_reader() {}
-
 void sprite_reader::load_sprites(std::vector<sprite>& sprites,
                                  std::istream&        in,
                                  om::engine&          texture_cache)
@@ -59,7 +57,6 @@ void sprite_reader::load_sprites(std::vector<sprite>& sprites,
 
         in >> std::ws;
     }
-    return;
 }
 
 void sprite_reader::save_sprites(const std::vector<sprite>& list,

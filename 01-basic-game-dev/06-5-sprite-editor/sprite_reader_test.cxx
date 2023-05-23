@@ -14,8 +14,6 @@ TEST_CASE("save and load one sprite")
 {
     using namespace std;
 
-    sprite_reader loader;
-
     const rect     r{ { 0.3f, 0.3f }, { 0.5f, 0.5f } };
     const om::vec2 pos(0.123f, 0.123f);
     const om::vec2 size(1.0f, 0.3f);
@@ -47,7 +45,7 @@ TEST_CASE("save and load one sprite")
     vector<sprite> sprites;
     try
     {
-        loader.load_sprites(sprites, ss, texture_cache);
+        sprite_reader::load_sprites(sprites, ss, texture_cache);
     }
     catch (const exception& e)
     {
@@ -62,12 +60,12 @@ TEST_CASE("save and load one sprite")
     const sprite& spr_ref = sprites.at(0);
     sprite        spr(spr_ref);
 
-    stringstream ssave;
+    stringstream out;
 
     try
     {
-        loader.save_sprites(sprites, ssave);
-        cout << ssave.str() << endl;
+        sprite_reader::save_sprites(sprites, out);
+        cout << out.str() << endl;
     }
     catch (const exception& e)
     {
@@ -78,7 +76,7 @@ TEST_CASE("save and load one sprite")
     vector<sprite> sprites_saved;
     try
     {
-        loader.load_sprites(sprites_saved, ssave, texture_cache);
+        sprite_reader::load_sprites(sprites_saved, out, texture_cache);
     }
     catch (const exception& e)
     {

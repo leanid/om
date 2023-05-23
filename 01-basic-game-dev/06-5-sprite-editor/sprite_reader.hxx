@@ -5,11 +5,8 @@
 
 #include "sprite.hxx"
 
-class sprite_reader
+namespace sprite_reader
 {
-public:
-    sprite_reader();
-
     void load_sprites(std::vector<sprite>&,
                       std::istream& in,
                       om::engine&   texture_cache);
