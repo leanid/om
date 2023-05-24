@@ -84,13 +84,12 @@ int main(int /*argc*/, char* /*argv*/[])
     om::vec2     spr_size       = {};
     float        angle          = 0.f;
 
-    sprite_reader  loader_of_sprites;
     vector<sprite> sprites_for_animation;
     ifstream       ifile;
     ifile.exceptions(ios::badbit | ios::failbit);
     ifile.open("./01-basic-game-dev/06-5-sprite-editor/spr_cache.yaml",
                ios::binary);
-    loader_of_sprites.load_sprites(sprites_for_animation, ifile, engine);
+    sprite_reader::load_sprites(sprites_for_animation, ifile, engine);
 
     ani2d animation;
     animation.sprites(sprites_for_animation);
@@ -102,7 +101,7 @@ int main(int /*argc*/, char* /*argv*/[])
         "./01-basic-game-dev/06-5-sprite-editor/res/explosion.yaml",
         ios::binary);
     vector<sprite> explosion_sprites;
-    loader_of_sprites.load_sprites(explosion_sprites, explosion_file, engine);
+    sprite_reader::load_sprites(explosion_sprites, explosion_file, engine);
 
     ani2d explosion_ani;
     explosion_ani.sprites(explosion_sprites);
@@ -303,11 +302,10 @@ int main(int /*argc*/, char* /*argv*/[])
                                              spr_size,
                                              angle);
 
-                        sprite_reader reader;
-                        ofstream      fout;
+                        ofstream fout;
                         fout.exceptions(ios::badbit);
                         fout.open(texture_cache_file.data(), ios::binary);
-                        reader.save_sprites(sprites, fout);
+                        sprite_reader::save_sprites(sprites, fout);
                     }
                 }
             }
