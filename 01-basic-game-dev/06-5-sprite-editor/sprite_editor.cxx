@@ -89,7 +89,7 @@ int main(int /*argc*/, char* /*argv*/[])
     ifile.exceptions(ios::badbit | ios::failbit);
     ifile.open("./01-basic-game-dev/06-5-sprite-editor/spr_cache.yaml",
                ios::binary);
-    sprite_reader::load_sprites(sprites_for_animation, ifile, engine);
+    sprite_io::load(sprites_for_animation, ifile, engine);
 
     ani2d animation;
     animation.sprites(sprites_for_animation);
@@ -101,7 +101,7 @@ int main(int /*argc*/, char* /*argv*/[])
         "./01-basic-game-dev/06-5-sprite-editor/res/explosion.yaml",
         ios::binary);
     vector<sprite> explosion_sprites;
-    sprite_reader::load_sprites(explosion_sprites, explosion_file, engine);
+    sprite_io::load(explosion_sprites, explosion_file, engine);
 
     ani2d explosion_ani;
     explosion_ani.sprites(explosion_sprites);
@@ -305,7 +305,7 @@ int main(int /*argc*/, char* /*argv*/[])
                         ofstream fout;
                         fout.exceptions(ios::badbit);
                         fout.open(texture_cache_file.data(), ios::binary);
-                        sprite_reader::save_sprites(sprites, fout);
+                        sprite_io::save(sprites, fout);
                     }
                 }
             }

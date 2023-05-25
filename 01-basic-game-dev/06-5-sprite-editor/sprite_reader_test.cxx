@@ -45,7 +45,7 @@ TEST_CASE("save and load one sprite")
     vector<sprite> sprites;
     try
     {
-        sprite_reader::load_sprites(sprites, ss, texture_cache);
+        sprite_io::load(sprites, ss, texture_cache);
     }
     catch (const exception& e)
     {
@@ -64,7 +64,7 @@ TEST_CASE("save and load one sprite")
 
     try
     {
-        sprite_reader::save_sprites(sprites, out);
+        sprite_io::save(sprites, out);
         cout << out.str() << endl;
     }
     catch (const exception& e)
@@ -76,7 +76,7 @@ TEST_CASE("save and load one sprite")
     vector<sprite> sprites_saved;
     try
     {
-        sprite_reader::load_sprites(sprites_saved, out, texture_cache);
+        sprite_io::load(sprites_saved, out, texture_cache);
     }
     catch (const exception& e)
     {

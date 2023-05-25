@@ -4,9 +4,9 @@
 #include <iomanip>
 #include <iostream>
 
-void sprite_reader::load_sprites(std::vector<sprite>& sprites,
-                                 std::istream&        in,
-                                 om::engine&          texture_cache)
+void sprite_io::load(std::vector<sprite>& sprites,
+                     std::istream&        in,
+                     om::engine&          texture_cache)
 {
     sprite spr;
 
@@ -59,8 +59,7 @@ void sprite_reader::load_sprites(std::vector<sprite>& sprites,
     }
 }
 
-void sprite_reader::save_sprites(const std::vector<sprite>& list,
-                                 std::ostream&              ss)
+void sprite_io::save(const std::vector<sprite>& list, std::ostream& ss)
 {
     const auto save_one_sprite = [&ss](const sprite& spr)
     {

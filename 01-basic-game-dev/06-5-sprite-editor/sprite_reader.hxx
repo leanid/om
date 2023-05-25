@@ -5,10 +5,8 @@
 
 #include "sprite.hxx"
 
-namespace sprite_reader
+namespace sprite_io
 {
-    void load_sprites(std::vector<sprite>&,
-                      std::istream& in,
-                      om::engine&   texture_cache);
-    void save_sprites(const std::vector<sprite>&, std::ostream& out);
-};
+void load(std::vector<sprite>&, std::istream& in, om::engine& texture_cache);
+void save(const std::vector<sprite>&, std::ostream& out);
+}; // namespace sprite_io
