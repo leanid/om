@@ -4,7 +4,7 @@
 
 #include "catch.hpp"
 
-#include "sprite_reader.hxx"
+#include "sprite_io.hxx"
 
 #include <iomanip>
 #include <iostream>

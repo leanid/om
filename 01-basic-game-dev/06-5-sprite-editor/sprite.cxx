@@ -137,7 +137,7 @@ void sprite::rotation(const float r)
     rotation_ = r;
 }
 
-const std::string& sprite::id() const
+std::string_view sprite::id() const
 {
     return id_;
 }

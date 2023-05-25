@@ -30,25 +30,25 @@ add_executable(
     sprite.cxx
     sprite.hxx
     sprite_editor.cxx
-    sprite_reader.cxx
-    sprite_reader.hxx)
+        sprite_io.cxx
+        sprite_io.hxx)
 target_compile_features(06-5-sprite-editor PUBLIC cxx_std_20)
 target_link_libraries(06-5-sprite-editor PRIVATE engine-06-5)
 add_executable(
     06-5-test-spr-loader
     sprite.cxx
-    sprite_reader.cxx
-    sprite_reader.hxx
-    sprite_reader_test.cxx)
+        sprite_io.cxx
+        sprite_io.hxx
+        sprite_io_test.cxx)
 target_compile_features(06-5-test-spr-loader PUBLIC cxx_std_20)
 target_link_libraries(06-5-test-spr-loader PRIVATE engine-06-5)
 
 option(OM_ENABLE_ADDRESS_SANITIZER_FOR_SPRITE_TEST
-       [["Use address sanitizer to findout memory bug.
+       [[Use address sanitizer to find out memory bug.
 Works only on Linux. You should already install library:
 ```sudo dnf install libasan```
 To see line numbers in asan log configure your build with
-```CMAKE_BUILD_TYPE=Debug```."]] OFF)
+```CMAKE_BUILD_TYPE=Debug```.]] OFF)
 
 if(OM_ENABLE_ADDRESS_SANITIZER_FOR_SPRITE_TEST)
     message(

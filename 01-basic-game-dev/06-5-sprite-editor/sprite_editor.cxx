@@ -1,15 +1,12 @@
 #include <algorithm>
 #include <array>
-#include <cassert>
-#include <cmath>
+#include <chrono>
 #include <cstdlib>
-#include <cstring>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <memory>
 #include <sstream>
-#include <string_view>
 #include <vector>
 
 #pragma GCC diagnostic push
@@ -18,13 +15,10 @@
 #include "imgui.h"
 #pragma GCC diagnostic pop
 
+#include "ani2d.hxx"
 #include "engine.hxx"
 #include "sprite.hxx"
-#include "sprite_reader.hxx"
-
-#include "ani2d.hxx"
-
-#include <chrono> // for std::chrono functions
+#include "sprite_io.hxx"
 
 class timer
 {
@@ -36,7 +30,7 @@ public:
 
     void reset() { m_beg = clock_t::now(); }
 
-    float elapsed() const
+    [[nodiscard]] float elapsed() const
     {
         return std::chrono::duration_cast<second_t>(clock_t::now() - m_beg)
             .count();
@@ -73,23 +67,21 @@ int main(int /*argc*/, char* /*argv*/[])
 
     bool continue_loop = true;
 
-    [[maybe_unused]] constexpr float pi = 3.1415926f;
-
-    string       texture_path(1024, '\0');
-    string       texture_cache_file(1024, '\0');
-    string       sprite_id(1024, '\0');
-    om::texture* texture        = nullptr;
-    rect         spr_rect       = {};
-    om::vec2     spr_center_pos = {};
-    om::vec2     spr_size       = {};
-    float        angle          = 0.f;
+    array<char, 1024> texture_path{};
+    array<char, 1024> texture_cache_file{};
+    array<char, 1024> sprite_id{};
+    om::texture*      texture        = nullptr;
+    rect              spr_rect       = {};
+    om::vec2          spr_center_pos = {};
+    om::vec2          spr_size       = {};
+    float             angle          = 0.f;
 
     vector<sprite> sprites_for_animation;
-    ifstream       ifile;
-    ifile.exceptions(ios::badbit | ios::failbit);
-    ifile.open("./01-basic-game-dev/06-5-sprite-editor/spr_cache.yaml",
-               ios::binary);
-    sprite_io::load(sprites_for_animation, ifile, engine);
+    ifstream       sprite_cache;
+    sprite_cache.exceptions(ios::badbit | ios::failbit);
+    sprite_cache.open("./01-basic-game-dev/06-5-sprite-editor/spr_cache.yaml",
+                      ios::binary);
+    sprite_io::load(sprites_for_animation, sprite_cache, engine);
 
     ani2d animation;
     animation.sprites(sprites_for_animation);
@@ -105,14 +97,14 @@ int main(int /*argc*/, char* /*argv*/[])
 
     ani2d explosion_ani;
     explosion_ani.sprites(explosion_sprites);
-    explosion_ani.fps(explosion_sprites.size() / 1.f);
+    explosion_ani.fps(static_cast<float>(explosion_sprites.size()) / 1.f);
 
-    om::vec2 mouse_pos = engine.mouse_pos();
+    om::vec2 mouse_pos{};
     om::vec2 image_screen_start_pos;
 
-    [[maybe_unused]] bool is_left_mouse_holded = false;
-    om::vec2              start_drag_pos;
-    om::vec2              end_drag_pos;
+    bool     is_left_mouse_down{};
+    om::vec2 start_drag_pos;
+    om::vec2 end_drag_pos;
 
     timer timer_;
     while (continue_loop)
@@ -137,24 +129,26 @@ int main(int /*argc*/, char* /*argv*/[])
                         cur_pos.y >= image_screen_start_pos.y &&
                         texture != nullptr &&
                         cur_pos.x <=
-                            image_screen_start_pos.x + texture->get_width() &&
+                            image_screen_start_pos.x +
+                                static_cast<float>(texture->get_width()) &&
                         cur_pos.y <=
-                            image_screen_start_pos.y + texture->get_height())
+                            image_screen_start_pos.y +
+                                static_cast<float>(texture->get_height()))
                     {
-                        is_left_mouse_holded = true;
-                        start_drag_pos       = cur_pos;
+                        is_left_mouse_down = true;
+                        start_drag_pos     = cur_pos;
                     }
                 }
                 break;
                 case om::event::left_mouse_released:
-                    if (is_left_mouse_holded)
+                    if (is_left_mouse_down)
                     {
-                        is_left_mouse_holded = false;
-                        end_drag_pos         = engine.mouse_pos();
+                        is_left_mouse_down = false;
+                        end_drag_pos       = engine.mouse_pos();
                     }
                     break;
                 case om::event::mouse_moved:
-                    if (is_left_mouse_holded)
+                    if (is_left_mouse_down)
                     {
                         end_drag_pos = engine.mouse_pos();
                     }
@@ -178,16 +172,16 @@ int main(int /*argc*/, char* /*argv*/[])
         ImGui::SetNextWindowPos(ImVec2(0, 0));
         ImGui::SetNextWindowSize(ImVec2(screen_size.x, 0));
 
-        bool is_propetries_window_open = true;
+        bool is_properties_window_open = true;
         if (ImGui::Begin("sprite properties",
-                         &is_propetries_window_open,
+                         &is_properties_window_open,
                          ImGuiWindowFlags_NoMove))
         {
             ImGui::InputText("texture_cache_file: ",
                              texture_cache_file.data(),
                              texture_cache_file.size());
             ImGui::InputText(
-                "texture: ", texture_path.data(), texture_path.capacity());
+                "texture: ", texture_path.data(), texture_path.size());
             ImGui::InputText("spr_id: ", sprite_id.data(), sprite_id.size());
 
             if (ImGui::Button("load texture"))
@@ -196,7 +190,7 @@ int main(int /*argc*/, char* /*argv*/[])
                 {
                     engine.destroy_texture(texture);
                 }
-                texture = engine.create_texture(texture_path.c_str());
+                texture = engine.create_texture(texture_path.data());
             }
 
             if (texture != nullptr)
@@ -222,22 +216,24 @@ int main(int /*argc*/, char* /*argv*/[])
                 image_screen_start_pos.x = cur_screen_pos.x;
                 image_screen_start_pos.y = cur_screen_pos.y;
 
-                ImGui::Image(
-                    texture,
-                    ImVec2(texture->get_width(), texture->get_height()),
-                    ImVec2(0, 1),
-                    ImVec2(1, 0));
+                ImGui::Image(texture,
+                             ImVec2(static_cast<float>(texture->get_width()),
+                                    static_cast<float>(texture->get_height())),
+                             ImVec2(0, 1),
+                             ImVec2(1, 0));
 
                 if (start_drag_pos.x >= image_screen_start_pos.x &&
                     start_drag_pos.y >= image_screen_start_pos.y &&
                     end_drag_pos.x > start_drag_pos.x &&
                     end_drag_pos.y > start_drag_pos.y &&
                     end_drag_pos.x <=
-                        image_screen_start_pos.x + texture->get_width() &&
+                        image_screen_start_pos.x +
+                            static_cast<float>(texture->get_width()) &&
                     end_drag_pos.y <=
-                        image_screen_start_pos.y + texture->get_height())
+                        image_screen_start_pos.y +
+                            static_cast<float>(texture->get_height()))
                 {
-                    // our selection is inside image so we can render
+                    // our selection is inside image, so we can render
                     // selection over it
                     ImVec2 p(start_drag_pos.x, start_drag_pos.y);
                     float  sel_w = end_drag_pos.x - start_drag_pos.x;
@@ -264,7 +260,7 @@ int main(int /*argc*/, char* /*argv*/[])
                         3.0f);
 
                     // update rect
-                    if (is_left_mouse_holded)
+                    if (is_left_mouse_down)
                     {
                         spr_rect.pos.x =
                             start_drag_pos.x - image_screen_start_pos.x;
@@ -295,17 +291,17 @@ int main(int /*argc*/, char* /*argv*/[])
                     if (ImGui::Button("save to cache"))
                     {
                         vector<sprite> sprites;
-                        sprites.emplace_back(sprite_id.c_str(),
+                        sprites.emplace_back(sprite_id.data(),
                                              texture,
                                              spr_rect,
                                              spr_center_pos,
                                              spr_size,
                                              angle);
 
-                        ofstream fout;
-                        fout.exceptions(ios::badbit);
-                        fout.open(texture_cache_file.data(), ios::binary);
-                        sprite_io::save(sprites, fout);
+                        ofstream out;
+                        out.exceptions(ios::badbit);
+                        out.open(texture_cache_file.data(), ios::binary);
+                        sprite_io::save(sprites, out);
                     }
                 }
             }
@@ -319,13 +315,17 @@ int main(int /*argc*/, char* /*argv*/[])
 
         if (texture != nullptr)
         {
-            from_pixels_to_relative.pos.x /= texture->get_width();
-            from_pixels_to_relative.pos.y /= texture->get_height();
-            from_pixels_to_relative.size.x /= texture->get_width();
-            from_pixels_to_relative.size.y /= texture->get_height();
+            from_pixels_to_relative.pos.x /=
+                static_cast<float>(texture->get_width());
+            from_pixels_to_relative.pos.y /=
+                static_cast<float>(texture->get_height());
+            from_pixels_to_relative.size.x /=
+                static_cast<float>(texture->get_width());
+            from_pixels_to_relative.size.y /=
+                static_cast<float>(texture->get_height());
         }
 
-        sprite spr(sprite_id.c_str(),
+        sprite spr(sprite_id.data(),
                    texture,
                    from_pixels_to_relative,
                    spr_center_pos,
