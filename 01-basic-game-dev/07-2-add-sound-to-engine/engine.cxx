@@ -1333,7 +1333,7 @@ std::string engine_impl::initialize(std::string_view)
                   << std::flush;
 
         // unpause device
-        SDL_PauseAudioDevice(audio_device);
+        SDL_PlayAudioDevice(audio_device);
     }
 
     return "";
