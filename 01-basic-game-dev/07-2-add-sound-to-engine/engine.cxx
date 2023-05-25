@@ -1,7 +1,5 @@
 #include "engine.hxx"
 
-#include <SDL3/SDL_error.h>
-#include <SDL3/SDL_stdinc.h>
 #include <algorithm>
 #include <array>
 #include <cassert>

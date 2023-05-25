@@ -22,7 +22,8 @@ int main(int /*argc*/, char* /*argv*/[])
         return EXIT_FAILURE;
     }
 
-    om::texture* texture = engine->create_texture("tank.png");
+    om::texture* texture = engine->create_texture(
+        "01-basic-game-dev/07-2-add-sound-to-engine/tank.png");
     if (nullptr == texture)
     {
         std::cerr << "failed load texture\n";
@@ -31,7 +32,8 @@ int main(int /*argc*/, char* /*argv*/[])
 
     om::vertex_buffer* vertex_buf = nullptr;
 
-    std::ifstream file("vert_tex_color.txt");
+    std::ifstream file(
+        "01-basic-game-dev/07-2-add-sound-to-engine/vert_tex_color.txt");
     if (!file)
     {
         std::cerr << "can't load vert_tex_color.txt\n";
@@ -49,9 +51,10 @@ int main(int /*argc*/, char* /*argv*/[])
         }
     }
 
-    om::sound_buffer* s = engine->create_sound_buffer("t2_no_problemo.wav");
-    om::sound_buffer* music =
-        engine->create_sound_buffer("8-bit_detective.wav");
+    om::sound_buffer* s = engine->create_sound_buffer(
+        "01-basic-game-dev/07-2-add-sound-to-engine/t2_no_problemo.wav");
+    om::sound_buffer* music = engine->create_sound_buffer(
+        "01-basic-game-dev/07-2-add-sound-to-engine/8-bit_detective.wav");
     assert(music != nullptr);
 
     music->play(om::sound_buffer::properties::looped);
