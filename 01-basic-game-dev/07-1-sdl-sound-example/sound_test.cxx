@@ -5,8 +5,9 @@
 #include <cstring>
 #include <iomanip>
 #include <iostream>
+#include <string>
 
-#include <SDL2/SDL.h>
+#include <SDL3/SDL.h>
 
 constexpr int32_t AUDIO_FORMAT = AUDIO_S16LSB;
 
@@ -55,7 +56,8 @@ int main(int /*argc*/, char* /*argv*/[])
         return EXIT_FAILURE;
     }
 
-    const char* file_name = "highlands.wav";
+    const char* file_name =
+        "01-basic-game-dev/07-1-sdl-sound-example/highlands.wav";
 
     clog << "read file: " << file_name << endl;
 
@@ -144,7 +146,7 @@ int main(int /*argc*/, char* /*argv*/[])
 
     // start playing audio thread
     // now callback is firing
-    SDL_PauseAudioDevice(audio_device_id, SDL_FALSE);
+    SDL_PlayAudioDevice(audio_device_id);
 
     clog << "unpause audio device (start audio thread)" << endl;
 
@@ -238,13 +240,13 @@ int main(int /*argc*/, char* /*argv*/[])
 
     clog << "pause audio device (stop audio thread)" << endl;
     // stop audio device and stop thread call our callback function
-    SDL_PauseAudioDevice(audio_device_id, SDL_TRUE);
+    SDL_PauseAudioDevice(audio_device_id);
 
     clog << "close audio device" << endl;
 
     SDL_CloseAudioDevice(audio_device_id);
 
-    SDL_FreeWAV(loaded_audio_buff.start);
+    SDL_free(loaded_audio_buff.start);
 
     SDL_Quit();
 
@@ -356,13 +358,15 @@ static void audio_callback(void* userdata, uint8_t* stream, int len)
 
 std::ostream& operator<<(std::ostream& o, const SDL_AudioSpec& spec)
 {
-    o << "\tfreq: " << spec.freq << '\n'
-      << "\tformat: " << std::hex << spec.format << '\n'
-      << "\tchannels: " << std::dec << int(spec.channels) << '\n'
-      << "\tsilence: " << int(spec.silence) << '\n'
-      << "\tsamples: " << spec.samples << '\n'
-      << "\tsize: " << spec.size << '\n'
-      << "\tcallback: " << reinterpret_cast<const void*>(spec.callback) << '\n'
-      << "\tuserdata: " << spec.userdata;
+    std::string tab(4, ' ');
+    o << tab << "freq: " << spec.freq << '\n'
+      << tab << "format: " << std::hex << spec.format << '\n'
+      << tab << "channels: " << std::dec << int(spec.channels) << '\n'
+      << tab << "silence: " << int(spec.silence) << '\n'
+      << tab << "samples: " << spec.samples << '\n'
+      << tab << "size: " << spec.size << '\n'
+      << tab << "callback: " << reinterpret_cast<const void*>(spec.callback)
+      << '\n'
+      << tab << "userdata: " << spec.userdata;
     return o;
 }
