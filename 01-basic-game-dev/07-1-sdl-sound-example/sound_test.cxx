@@ -105,7 +105,7 @@ int main(int /*argc*/, char* /*argv*/[])
 
     clog << "audio buffer from file size: " << sample_buffer_len_from_file
          << " B (" << sample_buffer_len_from_file / double(1024 * 1024)
-         << ") Mb" << endl;
+         << ") MB" << endl;
 
     const char*   device_name       = nullptr; // device name or nullptr
     const int32_t is_capture_device = 0; // 0 - play device, 1 - microphone
