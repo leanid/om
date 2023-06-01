@@ -50,7 +50,8 @@ std::unique_ptr<om::lila> om_tat_sat()
 
 void tanks_game::on_initialize()
 {
-    texture = om::create_texture("tank.png");
+    texture =
+        om::create_texture("01-basic-game-dev/08-3-engine-cleanup/tank.png");
     if (nullptr == texture)
     {
         om::log << "failed load texture\n";
@@ -59,7 +60,8 @@ void tanks_game::on_initialize()
 
     vertex_buf = nullptr;
 
-    std::stringstream file = filter_comments("vert_tex_color.txt");
+    std::stringstream file = filter_comments(
+        "01-basic-game-dev/08-3-engine-cleanup/vert_tex_color.txt");
     if (!file)
     {
         om::log << "can't load vert_tex_color.txt\n";
@@ -81,7 +83,8 @@ void tanks_game::on_initialize()
         }
     }
 
-    snd = om::create_sound("t2_no_problemo.wav");
+    snd = om::create_sound(
+        "01-basic-game-dev/08-3-engine-cleanup/t2_no_problemo.wav");
 }
 
 void tanks_game::on_event(om::event& event)

@@ -1391,11 +1391,16 @@ int initialize_and_start_main_loop()
         ~start() { om::uninitialize(); }
     } guard;
 
-    std::vector<const char*> lib_names{ { "libgame.dll",
-                                          "libgame.so",
-                                          "game.so",
-                                          "./build/Debug/libgame.so",
-                                          "./build-Debug/libgame-08-3.so" } };
+    // clang-format off
+    std::vector<const char*> lib_names{
+        { "libgame.dll",
+          "libgame.so",
+          "game.so",
+          "./build/Debug/libgame.so",
+          "./build-Debug/libgame-08-3.so",
+          "./build/ninja/01-basic-game-dev/08-3-engine-cleanup/libgame-08-3.so" }
+    };
+    // clang-format on
 
     void* so_handle   = nullptr;
     auto  lib_name_it = std::find_if(begin(lib_names),
