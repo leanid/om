@@ -26,7 +26,6 @@ target_compile_definitions(
 
 find_package(SDL3 REQUIRED)
 if(MINGW)
-    target_link_libraries(engine-03-4 PRIVATE -lmingw32)
     add_custom_command(
         TARGET engine-03-4
         POST_BUILD

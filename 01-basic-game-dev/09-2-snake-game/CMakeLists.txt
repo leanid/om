@@ -34,6 +34,15 @@ target_include_directories(game-09-2 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_features(game-09-2 PRIVATE cxx_std_20)
 target_link_libraries(game-09-2 PRIVATE engine-09-2)
 
+if(MINGW)
+    add_custom_command(
+        TARGET engine-09-2
+        POST_BUILD
+        COMMAND
+            ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:SDL3::SDL3>
+            $<TARGET_FILE_DIR:engine-09-2>)
+endif()
+
 if(MSVC)
     target_compile_definitions(game-09-2
                                PRIVATE "-DOM_DECLSPEC=__declspec(dllimport)")
