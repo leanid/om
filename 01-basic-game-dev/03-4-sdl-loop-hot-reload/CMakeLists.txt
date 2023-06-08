@@ -1,31 +1,43 @@
 cmake_minimum_required(VERSION 3.16...3.23)
 project(03-4-sdl-loop-hot-reload)
 
-add_executable(engine-03-4 engine.cxx engine.hxx engine.cxx)
+add_executable(engine-03-4 engine.cxx engine.cxx engine.hxx)
 target_compile_features(engine-03-4 PUBLIC cxx_std_20)
 
-target_compile_definitions(engine-03-4 PRIVATE $<$<PLATFORM_ID:Windows>: OM_DECLSPEC=__declspec(dllexport) >)
-target_compile_definitions(engine-03-4 PRIVATE $<$<PLATFORM_ID:Windows>:_CRT_SECURE_NO_WARNINGS=1>)
+# cmake-format: off
+target_compile_definitions(
+    engine-03-4
+    PRIVATE $<$<CXX_COMPILER_ID:MSVC>: OM_DECLSPEC=__declspec(dllexport) >)
+# cmake-format: on
+
+target_compile_definitions(
+    engine-03-4 PRIVATE $<$<PLATFORM_ID:Windows>:_CRT_SECURE_NO_WARNINGS=1>)
 
 set_target_properties(
-  engine-03-4 PROPERTIES
-  ENABLE_EXPORTS 1 # we need to be able to link to exe functions from game
-)
+    engine-03-4
+    PROPERTIES ENABLE_EXPORTS
+               1 # we need to be able to link to exe functions from game
+    )
 
 find_package(SDL3 REQUIRED)
 if(MINGW)
-  target_link_libraries(engine-03-4 PRIVATE -lmingw32)
-  add_custom_command(
-    TARGET engine-03-4 POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    $<TARGET_FILE:SDL3::SDL3> $<TARGET_FILE_DIR:engine-03-4>
-  )
+    target_link_libraries(engine-03-4 PRIVATE -lmingw32)
+    add_custom_command(
+        TARGET engine-03-4
+        POST_BUILD
+        COMMAND
+            ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:SDL3::SDL3>
+            $<TARGET_FILE_DIR:engine-03-4>)
 endif()
 target_link_libraries(engine-03-4 PRIVATE SDL3::SDL3-shared)
 
 add_library(game-03-4 SHARED game.cxx)
 
-target_compile_definitions(game-03-4 PRIVATE $<$<PLATFORM_ID:Windows>:OM_DECLSPEC=__declspec(dllexport) >)
+# cmake-format: off
+target_compile_definitions(
+    game-03-4 PRIVATE
+    $<$<CXX_COMPILER_ID:MSVC>:OM_DECLSPEC=__declspec (dllexport) >)
+# cmake-format: on
 
 target_compile_features(game-03-4 PUBLIC cxx_std_20)
 target_link_libraries(game-03-4 PRIVATE engine-03-4)
