@@ -43,8 +43,3 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     # using regular Clang or AppleClang
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
 endif()
-
-install(TARGETS engine-09-2 game-09-2
-        RUNTIME DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../../bin/tests
-        LIBRARY DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../../bin/tests
-        ARCHIVE DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../../bin/tests)

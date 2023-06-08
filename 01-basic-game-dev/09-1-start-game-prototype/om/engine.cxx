@@ -1425,8 +1425,8 @@ int initialize_and_start_main_loop()
 
     std::vector<const char*> lib_names{
         { "libgame-09-1.dll",
-          "libgame-09-1.so",
-          "game-09-1.so",
+          "./libgame-09-1.so",
+          "./game-09-1.so",
           "./build/Debug/libgame-09-1.so",
           "./build/Debug/libgame-09-1.dll",
           "./build-Debug/libgame-09-1.so",
