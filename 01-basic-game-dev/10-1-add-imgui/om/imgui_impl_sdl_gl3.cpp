@@ -585,8 +585,7 @@ bool ImGui_ImplSdlGL3_Init(SDL_Window* window)
 
 #ifdef _WIN32
     SDL_SysWMinfo wmInfo;
-    SDL_VERSION(&wmInfo.version);
-    SDL_GetWindowWMInfo(window, &wmInfo);
+    SDL_GetWindowWMInfo(window, &wmInfo, SDL_SYSWM_CURRENT_VERSION);
     io.ImeWindowHandle = wmInfo.info.win.window;
 #else
     (void)window;

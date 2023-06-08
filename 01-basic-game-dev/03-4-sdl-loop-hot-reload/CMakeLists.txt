@@ -2,6 +2,17 @@ cmake_minimum_required(VERSION 3.16...3.23)
 project(03-4-sdl-loop-hot-reload)
 
 add_executable(engine-03-4 engine.cxx engine.cxx engine.hxx)
+set_target_properties(
+    engine-03-4
+    PROPERTIES ENABLE_EXPORTS
+               ON # we need to be able to link to exe functions from game
+    )
+if(MINGW)
+    # cannot find 01-basic-game-dev/03-4-sdl-loop-hot-reload/libengine-03-4.dll.a:
+    # No such file or directory
+    target_compile_definitions(engine-03-4
+                               PRIVATE "-DOM_DECLSPEC=__declspec(dllexport)")
+endif()
 target_compile_features(engine-03-4 PUBLIC cxx_std_20)
 
 # cmake-format: off
@@ -12,12 +23,6 @@ target_compile_definitions(
 
 target_compile_definitions(
     engine-03-4 PRIVATE $<$<CXX_COMPILER_ID:MSVC>:_CRT_SECURE_NO_WARNINGS=1>)
-
-set_target_properties(
-    engine-03-4
-    PROPERTIES ENABLE_EXPORTS
-               1 # we need to be able to link to exe functions from game
-    )
 
 find_package(SDL3 REQUIRED)
 if(MINGW)
