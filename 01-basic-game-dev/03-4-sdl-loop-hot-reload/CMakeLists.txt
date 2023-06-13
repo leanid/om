@@ -40,7 +40,7 @@ add_library(game-03-4 SHARED game.cxx)
 # cmake-format: off
 target_compile_definitions(
     game-03-4 PRIVATE
-    $<$<CXX_COMPILER_ID:MSVC>:"OM_DECLSPEC=__declspec(dllexport)" >)
+    $<$<CXX_COMPILER_ID:MSVC>: OM_DECLSPEC=__declspec(dllexport) >)
 # cmake-format: on
 
 target_compile_features(game-03-4 PUBLIC cxx_std_20)
