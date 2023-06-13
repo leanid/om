@@ -435,7 +435,7 @@ void main()
     /// return seconds from initialization
     float get_time_from_init() final
     {
-        std::uint32_t ms_from_library_initialization = SDL_GetTicks();
+        std::uint64_t ms_from_library_initialization = SDL_GetTicks();
         float         seconds = ms_from_library_initialization * 0.001f;
         return seconds;
     }

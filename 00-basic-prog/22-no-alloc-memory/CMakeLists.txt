@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.14...3.25)
 project(22-no-alloc-memory)
-if(NOT MINGW)
+if(NOT MINGW AND NOT MSVC)
     add_executable(${PROJECT_NAME} main.cxx)
     target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)
 endif()

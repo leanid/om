@@ -167,7 +167,7 @@ OM_DECLSPEC void render(const primitives,
                         const texture*,
                         const matrix&);
 
-OM_DECLSPEC [[noreturn]] void exit(int return_code);
+[[noreturn]] OM_DECLSPEC void exit(int return_code);
 
 extern OM_DECLSPEC std::ostream& log;
 

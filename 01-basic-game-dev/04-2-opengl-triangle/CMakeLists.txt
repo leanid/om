@@ -4,11 +4,17 @@ project(04-2-opengl-triangle)
 add_library(engine-04-2 SHARED engine.cxx engine.hxx)
 target_compile_features(engine-04-2 PUBLIC cxx_std_20)
 
+if(MINGW OR MSVC)
+    # cannot find 01-basic-game-dev/03-4-sdl-loop-hot-reload/libengine-03-4.dll.a:
+    # No such file or directory
+    target_compile_definitions(engine-04-2
+                               PRIVATE "-DOM_DECLSPEC=__declspec(dllexport)")
+endif()
 # cmake-format: off
-target_compile_definitions(
-    engine-04-2
-    PRIVATE
-        $<$<CXX_COMPILER_ID:MSVC>:OM_DECLSPEC=__declspec(dllexport) >)
+# target_compile_definitions(
+#     engine-04-2
+#     PRIVATE
+#         $<$<CXX_COMPILER_ID:MSVC>:OM_DECLSPEC=__declspec(dllexport) >)
 # cmake-format: on
 
 find_package(SDL3 REQUIRED)

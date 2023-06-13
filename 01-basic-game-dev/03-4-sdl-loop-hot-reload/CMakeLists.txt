@@ -7,7 +7,7 @@ set_target_properties(
     PROPERTIES ENABLE_EXPORTS
                ON # we need to be able to link to exe functions from game
     )
-if(MINGW)
+if(MINGW OR MSVC)
     # cannot find 01-basic-game-dev/03-4-sdl-loop-hot-reload/libengine-03-4.dll.a:
     # No such file or directory
     target_compile_definitions(engine-03-4
@@ -16,9 +16,9 @@ endif()
 target_compile_features(engine-03-4 PUBLIC cxx_std_20)
 
 # cmake-format: off
-target_compile_definitions(
-    engine-03-4
-    PRIVATE $<$<CXX_COMPILER_ID:MSVC>:OM_DECLSPEC=__declspec(dllexport) >)
+# target_compile_definitions(
+#     engine-03-4
+#     PRIVATE $<$<CXX_COMPILER_ID:MSVC>:"OM_DECLSPEC=__declspec(dllexport)" >)
 # cmake-format: on
 
 target_compile_definitions(
@@ -40,7 +40,7 @@ add_library(game-03-4 SHARED game.cxx)
 # cmake-format: off
 target_compile_definitions(
     game-03-4 PRIVATE
-    $<$<CXX_COMPILER_ID:MSVC>:OM_DECLSPEC=__declspec(dllexport) >)
+    $<$<CXX_COMPILER_ID:MSVC>:"OM_DECLSPEC=__declspec(dllexport)" >)
 # cmake-format: on
 
 target_compile_features(game-03-4 PUBLIC cxx_std_20)

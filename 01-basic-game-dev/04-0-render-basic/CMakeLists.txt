@@ -107,30 +107,35 @@ add_executable(
   07_ray_tracing_basic.cxx
 )
 target_compile_features(04-07-ray-tracing-basic PRIVATE cxx_std_20)
+target_link_libraries(04-07-ray-tracing-basic PRIVATE glm::glm)
 
 add_executable(
   04-08-ray-tracing-basic 00_canvas_basic.cxx 00_canvas_basic.hxx
   08_ray_tracing_basic.cxx
 )
 target_compile_features(04-08-ray-tracing-basic PRIVATE cxx_std_20)
+target_link_libraries(04-08-ray-tracing-basic PRIVATE glm::glm)
 
 add_executable(
   04-09-ray-tracing-basic 00_canvas_basic.cxx 00_canvas_basic.hxx
   09_ray_tracing_basic.cxx
 )
 target_compile_features(04-09-ray-tracing-basic PRIVATE cxx_std_20)
+target_link_libraries(04-09-ray-tracing-basic PRIVATE glm::glm)
 
 add_executable(
   04-10-ray-tracing-basic 00_canvas_basic.cxx 00_canvas_basic.hxx
   10_ray_tracing_basic.cxx
 )
 target_compile_features(04-10-ray-tracing-basic PRIVATE cxx_std_20)
+target_link_libraries(04-10-ray-tracing-basic PRIVATE glm::glm)
 
 add_executable(
   04-11-ray-tracing-basic 00_canvas_basic.cxx 00_canvas_basic.hxx
   11_ray_tracing_basic.cxx
 )
 target_compile_features(04-11-ray-tracing-basic PRIVATE cxx_std_20)
+target_link_libraries(04-11-ray-tracing-basic PRIVATE glm::glm)
 
 add_executable(
   04-12-rasterize_cube
@@ -147,3 +152,4 @@ add_executable(
   12_rasterize_cube.cxx
 )
 target_compile_features(04-12-rasterize_cube PRIVATE cxx_std_20)
+target_link_libraries(04-12-rasterize_cube PRIVATE glm::glm)

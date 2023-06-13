@@ -2,8 +2,8 @@
 
 #include <iostream>
 
-#include <SDL2/SDL_opengl.h>
-#include <SDL2/SDL_opengl_glext.h>
+#include <SDL3/SDL_opengl.h>
+#include <SDL3/SDL_opengl_glext.h>
 
 // we have to load all extension GL function pointers
 // dynamically from OpenGL library
