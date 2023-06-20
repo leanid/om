@@ -34,7 +34,11 @@ example: OpenGL -- -tcmake -C3
                             ^- show [--context] around match
 example: SPC\+/[[:space:]]*example -- -U -C3 -tmd
          ^^^^^^^^^^^^^^^^^^^^^^^^^ - emacs regexp example multiline and with context search only *.md
+example: OpenGL -- -g *.rs
+                   ^^^^^^^^^ - search only in Rust files if you need exacly file pattern
 ```
+RipGrep manual here: 
+[RipGrep User Guide](https://github.com/BurntSushi/ripgrep/blob/master/GUIDE.md)
 Emacs regexp manual here:
 [Emacs regexp](https://www.gnu.org/software/emacs/manual/html_node/emacs/Regexps.html)
 Emacs regexp character classes:
