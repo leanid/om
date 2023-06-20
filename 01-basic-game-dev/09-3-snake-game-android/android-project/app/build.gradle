@@ -7,68 +7,31 @@ else {
     apply plugin: 'com.android.library'
 }
 
+Properties properties = new Properties()
+properties.load(project.rootProject.file('local.properties').newDataInputStream())
+def sdl3Dir = properties.getProperty('sdl3.dir')
+if (sdl3Dir == null)
+{
+    throw new IllegalArgumentException("no [sdl3.dir] property in [local.properties] file")
+}
 android {
-    compileSdkVersion 30
-    ndkVersion '22.1.7171670'
-
-    Properties properties = new Properties()
-    properties.load(project.rootProject.file('local.properties').newDataInputStream())
-
-    if (properties.getProperty('sdl2_src.dir') == null)
-    {
-        throw new IllegalArgumentException("error: add sdl2_src.dir in local.properties")
-    }
-
-    if (properties.getProperty('sdl2_build.dir') == null)
-    {
-        throw new IllegalArgumentException("error: add sdl2_build.dir in local.properties")
-    }
-
-    def sdl2SrcDir = properties.getProperty('sdl2_src.dir')
-    def sdl2BuildDir = properties.getProperty('sdl2_build.dir')
+    compileSdkVersion 33
+    ndkVersion '25.2.9519653'
 
     defaultConfig {
-        applicationId "org.home.leo"
-
-        minSdkVersion 21    // 21 - is minimal to work for dlopen with new NDK
-                            // or you have to build SDL-static, SDLmain, and link it into you .SO
-                            // and in SDL_android.c directly call SDL_main without dlopen, dsym, etc
-                            // also replace find_library(ANDROID_DL_LIBRARY dl) with:
-                            // find_library(ANDROID_DL_LIBRARY NAMES libdl.so dl) in
-                            // SDL2/CMakeLists.txt
-                            // or you can use old version NDk18b
-        targetSdkVersion 30
+        if (buildAsApplication) {
+            applicationId "org.libsdl.app"
+        }
+        minSdkVersion 16
+        targetSdkVersion 33
         versionCode 1
         versionName "1.0"
-
-        ndk {
-            // on NDK20b arm64-v8a dlopen failed if minSdkVersion less 21
-            //abiFilters "arm64-v8a"
-            //abiFilters "armeabi-v7a"
-            //abiFilters "arm64-v8a"
-        }
-
         externalNativeBuild {
-	        cmake {
-                version "3.18.1"  // double check your ENV variable PATH have cmake with correct version
-                                 // or you have to set path to it in local.properties like:
-                                 // # If you set this property, Gradle no longer uses PATH to find CMake.
-                                 // # gradle works only with canonical cmake from cmake.org
-                                 // cmake.dir="path-to-cmake like /usr or /home/leo/cmake-3.17.2"
-
-
-                // Use the following syntax when passing arguments to variables:
-       	        // arguments "-DVAR_NAME=ARGUMENT".
-                arguments "-DSDL2_SRC_DIR=" + sdl2SrcDir
-                arguments "-DSDL2_BUILD_DIR=" + sdl2BuildDir
-		
-	            // arguments "-DANDROID_ARM_NEON=TRUE",
-      	        // If you're passing multiple arguments to a variable, pass them together:
-	            // arguments "-DVAR_NAME=ARG_1 ARG_2"
-      	        // The following line passes 'rtti' and 'exceptions' to 'ANDROID_CPP_FEATURES'.
-                arguments "-DANDROID_CPP_FEATURES=rtti exceptions",
-	                  "-DANDROID_STL=c++_shared"
-	        }
+            cmake {
+                arguments "-DANDROID_STL=c++_shared", "-DSDL3_SRC_DIR=$sdl3Dir"
+                // abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
+                // abiFilters 'arm64-v8a'
+            }
         }
     }
     buildTypes {
@@ -77,23 +40,26 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    applicationVariants.all { variant ->
+        tasks["merge${variant.name.capitalize()}Assets"]
+            .dependsOn("externalNativeBuild${variant.name.capitalize()}")
+    }
     if (!project.hasProperty('EXCLUDE_NATIVE_LIBS')) {
         sourceSets.main {
             jniLibs.srcDir 'libs'
-        }   
+        }
+        externalNativeBuild {
+            cmake {
+                path '../../CMakeLists.txt'
+            }
+        }
+       
     }
-
-    externalNativeBuild {
-       cmake {
-           version "3.18.1"
-           path '../../CMakeLists.txt'
-       }
-    }
-    
     lintOptions {
         abortOnError false
     }
-    
+    namespace 'org.libsdl.app'
+
     if (buildAsLibrary) {
         libraryVariants.all { variant ->
             variant.outputs.each { output ->

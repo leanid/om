@@ -1,7 +1,5 @@
 #include "engine.hxx"
 
-#include <SDL3/SDL_audio.h>
-#include <SDL3/SDL_stdinc.h>
 #include <algorithm>
 #include <array>
 #include <atomic>
@@ -23,7 +21,8 @@
 #include <vector>
 
 #ifdef __ANDROID__
-#include <SDL.h>
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_main.h>
 #include <android/log.h>
 #define GL_GLES_PROTOTYPES 1
 #include <GLES2/gl2.h>
@@ -1009,10 +1008,13 @@ static void initialize_internal(std::string_view   title,
 
 #if defined(__ANDROID__)
         {
-            SDL_DisplayMode dispale_mode;
-            SDL_GetCurrentDisplayMode(0, &dispale_mode);
-            window_size_w = dispale_mode.w;
-            window_size_h = dispale_mode.h;
+            const SDL_DisplayMode* dispale_mode = SDL_GetCurrentDisplayMode(1);
+            if (!dispale_mode )
+            {
+                std::cout << "can't get current display mode: " << SDL_GetError() << std::endl;
+            }
+            window_size_w                       = dispale_mode->w;
+            window_size_h                       = dispale_mode->h;
         }
 #endif
 

@@ -1,16 +1,16 @@
 cmake_minimum_required(VERSION 3.16)
 
-if(SDL2_SRC_DIR)
+if(SDL3_SRC_DIR)
     add_subdirectory(
         # Specifies the directory of the CMakeLists.txt file.
-        ${SDL2_SRC_DIR}
+        ${SDL3_SRC_DIR}
         # Specifies the directory for the build outputs.
-        ${SDL2_BUILD_DIR}_${ANDROID_ABI})
+        ${CMAKE_CURRENT_BINARY_DIR}/SDL_${ANDROID_ABI})
 endif()
 
 project(09-3-start-game-protorype CXX)
 
-if(SDL2_SRC_DIR)
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Android")
     add_library(engine-09-3 SHARED)
 else()
     add_executable(engine-09-3)
@@ -30,20 +30,19 @@ if(WIN32)
                                PRIVATE "-DOM_DECLSPEC=__declspec(dllexport)")
 endif(WIN32)
 
-if(SDL2_SRC_DIR)
-    find_library(SDL2_LIB NAMES SDL2)
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Android")
+    # find_library(SDL3_LIB NAMES SDL3)
 else()
     find_package(SDL3 REQUIRED)
     find_package(OpenGL REQUIRED)
 endif()
 
-if(SDL2_SRC_DIR)
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Android")
     # target_include_directories( engine-09-3 PRIVATE
     # ${SDL2_SRC_DIR}/include )
     target_link_libraries(
         engine-09-3
-        PRIVATE SDL2
-                SDL2main
+        PRIVATE SDL3::SDL3-shared
                 android
                 log
                 EGL

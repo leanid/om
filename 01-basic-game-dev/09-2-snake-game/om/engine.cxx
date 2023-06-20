@@ -1,7 +1,9 @@
 #include "engine.hxx"
 
 #include <SDL3/SDL_audio.h>
+#include <SDL3/SDL_error.h>
 #include <SDL3/SDL_stdinc.h>
+#include <SDL3/SDL_video.h>
 #include <algorithm>
 #include <array>
 #include <atomic>
@@ -946,6 +948,18 @@ static void initialize_internal(std::string_view   title,
         }
 
         cout << "initialize om::engine" << std::endl;
+        const SDL_DisplayMode* dispaly_mode = SDL_GetDesktopDisplayMode(1);
+        if (!dispaly_mode)
+        {
+            cout << "error: can't get dispaly mode: " << SDL_GetError()
+                 << std::endl;
+        }
+        else
+        {
+            cout << "current display mode: [" << dispaly_mode->w << ' '
+                 << dispaly_mode->h << std::endl;
+        }
+
         if (std::string_view("Windows") == SDL_GetPlatform())
         {
             if (!cout)
