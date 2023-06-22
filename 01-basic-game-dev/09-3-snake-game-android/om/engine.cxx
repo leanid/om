@@ -1380,11 +1380,11 @@ membuf load_file(std::string_view path)
         throw std::runtime_error("can't determine size of file: " +
                                  std::string(path));
     }
-    size_t                  size = static_cast<size_t>(file_size);
+    const size_t                  size = static_cast<size_t>(file_size);
     std::unique_ptr<char[]> mem  = std::make_unique<char[]>(size);
 
-    size_t num_readed_objects = io->read(io, mem.get(), size);
-    if (num_readed_objects != 1)
+    const size_t num_readed_objects = io->read(io, mem.get(), size);
+    if (num_readed_objects != size)
     {
         throw std::runtime_error("can't read all content from file: " +
                                  std::string(path));
