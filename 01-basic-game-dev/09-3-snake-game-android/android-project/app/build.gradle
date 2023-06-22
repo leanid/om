@@ -20,7 +20,7 @@ android {
 
     defaultConfig {
         if (buildAsApplication) {
-            applicationId "org.libsdl.app"
+            applicationId "org.home.leo"
         }
         minSdkVersion 16
         targetSdkVersion 33
@@ -35,6 +35,9 @@ android {
         }
     }
     buildTypes {
+        debug {
+            debuggable true
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
@@ -58,7 +61,7 @@ android {
     lintOptions {
         abortOnError false
     }
-    namespace 'org.libsdl.app'
+    namespace 'org.home.leo'
 
     if (buildAsLibrary) {
         libraryVariants.all { variant ->
