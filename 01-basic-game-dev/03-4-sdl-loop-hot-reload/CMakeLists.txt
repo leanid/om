@@ -13,7 +13,10 @@ if(MINGW OR MSVC)
     target_compile_definitions(
         engine-03-4 PRIVATE "-DOM_DECLSPEC=__declspec(dllexport)"
                             "-DGAME_DECLSPEC=__declspec(dllimport)")
+else()
+    target_compile_definitions(engine-03-4 PRIVATE OM_DECLSPEC= GAME_DECLSPEC=)
 endif()
+
 target_compile_features(engine-03-4 PUBLIC cxx_std_20)
 
 target_compile_definitions(
@@ -36,6 +39,8 @@ if(MSVC)
     target_compile_definitions(
         game-03-4 PRIVATE "-DOM_DECLSPEC=__declspec(dllimport)"
                           "-DGAME_DECLSPEC=__declspec(dllexport)")
+else()
+    target_compile_definitions(game-03-4 PRIVATE OM_DECLSPEC= GAME_DECLSPEC= )
 endif(MSVC)
 
 target_compile_features(game-03-4 PUBLIC cxx_std_20)

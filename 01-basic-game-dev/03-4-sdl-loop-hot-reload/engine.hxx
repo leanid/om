@@ -4,7 +4,11 @@
 #include <string_view>
 
 #ifndef OM_DECLSPEC
-#define OM_DECLSPEC
+#error "engine export macro should be defined"
+#endif
+
+#ifndef GAME_DECLSPEC
+#error "game import macro should be defined"
 #endif
 
 namespace om
