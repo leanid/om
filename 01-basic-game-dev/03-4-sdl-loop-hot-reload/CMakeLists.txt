@@ -10,16 +10,11 @@ set_target_properties(
 if(MINGW OR MSVC)
     # cannot find 01-basic-game-dev/03-4-sdl-loop-hot-reload/libengine-03-4.dll.a:
     # No such file or directory
-    target_compile_definitions(engine-03-4
-                               PRIVATE "-DOM_DECLSPEC=__declspec(dllexport)")
+    target_compile_definitions(
+        engine-03-4 PRIVATE "-DOM_DECLSPEC=__declspec(dllexport)"
+                            "-DGAME_DECLSPEC=__declspec(dllimport)")
 endif()
 target_compile_features(engine-03-4 PUBLIC cxx_std_20)
-
-# cmake-format: off
-# target_compile_definitions(
-#     engine-03-4
-#     PRIVATE $<$<CXX_COMPILER_ID:MSVC>:"OM_DECLSPEC=__declspec(dllexport)" >)
-# cmake-format: on
 
 target_compile_definitions(
     engine-03-4 PRIVATE $<$<CXX_COMPILER_ID:MSVC>:_CRT_SECURE_NO_WARNINGS=1>)
@@ -37,11 +32,11 @@ target_link_libraries(engine-03-4 PRIVATE SDL3::SDL3-shared)
 
 add_library(game-03-4 SHARED game.cxx)
 
-# cmake-format: off
-target_compile_definitions(
-    game-03-4 PRIVATE
-    $<$<CXX_COMPILER_ID:MSVC>: OM_DECLSPEC=__declspec(dllexport) >)
-# cmake-format: on
+if(MSVC)
+    target_compile_definitions(
+        game-03-4 PRIVATE "-DOM_DECLSPEC=__declspec(dllimport)"
+                          "-DGAME_DECLSPEC=__declspec(dllexport)")
+endif(MSVC)
 
 target_compile_features(game-03-4 PUBLIC cxx_std_20)
 target_link_libraries(game-03-4 PRIVATE engine-03-4)

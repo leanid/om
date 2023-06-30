@@ -40,7 +40,7 @@ private:
 };
 
 /// We have to export next two functions
-OM_DECLSPEC om::game* create_game(om::engine* engine)
+GAME_DECLSPEC om::game* create_game(om::engine* engine)
 {
     if (engine != nullptr)
     {
@@ -49,7 +49,7 @@ OM_DECLSPEC om::game* create_game(om::engine* engine)
     return nullptr;
 }
 
-[[maybe_unused]] OM_DECLSPEC void destroy_game(om::game* game)
+[[maybe_unused]] GAME_DECLSPEC void destroy_game(om::game* game)
 {
     delete game;
 }

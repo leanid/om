@@ -67,5 +67,5 @@ struct OM_DECLSPEC game
 
 /// You have to implement next functions in your code for engine
 /// to be able to load your library
-extern "C" OM_DECLSPEC om::game*             create_game(om::engine*);
-extern "C" [[maybe_unused]] OM_DECLSPEC void destroy_game(om::game*);
+extern "C" GAME_DECLSPEC om::game*             create_game(om::engine*);
+extern "C" [[maybe_unused]] GAME_DECLSPEC void destroy_game(om::game*);
