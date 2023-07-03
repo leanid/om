@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.22)
 project(hello-bin CXX)
 
-if(NOT MINGW AND NOT MSVC)
+if(NOT MINGW AND NOT MSVC AND NOT APPLE)
     message(STATUS "try to fix MinGW64 static linking error for F31 MinGW 6.0")
 
     add_executable(hello-bin-static src/main.cxx)
