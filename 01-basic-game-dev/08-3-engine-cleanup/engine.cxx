@@ -1428,7 +1428,7 @@ int initialize_and_start_main_loop()
 
     std::string_view om_tat_sat_func;
 
-#if defined(__MINGW32__) || defined(__linux__)
+#if defined(__MINGW32__) || defined(__linux__) || defined(__APPLE__)
     om_tat_sat_func = "_Z10om_tat_satv";
 #elif defined(_MSC_VER)
     om_tat_sat_func = "om_tat_sat::om::engine"; // TODO fix it later
