@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.25)
-project(09-1-start-game-protorype)
+project(09-1-start-game-prototype)
 
 add_executable(
     engine-09-1
