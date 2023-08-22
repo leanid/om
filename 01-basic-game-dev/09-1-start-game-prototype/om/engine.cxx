@@ -1174,11 +1174,8 @@ static void initialize_internal(std::string_view   title,
         }
         std::cout << std::flush;
 
-        audio_device = SDL_OpenAudioDevice(default_audio_device_name,
-                                           0,
-                                           &audio_device_spec,
-                                           nullptr,
-                                           SDL_AUDIO_ALLOW_ANY_CHANGE);
+        audio_device = SDL_OpenAudioDevice(*currently_connected,
+                                           &audio_device_spec);
 
         if (audio_device == 0)
         {
@@ -1195,11 +1192,11 @@ static void initialize_internal(std::string_view   title,
                       << "channels: "
                       << static_cast<uint32_t>(audio_device_spec.channels)
                       << '\n'
-                      << "samples: " << audio_device_spec.samples << '\n'
+                      << "samples: ???" << '\n'
                       << std::flush;
 
             // unpause device and start audio thread
-            SDL_PlayAudioDevice(audio_device);
+            SDL_ResumeAudioDevice(audio_device);
         }
     }
 
