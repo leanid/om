@@ -1272,9 +1272,9 @@ std::string engine_impl::initialize(std::string_view)
     audio_device_spec.freq     = 48000;
     audio_device_spec.format   = SDL_AUDIO_S16LSB;
     audio_device_spec.channels = 2;
-    audio_device_spec.samples  = 1024; // must be power of 2
-    audio_device_spec.callback = engine_impl::audio_callback;
-    audio_device_spec.userdata = this;
+    // audio_device_spec.samples  = 1024; // must be power of 2
+    // audio_device_spec.callback = engine_impl::audio_callback;
+    // audio_device_spec.userdata = this;
 
     const int num_audio_drivers = SDL_GetNumAudioDrivers();
     for (int i = 0; i < num_audio_drivers; ++i)
@@ -1300,24 +1300,21 @@ std::string engine_impl::initialize(std::string_view)
     const char* default_audio_device_name = nullptr;
 
     // SDL_FALSE - mean get only OUTPUT audio devices
-    const int num_audio_devices = SDL_GetNumAudioDevices(SDL_FALSE);
+    int                num_audio_devices = 0;
+    SDL_AudioDeviceID* audio_devices =
+        SDL_GetAudioOutputDevices(&num_audio_devices);
     if (num_audio_devices > 0)
     {
-        default_audio_device_name =
-            SDL_GetAudioDeviceName(num_audio_devices - 1, SDL_FALSE);
+        default_audio_device_name = SDL_GetAudioDeviceName(audio_devices[0]);
         for (int i = 0; i < num_audio_devices; ++i)
         {
             std::cout << "audio device #" << i << ": "
-                      << SDL_GetAudioDeviceName(i, SDL_FALSE) << '\n';
+                      << SDL_GetAudioDeviceName(audio_devices[i]) << '\n';
         }
     }
     std::cout << std::flush;
 
-    audio_device = SDL_OpenAudioDevice(default_audio_device_name,
-                                       0,
-                                       &audio_device_spec,
-                                       nullptr,
-                                       SDL_AUDIO_ALLOW_ANY_CHANGE);
+    audio_device = SDL_OpenAudioDevice(audio_devices[0], &audio_device_spec);
 
     if (audio_device == 0)
     {
