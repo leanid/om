@@ -1,5 +1,6 @@
 #include "engine.hxx"
 
+#include <SDL3/SDL_stdinc.h>
 #include <algorithm>
 #include <array>
 #include <cassert>
@@ -1330,12 +1331,13 @@ std::string engine_impl::initialize(std::string_view)
                   << "format: "
                   << get_sound_format_name(audio_device_spec.format) << '\n'
                   << "channels: "
-                  << static_cast<uint32_t>(audio_device_spec.channels) << '\n'
-                  << "samples: " << audio_device_spec.samples << '\n'
+                  << static_cast<uint32_t>(audio_device_spec.channels)
+                  << '\n'
+                  // << "samples: " << audio_device_spec.samples << '\n'
                   << std::flush;
 
         // unpause device
-        SDL_PlayAudioDevice(audio_device);
+        SDL_ResumeAudioDevice(audio_device);
     }
 
     return "";
@@ -1387,7 +1389,8 @@ sound_buffer_impl::sound_buffer_impl(std::string_view  path,
     // freq, format, channels, and samples - used by SDL_LoadWAV_RW
     SDL_AudioSpec file_audio_spec;
 
-    if (nullptr == SDL_LoadWAV_RW(file, 1, &file_audio_spec, &buffer, &length))
+    if (-1 ==
+        SDL_LoadWAV_RW(file, SDL_TRUE, &file_audio_spec, &buffer, &length))
     {
         throw std::runtime_error(std::string("can't load wav: ") + path.data());
     }
@@ -1417,14 +1420,10 @@ sound_buffer_impl::sound_buffer_impl(std::string_view  path,
         Uint8* output_bytes;
         int    output_length;
 
-        int convert_status = SDL_ConvertAudioSamples(file_audio_spec.format,
-                                                     file_audio_spec.channels,
-                                                     file_audio_spec.freq,
+        int convert_status = SDL_ConvertAudioSamples(&file_audio_spec,
                                                      buffer,
                                                      static_cast<int>(length),
-                                                     device_audio_spec.format,
-                                                     device_audio_spec.channels,
-                                                     device_audio_spec.freq,
+                                                     &device_audio_spec,
                                                      &output_bytes,
                                                      &output_length);
         if (0 != convert_status)

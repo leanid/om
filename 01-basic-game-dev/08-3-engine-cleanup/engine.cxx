@@ -271,7 +271,7 @@ public:
     void play(const effect prop) final
     {
         // Lock callback function
-        SDL_LockAudioDevice(device);
+        SDL_PauseAudioDevice(device);
 
         // here we can change properties
         // of sound and dont collade with multithreaded playing
@@ -279,13 +279,13 @@ public:
         is_playing_   = true;
         is_looped     = (prop == effect::looped);
 
-        SDL_UnlockAudioDevice(device);
+        SDL_ResumeAudioDevice(device);
     }
     bool is_playing() const final { return is_playing_; }
     void stop() final
     {
         // Lock callback function
-        SDL_LockAudioDevice(device);
+        SDL_PauseAudioDevice(device);
 
         // here we can change properties
         // of sound and dont collade with multithreaded playing
@@ -294,7 +294,7 @@ public:
         is_looped     = false;
 
         // unlock callback for continue mixing of audio
-        SDL_UnlockAudioDevice(device);
+        SDL_ResumeAudioDevice(device);
     }
 
     std::unique_ptr<uint8_t[]> tmp_buf;
@@ -323,7 +323,8 @@ sound_buffer_impl::sound_buffer_impl(std::string_view  path,
     // freq, format, channels, and samples - used by SDL_LoadWAV_RW
     SDL_AudioSpec file_audio_spec;
 
-    if (nullptr == SDL_LoadWAV_RW(file, 1, &file_audio_spec, &buffer, &length))
+    if (-1 ==
+        SDL_LoadWAV_RW(file, SDL_TRUE, &file_audio_spec, &buffer, &length))
     {
         throw std::runtime_error(std::string("can't load wav: ") + path.data());
     }
@@ -350,14 +351,10 @@ sound_buffer_impl::sound_buffer_impl(std::string_view  path,
         Uint8* output_bytes;
         int    output_length;
 
-        int convert_status = SDL_ConvertAudioSamples(file_audio_spec.format,
-                                                     file_audio_spec.channels,
-                                                     file_audio_spec.freq,
+        int convert_status = SDL_ConvertAudioSamples(&file_audio_spec,
                                                      buffer,
                                                      static_cast<int>(length),
-                                                     device_audio_spec.format,
-                                                     device_audio_spec.channels,
-                                                     device_audio_spec.freq,
+                                                     &device_audio_spec,
                                                      &output_bytes,
                                                      &output_length);
         if (0 != convert_status)
@@ -790,11 +787,11 @@ void destroy_vbo(vbo* buffer)
 
 sound* create_sound(std::string_view path)
 {
-    SDL_LockAudioDevice(audio_device);
+    SDL_PauseAudioDevice(audio_device);
     sound_buffer_impl* s =
         new sound_buffer_impl(path, audio_device, audio_device_spec);
     sounds.push_back(s);
-    SDL_UnlockAudioDevice(audio_device);
+    SDL_ResumeAudioDevice(audio_device);
     return s;
 }
 void destroy_sound(sound* sound)
@@ -1109,9 +1106,9 @@ static void initialize_internal(std::string_view   title,
         audio_device_spec.freq     = 48000;
         audio_device_spec.format   = SDL_AUDIO_S16LSB;
         audio_device_spec.channels = 2;
-        audio_device_spec.samples  = 1024; // must be power of 2
-        audio_device_spec.callback = audio_callback;
-        audio_device_spec.userdata = nullptr;
+        // audio_device_spec.samples  = 1024; // must be power of 2
+        // audio_device_spec.callback = audio_callback;
+        // audio_device_spec.userdata = nullptr;
 
         const int num_audio_drivers = SDL_GetNumAudioDrivers();
         for (int i = 0; i < num_audio_drivers; ++i)
