@@ -15,7 +15,9 @@ if(${OM_BUILD_DEPS})
         GIT_SHALLOW TRUE
         GIT_PROGRESS TRUE
         OVERRIDE_FIND_PACKAGE TRUE)
-    #fetchcontent_makeavailable(SDL3)
+    option(SDL_STATIC "" ON)
+    option(SDL_SHARED "" ON)
+    fetchcontent_makeavailable(SDL3)
     #fetchcontent_populate(SDL3)
     find_package(SDL3 REQUIRED)
 endif(${OM_BUILD_DEPS})
