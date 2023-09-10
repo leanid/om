@@ -1458,7 +1458,7 @@ texture_gl_es20::~texture_gl_es20()
     OM_GL_CHECK();
 }
 
-void audio_callback(void*, uint8_t* stream, int stream_size)
+[[maybe_unused]] void audio_callback(void*, uint8_t* stream, int stream_size)
 {
     // no sound default
     std::fill_n(stream, stream_size, 0);
