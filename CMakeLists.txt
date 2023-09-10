@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.22...3.27)
 
+project(gamedev_study CXX)
+
 option(OM_BUILD_DEPS "download and build dependencies as part of current build"
        ON)
 
@@ -7,15 +9,16 @@ if(${OM_BUILD_DEPS})
     message(STATUS "download and build SDL3 sources")
     include(FetchContent)
     fetchcontent_declare(
-        sdl3
+        SDL3
         GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
         GIT_TAG origin/main
-        GIT_SHALLOW ON
-        GIT_PROGRESS ON)
-    fetchcontent_makeavailable(sdl3)
+        GIT_SHALLOW TRUE
+        GIT_PROGRESS TRUE
+        OVERRIDE_FIND_PACKAGE TRUE)
+    #fetchcontent_makeavailable(SDL3)
+    #fetchcontent_populate(SDL3)
+    find_package(SDL3 REQUIRED)
 endif(${OM_BUILD_DEPS})
-
-project(gamedev_study CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_EXTENSIONS OFF)
