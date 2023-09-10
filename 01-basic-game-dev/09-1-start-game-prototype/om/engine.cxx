@@ -221,12 +221,12 @@ static std::string_view get_sound_format_name(uint16_t format_value)
     static const std::map<uint16_t, std::string_view> format = {
         { SDL_AUDIO_U8, "AUDIO_U8" },
         { SDL_AUDIO_S8, "AUDIO_S8" },
-        { SDL_AUDIO_S16LSB, "AUDIO_S16LSB" },
-        { SDL_AUDIO_S16MSB, "AUDIO_S16MSB" },
-        { SDL_AUDIO_S32LSB, "AUDIO_S32LSB" },
-        { SDL_AUDIO_S32MSB, "AUDIO_S32MSB" },
-        { SDL_AUDIO_F32LSB, "AUDIO_F32LSB" },
-        { SDL_AUDIO_F32MSB, "AUDIO_F32MSB" },
+        { SDL_AUDIO_S16LE, "AUDIO_S16LSB" },
+        { SDL_AUDIO_S16BE, "AUDIO_S16MSB" },
+        { SDL_AUDIO_S32LE, "AUDIO_S32LSB" },
+        { SDL_AUDIO_S32BE, "AUDIO_S32MSB" },
+        { SDL_AUDIO_F32LE, "AUDIO_F32LSB" },
+        { SDL_AUDIO_F32BE, "SDL_AUDIO_F32BE" },
     };
 
     auto it = format.find(format_value);
@@ -236,10 +236,9 @@ static std::string_view get_sound_format_name(uint16_t format_value)
 static std::size_t get_sound_format_size(uint16_t format_value)
 {
     static const std::map<uint16_t, std::size_t> format = {
-        { SDL_AUDIO_U8, 1 },     { SDL_AUDIO_S8, 1 },
-        { SDL_AUDIO_S16LSB, 2 }, { SDL_AUDIO_S16MSB, 2 },
-        { SDL_AUDIO_S32LSB, 4 }, { SDL_AUDIO_S32MSB, 4 },
-        { SDL_AUDIO_F32LSB, 4 }, { SDL_AUDIO_F32MSB, 4 },
+        { SDL_AUDIO_U8, 1 },    { SDL_AUDIO_S8, 1 },    { SDL_AUDIO_S16LE, 2 },
+        { SDL_AUDIO_S16BE, 2 }, { SDL_AUDIO_S32LE, 4 }, { SDL_AUDIO_S32BE, 4 },
+        { SDL_AUDIO_F32LE, 4 }, { SDL_AUDIO_F32BE, 4 },
     };
 
     auto it = format.find(format_value);
@@ -338,7 +337,8 @@ sound_buffer_impl::sound_buffer_impl(std::string_view  path,
     // freq, format, channels, and samples - used by SDL_LoadWAV_RW
     SDL_AudioSpec file_audio_spec;
 
-    if (-1 == SDL_LoadWAV_RW(file, SDL_TRUE, &file_audio_spec, &buffer, &length))
+    if (-1 ==
+        SDL_LoadWAV_RW(file, SDL_TRUE, &file_audio_spec, &buffer, &length))
     {
         throw std::runtime_error(std::string("can't load wav: ") + path.data());
     }
@@ -1132,11 +1132,11 @@ static void initialize_internal(std::string_view   title,
 
         // initialize audio
         audio_device_spec.freq     = 48000;
-        audio_device_spec.format   = SDL_AUDIO_S16LSB;
+        audio_device_spec.format   = SDL_AUDIO_S16LE;
         audio_device_spec.channels = 2;
-        //audio_device_spec.samples  = 1024; // must be power of 2
-        //audio_device_spec.callback = audio_callback;
-        //audio_device_spec.userdata = nullptr;
+        // audio_device_spec.samples  = 1024; // must be power of 2
+        // audio_device_spec.callback = audio_callback;
+        // audio_device_spec.userdata = nullptr;
 
         const int num_audio_drivers = SDL_GetNumAudioDrivers();
         for (int i = 0; i < num_audio_drivers; ++i)
@@ -1160,8 +1160,9 @@ static void initialize_internal(std::string_view   title,
 
         const char* default_audio_device_name = nullptr;
 
-        int num_audio_devices = 0;
-        SDL_AudioDeviceID* currently_connected = SDL_GetAudioOutputDevices(&num_audio_devices);
+        int                num_audio_devices = 0;
+        SDL_AudioDeviceID* currently_connected =
+            SDL_GetAudioOutputDevices(&num_audio_devices);
         if (num_audio_devices > 0)
         {
             default_audio_device_name =
@@ -1169,13 +1170,14 @@ static void initialize_internal(std::string_view   title,
             for (int i = 0; i < num_audio_devices; ++i)
             {
                 std::cout << "audio device #" << i << ": "
-                          << SDL_GetAudioDeviceName(currently_connected[i]) << '\n';
+                          << SDL_GetAudioDeviceName(currently_connected[i])
+                          << '\n';
             }
         }
         std::cout << std::flush;
 
-        audio_device = SDL_OpenAudioDevice(*currently_connected,
-                                           &audio_device_spec);
+        audio_device =
+            SDL_OpenAudioDevice(*currently_connected, &audio_device_spec);
 
         if (audio_device == 0)
         {
