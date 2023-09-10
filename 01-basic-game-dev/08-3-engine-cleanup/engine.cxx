@@ -1133,24 +1133,23 @@ static void initialize_internal(std::string_view   title,
 
         const char* default_audio_device_name = nullptr;
 
-        const int num_audio_devices = SDL_GetNumAudioDevices(SDL_FALSE);
+        int                num_audio_devices = 0;
+        SDL_AudioDeviceID* audio_devices =
+            SDL_GetAudioOutputDevices(&num_audio_devices);
         if (num_audio_devices > 0)
         {
             default_audio_device_name =
-                SDL_GetAudioDeviceName(num_audio_devices - 1, SDL_FALSE);
+                SDL_GetAudioDeviceName(audio_devices[0]);
             for (int i = 0; i < num_audio_devices; ++i)
             {
                 std::cout << "audio device #" << i << ": "
-                          << SDL_GetAudioDeviceName(i, SDL_FALSE) << '\n';
+                          << SDL_GetAudioDeviceName(audio_devices[i]) << '\n';
             }
         }
         std::cout << std::flush;
 
-        audio_device = SDL_OpenAudioDevice(default_audio_device_name,
-                                           0,
-                                           &audio_device_spec,
-                                           nullptr,
-                                           SDL_AUDIO_ALLOW_ANY_CHANGE);
+        audio_device =
+            SDL_OpenAudioDevice(audio_devices[0], &audio_device_spec);
 
         if (audio_device == 0)
         {
@@ -1167,11 +1166,11 @@ static void initialize_internal(std::string_view   title,
                       << "channels: "
                       << static_cast<uint32_t>(audio_device_spec.channels)
                       << '\n'
-                      << "samples: " << audio_device_spec.samples << '\n'
+                      // << "samples: " << audio_device_spec.samples << '\n'
                       << std::flush;
 
             // unpause device
-            SDL_PlayAudioDevice(audio_device);
+            SDL_ResumeAudioDevice(audio_device);
         }
     }
 
