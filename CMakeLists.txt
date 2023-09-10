@@ -20,6 +20,17 @@ if(${OM_BUILD_DEPS})
     fetchcontent_makeavailable(SDL3)
     #fetchcontent_populate(SDL3)
     find_package(SDL3 REQUIRED)
+
+    message(STATUS "download and build GLM sources")
+    fetchcontent_declare(
+        glm
+        GIT_REPOSITORY git@github.com:g-truc/glm.git
+        GIT_TAG origin/master
+        GIT_SHALLOW TRUE
+        GIT_PROGRESS TRUE
+        OVERRIDE_FIND_PACKAGE TRUE)
+    fetchcontent_makeavailable(glm)
+    find_package(glm REQUIRED)
 endif(${OM_BUILD_DEPS})
 
 set(CMAKE_CXX_STANDARD 20)

@@ -215,7 +215,7 @@ static std::string_view get_sound_format_name(uint16_t format_value)
     static const std::map<int, std::string_view> format = {
         { SDL_AUDIO_U8, "AUDIO_U8" },
         { SDL_AUDIO_S8, "AUDIO_S8" },
-        { SDL_AUDIO_S16LSB, "AUDIO_S16LSB" },
+        { SDL_AUDIO_S16LE, "AUDIO_S16LE" },
         { SDL_AUDIO_S16MSB, "AUDIO_S16MSB" },
         { SDL_AUDIO_S32LSB, "AUDIO_S32LSB" },
         { SDL_AUDIO_S32MSB, "AUDIO_S32MSB" },
