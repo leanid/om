@@ -11,7 +11,7 @@
 
 #include <SDL3/SDL.h>
 
-constexpr int32_t AUDIO_FORMAT = SDL_AUDIO_S16LSB;
+constexpr int32_t AUDIO_FORMAT = SDL_AUDIO_S16LE;
 
 static void audio_callback(void* userdata, uint8_t* stream, int len);
 

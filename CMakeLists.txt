@@ -1,31 +1,24 @@
 cmake_minimum_required(VERSION 3.22...3.27)
 
-# include("cmake/HunterGate.cmake")
-
-# huntergate(
-#     URL
-#     "https://github.com/cpp-pm/hunter/archive/v0.24.18.tar.gz"
-#     SHA1
-#     "1292e4d661e1770d6d6ca08c12c07cf34a0bf718")
-
-project(gamedev_study CXX)
-
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_EXTENSIONS OFF)
-
 option(OM_BUILD_DEPS "download and build dependencies as part of current build"
        ON)
 
 if(${OM_BUILD_DEPS})
     message(STATUS "download and build SDL3 sources")
-    include(ExternalProject)
-    externalproject_add(
+    include(FetchContent)
+    fetchcontent_declare(
         sdl3
         GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
         GIT_TAG origin/main
         GIT_SHALLOW ON
         GIT_PROGRESS ON)
+    fetchcontent_makeavailable(sdl3)
 endif(${OM_BUILD_DEPS})
+
+project(gamedev_study CXX)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(OM_BUILD_COURSE_BASIC_PROG ON
     CACHE BOOL "turn ON if need to build 00-basic-prog")
