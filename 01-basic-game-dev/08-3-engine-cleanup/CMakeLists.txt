@@ -21,7 +21,7 @@ find_package(SDL3 REQUIRED)
 
 target_link_libraries(engine-08-3 PRIVATE SDL3::SDL3-shared OpenGL::GL)
 
-add_library(game-08-3 SHARED game.cxx)
+add_library(game-08-3 SHARED MODULE game.cxx)
 target_compile_features(game-08-3 PUBLIC cxx_std_20)
 target_link_libraries(game-08-3 PRIVATE engine-08-3)
 

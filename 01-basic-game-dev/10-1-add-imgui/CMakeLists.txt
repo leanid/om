@@ -35,7 +35,7 @@ find_package(OpenGL REQUIRED)
 
 target_link_libraries(engine-10-1 PRIVATE SDL3::SDL3 OpenGL::GL)
 
-add_library(game-10-1 SHARED game/configuration_loader.hxx game/game.cxx
+add_library(game-10-1 SHARED MODULE game/configuration_loader.hxx game/game.cxx
                              game/game_object.hxx)
 target_include_directories(game-10-1 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_features(game-10-1 PRIVATE cxx_std_20)

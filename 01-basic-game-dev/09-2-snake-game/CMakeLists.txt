@@ -21,7 +21,7 @@ find_package(OpenGL REQUIRED)
 target_link_libraries(engine-09-2 PRIVATE SDL3::SDL3-shared OpenGL::GL)
 
 add_library(
-    game-09-2 SHARED
+    game-09-2 SHARED MODULE
     game/configuration_loader.hxx
     game/fruit.cxx
     game/fruit.hxx

@@ -36,7 +36,7 @@ endif(${OM_BUILD_DEPS})
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-set(OM_BUILD_COURSE_BASIC_PROG ON
+set(OM_BUILD_COURSE_BASIC_PROG OFF
     CACHE BOOL "turn ON if need to build 00-basic-prog")
 set(OM_BUILD_COURSE_BASIC_GAME_DEV ON
     CACHE BOOL "turn ON if need to build 01-basic-game-dev")
