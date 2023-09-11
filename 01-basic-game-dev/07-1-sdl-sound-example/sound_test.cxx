@@ -1,3 +1,5 @@
+#include <SDL3/SDL_audio.h>
+#include <SDL3/SDL_stdinc.h>
 #include <cassert>
 #include <chrono>
 #include <cmath>
@@ -9,7 +11,7 @@
 
 #include <SDL3/SDL.h>
 
-constexpr int32_t AUDIO_FORMAT = SDL_AUDIO_S16LSB;
+constexpr int32_t AUDIO_FORMAT = SDL_AUDIO_S16LE;
 
 static void audio_callback(void* userdata, uint8_t* stream, int len);
 
@@ -68,20 +70,20 @@ int main(int /*argc*/, char* /*argv*/[])
         return EXIT_FAILURE;
     }
 
-    SDL_AudioSpec audio_spec_from_file{};
-    const int32_t auto_delete_file            = 1;
-    uint8_t*      sample_buffer_from_file     = nullptr;
-    uint32_t      sample_buffer_len_from_file = 0;
+    SDL_AudioSpec  audio_spec_from_file{};
+    const SDL_bool auto_delete_file            = SDL_TRUE;
+    uint8_t*       sample_buffer_from_file     = nullptr;
+    uint32_t       sample_buffer_len_from_file = 0;
 
     clog << "loading sample buffer from file: " << file_name << endl;
 
-    SDL_AudioSpec* audio_spec = SDL_LoadWAV_RW(file,
-                                               auto_delete_file,
-                                               &audio_spec_from_file,
-                                               &sample_buffer_from_file,
-                                               &sample_buffer_len_from_file);
+    int load_status = SDL_LoadWAV_RW(file,
+                                     auto_delete_file,
+                                     &audio_spec_from_file,
+                                     &sample_buffer_from_file,
+                                     &sample_buffer_len_from_file);
 
-    if (audio_spec == nullptr)
+    if (load_status == -3)
     {
         cerr << "error: can't parse and load audio samples from file\n";
         return EXIT_FAILURE;
@@ -109,15 +111,9 @@ int main(int /*argc*/, char* /*argv*/[])
 
     const char*   device_name       = nullptr; // device name or nullptr
     const int32_t is_capture_device = 0; // 0 - play device, 1 - microphone
-    SDL_AudioSpec disired{ .freq     = 48000,
-                           .format   = AUDIO_FORMAT,
+    SDL_AudioSpec disired{ .format   = AUDIO_FORMAT,
                            .channels = 2, // stereo
-                           .silence  = 0,
-                           .samples  = 4096, // must be power of 2
-                           .padding  = 0,
-                           .size     = 0,
-                           .callback = audio_callback,
-                           .userdata = &loaded_audio_buff };
+                           .freq     = 48000 };
 
     clog << "prepare disired audio specs for output device:\n"
          << disired << endl;
@@ -126,8 +122,12 @@ int main(int /*argc*/, char* /*argv*/[])
 
     const int32_t allow_changes = 0;
 
-    SDL_AudioDeviceID audio_device_id = SDL_OpenAudioDevice(
-        device_name, is_capture_device, &disired, &returned, allow_changes);
+    int                num_audio_devices = 0;
+    SDL_AudioDeviceID* audio_devices =
+        SDL_GetAudioOutputDevices(&num_audio_devices);
+
+    SDL_AudioDeviceID audio_device_id =
+        SDL_OpenAudioDevice(audio_devices[0], &disired);
     if (audio_device_id == 0)
     {
         cerr << "error: failed to open audio device: " << SDL_GetError()
@@ -146,7 +146,7 @@ int main(int /*argc*/, char* /*argv*/[])
 
     // start playing audio thread
     // now callback is firing
-    SDL_PlayAudioDevice(audio_device_id);
+    SDL_ResumeAudioDevice(audio_device_id);
 
     clog << "unpause audio device (start audio thread)" << endl;
 
@@ -199,9 +199,10 @@ int main(int /*argc*/, char* /*argv*/[])
             }
             case 4:
             {
-                clog << "device buffer play length: "
-                     << returned.samples / double(returned.freq) << " seconds"
-                     << endl;
+                clog
+                    << "device buffer play length: "
+                    // << returned.samples / double(returned.freq) << " seconds"
+                    << endl;
                 break;
             }
             case 5:
@@ -361,12 +362,13 @@ std::ostream& operator<<(std::ostream& o, const SDL_AudioSpec& spec)
     std::string tab(4, ' ');
     o << tab << "freq: " << spec.freq << '\n'
       << tab << "format: " << std::hex << spec.format << '\n'
-      << tab << "channels: " << std::dec << int(spec.channels) << '\n'
-      << tab << "silence: " << int(spec.silence) << '\n'
-      << tab << "samples: " << spec.samples << '\n'
-      << tab << "size: " << spec.size << '\n'
-      << tab << "callback: " << reinterpret_cast<const void*>(spec.callback)
+      << tab << "channels: " << std::dec << int(spec.channels)
       << '\n'
-      << tab << "userdata: " << spec.userdata;
+      // << tab << "silence: " << int(spec.silence) << '\n'
+      // << tab << "samples: " << spec.samples << '\n'
+      // << tab << "size: " << spec.size << '\n'
+      // << tab << "callback: " << reinterpret_cast<const void*>(spec.callback)
+      << '\n';
+    // << tab << "userdata: " << spec.userdata;
     return o;
 }

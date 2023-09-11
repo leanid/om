@@ -203,7 +203,7 @@ int main(int, char**)
         {
             cerr << "Failed to SDL_CreateSurfaceFrom(" << pixels << ", "
                  << width << ", " << height << ", " << pitch << ", "
-                 << SDL_GetPixelFormatName(SDL_PIXELFORMAT_RGB888) << ") "
+                 << SDL_GetPixelFormatName(SDL_PIXELFORMAT_XRGB8888) << ") "
                  << SDL_GetError() << endl;
             SDL_RendererInfo renderer_info{};
             if (0 == SDL_GetRendererInfo(renderer, &renderer_info))

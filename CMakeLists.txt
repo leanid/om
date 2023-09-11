@@ -1,10 +1,42 @@
-cmake_minimum_required(VERSION 3.22...3.24)
+cmake_minimum_required(VERSION 3.22...3.27)
 
 project(gamedev_study CXX)
 
+option(OM_BUILD_DEPS "download and build dependencies as part of current build"
+       ON)
+
+if(${OM_BUILD_DEPS})
+    message(STATUS "download and build SDL3 sources")
+    include(FetchContent)
+    fetchcontent_declare(
+        SDL3
+        GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
+        GIT_TAG origin/main
+        GIT_SHALLOW TRUE
+        GIT_PROGRESS TRUE
+        OVERRIDE_FIND_PACKAGE TRUE)
+    option(SDL_STATIC "" ON)
+    option(SDL_SHARED "" ON)
+    fetchcontent_makeavailable(SDL3)
+    #fetchcontent_populate(SDL3)
+    find_package(SDL3 REQUIRED)
+
+    message(STATUS "download and build GLM sources")
+    fetchcontent_declare(
+        glm
+        GIT_REPOSITORY git@github.com:g-truc/glm.git
+        GIT_TAG origin/master
+        GIT_SHALLOW TRUE
+        GIT_PROGRESS TRUE
+        OVERRIDE_FIND_PACKAGE TRUE)
+    fetchcontent_makeavailable(glm)
+    find_package(glm REQUIRED)
+endif(${OM_BUILD_DEPS})
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_EXTENSIONS OFF)
-set(OM_BUILD_COURSE_BASIC_PROG ON
+
+set(OM_BUILD_COURSE_BASIC_PROG OFF
     CACHE BOOL "turn ON if need to build 00-basic-prog")
 set(OM_BUILD_COURSE_BASIC_GAME_DEV ON
     CACHE BOOL "turn ON if need to build 01-basic-game-dev")
