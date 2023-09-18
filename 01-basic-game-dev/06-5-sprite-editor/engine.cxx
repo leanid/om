@@ -358,7 +358,7 @@ private:
                                  const size_t height);
 
     std::string   file_path;
-    std::size_t        ref_counter = 1;
+    std::size_t   ref_counter = 1;
     GLuint        tex_handl   = 0;
     std::uint32_t width       = 0;
     std::uint32_t height      = 0;
