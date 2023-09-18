@@ -11,8 +11,7 @@ void sprite_io::load(std::vector<sprite>& sprites,
     sprite spr;
 
     std::string attribute_name;
-    // float       value;
-    while (!in.eof() && in >> attribute_name)
+    while (!in.eof() && in >> attribute_name && !in.fail())
     {
         if ("uv_rect:" == attribute_name)
         {
@@ -38,7 +37,7 @@ void sprite_io::load(std::vector<sprite>& sprites,
             in >> a;
             spr.rotation(a);
 
-            // angle: - last attribute in sprite so add it to result
+            // angle: - last attribute in the sprite, so add it to the result
             sprites.push_back(spr);
         }
         else if ("id:" == attribute_name)
