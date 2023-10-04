@@ -30,9 +30,9 @@ std::ostream& operator<<(std::ostream& out, const float_bits& value)
         << endl;
     bitset<23> fraction_bits(fraction);
     float      fraction_value = .0f;
-    for (int32_t i = 1; i <= 23; ++i)
+    for (int32_t i = 23; i >= 1; --i)
     {
-        if (fraction_bits[i])
+        if (fraction_bits[23 - i])
         {
             float next_fraction =
                 pow(2.0f, -i); // 1/2 1/4 1/8 1/16 ... 1/(2^23)
@@ -50,6 +50,20 @@ std::ostream& operator<<(std::ostream& out, const float_bits& value)
 
 int main(int argc, char** argv)
 {
-    std::cout << float_bits{ 4.f };
+    if (argc > 1 && argv[1] == std::string("-i"))
+    {
+        float user_value{};
+        std::cout << "type float value (or 0 for exit):" << std::endl;
+        std::cin >> user_value;
+        while (user_value != 0.f)
+        {
+            std::cout << float_bits{ user_value };
+            std::cin >> user_value;
+        }
+    }
+    else
+    {
+        std::cout << float_bits{ 4.f };
+    }
     return std::cout.fail();
 }
