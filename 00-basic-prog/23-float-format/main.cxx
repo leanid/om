@@ -23,28 +23,29 @@ std::ostream& operator<<(std::ostream& out, const float_bits& value)
     out << sign_bits << string(31, '_') << " sign 1 bit 0->(+) 1->(-)" << endl;
     exp >>= 23;
     bitset<8> exp_bits(exp);
-    int       real_exp    = exp - 127;
-    float     two_pow_exp = pow(2.0f, real_exp);
+    int32_t   real_exp    = exp - 127;
+    double    two_pow_exp = pow(2.0, real_exp);
+    out << fixed << setprecision(30);
     out << '_' << exp_bits << string(23, '_') << " exp=(x-127) " << exp
         << "-127=" << real_exp << " 2^" << real_exp << "=" << two_pow_exp
         << endl;
     bitset<23> fraction_bits(fraction);
-    float      fraction_value = .0f;
+    double     fraction_value = .0;
     for (int32_t i = 23; i >= 1; --i)
     {
         if (fraction_bits[23 - i])
         {
-            float next_fraction =
-                pow(2.0f, -i); // 1/2 1/4 1/8 1/16 ... 1/(2^23)
+            // 1/2 1/4 1/8 1/16 ... 1/(2^23)
+            double next_fraction = pow(2.0, -i);
             fraction_value += next_fraction;
         }
     }
     out << string(9, '_') << fraction_bits << " fraction 23 bits " << fixed
-        << setw(12) << fraction_value << endl;
+        << fraction_value << endl;
     const char* sign_char = sign_bit ? "-" : "";
     out << "s*exp*(1+fraction)=" << sign_char << two_pow_exp << "*(1.0+"
         << fraction_value << ")=" << sign_char
-        << two_pow_exp * (1.0f + fraction_value) << endl;
+        << two_pow_exp * (1.0 + fraction_value) << endl;
     return out;
 }
 
