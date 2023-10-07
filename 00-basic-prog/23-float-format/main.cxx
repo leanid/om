@@ -12,6 +12,8 @@ struct float_bits
 
 std::ostream& operator<<(std::ostream& out, const float_bits& value)
 {
+    // online visualizer: https://www.h-schmidt.net/FloatConverter/IEEE754.html
+    // TODO implement minimal, maximum, NaN, Inf, denormalized
     using namespace std;
     out << "sEEEEEEEEfffffffffffffffffffffff" << endl;
     uint32_t as_i32   = *reinterpret_cast<const uint32_t*>(&value.value);
