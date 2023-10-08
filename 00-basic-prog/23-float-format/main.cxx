@@ -1,14 +1,37 @@
+#include <algorithm>
 #include <bitset>
 #include <cmath>
 #include <cstdint>
+#include <functional>
 #include <iomanip>
 #include <iostream>
+#include <iterator>
+#include <limits>
+#include <sstream>
 #include <string>
 
 struct float_bits
 {
     float value;
 };
+
+std::string no_tail_zero(double value)
+{
+    std::ostringstream oss;
+    oss << std::fixed << std::setprecision(50);
+    oss << value;
+    std::string result = oss.str();
+    auto        it     = std::adjacent_find(
+        result.rbegin(), result.rend(), std::not_equal_to<char>());
+    if (*it == '0')
+    {
+        // drop last zeroes like: 0.123000000 -> 0.123
+        size_t num_of_zeroes = std::distance(result.rbegin(), it);
+        size_t size          = result.size();
+        result.resize(size - num_of_zeroes);
+    }
+    return result;
+}
 
 std::ostream& operator<<(std::ostream& out, const float_bits& value)
 {
@@ -29,8 +52,8 @@ std::ostream& operator<<(std::ostream& out, const float_bits& value)
     double    two_pow_exp = pow(2.0, real_exp);
     out << fixed << setprecision(30);
     out << '_' << exp_bits << string(23, '_') << " exp=(x-127) " << exp
-        << "-127=" << real_exp << " 2^" << real_exp << "=" << two_pow_exp
-        << endl;
+        << "-127=" << real_exp << " 2^" << real_exp << "="
+        << no_tail_zero(two_pow_exp) << endl;
     bitset<23> fraction_bits(fraction);
     double     fraction_value = .0;
     for (int32_t i = 23; i >= 1; --i)
@@ -43,11 +66,11 @@ std::ostream& operator<<(std::ostream& out, const float_bits& value)
         }
     }
     out << string(9, '_') << fraction_bits << " fraction 23 bits " << fixed
-        << fraction_value << endl;
+        << no_tail_zero(fraction_value) << endl;
     const char* sign_char = sign_bit ? "-" : "";
-    out << "s*exp*(1+fraction)=" << sign_char << two_pow_exp << "*(1.0+"
-        << fraction_value << ")=" << sign_char
-        << two_pow_exp * (1.0 + fraction_value) << endl;
+    out << "s*exp*(1+fraction)=" << sign_char << no_tail_zero(two_pow_exp)
+        << "*(1.0+" << no_tail_zero(fraction_value) << ")=" << sign_char
+        << no_tail_zero(two_pow_exp * (1.0 + fraction_value)) << endl;
     return out;
 }
 
@@ -66,7 +89,21 @@ int main(int argc, char** argv)
     }
     else
     {
-        std::cout << float_bits{ 4.f };
+        const std::initializer_list<float> intresting_floats{
+            0.f,
+            1.f,
+            0.1f,
+            std::numeric_limits<float>::min(),
+            std::numeric_limits<float>::max(),
+            std::numeric_limits<float>::max() +
+                std::numeric_limits<float>::min(),
+            std::numeric_limits<float>::min() / 2.0f
+        };
+        for (float value : intresting_floats)
+        {
+            std::cout << "float " << no_tail_zero(value) << " :" << std::endl
+                      << float_bits{ value };
+        }
     }
     return std::cout.fail();
 }
