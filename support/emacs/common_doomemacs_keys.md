@@ -36,6 +36,8 @@ example: SPC\+/[[:space:]]*example -- -U -C3 -tmd
          ^^^^^^^^^^^^^^^^^^^^^^^^^ - emacs regexp example multiline and with context search only *.md
 example: OpenGL -- -g *.rs
                    ^^^^^^^^^ - search only in Rust files if you need exacly file pattern
+example: test -- --no-ignore
+                 ^^^^^^^^^^^ - search ignore .gitignore file patterns
 ```
 RipGrep manual here: 
 [RipGrep User Guide](https://github.com/BurntSushi/ripgrep/blob/master/GUIDE.md)
