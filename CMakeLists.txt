@@ -24,7 +24,7 @@ if(${OM_BUILD_DEPS})
     message(STATUS "download and build GLM sources")
     fetchcontent_declare(
         glm
-        GIT_REPOSITORY git@github.com:g-truc/glm.git
+        GIT_REPOSITORY https://github.com/g-truc/glm.git
         GIT_TAG origin/master
         GIT_SHALLOW TRUE
         GIT_PROGRESS TRUE
