@@ -20,7 +20,6 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_opengl.h>
 #include <SDL3/SDL_opengl_glext.h>
-#include <SDL3/SDL_syswm.h>
 #include <SDL3/SDL_video.h>
 
 #include "picopng.hxx"
