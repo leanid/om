@@ -4,6 +4,12 @@ project(gamedev_study CXX)
 
 option(OM_BUILD_DEPS "download and build dependencies as part of current build"
        ON)
+option(OM_BUILD_COURSE_BASIC_PROG "turn ON if need to build 00-basic-prog" ON)
+option(OM_BUILD_COURSE_BASIC_GAME_DEV
+       "turn ON if need to build 01-basic-game-dev" ON)
+option(OM_BUILD_COURSE_OPENGL "turn ON if need to build 02-opengl" OFF)
+option(OM_BUILD_COURSE_VULKAN "turn ON if need to build 02-vulkan" OFF)
+option(OM_BUILD_GAME_EXAMPLE "turn ON if need to build 05-game" OFF)
 
 if(${OM_BUILD_DEPS})
     message(STATUS "download and build SDL3 sources")
@@ -36,14 +42,6 @@ endif(${OM_BUILD_DEPS})
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-set(OM_BUILD_COURSE_BASIC_PROG ON
-    CACHE BOOL "turn ON if need to build 00-basic-prog")
-set(OM_BUILD_COURSE_BASIC_GAME_DEV ON
-    CACHE BOOL "turn ON if need to build 01-basic-game-dev")
-set(OM_BUILD_COURSE_GRAPHICS_3D OFF
-    CACHE BOOL "turn ON if need to build 02-graphics-3d")
-set(OM_BUILD_GAME_EXAMPLE OFF CACHE BOOL "turn ON if need to build 05-game")
-
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # curses
@@ -55,9 +53,14 @@ if(OM_BUILD_COURSE_BASIC_GAME_DEV)
     add_subdirectory(01-basic-game-dev)
 endif()
 
-if(OM_BUILD_COURSE_GRAPHICS_3D)
-    add_subdirectory(02-graphics-3d)
+if(OM_BUILD_COURSE_OPENGL)
+    add_subdirectory(02-opengl)
 endif()
+
+if(OM_BUILD_COURSE_VULKAN)
+    add_subdirectory(02-vulkan)
+endif()
+
 # start sample project
 if(OM_BUILD_GAME_EXAMPLE)
     add_subdirectory(05-game)
