@@ -32,6 +32,7 @@ public:
                        callback      get_instance_extensions,
                        hints         h)
         : log{ log }
+        , hints_{ h }
     {
         vk::ApplicationInfo    application_info;
         vk::InstanceCreateInfo instance_create_info;
@@ -45,7 +46,7 @@ public:
                 "get_instance_extensions callback return nullptr");
         }
 
-        if (h.verbose)
+        if (hints_.verbose)
         {
             log << "minimal vulkan expected extensions from "
                    "get_instance_extensions callback\n";
@@ -55,18 +56,32 @@ public:
                             { log << instance_extension << '\n'; });
         }
 
-        validate_expected_extensions_exists(instance_create_info, h);
+        validate_expected_extensions_exists(instance_create_info);
 
         // TODO future all layers (maybe debug?)
         // instance_create_info.enabledLayerCount   = 0;
         // instance_create_info.ppEnabledLayerNames = nullptr;
 
         instance = vk::createInstance(instance_create_info);
+        if (hints_.verbose)
+        {
+            log << "vulkan instance created\n";
+        }
+    }
+
+    ~vk_render()
+    {
+        instance.destroy();
+
+        if (hints_.verbose)
+        {
+            log << "vulkan instance destroed\n";
+        }
     }
 
 private:
     void validate_expected_extensions_exists(
-        const vk::InstanceCreateInfo& instance_create_info, const hints& h)
+        const vk::InstanceCreateInfo& instance_create_info)
     {
         uint32_t   num_extensions{};
         vk::Result result = vk::enumerateInstanceExtensionProperties(
@@ -79,7 +94,7 @@ private:
                 vk::to_string(result));
         }
 
-        if (h.verbose)
+        if (hints_.verbose)
         {
             log << "vulkan instance extension on this machine: ["
                 << num_extensions << "]" << std::endl;
@@ -99,7 +114,7 @@ private:
                 vk::to_string(result));
         }
 
-        if (h.verbose)
+        if (hints_.verbose)
         {
             log << "all vulkan instance extensions: \n";
             std::for_each(extension_properties.begin(),
@@ -130,29 +145,54 @@ private:
     }
 
     std::ostream& log;
+    hints         hints_;
     vk::Instance  instance;
 };
 } // namespace om
 
 int main(int argc, char** argv)
 {
+    using namespace std::literals;
+
+    bool verbose = argc > 1 && argv[1] == "-v"sv;
+
+    struct null_buffer : std::streambuf
+    {
+        int overflow(int c) { return c; }
+    } null;
+
+    std::ostream  null_stream(&null);
+    std::ostream& log = verbose ? std::clog : null_stream;
+
     if (0 != SDL_Init(SDL_INIT_VIDEO))
     {
         std::cerr << SDL_GetError();
         return EXIT_FAILURE;
     }
-    std::experimental::scope_exit quit([]() { SDL_Quit(); });
+    log << "create all subsystems\n";
+    std::experimental::scope_exit quit(
+        [&log]()
+        {
+            SDL_Quit();
+            log << "destory all subsystems\n";
+        });
 
     if (0 != SDL_Vulkan_LoadLibrary(nullptr))
     {
         std::cerr << SDL_GetError();
         return EXIT_FAILURE;
     }
-    std::experimental::scope_exit unload([]() { SDL_Vulkan_UnloadLibrary(); });
+    log << "load vulkan library\n";
+    std::experimental::scope_exit unload(
+        [&log]()
+        {
+            SDL_Vulkan_UnloadLibrary();
+            log << "unload vulkan library\n";
+        });
 
-    om::vk_render render(std::cerr,
+    om::vk_render render(log,
                          SDL_Vulkan_GetInstanceExtensions,
-                         om::vk_render::hints{ .verbose = true });
+                         om::vk_render::hints{ .verbose = verbose });
 
     return std::cerr.fail();
 }
