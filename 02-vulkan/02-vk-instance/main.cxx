@@ -46,15 +46,12 @@ public:
                 "get_instance_extensions callback return nullptr");
         }
 
-        if (hints_.verbose)
-        {
-            log << "minimal vulkan expected extensions from "
-                   "get_instance_extensions callback\n";
-            std::for_each_n(instance_create_info.ppEnabledExtensionNames,
-                            instance_create_info.enabledExtensionCount,
-                            [&log](std::string_view instance_extension)
-                            { log << instance_extension << '\n'; });
-        }
+        log << "minimal vulkan expected extensions from "
+               "get_instance_extensions callback\n";
+        std::for_each_n(instance_create_info.ppEnabledExtensionNames,
+                        instance_create_info.enabledExtensionCount,
+                        [&log](std::string_view instance_extension)
+                        { log << instance_extension << '\n'; });
 
         validate_expected_extensions_exists(instance_create_info);
 
@@ -63,20 +60,14 @@ public:
         // instance_create_info.ppEnabledLayerNames = nullptr;
 
         instance = vk::createInstance(instance_create_info);
-        if (hints_.verbose)
-        {
-            log << "vulkan instance created\n";
-        }
+        log << "vulkan instance created\n";
     }
 
     ~vk_render()
     {
         instance.destroy();
 
-        if (hints_.verbose)
-        {
-            log << "vulkan instance destroed\n";
-        }
+        log << "vulkan instance destroed\n";
     }
 
 private:
@@ -94,11 +85,8 @@ private:
                 vk::to_string(result));
         }
 
-        if (hints_.verbose)
-        {
-            log << "vulkan instance extension on this machine: ["
-                << num_extensions << "]" << std::endl;
-        }
+        log << "vulkan instance extension on this machine: [" << num_extensions
+            << "]\n";
 
         std::vector<vk::ExtensionProperties> extension_properties(
             num_extensions);
@@ -114,17 +102,15 @@ private:
                 vk::to_string(result));
         }
 
-        if (hints_.verbose)
-        {
-            log << "all vulkan instance extensions: \n";
-            std::for_each(extension_properties.begin(),
-                          extension_properties.end(),
-                          [this](const vk::ExtensionProperties& extension)
-                          {
-                              log << std::setw(3) << extension.specVersion
-                                  << ' ' << extension.extensionName << '\n';
-                          });
-        }
+        log << "all vulkan instance extensions: \n";
+        std::for_each(extension_properties.begin(),
+                      extension_properties.end(),
+                      [this](const vk::ExtensionProperties& extension)
+                      {
+                          log << std::setw(3) << extension.specVersion << ' '
+                              << extension.extensionName << '\n';
+                      });
+
         std::for_each_n(
             instance_create_info.ppEnabledExtensionNames,
             instance_create_info.enabledExtensionCount,
@@ -147,6 +133,12 @@ private:
     std::ostream& log;
     hints         hints_;
     vk::Instance  instance;
+
+    struct devices_t
+    {
+        vk::PhysicalDevice devicePhysical;
+        vk::Device         deviceLogical;
+    } devices;
 };
 } // namespace om
 
