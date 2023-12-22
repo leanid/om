@@ -81,7 +81,7 @@ private:
 
         if (h.verbose)
         {
-            log << " num of vulkan extension on this machine: ["
+            log << "vulkan instance extension on this machine: ["
                 << num_extensions << "]" << std::endl;
         }
 
@@ -101,7 +101,7 @@ private:
 
         if (h.verbose)
         {
-            log << "all instance extensions: \n";
+            log << "all vulkan instance extensions: \n";
             std::for_each(extension_properties.begin(),
                           extension_properties.end(),
                           [this](const vk::ExtensionProperties& extension)
@@ -123,7 +123,7 @@ private:
                 if (it == extension_properties.end())
                 {
                     throw std::runtime_error(
-                        "error: can't find Instance Extension: " +
+                        "error: can't find vulkan instance extension: " +
                         std::string(extension));
                 }
             });
