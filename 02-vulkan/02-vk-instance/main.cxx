@@ -63,6 +63,7 @@ public:
         log << "vulkan instance created\n";
 
         get_phisical_device();
+        validate_physical_device();
     }
 
     ~vk_render()
@@ -159,6 +160,15 @@ private:
                          << vk::to_string(properties.deviceType) << '\n'
                          << "api_version: " << api_version << '\n';
                  });
+        // TODO just select first for now
+        devices.physical = physical_devices.front();
+    }
+    void validate_physical_device()
+    {
+        // check properties
+        // devices.physical.getProperties();
+        // check features
+        // devices.physical.getFeatures().geometryShader
     }
     std::string api_version_to_string(uint32_t apiVersion)
     {
@@ -174,8 +184,8 @@ private:
 
     struct devices_t
     {
-        vk::PhysicalDevice devicePhysical;
-        vk::Device         deviceLogical;
+        vk::PhysicalDevice physical;
+        vk::Device         logical;
     } devices;
 };
 } // namespace om
