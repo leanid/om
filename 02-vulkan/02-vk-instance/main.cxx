@@ -61,6 +61,8 @@ public:
 
         instance = vk::createInstance(instance_create_info);
         log << "vulkan instance created\n";
+
+        get_phisical_device();
     }
 
     ~vk_render()
@@ -130,6 +132,42 @@ private:
             });
     }
 
+    void get_phisical_device()
+    {
+        using namespace std::ranges;
+        std::vector<vk::PhysicalDevice> physical_devices =
+            instance.enumeratePhysicalDevices();
+
+        if (physical_devices.empty())
+        {
+            throw std::runtime_error(
+                "error: no any vulkan physical device found in the system");
+        }
+
+        log << "vulkan physical deveses in the system:\n";
+        for_each(physical_devices,
+                 [this](const vk::PhysicalDevice& device)
+                 {
+                     const auto& properties = device.getProperties();
+
+                     auto api_version =
+                         api_version_to_string(properties.apiVersion);
+
+                     log << "id: " << properties.deviceID << '\n'
+                         << "device_name: " << properties.deviceName << '\n'
+                         << "device_type: "
+                         << vk::to_string(properties.deviceType) << '\n'
+                         << "api_version: " << api_version << '\n';
+                 });
+    }
+    std::string api_version_to_string(uint32_t apiVersion)
+    {
+        std::stringstream version;
+        version << VK_VERSION_MAJOR(apiVersion) << '.'
+                << VK_VERSION_MINOR(apiVersion) << '.'
+                << VK_VERSION_PATCH(apiVersion);
+        return version.str();
+    }
     std::ostream& log;
     hints         hints_;
     vk::Instance  instance;
