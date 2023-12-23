@@ -3,6 +3,8 @@
 #include <cstdlib>
 #include <iomanip>
 #include <iostream>
+#include <iterator>
+#include <limits>
 #include <ostream>
 #include <stdexcept>
 #include <string_view>
@@ -133,6 +135,28 @@ private:
             });
     }
 
+    static bool check_render_queue(const vk::QueueFamilyProperties& property)
+    {
+        return property.queueFlags & vk::QueueFlagBits::eGraphics &&
+               property.queueCount >= 1;
+    }
+
+    static auto find_render_queue(
+        const std::vector<vk::QueueFamilyProperties>& queue_properties)
+    {
+        return std::ranges::find_if(queue_properties, check_render_queue);
+    }
+
+    static bool check_device_suitable(vk::PhysicalDevice& physical)
+    {
+        std::vector<vk::QueueFamilyProperties> queue_properties =
+            physical.getQueueFamilyProperties();
+
+        auto it = find_render_queue(queue_properties);
+
+        return it != queue_properties.end();
+    }
+
     void get_phisical_device()
     {
         using namespace std::ranges;
@@ -160,16 +184,48 @@ private:
                          << vk::to_string(properties.deviceType) << '\n'
                          << "api_version: " << api_version << '\n';
                  });
-        // TODO just select first for now
-        devices.physical = physical_devices.front();
+        // find first suitable device
+        auto it = std::ranges::find_if(physical_devices.begin(),
+                                       physical_devices.end(),
+                                       check_device_suitable);
+        if (it == physical_devices.end())
+        {
+            throw std::runtime_error(
+                "error: no physical devices found with render queue");
+        }
+
+        devices.physical = *it;
+
+        log << "selected device: "
+            << devices.physical.getProperties().deviceName << '\n';
+
+        auto queue_properties = it->getQueueFamilyProperties();
+        auto it_render_queue  = find_render_queue(queue_properties);
+
+        queue_indexes.graphics_queue_index =
+            std::distance(queue_properties.cbegin(), it_render_queue);
+
+        const vk::QueueFamilyProperties& render_queue =
+            queue_properties.at(queue_indexes.graphics_queue_index);
+
+        log << "render queue found with index is: "
+            << queue_indexes.graphics_queue_index << '\n'
+            << "render queue count: " << render_queue.queueCount << '\n';
     }
+
     void validate_physical_device()
     {
         // check properties
         // devices.physical.getProperties();
         // check features
         // devices.physical.getFeatures().geometryShader
+        if (!queue_indexes.is_valid())
+        {
+            throw std::runtime_error("error: vulkan queue with render graphics "
+                                     "capability not found");
+        }
     }
+
     std::string api_version_to_string(uint32_t apiVersion)
     {
         std::stringstream version;
@@ -178,15 +234,27 @@ private:
                 << VK_VERSION_PATCH(apiVersion);
         return version.str();
     }
+
     std::ostream& log;
     hints         hints_;
-    vk::Instance  instance;
+
+    vk::Instance instance;
 
     struct devices_t
     {
         vk::PhysicalDevice physical;
         vk::Device         logical;
     } devices;
+
+    struct queue_family_indexes
+    {
+        size_t graphics_queue_index = std::numeric_limits<size_t>::max();
+
+        bool is_valid() const
+        {
+            return graphics_queue_index != std::numeric_limits<size_t>::max();
+        }
+    } queue_indexes;
 };
 } // namespace om
 
