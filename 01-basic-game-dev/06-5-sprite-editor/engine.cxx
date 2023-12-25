@@ -22,7 +22,7 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_opengl.h>
 #include <SDL3/SDL_opengl_glext.h>
-#include <SDL3/SDL_syswm.h>
+// #include <SDL3/SDL_syswm.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #ifdef __GNUG__
