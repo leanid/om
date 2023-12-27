@@ -1,0 +1,35 @@
+#pragma once
+
+#include <filesystem>
+#include <memory>
+#include <string_view>
+
+#include <glm/vec3.hpp>
+
+// TODO add vec4 (for color or whatever)
+// TODO add int32_t (for bit masks or whatever)
+
+class properties_reader
+{
+public:
+    explicit properties_reader(const std::filesystem::path& path);
+    properties_reader(const properties_reader&)            = delete;
+    properties_reader& operator=(const properties_reader&) = delete;
+    ~properties_reader();
+
+    void update_changes();
+
+    [[nodiscard]] const std::string& get_string(std::string_view name) const
+        noexcept(false);
+    [[nodiscard]] float get_float(std::string_view name) const noexcept(false);
+    [[nodiscard]] const glm::vec3& get_vec3(std::string_view name) const
+        noexcept(false);
+    [[nodiscard]] bool get_bool(std::string_view name) const noexcept(false);
+    [[nodiscard]] int  get_int(std::string_view name) const noexcept(false);
+    [[nodiscard]] uint32_t get_uint(std::string_view name) const
+        noexcept(false);
+
+private:
+    class impl;
+    std::unique_ptr<impl> ptr;
+};
