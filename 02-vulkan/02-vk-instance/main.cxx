@@ -9,7 +9,7 @@
 #include <stdexcept>
 #include <string_view>
 
-#include <experimental/scope>
+#include <experimental/scope> // not found on macos
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
