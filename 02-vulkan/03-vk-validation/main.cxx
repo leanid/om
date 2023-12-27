@@ -61,43 +61,20 @@ public:
 
         if (hints_.enable_validation_layers)
         {
-            uint32_t   layer_count{};
-            vk::Result r =
-                vk::enumerateInstanceLayerProperties(&layer_count, nullptr);
-            if (r != vk::Result::eSuccess)
-            {
-                throw std::runtime_error(
-                    "error: can't get instance layers count");
-            }
-            std::vector<vk::LayerProperties> available_layers(layer_count);
-            r = vk::enumerateInstanceLayerProperties(&layer_count,
-                                                     available_layers.data());
-            if (r != vk::Result::eSuccess)
-            {
-                throw std::runtime_error(
-                    "error: can't get any instance layers");
-            }
+            const char* layer = "VK_LAYER_KHRONOS_validation";
+            validate_instance_layer_present(layer);
 
-            log << "all vulkan layers count [" << layer_count << "]\n";
-            log << "spec-version | impl-version | name and description\n";
-            std::for_each(available_layers.begin(),
-                          available_layers.end(),
-                          [this, &log](const vk::LayerProperties& layer)
-                          {
-                              log << api_version_to_string(layer.specVersion)
-                                  << ' ' << layer.implementationVersion << ' '
-                                  << layer.layerName << " " << layer.description
-                                  << '\n';
-                          });
+            instance_create_info.enabledLayerCount   = 1;
+            instance_create_info.ppEnabledLayerNames = &layer;
+            log << "enable layer: " << layer << '\n';
         }
         else
         {
             log << "vulkan validation layer disabled\n";
         }
-        // TODO future all layers (maybe debug?)
-        // instance_create_info.enabledLayerCount   = 0;
-        // instance_create_info.ppEnabledLayerNames = nullptr;
 
+        // instance_create_info.enabledExtensionCount   = 0;
+        // instance_create_info.ppEnabledExtensionNames = nullptr;
         instance = vk::createInstance(instance_create_info);
         log << "vulkan instance created\n";
 
@@ -173,6 +150,47 @@ private:
                         std::string(extension));
                 }
             });
+    }
+
+    void validate_instance_layer_present(std::string_view instance_layer)
+    {
+        uint32_t   layer_count{};
+        vk::Result r =
+            vk::enumerateInstanceLayerProperties(&layer_count, nullptr);
+        if (r != vk::Result::eSuccess)
+        {
+            throw std::runtime_error("error: can't get instance layers count");
+        }
+        std::vector<vk::LayerProperties> available_layers(layer_count);
+        r = vk::enumerateInstanceLayerProperties(&layer_count,
+                                                 available_layers.data());
+        if (r != vk::Result::eSuccess)
+        {
+            throw std::runtime_error("error: can't get any instance layers");
+        }
+
+        log << "all vulkan layers count [" << layer_count << "]\n";
+        log << "spec-version | impl-version | name and description\n";
+        std::for_each(available_layers.begin(),
+                      available_layers.end(),
+                      [this](const vk::LayerProperties& layer)
+                      {
+                          log << api_version_to_string(layer.specVersion) << ' '
+                              << layer.implementationVersion << ' '
+                              << layer.layerName << " " << layer.description
+                              << '\n';
+                      });
+        auto it =
+            std::find_if(available_layers.begin(),
+                         available_layers.end(),
+                         [&instance_layer](const vk::LayerProperties& layer)
+                         { return layer.layerName == instance_layer; });
+
+        if (it == available_layers.end())
+        {
+            throw std::runtime_error("error: can't find requested layer: " +
+                                     std::string(instance_layer));
+        }
     }
 
     static bool check_render_queue(const vk::QueueFamilyProperties& property)

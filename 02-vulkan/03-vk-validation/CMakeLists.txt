@@ -9,6 +9,22 @@ project(03-vk-validation CXX)
 find_package(Vulkan REQUIRED)
 find_package(SDL3 REQUIRED)
 
+# To check validation is working replace 1 with 0  in (main.cxx) line:
+#
+#        device_create_info.queueCreateInfoCount    = 1;
+# end you will see error line below
+
+# VUID-VkDeviceCreateInfo-queueCreateInfoCount-arraylength(ERROR / SPEC):
+# msgNum: 1641005941 -
+# Validation Error:
+# [ VUID-VkDeviceCreateInfo-queueCreateInfoCount-arraylength ]
+# | MessageID = 0x61cfc375 |
+# vkCreateDevice():
+# pCreateInfo->queueCreateInfoCount must be greater than 0.
+# The Vulkan spec states: queueCreateInfoCount must be greater than 0
+# (https://www.khronos.org/registry/vulkan/specs/1.3-extensions/html/vkspec.html#VUID-VkDeviceCreateInfo-queueCreateInfoCount-arraylength)
+#    Objects: 0
+
 add_executable(03-vk-validation main.cxx)
 
 target_compile_features(03-vk-validation PRIVATE cxx_std_20)
