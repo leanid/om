@@ -66,12 +66,15 @@ public:
 
         get_phisical_device();
         validate_physical_device();
+        create_logical_device();
     }
 
     ~vk_render()
     {
-        instance.destroy();
+        devices.logical.destroy();
+        log << "vulkan logical device destroyed\n";
 
+        instance.destroy();
         log << "vulkan instance destroed\n";
     }
 
@@ -199,17 +202,16 @@ private:
         log << "selected device: "
             << devices.physical.getProperties().deviceName << '\n';
 
-        auto queue_properties = it->getQueueFamilyProperties();
-        auto it_render_queue  = find_render_queue(queue_properties);
+        queue_indexes.graphics_family =
+            get_render_queue_family_index(devices.physical);
 
-        queue_indexes.graphics_queue_index =
-            std::distance(queue_properties.cbegin(), it_render_queue);
+        auto queue_properties = devices.physical.getQueueFamilyProperties();
 
         const vk::QueueFamilyProperties& render_queue =
-            queue_properties.at(queue_indexes.graphics_queue_index);
+            queue_properties.at(queue_indexes.graphics_family);
 
         log << "render queue found with index is: "
-            << queue_indexes.graphics_queue_index << '\n'
+            << queue_indexes.graphics_family << '\n'
             << "render queue count: " << render_queue.queueCount << '\n';
     }
 
@@ -226,6 +228,37 @@ private:
         }
     }
 
+    void create_logical_device()
+    {
+        uint32_t render_queue_index = queue_indexes.graphics_family;
+
+        vk::DeviceQueueCreateInfo device_queue_create_info;
+        device_queue_create_info.queueFamilyIndex = render_queue_index;
+
+        device_queue_create_info.queueCount = 1;
+        float priorities                    = 1.f;
+        // 1 - hierst, 0 - lowest
+        device_queue_create_info.pQueuePriorities = &priorities;
+
+        vk::PhysicalDeviceFeatures device_features;
+
+        vk::DeviceCreateInfo device_create_info;
+        device_create_info.queueCreateInfoCount    = 1;
+        device_create_info.pQueueCreateInfos       = &device_queue_create_info;
+        device_create_info.enabledExtensionCount   = 0;
+        device_create_info.ppEnabledExtensionNames = nullptr;
+        device_create_info.enabledLayerCount = 0; // in vk_1_1 this in instance
+        device_create_info.pEnabledFeatures  = &device_features;
+
+        devices.logical = devices.physical.createDevice(device_create_info);
+        log << "logical device created\n";
+
+        uint32_t queue_index = 0;
+        render_queue =
+            devices.logical.getQueue(render_queue_index, queue_index);
+        log << "got render queue\n";
+    }
+
     std::string api_version_to_string(uint32_t apiVersion)
     {
         std::stringstream version;
@@ -233,6 +266,17 @@ private:
                 << VK_VERSION_MINOR(apiVersion) << '.'
                 << VK_VERSION_PATCH(apiVersion);
         return version.str();
+    }
+
+    uint32_t get_render_queue_family_index(
+        const vk::PhysicalDevice& physycal_device)
+    {
+        auto queue_properties = physycal_device.getQueueFamilyProperties();
+        auto it_render_queue  = find_render_queue(queue_properties);
+
+        size_t graphics_queue_index =
+            std::distance(queue_properties.cbegin(), it_render_queue);
+        return static_cast<uint32_t>(graphics_queue_index);
     }
 
     std::ostream& log;
@@ -246,13 +290,15 @@ private:
         vk::Device         logical;
     } devices;
 
+    vk::Queue render_queue;
+
     struct queue_family_indexes
     {
-        size_t graphics_queue_index = std::numeric_limits<size_t>::max();
+        uint32_t graphics_family = std::numeric_limits<uint32_t>::max();
 
         bool is_valid() const
         {
-            return graphics_queue_index != std::numeric_limits<size_t>::max();
+            return graphics_family != std::numeric_limits<uint32_t>::max();
         }
     } queue_indexes;
 };
