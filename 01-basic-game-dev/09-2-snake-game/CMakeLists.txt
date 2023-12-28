@@ -10,16 +10,18 @@ add_executable(
 set_target_properties(engine-09-2 PROPERTIES ENABLE_EXPORTS TRUE)
 target_compile_features(engine-09-2 PRIVATE cxx_std_20)
 
-if(WIN32)
-    target_compile_definitions(engine-09-2
-                               PRIVATE "-DOM_DECLSPEC=__declspec(dllexport)")
-endif(WIN32)
+target_compile_definitions(
+    engine-09-2
+    PRIVATE "$<$<PLATFORM_ID:Windows>:-DOM_DECLSPEC=__declspec(dllexport)>")
+target_compile_definitions(
+    engine-09-2 PRIVATE "$<$<PLATFORM_ID:Windows>:-D_CRT_SECURE_NO_WARNINGS=1>")
 
 find_package(SDL3 REQUIRED)
 find_package(OpenGL REQUIRED)
 
 target_link_libraries(engine-09-2 PRIVATE SDL3::SDL3-shared OpenGL::GL)
 
+# cmake-format: off
 add_library(
     game-09-2 SHARED MODULE
     game/configuration_loader.hxx
@@ -29,7 +31,10 @@ add_library(
     game/game_object.cxx
     game/game_object.hxx
     game/snake.cxx
-    game/snake.hxx)
+    game/snake.hxx
+    )
+# cmake-format: on
+
 target_include_directories(game-09-2 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_features(game-09-2 PRIVATE cxx_std_20)
 target_link_libraries(game-09-2 PRIVATE engine-09-2)
@@ -43,12 +48,14 @@ if(MINGW)
             $<TARGET_FILE_DIR:engine-09-2>)
 endif()
 
-if(MSVC)
-    target_compile_definitions(game-09-2
-                               PRIVATE "-DOM_DECLSPEC=__declspec(dllimport)")
-    target_compile_definitions(game-09-2
-                               PRIVATE "-DOM_EXPORT=__declspec(dllexport)")
-elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+target_compile_definitions(
+    game-09-2
+    PRIVATE "$<$<PLATFORM_ID:Windows>:-DOM_DECLSPEC=__declspec(dllimport)>")
+target_compile_definitions(
+    game-09-2
+    PRIVATE "$<$<PLATFORM_ID:Windows>:-DOM_EXPORT=__declspec(dllexport)>")
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND APPLE)
     # using regular Clang or AppleClang
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
 endif()

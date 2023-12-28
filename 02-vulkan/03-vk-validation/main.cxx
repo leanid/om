@@ -405,11 +405,18 @@ int main(int argc, char** argv)
             log << "unload vulkan library\n";
         });
 
-    om::vk_render render(log,
-                         SDL_Vulkan_GetInstanceExtensions,
-                         om::vk_render::hints{ .verbose = verbose,
-                                               .enable_validation_layers =
-                                                   vk_enable_validation });
+    try
+    {
+        om::vk_render render(log,
+                             SDL_Vulkan_GetInstanceExtensions,
+                             om::vk_render::hints{ .verbose = verbose,
+                                                   .enable_validation_layers =
+                                                       vk_enable_validation });
+    }
+    catch (const std::exception& ex)
+    {
+        std::cerr << ex.what() << std::endl;
+    }
 
     return std::cerr.fail();
 }

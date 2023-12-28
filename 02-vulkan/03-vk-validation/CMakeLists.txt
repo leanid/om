@@ -33,3 +33,15 @@ target_include_directories(
     PRIVATE Vulkan::Headers
             $<$<PLATFORM_ID:Windows>:${CMAKE_SOURCE_DIR}/support/cxx_lib/>)
 target_link_libraries(03-vk-validation PRIVATE Vulkan::Vulkan SDL3::SDL3-shared)
+
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+    add_custom_command(
+        TARGET 03-vk-validation
+        POST_BUILD
+        COMMAND
+            ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:SDL3::SDL3-shared> $<TARGET_FILE_DIR:03-vk-validation>
+        COMMENT "Copying SDL3 library to target directory (Windows only)\n"
+                "vulkan-1.dll also is copied every time - cmake to it for us"
+        VERBATIM)
+endif()
