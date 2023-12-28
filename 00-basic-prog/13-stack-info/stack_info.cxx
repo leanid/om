@@ -1,6 +1,6 @@
 #if defined(_WIN32)
 #define _WIN32_WINNT 0x0602
-#include <processthreadsapi.h>
+#include <windows.h>
 
 static void get_stack_min_and_max_adresses(size_t& min, size_t& max)
 {

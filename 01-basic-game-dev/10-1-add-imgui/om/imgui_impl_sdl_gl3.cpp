@@ -583,9 +583,12 @@ bool ImGui_ImplSdlGL3_Init(SDL_Window* window)
     io.ClipboardUserData  = NULL;
 
 #ifdef _WIN32
-    SDL_SysWMinfo wmInfo;
-    SDL_GetWindowWMInfo(window, &wmInfo, SDL_SYSWM_CURRENT_VERSION);
-    io.ImeWindowHandle = wmInfo.info.win.window;
+    // SDL_SysWMinfo wmInfo;
+    // SDL_GetWindowWMInfo(window, &wmInfo, SDL_SYSWM_CURRENT_VERSION);
+    // io.ImeWindowHandle = wmInfo.info.win.window;
+    HWND hwnd = (HWND)SDL_GetProperty(
+        SDL_GetWindowProperties(window), "SDL.window.win32.hwnd", nullptr);
+    io.ImeWindowHandle = hwnd;
 #else
     (void)window;
 #endif
