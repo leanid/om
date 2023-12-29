@@ -80,7 +80,7 @@ int main(int /*argc*/, char* /*argv*/[])
     }
 
     SDL_Window* const window =
-        SDL_CreateWindow("title", 640, 480, ::SDL_WINDOW_OPENGL);
+        SDL_CreateWindow("title", 640, 480, SDL_WINDOW_OPENGL);
 
     if (window == nullptr)
     {

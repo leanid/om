@@ -1367,7 +1367,7 @@ std::string engine_impl::initialize(std::string_view)
         return serr.str();
     }
 
-    window = SDL_CreateWindow("title", 1024, 768, ::SDL_WINDOW_OPENGL);
+    window = SDL_CreateWindow("title", 1024, 768, SDL_WINDOW_OPENGL);
 
     if (window == nullptr)
     {

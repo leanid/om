@@ -195,7 +195,7 @@ public:
 
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
 
-        window = SDL_CreateWindow("title", 640, 480, ::SDL_WINDOW_OPENGL);
+        window = SDL_CreateWindow("title", 640, 480, SDL_WINDOW_OPENGL);
 
         if (window == nullptr)
         {
