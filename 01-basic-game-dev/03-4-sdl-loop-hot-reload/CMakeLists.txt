@@ -11,7 +11,9 @@ set_target_properties(
 # No such file or directory
 target_compile_definitions(
     engine-03-4
-    PRIVATE "$<$<PLATFORM_ID:Windows>:-DOM_DECLSPEC=__declspec(dllexport)>"
+    PRIVATE "$<$<PLATFORM_ID:Linux>:-DOM_DECLSPEC= >"
+            "$<$<PLATFORM_ID:Linux>:-DGAME_DECLSPEC= >"
+            "$<$<PLATFORM_ID:Windows>:-DOM_DECLSPEC=__declspec(dllexport)>"
             "$<$<PLATFORM_ID:Windows>:-DGAME_DECLSPEC=__declspec(dllimport)>"
             "$<$<PLATFORM_ID:Windows>:-D_CRT_SECURE_NO_WARNINGS=1>")
 
@@ -35,7 +37,9 @@ add_library(game-03-4 SHARED game.cxx)
 
 target_compile_definitions(
     game-03-4
-    PRIVATE "$<$<PLATFORM_ID:Windows>:-DOM_DECLSPEC=__declspec(dllimport)>"
+    PRIVATE "$<$<PLATFORM_ID:Linux>:-DGAME_DECLSPEC= >"
+            "$<$<PLATFORM_ID:Linux>:-DOM_DECLSPEC= >"
+            "$<$<PLATFORM_ID:Windows>:-DOM_DECLSPEC=__declspec(dllimport)>"
             "$<$<PLATFORM_ID:Windows>:-DGAME_DECLSPEC=__declspec(dllexport)>")
 
 target_compile_features(game-03-4 PUBLIC cxx_std_20)

@@ -952,7 +952,7 @@ static void initialize_internal(std::string_view   title,
         int window_size_h = static_cast<int>(desired_window_mode.heigth);
 
         window = SDL_CreateWindow(
-            title.data(), window_size_w, window_size_h, ::SDL_WINDOW_OPENGL);
+            title.data(), window_size_w, window_size_h, SDL_WINDOW_OPENGL);
 
         if (window == nullptr)
         {

@@ -1060,7 +1060,7 @@ engine::engine(std::string_view)
             }
         }
 
-        window = SDL_CreateWindow("title", 640, 480, ::SDL_WINDOW_OPENGL);
+        window = SDL_CreateWindow("title", 640, 480, SDL_WINDOW_OPENGL);
 
         if (window == nullptr)
         {
