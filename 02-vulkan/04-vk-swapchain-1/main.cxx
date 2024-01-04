@@ -8,6 +8,7 @@
 #include <limits>
 #include <memory>
 #include <ostream>
+#include <set>
 #include <sstream>
 #include <stdexcept>
 #include <string_view>
@@ -46,16 +47,20 @@ public:
         , hints_{ h }
     {
         create_instance(get_instance_extensions);
+        create_surface(create_vk_surface);
         get_phisical_device();
         validate_physical_device();
         create_logical_device();
-        create_surface(create_vk_surface);
     }
 
     ~vk_render()
     {
         devices.logical.destroy();
         log << "vulkan logical device destroyed\n";
+
+        // TODO destroy swap_chain
+
+        instance.destroy(surface);
 
         instance.destroy();
         log << "vulkan instance destroed\n";
@@ -217,6 +222,22 @@ private:
         return std::ranges::find_if(queue_properties, check_render_queue);
     }
 
+    static auto find_render_queue(
+        const std::vector<vk::QueueFamilyProperties>& queue_properties,
+        const vk::PhysicalDevice&                     device,
+        const vk::SurfaceKHR&                         surface_to_check)
+    {
+        return std::ranges::find_if(
+            queue_properties,
+            [&device, &surface_to_check, &queue_properties](
+                const vk::QueueFamilyProperties& property)
+            {
+                uint32_t index =
+                    std::distance(queue_properties.data(), &property);
+                return device.getSurfaceSupportKHR(index, surface_to_check);
+            });
+    }
+
     static bool check_device_suitable(vk::PhysicalDevice& physical)
     {
         std::vector<vk::QueueFamilyProperties> queue_properties =
@@ -272,6 +293,28 @@ private:
         queue_indexes.graphics_family =
             get_render_queue_family_index(devices.physical);
 
+        vk::Bool32 is_supported = devices.physical.getSurfaceSupportKHR(
+            queue_indexes.graphics_family, surface);
+
+        if (!is_supported)
+        {
+            log << "error: physical device ["
+                << devices.physical.getProperties().deviceName
+                << "] with render queue index ["
+                << queue_indexes.graphics_family
+                << "] do not support SurfaceSupportKHR\n"
+                << "try to find another queue index with VkSurfaceKHR\n";
+            queue_indexes.presentation_family =
+                get_presentation_queue_family_index(devices.physical, surface);
+        }
+        else
+        {
+            log << "render queue family with index ["
+                << queue_indexes.graphics_family << "] support surfaceKHR\n";
+
+            queue_indexes.presentation_family = queue_indexes.graphics_family;
+        }
+
         auto queue_properties = devices.physical.getQueueFamilyProperties();
 
         const vk::QueueFamilyProperties& render_queue =
@@ -279,7 +322,9 @@ private:
 
         log << "render queue found with index is: "
             << queue_indexes.graphics_family << '\n'
-            << "render queue count: " << render_queue.queueCount << '\n';
+            << "render queue count: " << render_queue.queueCount << '\n'
+            << "presentation queue index is: "
+            << queue_indexes.presentation_family << '\n';
     }
 
     void validate_physical_device()
@@ -297,21 +342,30 @@ private:
 
     void create_logical_device()
     {
-        uint32_t render_queue_index = queue_indexes.graphics_family;
+        std::set<uint32_t> queue_family_indexes = {
+            queue_indexes.graphics_family, queue_indexes.presentation_family
+        };
 
-        vk::DeviceQueueCreateInfo device_queue_create_info;
-        device_queue_create_info.queueFamilyIndex = render_queue_index;
+        std::vector<vk::DeviceQueueCreateInfo> queue_infos;
 
-        device_queue_create_info.queueCount = 1;
-        float priorities                    = 1.f;
-        // 1 - hierst, 0 - lowest
-        device_queue_create_info.pQueuePriorities = &priorities;
+        float priorities = 1.f;
+        for (uint32_t queue_index : queue_family_indexes)
+        {
+            vk::DeviceQueueCreateInfo device_queue_create_info;
+            device_queue_create_info.queueFamilyIndex = queue_index;
+            device_queue_create_info.queueCount       = 1;
+            // 1 - hierst, 0 - lowest
+            device_queue_create_info.pQueuePriorities = &priorities;
+
+            queue_infos.push_back(device_queue_create_info);
+        }
 
         vk::PhysicalDeviceFeatures device_features;
 
         vk::DeviceCreateInfo device_create_info;
-        device_create_info.queueCreateInfoCount    = 1;
-        device_create_info.pQueueCreateInfos       = &device_queue_create_info;
+        device_create_info.queueCreateInfoCount =
+            static_cast<uint32_t>(queue_infos.size());
+        device_create_info.pQueueCreateInfos       = queue_infos.data();
         device_create_info.enabledExtensionCount   = 0;
         device_create_info.ppEnabledExtensionNames = nullptr;
         device_create_info.enabledLayerCount = 0; // in vk_1_1 this in instance
@@ -321,8 +375,8 @@ private:
         log << "logical device created\n";
 
         uint32_t queue_index = 0;
-        render_queue =
-            devices.logical.getQueue(render_queue_index, queue_index);
+        render_queue = devices.logical.getQueue(queue_indexes.graphics_family,
+                                                queue_index);
         log << "got render queue\n";
     }
 
@@ -340,6 +394,33 @@ private:
     {
         auto queue_properties = physycal_device.getQueueFamilyProperties();
         auto it_render_queue  = find_render_queue(queue_properties);
+
+        if (it_render_queue == queue_properties.end())
+        {
+            using namespace std::literals;
+            throw std::runtime_error(
+                "error: can't find render queue for device: "s +
+                physycal_device.getProperties().deviceName.data());
+        }
+
+        size_t graphics_queue_index =
+            std::distance(queue_properties.cbegin(), it_render_queue);
+        return static_cast<uint32_t>(graphics_queue_index);
+    }
+
+    uint32_t get_presentation_queue_family_index(
+        const vk::PhysicalDevice& physycal_device,
+        const vk::SurfaceKHR&     surface_to_check)
+    {
+        auto queue_properties = physycal_device.getQueueFamilyProperties();
+        auto it_render_queue  = find_render_queue(
+            queue_properties, physycal_device, surface_to_check);
+
+        if (it_render_queue == queue_properties.end())
+        {
+            throw std::runtime_error(
+                "error: can't find presentation queue family");
+        }
 
         size_t graphics_queue_index =
             std::distance(queue_properties.cbegin(), it_render_queue);
@@ -375,11 +456,13 @@ private:
 
     struct queue_family_indexes
     {
-        uint32_t graphics_family = std::numeric_limits<uint32_t>::max();
+        uint32_t graphics_family     = std::numeric_limits<uint32_t>::max();
+        uint32_t presentation_family = std::numeric_limits<uint32_t>::max();
 
         bool is_valid() const
         {
-            return graphics_family != std::numeric_limits<uint32_t>::max();
+            return graphics_family != std::numeric_limits<uint32_t>::max() &&
+                   presentation_family != std::numeric_limits<uint32_t>::max();
         }
     } queue_indexes;
 };
