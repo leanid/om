@@ -39,6 +39,24 @@ public:
         : log{ log }
         , hints_{ h }
     {
+        create_instance(get_instance_extensions);
+        get_phisical_device();
+        validate_physical_device();
+        create_logical_device();
+    }
+
+    ~vk_render()
+    {
+        devices.logical.destroy();
+        log << "vulkan logical device destroyed\n";
+
+        instance.destroy();
+        log << "vulkan instance destroed\n";
+    }
+
+private:
+    void create_instance(callback get_instance_extensions)
+    {
         vk::ApplicationInfo    application_info;
         vk::InstanceCreateInfo instance_create_info;
         instance_create_info.pApplicationInfo        = &application_info;
@@ -55,7 +73,7 @@ public:
                "get_instance_extensions callback\n";
         std::for_each_n(instance_create_info.ppEnabledExtensionNames,
                         instance_create_info.enabledExtensionCount,
-                        [&log](std::string_view instance_extension)
+                        [this](std::string_view instance_extension)
                         { log << instance_extension << '\n'; });
 
         validate_expected_extensions_exists(instance_create_info);
@@ -78,22 +96,8 @@ public:
         // instance_create_info.ppEnabledExtensionNames = nullptr;
         instance = vk::createInstance(instance_create_info);
         log << "vulkan instance created\n";
-
-        get_phisical_device();
-        validate_physical_device();
-        create_logical_device();
     }
 
-    ~vk_render()
-    {
-        devices.logical.destroy();
-        log << "vulkan logical device destroyed\n";
-
-        instance.destroy();
-        log << "vulkan instance destroed\n";
-    }
-
-private:
     void validate_expected_extensions_exists(
         const vk::InstanceCreateInfo& instance_create_info)
     {
@@ -335,6 +339,8 @@ private:
         return static_cast<uint32_t>(graphics_queue_index);
     }
 
+    void create_surface() {}
+
     std::ostream& log;
     hints         hints_;
 
@@ -346,7 +352,8 @@ private:
         vk::Device         logical;
     } devices;
 
-    vk::Queue render_queue;
+    vk::Queue      render_queue;
+    vk::SurfaceKHR surface; // KHR - extension
 
     struct queue_family_indexes
     {
