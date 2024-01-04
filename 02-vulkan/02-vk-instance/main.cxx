@@ -25,15 +25,15 @@ namespace om
 class vk_render
 {
 public:
-    using callback = const char* const* (*)(uint32_t* num_extensions);
+    using callback_get_ext = const char* const* (*)(uint32_t* num_extensions);
     struct hints
     {
         bool verbose;
     };
 
-    explicit vk_render(std::ostream& log,
-                       callback      get_instance_extensions,
-                       hints         h)
+    explicit vk_render(std::ostream&    log,
+                       callback_get_ext get_instance_extensions,
+                       hints            h)
         : log{ log }
         , hints_{ h }
     {

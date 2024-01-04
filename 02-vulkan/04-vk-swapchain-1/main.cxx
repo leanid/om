@@ -1,10 +1,12 @@
 #include <algorithm>
 #include <cstdint>
 #include <cstdlib>
+#include <functional>
 #include <iomanip>
 #include <iostream>
 #include <iterator>
 #include <limits>
+#include <memory>
 #include <ostream>
 #include <sstream>
 #include <stdexcept>
@@ -26,16 +28,20 @@ namespace om
 class vk_render
 {
 public:
-    using callback = const char* const* (*)(uint32_t* num_extensions);
+    using callback_get_ext = const char* const* (*)(uint32_t* num_extensions);
+    using callback_create_surface =
+        std::function<VkSurfaceKHR(VkInstance, const VkAllocationCallbacks*)>;
+
     struct hints
     {
         bool verbose;
         bool enable_validation_layers;
     };
 
-    explicit vk_render(std::ostream& log,
-                       callback      get_instance_extensions,
-                       hints         h)
+    explicit vk_render(std::ostream&           log,
+                       callback_get_ext        get_instance_extensions,
+                       callback_create_surface create_vk_surface,
+                       hints                   h)
         : log{ log }
         , hints_{ h }
     {
@@ -43,6 +49,7 @@ public:
         get_phisical_device();
         validate_physical_device();
         create_logical_device();
+        create_surface(create_vk_surface);
     }
 
     ~vk_render()
@@ -55,7 +62,7 @@ public:
     }
 
 private:
-    void create_instance(callback get_instance_extensions)
+    void create_instance(callback_get_ext get_instance_extensions)
     {
         vk::ApplicationInfo    application_info;
         vk::InstanceCreateInfo instance_create_info;
@@ -339,7 +346,18 @@ private:
         return static_cast<uint32_t>(graphics_queue_index);
     }
 
-    void create_surface() {}
+    void create_surface(callback_create_surface create_vk_surface)
+    {
+        VkSurfaceKHR surfaceKHR = create_vk_surface(instance, nullptr);
+        if (surfaceKHR == nullptr)
+        {
+            throw std::runtime_error(
+                "error: can't create VkSurfaceKHR from user provided callback");
+        }
+
+        log << "vk surface KHR created\n";
+        surface = surfaceKHR;
+    }
 
     std::ostream& log;
     hints         hints_;
@@ -412,13 +430,42 @@ int main(int argc, char** argv)
             log << "unload vulkan library\n";
         });
 
+    std::unique_ptr<SDL_Window, decltype(&SDL_DestroyWindow)> window(
+        SDL_CreateWindow("04-vk-swapchain-1", 800, 600, SDL_WINDOW_VULKAN),
+        SDL_DestroyWindow);
+    std::experimental::scope_exit destroy_window(
+        [&log]() { log << "destroy sdl window\n"; });
+
+    if (!window)
+    {
+        log << "error: can't create sdl window: " << SDL_GetError()
+            << std::endl;
+    }
+
+    log << "sdl windows created\n";
+
     try
     {
-        om::vk_render render(log,
-                             SDL_Vulkan_GetInstanceExtensions,
-                             om::vk_render::hints{ .verbose = verbose,
-                                                   .enable_validation_layers =
-                                                       vk_enable_validation });
+        om::vk_render render(
+            log,
+            SDL_Vulkan_GetInstanceExtensions,
+            [&window, &log](
+                VkInstance                          instance,
+                const struct VkAllocationCallbacks* allocator) -> VkSurfaceKHR
+            {
+                VkSurfaceKHR surface{};
+                SDL_bool     result = SDL_Vulkan_CreateSurface(
+                    window.get(), instance, allocator, &surface);
+                if (!result)
+                {
+                    log << "error: can't create VkSurfaceKHR: "
+                        << SDL_GetError() << std::endl;
+                }
+                return surface;
+            },
+            om::vk_render::hints{ .verbose = verbose,
+                                  .enable_validation_layers =
+                                      vk_enable_validation });
     }
     catch (const std::exception& ex)
     {
