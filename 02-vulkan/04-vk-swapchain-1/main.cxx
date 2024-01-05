@@ -238,14 +238,32 @@ private:
             });
     }
 
-    static bool check_device_suitable(vk::PhysicalDevice& physical)
+    bool check_device_suitable(vk::PhysicalDevice& physical)
     {
         std::vector<vk::QueueFamilyProperties> queue_properties =
             physical.getQueueFamilyProperties();
 
         auto it = find_render_queue(queue_properties);
 
-        return it != queue_properties.end();
+        bool render_queue_found = it != queue_properties.end();
+        bool all_extensions_found =
+            std::ranges::all_of(device_extensions,
+                                [&physical, this](const char* extension_name) {
+                                    return check_device_extension_supported(
+                                        physical, extension_name);
+                                });
+        return render_queue_found && all_extensions_found;
+    }
+
+    bool check_device_extension_supported(vk::PhysicalDevice& device,
+                                          std::string_view    extension_name)
+    {
+        auto extensions = device.enumerateDeviceExtensionProperties();
+        auto it         = std::ranges::find_if(
+            extensions,
+            [&extension_name](const auto& extension)
+            { return extension.extensionName == extension_name; });
+        return it != extensions.end();
     }
 
     void get_phisical_device()
@@ -276,9 +294,9 @@ private:
                          << "api_version: " << api_version << '\n';
                  });
         // find first suitable device
-        auto it = std::ranges::find_if(physical_devices.begin(),
-                                       physical_devices.end(),
-                                       check_device_suitable);
+        auto it = find_if(physical_devices,
+                          [this](vk::PhysicalDevice& physical)
+                          { return check_device_suitable(physical); });
         if (it == physical_devices.end())
         {
             throw std::runtime_error(
@@ -365,9 +383,10 @@ private:
         vk::DeviceCreateInfo device_create_info;
         device_create_info.queueCreateInfoCount =
             static_cast<uint32_t>(queue_infos.size());
-        device_create_info.pQueueCreateInfos       = queue_infos.data();
-        device_create_info.enabledExtensionCount   = 0;
-        device_create_info.ppEnabledExtensionNames = nullptr;
+        device_create_info.pQueueCreateInfos = queue_infos.data();
+        device_create_info.enabledExtensionCount =
+            static_cast<uint32_t>(device_extensions.size());
+        device_create_info.ppEnabledExtensionNames = device_extensions.data();
         device_create_info.enabledLayerCount = 0; // in vk_1_1 this in instance
         device_create_info.pEnabledFeatures  = &device_features;
 
@@ -378,6 +397,9 @@ private:
         render_queue = devices.logical.getQueue(queue_indexes.graphics_family,
                                                 queue_index);
         log << "got render queue\n";
+        presentation_queue = devices.logical.getQueue(
+            queue_indexes.presentation_family, queue_index);
+        log << "got presentation queue\n";
     }
 
     std::string api_version_to_string(uint32_t apiVersion)
@@ -452,6 +474,7 @@ private:
     } devices;
 
     vk::Queue      render_queue;
+    vk::Queue      presentation_queue;
     vk::SurfaceKHR surface; // KHR - extension
 
     struct queue_family_indexes
@@ -465,6 +488,10 @@ private:
                    presentation_family != std::numeric_limits<uint32_t>::max();
         }
     } queue_indexes;
+
+    const std::vector<const char*> device_extensions{
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME
+    };
 };
 } // namespace om
 
