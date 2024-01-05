@@ -356,6 +356,21 @@ private:
             throw std::runtime_error("error: vulkan queue with render graphics "
                                      "capability not found");
         }
+
+        swap_chain_details_t swap_chain_details =
+            get_swapchain_details(devices.physical);
+
+        log << swap_chain_details;
+
+        if (swap_chain_details.presentation_modes.empty())
+        {
+            throw std::runtime_error("error: presentation_modes empty");
+        }
+
+        if (swap_chain_details.surface_formats.empty())
+        {
+            throw std::runtime_error("error: surface_formats empty");
+        }
     }
 
     void create_logical_device()
@@ -460,6 +475,60 @@ private:
 
         log << "vk surface KHR created\n";
         surface = surfaceKHR;
+    }
+
+    struct swap_chain_details_t
+    {
+        vk::SurfaceCapabilitiesKHR        surface_capabilities;
+        std::vector<vk::SurfaceFormatKHR> surface_formats;
+        std::vector<vk::PresentModeKHR>   presentation_modes;
+    };
+    friend std::ostream& operator<<(std::ostream&               os,
+                                    const swap_chain_details_t& details)
+    {
+        os << "swap_chain_details:\n";
+        auto& caps = details.surface_capabilities;
+        os << "surface_capabilities:\n"
+           << "\tMin image count: " << caps.minImageCount << "\n"
+           << "\tMax image count: " << caps.maxImageCount << "\n"
+           << "\tCurrent extent: " << caps.currentExtent.width << "x"
+           << caps.currentExtent.height << "\n"
+           << "\tMin image extent: " << caps.minImageExtent.width << "x"
+           << caps.minImageExtent.height << "\n"
+           << "\tMax image extent: " << caps.maxImageExtent.width << "x"
+           << caps.maxImageExtent.height << "\n"
+           << "\tMax image array layers: " << caps.maxImageArrayLayers << "\n"
+           << "\tSupported transformation: "
+           << vk::to_string(caps.currentTransform) << "\n"
+           << "\tComposite alpha flags: "
+           << vk::to_string(caps.supportedCompositeAlpha) << "\n"
+           << "\tSupported usage flags: "
+           << vk::to_string(caps.supportedUsageFlags) << "\n";
+
+        os << "surface formats:\n";
+        std::ranges::for_each(
+            details.surface_formats,
+            [&os](vk::SurfaceFormatKHR format)
+            {
+                os << "\tImage format: " << vk::to_string(format.format) << "\n"
+                   << "\tColor space: " << vk::to_string(format.colorSpace)
+                   << "\n";
+            });
+        os << "presentation modes:\n";
+        std::ranges::for_each(details.presentation_modes,
+                              [&os](vk::PresentModeKHR mode)
+                              { os << '\t' << vk::to_string(mode) << '\n'; });
+        return os;
+    }
+
+    swap_chain_details_t get_swapchain_details(vk::PhysicalDevice& device)
+    {
+        swap_chain_details_t details{};
+        details.surface_capabilities =
+            device.getSurfaceCapabilitiesKHR(surface);
+        details.surface_formats    = device.getSurfaceFormatsKHR(surface);
+        details.presentation_modes = device.getSurfacePresentModesKHR(surface);
+        return details;
     }
 
     std::ostream& log;
