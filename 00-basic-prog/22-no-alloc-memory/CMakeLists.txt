@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.27)
 project(22-no-alloc-memory)
-if(LINUX)
+if(UNIX)
     add_executable(22-no-alloc-memory main.cxx)
     target_compile_features(22-no-alloc-memory PRIVATE cxx_std_20)
 endif()
