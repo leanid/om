@@ -38,6 +38,8 @@ example: OpenGL -- -g *.rs
                    ^^^^^^^^^ - search only in Rust files if you need exacly file pattern
 example: test -- --no-ignore
                  ^^^^^^^^^^^ - search ignore .gitignore file patterns
+example rg: rg --no-ignore --files -g "*pickling*"
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ will print only file path with names contains "pickling"
 ```
 RipGrep manual here: 
 [RipGrep User Guide](https://github.com/BurntSushi/ripgrep/blob/master/GUIDE.md)
