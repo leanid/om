@@ -38,6 +38,11 @@ example: OpenGL -- -g *.rs
                    ^^^^^^^^^ - search only in Rust files if you need exacly file pattern
 example: test -- --no-ignore
                  ^^^^^^^^^^^ - search ignore .gitignore file patterns
+example: \(std::\)\|\(namespace\ std\) -- -tcpp --no-ignore
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^1    ^^^2 ^^^^^^^^^^3
+         1. regex to search "std::" or "namespace std"
+         2. all c/c++ file types
+         3. skip git-ignore rules (search everywhere)
 example rg: rg --no-ignore --files -g "*pickling*"
                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ will print only file path with names contains "pickling"
 ```
