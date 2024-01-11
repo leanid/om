@@ -64,3 +64,9 @@ for Vertico module users (I use it most of the time)
 SPC s p foo C-; E C-c C-p :%s/foo/bar/g RET Z Z
 ```
 Entering those keys will replace “foo” with “bar” in your whole project. 
+
+### How to disable format-on-save temporally in current buffer?
+double use mode for reformating (will disable it)
+```emacs
+SPC+:  aphelia-mode
+```
