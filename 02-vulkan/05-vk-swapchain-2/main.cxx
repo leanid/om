@@ -18,6 +18,7 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
 
+#include <vector>
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_enums.hpp>
 #include <vulkan/vulkan_handles.hpp>
@@ -357,7 +358,7 @@ private:
                                      "capability not found");
         }
 
-        swap_chain_details_t swap_chain_details =
+        swapchain_details_t swap_chain_details =
             get_swapchain_details(devices.physical);
 
         log << swap_chain_details;
@@ -477,14 +478,29 @@ private:
         surface = surfaceKHR;
     }
 
-    struct swap_chain_details_t
+    void create_swapchain()
+    {
+        swapchain_details_t swapchain_details =
+            get_swapchain_details(devices.physical);
+
+        // 1. choose best surface format
+        // 2. choose best presentation mode
+        // 3. choose swapchain image resolution
+    }
+
+    vk::SurfaceFormatKHR choose_best_surface_format(
+        const std::vector<vk::SurfaceFormatKHR>& formats)
+    {
+    }
+
+    struct swapchain_details_t
     {
         vk::SurfaceCapabilitiesKHR        surface_capabilities;
         std::vector<vk::SurfaceFormatKHR> surface_formats;
         std::vector<vk::PresentModeKHR>   presentation_modes;
     };
-    friend std::ostream& operator<<(std::ostream&               os,
-                                    const swap_chain_details_t& details)
+    friend std::ostream& operator<<(std::ostream&              os,
+                                    const swapchain_details_t& details)
     {
         os << "swap_chain_details:\n";
         auto& caps = details.surface_capabilities;
@@ -521,9 +537,9 @@ private:
         return os;
     }
 
-    swap_chain_details_t get_swapchain_details(vk::PhysicalDevice& device)
+    swapchain_details_t get_swapchain_details(vk::PhysicalDevice& device)
     {
-        swap_chain_details_t details{};
+        swapchain_details_t details{};
         details.surface_capabilities =
             device.getSurfaceCapabilitiesKHR(surface);
         details.surface_formats    = device.getSurfaceFormatsKHR(surface);
