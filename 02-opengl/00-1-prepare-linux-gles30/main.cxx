@@ -10,7 +10,7 @@ int main(int /*argc*/, char* /*argv*/[])
 {
     using namespace std;
 
-    const int init_result = SDL_Init(SDL_INIT_EVERYTHING);
+    const int init_result = SDL_Init(SDL_INIT_VIDEO);
     if (init_result != 0)
 
     {

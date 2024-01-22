@@ -42,7 +42,7 @@ int main(int /*argc*/, char* /*argv*/[])
 
     auto start_time = high_resolution_clock::now();
 
-    const int init_result = SDL_Init(SDL_INIT_EVERYTHING);
+    const int init_result = SDL_Init(SDL_INIT_VIDEO);
     if (init_result != 0)
     {
         const char* err_message = SDL_GetError();

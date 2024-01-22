@@ -221,7 +221,7 @@ std::unique_ptr<SDL_Window, void (*)(SDL_Window*)> create_window(
     const properties_reader& properties)
 {
     using namespace std;
-    const int init_result = SDL_Init(SDL_INIT_EVERYTHING);
+    const int init_result = SDL_Init(SDL_INIT_VIDEO);
     if (init_result != 0)
     {
         std::string err_message = SDL_GetError();

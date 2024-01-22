@@ -12,7 +12,7 @@ int main(int, char**)
 {
     using namespace std;
 
-    if (0 != SDL_Init(SDL_INIT_EVERYTHING))
+    if (0 != SDL_Init(SDL_INIT_VIDEO))
     {
         cerr << SDL_GetError() << endl;
         return EXIT_FAILURE;
