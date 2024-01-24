@@ -7,7 +7,7 @@ find_package(SDL3 REQUIRED)
 
 add_executable(05-vk-swapchain-2 main.cxx)
 
-target_compile_features(05-vk-swapchain-2 PRIVATE cxx_std_20)
+target_compile_features(05-vk-swapchain-2 PRIVATE cxx_std_23)
 target_include_directories(
     05-vk-swapchain-2
     PRIVATE

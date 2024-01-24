@@ -492,6 +492,10 @@ private:
             << vk::to_string(selected_format.format) << ' '
             << vk::to_string(selected_format.colorSpace) << std::endl;
         // 2. choose best presentation mode
+        vk::PresentModeKHR selected_mode =
+            choose_best_present_mode(swapchain_details.presentation_modes);
+        log << "best presentation_mode we choose: "
+            << vk::to_string(selected_mode) << std::endl;
         // 3. choose swapchain image resolution
     }
 
@@ -501,10 +505,16 @@ private:
         vk::SurfaceFormatKHR default_format(vk::Format::eR8G8B8A8Unorm,
                                             vk::ColorSpaceKHR::eSrgbNonlinear);
 
-        if (formats.size() == 1 && formats[0].format == vk::Format::eUndefined)
+        if (formats.empty())
+        {
+            throw std::runtime_error("empty surface formats");
+        }
+
+        if (formats.size() == 1 &&
+            formats.front().format == vk::Format::eUndefined)
         {
             // this means all formats are supported!
-            // so let's use ower defaults
+            // so let's use our defaults
             return default_format;
         }
         // not all supported search for RGB or BGR
@@ -515,12 +525,24 @@ private:
         auto it =
             std::ranges::find_first_of(formats, std::span(suitable_formats));
 
-        if (it == formats.end())
+        if (it != formats.end())
         {
-            // can't find suitable format lets try first as it is
-            return formats.front();
+            return *it;
         }
-        return *it;
+
+        // can't find suitable format lets try first as it is
+        return formats.front();
+    }
+
+    vk::PresentModeKHR choose_best_present_mode(
+        std::span<vk::PresentModeKHR> present_modes)
+    {
+        if (std::ranges::contains(present_modes, vk::PresentModeKHR::eMailbox))
+        {
+            return vk::PresentModeKHR::eMailbox;
+        }
+        // garantid to be in any vulkan implementation
+        return vk::PresentModeKHR::eFifo;
     }
 
     struct swapchain_details_t
