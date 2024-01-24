@@ -9,6 +9,7 @@
 #include <memory>
 #include <ostream>
 #include <set>
+#include <span>
 #include <sstream>
 #include <stdexcept>
 #include <string_view>
@@ -484,13 +485,42 @@ private:
             get_swapchain_details(devices.physical);
 
         // 1. choose best surface format
+        vk::SurfaceFormatKHR selected_format =
+            choose_best_surface_format(swapchain_details.surface_formats);
+
+        log << "best surface format we choose: "
+            << vk::to_string(selected_format.format) << ' '
+            << vk::to_string(selected_format.colorSpace) << std::endl;
         // 2. choose best presentation mode
         // 3. choose swapchain image resolution
     }
 
     vk::SurfaceFormatKHR choose_best_surface_format(
-        const std::vector<vk::SurfaceFormatKHR>& formats)
+        std::span<vk::SurfaceFormatKHR> formats)
     {
+        vk::SurfaceFormatKHR default_format(vk::Format::eR8G8B8A8Unorm,
+                                            vk::ColorSpaceKHR::eSrgbNonlinear);
+
+        if (formats.size() == 1 && formats[0].format == vk::Format::eUndefined)
+        {
+            // this means all formats are supported!
+            // so let's use ower defaults
+            return default_format;
+        }
+        // not all supported search for RGB or BGR
+        vk::SurfaceFormatKHR suitable_formats[] = {
+            default_format,
+            { vk::Format::eB8G8R8A8Unorm, vk::ColorSpaceKHR::eSrgbNonlinear }
+        };
+        auto it =
+            std::ranges::find_first_of(formats, std::span(suitable_formats));
+
+        if (it == formats.end())
+        {
+            // can't find suitable format lets try first as it is
+            return formats.front();
+        }
+        return *it;
     }
 
     struct swapchain_details_t
