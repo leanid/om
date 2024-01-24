@@ -34,6 +34,8 @@ public:
     using callback_get_ext = const char* const* (*)(uint32_t* num_extensions);
     using callback_create_surface =
         std::function<VkSurfaceKHR(VkInstance, const VkAllocationCallbacks*)>;
+    using callback_get_window_buffer_size =
+        std::function<void(uint32_t* width, uint32_t* height)>;
 
     struct hints
     {
@@ -41,12 +43,14 @@ public:
         bool enable_validation_layers;
     };
 
-    explicit vk_render(std::ostream&           log,
-                       callback_get_ext        get_instance_extensions,
-                       callback_create_surface create_vk_surface,
-                       hints                   h)
+    explicit vk_render(std::ostream&                   log,
+                       callback_get_ext                get_instance_extensions,
+                       callback_create_surface         create_vk_surface,
+                       callback_get_window_buffer_size get_window_buffer_size,
+                       hints                           h)
         : log{ log }
         , hints_{ h }
+        , get_window_buffer_size_{ get_window_buffer_size }
     {
         create_instance(get_instance_extensions);
         create_surface(create_vk_surface);
@@ -497,6 +501,26 @@ private:
         log << "best presentation_mode we choose: "
             << vk::to_string(selected_mode) << std::endl;
         // 3. choose swapchain image resolution
+        vk::Extent2D image_resolution = choose_best_swapchain_image_resolution(
+            swapchain_details.surface_capabilities);
+        log << "current windows image resolution: " << image_resolution.width
+            << 'x' << image_resolution.height << std::endl;
+    }
+
+    vk::Extent2D choose_best_swapchain_image_resolution(
+        const vk::SurfaceCapabilitiesKHR& capabilities)
+    {
+        const auto& extent = capabilities.currentExtent;
+        if (extent.width != std::numeric_limits<uint32_t>::max() &&
+            extent.height != std::numeric_limits<uint32_t>::max())
+        {
+            return extent;
+        }
+
+        uint32_t width{};
+        uint32_t height{};
+        get_window_buffer_size_(&width, &height);
+        return vk::Extent2D(width, height);
     }
 
     vk::SurfaceFormatKHR choose_best_surface_format(
@@ -599,8 +623,9 @@ private:
         return details;
     }
 
-    std::ostream& log;
-    hints         hints_;
+    std::ostream&                   log;
+    hints                           hints_;
+    callback_get_window_buffer_size get_window_buffer_size_;
 
     vk::Instance instance;
 
@@ -709,6 +734,25 @@ int main(int argc, char** argv)
                         << SDL_GetError() << std::endl;
                 }
                 return surface;
+            },
+            [&window](uint32_t* width, uint32_t* height)
+            {
+                int w{};
+                int h{};
+                if (0 != SDL_GetWindowSizeInPixels(window.get(), &w, &h))
+                {
+                    throw std::runtime_error(SDL_GetError());
+                }
+
+                if (width)
+                {
+                    *width = static_cast<uint32_t>(w);
+                }
+
+                if (height)
+                {
+                    *height = static_cast<uint32_t>(h);
+                }
             },
             om::vk_render::hints{ .verbose = verbose,
                                   .enable_validation_layers =
