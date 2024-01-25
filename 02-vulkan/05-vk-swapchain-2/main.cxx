@@ -510,17 +510,36 @@ private:
     vk::Extent2D choose_best_swapchain_image_resolution(
         const vk::SurfaceCapabilitiesKHR& capabilities)
     {
-        const auto& extent = capabilities.currentExtent;
+        auto clamp_extent = [](vk::Extent2D&       extent,
+                               const vk::Extent2D& min_extent,
+                               const vk::Extent2D& max_extent)
+        {
+            extent.width =
+                std::clamp(extent.width, min_extent.width, max_extent.width);
+            extent.height =
+                std::clamp(extent.height, min_extent.height, max_extent.height);
+        };
+
+        auto extent = capabilities.currentExtent;
         if (extent.width != std::numeric_limits<uint32_t>::max() &&
             extent.height != std::numeric_limits<uint32_t>::max())
         {
+            clamp_extent(extent,
+                         capabilities.minImageExtent,
+                         capabilities.maxImageExtent);
             return extent;
         }
 
         uint32_t width{};
         uint32_t height{};
         get_window_buffer_size_(&width, &height);
-        return vk::Extent2D(width, height);
+
+        extent.width  = width;
+        extent.height = height;
+
+        clamp_extent(
+            extent, capabilities.minImageExtent, capabilities.maxImageExtent);
+        return extent;
     }
 
     vk::SurfaceFormatKHR choose_best_surface_format(
