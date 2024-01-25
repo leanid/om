@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <array>
 #include <cstdint>
 #include <cstdlib>
 #include <functional>
@@ -13,13 +14,13 @@
 #include <sstream>
 #include <stdexcept>
 #include <string_view>
+#include <vector>
 
 #include <experimental/scope> // not found on macos
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
 
-#include <vector>
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_enums.hpp>
 #include <vulkan/vulkan_handles.hpp>
@@ -496,30 +497,75 @@ private:
             << vk::to_string(selected_format.format) << ' '
             << vk::to_string(selected_format.colorSpace) << std::endl;
         // 2. choose best presentation mode
-        vk::PresentModeKHR selected_mode =
+        vk::PresentModeKHR selected_presentation_mode =
             choose_best_present_mode(swapchain_details.presentation_modes);
         log << "best presentation_mode we choose: "
-            << vk::to_string(selected_mode) << std::endl;
+            << vk::to_string(selected_presentation_mode) << std::endl;
         // 3. choose swapchain image resolution
-        vk::Extent2D image_resolution = choose_best_swapchain_image_resolution(
-            swapchain_details.surface_capabilities);
-        log << "current windows image resolution: " << image_resolution.width
-            << 'x' << image_resolution.height << std::endl;
+        vk::Extent2D selected_image_resolution =
+            choose_best_swapchain_image_resolution(
+                swapchain_details.surface_capabilities);
+        log << "current windows image resolution: "
+            << selected_image_resolution.width << 'x'
+            << selected_image_resolution.height << std::endl;
+
+        const auto& surface_capabilities =
+            swapchain_details.surface_capabilities;
+
+        uint32_t image_count = surface_capabilities.minImageCount + 1u;
+        // if 0 - then limitless
+        if (surface_capabilities.maxImageCount > 0u &&
+            surface_capabilities.maxImageCount < image_count)
+        {
+            image_count = surface_capabilities.maxImageCount;
+        }
+
+        log << "image_count in swapchain minImageCount + 1 (triple buffering "
+               "expected) clamped by "
+               "maxImageCount = "
+            << image_count << std::endl;
+
+        vk::SwapchainCreateInfoKHR create_info;
+        create_info.imageFormat     = selected_format.format;
+        create_info.imageColorSpace = selected_format.colorSpace;
+        create_info.presentMode     = selected_presentation_mode;
+        create_info.imageExtent     = selected_image_resolution;
+        create_info.minImageCount   = image_count;
+        // number of layers for each image in chain
+        create_info.imageArrayLayers = 1u;
+        create_info.imageUsage       = vk::ImageUsageFlagBits::eColorAttachment;
+        create_info.preTransform     = surface_capabilities.currentTransform;
+        // how two windows will be composite together
+        create_info.compositeAlpha = vk::CompositeAlphaFlagBitsKHR::eOpaque;
+        create_info.clipped        = vk::True;
+
+        // if Graphics and Presentation families are different, then swapchain
+        // must let images be shared between families
+        if (queue_indexes.graphics_family != queue_indexes.presentation_family)
+        {
+            create_info.imageSharingMode    = vk::SharingMode::eConcurrent;
+            std::array<uint32_t, 2> indexes = {
+                queue_indexes.graphics_family, queue_indexes.presentation_family
+            };
+            create_info.pQueueFamilyIndices = indexes.data();
+            create_info.queueFamilyIndexCount =
+                static_cast<uint32_t>(indexes.size());
+        }
+        else
+        {
+            create_info.imageSharingMode      = vk::SharingMode::eExclusive;
+            create_info.pQueueFamilyIndices   = nullptr;
+            create_info.queueFamilyIndexCount = 0;
+        }
+
+        // if old swapchain been destroyed and this one replaces it, then link
+        // old one to quickly hand over responsibilities
+        create_info.oldSwapchain = nullptr;
     }
 
     vk::Extent2D choose_best_swapchain_image_resolution(
         const vk::SurfaceCapabilitiesKHR& capabilities)
     {
-        auto clamp_extent = [](vk::Extent2D&       extent,
-                               const vk::Extent2D& min_extent,
-                               const vk::Extent2D& max_extent)
-        {
-            extent.width =
-                std::clamp(extent.width, min_extent.width, max_extent.width);
-            extent.height =
-                std::clamp(extent.height, min_extent.height, max_extent.height);
-        };
-
         auto extent = capabilities.currentExtent;
         if (extent.width != std::numeric_limits<uint32_t>::max() &&
             extent.height != std::numeric_limits<uint32_t>::max())
@@ -530,10 +576,21 @@ private:
 
         uint32_t width{};
         uint32_t height{};
+
         get_window_buffer_size_(&width, &height);
 
         extent.width  = width;
         extent.height = height;
+
+        auto clamp_extent = [](vk::Extent2D&       extent,
+                               const vk::Extent2D& min_extent,
+                               const vk::Extent2D& max_extent)
+        {
+            extent.width =
+                std::clamp(extent.width, min_extent.width, max_extent.width);
+            extent.height =
+                std::clamp(extent.height, min_extent.height, max_extent.height);
+        };
 
         clamp_extent(
             extent, capabilities.minImageExtent, capabilities.maxImageExtent);
