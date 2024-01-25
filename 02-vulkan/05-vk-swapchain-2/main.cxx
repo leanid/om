@@ -524,9 +524,7 @@ private:
         if (extent.width != std::numeric_limits<uint32_t>::max() &&
             extent.height != std::numeric_limits<uint32_t>::max())
         {
-            clamp_extent(extent,
-                         capabilities.minImageExtent,
-                         capabilities.maxImageExtent);
+            // no need to clamp
             return extent;
         }
 
