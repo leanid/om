@@ -65,7 +65,7 @@ public:
         instance = vk::createInstance(instance_create_info);
         log << "vulkan instance created\n";
 
-        get_phisical_device();
+        get_physical_device();
         validate_physical_device();
         create_logical_device();
     }
@@ -161,7 +161,7 @@ private:
         return it != queue_properties.end();
     }
 
-    void get_phisical_device()
+    void get_physical_device()
     {
         using namespace std::ranges;
         std::vector<vk::PhysicalDevice> physical_devices =
@@ -291,7 +291,7 @@ private:
         vk::Device         logical;
     } devices;
 
-    vk::Queue render_queue;
+    [[maybe_unused]] vk::Queue render_queue;
 
     struct queue_family_indexes
     {

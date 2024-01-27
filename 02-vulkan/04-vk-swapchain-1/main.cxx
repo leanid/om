@@ -48,7 +48,7 @@ public:
     {
         create_instance(get_instance_extensions);
         create_surface(create_vk_surface);
-        get_phisical_device();
+        get_physical_device();
         validate_physical_device();
         create_logical_device();
     }
@@ -266,7 +266,7 @@ private:
         return it != extensions.end();
     }
 
-    void get_phisical_device()
+    void get_physical_device()
     {
         using namespace std::ranges;
         std::vector<vk::PhysicalDevice> physical_devices =
@@ -542,8 +542,8 @@ private:
         vk::Device         logical;
     } devices;
 
-    vk::Queue      render_queue;
-    vk::Queue      presentation_queue;
+    [[maybe_unused]] vk::Queue      render_queue;
+    [[maybe_unused]] vk::Queue      presentation_queue;
     vk::SurfaceKHR surface; // KHR - extension
 
     struct queue_family_indexes

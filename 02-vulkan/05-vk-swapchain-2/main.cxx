@@ -1,6 +1,5 @@
 #include <algorithm>
 #include <array>
-#include <cstdint>
 #include <cstdlib>
 #include <functional>
 #include <iomanip>
@@ -14,9 +13,10 @@
 #include <sstream>
 #include <stdexcept>
 #include <string_view>
+#include <utility>
 #include <vector>
 
-#include <experimental/scope> // not found on macos
+#include <experimental/scope> // not found on macOS
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
@@ -46,16 +46,16 @@ public:
 
     explicit vk_render(std::ostream&                   log,
                        callback_get_ext                get_instance_extensions,
-                       callback_create_surface         create_vk_surface,
+                       const callback_create_surface&  create_vk_surface,
                        callback_get_window_buffer_size get_window_buffer_size,
                        hints                           h)
         : log{ log }
         , hints_{ h }
-        , get_window_buffer_size_{ get_window_buffer_size }
+        , get_window_buffer_size_{ std::move(get_window_buffer_size) }
     {
         create_instance(get_instance_extensions);
         create_surface(create_vk_surface);
-        get_phisical_device();
+        get_physical_device();
         validate_physical_device();
         create_logical_device();
         create_swapchain();
@@ -75,7 +75,7 @@ public:
         instance.destroy(surface);
 
         instance.destroy();
-        log << "vulkan instance destroed\n";
+        log << "vulkan instance destroyed\n";
     }
 
 private:
@@ -260,15 +260,15 @@ private:
         bool render_queue_found = it != queue_properties.end();
         bool all_extensions_found =
             std::ranges::all_of(device_extensions,
-                                [&physical, this](const char* extension_name) {
+                                [&physical](const char* extension_name) {
                                     return check_device_extension_supported(
                                         physical, extension_name);
                                 });
         return render_queue_found && all_extensions_found;
     }
 
-    bool check_device_extension_supported(vk::PhysicalDevice& device,
-                                          std::string_view    extension_name)
+    static bool check_device_extension_supported(
+        vk::PhysicalDevice& device, std::string_view extension_name)
     {
         auto extensions = device.enumerateDeviceExtensionProperties();
         auto it         = std::ranges::find_if(
@@ -278,7 +278,7 @@ private:
         return it != extensions.end();
     }
 
-    void get_phisical_device()
+    void get_physical_device()
     {
         using namespace std::ranges;
         std::vector<vk::PhysicalDevice> physical_devices =
@@ -290,7 +290,7 @@ private:
                 "error: no any vulkan physical device found in the system");
         }
 
-        log << "vulkan physical deveses in the system:\n";
+        log << "vulkan physical devises in the system:\n";
         for_each(physical_devices,
                  [this](const vk::PhysicalDevice& device)
                  {
@@ -347,12 +347,13 @@ private:
 
         auto queue_properties = devices.physical.getQueueFamilyProperties();
 
-        const vk::QueueFamilyProperties& render_queue =
+        const vk::QueueFamilyProperties& render_queue_properties =
             queue_properties.at(queue_indexes.graphics_family);
 
         log << "render queue found with index is: "
             << queue_indexes.graphics_family << '\n'
-            << "render queue count: " << render_queue.queueCount << '\n'
+            << "render queue count: " << render_queue_properties.queueCount
+            << '\n'
             << "presentation queue index is: "
             << queue_indexes.presentation_family << '\n';
     }
@@ -399,7 +400,7 @@ private:
             vk::DeviceQueueCreateInfo device_queue_create_info;
             device_queue_create_info.queueFamilyIndex = queue_index;
             device_queue_create_info.queueCount       = 1;
-            // 1 - hierst, 0 - lowest
+            // 1 - hi, 0 - lowest
             device_queue_create_info.pQueuePriorities = &priorities;
 
             queue_infos.push_back(device_queue_create_info);
@@ -429,7 +430,7 @@ private:
         log << "got presentation queue\n";
     }
 
-    std::string api_version_to_string(uint32_t apiVersion)
+    static std::string api_version_to_string(uint32_t apiVersion)
     {
         std::stringstream version;
         version << VK_VERSION_MAJOR(apiVersion) << '.'
@@ -438,10 +439,10 @@ private:
         return version.str();
     }
 
-    uint32_t get_render_queue_family_index(
-        const vk::PhysicalDevice& physycal_device)
+    static uint32_t get_render_queue_family_index(
+        const vk::PhysicalDevice& physical_device)
     {
-        auto queue_properties = physycal_device.getQueueFamilyProperties();
+        auto queue_properties = physical_device.getQueueFamilyProperties();
         auto it_render_queue  = find_render_queue(queue_properties);
 
         if (it_render_queue == queue_properties.end())
@@ -449,7 +450,7 @@ private:
             using namespace std::literals;
             throw std::runtime_error(
                 "error: can't find render queue for device: "s +
-                physycal_device.getProperties().deviceName.data());
+                physical_device.getProperties().deviceName.data());
         }
 
         size_t graphics_queue_index =
@@ -457,13 +458,13 @@ private:
         return static_cast<uint32_t>(graphics_queue_index);
     }
 
-    uint32_t get_presentation_queue_family_index(
-        const vk::PhysicalDevice& physycal_device,
+    static uint32_t get_presentation_queue_family_index(
+        const vk::PhysicalDevice& physical_device,
         const vk::SurfaceKHR&     surface_to_check)
     {
-        auto queue_properties = physycal_device.getQueueFamilyProperties();
+        auto queue_properties = physical_device.getQueueFamilyProperties();
         auto it_render_queue  = find_render_queue(
-            queue_properties, physycal_device, surface_to_check);
+            queue_properties, physical_device, surface_to_check);
 
         if (it_render_queue == queue_properties.end())
         {
@@ -476,7 +477,7 @@ private:
         return static_cast<uint32_t>(graphics_queue_index);
     }
 
-    void create_surface(callback_create_surface create_vk_surface)
+    void create_surface(const callback_create_surface& create_vk_surface)
     {
         VkSurfaceKHR surfaceKHR = create_vk_surface(instance, nullptr);
         if (surfaceKHR == nullptr)
@@ -637,7 +638,7 @@ private:
         return extent;
     }
 
-    vk::SurfaceFormatKHR choose_best_surface_format(
+    static vk::SurfaceFormatKHR choose_best_surface_format(
         std::span<vk::SurfaceFormatKHR> formats)
     {
         vk::SurfaceFormatKHR default_format(vk::Format::eR8G8B8A8Unorm,
@@ -672,14 +673,14 @@ private:
         return formats.front();
     }
 
-    vk::PresentModeKHR choose_best_present_mode(
+    static vk::PresentModeKHR choose_best_present_mode(
         std::span<vk::PresentModeKHR> present_modes)
     {
         if (std::ranges::contains(present_modes, vk::PresentModeKHR::eMailbox))
         {
             return vk::PresentModeKHR::eMailbox;
         }
-        // garantid to be in any vulkan implementation
+        // guaranteed to be in any vulkan implementation
         return vk::PresentModeKHR::eFifo;
     }
 
@@ -738,9 +739,10 @@ private:
         return details;
     }
 
-    vk::ImageView create_image_view(vk::Image            image,
-                                    vk::Format           format,
-                                    vk::ImageAspectFlags aspect_flags)
+    [[nodiscard]] vk::ImageView create_image_view(
+        vk::Image            image,
+        vk::Format           format,
+        vk::ImageAspectFlags aspect_flags) const
     {
         vk::ImageViewCreateInfo info;
         info.image        = image;
@@ -752,7 +754,7 @@ private:
         info.components.a = vk::ComponentSwizzle::eIdentity;
         // subresources allow the view to view only a part of image
         auto& range          = info.subresourceRange;
-        range.aspectMask     = aspect_flags; // ColorBit and etc.
+        range.aspectMask     = aspect_flags; // ColorBit etc.
         range.baseMipLevel   = 0;            // start mip level to view from
         range.levelCount     = 1;            // count of mip levels
         range.baseArrayLayer = 0;            // start array level to view from
@@ -775,8 +777,8 @@ private:
         vk::Device         logical;
     } devices;
 
-    vk::Queue                  render_queue;
-    vk::Queue                  presentation_queue;
+    [[maybe_unused]] vk::Queue render_queue;
+    [[maybe_unused]] vk::Queue presentation_queue;
     vk::SurfaceKHR             surface; // KHR - extension
     vk::SwapchainKHR           swapchain;
     std::vector<vk::Image>     swapchain_images;
@@ -791,7 +793,7 @@ private:
         uint32_t graphics_family     = std::numeric_limits<uint32_t>::max();
         uint32_t presentation_family = std::numeric_limits<uint32_t>::max();
 
-        bool is_valid() const
+        [[nodiscard]] bool is_valid() const
         {
             return graphics_family != std::numeric_limits<uint32_t>::max() &&
                    presentation_family != std::numeric_limits<uint32_t>::max();
@@ -817,7 +819,7 @@ int main(int argc, char** argv)
 
     struct null_buffer : std::streambuf
     {
-        int overflow(int c) { return c; }
+        int overflow(int c) final { return c; }
     } null;
 
     std::ostream  null_stream(&null);
@@ -829,11 +831,11 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
     log << "create all subsystems\n";
-    std::experimental::scope_exit quit(
+    [[maybe_unused]] std::experimental::scope_exit quit(
         [&log]()
         {
             SDL_Quit();
-            log << "destory all subsystems\n";
+            log << "destroy all subsystems\n";
         });
 
     if (0 != SDL_Vulkan_LoadLibrary(nullptr))
@@ -842,7 +844,7 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
     log << "load vulkan library\n";
-    std::experimental::scope_exit unload(
+    [[maybe_unused]] std::experimental::scope_exit unload(
         [&log]()
         {
             SDL_Vulkan_UnloadLibrary();
@@ -852,7 +854,7 @@ int main(int argc, char** argv)
     std::unique_ptr<SDL_Window, decltype(&SDL_DestroyWindow)> window(
         SDL_CreateWindow("04-vk-swapchain-1", 800, 600, SDL_WINDOW_VULKAN),
         SDL_DestroyWindow);
-    std::experimental::scope_exit destroy_window(
+    [[maybe_unused]] std::experimental::scope_exit destroy_window(
         [&log]() { log << "destroy sdl window\n"; });
 
     if (!window)
