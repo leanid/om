@@ -217,6 +217,8 @@ private:
 
         if (it == available_layers.end())
         {
+            log << "see: support/vulkan/install.md how to install validation "
+                   "layer\n";
             throw std::runtime_error("error: can't find requested layer: " +
                                      std::string(instance_layer));
         }
