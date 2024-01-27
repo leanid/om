@@ -58,15 +58,20 @@ public:
         get_phisical_device();
         validate_physical_device();
         create_logical_device();
+        create_swapchain();
     }
 
     ~vk_render()
     {
+        std::ranges::for_each(swapchain_image_views,
+                              [this](vk::ImageView image_view) {
+                                  devices.logical.destroyImageView(image_view);
+                              });
+        log << "vulkan swapchain image views destroyed\n";
+        devices.logical.destroy(swapchain);
+        log << "vulkan swapchain destroyed\n";
         devices.logical.destroy();
         log << "vulkan logical device destroyed\n";
-
-        // TODO destroy swap_chain
-
         instance.destroy(surface);
 
         instance.destroy();
@@ -543,6 +548,8 @@ private:
         // must let images be shared between families
         if (queue_indexes.graphics_family != queue_indexes.presentation_family)
         {
+            log << "graphics_family != presentation_family use sharing_mode: "
+                << vk::to_string(vk::SharingMode::eConcurrent) << std::endl;
             create_info.imageSharingMode    = vk::SharingMode::eConcurrent;
             std::array<uint32_t, 2> indexes = {
                 queue_indexes.graphics_family, queue_indexes.presentation_family
@@ -561,6 +568,35 @@ private:
         // if old swapchain been destroyed and this one replaces it, then link
         // old one to quickly hand over responsibilities
         create_info.oldSwapchain = nullptr;
+        create_info.surface      = surface;
+
+        swapchain = devices.logical.createSwapchainKHR(create_info);
+        log << "vulkan swapchain created\n";
+
+        // store for later usages
+        swapchain_image_format = create_info.imageFormat;
+        swapchain_image_extent = create_info.imageExtent;
+        log << "store in utilities swapchain_image_format: "
+            << vk::to_string(swapchain_image_format) << '\n'
+            << "swapchain_image_extent: " << swapchain_image_extent.width << 'x'
+            << swapchain_image_extent.height << std::endl;
+
+        swapchain_images = devices.logical.getSwapchainImagesKHR(swapchain);
+        log << "get swapchain images count: " << swapchain_images.size()
+            << std::endl;
+
+        swapchain_image_views.clear();
+        std::ranges::transform(swapchain_images,
+                               std::back_inserter(swapchain_image_views),
+                               [this](vk::Image image) -> vk::ImageView
+                               {
+                                   return create_image_view(
+                                       image,
+                                       swapchain_image_format,
+                                       vk::ImageAspectFlagBits::eColor);
+                               });
+        log << "create swapchain_image_views count: "
+            << swapchain_image_views.size() << std::endl;
     }
 
     vk::Extent2D choose_best_swapchain_image_resolution(
@@ -570,6 +606,7 @@ private:
         if (extent.width != std::numeric_limits<uint32_t>::max() &&
             extent.height != std::numeric_limits<uint32_t>::max())
         {
+            log << "use extent2d from surface\n";
             // no need to clamp
             return extent;
         }
@@ -581,6 +618,9 @@ private:
 
         extent.width  = width;
         extent.height = height;
+
+        log << "use extent2d from callback_get_window_buffer_size: " << width
+            << 'x' << height << std::endl;
 
         auto clamp_extent = [](vk::Extent2D&       extent,
                                const vk::Extent2D& min_extent,
@@ -649,6 +689,7 @@ private:
         std::vector<vk::SurfaceFormatKHR> surface_formats;
         std::vector<vk::PresentModeKHR>   presentation_modes;
     };
+
     friend std::ostream& operator<<(std::ostream&              os,
                                     const swapchain_details_t& details)
     {
@@ -697,21 +738,53 @@ private:
         return details;
     }
 
+    vk::ImageView create_image_view(vk::Image            image,
+                                    vk::Format           format,
+                                    vk::ImageAspectFlags aspect_flags)
+    {
+        vk::ImageViewCreateInfo info;
+        info.image        = image;
+        info.format       = format;
+        info.viewType     = vk::ImageViewType::e2D;
+        info.components.r = vk::ComponentSwizzle::eIdentity;
+        info.components.g = vk::ComponentSwizzle::eIdentity;
+        info.components.b = vk::ComponentSwizzle::eIdentity;
+        info.components.a = vk::ComponentSwizzle::eIdentity;
+        // subresources allow the view to view only a part of image
+        auto& range          = info.subresourceRange;
+        range.aspectMask     = aspect_flags; // ColorBit and etc.
+        range.baseMipLevel   = 0;            // start mip level to view from
+        range.levelCount     = 1;            // count of mip levels
+        range.baseArrayLayer = 0;            // start array level to view from
+        range.layerCount     = 1;
+
+        return devices.logical.createImageView(info);
+    }
+
+    // render external interface objects
     std::ostream&                   log;
     hints                           hints_;
     callback_get_window_buffer_size get_window_buffer_size_;
 
+    // vulkan main objects
     vk::Instance instance;
 
-    struct devices_t
+    struct
     {
         vk::PhysicalDevice physical;
         vk::Device         logical;
     } devices;
 
-    vk::Queue      render_queue;
-    vk::Queue      presentation_queue;
-    vk::SurfaceKHR surface; // KHR - extension
+    vk::Queue                  render_queue;
+    vk::Queue                  presentation_queue;
+    vk::SurfaceKHR             surface; // KHR - extension
+    vk::SwapchainKHR           swapchain;
+    std::vector<vk::Image>     swapchain_images;
+    std::vector<vk::ImageView> swapchain_image_views;
+
+    // vulkan utilities
+    vk::Format   swapchain_image_format{};
+    vk::Extent2D swapchain_image_extent{};
 
     struct queue_family_indexes
     {
