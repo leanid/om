@@ -45,6 +45,7 @@ example: \(std::\)\|\(namespace\ std\) -- -tcpp --no-ignore
          3. skip git-ignore rules (search everywhere)
 example rg: rg --no-ignore --files -g "*pickling*"
                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ will print only file path with names contains "pickling"
+example (search only in file names): rg --files | rg "\w*.gradle$"
 ```
 RipGrep manual here: 
 [RipGrep User Guide](https://github.com/BurntSushi/ripgrep/blob/master/GUIDE.md)
@@ -70,3 +71,8 @@ double use mode for reformating (will disable it)
 ```emacs
 SPC+:  aphelia-mode
 ```
+### How to show all keys and commands for some Doomemacs shortcuts
+After you just started fire shortcut(prefix) and help not fit in help window and show you
+(window 1 of 3)
+like ```SPC+w``` and wait will show you (window 1 of 3) how to see all commands?
+If you use ```vertico``` type ```?``` and you see all.
