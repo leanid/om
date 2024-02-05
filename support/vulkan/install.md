@@ -10,3 +10,7 @@ now you can use Vulkan with cmake like:
 ```cmd
 cmake -DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake
 ```
+# How to install Vulkan SDK on macOS (nice and easy way)
+```bash
+brew install vulkan-tools
+```
