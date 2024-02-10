@@ -1,5 +1,20 @@
 #include "gfx.hxx"
 
+#include <algorithm>
+#include <array>
+#include <cstdlib>
+#include <iomanip>
+#include <iterator>
+#include <set>
+#include <sstream>
+#include <stdexcept>
+#include <utility>
+
+#include <vulkan/vulkan_enums.hpp>
+#include <vulkan/vulkan_handles.hpp>
+#include <vulkan/vulkan_structs.hpp>
+#include <vulkan/vulkan_to_string.hpp>
+
 namespace om
 {
 
@@ -12,11 +27,12 @@ static std::string api_version_to_string(uint32_t apiVersion)
     return version.str();
 }
 
-gfx::gfx(std::ostream&     log,
-         get_extensions_t  get_instance_extensions,
-         create_surface_t  create_vk_surface, // NOLINT(*-unnecessary-value-param)
-         get_window_size_t get_window_size,
-         hints             h)
+gfx::gfx(
+    std::ostream&     log,
+    get_extensions_t  get_instance_extensions,
+    create_surface_t  create_vk_surface, // NOLINT(*-unnecessary-value-param)
+    get_window_size_t get_window_size,
+    hints             h)
     : log{ log }
     , hints_{ h }
     , get_window_buffer_size_{ std::move(get_window_size) }

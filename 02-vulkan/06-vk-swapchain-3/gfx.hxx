@@ -1,31 +1,14 @@
-#include <algorithm>
-#include <array>
-#include <cstdlib>
 #include <functional>
-#include <iomanip>
 #include <iostream>
-#include <iterator>
 #include <limits>
-#include <memory>
 #include <ostream>
-#include <set>
 #include <span>
-#include <sstream>
-#include <stdexcept>
 #include <string_view>
-#include <utility>
 #include <vector>
 
 #include <experimental/scope> // not found on macOS
 
-#include <SDL3/SDL.h>
-#include <SDL3/SDL_vulkan.h>
-
 #include <vulkan/vulkan.hpp>
-#include <vulkan/vulkan_enums.hpp>
-#include <vulkan/vulkan_handles.hpp>
-#include <vulkan/vulkan_structs.hpp>
-#include <vulkan/vulkan_to_string.hpp>
 
 namespace om
 {

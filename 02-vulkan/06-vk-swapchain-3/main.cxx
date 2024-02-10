@@ -1,5 +1,10 @@
 #include "gfx.hxx"
 
+#include <memory>
+
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_vulkan.h>
+
 int main(int argc, char** argv)
 {
     using namespace std::literals;
