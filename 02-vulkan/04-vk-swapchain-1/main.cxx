@@ -26,7 +26,7 @@
 
 namespace om
 {
-class vk_render
+class gfx
 {
 public:
     using callback_get_ext = const char* const* (*)(uint32_t* num_extensions);
@@ -39,10 +39,10 @@ public:
         bool enable_validation_layers;
     };
 
-    explicit vk_render(std::ostream&           log,
-                       callback_get_ext        get_instance_extensions,
-                       callback_create_surface create_vk_surface,
-                       hints                   h)
+    explicit gfx(std::ostream&           log,
+                 callback_get_ext        get_instance_extensions,
+                 callback_create_surface create_vk_surface,
+                 hints                   h)
         : log{ log }
         , hints_{ h }
     {
@@ -53,7 +53,7 @@ public:
         create_logical_device();
     }
 
-    ~vk_render()
+    ~gfx()
     {
         devices.logical.destroy();
         log << "vulkan logical device destroyed\n";
@@ -542,9 +542,9 @@ private:
         vk::Device         logical;
     } devices;
 
-    [[maybe_unused]] vk::Queue      render_queue;
-    [[maybe_unused]] vk::Queue      presentation_queue;
-    vk::SurfaceKHR surface; // KHR - extension
+    [[maybe_unused]] vk::Queue render_queue;
+    [[maybe_unused]] vk::Queue presentation_queue;
+    vk::SurfaceKHR             surface; // KHR - extension
 
     struct queue_family_indexes
     {
@@ -625,7 +625,7 @@ int main(int argc, char** argv)
 
     try
     {
-        om::vk_render render(
+        om::gfx render(
             log,
             SDL_Vulkan_GetInstanceExtensions,
             [&window, &log](
@@ -642,9 +642,8 @@ int main(int argc, char** argv)
                 }
                 return surface;
             },
-            om::vk_render::hints{ .verbose = verbose,
-                                  .enable_validation_layers =
-                                      vk_enable_validation });
+            om::gfx::hints{ .verbose                  = verbose,
+                            .enable_validation_layers = vk_enable_validation });
     }
     catch (const std::exception& ex)
     {

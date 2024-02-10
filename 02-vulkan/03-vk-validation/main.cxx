@@ -23,7 +23,7 @@
 
 namespace om
 {
-class vk_render
+class gfx
 {
 public:
     using callback_get_ext = const char* const* (*)(uint32_t* num_extensions);
@@ -33,9 +33,9 @@ public:
         bool enable_validation_layers;
     };
 
-    explicit vk_render(std::ostream&    log,
-                       callback_get_ext get_instance_extensions,
-                       hints            h)
+    explicit gfx(std::ostream&    log,
+                 callback_get_ext get_instance_extensions,
+                 hints            h)
         : log{ log }
         , hints_{ h }
     {
@@ -84,7 +84,7 @@ public:
         create_logical_device();
     }
 
-    ~vk_render()
+    ~gfx()
     {
         devices.logical.destroy();
         log << "vulkan logical device destroyed\n";
@@ -407,11 +407,11 @@ int main(int argc, char** argv)
 
     try
     {
-        om::vk_render render(log,
-                             SDL_Vulkan_GetInstanceExtensions,
-                             om::vk_render::hints{ .verbose = verbose,
-                                                   .enable_validation_layers =
-                                                       vk_enable_validation });
+        om::gfx render(
+            log,
+            SDL_Vulkan_GetInstanceExtensions,
+            om::gfx::hints{ .verbose                  = verbose,
+                            .enable_validation_layers = vk_enable_validation });
     }
     catch (const std::exception& ex)
     {

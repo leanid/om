@@ -61,7 +61,7 @@ int main(int argc, char** argv)
 
     try
     {
-        om::vk_render render(
+        om::gfx render(
             log,
             SDL_Vulkan_GetInstanceExtensions,
             [&window, &log](
@@ -97,9 +97,8 @@ int main(int argc, char** argv)
                     *height = static_cast<uint32_t>(h);
                 }
             },
-            om::vk_render::hints{ .verbose = verbose,
-                                  .enable_validation_layers =
-                                      vk_enable_validation });
+            om::gfx::hints{ .verbose                  = verbose,
+                            .enable_validation_layers = vk_enable_validation });
     }
     catch (const std::exception& ex)
     {

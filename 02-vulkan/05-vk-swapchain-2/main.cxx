@@ -29,7 +29,7 @@
 
 namespace om
 {
-class vk_render
+class gfx
 {
 public:
     using callback_get_ext = const char* const* (*)(uint32_t* num_extensions);
@@ -44,11 +44,11 @@ public:
         bool enable_validation_layers;
     };
 
-    explicit vk_render(std::ostream&                   log,
-                       callback_get_ext                get_instance_extensions,
-                       const callback_create_surface&  create_vk_surface,
-                       callback_get_window_buffer_size get_window_buffer_size,
-                       hints                           h)
+    explicit gfx(std::ostream&                   log,
+                 callback_get_ext                get_instance_extensions,
+                 const callback_create_surface&  create_vk_surface,
+                 callback_get_window_buffer_size get_window_buffer_size,
+                 hints                           h)
         : log{ log }
         , hints_{ h }
         , get_window_buffer_size_{ std::move(get_window_buffer_size) }
@@ -61,7 +61,7 @@ public:
         create_swapchain();
     }
 
-    ~vk_render()
+    ~gfx()
     {
         std::ranges::for_each(swapchain_image_views,
                               [this](vk::ImageView image_view) {
@@ -869,7 +869,7 @@ int main(int argc, char** argv)
 
     try
     {
-        om::vk_render render(
+        om::gfx render(
             log,
             SDL_Vulkan_GetInstanceExtensions,
             [&window, &log](
@@ -905,9 +905,8 @@ int main(int argc, char** argv)
                     *height = static_cast<uint32_t>(h);
                 }
             },
-            om::vk_render::hints{ .verbose = verbose,
-                                  .enable_validation_layers =
-                                      vk_enable_validation });
+            om::gfx::hints{ .verbose                  = verbose,
+                            .enable_validation_layers = vk_enable_validation });
     }
     catch (const std::exception& ex)
     {
