@@ -29,8 +29,8 @@ namespace om
 class gfx
 {
 public:
-    using callback_get_ext = const char* const* (*)(uint32_t* num_extensions);
-    using callback_create_surface =
+    using get_extensions_t = const char* const* (*)(uint32_t* num_extensions);
+    using create_surface_t =
         std::function<VkSurfaceKHR(VkInstance, const VkAllocationCallbacks*)>;
 
     struct hints
@@ -39,10 +39,10 @@ public:
         bool enable_validation_layers;
     };
 
-    explicit gfx(std::ostream&           log,
-                 callback_get_ext        get_instance_extensions,
-                 callback_create_surface create_vk_surface,
-                 hints                   h)
+    explicit gfx(std::ostream&    log,
+                 get_extensions_t get_instance_extensions,
+                 create_surface_t create_vk_surface,
+                 hints            h)
         : log{ log }
         , hints_{ h }
     {
@@ -67,7 +67,7 @@ public:
     }
 
 private:
-    void create_instance(callback_get_ext get_instance_extensions)
+    void create_instance(get_extensions_t get_instance_extensions)
     {
         vk::ApplicationInfo    application_info;
         vk::InstanceCreateInfo instance_create_info;
@@ -464,7 +464,7 @@ private:
         return static_cast<uint32_t>(graphics_queue_index);
     }
 
-    void create_surface(callback_create_surface create_vk_surface)
+    void create_surface(create_surface_t create_vk_surface)
     {
         VkSurfaceKHR surfaceKHR = create_vk_surface(instance, nullptr);
         if (surfaceKHR == nullptr)

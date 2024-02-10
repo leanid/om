@@ -26,7 +26,7 @@ namespace om
 class gfx
 {
 public:
-    using callback_get_ext = const char* const* (*)(uint32_t* num_extensions);
+    using get_extensions_t = const char* const* (*)(uint32_t* num_extensions);
     struct hints
     {
         bool verbose;
@@ -34,7 +34,7 @@ public:
     };
 
     explicit gfx(std::ostream&    log,
-                 callback_get_ext get_instance_extensions,
+                 get_extensions_t get_instance_extensions,
                  hints            h)
         : log{ log }
         , hints_{ h }

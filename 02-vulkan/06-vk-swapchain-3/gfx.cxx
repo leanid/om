@@ -12,14 +12,14 @@ static std::string api_version_to_string(uint32_t apiVersion)
     return version.str();
 }
 
-gfx::gfx(std::ostream&                   log,
-         callback_get_ext                get_instance_extensions,
-         const callback_create_surface&  create_vk_surface,
-         callback_get_window_buffer_size get_window_buffer_size,
-         hints                           h)
+gfx::gfx(std::ostream&     log,
+         get_extensions_t  get_instance_extensions,
+         create_surface_t  create_vk_surface,
+         get_window_size_t get_window_size,
+         hints             h)
     : log{ log }
     , hints_{ h }
-    , get_window_buffer_size_{ std::move(get_window_buffer_size) }
+    , get_window_buffer_size_{ std::move(get_window_size) }
 {
     create_instance(get_instance_extensions);
     create_surface(create_vk_surface);
@@ -45,7 +45,7 @@ gfx::~gfx()
     log << "vulkan instance destroyed\n";
 }
 
-void gfx::create_instance(callback_get_ext get_instance_extensions)
+void gfx::create_instance(get_extensions_t get_instance_extensions)
 {
     vk::ApplicationInfo    application_info;
     vk::InstanceCreateInfo instance_create_info;
@@ -337,6 +337,7 @@ uint32_t gfx::get_render_queue_family_index(
         std::distance(queue_properties.cbegin(), it_render_queue);
     return static_cast<uint32_t>(graphics_queue_index);
 }
+
 uint32_t gfx::get_presentation_queue_family_index(
     const vk::PhysicalDevice& physical_device,
     const vk::SurfaceKHR&     surface_to_check)
@@ -354,7 +355,8 @@ uint32_t gfx::get_presentation_queue_family_index(
         std::distance(queue_properties.cbegin(), it_render_queue);
     return static_cast<uint32_t>(graphics_queue_index);
 }
-void gfx::create_surface(const callback_create_surface& create_vk_surface)
+
+void gfx::create_surface(const create_surface_t& create_vk_surface)
 {
     VkSurfaceKHR surfaceKHR = create_vk_surface(instance, nullptr);
     if (surfaceKHR == nullptr)
@@ -475,6 +477,7 @@ void gfx::create_logical_device()
         queue_indexes.presentation_family, queue_index);
     log << "got presentation queue\n";
 }
+
 void gfx::create_swapchain()
 {
     swapchain_details_t swapchain_details =
@@ -581,6 +584,7 @@ void gfx::create_swapchain()
     log << "create swapchain_image_views count: "
         << swapchain_image_views.size() << std::endl;
 }
+
 vk::Extent2D gfx::choose_best_swapchain_image_resolution(
     const vk::SurfaceCapabilitiesKHR& capabilities)
 {
@@ -651,6 +655,7 @@ vk::SurfaceFormatKHR gfx::choose_best_surface_format(
     // can't find suitable format lets try first as it is
     return formats.front();
 }
+
 vk::PresentModeKHR gfx::choose_best_present_mode(
     std::span<vk::PresentModeKHR> present_modes)
 {
@@ -670,6 +675,7 @@ gfx::swapchain_details_t gfx::get_swapchain_details(vk::PhysicalDevice& device)
     details.presentation_modes   = device.getSurfacePresentModesKHR(surface);
     return details;
 }
+
 vk::ImageView gfx::create_image_view(vk::Image            image,
                                      vk::Format           format,
                                      vk::ImageAspectFlags aspect_flags) const

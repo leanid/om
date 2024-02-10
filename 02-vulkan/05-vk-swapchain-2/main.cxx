@@ -32,10 +32,10 @@ namespace om
 class gfx
 {
 public:
-    using callback_get_ext = const char* const* (*)(uint32_t* num_extensions);
-    using callback_create_surface =
+    using get_extensions_t = const char* const* (*)(uint32_t* num_extensions);
+    using create_surface_t =
         std::function<VkSurfaceKHR(VkInstance, const VkAllocationCallbacks*)>;
-    using callback_get_window_buffer_size =
+    using get_window_size_t =
         std::function<void(uint32_t* width, uint32_t* height)>;
 
     struct hints
@@ -44,11 +44,11 @@ public:
         bool enable_validation_layers;
     };
 
-    explicit gfx(std::ostream&                   log,
-                 callback_get_ext                get_instance_extensions,
-                 const callback_create_surface&  create_vk_surface,
-                 callback_get_window_buffer_size get_window_buffer_size,
-                 hints                           h)
+    explicit gfx(std::ostream&           log,
+                 get_extensions_t        get_instance_extensions,
+                 const create_surface_t& create_vk_surface,
+                 get_window_size_t       get_window_buffer_size,
+                 hints                   h)
         : log{ log }
         , hints_{ h }
         , get_window_buffer_size_{ std::move(get_window_buffer_size) }
@@ -79,7 +79,7 @@ public:
     }
 
 private:
-    void create_instance(callback_get_ext get_instance_extensions)
+    void create_instance(get_extensions_t get_instance_extensions)
     {
         vk::ApplicationInfo    application_info;
         vk::InstanceCreateInfo instance_create_info;
@@ -479,7 +479,7 @@ private:
         return static_cast<uint32_t>(graphics_queue_index);
     }
 
-    void create_surface(const callback_create_surface& create_vk_surface)
+    void create_surface(const create_surface_t& create_vk_surface)
     {
         VkSurfaceKHR surfaceKHR = create_vk_surface(instance, nullptr);
         if (surfaceKHR == nullptr)
@@ -766,9 +766,9 @@ private:
     }
 
     // render external interface objects
-    std::ostream&                   log;
-    hints                           hints_;
-    callback_get_window_buffer_size get_window_buffer_size_;
+    std::ostream&     log;
+    hints             hints_;
+    get_window_size_t get_window_buffer_size_;
 
     // vulkan main objects
     vk::Instance instance;
