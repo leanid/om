@@ -3,6 +3,15 @@
 namespace om
 {
 
+static std::string api_version_to_string(uint32_t apiVersion)
+{
+    std::stringstream version;
+    version << VK_VERSION_MAJOR(apiVersion) << '.'
+            << VK_VERSION_MINOR(apiVersion) << '.'
+            << VK_VERSION_PATCH(apiVersion);
+    return version.str();
+}
+
 gfx::gfx(std::ostream&                   log,
          callback_get_ext                get_instance_extensions,
          const callback_create_surface&  create_vk_surface,
@@ -309,14 +318,7 @@ void gfx::get_physical_device()
         << "presentation queue index is: " << queue_indexes.presentation_family
         << '\n';
 }
-std::string gfx::api_version_to_string(uint32_t apiVersion)
-{
-    std::stringstream version;
-    version << VK_VERSION_MAJOR(apiVersion) << '.'
-            << VK_VERSION_MINOR(apiVersion) << '.'
-            << VK_VERSION_PATCH(apiVersion);
-    return version.str();
-}
+
 uint32_t gfx::get_render_queue_family_index(
     const vk::PhysicalDevice& physical_device)
 {
@@ -364,6 +366,44 @@ void gfx::create_surface(const callback_create_surface& create_vk_surface)
     log << "vk surface KHR created\n";
     surface = surfaceKHR;
 }
+
+std::ostream& operator<<(std::ostream&                   os,
+                         const gfx::swapchain_details_t& details)
+{
+    os << "swap_chain_details:\n";
+    auto& caps = details.surface_capabilities;
+    os << "surface_capabilities:\n"
+       << "\tMin image count: " << caps.minImageCount << "\n"
+       << "\tMax image count: " << caps.maxImageCount << "\n"
+       << "\tCurrent extent: " << caps.currentExtent.width << "x"
+       << caps.currentExtent.height << "\n"
+       << "\tMin image extent: " << caps.minImageExtent.width << "x"
+       << caps.minImageExtent.height << "\n"
+       << "\tMax image extent: " << caps.maxImageExtent.width << "x"
+       << caps.maxImageExtent.height << "\n"
+       << "\tMax image array layers: " << caps.maxImageArrayLayers << "\n"
+       << "\tSupported transformation: " << vk::to_string(caps.currentTransform)
+       << "\n"
+       << "\tComposite alpha flags: "
+       << vk::to_string(caps.supportedCompositeAlpha) << "\n"
+       << "\tSupported usage flags: " << vk::to_string(caps.supportedUsageFlags)
+       << "\n";
+
+    os << "surface formats:\n";
+    std::ranges::for_each(
+        details.surface_formats,
+        [&os](vk::SurfaceFormatKHR format)
+        {
+            os << "\tImage format: " << vk::to_string(format.format) << "\n"
+               << "\tColor space: " << vk::to_string(format.colorSpace) << "\n";
+        });
+    os << "presentation modes:\n";
+    std::ranges::for_each(details.presentation_modes,
+                          [&os](vk::PresentModeKHR mode)
+                          { os << '\t' << vk::to_string(mode) << '\n'; });
+    return os;
+}
+
 void gfx::validate_physical_device()
 {
     // check properties
@@ -620,5 +660,36 @@ vk::PresentModeKHR gfx::choose_best_present_mode(
     }
     // guaranteed to be in any vulkan implementation
     return vk::PresentModeKHR::eFifo;
+}
+
+gfx::swapchain_details_t gfx::get_swapchain_details(vk::PhysicalDevice& device)
+{
+    swapchain_details_t details{};
+    details.surface_capabilities = device.getSurfaceCapabilitiesKHR(surface);
+    details.surface_formats      = device.getSurfaceFormatsKHR(surface);
+    details.presentation_modes   = device.getSurfacePresentModesKHR(surface);
+    return details;
+}
+vk::ImageView gfx::create_image_view(vk::Image            image,
+                                     vk::Format           format,
+                                     vk::ImageAspectFlags aspect_flags) const
+{
+    vk::ImageViewCreateInfo info;
+    info.image        = image;
+    info.format       = format;
+    info.viewType     = vk::ImageViewType::e2D;
+    info.components.r = vk::ComponentSwizzle::eIdentity;
+    info.components.g = vk::ComponentSwizzle::eIdentity;
+    info.components.b = vk::ComponentSwizzle::eIdentity;
+    info.components.a = vk::ComponentSwizzle::eIdentity;
+    // subresources allow the view to view only a part of image
+    auto& range          = info.subresourceRange;
+    range.aspectMask     = aspect_flags; // ColorBit etc.
+    range.baseMipLevel   = 0;            // start mip level to view from
+    range.levelCount     = 1;            // count of mip levels
+    range.baseArrayLayer = 0;            // start array level to view from
+    range.layerCount     = 1;
+
+    return devices.logical.createImageView(info);
 }
 } // namespace om

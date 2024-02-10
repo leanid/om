@@ -53,10 +53,21 @@ public:
     ~gfx();
 
 private:
+    struct swapchain_details_t
+    {
+        vk::SurfaceCapabilitiesKHR        surface_capabilities;
+        std::vector<vk::SurfaceFormatKHR> surface_formats;
+        std::vector<vk::PresentModeKHR>   presentation_modes;
+    };
+
     void create_instance(callback_get_ext get_instance_extensions);
     void create_logical_device();
     void create_surface(const callback_create_surface& create_vk_surface);
     void create_swapchain();
+    [[nodiscard]] vk::ImageView create_image_view(
+        vk::Image            image,
+        vk::Format           format,
+        vk::ImageAspectFlags aspect_flags) const;
 
     void validate_expected_extensions_exists(
         const vk::InstanceCreateInfo& create_info);
@@ -67,11 +78,11 @@ private:
     static bool check_device_extension_supported(
         vk::PhysicalDevice& device, std::string_view extension_name);
 
-    void get_physical_device();
+    void                get_physical_device();
+    swapchain_details_t get_swapchain_details(vk::PhysicalDevice& device);
 
-    static std::string api_version_to_string(uint32_t apiVersion);
-    static uint32_t    get_render_queue_family_index(
-           const vk::PhysicalDevice& physical_device);
+    static uint32_t get_render_queue_family_index(
+        const vk::PhysicalDevice& physical_device);
     static uint32_t get_presentation_queue_family_index(
         const vk::PhysicalDevice& physical_device,
         const vk::SurfaceKHR&     surface_to_check);
@@ -83,84 +94,8 @@ private:
     static vk::PresentModeKHR choose_best_present_mode(
         std::span<vk::PresentModeKHR> present_modes);
 
-    struct swapchain_details_t
-    {
-        vk::SurfaceCapabilitiesKHR        surface_capabilities;
-        std::vector<vk::SurfaceFormatKHR> surface_formats;
-        std::vector<vk::PresentModeKHR>   presentation_modes;
-    };
-
     friend std::ostream& operator<<(std::ostream&              os,
-                                    const swapchain_details_t& details)
-    {
-        os << "swap_chain_details:\n";
-        auto& caps = details.surface_capabilities;
-        os << "surface_capabilities:\n"
-           << "\tMin image count: " << caps.minImageCount << "\n"
-           << "\tMax image count: " << caps.maxImageCount << "\n"
-           << "\tCurrent extent: " << caps.currentExtent.width << "x"
-           << caps.currentExtent.height << "\n"
-           << "\tMin image extent: " << caps.minImageExtent.width << "x"
-           << caps.minImageExtent.height << "\n"
-           << "\tMax image extent: " << caps.maxImageExtent.width << "x"
-           << caps.maxImageExtent.height << "\n"
-           << "\tMax image array layers: " << caps.maxImageArrayLayers << "\n"
-           << "\tSupported transformation: "
-           << vk::to_string(caps.currentTransform) << "\n"
-           << "\tComposite alpha flags: "
-           << vk::to_string(caps.supportedCompositeAlpha) << "\n"
-           << "\tSupported usage flags: "
-           << vk::to_string(caps.supportedUsageFlags) << "\n";
-
-        os << "surface formats:\n";
-        std::ranges::for_each(
-            details.surface_formats,
-            [&os](vk::SurfaceFormatKHR format)
-            {
-                os << "\tImage format: " << vk::to_string(format.format) << "\n"
-                   << "\tColor space: " << vk::to_string(format.colorSpace)
-                   << "\n";
-            });
-        os << "presentation modes:\n";
-        std::ranges::for_each(details.presentation_modes,
-                              [&os](vk::PresentModeKHR mode)
-                              { os << '\t' << vk::to_string(mode) << '\n'; });
-        return os;
-    }
-
-    swapchain_details_t get_swapchain_details(vk::PhysicalDevice& device)
-    {
-        swapchain_details_t details{};
-        details.surface_capabilities =
-            device.getSurfaceCapabilitiesKHR(surface);
-        details.surface_formats    = device.getSurfaceFormatsKHR(surface);
-        details.presentation_modes = device.getSurfacePresentModesKHR(surface);
-        return details;
-    }
-
-    [[nodiscard]] vk::ImageView create_image_view(
-        vk::Image            image,
-        vk::Format           format,
-        vk::ImageAspectFlags aspect_flags) const
-    {
-        vk::ImageViewCreateInfo info;
-        info.image        = image;
-        info.format       = format;
-        info.viewType     = vk::ImageViewType::e2D;
-        info.components.r = vk::ComponentSwizzle::eIdentity;
-        info.components.g = vk::ComponentSwizzle::eIdentity;
-        info.components.b = vk::ComponentSwizzle::eIdentity;
-        info.components.a = vk::ComponentSwizzle::eIdentity;
-        // subresources allow the view to view only a part of image
-        auto& range          = info.subresourceRange;
-        range.aspectMask     = aspect_flags; // ColorBit etc.
-        range.baseMipLevel   = 0;            // start mip level to view from
-        range.levelCount     = 1;            // count of mip levels
-        range.baseArrayLayer = 0;            // start array level to view from
-        range.layerCount     = 1;
-
-        return devices.logical.createImageView(info);
-    }
+                                    const swapchain_details_t& details);
 
     // render external interface objects
     std::ostream&                   log;
