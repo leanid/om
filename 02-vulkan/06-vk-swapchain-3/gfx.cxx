@@ -14,7 +14,7 @@ static std::string api_version_to_string(uint32_t apiVersion)
 
 gfx::gfx(std::ostream&     log,
          get_extensions_t  get_instance_extensions,
-         create_surface_t  create_vk_surface,
+         create_surface_t  create_vk_surface, // NOLINT(*-unnecessary-value-param)
          get_window_size_t get_window_size,
          hints             h)
     : log{ log }
