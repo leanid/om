@@ -16,7 +16,7 @@ int main(int argc, char** argv)
     bool vk_enable_validation = true;
 #endif
 
-    struct null_buffer : std::streambuf
+    struct null_buffer final : std::streambuf
     {
         int overflow(int c) final { return c; }
     } null;
