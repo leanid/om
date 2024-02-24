@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.27)
+cmake_minimum_required(VERSION 3.27...3.28)
 
 project(07-vk-pipeline-1 CXX)
 
