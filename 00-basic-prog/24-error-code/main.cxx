@@ -16,6 +16,13 @@ enum class custom_errc
 
 namespace std
 {
+
+/// this code marks 'om::custom_errc' can be automatically converted to
+/// std::error_code or std::error_condition
+template <> struct is_error_code_enum<om::custom_errc> : public true_type
+{
+};
+
 std::error_code make_error_code(om::custom_errc err) noexcept
 {
     class custom_category : public error_category
@@ -38,18 +45,21 @@ std::error_code make_error_code(om::custom_errc err) noexcept
             }
             throw std::invalid_argument("error: now such enum value");
         };
+        error_condition default_error_condition(int i) const noexcept override
+        {
+            if (static_cast<om::custom_errc>(i) ==
+                om::custom_errc::some_strange_error)
+            {
+                return make_error_condition(static_cast<errc>(i));
+            }
+            return error_category::default_error_condition(i);
+        }
     };
 
     static custom_category category{};
 
     return std::error_code(static_cast<int>(err), category);
 }
-
-/// this code marks 'om::custom_errc' can be automatically converted to
-/// std::error_code or std::error_condition
-template <> struct is_error_code_enum<om::custom_errc> : public true_type
-{
-};
 
 } // namespace std
 
@@ -60,7 +70,7 @@ int main(int argc, char** argv)
 
     std::error_code code =
         std::make_error_code(om::custom_errc::some_strange_error);
-    std::cout << "custom error_code code = " << code
+    std::cout << " custom error_code code = " << code
               << " message:" << code.message() << std::endl;
     std::cout << " default error condition category name: "
               << code.default_error_condition().category().name() << std::endl;
