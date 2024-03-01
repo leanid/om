@@ -1,4 +1,7 @@
+#include <algorithm>
+#include <format>
 #include <iostream>
+#include <ranges>
 #include <stdexcept>
 #include <system_error>
 #include <type_traits>
@@ -65,36 +68,92 @@ std::error_code make_error_code(om::custom_errc err) noexcept
 
 int main(int argc, char** argv)
 {
-    std::cout << "1. example how to make your custom error codes with custom "
-                 "error_category:\n";
+    using namespace std;
+    cout << "1. example how to make your custom error codes with custom "
+            "error_category:\n";
 
-    std::error_code code =
-        std::make_error_code(om::custom_errc::some_strange_error);
-    std::cout << " custom error_code code = " << code
-              << " message:" << code.message() << std::endl;
-    std::cout << " default error condition category name: "
-              << code.default_error_condition().category().name() << std::endl;
-    std::cout << " default error condition message: "
-              << code.default_error_condition().message() << std::endl;
+    error_code code = make_error_code(om::custom_errc::some_strange_error);
+    cout << " custom error_code code = " << code
+         << " message:" << code.message() << endl;
+    cout << " default error condition category name: "
+         << code.default_error_condition().category().name() << endl;
+    cout << " default error condition message: "
+         << code.default_error_condition().message() << endl;
 
-    std::cout << "2. example posix errno codes\n";
+    cout << "2. example posix errno codes\n";
 
-    std::cout << "int value | ec.category | ec.message | ec.condition.category "
-                 "| ec.condition.message |"
-              << std::endl;
-
-    for (unsigned i = 0; i < 255u; i++)
+    struct
     {
-        auto            error     = static_cast<std::errc>(i);
-        std::error_code ec        = std::make_error_code(error);
-        auto            msg       = ec.message();
-        auto            category  = ec.category().name();
-        auto            condition = ec.default_error_condition();
-        auto            category2 = condition.category().name();
-        auto            msg2      = condition.message();
-        std::cout << i << ": " << category << ' ' << msg << " " << category2
-                  << " " << msg2 << std::endl;
+        size_t i                  = "int"s.size();
+        size_t category           = "category"s.size();
+        size_t message            = "message"s.size();
+        size_t condition_category = "condition category"s.size();
+        size_t condition_message  = "condition message"s.size();
+    } max_len;
+
+    const int start  = 0;
+    const int finish = 133 + 1;
+
+    for (int i : ranges::iota_view{ start, finish })
+    {
+        auto       error     = static_cast<errc>(i);
+        error_code ec        = make_error_code(error);
+        auto       condition = ec.default_error_condition();
+
+        string i_str     = to_string(i);
+        string message   = ec.message();
+        string category  = ec.category().name();
+        string category2 = condition.category().name();
+        string msg2      = condition.message();
+
+        auto& m = max_len;
+
+        m.i                  = max(m.i, i_str.size());
+        m.category           = max(m.category, category.size());
+        m.message            = max(m.message, message.size());
+        m.condition_category = max(m.condition_category, category2.size());
+        m.condition_message  = max(m.condition_message, msg2.size());
     }
 
-    return std::cout.fail();
+    string table_title = std::format("|{:^{}}|{:^{}}|{:^{}}|{:^{}}|{:^{}}|",
+                                     "int",
+                                     max_len.i,
+                                     "category",
+                                     max_len.category,
+                                     "message",
+                                     max_len.message,
+                                     "condition_category",
+                                     max_len.condition_category,
+                                     "condition_message",
+                                     max_len.condition_message);
+
+    cout << table_title << endl;
+    cout << string(table_title.size(), '-') << endl;
+
+    for (int i : ranges::iota_view{ start, finish })
+    {
+        auto       error     = static_cast<errc>(i);
+        error_code ec        = make_error_code(error);
+        auto       condition = ec.default_error_condition();
+
+        string i_str     = to_string(i);
+        string message   = ec.message();
+        string category  = ec.category().name();
+        string category2 = condition.category().name();
+        string msg2      = condition.message();
+
+        string line = std::format("|{:>{}}|{:<{}}|{:<{}}|{:<{}}|{:<{}}|",
+                                  i_str,
+                                  max_len.i,
+                                  category,
+                                  max_len.category,
+                                  message,
+                                  max_len.message,
+                                  category2,
+                                  max_len.condition_category,
+                                  msg2,
+                                  max_len.condition_message);
+        cout << line << endl;
+    }
+    return cout.fail();
 }
