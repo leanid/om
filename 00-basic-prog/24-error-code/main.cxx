@@ -118,37 +118,20 @@ int main(int argc, char** argv)
     const int start  = 0;
     const int finish = 133 + 1;
 
-    for (int i : ranges::iota_view{ start, finish })
+    for (tbl_values v :
+         ranges::iota_view{ start, finish } | views::transform(to_strings))
     {
-        tbl_values v = to_strings(i);
-        auto&      m = max_len;
+        auto& m = max_len;
 
         m.i                  = max(m.i, v.i_str.size());
-        m.category           = max(m.category, v.category.size());
         m.message            = max(m.message, v.message.size());
+        m.category           = max(m.category, v.category.size());
         m.condition_category = max(m.condition_category, v.category2.size());
         m.condition_message  = max(m.condition_message, v.msg2.size());
     }
 
-    string table_title = std::format("|{:^{}}|{:^{}}|{:^{}}|{:^{}}|{:^{}}|",
-                                     "int",
-                                     max_len.i,
-                                     "category",
-                                     max_len.category,
-                                     "message",
-                                     max_len.message,
-                                     "condition_category",
-                                     max_len.condition_category,
-                                     "condition_message",
-                                     max_len.condition_message);
-
-    cout << table_title << endl;
-    cout << string(table_title.size(), '-') << endl;
-
-    for (int i : ranges::iota_view{ start, finish })
+    auto format_line = [&max_len](const tbl_values& v) -> string
     {
-        tbl_values v = to_strings(i);
-
         string line = std::format("|{:>{}}|{:<{}}|{:<{}}|{:<{}}|{:<{}}|",
                                   v.i_str,
                                   max_len.i,
@@ -160,6 +143,22 @@ int main(int argc, char** argv)
                                   max_len.condition_category,
                                   v.msg2,
                                   max_len.condition_message);
+        return line;
+    };
+    string table_title =
+        format_line(tbl_values{ .i_str     = "int",
+                                .message   = "message",
+                                .category  = "category",
+                                .category2 = "condition_category",
+                                .msg2      = "condition_message" });
+
+    cout << table_title << endl;
+    cout << string(table_title.size(), '-') << endl;
+
+    for (string line : ranges::iota_view{ start, finish } |
+                           views::transform(to_strings) |
+                           views::transform(format_line))
+    {
         cout << line << endl;
     }
     return cout.fail();
