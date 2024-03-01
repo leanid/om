@@ -91,28 +91,43 @@ int main(int argc, char** argv)
         size_t condition_message  = "condition message"s.size();
     } max_len;
 
-    const int start  = 0;
-    const int finish = 133 + 1;
-
-    for (int i : ranges::iota_view{ start, finish })
+    struct tbl_values
     {
-        auto       error     = static_cast<errc>(i);
+        string i_str;
+        string message;
+        string category;
+        string category2;
+        string msg2;
+    };
+
+    auto to_strings = [](int errno_code) -> tbl_values
+    {
+        auto       error     = static_cast<errc>(errno_code);
         error_code ec        = make_error_code(error);
         auto       condition = ec.default_error_condition();
 
-        string i_str     = to_string(i);
+        string i_str     = to_string(errno_code);
         string message   = ec.message();
         string category  = ec.category().name();
         string category2 = condition.category().name();
         string msg2      = condition.message();
 
-        auto& m = max_len;
+        return { i_str, message, category, category2, msg2 };
+    };
 
-        m.i                  = max(m.i, i_str.size());
-        m.category           = max(m.category, category.size());
-        m.message            = max(m.message, message.size());
-        m.condition_category = max(m.condition_category, category2.size());
-        m.condition_message  = max(m.condition_message, msg2.size());
+    const int start  = 0;
+    const int finish = 133 + 1;
+
+    for (int i : ranges::iota_view{ start, finish })
+    {
+        tbl_values v = to_strings(i);
+        auto&      m = max_len;
+
+        m.i                  = max(m.i, v.i_str.size());
+        m.category           = max(m.category, v.category.size());
+        m.message            = max(m.message, v.message.size());
+        m.condition_category = max(m.condition_category, v.category2.size());
+        m.condition_message  = max(m.condition_message, v.msg2.size());
     }
 
     string table_title = std::format("|{:^{}}|{:^{}}|{:^{}}|{:^{}}|{:^{}}|",
@@ -132,26 +147,18 @@ int main(int argc, char** argv)
 
     for (int i : ranges::iota_view{ start, finish })
     {
-        auto       error     = static_cast<errc>(i);
-        error_code ec        = make_error_code(error);
-        auto       condition = ec.default_error_condition();
-
-        string i_str     = to_string(i);
-        string message   = ec.message();
-        string category  = ec.category().name();
-        string category2 = condition.category().name();
-        string msg2      = condition.message();
+        tbl_values v = to_strings(i);
 
         string line = std::format("|{:>{}}|{:<{}}|{:<{}}|{:<{}}|{:<{}}|",
-                                  i_str,
+                                  v.i_str,
                                   max_len.i,
-                                  category,
+                                  v.category,
                                   max_len.category,
-                                  message,
+                                  v.message,
                                   max_len.message,
-                                  category2,
+                                  v.category2,
                                   max_len.condition_category,
-                                  msg2,
+                                  v.msg2,
                                   max_len.condition_message);
         cout << line << endl;
     }
