@@ -123,14 +123,18 @@ int main(int argc, char** argv)
     const int start  = 0;
     const int finish = 133 + 1;
 
-    for (table_row v : ranges::iota_view{ start, finish } |
-                           views::transform(to_error_code_member_strings))
+    auto table_rows = ranges::iota_view{ start, finish } |
+                      views::transform(to_error_code_member_strings);
+
+    auto update_max_column_sizes = [&max_len](table_row row)
     {
         auto select_max = [](auto l, auto r) { return max(l, r); };
-        auto row_sizes  = v | views::transform(&string::size);
+        auto row_sizes  = row | views::transform(&string::size);
         auto max_view   = views::zip_transform(select_max, max_len, row_sizes);
         ranges::copy(max_view, &max_len.i);
-    }
+    };
+
+    ranges::for_each(table_rows, update_max_column_sizes);
 
     auto format_row = [&max_len](const table_row& v) -> string
     {
