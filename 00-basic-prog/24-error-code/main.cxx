@@ -20,7 +20,6 @@ enum class custom_errc
 
 namespace std
 {
-
 /// this code marks 'om::custom_errc' can be automatically converted to
 /// std::error_code or std::error_condition
 template <> struct is_error_code_enum<om::custom_errc> : public true_type
@@ -75,13 +74,13 @@ int main(int argc, char** argv)
 
     error_code code = make_error_code(om::custom_errc::some_strange_error);
     cout << " custom error_code code = " << code
-         << " message:" << code.message() << endl;
+         << " message:" << code.message() << "\n";
     cout << " default error condition category name: "
-         << code.default_error_condition().category().name() << endl;
+         << code.default_error_condition().category().name() << "\n";
     cout << " default error condition message: "
-         << code.default_error_condition().message() << endl;
+         << code.default_error_condition().message() << "\n";
 
-    cout << "2. example posix errno codes\n";
+    cout << "2. example posix errno codes:\n\n";
 
     struct
     {
@@ -136,7 +135,7 @@ int main(int argc, char** argv)
 
     ranges::for_each(table_rows, update_max_column_sizes);
 
-    auto format_row = [&max_len](const table_row& v) -> string
+    auto to_string = [&max_len](const table_row& v) -> string
     {
         string row = std::format("|{:>{}}|{:<{}}|{:<{}}|{:<{}}|{:<{}}|",
                                  v.i_str,
@@ -151,19 +150,18 @@ int main(int argc, char** argv)
                                  max_len.condition_message);
         return row;
     };
-    string table_title =
-        format_row(table_row{ .i_str     = "int",
-                              .message   = "message",
-                              .category  = "category",
-                              .category2 = "condition_category",
-                              .msg2      = "condition_message" });
+    string table_title = to_string(table_row{ .i_str     = "int",
+                                              .message   = "message",
+                                              .category  = "category",
+                                              .category2 = "condition_category",
+                                              .msg2 = "condition_message" });
 
-    cout << table_title << endl;
-    cout << string(table_title.size(), '-') << endl;
+    cout << table_title << "\n";
+    cout << string(table_title.size(), '-') << "\n";
 
     auto rows = ranges::iota_view{ start, finish } |
                 views::transform(to_error_code_member_strings) |
-                views::transform(format_row);
+                views::transform(to_string);
 
     ranges::copy(rows, ostream_iterator<string>(cout, "\n"));
 
