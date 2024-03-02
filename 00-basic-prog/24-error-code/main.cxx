@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <format>
 #include <iostream>
+#include <iterator>
 #include <ranges>
 #include <stdexcept>
 #include <system_error>
@@ -84,23 +85,27 @@ int main(int argc, char** argv)
 
     struct
     {
-        size_t i                  = "int"s.size();
-        size_t category           = "category"s.size();
-        size_t message            = "message"s.size();
-        size_t condition_category = "condition category"s.size();
-        size_t condition_message  = "condition message"s.size();
+        size_t        i                  = "int"s.size();
+        size_t        message            = "message"s.size();
+        size_t        category           = "category"s.size();
+        size_t        condition_category = "condition category"s.size();
+        size_t        condition_message  = "condition message"s.size();
+        const size_t* begin() const noexcept { return &i; }
+        const size_t* end() const noexcept { return &condition_message + 1; }
     } max_len;
 
-    struct tbl_values
+    struct table_row
     {
-        string i_str;
-        string message;
-        string category;
-        string category2;
-        string msg2;
+        string        i_str;
+        string        message;
+        string        category;
+        string        category2;
+        string        msg2;
+        const string* begin() const noexcept { return &i_str; }
+        const string* end() const noexcept { return &msg2 + 1; }
     };
 
-    auto to_strings = [](int errno_code) -> tbl_values
+    auto to_error_code_member_strings = [](int errno_code) -> table_row
     {
         auto       error     = static_cast<errc>(errno_code);
         error_code ec        = make_error_code(error);
@@ -118,48 +123,45 @@ int main(int argc, char** argv)
     const int start  = 0;
     const int finish = 133 + 1;
 
-    for (tbl_values v :
-         ranges::iota_view{ start, finish } | views::transform(to_strings))
+    for (table_row v : ranges::iota_view{ start, finish } |
+                           views::transform(to_error_code_member_strings))
     {
-        auto& m = max_len;
-
-        m.i                  = max(m.i, v.i_str.size());
-        m.message            = max(m.message, v.message.size());
-        m.category           = max(m.category, v.category.size());
-        m.condition_category = max(m.condition_category, v.category2.size());
-        m.condition_message  = max(m.condition_message, v.msg2.size());
+        auto select_max = [](auto l, auto r) { return max(l, r); };
+        auto row_sizes  = v | views::transform(&string::size);
+        auto max_view   = views::zip_transform(select_max, max_len, row_sizes);
+        ranges::copy(max_view, &max_len.i);
     }
 
-    auto format_line = [&max_len](const tbl_values& v) -> string
+    auto format_row = [&max_len](const table_row& v) -> string
     {
-        string line = std::format("|{:>{}}|{:<{}}|{:<{}}|{:<{}}|{:<{}}|",
-                                  v.i_str,
-                                  max_len.i,
-                                  v.category,
-                                  max_len.category,
-                                  v.message,
-                                  max_len.message,
-                                  v.category2,
-                                  max_len.condition_category,
-                                  v.msg2,
-                                  max_len.condition_message);
-        return line;
+        string row = std::format("|{:>{}}|{:<{}}|{:<{}}|{:<{}}|{:<{}}|",
+                                 v.i_str,
+                                 max_len.i,
+                                 v.category,
+                                 max_len.category,
+                                 v.message,
+                                 max_len.message,
+                                 v.category2,
+                                 max_len.condition_category,
+                                 v.msg2,
+                                 max_len.condition_message);
+        return row;
     };
     string table_title =
-        format_line(tbl_values{ .i_str     = "int",
-                                .message   = "message",
-                                .category  = "category",
-                                .category2 = "condition_category",
-                                .msg2      = "condition_message" });
+        format_row(table_row{ .i_str     = "int",
+                              .message   = "message",
+                              .category  = "category",
+                              .category2 = "condition_category",
+                              .msg2      = "condition_message" });
 
     cout << table_title << endl;
     cout << string(table_title.size(), '-') << endl;
 
-    for (string line : ranges::iota_view{ start, finish } |
-                           views::transform(to_strings) |
-                           views::transform(format_line))
-    {
-        cout << line << endl;
-    }
+    auto rows = ranges::iota_view{ start, finish } |
+                views::transform(to_error_code_member_strings) |
+                views::transform(format_row);
+
+    ranges::copy(rows, ostream_iterator<string>(cout, "\n"));
+
     return cout.fail();
 }
