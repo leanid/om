@@ -87,7 +87,7 @@ void canvas_put_pixel(int x, int y, color_t col, canvas& image)
     const size_t image_x = (Cw / 2) + x;
     const size_t image_y = (Ch / 2) - y;
 
-    if (image_x < 0 || image_x >= Cw || image_y < 0 || image_y >= Ch)
+    if (image_x >= Cw || image_y >= Ch)
     {
         return;
     }

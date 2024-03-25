@@ -354,9 +354,9 @@ sound_buffer_impl::sound_buffer_impl(std::string_view  path,
               << "length: " << length << '\n'
               << "time: "
               << static_cast<double>(length) /
-                     (static_cast<size_t>(file_audio_spec.channels *
-                                          file_audio_spec.freq) *
-                      get_sound_format_size(file_audio_spec.format))
+                     (static_cast<double>(file_audio_spec.channels) *
+                      static_cast<double>(file_audio_spec.freq) *
+                      static_cast<double>(get_sound_format_size(file_audio_spec.format)))
               << "sec" << std::endl;
 
     if (file_audio_spec.channels != device_audio_spec.channels ||

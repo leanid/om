@@ -357,7 +357,7 @@ private:
                                  const size_t height);
 
     std::string   file_path;
-    size_t        ref_counter = 1;
+    std::size_t   ref_counter = 1;
     GLuint        tex_handl   = 0;
     std::uint32_t width       = 0;
     std::uint32_t height      = 0;
@@ -477,9 +477,9 @@ private:
             glDeleteShader(shader_id);
             OM_GL_CHECK();
 
-            std::string shader_type_name =
+            const std::string shader_type_name =
                 shader_type == GL_VERTEX_SHADER ? "vertex" : "fragment";
-            std::cerr << "Error compiling shader(vertex)\n"
+            std::cerr << "Error compiling shader " << shader_type_name << "\n"
                       << vertex_shader_src << "\n"
                       << info_chars.data();
             return 0;
@@ -588,7 +588,7 @@ tri2::tri2()
 {
 }
 
-std::ostream& operator<<(std::ostream& out, const SDL_Version& v)
+std::ostream& operator<<(std::ostream& out, SDL_version v)
 {
     out << static_cast<int>(v.major) << '.';
     out << static_cast<int>(v.minor) << '.';
