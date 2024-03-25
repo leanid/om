@@ -129,7 +129,10 @@ private:
                     extension_properties.begin(),
                     extension_properties.end(),
                     [extension](const vk::ExtensionProperties& other_extension)
-                    { return other_extension.extensionName == extension; });
+                    {
+                        return other_extension.extensionName.data() ==
+                               extension;
+                    });
                 if (it == extension_properties.end())
                 {
                     throw std::runtime_error(

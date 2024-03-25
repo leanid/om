@@ -63,7 +63,7 @@ int main(int /*argc*/, char* /*argv*/[])
 
     clog << "read file: " << file_name << endl;
 
-    SDL_RWops* file = SDL_RWFromFile(file_name, "rb");
+    SDL_IOStream* file = SDL_IOFromFile(file_name, "rb");
     if (file == nullptr)
     {
         cerr << "error: can't open file: " << file_name << "\n";
@@ -77,7 +77,7 @@ int main(int /*argc*/, char* /*argv*/[])
 
     clog << "loading sample buffer from file: " << file_name << endl;
 
-    int load_status = SDL_LoadWAV_RW(file,
+    int load_status = SDL_LoadWAV_IO(file,
                                      auto_delete_file,
                                      &audio_spec_from_file,
                                      &sample_buffer_from_file,

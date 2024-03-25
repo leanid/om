@@ -171,7 +171,10 @@ private:
                     extension_properties.begin(),
                     extension_properties.end(),
                     [extension](const vk::ExtensionProperties& other_extension)
-                    { return other_extension.extensionName == extension; });
+                    {
+                        return other_extension.extensionName.data() ==
+                               extension;
+                    });
                 if (it == extension_properties.end())
                 {
                     throw std::runtime_error(
@@ -213,7 +216,7 @@ private:
             std::find_if(available_layers.begin(),
                          available_layers.end(),
                          [&instance_layer](const vk::LayerProperties& layer)
-                         { return layer.layerName == instance_layer; });
+                         { return layer.layerName.data() == instance_layer; });
 
         if (it == available_layers.end())
         {
@@ -276,7 +279,7 @@ private:
         auto it         = std::ranges::find_if(
             extensions,
             [&extension_name](const auto& extension)
-            { return extension.extensionName == extension_name; });
+            { return extension.extensionName.data() == extension_name; });
         return it != extensions.end();
     }
 

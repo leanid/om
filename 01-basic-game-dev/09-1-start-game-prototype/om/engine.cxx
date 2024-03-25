@@ -327,18 +327,18 @@ sound_buffer_impl::sound_buffer_impl(std::string_view  path,
     , length(0)
     , device(device_)
 {
-    SDL_RWops* file = SDL_RWFromFile(path.data(), "rb");
+    SDL_IOStream* file = SDL_IOFromFile(path.data(), "rb");
     if (file == nullptr)
     {
         throw std::runtime_error(std::string("can't open audio file: ") +
                                  path.data());
     }
 
-    // freq, format, channels, and samples - used by SDL_LoadWAV_RW
+    // freq, format, channels, and samples - used by SDL_LoadWAV_IO
     SDL_AudioSpec file_audio_spec;
 
     if (-1 ==
-        SDL_LoadWAV_RW(file, SDL_TRUE, &file_audio_spec, &buffer, &length))
+        SDL_LoadWAV_IO(file, SDL_TRUE, &file_audio_spec, &buffer, &length))
     {
         throw std::runtime_error(std::string("can't load wav: ") + path.data());
     }
