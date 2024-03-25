@@ -4,6 +4,7 @@
 #include <iterator>
 #include <ranges>
 #include <stdexcept>
+#include <string>
 #include <system_error>
 #include <type_traits>
 
@@ -110,7 +111,7 @@ int main(int argc, char** argv)
         error_code ec        = make_error_code(error);
         auto       condition = ec.default_error_condition();
 
-        string i_str     = to_string(errno_code);
+        string i_str     = std::to_string(errno_code);
         string message   = ec.message();
         string category  = ec.category().name();
         string category2 = condition.category().name();
