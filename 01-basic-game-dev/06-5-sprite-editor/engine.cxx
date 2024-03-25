@@ -588,7 +588,7 @@ tri2::tri2()
 {
 }
 
-std::ostream& operator<<(std::ostream& out, SDL_version v)
+std::ostream& operator<<(std::ostream& out, SDL_Version v)
 {
     out << static_cast<int>(v.major) << '.';
     out << static_cast<int>(v.minor) << '.';
