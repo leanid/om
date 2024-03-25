@@ -16,9 +16,32 @@
         "CMAKE_EXPORT_COMPILE_COMMANDS": {
           "type": "BOOL",
           "value": "ON"
+        },
+        "CMAKE_BUILD_TYPE": {
+          "type": "STRING",
+          "value": "Debug"
         }
       }
     },
+    {
+      "name": "ninja-llvm",
+      "inherits": "ninja",
+      "displayName": "Ninja-llvm",
+      "description": "build using Ninja generator",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/ninja-llvm",
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": {
+          "type": "INTERNAL",
+          "value": "clang++"
+        },
+        "CMAKE_C_COMPILER": {
+          "type": "INTERNAL",
+          "value": "clang"
+        }
+      }
+    },
+
     {
       "name": "xcode",
       "displayName": "xcode",
@@ -76,6 +99,10 @@
     {
       "name": "ninja",
       "configurePreset": "ninja"
+    },
+    {
+      "name": "ninja-llvm",
+      "configurePreset": "ninja-llvm"
     },
     {
       "name": "xcode",

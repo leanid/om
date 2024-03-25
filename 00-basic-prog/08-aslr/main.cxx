@@ -13,7 +13,7 @@ int main(int argc, char* argv[])
     cout << "&some_func = " << hex << reinterpret_cast<void*>(&some_func)
          << endl;
 
-    long your_guess = 0x401350;
+    size_t your_guess = 0x401350;
     if (reinterpret_cast<void*>(&some_func) ==
         reinterpret_cast<void*>(your_guess))
     {

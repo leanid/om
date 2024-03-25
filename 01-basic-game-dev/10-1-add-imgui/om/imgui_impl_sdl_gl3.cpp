@@ -22,7 +22,6 @@
 // SDL,GL3W
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_mouse.h>
-#include <SDL3/SDL_syswm.h>
 #include <SDL3/SDL_video.h>
 
 #include "gles20.hxx"
@@ -584,9 +583,12 @@ bool ImGui_ImplSdlGL3_Init(SDL_Window* window)
     io.ClipboardUserData  = NULL;
 
 #ifdef _WIN32
-    SDL_SysWMinfo wmInfo;
-    SDL_GetWindowWMInfo(window, &wmInfo, SDL_SYSWM_CURRENT_VERSION);
-    io.ImeWindowHandle = wmInfo.info.win.window;
+    // SDL_SysWMinfo wmInfo;
+    // SDL_GetWindowWMInfo(window, &wmInfo, SDL_SYSWM_CURRENT_VERSION);
+    // io.ImeWindowHandle = wmInfo.info.win.window;
+    HWND hwnd = (HWND)SDL_GetProperty(
+        SDL_GetWindowProperties(window), "SDL.window.win32.hwnd", nullptr);
+    io.ImeWindowHandle = hwnd;
 #else
     (void)window;
 #endif

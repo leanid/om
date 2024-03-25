@@ -10,9 +10,7 @@ if(NOT MINGW AND NOT MSVC AND NOT APPLE)
     target_link_options(hello-bin-static PRIVATE -static)
 endif()
 
-if(MSVC)
-    add_compile_definitions(_CRT_SECURE_NO_WARNINGS=1)
-endif()
+add_compile_definitions($<$<PLATFORM_ID:Windows>:_CRT_SECURE_NO_WARNINGS=1>)
 
 add_executable(hello-bin-dynamic src/main.cxx)
 if(MSVC)

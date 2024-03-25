@@ -342,17 +342,17 @@ namespace om {
                                          SDL_AudioDeviceID device_,
                                          SDL_AudioSpec device_audio_spec)
             : buffer(nullptr), length(0), device(device_) {
-        SDL_RWops *file = SDL_RWFromFile(path.data(), "rb");
+        SDL_IOStream *file = SDL_IOFromFile(path.data(), "rb");
         if (file == nullptr) {
             throw std::runtime_error(std::string("can't open audio file: ") +
                                      path.data());
         }
 
-        // freq, format, channels, and samples - used by SDL_LoadWAV_RW
+        // freq, format, channels, and samples - used by SDL_LoadWAV_IO
         SDL_AudioSpec file_audio_spec;
 
         if (nullptr ==
-            SDL_LoadWAV_RW(file, 1, &file_audio_spec, &buffer, &length)) {
+            SDL_LoadWAV_IO(file, 1, &file_audio_spec, &buffer, &length)) {
             throw std::runtime_error(
                     std::string("can't load wav: ") + path.data());
         }
@@ -633,7 +633,7 @@ namespace om {
         return stream;
     }
 
-    std::ostream &operator<<(std::ostream &out, const SDL_version &v) {
+    std::ostream &operator<<(std::ostream &out, const SDL_Version &v) {
         out << static_cast<int>(v.major) << '.';
         out << static_cast<int>(v.minor) << '.';
         out << static_cast<int>(v.patch);
@@ -895,8 +895,8 @@ namespace om {
 
             stringstream serr;
 
-            SDL_version compiled = {0, 0, 0};
-            SDL_version linked = {0, 0, 0};
+            SDL_Version compiled = {0, 0, 0};
+            SDL_Version linked = {0, 0, 0};
 
             SDL_VERSION(&compiled);
             SDL_GetVersion(&linked);
@@ -1321,7 +1321,7 @@ namespace om {
     }
 
     membuf load_file(std::string_view path) {
-        SDL_RWops *io = SDL_RWFromFile(path.data(), "rb");
+        SDL_IOStream *io = SDL_IOFromFile(path.data(), "rb");
         if (nullptr == io) {
             throw std::runtime_error("can't load file: " + std::string(path));
         }

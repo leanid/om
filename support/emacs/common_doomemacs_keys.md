@@ -36,6 +36,16 @@ example: SPC\+/[[:space:]]*example -- -U -C3 -tmd
          ^^^^^^^^^^^^^^^^^^^^^^^^^ - emacs regexp example multiline and with context search only *.md
 example: OpenGL -- -g *.rs
                    ^^^^^^^^^ - search only in Rust files if you need exacly file pattern
+example: test -- --no-ignore
+                 ^^^^^^^^^^^ - search ignore .gitignore file patterns
+example: \(std::\)\|\(namespace\ std\) -- -tcpp --no-ignore
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^1    ^^^2 ^^^^^^^^^^3
+         1. regex to search "std::" or "namespace std"
+         2. all c/c++ file types
+         3. skip git-ignore rules (search everywhere)
+example rg: rg --no-ignore --files -g "*pickling*"
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ will print only file path with names contains "pickling"
+example (search only in file names): rg --files | rg "\w*.gradle$"
 ```
 RipGrep manual here: 
 [RipGrep User Guide](https://github.com/BurntSushi/ripgrep/blob/master/GUIDE.md)
@@ -55,3 +65,14 @@ for Vertico module users (I use it most of the time)
 SPC s p foo C-; E C-c C-p :%s/foo/bar/g RET Z Z
 ```
 Entering those keys will replace “foo” with “bar” in your whole project. 
+
+### How to disable format-on-save temporally in current buffer?
+double use mode for reformating (will disable it)
+```emacs
+SPC+:  aphelia-mode
+```
+### How to show all keys and commands for some Doomemacs shortcuts
+After you just started fire shortcut(prefix) and help not fit in help window and show you
+(window 1 of 3)
+like ```SPC+w``` and wait will show you (window 1 of 3) how to see all commands?
+If you use ```vertico``` type ```?``` and you see all.

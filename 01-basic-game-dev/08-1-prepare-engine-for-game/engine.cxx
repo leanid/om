@@ -311,18 +311,18 @@ sound_buffer_impl::sound_buffer_impl(std::string_view  path,
     , length(0)
     , device(device_)
 {
-    SDL_RWops* file = SDL_RWFromFile(path.data(), "rb");
+    SDL_IOStream* file = SDL_IOFromFile(path.data(), "rb");
     if (file == nullptr)
     {
         throw std::runtime_error(std::string("can't open audio file: ") +
                                  path.data());
     }
 
-    // freq, format, channels, and samples - used by SDL_LoadWAV_RW
+    // freq, format, channels, and samples - used by SDL_LoadWAV_IO
     SDL_AudioSpec file_audio_spec;
 
     if (-1 ==
-        SDL_LoadWAV_RW(file, SDL_TRUE, &file_audio_spec, &buffer, &length))
+        SDL_LoadWAV_IO(file, SDL_TRUE, &file_audio_spec, &buffer, &length))
     {
         throw std::runtime_error(std::string("can't load wav: ") + path.data());
     }
@@ -636,7 +636,7 @@ tri2::tri2()
 {
 }
 
-std::ostream& operator<<(std::ostream& out, const SDL_version& v)
+std::ostream& operator<<(std::ostream& out, const SDL_Version& v)
 {
     out << static_cast<int>(v.major) << '.';
     out << static_cast<int>(v.minor) << '.';
@@ -1016,8 +1016,8 @@ engine::engine(std::string_view)
 
         stringstream serr;
 
-        SDL_version compiled = { 0, 0, 0 };
-        SDL_version linked   = { 0, 0, 0 };
+        SDL_Version compiled = { 0, 0, 0 };
+        SDL_Version linked   = { 0, 0, 0 };
 
         SDL_VERSION(&compiled);
         SDL_GetVersion(&linked);
@@ -1061,7 +1061,7 @@ engine::engine(std::string_view)
             }
         }
 
-        window = SDL_CreateWindow("title", 640, 480, ::SDL_WINDOW_OPENGL);
+        window = SDL_CreateWindow("title", 640, 480, SDL_WINDOW_OPENGL);
 
         if (window == nullptr)
         {

@@ -1,7 +1,7 @@
 #include <csignal>
 #include <iostream>
 
-extern "C" void custom_handler(int sig)
+extern "C" void custom_handler(int sig) noexcept(false)
 {
     // DO NOT DO IT AT HOME (this is undefined behaviour)
     std::cerr << "we in " << __FUNCTION__ << " with sig: " << sig << std::endl;

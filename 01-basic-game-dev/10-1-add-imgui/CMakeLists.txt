@@ -23,29 +23,40 @@ add_executable(
 set_target_properties(engine-10-1 PROPERTIES ENABLE_EXPORTS TRUE)
 target_compile_features(engine-10-1 PRIVATE cxx_std_20)
 
-if(WIN32)
-    target_compile_definitions(engine-10-1
-                               PRIVATE "-DOM_DECLSPEC=__declspec(dllexport)")
-    target_compile_definitions(engine-10-1
-                               PRIVATE "-DIMGUI_API=__declspec(dllexport)")
-endif(WIN32)
+target_compile_definitions(
+    engine-10-1
+    PRIVATE "$<$<PLATFORM_ID:Windows>:-DOM_DECLSPEC=__declspec(dllexport)>")
+target_compile_definitions(
+    engine-10-1 PRIVATE "$<$<PLATFORM_ID:Windows>:-D_CRT_SECURE_NO_WARNINGS=1>")
+
+target_compile_definitions(
+    engine-10-1
+    PRIVATE "$<$<PLATFORM_ID:Windows>:-DIMGUI_API=__declspec(dllexport)>")
 
 find_package(SDL3 REQUIRED)
 find_package(OpenGL REQUIRED)
 
 target_link_libraries(engine-10-1 PRIVATE SDL3::SDL3 OpenGL::GL)
 
-add_library(game-10-1 SHARED MODULE game/configuration_loader.hxx game/game.cxx
-                             game/game_object.hxx)
+# cmake-format: off
+add_library(
+    game-10-1 SHARED MODULE
+    game/configuration_loader.hxx
+    game/game.cxx
+    game/game_object.hxx
+    )
+# cmake-format: on
+
 target_include_directories(game-10-1 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_features(game-10-1 PRIVATE cxx_std_20)
 
 target_link_libraries(game-10-1 engine-10-1)
 
-if(MSVC)
-    target_compile_definitions(game-10-1
-                               PRIVATE "-DOM_DECLSPEC=__declspec(dllimport)")
-elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+target_compile_definitions(
+    game-10-1
+    PRIVATE "$<$<PLATFORM_ID:Windows>:-DOM_DECLSPEC=__declspec(dllimport)>")
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND APPLE)
     # using regular Clang or AppleClang
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
 endif()

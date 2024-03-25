@@ -1,0 +1,22 @@
+namespace std::experimental
+{
+    template<typename F>
+    class scope_exit
+    {
+    public:
+        explicit scope_exit(F&& fn) : fn(fn)
+        {
+        }
+
+        ~scope_exit()
+        {
+            fn();
+        }
+
+    private:
+        scope_exit(const scope_exit&);
+        scope_exit& operator=(const scope_exit&);
+
+        F fn;
+    };
+}

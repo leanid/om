@@ -1,6 +1,17 @@
 cmake_minimum_required(VERSION 3.16)
 
 project(08-aslr CXX)
+
+if (UNIX)
+    include(CheckSymbolExists)
+    check_symbol_exists(pthread_cancel "pthread.h" HAVE_PTHREAD_CANCEL)
+    if (NOT HAVE_PTHREAD_CANCEL)
+        message(STATUS "on Android lib bionic not support pthread_cancel skip this example")
+        return()
+    endif()
+    message(STATUS "pthread_cancel ${HAVE_PTHREAD_CANCEL}")
+endif()
+
 add_executable(08-aslr "main.cxx")
 target_compile_features(08-aslr PRIVATE cxx_std_20)
 

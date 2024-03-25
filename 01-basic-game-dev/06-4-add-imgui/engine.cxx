@@ -20,7 +20,6 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_opengl.h>
 #include <SDL3/SDL_opengl_glext.h>
-#include <SDL3/SDL_syswm.h>
 #include <SDL3/SDL_video.h>
 
 #include "picopng.hxx"
@@ -531,7 +530,7 @@ tri2::tri2()
 {
 }
 
-std::ostream& operator<<(std::ostream& out, const SDL_version& v)
+std::ostream& operator<<(std::ostream& out, const SDL_Version& v)
 {
     out << static_cast<int>(v.major) << '.';
     out << static_cast<int>(v.minor) << '.';
@@ -1236,8 +1235,8 @@ std::string engine_impl::initialize(std::string_view)
 
     stringstream serr;
 
-    SDL_version compiled = { 0, 0, 0 };
-    SDL_version linked   = { 0, 0, 0 };
+    SDL_Version compiled = { 0, 0, 0 };
+    SDL_Version linked   = { 0, 0, 0 };
 
     SDL_VERSION(&compiled);
     SDL_GetVersion(&linked);
@@ -1249,7 +1248,7 @@ std::string engine_impl::initialize(std::string_view)
              << compiled << " " << linked << endl;
     }
 
-    const int init_result = SDL_Init(SDL_INIT_EVERYTHING);
+    const int init_result = SDL_Init(SDL_INIT_VIDEO);
     if (init_result != 0)
     {
         const char* err_message = SDL_GetError();
@@ -1257,7 +1256,7 @@ std::string engine_impl::initialize(std::string_view)
         return serr.str();
     }
 
-    window = SDL_CreateWindow("title", 800, 600, ::SDL_WINDOW_OPENGL);
+    window = SDL_CreateWindow("title", 800, 600, SDL_WINDOW_OPENGL);
 
     if (window == nullptr)
     {
@@ -1807,9 +1806,12 @@ bool ImGui_ImplSdlGL3_Init(SDL_Window* window)
     io.ClipboardUserData  = nullptr;
 
 #ifdef _WIN32
-    SDL_SysWMinfo wmInfo;
-    SDL_GetWindowWMInfo(window, &wmInfo, SDL_SYSWM_CURRENT_VERSION);
-    io.ImeWindowHandle = wmInfo.info.win.window;
+    // SDL_SysWMinfo wmInfo;
+    // SDL_GetWindowWMInfo(window, &wmInfo, SDL_SYSWM_CURRENT_VERSION);
+    // io.ImeWindowHandle = wmInfo.info.win.window;
+    HWND hwnd = (HWND)SDL_GetProperty(
+        SDL_GetWindowProperties(window), "SDL.window.win32.hwnd", nullptr);
+    io.ImeWindowHandle = hwnd;
 #else
     (void)window;
 #endif

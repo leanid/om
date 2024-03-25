@@ -218,9 +218,7 @@ void snake_game::on_render() const
         const om::matrix  world;
     };
 
-    static const std::vector<object_type> render_order = {
-        { object_type::level }
-    };
+    static const std::vector<object_type> render_order = { object_type::level };
 
     auto it = std::find_if(begin(objects),
                            end(objects),

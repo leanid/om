@@ -8,6 +8,8 @@
 #include <string_view>
 #include <utility>
 
+#include <sys/mman.h>
+
 constexpr size_t Mb = 1024 * 1024;
 constexpr size_t Gb = Mb * 1024;
 
@@ -51,6 +53,47 @@ int main(int argc, char** argv)
                 &init_time_memory[sizeof(init_time_memory)],
                 0);
             std::cout << "done" << std::endl;
+        }
+        if ("huge"sv == command)
+        {
+            std::cout << "try to allocate huge page like 2Mb" << std::endl;
+
+            // This will allocate a single normal 4K page (yes we can in same
+            // app on Linux use as 4k pages and Huge Pages 2Mb, 1Gb, 2Gb if
+            // HugePage enabled)
+            void* b = mmap(nullptr,
+                           4096,
+                           PROT_READ | PROT_WRITE,
+                           MAP_PRIVATE | MAP_ANONYMOUS,
+                           -1,
+                           0);
+            if (b == MAP_FAILED)
+            {
+                perror("mmap failed to allocate 4k page");
+                return 1;
+            }
+
+            int    flags = MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGETLB;
+            size_t size  = 2 * Mb; // 2MB, which is the common huge page size
+
+            void* addr =
+                mmap(nullptr, size, PROT_READ | PROT_WRITE, flags, -1, 0);
+            if (addr == MAP_FAILED)
+            {
+                std::cerr << "mmap failed to allocate 2Mb huge page\n";
+                perror("mmap");
+                return 1;
+            }
+
+            // use memory...
+            char* ptr = static_cast<char*>(addr);
+            std::fill_n(ptr, size, 'Z');
+
+            if (munmap(addr, size) != 0)
+            {
+                std::cerr << "munmap failed\n";
+                return 1;
+            }
         }
         if ("q"sv == command)
         {

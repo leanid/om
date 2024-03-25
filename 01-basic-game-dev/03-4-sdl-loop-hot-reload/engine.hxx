@@ -39,12 +39,6 @@ enum class event
 
 OM_DECLSPEC std::ostream& operator<<(std::ostream& stream, const event& e);
 
-class engine;
-
-/// return not null on success
-OM_DECLSPEC engine* create_engine();
-OM_DECLSPEC void    destroy_engine(engine* e);
-
 class OM_DECLSPEC engine
 {
 public:
@@ -57,6 +51,10 @@ public:
     virtual bool read_input(event& e) = 0;
     virtual void uninitialize()       = 0;
 };
+
+/// return not null on success
+OM_DECLSPEC engine* create_engine();
+OM_DECLSPEC void    destroy_engine(engine* e);
 
 struct OM_DECLSPEC game
 {

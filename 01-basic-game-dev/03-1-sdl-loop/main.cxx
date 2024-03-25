@@ -6,7 +6,7 @@
 
 #include <SDL3/SDL.h>
 
-std::ostream& operator<<(std::ostream& out, const SDL_version& v)
+std::ostream& operator<<(std::ostream& out, const SDL_Version& v)
 {
     out << static_cast<int>(v.major) << '.';
     out << static_cast<int>(v.minor) << '.';
@@ -58,8 +58,8 @@ int main(int /*argc*/, char* /*argv*/[])
 {
     using namespace std;
 
-    SDL_version compiled = { 0, 0, 0 };
-    SDL_version linked   = { 0, 0, 0 };
+    SDL_Version compiled = { 0, 0, 0 };
+    SDL_Version linked   = { 0, 0, 0 };
 
     SDL_VERSION(&compiled)
     SDL_GetVersion(&linked);
@@ -71,7 +71,7 @@ int main(int /*argc*/, char* /*argv*/[])
              << compiled << " " << linked << endl;
     }
 
-    const int init_result = SDL_Init(SDL_INIT_EVERYTHING);
+    const int init_result = SDL_Init(SDL_INIT_VIDEO);
     if (init_result != 0)
     {
         const char* err_message = SDL_GetError();
@@ -80,7 +80,7 @@ int main(int /*argc*/, char* /*argv*/[])
     }
 
     SDL_Window* const window =
-        SDL_CreateWindow("title", 640, 480, ::SDL_WINDOW_OPENGL);
+        SDL_CreateWindow("title", 640, 480, SDL_WINDOW_OPENGL);
 
     if (window == nullptr)
     {

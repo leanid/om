@@ -93,7 +93,7 @@ static void run_program_while_find_same_stack_adress()
 
     size_t iter_count = accumulate(begin(jobs),
                                    end(jobs),
-                                   0UL,
+                                   size_t(0UL),
                                    [](size_t current, future<size_t>& num_iter)
                                    {
                                        static size_t thread_index = 0;
