@@ -21,7 +21,7 @@ int main(int argc, char** argv)
                                     { 2, "dima", "developer" },
                                     { 3, "igor", "developer" } };
 
-    auto it = std::ranges::find(table, "igor", &om::table_row::name);
+    auto it = ranges::find(table, "igor", &om::table_row::name);
 
     cout << "uid: " << it->uid << '\n'
          << "name: " << it->name << '\n'
