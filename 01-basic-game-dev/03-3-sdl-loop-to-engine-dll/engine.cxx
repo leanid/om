@@ -157,8 +157,7 @@ public:
         }
         // We have to create renderer cause without it
         // Window not visible on Wayland video driver
-        SDL_Renderer* renderer =
-            SDL_CreateRenderer(window, "opengl", SDL_RENDERER_ACCELERATED);
+        SDL_Renderer* renderer = SDL_CreateRenderer(window, "opengl", 0);
         if (renderer == nullptr)
         {
             cerr << SDL_GetError() << endl;

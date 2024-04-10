@@ -30,7 +30,7 @@ int main(int, char**)
     }
 
     SDL_Renderer* renderer =
-        SDL_CreateRenderer(window, nullptr, SDL_RENDERER_ACCELERATED);
+        SDL_CreateRenderer(window, nullptr, 0);
     if (renderer == nullptr)
     {
         cerr << SDL_GetError() << endl;
