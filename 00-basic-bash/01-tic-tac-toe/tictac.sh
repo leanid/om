@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/bash
 
 printf "%s\n" "play XO-game"
 # create array of XO-game board
