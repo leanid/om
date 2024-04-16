@@ -17,13 +17,46 @@ include(FetchContent)
 set(FETCHCONTENT_QUIET OFF)
 
 set(BOOST_INCLUDE_LIBRARIES filesystem)
-set(BOOST_ENABLE_CMAKE ON)
 
 fetchcontent_declare(
     Boost
     GIT_REPOSITORY "https://github.com/boostorg/boost.git"
     GIT_TAG "boost-1.85.0"
-    #GIT_SUBMODULES libs/filesystem
+    # list of all deps for filesystem submodule
+    GIT_SUBMODULES
+        libs/assert
+        libs/bind
+        libs/concept_check
+        libs/config
+        libs/container_hash
+        libs/core
+        libs/describe
+        libs/detail
+        libs/filesystem
+        libs/function
+        libs/function_types
+        libs/functional
+        libs/fusion
+        libs/io
+        libs/iterator
+        libs/move
+        libs/mp11
+        libs/mpl
+        libs/optional
+        libs/predef
+        libs/preprocessor
+        libs/scope
+        libs/smart_ptr
+        libs/static_assert
+        libs/system
+        libs/throw_exception
+        libs/tuple
+        libs/type_traits
+        libs/typeof
+        libs/utility
+        libs/variant2
+        libs/winapi
+        tools/cmake
     GIT_PROGRESS ON
     GIT_SHALLOW ON)
 
