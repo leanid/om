@@ -6,19 +6,40 @@
 %                caption natbib babel-russian titlesec lh cyrillic
 % in Doomemacs enable pdf (build pdf-tool) M-x pdf-tools-install
 %                                          M-x pdf-info-check-epdfinfo
-\documentclass{article}
+\documentclass[oneside,final,14pt]{extreport}
 \usepackage[utf8]{inputenc}
 \usepackage[english,russian]{babel}
 \usepackage{fontspec} % Advanced font management (works only with LuaTeX)
 \setmainfont{JetBrains Mono}
 \newfontfamily\jbmono{JetBrains Mono} % Replace 'JetBrains Mono' with your desired font
 \begin{document}
-\noindent Hello World\newline
-\noindent\textbf{Hello World Bold Font}\newline
-\it{Привет Мир} это \textbf{будет} работать т.к. надо уметь включать русский шрифт\\
+\part{Начало}
+\chapter{Настраивам LaTeX}
+\section{Как выводить текст, делать переносы, абзацы}
+\subsection{Вывод текста простой}
+\subsubsection{Ну т.е. такой простой вывод, когда мы все по умолчанию оставляем}
+\paragraph{Как есть так и оставляем}
+\subparagraph{Ничего не добавляя}
+Если хочешь что бы не было отсупа, то используй комаду
+\textbf{noindent} в начале строки.\newline
+\subsection{Вывод специальных символов}
+Следующие символы можно экранировать обратным слешем перед ними: \% \{ \} \$ \& \# \_ \\
+Дополнительное экранирование для особых символов: \textbackslash  \textasciicircum \~{}  `` '' \\
 
-some special chars: \% \{ \} \$ \& \# \_ \\
-some super special chars: \textbackslash  \textasciicircum  \textasciitilde \~{}  ``'' \\
+\subsection{Размеры шрифта, относительные}
+\tiny oчень маленький шрифт, трудно читаемый \\
+\scriptsize малеький шрифт \\
+\footnotesize таким размером обычно делают сноски \\
+\small шрифт почти такой же как и обычный \\
+\normalsize нормальный размер букв \\
+\large чуть увеличенный размер \\
+\Large еще более увеличенный размер \\
+\LARGE очень большой размер текста \\
+\huge просто огромный размер текста \\
+\Huge нереально огромный размер текста \\
+\normalsize
+
+\subsection{Вывод формул, примеры}
 % Example 1
 \ldots when Einstein introduced his formula
 \begin{equation}
@@ -33,7 +54,6 @@ and the least well understood physical formula.
 \end{equation}
 Kirchhoff's voltage law can be derived \ldots
 % Example 3
-{\jbmono \fontsize{6pt}{7pt}\selectfont This is a text segment in a different font at 6pt.}
 \ldots which has several advantages.
 \begin{equation}
 	I_D = I_F - I_R
