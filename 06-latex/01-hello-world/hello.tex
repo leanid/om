@@ -79,6 +79,19 @@ is the core of a very different transistor model. \ldots
     \end{axis}
 \end{tikzpicture}
 
+\begin{tikzpicture}
+  \begin{axis}[
+    xmin=-2, xmax=2, ymin=-2, ymax=2,
+    axis lines=middle,
+    samples=50,
+    title={$y=x^3$},
+    xlabel={Ось aбсцисс},
+    ylabel={Ось ординат}
+    ]
+        \addplot{x^3};
+    \end{axis}
+\end{tikzpicture}
+
 \tableofcontents
 
 \end{document}
