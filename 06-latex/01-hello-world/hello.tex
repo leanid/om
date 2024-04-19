@@ -121,7 +121,8 @@ is the core of a very different transistor model. \ldots
 				xmajorgrids=true,
 				grid style=dashed
 			]
-			\addplot[color=green,domain=0:2*pi]{sin(deg(x))}
+			\addplot[color=green,domain=0:2*pi,
+				line width=2pt]{sin(deg(x))}
 			node[right,pos=0.8]{$f(x)=sin(x)$};
 			\addplot[color=red,domain=0:2*pi]{cos(deg(x))}
 			node[right,pos=0.9]{$f(x)=cos(x)$};
