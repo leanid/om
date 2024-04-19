@@ -4,13 +4,15 @@
 % also I did (on Windows):
 % tlmgr  install fontspec enumitem extsizes subfig \
 %                caption natbib babel-russian titlesec lh cyrillic \
-%                hyphen-russian
+%                hyphen-russian pgfplots
 % delete ~/.texlive2024 folder
 % in Doomemacs enable pdf (build pdf-tool) M-x pdf-tools-install
 %                                          M-x pdf-info-check-epdfinfo
 \documentclass[oneside,final,14pt]{extreport}
 \usepackage[english,russian]{babel}
 \usepackage{fontspec} % Advanced font management (works only with LuaTeX)
+\usepackage{pgfplots}
+%\pgfplotsset{compat=1.5} % without it not working
 \setmainfont{JetBrains Mono}
 \newfontfamily\jbmono{JetBrains Mono} % Replace 'JetBrains Mono' with your desired font
 \begin{document}
@@ -63,7 +65,22 @@ Kirchhoff's voltage law can be derived \ldots
     I_D = I_F - I_R
 \end{equation}
 is the core of a very different transistor model. \ldots
+\section{Графики}
+
+\subsection{2d графики}
+
+\begin{tikzpicture}
+  \begin{axis}[
+    title=Любимая фукнция всех школьников,
+    xlabel={Ось aбсцисс},
+    ylabel={Ось ординат},
+    grid=major]
+        \addplot{x^2};
+    \end{axis}
+\end{tikzpicture}
+
 \tableofcontents
+
 \end{document}
 
 
