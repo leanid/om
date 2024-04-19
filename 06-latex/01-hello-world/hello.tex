@@ -3,11 +3,12 @@
 % sudo dnf install texlive-babel-russian
 % also I did (on Windows):
 % tlmgr  install fontspec enumitem extsizes subfig \
-%                caption natbib babel-russian titlesec lh cyrillic
+%                caption natbib babel-russian titlesec lh cyrillic \
+%                hyphen-russian
+% delete ~/.texlive2024 folder
 % in Doomemacs enable pdf (build pdf-tool) M-x pdf-tools-install
 %                                          M-x pdf-info-check-epdfinfo
 \documentclass[oneside,final,14pt]{extreport}
-\usepackage[utf8]{inputenc}
 \usepackage[english,russian]{babel}
 \usepackage{fontspec} % Advanced font management (works only with LuaTeX)
 \setmainfont{JetBrains Mono}
@@ -23,8 +24,10 @@
 Если хочешь что бы не было отсупа, то используй комаду
 \textbf{noindent} в начале строки.\newline
 \subsection{Вывод специальных символов}
-Следующие символы можно экранировать обратным слешем перед ними: \% \{ \} \$ \& \# \_ \\
-Дополнительное экранирование для особых символов: \textbackslash  \textasciicircum \~{}  `` '' \\
+Следующие символы можно экранировать обратным слешем
+перед ними: \% \{ \} \$ \& \# \_ \\
+Дополнительное экранирование для особых
+символов: \textbackslash  \textasciicircum \~{}  `` '' \\
 
 \subsection{Размеры шрифта, относительные}
 \tiny oчень маленький шрифт, трудно читаемый \\
@@ -37,28 +40,30 @@
 \LARGE очень большой размер текста \\
 \huge просто огромный размер текста \\
 \Huge нереально огромный размер текста \\
+\Huge to large some string of some text \\
 \normalsize
 
 \subsection{Вывод формул, примеры}
 % Example 1
 \ldots when Einstein introduced his formula
 \begin{equation}
-	e = m \cdot c^2 \; ,
+    e = m \cdot c^2 \; ,
 \end{equation}
 which is at the same time the most widely known
 and the least well understood physical formula.
 % Example 2
 \ldots from which follows Kirchhoff's current law:
 \begin{equation}
-	\sum_{k=1}^{n} I_k = 0 \; .
+    \sum_{k=1}^{n} I_k = 0 \; .
 \end{equation}
 Kirchhoff's voltage law can be derived \ldots
 % Example 3
 \ldots which has several advantages.
 \begin{equation}
-	I_D = I_F - I_R
+    I_D = I_F - I_R
 \end{equation}
 is the core of a very different transistor model. \ldots
+\tableofcontents
 \end{document}
 
 
