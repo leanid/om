@@ -99,7 +99,8 @@ is the core of a very different transistor model. \ldots
 
 \begin{tikzpicture}
 	\begin{axis}[
-			xmin=0, xmax=3*pi,
+			clip=false,
+			xmin=0, xmax=2.5*pi,
 			ymin=-1.5, ymax=1.5,
 			axis lines=middle,
 			samples=50,
@@ -108,10 +109,12 @@ is the core of a very different transistor model. \ldots
 			xtick={0,pi/2,pi,3*pi/2,2*pi},
 			xticklabels={$0$,$\frac{\pi}{2}$,$\pi$,
 					$\frac{3\pi}{2}$,$2\pi$},
-			xticklabel style={anchor=south west}
+			xticklabel style={anchor=south west},
+			xmajorgrids=true,
+			grid style=dashed
 		]
 		\addplot[color=green,domain=0:2*pi]{sin(deg(x))}
-		node[right,pos=0.75]{$f(x)=\sin x$};
+		node[right,pos=0.8]{$f(x)=\sin x$};
 		\addplot[color=red,domain=0:2*pi]{cos(deg(x))}
 		node[right,pos=0.9]{$f(x)=\cos x$};
 	\end{axis}
