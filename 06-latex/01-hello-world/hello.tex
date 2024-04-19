@@ -121,7 +121,8 @@ is the core of a very different transistor model. \ldots
 				xmajorgrids=true,
 				grid style=dashed
 			]
-			\addplot[color=green,domain=0:2*pi,
+			\addplot[color=green,
+				domain=0:2*pi,
 				line width=2pt]{sin(deg(x))}
 			node[right,pos=0.8]{$f(x)=sin(x)$};
 			\addplot[color=red,domain=0:2*pi]{cos(deg(x))}
@@ -129,6 +130,45 @@ is the core of a very different transistor model. \ldots
 		\end{axis}
 	\end{tikzpicture}
 }
+
+\subsection{3d графики}
+
+\subsubsection{Поверхность, Сетка, Итерполяция}
+\scalebox{1}{
+	\begin{tikzpicture}
+		\begin{axis}[
+				title={$y=1-x^2-y^2$},
+			]
+			\addplot3[surf,samples=10]{1-x^2-y^2};
+		\end{axis}
+	\end{tikzpicture}
+	\begin{tikzpicture}
+		\begin{axis}
+			\addplot3[mesh,samples=10]{1-x^2-y^2};
+		\end{axis}
+	\end{tikzpicture}
+}
+\begin{tikzpicture}
+	\begin{axis}
+		\addplot3[surf,samples=10,shader=interp]{1-x^2-y^2};
+	\end{axis}
+\end{tikzpicture}
+\begin{tikzpicture}
+	\begin{axis}[colormap/cool, hide axis]
+		\addplot3[mesh,samples=10]{1-x^2-y^2};
+	\end{axis}
+\end{tikzpicture}
+
+\subsubsection{Меняем угол просмотра, вращаем график}
+
+\begin{tikzpicture}
+	\begin{axis}[colormap/cool, view={45}{45}]
+		\addplot3+[domain=0:5*pi,mesh,samples=50]
+		({sin(deg(x))},
+		{cos(deg(x))},
+		{x});
+	\end{axis}
+\end{tikzpicture}
 
 \setcounter{tocdepth}{3}
 \tableofcontents
