@@ -1,6 +1,8 @@
 % How to prepare Doomemacs for LaTeX (LuaTeX)
 % sudo dnf install texlive-full
 % sudo dnf install texlive-babel-russian
+% sudo dnf install texlive-pgfplots
+% sudo dnf install texlive-pgfplots-doc
 % also I did (on Windows):
 % tlmgr  install fontspec enumitem extsizes subfig \
 %                caption natbib babel-russian titlesec lh cyrillic \
@@ -18,7 +20,7 @@
 \begin{document}
 \part{Начало}
 \chapter{Настраивам LaTeX}
-\section{Как выводить текст, делать переносы, абзацы}
+\section{Как выводить текст, переносы, абзацы}
 \subsection{Вывод текста простой}
 \subsubsection{Ну т.е. такой простой вывод, когда мы все по умолчанию оставляем}
 \paragraph{Как есть так и оставляем}
@@ -49,20 +51,20 @@
 % Example 1
 \ldots when Einstein introduced his formula
 \begin{equation}
-    e = m \cdot c^2 \; ,
+	e = m \cdot c^2 \; ,
 \end{equation}
 which is at the same time the most widely known
 and the least well understood physical formula.
 % Example 2
 \ldots from which follows Kirchhoff's current law:
 \begin{equation}
-    \sum_{k=1}^{n} I_k = 0 \; .
+	\sum_{k=1}^{n} I_k = 0 \; .
 \end{equation}
 Kirchhoff's voltage law can be derived \ldots
 % Example 3
 \ldots which has several advantages.
 \begin{equation}
-    I_D = I_F - I_R
+	I_D = I_F - I_R
 \end{equation}
 is the core of a very different transistor model. \ldots
 \section{Графики}
@@ -70,26 +72,49 @@ is the core of a very different transistor model. \ldots
 \subsection{2d графики}
 
 \begin{tikzpicture}
-  \begin{axis}[
-    title=Любимая фукнция всех школьников,
-    xlabel={Ось aбсцисс},
-    ylabel={Ось ординат},
-    grid=major]
-        \addplot{x^2};
-    \end{axis}
+	\begin{axis}[
+			title=Любимая фукнция всех школьников,
+			xlabel={Ось aбсцисс},
+			ylabel={Ось ординат},
+			grid=major]
+		\addplot{x^2};
+	\end{axis}
 \end{tikzpicture}
 
 \begin{tikzpicture}
-  \begin{axis}[
-    xmin=-2, xmax=2, ymin=-2, ymax=2,
-    axis lines=middle,
-    samples=50,
-    title={$y=x^3$},
-    xlabel={Ось aбсцисс},
-    ylabel={Ось ординат}
-    ]
-        \addplot{x^3};
-    \end{axis}
+	\begin{axis}[
+			xmin=-2, xmax=2, ymin=-2, ymax=2,
+			axis lines=middle,
+			samples=50,
+			title={$y=x^3$},
+			xlabel={X},
+			ylabel={Y}
+		]
+		\addplot{x^3};
+		\addplot[color=red, dashed]{x^2};
+		\addplot[color=green, samples=100]{1-x^2};
+		\addplot[color=blue, domain=-1:1]{1};
+	\end{axis}
+\end{tikzpicture}
+
+\begin{tikzpicture}
+	\begin{axis}[
+			xmin=0, xmax=3*pi,
+			ymin=-1.5, ymax=1.5,
+			axis lines=middle,
+			samples=50,
+			xlabel={x},
+			ylabel={y},
+			xtick={0,pi/2,pi,3*pi/2,2*pi},
+			xticklabels={$0$,$\frac{\pi}{2}$,$\pi$,
+					$\frac{3\pi}{2}$,$2\pi$},
+			xticklabel style={anchor=south west}
+		]
+		\addplot[color=green,domain=0:2*pi]{sin(deg(x))}
+		node[right,pos=0.75]{$f(x)=\sin x$};
+		\addplot[color=red,domain=0:2*pi]{cos(deg(x))}
+		node[right,pos=0.9]{$f(x)=\cos x$};
+	\end{axis}
 \end{tikzpicture}
 
 \tableofcontents
