@@ -34,6 +34,7 @@
 \setpapersize{A4}
 \setmarginsrb{30mm}{20mm}{20mm}{20mm}{0cm}{5mm}{0cm}{0cm}
 %\pagestyle{empty} % removes pages numbers
+\usepackage{listings}
 
 \setmainfont{JetBrains Mono}
 \newfontfamily\jbmono{JetBrains Mono} % Replace 'JetBrains Mono' with your desired font
@@ -308,6 +309,33 @@ is the core of a very different transistor model. \ldots
 	\draw[->, very thick] (SusO.south west)  to node[right] {$a_{YO}$} (InfO.north west);
 	\draw[dashed,->, very thick] (InfY.north east)  to  (SusO.south west);
 \end{tikzpicture}
+
+\section{Code listings}
+\subsection{Однострочный код}
+Что бы прямо в тексте сделать односточную вставку кода, можно испполльзовать verb вот так \verb|std::string str{"hello"};|, а
+можно еще попробывать вот так, более современный способ:
+\lstinline[language=C++]!std::vector<char> numbers{"hello world"sv};!
+
+\subsection{Многострочный код}
+
+\begin{figure}
+	\begin{lstlisting}[language={[11]C++},
+	  keepspaces=true,escapeinside={\%*}{*)},
+	  showspaces=false,
+	  showstringspaces=false,
+	  stringstyle=\color{green},
+	  frame=single,
+	  numbers=left]
+#include <iostream>
+
+int main(int argc, char** argv)
+{
+    std::cout << "hello world" << std::endl;
+    return std::cout.fail();
+}   \end{lstlisting}
+	\caption{C++ Hello World Example}
+	\label{lst:hello}
+\end{figure}
 
 
 \setcounter{tocdepth}{3}
