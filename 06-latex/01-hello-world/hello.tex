@@ -28,9 +28,13 @@
 \usetikzlibrary{arrows.meta}
 \usepackage{layout} % place \layout command to understand
 \usepackage{geometry}
-%\printinunitsof{cm} % now working strange
 \usepackage{vmargin}
-\setmarginsrb{2.5cm}{2cm}{1.5cm}{2cm}{0pt}{0mm}{0pt}{13mm}
+% A4 paper, left margin 30mm, top, right, and bottom
+% margin 20mm each, no headers or footers:
+\setpapersize{A4}
+\setmarginsrb{30mm}{20mm}{20mm}{20mm}{0cm}{5mm}{0cm}{0cm}
+%\pagestyle{empty} % removes pages numbers
+
 \setmainfont{JetBrains Mono}
 \newfontfamily\jbmono{JetBrains Mono} % Replace 'JetBrains Mono' with your desired font
 
@@ -39,25 +43,35 @@
 \date{2024}
 
 \begin{document}
+
+%\printinunitsof{cm} % now working strange
 \layout
+
 \maketitle % без этого страницы с названием не будет
 
 \part{Начало}
+
 \chapter{Настраивам LaTeX}
+
 \section{Как выводить текст, переносы, абзацы}
+
 \subsection{Вывод текста простой}
+
 \subsubsection{все по умолчанию оставляем}
+
 \paragraph{Как есть так и оставляем}
+
 \subparagraph{Ничего не добавляя}
 Если хочешь что бы не было отсупа, то используй комаду
 \textbf{noindent} в начале строки.\newline
 \subsection{Вывод специальных символов}
 Следующие символы можно экранировать обратным слешем
-перед ними: \% \{ \} \$ \& \# \_ \\
-Дополнительное экранирование для особых
-символов: \textbackslash  \textasciicircum \~{}  `` '' \\
+перед ними: \\
+\% \{ \} \$ \& \# \_. Дополнительное экранирование для особых
+символов: \\ \textbackslash  \textasciicircum \~{}  `` ''
 
 \subsection{Размеры шрифта, относительные}
+
 \tiny oчень маленький шрифт, трудно читаемый \\
 \scriptsize малеький шрифт \\
 \footnotesize таким размером обычно делают сноски \\
@@ -74,7 +88,6 @@
 \section{Формулы}
 
 \subsection{Вывод формул, примеры}
-
 % Example 1
 \ldots when Einstein introduced his formula
 \begin{equation}
@@ -95,7 +108,7 @@ Kirchhoff's voltage law can be derived \ldots
 \end{equation}
 is the core of a very different transistor model. \ldots
 
-\section{Графики}
+\section{Графика}
 
 \subsection{2d графики}
 
@@ -112,7 +125,6 @@ is the core of a very different transistor model. \ldots
 \end{tikzpicture}
 
 \subsubsection{Несколько функций, оси координат}
-
 \begin{tikzpicture}
 	\begin{axis}[
 			xmin=-2, xmax=2, ymin=-2, ymax=2,
@@ -162,6 +174,7 @@ is the core of a very different transistor model. \ldots
 \subsection{3d графики}
 
 \subsubsection{Поверхность, Сетка, Итерполяция}
+
 \scalebox{1}{
 	\begin{tikzpicture}
 		\begin{axis}[
@@ -235,16 +248,68 @@ is the core of a very different transistor model. \ldots
 \newpage
 
 \subsection{Окружности, заливка, арки, элипсы}
-\begin{center}
-	\begin{tikzpicture}[transform canvas={scale=4.0}]  %%[scale=4] ONLY changes distances, not the canvas
-		\draw[blue] (0,1) arc (90:-90:0.5cm and 1cm);
-		\draw[dashed, red] (0,1) arc (90:270:0.5cm and 1cm);
-		\draw (0,0) circle (1cm);
-		\filldraw[red] (0,1) circle  (0.05); %add fill=, and draw= to have separate colours
-		\filldraw[red] (0,-1) circle (0.05);
-		\shade[ball color=blue!10!white,opacity=0.20] (0,0) circle (1cm);
-	\end{tikzpicture}
-\end{center}
+
+\begin{figure}[h] %t-top b-bottom h-here
+	\begin{center}
+		\begin{tikzpicture}%[transform canvas={scale=4.0}]  %%[scale=4] ONLY changes distances, not the canvas
+			\draw[blue,line width=2pt] (0,4) arc (90:-90:2cm and 4cm);
+			\draw[dashed,red,line width=2pt] (0,4) arc (90:270:2cm and 4cm);
+			\draw[line width=2pt] (0,0) circle (4cm);
+			\filldraw[red] (0,4) circle  (0.1); %add fill=, and draw= to have separate colours
+			\filldraw[red] (0,-4) circle (0.1);
+			\shade[ball color=blue!10!white,opacity=0.20] (0,0) circle (4cm);
+		\end{tikzpicture}
+	\end{center}
+	\caption{красивый сложный, многослойный рисунок}
+	\label{fig:circle1}
+\end{figure}
+
+\subsection{Граф, сложный граф со стрелками}
+
+\begin{tikzpicture}[
+		SIR/.style={rectangle, draw=red!60, fill=red!5, very thick, minimum size=5mm},
+	]
+	%Nodes
+	\node[SIR]    (Susceptible)                              {Susceptible $S(t)$};
+	\node[SIR]    (Infectious)       [below=of Susceptible] {Infectious $I(t)$};
+	\node[SIR]    (Recovered)       [below=of Infectious] {Recovered $R(t)$};
+
+	%Lines
+	\draw[->, very thick] (Susceptible.south)  to node[right] {$a$} (Infectious.north);
+	\draw[->, very thick] (Infectious.south)  to node[right] {$b$} (Recovered.north);
+	\draw[->, very thick] (Recovered.east) .. controls  +(right:7mm) and +(right:7mm)   .. (Susceptible.east);
+\end{tikzpicture}
+%\vspace{1in}
+\begin{tikzpicture}[
+		youngnode/.style={rectangle, draw=red!60, fill=red!5, very thick, minimum size=40},
+		oldnode/.style={rectangle, draw=blue!60, fill=blue!5, very thick, minimum size=40},
+	]
+	%Nodes
+	\node[oldnode]        (SusO)                            { $S_O(t)$};
+	\node[oldnode]        (InfO)       [below=of SusO]      { $I_O(t)$};
+	\node[oldnode]        (RecO)       [below=of InfO]      { $R_O(t)$};
+
+	\node[youngnode]      (SusY)        [left=of SusO]      { $S_Y(t)$};
+	\node[youngnode]      (InfY)        [left=of InfO]      { $I_Y(t)$};
+	\node[youngnode]      (RecY)        [left=of RecO]      { $R_Y(t)$};
+
+	%Lines
+	\draw[->, very thick] (SusO.south east)  to node[right] {$a_{OO}$} (InfO.north east);
+	\draw[->, very thick] (InfO.south)  to node[right] {$b_O$} (RecO.north);
+	\draw[->, very thick] (RecO.east)  .. controls  +(right:17mm) and +(right:17mm)   .. (SusO.east);
+
+	\draw[->, very thick] (SusY.south west)  to node[left] {$a_{YY}$} (InfY.north west);
+	\draw[->, very thick] (InfY.south)  to node[left] {$b_Y$} (RecY.north);
+	\draw[->, very thick] (RecY.west) .. controls  +(left:17mm) and +(left:17mm)   .. (SusY.west);
+
+	\draw[dashed,->, very thick] (InfO.north west)  to  (SusY.south east);
+	\draw[->, very thick] (SusY.south east)  to node[left] {$a_{OY}$} (InfY.north east);
+
+	\draw[->, very thick] (SusO.south west)  to node[right] {$a_{YO}$} (InfO.north west);
+	\draw[dashed,->, very thick] (InfY.north east)  to  (SusO.south west);
+\end{tikzpicture}
+
+
 \setcounter{tocdepth}{3}
 \tableofcontents
 
