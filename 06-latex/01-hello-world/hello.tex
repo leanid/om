@@ -192,7 +192,7 @@ is the core of a very different transistor model. \ldots
 
 \subsection{Рисуем графику}
 
-\subsubsection{Линии, Вектора}
+\subsubsection{Линии, Вектора, Сетка}
 
 \begin{tikzpicture}
 	\draw[ultra thick] (0,3) -- (2,3);
@@ -210,6 +210,12 @@ is the core of a very different transistor model. \ldots
 	\draw[very thin, <->] (0,1) -- (2,1);
 	\draw[ultra thin,-{Stealth[length=8pt,width=2pt]}] (0,.5) -- (2,.5);
 \end{tikzpicture}
+\scalebox{0.5}{
+	\begin{tikzpicture}
+		\draw (0,0) rectangle (10,6);
+		\draw (0,0) grid (10,6);
+	\end{tikzpicture}
+}
 
 \setcounter{tocdepth}{3}
 \tableofcontents
