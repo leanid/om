@@ -8,6 +8,8 @@
 % sudo dnf install texlive-cyrillic
 % sudo dnf install texlive-vmargin
 % sudo dnf install texlive-vmargin-doc
+% sudo dnf install texlive-lstaddons
+% sudo dnf install texlive-lstaddons-doc
 %
 % also I did (on Windows):
 % tlmgr  install fontspec enumitem extsizes subfig \
@@ -32,11 +34,12 @@
 % A4 paper, left margin 30mm, top, right, and bottom
 % margin 20mm each, no headers or footers:
 \setpapersize{A4}
-\setmarginsrb{30mm}{20mm}{20mm}{20mm}{0cm}{5mm}{0cm}{0cm}
+\setmarginsrb{30mm}{20mm}{20mm}{20mm}{0cm}{5mm}{0cm}{5mm}
 %\pagestyle{empty} % removes pages numbers
 \usepackage{listings}
 
 \setmainfont{JetBrains Mono}
+\setmonofont{JetBrains Mono}
 \newfontfamily\jbmono{JetBrains Mono} % Replace 'JetBrains Mono' with your desired font
 
 \title{Примеры использования LaTeX}
@@ -126,21 +129,26 @@ is the core of a very different transistor model. \ldots
 \end{tikzpicture}
 
 \subsubsection{Несколько функций, оси координат}
-\begin{tikzpicture}
-	\begin{axis}[
-			xmin=-2, xmax=2, ymin=-2, ymax=2,
-			axis lines=middle,
-			samples=50,
-			title={$y=x^3$},
-			xlabel={X},
-			ylabel={Y}
-		]
-		\addplot{x^3};
-		\addplot[color=red, dashed]{x^2};
-		\addplot[color=green, samples=100]{1-x^2};
-		\addplot[color=blue, domain=-1:1]{1};
-	\end{axis}
-\end{tikzpicture}
+\begin{figure}
+	\scalebox{1.5}{
+		\begin{tikzpicture}
+			\begin{axis}[
+					xmin=-2, xmax=2, ymin=-2, ymax=2,
+					axis lines=middle,
+					samples=50,
+					title={$y=x^3$},
+					xlabel={X},
+					ylabel={Y}
+				]
+				\addplot{x^3};
+				\addplot[color=red, dashed]{x^2};
+				\addplot[color=green, samples=100]{1-x^2};
+				\addplot[color=blue, domain=-1:1]{1};
+			\end{axis}
+		\end{tikzpicture}
+	}
+	\caption{Примеры графиков разными линиями}
+\end{figure}
 
 \subsubsection{Произвольные подписи на осях, масштабирование графика}
 %\resizebox{15cm}{7cm}
@@ -246,8 +254,6 @@ is the core of a very different transistor model. \ldots
 	\end{tikzpicture}
 }
 
-\newpage
-
 \subsection{Окружности, заливка, арки, элипсы}
 
 \begin{figure}[h] %t-top b-bottom h-here
@@ -314,7 +320,7 @@ is the core of a very different transistor model. \ldots
 \subsection{Однострочный код}
 Что бы прямо в тексте сделать односточную вставку кода, можно испполльзовать verb вот так \verb|std::string str{"hello"};|, а
 можно еще попробывать вот так, более современный способ:
-\lstinline[language=C++]!std::vector<char> numbers{"hello world"sv};!
+\lstinline[language=C++,basicstyle=\ttfamily,]!std::vector<const char*> numbers{"hello world"};!
 
 \subsection{Многострочный код}
 
