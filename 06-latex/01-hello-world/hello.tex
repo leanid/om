@@ -1,23 +1,39 @@
 % How to prepare Doomemacs for LaTeX (LuaTeX)
 % sudo dnf install texlive-full
 % sudo dnf install texlive-babel-russian
+% sudo dnf install texlive-hyphen-russian
+% sudo dnf install texlive-datetime2-russian
 % sudo dnf install texlive-pgfplots
 % sudo dnf install texlive-pgfplots-doc
+% sudo dnf install texlive-cyrillic
+%
 % also I did (on Windows):
 % tlmgr  install fontspec enumitem extsizes subfig \
-%                caption natbib babel-russian titlesec lh cyrillic \
+%                caption natbib babel-russian \
+%                titlesec lh cyrillic \
 %                hyphen-russian pgfplots
 % delete ~/.texlive2024 folder
-% in Doomemacs enable pdf (build pdf-tool) M-x pdf-tools-install
-%                                          M-x pdf-info-check-epdfinfo
+% in Doomemacs enable pdf-tool M-x pdf-tools-install
+%                              M-x pdf-info-check-epdfinfo
 \documentclass[oneside,final,14pt]{extreport}
 \usepackage[english,russian]{babel}
 \usepackage{fontspec} % Advanced font management (works only with LuaTeX)
 \usepackage{pgfplots}
-%\pgfplotsset{compat=1.5} % without it not working
+\usepackage{tikz}
+\usetikzlibrary{positioning}
+\usetikzlibrary{arrows.meta}
+
 \setmainfont{JetBrains Mono}
 \newfontfamily\jbmono{JetBrains Mono} % Replace 'JetBrains Mono' with your desired font
+
+\title{Примеры использования LaTeX}
+\author{Чайка Л.Н.}
+\date{2024}
+
 \begin{document}
+
+\maketitle % без этого страницы с названием не будет
+
 \part{Начало}
 \chapter{Настраивам LaTeX}
 \section{Как выводить текст, переносы, абзацы}
@@ -172,6 +188,27 @@ is the core of a very different transistor model. \ldots
 		{cos(deg(x))},
 		{x});
 	\end{axis}
+\end{tikzpicture}
+
+\subsection{Рисуем графику}
+
+\subsubsection{Линии, Вектора}
+
+\begin{tikzpicture}
+	\draw[ultra thick] (0,3) -- (2,3);
+	\draw[very thick] (0,2.5) -- (2,2.5);
+	\draw[thick] (0,2) -- (2,2);
+	\draw[thin] (0,1.5) -- (2,1.5);
+	\draw[very thin] (0,1) -- (2,1);
+	\draw[ultra thin] (0,.5) -- (2,.5);
+\end{tikzpicture}
+\begin{tikzpicture}
+	\draw[ultra thick, ->] (0,3) -- (2,3);
+	\draw[very thick, >-{Stealth}] (0,2.5) -- (2,2.5);
+	\draw[thick, -{Stealth[red]}] (0,2) -- (2,2);
+	\draw[thin, ->] (0,1.5) -- (2,1.5);
+	\draw[very thin, <->] (0,1) -- (2,1);
+	\draw[ultra thin,-{Stealth[length=8pt,width=2pt]}] (0,.5) -- (2,.5);
 \end{tikzpicture}
 
 \setcounter{tocdepth}{3}
