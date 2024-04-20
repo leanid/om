@@ -6,6 +6,8 @@
 % sudo dnf install texlive-pgfplots
 % sudo dnf install texlive-pgfplots-doc
 % sudo dnf install texlive-cyrillic
+% sudo dnf install texlive-vmargin
+% sudo dnf install texlive-vmargin-doc
 %
 % also I did (on Windows):
 % tlmgr  install fontspec enumitem extsizes subfig \
@@ -15,14 +17,20 @@
 % delete ~/.texlive2024 folder
 % in Doomemacs enable pdf-tool M-x pdf-tools-install
 %                              M-x pdf-info-check-epdfinfo
-\documentclass[oneside,final,14pt]{extreport}
+%\documentclass[oneside,final,14pt]{extreport}
+%\documentclass[a4paper,towcolumn,14pt,titlepage]{acticle}
+\documentclass[a4paper,14pt]{book}
 \usepackage[english,russian]{babel}
 \usepackage{fontspec} % Advanced font management (works only with LuaTeX)
 \usepackage{pgfplots}
 \usepackage{tikz}
 \usetikzlibrary{positioning}
 \usetikzlibrary{arrows.meta}
-
+\usepackage{layout} % place \layout command to understand
+\usepackage{geometry}
+%\printinunitsof{cm} % now working strange
+\usepackage{vmargin}
+\setmarginsrb{2.5cm}{2cm}{1.5cm}{2cm}{0pt}{0mm}{0pt}{13mm}
 \setmainfont{JetBrains Mono}
 \newfontfamily\jbmono{JetBrains Mono} % Replace 'JetBrains Mono' with your desired font
 
@@ -31,7 +39,7 @@
 \date{2024}
 
 \begin{document}
-
+\layout
 \maketitle % без этого страницы с названием не будет
 
 \part{Начало}
