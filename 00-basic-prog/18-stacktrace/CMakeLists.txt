@@ -18,7 +18,7 @@ target_link_libraries(
         $<$<CXX_COMPILER_ID:GNU>:
         $<IF:$<VERSION_GREATER_EQUAL:${CMAKE_CXX_COMPILER_VERSION},14.0.0>,
             stdc++exp,
-            $<IF:$<VERSION_GREATER_EQUAL:${CMAKE_CXX_COMPILER_VERSION},12.1.1>:
+            $<$<VERSION_GREATER_EQUAL:${CMAKE_CXX_COMPILER_VERSION},12.1.1>:
                 stdc++_libbacktrace>
             >
         >)
