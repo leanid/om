@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.20...3.22)
+cmake_minimum_required(VERSION 3.20...3.28)
 
 project(18-stacktrace CXX)
 
@@ -11,11 +11,18 @@ set(CMAKE_VISIBILITY_INLINES_HIDDEN ON)
 set(CMAKE_ENABLE_EXPORTS OFF)
 
 add_executable(main_std_stacktrace main_std_stacktrace.cxx)
+# cmake-format: off
 target_link_libraries(
     main_std_stacktrace
     PRIVATE
-        $<$<AND:$<VERSION_GREATER_EQUAL:${CMAKE_CXX_COMPILER_VERSION},12.1.1>,$<CXX_COMPILER_ID:GNU>>:stdc++_libbacktrace>
-    )
+        $<$<CXX_COMPILER_ID:GNU>:
+        $<IF:$<VERSION_GREATER_EQUAL:${CMAKE_CXX_COMPILER_VERSION},14.0.0>,
+            stdc++exp,
+            $<IF:$<VERSION_GREATER_EQUAL:${CMAKE_CXX_COMPILER_VERSION},12.1.1>:
+                stdc++_libbacktrace>
+            >
+        >)
+# cmake-format: on
 
 # set(CMAKE_CXX_VISIBILITY_PRESET)
 # set(CMAKE_VISIBILITY_INLINES_HIDDEN OFF)
