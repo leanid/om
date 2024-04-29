@@ -19,8 +19,8 @@ plot(t, power(t, 1/2.2));
 plot(t, t);
 
 % Adding text labels to the plots
-text (0.6, 0.3, {"power(t, 2.2)"});
-text (0.3, 0.6, {"power(t, 1/2.2)"});
-text (0.3, 0.3, {"y(t)"});
+text(0.6, 0.3, {"power(t, 2.2)"});
+text(0.3, 0.6, {"power(t, 1/2.2)"});
+text(0.3, 0.3, {"y(t)"});
 
 hold off; % new plots overwrite old now
