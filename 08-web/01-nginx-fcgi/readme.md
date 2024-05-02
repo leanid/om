@@ -16,6 +16,18 @@ sudo systemctl reload nginx
 # How to start with nginx (FastCGI)
 https://nginx.org/ru/docs/beginners_guide.html
 
+1. do:
+``` bash
+sudo vim /etc/nginx/conf.d/default.conf
+```
+end change `listen 80;` to `listen 81` (in case you can't use defaul 80 port)
+2. restart nginx
+``` bash
+sudo services nginx restart
+```
+3. go to you browser and open `localhost:81`. You should see default welcome nginx page.
+
+
 # nginx problems
 1. check 80 port before start listening it (if using WSL check on windows too)
    on Windows you can run Resource Monigor as Admin and tap Listening ports
