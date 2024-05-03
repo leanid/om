@@ -33,3 +33,20 @@ sudo services nginx restart
    on Windows you can run Resource Monigor as Admin and tap Listening ports
 2. on Linux to see all listening ports use
    sudo netstat -tunlp
+
+# minimal FastCGI nginx cofiguration
+
+``` nginx
+server { 
+    listen 82;
+    server_name localhost; 
+
+    location / { 
+        fastcgi_pass 127.0.0.1:9000; 
+        #fastcgi_pass  unix:/tmp/fastcgi/mysocket; 
+        #fastcgi_pass localhost:9000; 
+         
+        include fastcgi_params; 
+    } 
+}
+```
