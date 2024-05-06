@@ -20,7 +20,7 @@ https://nginx.org/ru/docs/beginners_guide.html
 ``` bash
 sudo vim /etc/nginx/conf.d/default.conf
 ```
-end change `listen 80;` to `listen 81` (in case you can't use defaul 80 port)
+end change `listen 80;` to `listen 81` (in case you can't use default 80 port)
 2. restart nginx
 ``` bash
 sudo services nginx restart
@@ -30,11 +30,11 @@ sudo services nginx restart
 
 # nginx problems
 1. check 80 port before start listening it (if using WSL check on windows too)
-   on Windows you can run Resource Monigor as Admin and tap Listening ports
+   on Windows you can run Resource Monitor as Admin and tap Listening ports
 2. on Linux to see all listening ports use
-   sudo netstat -tunlp
+   `sudo netstat -tunlp`
 
-# minimal FastCGI nginx cofiguration
+# minimal FastCGI nginx configuration
 
 ``` nginx
 server { 
