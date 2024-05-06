@@ -20,7 +20,7 @@ static int socket_id;
 
 static void worker_job(std::mutex& accept_mutex)
 {
-    using namespace std::chrono_literals;
+    using namespace std::string_literals;
 
     int          rc;
     FCGX_Request request;
@@ -76,6 +76,7 @@ static void worker_job(std::mutex& accept_mutex)
         FCGX_PutS("</html>\r\n", request.out);
 
         //"заснуть" - имитация многопоточной среды
+        using namespace std::chrono_literals;
         std::this_thread::sleep_for(2000ms);
 
         // закрыть текущее соединение
