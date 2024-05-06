@@ -70,7 +70,7 @@ static void worker_job(std::mutex& accept_mutex)
             "<h1>FastCGI Hello! (multi-threaded C, fcgiapp library)</h1>\r\n",
             request.out);
         FCGX_PutS("<p>Request accepted from host <i>", request.out);
-        FCGX_PutS(server_name.empty() ? "?"s : server_name, request.out);
+        FCGX_PutS(server_name.empty() ? "?" : server_name.data(), request.out);
         FCGX_PutS("</i></p>\r\n", request.out);
         FCGX_PutS("</body>\r\n", request.out);
         FCGX_PutS("</html>\r\n", request.out);
@@ -97,12 +97,12 @@ int main(void)
     std::cout << "Lib is inited\n";
 
     // открываем новый сокет
-    socketId = FCGX_OpenSocket(om::socket_path, 20);
-    if (socketId < 0)
+    om::socket_id = FCGX_OpenSocket(om::socket_path, 20);
+    if (socket_id < 0)
     {
         // ошибка при открытии сокета
         std::cerr << "error: failed to OpenSocket: " << om::socket_path
-                  << " error: " << socketId;
+                  << " error: " << socket_id;
         << std::endl;
         return 1;
     }
