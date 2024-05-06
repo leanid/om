@@ -1,0 +1,2 @@
+*.cxx text eof=lf
+*.hxx text eof=lf
