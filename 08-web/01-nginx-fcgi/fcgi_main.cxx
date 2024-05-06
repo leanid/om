@@ -1,4 +1,5 @@
 #include <chrono>
+#include <functional>
 #include <iostream>
 #include <mutex>
 #include <string>
@@ -88,6 +89,7 @@ static void worker_job(std::mutex& accept_mutex)
 
 int main(void)
 {
+    std::mutex                accept_mutex;
     size_t                    num_of_cpu = std::thread::hardware_concurrency();
     std::vector<std::jthread> threads;
     threads.reserve(num_of_cpu);
@@ -102,17 +104,15 @@ int main(void)
     {
         // ошибка при открытии сокета
         std::cerr << "error: failed to OpenSocket: " << om::socket_path
-                  << " error: " << om::socket_id;
-        << std::endl;
+                  << " error: " << om::socket_id << std::endl;
         return 1;
     }
     std::cout << "Socket is opened\n";
 
-    std::mutex accept_mutex;
     // создаём рабочие потоки
     while (num_of_cpu--)
     {
-        threads.push_back(std::jthread(worker_job, accept_mutex));
+        threads.push_back(std::jthread(worker_job, std::ref(accept_mutex)));
     }
 
     return 0;
