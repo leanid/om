@@ -8,7 +8,6 @@
 
 extern "C"
 {
-#include <fcgi_config.h>
 #include <fcgiapp.h>
 }
 
@@ -87,7 +86,7 @@ static void worker_job(std::mutex& accept_mutex)
     }
 }
 
-int main(void)
+int main(int argc, char** argv)
 {
     std::mutex                accept_mutex;
     size_t                    num_of_cpu = std::thread::hardware_concurrency();
