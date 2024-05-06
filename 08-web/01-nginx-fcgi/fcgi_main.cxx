@@ -97,12 +97,12 @@ int main(void)
     std::cout << "Lib is inited\n";
 
     // открываем новый сокет
-    om::socket_id = FCGX_OpenSocket(om::socket_path, 20);
-    if (socket_id < 0)
+    om::socket_id = FCGX_OpenSocket(om::socket_path, 20); // 20 - queue size
+    if (om::socket_id < 0)
     {
         // ошибка при открытии сокета
         std::cerr << "error: failed to OpenSocket: " << om::socket_path
-                  << " error: " << socket_id;
+                  << " error: " << om::socket_id;
         << std::endl;
         return 1;
     }
@@ -112,7 +112,7 @@ int main(void)
     // создаём рабочие потоки
     while (num_of_cpu--)
     {
-        threads.push_back(std::thread(worker_job, accept_mutex));
+        threads.push_back(std::jthread(worker_job, accept_mutex));
     }
 
     return 0;
