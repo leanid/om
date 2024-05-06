@@ -1,3 +1,4 @@
+#include <chrono>
 #include <iostream>
 #include <mutex>
 #include <string>
@@ -19,6 +20,8 @@ static int socket_id;
 
 static void worker_job(std::mutex& accept_mutex)
 {
+    using namespace std::chrono_literals;
+
     int          rc;
     FCGX_Request request;
     std::string  server_name;
@@ -27,7 +30,7 @@ static void worker_job(std::mutex& accept_mutex)
     {
         // ошибка при инициализации структуры запроса
         printf("Can not init request\n");
-        return NULL;
+        return;
     }
     std::cout << "Request is inited\n";
 
@@ -67,13 +70,13 @@ static void worker_job(std::mutex& accept_mutex)
             "<h1>FastCGI Hello! (multi-threaded C, fcgiapp library)</h1>\r\n",
             request.out);
         FCGX_PutS("<p>Request accepted from host <i>", request.out);
-        FCGX_PutS(server_name ? server_name : "?", request.out);
+        FCGX_PutS(server_name.empty() ? "?"s : server_name, request.out);
         FCGX_PutS("</i></p>\r\n", request.out);
         FCGX_PutS("</body>\r\n", request.out);
         FCGX_PutS("</html>\r\n", request.out);
 
         //"заснуть" - имитация многопоточной среды
-        std::this_thread::sleep(2);
+        std::this_thread::sleep_for(2000ms);
 
         // закрыть текущее соединение
         FCGX_Finish_r(&request);
