@@ -12,6 +12,7 @@ add_executable(01-nginx-fcgi fcgi_main.cxx)
 target_compile_features(01-nginx-fcgi PRIVATE cxx_std_23)
 
 # sudo apt install libfcgi-dev (on Ubuntu)
+# sudo dnf install fcgi-devel (on Fedora)
 find_library(FCGI fcgi REQUIRED)
 
 target_link_libraries(01-nginx-fcgi PRIVATE ${FCGI})
