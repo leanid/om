@@ -8,13 +8,13 @@ int main(int argc, char** argv)
 {
     using namespace std;
 
-    constexpr size_t size          = 1024;
-    char             buf[size]     = { 0 };
-    char             sub_buf[size] = { 0 };
+    constexpr size_t size              = 1024;
+    char             buf[size]         = { 0 };
+    char             sub_buf[size / 2] = { 0 };
 
     std::printf("what is your name: ");
 
-    std::scanf("%1023s", sub_buf);
+    std::scanf("%511s", sub_buf);
 
     std::snprintf(buf, 1023, "echo \"your name is %s\"", sub_buf);
 
