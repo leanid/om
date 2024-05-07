@@ -29,7 +29,7 @@ static void worker_job(std::mutex& accept_mutex)
     if (FCGX_InitRequest(&request, om::socket_id, 0) != 0)
     {
         // ошибка при инициализации структуры запроса
-        printf("Can not init request\n");
+        std::cerr << "Can not init request\n";
         return;
     }
     std::cout << "Request is inited\n";
