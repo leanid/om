@@ -50,34 +50,31 @@ void worker_job(web_app_context& context)
 
         std::stringstream out;
 
-        // получить значение переменной
-        server_name = FCGX_GetParam("SERVER_NAME", request.envp);
-
         out << "Content-type: text/html\r\n"
                "\r\n"
                "<html>\r\n"
-               "<head>\r\n"
-               "<title>FastCGI Hello! (multi-threaded C, fcgiapp "
-               "library)</title>\r\n"
-               "</head>\r\n"
-               "<body>\r\n"
-               "<h1>FastCGI Hello! (multi-threaded C, fcgiapp library)</h1>\r\n"
-               "<p>Request accepted from host "
-            << "<i>" << server_name << "</i>\r\n";
+               "    <head>\r\n"
+               "        <title>FastCGI Hello from C++!</title>\r\n"
+               "    </head>\r\n"
+               "    <body>\r\n"
+               "        <h1>FastCGI Hello! C++ fcgiapp</h1>\r\n"
+               "        <p>All Request params: <br/>\r\n";
 
         for (char** current = request.envp; *current; current++)
         {
-            out << "<i>" << *current << "</i><br/>\r\n";
+            // clang-format off
+        out << "            <i>" << *current << "</i><br/>\r\n";
+            // clang-format on
         }
-        out << "</p>\r\n"
-               "</body>\r\n"
+
+        out << "        </p>\r\n"
+               "    </body>\r\n"
                "</html>\r\n";
-        FCGX_PutS(out.str().c_str(), request.out);
+        auto str = out.str();
+        FCGX_PutStr(str.data(), static_cast<int>(str.size()), request.out);
 
         // закрыть текущее соединение
         FCGX_Finish_r(&request);
-
-        // завершающие действия - запись статистики, логгирование ошибок и т.п.
     }
     std::cout << "fishish main loop" << std::endl;
 }
