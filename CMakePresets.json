@@ -118,6 +118,10 @@
       "configurePreset": "ninja"
     },
     {
+      "name": "ninja-multi",
+      "configurePreset": "ninja-multi"
+    },
+    {
       "name": "ninja-llvm",
       "configurePreset": "ninja-llvm"
     },
