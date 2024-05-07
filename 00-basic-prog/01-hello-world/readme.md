@@ -21,7 +21,7 @@
 `ld prep.o`
 5. previous step will fail. We need `_start` - this is real start application entry point
 6. To show read linking command try
-g++ -v -static main.cxx
+`g++ -v -static main.cxx`
 7. You should see a lot of CRT(start, end, i, n).o object files and libraries to support exception
 handling, IO and other stuff.
 8. create minimal example without external CRT code in hack_main.cxx
