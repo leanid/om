@@ -31,22 +31,18 @@ static void worker_job(std::mutex& accept_mutex)
     }
     std::cout << "Request is inited\n";
 
-    for (;;)
+    auto accept_request = [](std::mutex&   accept_mutex,
+                             FCGX_Request& request) -> bool
     {
-        // попробовать получить новый запрос
-        std::cout << "Try to accept new request\n";
-        {
-            std::lock_guard lock(accept_mutex);
-            rc = FCGX_Accept_r(&request);
-        }
+        int rc = FCGX_Accept_r(&request);
+        return rc >= 0;
+    };
+    // попробовать получить новый запрос
+    std::cout << "Try to accept new request" << std::endl;
 
-        if (rc < 0)
-        {
-            // ошибка при получении запроса
-            std::cerr << "Can not accept new request\n";
-            break;
-        }
-        std::cout << "request is accepted\n";
+    while (accept_request(accept_mutex, request))
+    {
+        std::cout << "request is accepted" << std::endl;
 
         // получить значение переменной
         server_name = FCGX_GetParam("SERVER_NAME", request.envp);
@@ -81,18 +77,19 @@ static void worker_job(std::mutex& accept_mutex)
 
         // завершающие действия - запись статистики, логгирование ошибок и т.п.
     }
+    std::cout << "fishish main loop" << std::endl;
 }
 
 int main(int argc, char** argv)
 {
-    std::mutex                accept_mutex;
-    size_t                    num_of_cpu = std::thread::hardware_concurrency();
+    std::mutex accept_mutex;
+    size_t     num_of_cpu = 1; // std::thread::hardware_concurrency();
     std::vector<std::jthread> threads;
     threads.reserve(num_of_cpu);
 
     // инициализация библилиотеки
     FCGX_Init();
-    std::cout << "Lib is inited\n";
+    std::cout << "Lib is inited" << std::endl;
 
     // открываем новый сокет
     om::socket_id = FCGX_OpenSocket(om::socket_path, 20); // 20 - queue size
@@ -103,7 +100,7 @@ int main(int argc, char** argv)
                   << " error: " << om::socket_id << std::endl;
         return 1;
     }
-    std::cout << "Socket is opened\n";
+    std::cout << "Socket is opened" << std::endl;
 
     // создаём рабочие потоки
     while (num_of_cpu--)
