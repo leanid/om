@@ -53,10 +53,10 @@
           "value": "clang++"
         },
         "CMAKE_CXX_FLAGS": {
-          "type": "INTERNAL",
+          "type": "STRING",
           "value": "-stdlib=libc++"
         },
-       "CMAKE_C_COMPILER": {
+        "CMAKE_C_COMPILER": {
           "type": "INTERNAL",
           "value": "clang"
         }
