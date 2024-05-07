@@ -85,13 +85,14 @@ int main(int argc, char** argv)
 
     struct
     {
-        size_t        i                  = "int"s.size();
-        size_t        message            = "message"s.size();
-        size_t        category           = "category"s.size();
-        size_t        condition_category = "condition category"s.size();
-        size_t        condition_message  = "condition message"s.size();
-        const size_t* begin() const noexcept { return &i; }
-        const size_t* end() const noexcept { return &condition_message + 1; }
+        size_t i                  = "int"s.size();
+        size_t message            = "message"s.size();
+        size_t category           = "category"s.size();
+        size_t condition_category = "condition category"s.size();
+        size_t condition_message  = "condition message"s.size();
+
+        size_t* begin() noexcept { return &i; }
+        size_t* end() noexcept { return &condition_message + 1; }
     } max_len;
 
     struct table_row
@@ -131,7 +132,7 @@ int main(int argc, char** argv)
         auto select_max = [](auto l, auto r) { return max(l, r); };
         auto row_sizes  = row | views::transform(&string::size);
         auto max_view   = views::zip_transform(select_max, max_len, row_sizes);
-        ranges::copy(max_view, &max_len.i);
+        ranges::copy(max_view, max_len.begin());
     };
 
     ranges::for_each(table_rows, update_max_column_sizes);

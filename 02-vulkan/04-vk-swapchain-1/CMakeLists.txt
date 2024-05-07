@@ -12,7 +12,8 @@ target_include_directories(
     04-vk-swapchain-1
     PRIVATE
         Vulkan::Headers
-        $<$<PLATFORM_ID:Windows,Darwin>:${CMAKE_SOURCE_DIR}/support/cxx_lib/>)
+        $<$<PLATFORM_ID:Windows,Darwin,Linux>:${CMAKE_SOURCE_DIR}/support/cxx_lib/>
+    )
 target_link_libraries(04-vk-swapchain-1 PRIVATE Vulkan::Vulkan
                                                 SDL3::SDL3-shared)
 

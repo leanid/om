@@ -7,6 +7,7 @@ if(NOT MINGW AND NOT MSVC AND NOT APPLE)
     add_executable(hello-bin-static src/main.cxx)
     target_compile_features(hello-bin-static PRIVATE cxx_std_20)
     target_link_libraries(hello-bin-static PUBLIC hello-lib-static)
+    # Fedora `sudo dnf isntall libcxx-devel libcxx-static` for clang++
     target_link_options(hello-bin-static PRIVATE -static)
 endif()
 

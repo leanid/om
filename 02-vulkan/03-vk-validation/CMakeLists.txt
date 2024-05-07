@@ -30,8 +30,10 @@ add_executable(03-vk-validation main.cxx)
 target_compile_features(03-vk-validation PRIVATE cxx_std_20)
 target_include_directories(
     03-vk-validation
-    PRIVATE Vulkan::Headers
-            $<$<PLATFORM_ID:Windows>:${CMAKE_SOURCE_DIR}/support/cxx_lib/>)
+    PRIVATE
+        Vulkan::Headers
+        $<$<PLATFORM_ID:Windows,Linux,Darvin>:${CMAKE_SOURCE_DIR}/support/cxx_lib/>
+    )
 target_link_libraries(03-vk-validation PRIVATE Vulkan::Vulkan SDL3::SDL3-shared)
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")

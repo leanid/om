@@ -10,9 +10,13 @@ set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(CMAKE_VISIBILITY_INLINES_HIDDEN ON)
 set(CMAKE_ENABLE_EXPORTS OFF)
 
-add_executable(main_std_stacktrace main_std_stacktrace.cxx)
-# cmake-format: off
-target_link_libraries(
+include(CheckIncludeFileCXX)
+check_include_file_cxx("<stacktrace>" has_cxx_23_stacktrace_include)
+
+if(has_cxx_23_stacktrace_include)
+    add_executable(main_std_stacktrace main_std_stacktrace.cxx)
+    # cmake-format: off
+    target_link_libraries(
     main_std_stacktrace
     PRIVATE
         $<$<CXX_COMPILER_ID:GNU>:
@@ -22,7 +26,10 @@ target_link_libraries(
                 stdc++_libbacktrace>
             >
         >)
-# cmake-format: on
+     # cmake-format: on
+else()
+    message(STATUS "skip <stacktrace> example no such header file")
+endif(has_cxx_23_stacktrace_include)
 
 # set(CMAKE_CXX_VISIBILITY_PRESET)
 # set(CMAKE_VISIBILITY_INLINES_HIDDEN OFF)
