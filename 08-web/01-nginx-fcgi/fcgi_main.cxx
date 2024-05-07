@@ -1,7 +1,7 @@
-#include <chrono>
 #include <functional>
 #include <iostream>
 #include <mutex>
+#include <sstream>
 #include <string>
 #include <thread>
 #include <vector>
@@ -10,12 +10,16 @@
 
 namespace om
 {
-constexpr const char* socket_path = "127.0.0.1:9000";
-// хранит дескриптор открытого сокета
-static int socket_id;
-} // namespace om
+struct web_app_context
+{
+    std::string socket_path = "127.0.0.1:9000";
+    int         queue_size  = 20;
+    // хранит дескриптор открытого сокета
+    int        socket_id{};
+    std::mutex accept_mutex;
+};
 
-static void worker_job(std::mutex& accept_mutex)
+void worker_job(web_app_context& context)
 {
     using namespace std::string_literals;
 
@@ -23,7 +27,7 @@ static void worker_job(std::mutex& accept_mutex)
     FCGX_Request request;
     std::string  server_name;
 
-    if (FCGX_InitRequest(&request, om::socket_id, 0) != 0)
+    if (FCGX_InitRequest(&request, context.socket_id, 0) != 0)
     {
         // ошибка при инициализации структуры запроса
         std::cerr << "Can not init request\n";
@@ -40,37 +44,35 @@ static void worker_job(std::mutex& accept_mutex)
     // попробовать получить новый запрос
     std::cout << "Try to accept new request" << std::endl;
 
-    while (accept_request(accept_mutex, request))
+    while (accept_request(context.accept_mutex, request))
     {
         std::cout << "request is accepted" << std::endl;
+
+        std::stringstream out;
 
         // получить значение переменной
         server_name = FCGX_GetParam("SERVER_NAME", request.envp);
 
-        // вывести все HTTP-заголовки (каждый заголовок с новой строки)
-        FCGX_PutS("Content-type: text/html\r\n", request.out);
-        // между заголовками и телом ответа нужно вывести пустую строку
-        FCGX_PutS("\r\n", request.out);
-        // вывести тело ответа (например - html-код веб-страницы)
-        FCGX_PutS("<html>\r\n", request.out);
-        FCGX_PutS("<head>\r\n", request.out);
-        FCGX_PutS("<title>FastCGI Hello! (multi-threaded C, fcgiapp "
-                  "library)</title>\r\n",
-                  request.out);
-        FCGX_PutS("</head>\r\n", request.out);
-        FCGX_PutS("<body>\r\n", request.out);
-        FCGX_PutS(
-            "<h1>FastCGI Hello! (multi-threaded C, fcgiapp library)</h1>\r\n",
-            request.out);
-        FCGX_PutS("<p>Request accepted from host <i>", request.out);
-        FCGX_PutS(server_name.empty() ? "?" : server_name.data(), request.out);
-        FCGX_PutS("</i></p>\r\n", request.out);
-        FCGX_PutS("</body>\r\n", request.out);
-        FCGX_PutS("</html>\r\n", request.out);
+        out << "Content-type: text/html\r\n"
+               "\r\n"
+               "<html>\r\n"
+               "<head>\r\n"
+               "<title>FastCGI Hello! (multi-threaded C, fcgiapp "
+               "library)</title>\r\n"
+               "</head>\r\n"
+               "<body>\r\n"
+               "<h1>FastCGI Hello! (multi-threaded C, fcgiapp library)</h1>\r\n"
+               "<p>Request accepted from host "
+            << "<i>" << server_name << "</i>\r\n";
 
-        //"заснуть" - имитация многопоточной среды
-        using namespace std::chrono_literals;
-        std::this_thread::sleep_for(2000ms);
+        for (char** current = request.envp; *current; current++)
+        {
+            out << "<i>" << *current << "</i><br/>\r\n";
+        }
+        out << "</p>\r\n"
+               "</body>\r\n"
+               "</html>\r\n";
+        FCGX_PutS(out.str().c_str(), request.out);
 
         // закрыть текущее соединение
         FCGX_Finish_r(&request);
@@ -80,24 +82,31 @@ static void worker_job(std::mutex& accept_mutex)
     std::cout << "fishish main loop" << std::endl;
 }
 
+} // namespace om
+
 int main(int argc, char** argv)
 {
-    std::mutex accept_mutex;
-    size_t     num_of_cpu = 1; // std::thread::hardware_concurrency();
+    om::web_app_context context;
+    size_t              num_of_cpu = 1; // std::thread::hardware_concurrency();
     std::vector<std::jthread> threads;
     threads.reserve(num_of_cpu);
 
     // инициализация библилиотеки
-    FCGX_Init();
-    std::cout << "Lib is inited" << std::endl;
+    if (0 != FCGX_Init())
+    {
+        std::cerr << "error: failed to FCGX_init()" << std::endl;
+        return 1;
+    }
+    std::cout << "FCGX_init is inited" << std::endl;
 
     // открываем новый сокет
-    om::socket_id = FCGX_OpenSocket(om::socket_path, 20); // 20 - queue size
-    if (om::socket_id < 0)
+    context.socket_id =
+        FCGX_OpenSocket(context.socket_path.c_str(), context.queue_size);
+    if (context.socket_id < 0)
     {
         // ошибка при открытии сокета
-        std::cerr << "error: failed to OpenSocket: " << om::socket_path
-                  << " error: " << om::socket_id << std::endl;
+        std::cerr << "error: failed to OpenSocket: " << context.socket_path
+                  << " error: " << context.socket_id << std::endl;
         return 1;
     }
     std::cout << "Socket is opened" << std::endl;
@@ -105,7 +114,7 @@ int main(int argc, char** argv)
     // создаём рабочие потоки
     while (num_of_cpu--)
     {
-        threads.push_back(std::jthread(worker_job, std::ref(accept_mutex)));
+        threads.push_back(std::jthread(om::worker_job, std::ref(context)));
     }
 
     return 0;

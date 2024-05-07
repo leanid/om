@@ -23,9 +23,13 @@ sudo vim /etc/nginx/conf.d/default.conf
 end change `listen 80;` to `listen 81` (in case you can't use default 80 port)
 2. restart nginx
 ``` bash
+# Fedora
 sudo services nginx restart
+# Ubuntu
+sudo systemctl restart nginx
 ```
 3. go to you browser and open `localhost:81`. You should see default welcome nginx page.
+4. in case of truble check nginx configuration with `sudo nginx -t`
 
 
 # nginx problems
