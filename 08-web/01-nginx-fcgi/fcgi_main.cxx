@@ -6,10 +6,7 @@
 #include <thread>
 #include <vector>
 
-extern "C"
-{
 #include <fcgiapp.h>
-}
 
 namespace om
 {
