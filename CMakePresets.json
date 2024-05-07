@@ -7,6 +7,23 @@
   },
   "configurePresets": [
     {
+      "name": "ninja multi-config",
+      "displayName": "Ninja Multi-Config",
+      "description": "build using Ninja generator",
+      "generator": "Ninja Multi-Config",
+      "binaryDir": "${sourceDir}/build/ninja-multi",
+      "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": {
+          "type": "BOOL",
+          "value": "ON"
+        },
+        "CMAKE_CONFIGURATION_TYPES": {
+          "type": "STRING",
+          "value": "Debug;Release;RelWithDebInfo;MinSizeRel"
+        }
+      }
+    },
+    {
       "name": "ninja",
       "displayName": "Ninja",
       "description": "build using Ninja generator",
