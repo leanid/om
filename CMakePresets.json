@@ -7,7 +7,7 @@
   },
   "configurePresets": [
     {
-      "name": "ninja multi-config",
+      "name": "ninja-multi",
       "displayName": "Ninja Multi-Config",
       "description": "build using Ninja generator",
       "generator": "Ninja Multi-Config",
