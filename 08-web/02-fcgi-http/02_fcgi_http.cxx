@@ -114,7 +114,7 @@ void worker_job(web_app_context& context)
                "            <div>\n"
                "                <button>Send the file</button>\n"
                "            </div>\n"
-               "            </form>\n"
+               "        </form>\n"
                "    </body>\n"
                "</html>\n";
         // clang-format on
