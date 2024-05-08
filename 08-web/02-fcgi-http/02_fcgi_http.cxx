@@ -48,28 +48,76 @@ void worker_job(web_app_context& context)
     {
         std::cout << "request is accepted" << std::endl;
 
+        std::stringstream in;
+        std::string       line(256, '\0');
+        while (FCGX_GetLine(
+            line.data(), static_cast<int>(line.size()), request.in))
+        {
+            in << line.c_str();
+        }
+        std::cout << "got " << in.str().size() << " bytes of input stream"
+                  << std::endl;
+
         std::stringstream out;
 
         out << "Content-type: text/html\r\n"
                "\r\n"
-               "<html>\r\n"
-               "    <head>\r\n"
-               "        <title>FastCGI Hello from C++!</title>\r\n"
-               "    </head>\r\n"
-               "    <body>\r\n"
-               "        <h1>FastCGI Hello! C++ fcgiapp</h1>\r\n"
-               "        <p>All Request params: <br/>\r\n";
+               "<html>\n"
+               "    <head>\n"
+               "        <title>FastCGI Hello from C++!</title>\n"
+               "    </head>\n"
+               "    <body>\n"
+               "        <h1>FastCGI Hello! C++ fcgiapp</h1>\n"
+               "        <p>All Request params: <br/>\n";
 
         for (char** current = request.envp; *current; current++)
         {
             // clang-format off
-        out << "            <i>" << *current << "</i><br/>\r\n";
+        out << "            <i>" << *current << "</i><br/>\n";
             // clang-format on
         }
 
-        out << "        </p>\r\n"
-               "    </body>\r\n"
-               "</html>\r\n";
+        out << "        </p>\n";
+        out << "        <p>" << in.str() << "</p>\n";
+        // clang-format off
+        out << "        <form method=\"POST\" action=\"/do_post\">\n"
+               "            <div>\n"
+               "                <label for=\"say\">label one</label>\n"
+               "                <input name=\"say\" id=\"say\" value=\"Value0\" />\n"
+               "            </div>\n"
+               "            <div>\n"
+               "                <label for=\"to\">label two</label>\n"
+               "                <input name=\"to\" id=\"to\" value=\"Value1\" />\n"
+               "            </div>\n"
+               "            <div>\n"
+               "                <button>Send Post</button>\n"
+               "            </div>\n"
+               "        </form>\n"
+               "        <form method=\"GET\" action=\"/do_get\">\n"
+               "            <div>\n"
+               "                <label for=\"say\">label one</label>\n"
+               "                <input name=\"say\" id=\"say\" value=\"get_arg_0\" />\n"
+               "            </div>\n"
+               "            <div>\n"
+               "                <label for=\"to\">label two</label>\n"
+               "                <input name=\"to\" id=\"to\" value=\"get_arg_1\" />\n"
+               "            </div>\n"
+               "            <div>\n"
+               "                <button>Send Get</button>\n"
+               "            </div>\n"
+               "        </form>\n"
+               "        <form method=\"post\" action=\"/send_file\" enctype=\"multipart/form-data\">\n"
+               "            <div>\n"
+               "                <label for=\"file\">Choose a file</label>\n"
+               "                <input type=\"file\" id=\"file\" name=\"myFile\" />\n"
+               "            </div>\n"
+               "            <div>\n"
+               "                <button>Send the file</button>\n"
+               "            </div>\n"
+               "            </form>\n"
+               "    </body>\n"
+               "</html>\n";
+        // clang-format on
         auto str = out.str();
         FCGX_PutStr(str.data(), static_cast<int>(str.size()), request.out);
 
