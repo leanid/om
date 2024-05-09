@@ -29,10 +29,9 @@ int main(int argc, char** argv)
 
     {
         filebuf in;
-        if (!in.open("/home/leo/Videos/video_2024-05-05_12-44-07.mp4",
-                     ios_base::binary | ios_base::in))
+        if (!in.open(argv[1], ios_base::binary | ios_base::in))
         {
-            cout << "error: can't open test_file" << endl;
+            cout << "error: can't open argv[1]" << endl;
             return 1;
         }
         streamsize availiable_size = in.in_avail();
