@@ -1,4 +1,5 @@
 #include <fstream>
+#include <iomanip>
 #include <ios>
 #include <iosfwd>
 #include <iostream>
@@ -57,7 +58,9 @@ int main(int argc, char** argv)
             return 1;
         }
 
-        cout << "file fully loaded: " << string_view(content.get(), 4) << endl;
+        const uint32_t* data_as_u32 =
+            reinterpret_cast<const uint32_t*>(content.get());
+        cout << "file fully loaded: " << hex << *data_as_u32 << endl;
         // try to drop cache and see free memory status (all from root)
         // free -m  && sync && echo 3 > /proc/sys/vm/drop_caches && free -m
     }
