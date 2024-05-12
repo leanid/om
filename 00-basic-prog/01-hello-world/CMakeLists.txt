@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
 
-project(01-hello-world CXX)
+project(01-hello-world LANGUAGES CXX)
 
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -8,11 +8,13 @@ add_executable(hello_cout_dynamic cout_main.cxx)
 target_compile_features(hello_cout_dynamic PRIVATE cxx_std_20)
 
 include(CheckIncludeFileCXX)
-check_include_file_cxx("<print>" has_cxx_23_print_include -std=23)
+check_include_file_cxx("print" has_cxx_23_print_include)
 
 if(has_cxx_23_print_include)
-    add_executable(hello_std23 main_std23.cxx)
+    add_executable(hello_std23 main_print_std23.cxx)
     target_compile_features(hello_std23 PRIVATE cxx_std_23)
+else()
+    message(STATUS "skip hello_std23 <print> not found")
 endif(has_cxx_23_print_include)
 
 message(VERBOSE "${CMAKE_SYSTEM_NAME}")
