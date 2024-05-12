@@ -1,7 +1,7 @@
 # install static version of standard libraries g++
 `sudo dnf install libstdc++-devel libstdc++-static glibc-static`
 # install static version of standard libraries clang++ with `-stdlib=libc++`
-`sudo dnf install cxxlib-devel cxxlib-static`
+`sudo dnf install libcxx-devel libcxx-static`
 # then `g++ -static main.cxx`
 # should see a.out
 `ldd a.out`
