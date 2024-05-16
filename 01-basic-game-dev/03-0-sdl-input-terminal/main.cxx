@@ -44,7 +44,7 @@ int main(int argc, char** argv)
     {
         // We have to create renderer cause without it
         // Window not visible on Wayland video driver
-        SDL_Renderer* renderer = SDL_CreateRenderer(window, "opengl", 0);
+        SDL_Renderer* renderer = SDL_CreateRenderer(window, "opengl");
         if (renderer == nullptr)
         {
             cerr << SDL_GetError() << endl;

@@ -79,7 +79,7 @@ template <typename T> static void load_gl_func(const char* func_name, T& result)
                     std::cerr << "GL_OUT_OF_MEMORY" << std::endl;              \
                     break;                                                     \
             }                                                                  \
-            std::cerr << __FILE__ << ":" << (__LINE__) << "(" << __FUNCTION__  \
+            std::cerr << __FILE__ << ':' << __LINE__ << '(' << __FUNCTION__    \
                       << ')' << std::endl;                                     \
             assert(false);                                                     \
         }                                                                      \

@@ -1,3 +1,4 @@
+#include "SDL_version.h"
 #include <algorithm>
 #include <array>
 #include <cstdlib>
@@ -5,14 +6,6 @@
 #include <string_view>
 
 #include <SDL3/SDL.h>
-
-std::ostream& operator<<(std::ostream& out, const int& v)
-{
-    out << SDL_VERSIONNUM_MAJOR(v) << '.';
-    out << SDL_VERSIONNUM_MINOR(v) << '.';
-    out << SDL_VERSIONNUM_MINOR(v);
-    return out;
-}
 
 #pragma pack(push, 4)
 struct bind
@@ -58,14 +51,10 @@ int main(int /*argc*/, char* /*argv*/[])
 {
     using namespace std;
 
-    int compiled = { 0 };
-    int linked   = { 0 };
+    int compiled = SDL_VERSION;
+    int linked   = SDL_GetVersion();
 
-    compiled = SDL_VERSION
-    SDL_GetVersion(&linked);
-
-    if (SDL_COMPILEDVERSION !=
-        SDL_VERSIONNUM(linked.major, linked.minor, linked.patch))
+    if (compiled != linked)
     {
         cerr << "warning: SDL2 compiled and linked version mismatch: "
              << compiled << " " << linked << endl;
@@ -93,7 +82,7 @@ int main(int /*argc*/, char* /*argv*/[])
     {
         // We have to create renderer cause without it
         // Window not visible on Wayland video driver
-        SDL_Renderer* renderer = SDL_CreateRenderer(window, "opengl", 0);
+        SDL_Renderer* renderer = SDL_CreateRenderer(window, "opengl");
         if (renderer == nullptr)
         {
             cerr << SDL_GetError() << endl;
