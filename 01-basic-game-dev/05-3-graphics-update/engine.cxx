@@ -319,11 +319,11 @@ tri2::tri2()
 {
 }
 
-std::ostream& operator<<(std::ostream& out, const SDL_Version& v)
+std::ostream& operator<<(std::ostream& out, const int& v)
 {
-    out << static_cast<int>(v.major) << '.';
-    out << static_cast<int>(v.minor) << '.';
-    out << static_cast<int>(v.patch);
+    out << SDL_VERSIONNUM_MAJOR(v) << '.';
+    out << SDL_VERSIONNUM_MINOR(v) << '.';
+    out << SDL_VERSIONNUM_MINOR(v);
     return out;
 }
 
@@ -777,10 +777,10 @@ std::string engine_impl::initialize(std::string_view)
 
     stringstream serr;
 
-    SDL_Version compiled = { 0, 0, 0 };
-    SDL_Version linked   = { 0, 0, 0 };
+    int compiled = { 0 };
+    int linked   = { 0 };
 
-    SDL_VERSION(&compiled)
+    compiled = SDL_VERSION
     SDL_GetVersion(&linked);
 
     if (SDL_COMPILEDVERSION !=
