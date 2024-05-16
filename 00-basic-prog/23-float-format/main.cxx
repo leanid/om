@@ -8,6 +8,7 @@
 #include <iterator>
 #include <limits>
 #include <sstream>
+#include <stdfloat> //std::float16_t from c++23
 #include <string>
 
 struct float_bits
@@ -76,6 +77,11 @@ std::ostream& operator<<(std::ostream& out, const float_bits& value)
 
 int main(int argc, char** argv)
 {
+    std::float16_t  f16_support{};  // just checking
+    std::float32_t  f32_support{};  // just checking
+    std::float64_t  f64_support{};  // just checking
+    std::float128_t f128_support{}; // just checking
+
     if (argc > 1 && argv[1] == std::string("-i"))
     {
         float user_value{};
