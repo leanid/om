@@ -1,5 +1,3 @@
-#include <SDL3/SDL_audio.h>
-#include <SDL3/SDL_stdinc.h>
 #include <cassert>
 #include <chrono>
 #include <cmath>
@@ -336,19 +334,18 @@ static void audio_callback(void* userdata, uint8_t* stream, int len)
 
             if (left_in_buffer > stream_len)
             {
-                SDL_MixAudioFormat(
-                    stream, current_sound_pos, AUDIO_FORMAT, len, 128);
+                SDL_MixAudio(stream, current_sound_pos, AUDIO_FORMAT, len, 128);
                 audio_buff_data->current_pos += stream_len;
                 break;
             }
             else
             {
                 // first copy rest from buffer and repeat sound from begining
-                SDL_MixAudioFormat(stream,
-                                   current_sound_pos,
-                                   AUDIO_FORMAT,
-                                   left_in_buffer,
-                                   128);
+                SDL_MixAudio(stream,
+                             current_sound_pos,
+                             AUDIO_FORMAT,
+                             left_in_buffer,
+                             128);
                 // start buffer from begining
                 audio_buff_data->current_pos = 0;
                 stream_len -= left_in_buffer;

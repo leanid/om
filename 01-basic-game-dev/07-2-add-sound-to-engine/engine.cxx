@@ -1471,20 +1471,20 @@ void engine_impl::audio_callback(void*    engine_ptr,
             if (rest <= static_cast<uint32_t>(stream_size))
             {
                 // copy rest to buffer
-                SDL_MixAudioFormat(stream,
-                                   current_buff,
-                                   e->audio_device_spec.format,
-                                   rest,
-                                   SDL_MIX_MAXVOLUME);
+                SDL_MixAudio(stream,
+                             current_buff,
+                             e->audio_device_spec.format,
+                             rest,
+                             1.f);
                 snd->current_index += rest;
             }
             else
             {
-                SDL_MixAudioFormat(stream,
-                                   current_buff,
-                                   e->audio_device_spec.format,
-                                   static_cast<uint32_t>(stream_size),
-                                   SDL_MIX_MAXVOLUME);
+                SDL_MixAudio(stream,
+                             current_buff,
+                             e->audio_device_spec.format,
+                             static_cast<uint32_t>(stream_size),
+                             1.f);
                 snd->current_index += static_cast<uint32_t>(stream_size);
             }
 
