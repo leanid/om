@@ -26,8 +26,7 @@ int main(int, char**)
         return EXIT_FAILURE;
     }
 
-    SDL_Renderer* renderer =
-        SDL_CreateRenderer(window, nullptr, 0);
+    SDL_Renderer* renderer = SDL_CreateRenderer(window, nullptr);
     if (renderer == nullptr)
     {
         cerr << SDL_GetError() << endl;

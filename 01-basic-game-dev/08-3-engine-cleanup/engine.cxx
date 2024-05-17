@@ -26,6 +26,7 @@
 #include <SDL3/SDL_opengl.h>
 #include <SDL3/SDL_opengl_glext.h>
 
+#include "SDL_version.h"
 #include "picopng.hxx"
 
 // we have to load all extension GL function pointers
@@ -623,14 +624,6 @@ std::ostream& operator<<(std::ostream& stream, const event& e)
     return stream;
 }
 
-std::ostream& operator<<(std::ostream& out, const int& v)
-{
-    out << SDL_VERSIONNUM_MAJOR(v) << '.';
-    out << SDL_VERSIONNUM_MINOR(v) << '.';
-    out << SDL_VERSIONNUM_MINOR(v);
-    return out;
-}
-
 std::istream& operator>>(std::istream& is, matrix& m)
 {
     is >> m.row0.x;
@@ -874,14 +867,10 @@ static void initialize_internal(std::string_view   title,
 
         stringstream serr;
 
-        int compiled = { 0 };
-        int linked   = { 0 };
+        int compiled = SDL_VERSION;
+        int linked   = SDL_GetVersion();
 
-        compiled = SDL_VERSION;
-        SDL_GetVersion(&linked);
-
-        if (SDL_COMPILEDVERSION !=
-            SDL_VERSIONNUM(linked.major, linked.minor, linked.patch))
+        if (compiled != linked)
         {
             serr << "warning: SDL2 compiled and linked version mismatch: "
                  << compiled << " " << linked << endl;

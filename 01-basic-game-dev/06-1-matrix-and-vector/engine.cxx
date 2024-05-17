@@ -389,14 +389,6 @@ tri2::tri2()
 {
 }
 
-std::ostream& operator<<(std::ostream& out, const int& v)
-{
-    out << SDL_VERSIONNUM_MAJOR(v) << '.';
-    out << SDL_VERSIONNUM_MINOR(v) << '.';
-    out << SDL_VERSIONNUM_MINOR(v);
-    return out;
-}
-
 std::istream& operator>>(std::istream& is, mat2& m)
 {
     is >> m.col0.x;
@@ -858,10 +850,9 @@ std::string engine_impl::initialize(std::string_view)
     int linked   = { 0 };
 
     compiled = SDL_VERSION;
-    SDL_GetVersion(&linked);
+    linked   = SDL_GetVersion();
 
-    if (SDL_COMPILEDVERSION !=
-        SDL_VERSIONNUM(linked.major, linked.minor, linked.patch))
+    if (compiled != linked)
     {
         serr << "warning: SDL2 compiled and linked version mismatch: "
              << compiled << " " << linked << endl;

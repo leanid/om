@@ -1,4 +1,5 @@
 #include "engine.hxx"
+#include "SDL_version.h"
 
 #include <SDL3/SDL_stdinc.h>
 #include <algorithm>
@@ -115,14 +116,6 @@ std::ostream& operator<<(std::ostream& stream, const event e)
     {
         throw std::runtime_error("too big event value");
     }
-}
-
-static std::ostream& operator<<(std::ostream& out, const int& v)
-{
-    out << SDL_VERSIONNUM_MAJOR(v) << '.';
-    out << SDL_VERSIONNUM_MINOR(v) << '.';
-    out << SDL_VERSIONNUM_MINOR(v);
-    return out;
 }
 
 std::istream& operator>>(std::istream& is, vertex& v)
@@ -305,14 +298,10 @@ std::string engine_impl::initialize(std::string_view)
 
     stringstream serr;
 
-    int compiled = { 0 };
-    int linked   = { 0 };
+    int compiled = SDL_VERSION;
+    int linked   = SDL_GetVersion();
 
-    compiled = SDL_VERSION;
-    SDL_GetVersion(&linked);
-
-    if (SDL_COMPILEDVERSION !=
-        SDL_VERSIONNUM(linked.major, linked.minor, linked.patch))
+    if (compiled != linked)
     {
         serr << "warning: SDL2 compiled and linked version mismatch: "
              << compiled << " " << linked << endl;

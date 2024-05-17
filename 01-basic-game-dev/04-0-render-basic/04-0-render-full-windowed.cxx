@@ -29,8 +29,7 @@ int main(int, char**)
         return EXIT_FAILURE;
     }
 
-    SDL_Renderer* renderer =
-        SDL_CreateRenderer(window, nullptr, 0);
+    SDL_Renderer* renderer = SDL_CreateRenderer(window, nullptr);
     if (renderer == nullptr)
     {
         cerr << SDL_GetError() << endl;
@@ -106,7 +105,7 @@ int main(int, char**)
                 double green_to_red = (len / radius) - 0.35;
                 green_to_red        = std::clamp(green_to_red, 0.0, 1.0);
                 out.r               = (1 - green_to_red) * 255;
-                out.g               = (green_to_red)*255;
+                out.g               = (green_to_red) * 255;
                 out.b               = 0;
             }
 

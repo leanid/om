@@ -31,8 +31,7 @@ int main(int, char**)
         return EXIT_FAILURE;
     }
 
-    SDL_Renderer* renderer =
-        SDL_CreateRenderer(window, "opengl", 0);
+    SDL_Renderer* renderer = SDL_CreateRenderer(window, "opengl");
     if (renderer == nullptr)
     {
         cerr << SDL_GetError() << endl;
@@ -208,9 +207,7 @@ int main(int, char**)
             SDL_RendererInfo renderer_info{};
             if (0 == SDL_GetRendererInfo(renderer, &renderer_info))
             {
-                cerr << "name: " << renderer_info.name << '\n'
-                     << "flags: " << std::bitset<32>(renderer_info.flags)
-                     << '\n';
+                cerr << "name: " << renderer_info.name << '\n';
                 for (int i = 0; i < renderer_info.num_texture_formats; i++)
                 {
                     cerr << "supported texture format: "
@@ -218,10 +215,6 @@ int main(int, char**)
                                 renderer_info.texture_formats[i])
                          << '\n';
                 }
-                cerr << "max texture width: " << renderer_info.max_texture_width
-                     << '\n'
-                     << "max texture height: "
-                     << renderer_info.max_texture_height << '\n';
             }
             return EXIT_FAILURE;
         }
