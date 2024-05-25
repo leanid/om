@@ -22,7 +22,7 @@ public:
     using get_window_size_t =
         std::function<void(uint32_t* width, uint32_t* height)>;
 
-    struct hints
+    struct hints_t
     {
         bool verbose;
         bool enable_validation_layers;
@@ -32,7 +32,7 @@ public:
                  get_extensions_t  get_instance_extensions,
                  create_surface_t  create_vk_surface,
                  get_window_size_t get_window_buffer_size,
-                 hints             h);
+                 hints_t           h);
 
     ~gfx();
 
@@ -83,7 +83,7 @@ private:
 
     // render external interface objects
     std::ostream&     log;
-    hints             hints_;
+    hints_t           hints_;
     get_window_size_t get_window_buffer_size_;
 
     // vulkan main objects

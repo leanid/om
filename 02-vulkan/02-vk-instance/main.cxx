@@ -26,14 +26,14 @@ class gfx
 {
 public:
     using get_extensions_t = const char* const* (*)(uint32_t* num_extensions);
-    struct hints
+    struct hints_t
     {
         bool verbose;
     };
 
     explicit gfx(std::ostream&    log,
                  get_extensions_t get_instance_extensions,
-                 hints            h)
+                 hints_t          h)
         : log{ log }
         , hints_{ h }
     {
@@ -284,7 +284,7 @@ private:
     }
 
     std::ostream& log;
-    hints         hints_;
+    hints_t       hints_;
 
     vk::Instance instance;
 
@@ -350,7 +350,7 @@ int main(int argc, char** argv)
 
     om::gfx render(log,
                    SDL_Vulkan_GetInstanceExtensions,
-                   om::gfx::hints{ .verbose = verbose });
+                   om::gfx::hints_t{ .verbose = verbose });
 
     return std::cerr.fail();
 }

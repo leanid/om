@@ -38,7 +38,7 @@ public:
     using get_window_size_t =
         std::function<void(uint32_t* width, uint32_t* height)>;
 
-    struct hints
+    struct hints_t
     {
         bool verbose;
         bool enable_validation_layers;
@@ -48,7 +48,7 @@ public:
                  get_extensions_t        get_instance_extensions,
                  const create_surface_t& create_vk_surface,
                  get_window_size_t       get_window_buffer_size,
-                 hints                   h)
+                 hints_t                 h)
         : log{ log }
         , hints_{ h }
         , get_window_buffer_size_{ std::move(get_window_buffer_size) }
@@ -770,7 +770,7 @@ private:
 
     // render external interface objects
     std::ostream&     log;
-    hints             hints_;
+    hints_t           hints_;
     get_window_size_t get_window_buffer_size_;
 
     // vulkan main objects
@@ -908,8 +908,9 @@ int main(int argc, char** argv)
                     *height = static_cast<uint32_t>(h);
                 }
             },
-            om::gfx::hints{ .verbose                  = verbose,
-                            .enable_validation_layers = vk_enable_validation });
+            om::gfx::hints_t{ .verbose = verbose,
+                              .enable_validation_layers =
+                                  vk_enable_validation });
     }
     catch (const std::exception& ex)
     {

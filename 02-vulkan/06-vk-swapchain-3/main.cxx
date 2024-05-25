@@ -102,8 +102,9 @@ int main(int argc, char** argv)
                     *height = static_cast<uint32_t>(h);
                 }
             },
-            om::gfx::hints{ .verbose                  = verbose,
-                            .enable_validation_layers = vk_enable_validation });
+            om::gfx::hints_t{ .verbose = verbose,
+                              .enable_validation_layers =
+                                  vk_enable_validation });
     }
     catch (const std::exception& ex)
     {

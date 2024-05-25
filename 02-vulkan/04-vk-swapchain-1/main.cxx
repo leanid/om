@@ -33,7 +33,7 @@ public:
     using create_surface_t =
         std::function<VkSurfaceKHR(VkInstance, const VkAllocationCallbacks*)>;
 
-    struct hints
+    struct hints_t
     {
         bool verbose;
         bool enable_validation_layers;
@@ -42,7 +42,7 @@ public:
     explicit gfx(std::ostream&    log,
                  get_extensions_t get_instance_extensions,
                  create_surface_t create_vk_surface,
-                 hints            h)
+                 hints_t          h)
         : log{ log }
         , hints_{ h }
     {
@@ -535,7 +535,7 @@ private:
     }
 
     std::ostream& log;
-    hints         hints_;
+    hints_t       hints_;
 
     vk::Instance instance;
 
@@ -645,8 +645,9 @@ int main(int argc, char** argv)
                 }
                 return surface;
             },
-            om::gfx::hints{ .verbose                  = verbose,
-                            .enable_validation_layers = vk_enable_validation });
+            om::gfx::hints_t{ .verbose = verbose,
+                              .enable_validation_layers =
+                                  vk_enable_validation });
     }
     catch (const std::exception& ex)
     {

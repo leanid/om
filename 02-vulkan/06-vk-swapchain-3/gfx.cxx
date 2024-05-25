@@ -32,7 +32,7 @@ gfx::gfx(
     get_extensions_t  get_instance_extensions,
     create_surface_t  create_vk_surface, // NOLINT(*-unnecessary-value-param)
     get_window_size_t get_window_size,
-    hints             h)
+    hints_t           h)
     : log{ log }
     , hints_{ h }
     , get_window_buffer_size_{ std::move(get_window_size) }
