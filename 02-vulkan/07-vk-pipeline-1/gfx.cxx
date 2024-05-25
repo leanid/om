@@ -43,6 +43,7 @@ gfx::gfx(
     validate_physical_device();
     create_logical_device();
     create_swapchain();
+    create_graphics_pipeline();
 }
 
 gfx::~gfx()
@@ -601,7 +602,7 @@ void gfx::create_swapchain()
     log << "create swapchain_image_views count: "
         << swapchain_image_views.size() << std::endl;
 }
-
+void         gfx::create_graphics_pipeline() {}
 vk::Extent2D gfx::choose_best_swapchain_image_resolution(
     const vk::SurfaceCapabilitiesKHR& capabilities)
 {

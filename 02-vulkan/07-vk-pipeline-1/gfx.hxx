@@ -48,6 +48,7 @@ private:
     void create_logical_device();
     void create_surface(const create_surface_t& create_vk_surface);
     void create_swapchain();
+    void create_graphics_pipeline();
     [[nodiscard]] vk::ImageView create_image_view(
         vk::Image            image,
         vk::Format           format,
