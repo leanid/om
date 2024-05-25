@@ -152,7 +152,7 @@ void gfx::validate_expected_extensions_exists(
                 extension_properties.begin(),
                 extension_properties.end(),
                 [extension](const vk::ExtensionProperties& other_extension)
-                { return other_extension.extensionName == extension; });
+                { return other_extension.extensionName.data() == extension; });
 
             if (it == extension_properties.end())
             {
@@ -192,8 +192,9 @@ void gfx::validate_instance_layer_present(std::string_view instance_layer)
                   });
     auto it = std::find_if(available_layers.begin(),
                            available_layers.end(),
-                           [&instance_layer](const vk::LayerProperties& layer)
-                           { return layer.layerName == instance_layer; });
+                           [&instance_layer](const vk::LayerProperties& layer) {
+                               return layer.layerName.data() == instance_layer;
+                           });
 
     if (it == available_layers.end())
     {
@@ -253,7 +254,7 @@ bool gfx::check_device_extension_supported(vk::PhysicalDevice& device,
     auto it         = std::ranges::find_if(
         extensions,
         [&extension_name](const auto& extension)
-        { return extension.extensionName == extension_name; });
+        { return extension.extensionName.data() == extension_name; });
     return it != extensions.end();
 }
 
