@@ -14,7 +14,6 @@
 
 #include <SDL3/SDL.h>
 
-#include "SDL_version.h"
 #include "glad/glad.h"
 
 #define OM_GL_CHECK()                                                          \

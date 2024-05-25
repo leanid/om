@@ -22,9 +22,6 @@
 #include <SDL3/SDL_opengl.h>
 #include <SDL3/SDL_opengl_glext.h>
 
-#include "SDL_audio.h"
-#include "SDL_stdinc.h"
-#include "SDL_version.h"
 #include "picopng.hxx"
 
 // we have to load all extension GL function pointers
@@ -1461,20 +1458,17 @@ texture_gl_es20::~texture_gl_es20()
             if (rest <= static_cast<uint32_t>(stream_size))
             {
                 // copy rest to buffer
-                SDL_MixAudio(stream,
-                                   current_buff,
-                                   audio_device_spec.format,
-                                   rest,
-                                   1.f);
+                SDL_MixAudio(
+                    stream, current_buff, audio_device_spec.format, rest, 1.f);
                 snd->current_index += rest;
             }
             else
             {
                 SDL_MixAudio(stream,
-                                   current_buff,
-                                   audio_device_spec.format,
-                                   static_cast<uint32_t>(stream_size),
-                                   1.f);
+                             current_buff,
+                             audio_device_spec.format,
+                             static_cast<uint32_t>(stream_size),
+                             1.f);
                 snd->current_index += static_cast<uint32_t>(stream_size);
             }
 

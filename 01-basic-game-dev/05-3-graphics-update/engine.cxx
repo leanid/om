@@ -18,7 +18,6 @@
 #include <SDL3/SDL_opengl.h>
 #include <SDL3/SDL_opengl_glext.h>
 
-#include "SDL_version.h"
 #include "picopng.hxx"
 
 // we have to load all extension GL function pointers

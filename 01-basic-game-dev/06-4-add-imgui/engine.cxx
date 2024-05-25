@@ -22,7 +22,6 @@
 #include <SDL3/SDL_opengl_glext.h>
 #include <SDL3/SDL_video.h>
 
-#include "SDL_version.h"
 #include "picopng.hxx"
 
 #include "imgui.h"

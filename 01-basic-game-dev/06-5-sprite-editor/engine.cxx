@@ -1,9 +1,5 @@
 #include "engine.hxx"
-#include "SDL_version.h"
 
-#include <SDL3/SDL_mouse.h>
-#include <SDL3/SDL_stdinc.h>
-#include <SDL3/SDL_video.h>
 #include <algorithm>
 #include <array>
 #include <cassert>
@@ -21,8 +17,11 @@
 #include <vector>
 
 #include <SDL3/SDL.h>
+#include <SDL3/SDL_mouse.h>
 #include <SDL3/SDL_opengl.h>
 #include <SDL3/SDL_opengl_glext.h>
+#include <SDL3/SDL_stdinc.h>
+#include <SDL3/SDL_video.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #ifdef __GNUG__

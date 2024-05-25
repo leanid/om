@@ -1,4 +1,3 @@
-#include "SDL_version.h"
 #include <algorithm>
 #include <array>
 #include <cstdlib>

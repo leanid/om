@@ -1,5 +1,4 @@
 #include "engine.hxx"
-#include "SDL_version.h"
 
 #include <algorithm>
 #include <array>
