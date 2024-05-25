@@ -5,9 +5,19 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
 
+#include "files.hxx"
+
 int main(int argc, char** argv)
 {
     using namespace std;
+
+    om::files::content_t content = om::files::read_file(
+        "./02-vulkan/07-vk-pipeline-1/shaders/shader.frag");
+
+    std::cout << "size: " << content.size << std::endl;
+    std::cout << "memory: " << content.as_string_view() << std::endl;
+
+    throw 1;
 
     bool verbose = argc > 1 && argv[1] == "-v"sv;
 #ifdef NDEBUG

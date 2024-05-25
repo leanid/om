@@ -5,7 +5,13 @@ project(07-vk-pipeline-1 CXX)
 find_package(Vulkan REQUIRED COMPONENTS glslangValidator)
 find_package(SDL3 REQUIRED)
 
-add_executable(07-vk-pipeline-1 gfx.cxx gfx.hxx main.cxx)
+add_executable(
+    07-vk-pipeline-1
+    files.cxx
+    files.hxx
+    gfx.cxx
+    gfx.hxx
+    main.cxx)
 
 target_compile_features(07-vk-pipeline-1 PRIVATE cxx_std_23)
 target_include_directories(
