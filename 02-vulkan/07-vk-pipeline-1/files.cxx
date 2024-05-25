@@ -7,17 +7,17 @@ namespace om::files
 
 content_t read_file(const std::filesystem::path& path)
 {
+    using namespace std;
     content_t out;
 
-    std::ifstream f;
-    f.exceptions(std::ios::badbit | std::ios::failbit);
-    f.open(path, std::ios_base::binary);
+    ifstream f;
+    f.exceptions(ios::badbit | ios::failbit);
+    f.open(path, ios::binary | ios::ate);
 
-    f.seekg(0, std::ios_base::end);
     size_t size = f.tellg();
-    f.seekg(0, std::ios_base::beg);
+    f.seekg(0, ios_base::beg);
 
-    out.memory = std::make_unique<std::byte[]>(size);
+    out.memory = make_unique<byte[]>(size);
 
     f.read(reinterpret_cast<char*>(out.memory.get()), size);
     out.size = size;
