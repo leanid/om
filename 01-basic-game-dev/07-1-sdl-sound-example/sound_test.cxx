@@ -122,7 +122,7 @@ int main(int /*argc*/, char* /*argv*/[])
 
     int                num_audio_devices = 0;
     SDL_AudioDeviceID* audio_devices =
-        SDL_GetAudioOutputDevices(&num_audio_devices);
+        SDL_GetAudioPlaybackDevices(&num_audio_devices);
 
     SDL_AudioDeviceID audio_device_id =
         SDL_OpenAudioDevice(audio_devices[0], &disired);

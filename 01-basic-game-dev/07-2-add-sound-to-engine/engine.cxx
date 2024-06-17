@@ -1286,7 +1286,7 @@ std::string engine_impl::initialize(std::string_view)
     // SDL_FALSE - mean get only OUTPUT audio devices
     int                num_audio_devices = 0;
     SDL_AudioDeviceID* audio_devices =
-        SDL_GetAudioOutputDevices(&num_audio_devices);
+        SDL_GetAudioPlaybackDevices(&num_audio_devices);
     if (num_audio_devices > 0)
     {
         default_audio_device_name = SDL_GetAudioDeviceName(audio_devices[0]);

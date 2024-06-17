@@ -1177,7 +1177,7 @@ static void initialize_internal(std::string_view   title,
 
         int                num_audio_devices = 0;
         SDL_AudioDeviceID* audio_devices =
-            SDL_GetAudioOutputDevices(&num_audio_devices);
+            SDL_GetAudioPlaybackDevices(&num_audio_devices);
         if (num_audio_devices > 0)
         {
             default_audio_device_name =
@@ -1388,20 +1388,17 @@ void audio_callback(void*, uint8_t* stream, int stream_size)
             if (rest <= static_cast<uint32_t>(stream_size))
             {
                 // copy rest to buffer
-                SDL_MixAudio(stream,
-                                   current_buff,
-                                   audio_device_spec.format,
-                                   rest,
-                                   1.f);
+                SDL_MixAudio(
+                    stream, current_buff, audio_device_spec.format, rest, 1.f);
                 snd->current_index += rest;
             }
             else
             {
                 SDL_MixAudio(stream,
-                                   current_buff,
-                                   audio_device_spec.format,
-                                   static_cast<uint32_t>(stream_size),
-                                   1.f);
+                             current_buff,
+                             audio_device_spec.format,
+                             static_cast<uint32_t>(stream_size),
+                             1.f);
                 snd->current_index += static_cast<uint32_t>(stream_size);
             }
 

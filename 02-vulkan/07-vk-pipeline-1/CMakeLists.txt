@@ -12,14 +12,15 @@ add_executable(
     gfx.cxx
     gfx.hxx
     main.cxx)
-
+target_compile_definitions(07-vk-pipeline-1 PRIVATE VK_NULL_HANDLE=nullptr)
 target_compile_features(07-vk-pipeline-1 PRIVATE cxx_std_23)
 target_include_directories(
     07-vk-pipeline-1
     PRIVATE
-        Vulkan::Headers
-        $<$<PLATFORM_ID:Windows,Darwin>:${CMAKE_SOURCE_DIR}/support/cxx_lib/>)
-target_link_libraries(07-vk-pipeline-1 PRIVATE Vulkan::Vulkan SDL3::SDL3-shared)
+        $<$<PLATFORM_ID:Windows,Darwin,Linux>:${CMAKE_SOURCE_DIR}/support/cxx_lib/>
+    )
+target_link_libraries(07-vk-pipeline-1 PRIVATE Vulkan::Headers Vulkan::Vulkan
+                                               SDL3::SDL3-shared)
 
 # Find the shader files
 file(GLOB_RECURSE shader_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}

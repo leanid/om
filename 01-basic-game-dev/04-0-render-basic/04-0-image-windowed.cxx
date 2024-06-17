@@ -204,18 +204,6 @@ int main(int, char**)
                  << width << ", " << height << ", " << pitch << ", "
                  << SDL_GetPixelFormatName(SDL_PIXELFORMAT_XRGB8888) << ") "
                  << SDL_GetError() << endl;
-            SDL_RendererInfo renderer_info{};
-            if (0 == SDL_GetRendererInfo(renderer, &renderer_info))
-            {
-                cerr << "name: " << renderer_info.name << '\n';
-                for (int i = 0; i < renderer_info.num_texture_formats; i++)
-                {
-                    cerr << "supported texture format: "
-                         << SDL_GetPixelFormatName(
-                                renderer_info.texture_formats[i])
-                         << '\n';
-                }
-            }
             return EXIT_FAILURE;
         }
         SDL_Texture* bitmapTex =

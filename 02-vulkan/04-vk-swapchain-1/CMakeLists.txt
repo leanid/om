@@ -7,14 +7,14 @@ find_package(SDL3 REQUIRED)
 
 add_executable(04-vk-swapchain-1 main.cxx)
 
+target_compile_definitions(04-vk-swapchain-1 PRIVATE VK_NULL_HANDLE=nullptr)
 target_compile_features(04-vk-swapchain-1 PRIVATE cxx_std_20)
 target_include_directories(
     04-vk-swapchain-1
     PRIVATE
-        Vulkan::Headers
         $<$<PLATFORM_ID:Windows,Darwin,Linux>:${CMAKE_SOURCE_DIR}/support/cxx_lib/>
     )
-target_link_libraries(04-vk-swapchain-1 PRIVATE Vulkan::Vulkan
+target_link_libraries(04-vk-swapchain-1 PRIVATE Vulkan::Headers Vulkan::Vulkan
                                                 SDL3::SDL3-shared)
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")

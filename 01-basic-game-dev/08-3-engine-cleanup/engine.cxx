@@ -1122,7 +1122,7 @@ static void initialize_internal(std::string_view   title,
 
         int                num_audio_devices = 0;
         SDL_AudioDeviceID* audio_devices =
-            SDL_GetAudioOutputDevices(&num_audio_devices);
+            SDL_GetAudioPlaybackDevices(&num_audio_devices);
         if (num_audio_devices > 0)
         {
             default_audio_device_name =

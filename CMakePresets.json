@@ -59,6 +59,10 @@
         "CMAKE_C_COMPILER": {
           "type": "INTERNAL",
           "value": "clang"
+        },
+        "CMAKE_CXX_SCAN_FOR_MODULES": {
+          "type": "INTERNAL",
+          "value": "OFF"
         }
       }
     },
