@@ -606,10 +606,10 @@ void gfx::create_swapchain()
 }
 void gfx::create_graphics_pipeline()
 {
-    auto vertex_shader_code =
-        files::read_file("./02-vulkan/07-vk-pipeline-1/shader.vert.spv");
-    auto fragment_shader_code =
-        files::read_file("./02-vulkan/07-vk-pipeline-1/shader.frag.spv");
+    auto vertex_shader_code = files::read_file(
+        "./02-vulkan/07-vk-pipeline-1/shaders/shader.vert.spv");
+    auto fragment_shader_code = files::read_file(
+        "./02-vulkan/07-vk-pipeline-1/shaders/shader.frag.spv");
     // compile shaders from spir-v into gpu code
     vk::ShaderModule vertex = create_shader(vertex_shader_code.as_span());
     std::experimental::scope_exit vertex_cleanup([this, &vertex]()
