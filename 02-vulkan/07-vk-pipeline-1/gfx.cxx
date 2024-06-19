@@ -15,6 +15,8 @@
 #include <vulkan/vulkan_structs.hpp>
 #include <vulkan/vulkan_to_string.hpp>
 
+#include "files.hxx"
+
 namespace om
 {
 
@@ -602,7 +604,29 @@ void gfx::create_swapchain()
     log << "create swapchain_image_views count: "
         << swapchain_image_views.size() << std::endl;
 }
-void         gfx::create_graphics_pipeline() {}
+void gfx::create_graphics_pipeline()
+{
+    auto vertex_shader_code =
+        files::read_file("./02-vulkan/07-vk-pipeline-1/shader.vert.spv");
+    auto fragment_shader_code =
+        files::read_file("./02-vulkan/07-vk-pipeline-1/shader.frag.spv");
+    // compile shaders from spir-v into gpu code
+    vk::ShaderModule vertex = create_shader(vertex_shader_code.as_span());
+    std::experimental::scope_exit vertex_cleanup([this, &vertex]()
+                                                 { destroy(vertex); });
+
+    vk::ShaderModule fragment = create_shader(fragment_shader_code.as_span());
+    std::experimental::scope_exit fragment_cleanup([this, &fragment]()
+                                                   { destroy(fragment); });
+
+    vk::PipelineShaderStageCreateInfo stage_info_vert(
+        {}, vk::ShaderStageFlagBits::eVertex, vertex, "main");
+    vk::PipelineShaderStageCreateInfo stage_info_frag(
+        {}, vk::ShaderStageFlagBits::eFragment, fragment, "main");
+
+    std::array<vk::PipelineShaderStageCreateInfo, 2> stages{ stage_info_vert,
+                                                             stage_info_frag };
+}
 vk::Extent2D gfx::choose_best_swapchain_image_resolution(
     const vk::SurfaceCapabilitiesKHR& capabilities)
 {
@@ -715,5 +739,18 @@ vk::ImageView gfx::create_image_view(vk::Image            image,
     range.layerCount     = 1;
 
     return devices.logical.createImageView(info);
+}
+
+vk::ShaderModule gfx::create_shader(std::span<std::byte> spir_v)
+{
+    vk::ShaderModuleCreateInfo create_info(
+        {}, spir_v.size(), reinterpret_cast<const uint32_t*>(spir_v.data()));
+
+    return devices.logical.createShaderModule(create_info);
+}
+
+void gfx::destroy(vk::ShaderModule& shader)
+{
+    devices.logical.destroy(shader);
 }
 } // namespace om

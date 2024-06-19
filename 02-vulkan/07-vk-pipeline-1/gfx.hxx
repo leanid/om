@@ -49,10 +49,14 @@ private:
     void create_surface(const create_surface_t& create_vk_surface);
     void create_swapchain();
     void create_graphics_pipeline();
+
     [[nodiscard]] vk::ImageView create_image_view(
         vk::Image            image,
         vk::Format           format,
         vk::ImageAspectFlags aspect_flags) const;
+
+    vk::ShaderModule create_shader(std::span<std::byte> spir_v);
+    void             destroy(vk::ShaderModule& shader);
 
     void validate_expected_extensions_exists(
         const vk::InstanceCreateInfo& create_info);
