@@ -12,10 +12,11 @@ content_t read_file(const std::filesystem::path& path)
 
     ifstream f;
     f.exceptions(ios::badbit | ios::failbit);
+
     f.open(path, ios::binary | ios::ate);
 
     ifstream::pos_type size         = f.tellg();
-    std::streamoff     size_integer = size;
+    streamoff          size_integer = size;
 
     out.memory = make_unique<byte[]>(size_integer);
 
