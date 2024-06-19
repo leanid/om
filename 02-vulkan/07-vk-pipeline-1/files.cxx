@@ -21,13 +21,9 @@ content_t read_file(const std::filesystem::path& path)
 
     f.seekg(0, ios_base::beg);
     f.read(reinterpret_cast<char*>(out.memory.get()), size_integer);
-    out.size = size;
+    out.size = size_integer;
 
     return out;
 }
 
-std::string_view content_t::as_string_view() const
-{
-    return { reinterpret_cast<char*>(memory.get()), size };
-}
 } // namespace om::files
