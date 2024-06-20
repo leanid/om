@@ -743,6 +743,7 @@ vk::ImageView gfx::create_image_view(vk::Image            image,
 
 vk::ShaderModule gfx::create_shader(std::span<std::byte> spir_v)
 {
+    log << "create shader module\n";
     vk::ShaderModuleCreateInfo create_info(
         {}, spir_v.size(), reinterpret_cast<const uint32_t*>(spir_v.data()));
 
@@ -751,6 +752,7 @@ vk::ShaderModule gfx::create_shader(std::span<std::byte> spir_v)
 
 void gfx::destroy(vk::ShaderModule& shader)
 {
+    log << "destroy shader module\n";
     devices.logical.destroy(shader);
 }
 } // namespace om
