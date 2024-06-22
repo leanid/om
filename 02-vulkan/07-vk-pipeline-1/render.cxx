@@ -57,7 +57,8 @@ void render::create_instance()
     vk::InstanceCreateInfo instance_create_info;
     instance_create_info.pApplicationInfo = &application_info;
 
-    platform_interface::extensions extensions = platform_.get_extensions();
+    platform_interface::extensions extensions =
+        platform_.get_vulkan_extensions();
 
     instance_create_info.ppEnabledExtensionNames = extensions.names;
     instance_create_info.enabledExtensionCount   = extensions.count;
@@ -368,7 +369,8 @@ uint32_t render::get_presentation_queue_family_index(
 
 void render::create_surface()
 {
-    VkSurfaceKHR surfaceKHR = platform_.create_surface(instance, nullptr);
+    VkSurfaceKHR surfaceKHR =
+        platform_.create_vulkan_surface(instance, nullptr);
     if (surfaceKHR == nullptr)
     {
         throw std::runtime_error(
@@ -633,7 +635,7 @@ vk::Extent2D render::choose_best_swapchain_image_resolution(
     uint32_t height{};
 
     platform_interface::buffer_size buffer_size =
-        platform_.get_windows_buffer_size();
+        platform_.get_window_buffer_size();
 
     extent.width  = buffer_size.width;
     extent.height = buffer_size.height;

@@ -9,7 +9,7 @@
 namespace om::vulkan
 {
 
-platform_interface::extensions platform_sdl3::get_extensions()
+platform_interface::extensions platform_sdl3::get_vulkan_extensions()
 {
     platform_interface::extensions extensions{};
 
@@ -18,7 +18,7 @@ platform_interface::extensions platform_sdl3::get_extensions()
     return extensions;
 }
 
-VkSurfaceKHR platform_sdl3::create_surface(
+VkSurfaceKHR platform_sdl3::create_vulkan_surface(
     VkInstance instance, VkAllocationCallbacks* alloc_callbacks)
 {
     VkSurfaceKHR surface{};
@@ -33,7 +33,7 @@ VkSurfaceKHR platform_sdl3::create_surface(
     return surface;
 }
 
-platform_interface::buffer_size platform_sdl3::get_windows_buffer_size()
+platform_interface::buffer_size platform_sdl3::get_window_buffer_size()
 {
     platform_interface::buffer_size buffer_size{};
 

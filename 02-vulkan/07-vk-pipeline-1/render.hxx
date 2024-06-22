@@ -62,10 +62,10 @@ struct platform_interface
         }
     };
 
-    virtual extensions   get_extensions() = 0;
-    virtual VkSurfaceKHR create_surface(
+    virtual extensions   get_vulkan_extensions() = 0;
+    virtual VkSurfaceKHR create_vulkan_surface(
         VkInstance instance, VkAllocationCallbacks* alloc_callbacks) = 0;
-    virtual buffer_size get_windows_buffer_size()                    = 0;
+    virtual buffer_size get_window_buffer_size()                     = 0;
 
     virtual std::ostream& get_logger() = 0;
 
