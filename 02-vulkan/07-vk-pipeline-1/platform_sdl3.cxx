@@ -33,6 +33,14 @@ VkSurfaceKHR platform_sdl3::create_vulkan_surface(
     return surface;
 }
 
+void platform_sdl3::destroy_vulkan_surface(
+    VkInstance             instance,
+    VkSurfaceKHR           surface,
+    VkAllocationCallbacks* alloc_callbacks)
+{
+    SDL_Vulkan_DestroySurface(instance, surface, alloc_callbacks);
+}
+
 platform_interface::buffer_size platform_sdl3::get_window_buffer_size()
 {
     platform_interface::buffer_size buffer_size{};

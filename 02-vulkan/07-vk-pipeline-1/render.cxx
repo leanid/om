@@ -45,7 +45,7 @@ render::~render()
     log << "vulkan swapchain destroyed\n";
     devices.logical.destroy();
     log << "vulkan logical device destroyed\n";
-    instance.destroy(surface);
+    destroy_surface();
 
     instance.destroy();
     log << "vulkan instance destroyed\n";
@@ -92,8 +92,6 @@ void render::create_instance()
         log << "vulkan validation layer disabled\n";
     }
 
-    // instance_create_info.enabledExtensionCount   = 0;
-    // instance_create_info.ppEnabledExtensionNames = nullptr;
     instance = vk::createInstance(instance_create_info);
     log << "vulkan instance created\n";
 }
@@ -631,17 +629,14 @@ vk::Extent2D render::choose_best_swapchain_image_resolution(
         return extent;
     }
 
-    uint32_t width{};
-    uint32_t height{};
-
     platform_interface::buffer_size buffer_size =
         platform_.get_window_buffer_size();
 
     extent.width  = buffer_size.width;
     extent.height = buffer_size.height;
 
-    log << "use extent2d from callback_get_window_buffer_size: " << width << 'x'
-        << height << std::endl;
+    log << "use extent2d from callback_get_window_buffer_size: "
+        << buffer_size.width << 'x' << buffer_size.height << std::endl;
 
     auto clamp_extent = [](vk::Extent2D&       extent,
                            const vk::Extent2D& min_extent,
@@ -742,6 +737,12 @@ vk::ShaderModule render::create_shader(std::span<std::byte> spir_v)
         {}, spir_v.size(), reinterpret_cast<const uint32_t*>(spir_v.data()));
 
     return devices.logical.createShaderModule(create_info);
+}
+
+void render::destroy_surface()
+{
+    platform_.destroy_vulkan_surface(instance, surface, nullptr);
+    log << "vulkan surface destroyed\n";
 }
 
 void render::destroy(vk::ShaderModule& shader)

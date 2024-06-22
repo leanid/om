@@ -65,7 +65,11 @@ struct platform_interface
     virtual extensions   get_vulkan_extensions() = 0;
     virtual VkSurfaceKHR create_vulkan_surface(
         VkInstance instance, VkAllocationCallbacks* alloc_callbacks) = 0;
-    virtual buffer_size get_window_buffer_size()                     = 0;
+    virtual void destroy_vulkan_surface(
+        VkInstance             instance,
+        VkSurfaceKHR           surface,
+        VkAllocationCallbacks* alloc_callbacks)  = 0;
+    virtual buffer_size get_window_buffer_size() = 0;
 
     virtual std::ostream& get_logger() = 0;
 
@@ -105,7 +109,9 @@ private:
         vk::ImageAspectFlags aspect_flags) const;
 
     vk::ShaderModule create_shader(std::span<std::byte> spir_v);
-    void             destroy(vk::ShaderModule& shader);
+
+    void destroy_surface();
+    void destroy(vk::ShaderModule& shader);
 
     void validate_expected_extensions_exists(
         const vk::InstanceCreateInfo& create_info);

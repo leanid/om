@@ -17,6 +17,10 @@ struct platform_sdl3 final : platform_interface
     extensions   get_vulkan_extensions() override;
     VkSurfaceKHR create_vulkan_surface(
         VkInstance instance, VkAllocationCallbacks* alloc_callbacks) override;
+    void destroy_vulkan_surface(
+        VkInstance             instance,
+        VkSurfaceKHR           surface,
+        VkAllocationCallbacks* alloc_callbacks) override;
     buffer_size get_window_buffer_size() override;
 
     std::ostream& get_logger() override;
