@@ -332,7 +332,7 @@ bool ImGui_ImplSdlGL3_ProcessEvent(SDL_Event* event)
         case SDL_EVENT_KEY_DOWN:
         case SDL_EVENT_KEY_UP:
         {
-            int key          = event->key.keysym.sym & ~SDLK_SCANCODE_MASK;
+            int key          = event->key.key;
             io.KeysDown[key] = (event->type == SDL_EVENT_KEY_DOWN);
             io.KeyShift      = ((SDL_GetModState() & SDL_KMOD_SHIFT) != 0);
             io.KeyCtrl       = ((SDL_GetModState() & SDL_KMOD_CTRL) != 0);

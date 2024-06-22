@@ -65,7 +65,7 @@ int main(int argc, char** argv)
                 case SDL_EVENT_KEY_DOWN:
                     [[fallthrough]];
                 case SDL_EVENT_KEY_UP:
-                    cerr << sdl_event.key.keysym.sym << endl;
+                    cerr << sdl_event.key.key << endl;
                     break;
                 case SDL_EVENT_QUIT:
                     continue_loop = false;

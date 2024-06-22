@@ -16,7 +16,7 @@ class gfx
 {
 public:
     // callback functions types
-    using get_extensions_t = const char* const* (*)(uint32_t* num_extensions);
+    using get_extensions_t = std::function<const char* const*(uint32_t*)>;
     using create_surface_t =
         std::function<VkSurfaceKHR(VkInstance, const VkAllocationCallbacks*)>;
     using get_window_size_t =

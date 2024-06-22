@@ -741,10 +741,9 @@ static bool check_input(const SDL_Event& e, const bind*& result)
 {
     using namespace std;
 
-    const auto it =
-        find_if(begin(keys),
-                end(keys),
-                [&](const bind& b) { return b.key == e.key.keysym.sym; });
+    const auto it = find_if(begin(keys),
+                            end(keys),
+                            [&](const bind& b) { return b.key == e.key.key; });
 
     if (it != end(keys))
     {
@@ -802,8 +801,9 @@ bool engine::is_key_down(const enum keys key)
 
     if (it != end(keys))
     {
-        const std::uint8_t* state         = SDL_GetKeyboardState(nullptr);
-        int                 sdl_scan_code = SDL_GetScancodeFromKey(it->key);
+        const std::uint8_t* state = SDL_GetKeyboardState(nullptr);
+        SDL_Keymod          mod{};
+        int sdl_scan_code = SDL_GetScancodeFromKey(it->key, &mod);
         return state[sdl_scan_code];
     }
     return false;

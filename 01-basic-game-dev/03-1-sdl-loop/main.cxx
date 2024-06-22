@@ -30,7 +30,7 @@ void check_input(const SDL_Event& e)
     const auto it =
         find_if(begin(keys),
                 end(keys),
-                [&](const ::bind& b) { return b.key == e.key.keysym.sym; });
+                [&](const ::bind& b) { return b.key == e.key.key; });
 
     if (it != end(keys))
     {

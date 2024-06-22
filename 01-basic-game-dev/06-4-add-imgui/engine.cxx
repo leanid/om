@@ -9,7 +9,6 @@
 #include <cstddef>
 #include <exception>
 #include <fstream>
-#include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
@@ -676,10 +675,9 @@ static bool check_input(const SDL_Event& e, const bind*& result)
 {
     using namespace std;
 
-    const auto it =
-        find_if(begin(keys),
-                end(keys),
-                [&](const bind& b) { return b.key == e.key.keysym.sym; });
+    const auto it = find_if(begin(keys),
+                            end(keys),
+                            [&](const bind& b) { return b.key == e.key.key; });
 
     if (it != end(keys))
     {
@@ -750,8 +748,9 @@ public:
 
         if (it != end(keys))
         {
-            const std::uint8_t* state         = SDL_GetKeyboardState(nullptr);
-            int                 sdl_scan_code = SDL_GetScancodeFromKey(it->key);
+            const std::uint8_t* state = SDL_GetKeyboardState(nullptr);
+            SDL_Keymod          mod{};
+            int sdl_scan_code = SDL_GetScancodeFromKey(it->key, &mod);
             return state[sdl_scan_code];
         }
         return false;
@@ -1636,8 +1635,8 @@ bool ImGui_ImplSdlGL3_ProcessEvent(const SDL_Event* event)
         case SDL_EVENT_KEY_DOWN:
         case SDL_EVENT_KEY_UP:
         {
-            int key          = event->key.keysym.sym & ~SDLK_SCANCODE_MASK;
-            io.KeysDown[key] = (event->type == SDL_EVENT_KEY_DOWN);
+            int key                = event->key.key;
+            io.KeysDown[key]       = (event->type == SDL_EVENT_KEY_DOWN);
             uint32_t mod_keys_mask = SDL_GetModState();
             io.KeyShift            = ((mod_keys_mask & SDL_KMOD_SHIFT) != 0);
             io.KeyCtrl             = ((mod_keys_mask & SDL_KMOD_CTRL) != 0);
