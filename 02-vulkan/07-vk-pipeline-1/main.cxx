@@ -1,4 +1,4 @@
-#include "gfx.hxx"
+#include "render.hxx"
 
 #include <cstdlib>
 #include <iostream>

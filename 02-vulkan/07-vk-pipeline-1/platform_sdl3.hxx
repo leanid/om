@@ -1,6 +1,6 @@
 #pragma once
 
-#include "gfx.hxx"
+#include "render.hxx"
 
 #include <SDL3/SDL.h>
 
