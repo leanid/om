@@ -1,8 +1,10 @@
 #include "platform_sdl3.hxx"
 
-#include "read_file.hxx"
+#include <utility>
 
 #include <SDL3/SDL_vulkan.h>
+
+#include "read_file.hxx"
 
 namespace om::vulkan
 {
@@ -57,11 +59,11 @@ std::ostream& platform_sdl3::get_logger()
 platform_interface::content platform_sdl3::get_file_content(
     std::string_view path)
 {
-    content       result{};
-    io::content_t content = io::read_file(path);
+    content     result{};
+    io::content content = io::read_file(path);
 
-    std::swap(result.memory, content.memory);
-    std::swap(result.size, content.size);
+    result.memory = std::move(content.memory);
+    result.size   = std::exchange(content.size, 0);
 
     return result;
 }

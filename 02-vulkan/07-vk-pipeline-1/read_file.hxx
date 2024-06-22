@@ -6,26 +6,26 @@
 
 namespace om::io
 {
-struct content_t
+struct content
 {
     std::unique_ptr<std::byte[]> memory;
     std::size_t                  size{};
 
-    content_t(const content_t& other)            = delete;
-    content_t& operator=(const content_t& other) = delete;
+    content(const content& other)            = delete;
+    content& operator=(const content& other) = delete;
 
-    content_t() noexcept
+    content() noexcept
         : memory{}
         , size{}
     {
     }
-    content_t(content_t&& other) noexcept
+    content(content&& other) noexcept
         : memory{ std::move(other.memory) }
         , size{ std::exchange(other.size, 0) }
     {
     }
 
-    content_t& operator=(content_t&& other) noexcept
+    content& operator=(content&& other) noexcept
     {
         memory = std::move(other.memory);
         size   = std::exchange(other.size, 0);
@@ -42,5 +42,5 @@ struct content_t
     }
 };
 
-content_t read_file(const std::filesystem::path& path);
+content read_file(const std::filesystem::path& path);
 } // namespace om::io

@@ -7,10 +7,10 @@
 namespace om::io
 {
 
-content_t read_file(const std::filesystem::path& path)
+content read_file(const std::filesystem::path& path)
 {
     using namespace std;
-    content_t out;
+    content out;
 
     ifstream f;
     f.exceptions(ios::badbit | ios::failbit);
