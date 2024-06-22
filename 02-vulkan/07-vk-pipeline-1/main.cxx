@@ -70,9 +70,9 @@ int main(int argc, char** argv)
         om::vulkan::platform_sdl3 platform(window.get(), log);
         om::vulkan::render        render(
             platform,
-            om::vulkan::render::hints_t{ .verbose = verbose,
-                                                .enable_validation_layers =
-                                             vk_enable_validation });
+            om::vulkan::render::hints{ .verbose = verbose,
+                                              .enable_validation_layers =
+                                           vk_enable_validation });
     }
     catch (const std::exception& ex)
     {

@@ -75,13 +75,13 @@ struct platform_interface
 class render
 {
 public:
-    struct hints_t
+    struct hints
     {
         bool verbose;
         bool enable_validation_layers;
     };
 
-    explicit render(platform_interface& platform, hints_t hints);
+    explicit render(platform_interface& platform, hints hints);
 
     ~render();
 
@@ -138,7 +138,7 @@ private:
     // render external interface objects
     std::ostream&       log;
     platform_interface& platform_;
-    hints_t             hints_;
+    hints               hints_;
 
     // vulkan main objects
     vk::Instance instance;
