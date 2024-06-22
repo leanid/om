@@ -10,9 +10,32 @@
 
 #include <vulkan/vulkan.hpp>
 
-namespace om
+namespace om::vulkan
 {
-class gfx
+struct platform_interface
+{
+    virtual ~platform_interface() = default;
+
+    struct extensions
+    {
+        const char* const* names = nullptr;
+        std::uint32_t      count = 0u;
+    };
+
+    virtual extensions   get_extensions() = 0;
+    virtual VkSurfaceKHR create_surface(
+        VkInstance instance, VkAllocationCallbacks* alloc_callbacks) = 0;
+
+    struct buffer_size
+    {
+        std::uint32_t width  = 0u;
+        std::uint32_t height = 0u;
+    };
+
+    virtual buffer_size get_windows_buffer_size() = 0;
+};
+
+class render
 {
 public:
     // callback functions types
@@ -28,13 +51,13 @@ public:
         bool enable_validation_layers;
     };
 
-    explicit gfx(std::ostream&     log,
-                 get_extensions_t  get_instance_extensions,
-                 create_surface_t  create_vk_surface,
-                 get_window_size_t get_window_buffer_size,
-                 hints_t           hints);
+    explicit render(std::ostream&     log,
+                    get_extensions_t  get_instance_extensions,
+                    create_surface_t  create_vk_surface,
+                    get_window_size_t get_window_buffer_size,
+                    hints_t           hints);
 
-    ~gfx();
+    ~render();
 
 private:
     struct swapchain_details_t
@@ -127,4 +150,4 @@ private:
         VK_KHR_SWAPCHAIN_EXTENSION_NAME
     };
 };
-} // namespace om
+} // namespace om::vulkan

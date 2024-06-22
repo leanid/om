@@ -17,7 +17,7 @@
 
 #include "files.hxx"
 
-namespace om
+namespace om::vulkan
 {
 
 static std::string api_version_to_string(uint32_t apiVersion)
@@ -29,7 +29,7 @@ static std::string api_version_to_string(uint32_t apiVersion)
     return version.str();
 }
 
-gfx::gfx(
+render::render(
     std::ostream&     log,
     get_extensions_t  get_instance_extensions,
     create_surface_t  create_vk_surface, // NOLINT(*-unnecessary-value-param)
@@ -48,7 +48,7 @@ gfx::gfx(
     create_graphics_pipeline();
 }
 
-gfx::~gfx()
+render::~render()
 {
     std::ranges::for_each(swapchain_image_views,
                           [this](vk::ImageView image_view)
@@ -64,7 +64,7 @@ gfx::~gfx()
     log << "vulkan instance destroyed\n";
 }
 
-void gfx::create_instance(get_extensions_t get_instance_extensions)
+void render::create_instance(get_extensions_t get_instance_extensions)
 {
     vk::ApplicationInfo    application_info;
     vk::InstanceCreateInfo instance_create_info;
@@ -107,7 +107,7 @@ void gfx::create_instance(get_extensions_t get_instance_extensions)
     log << "vulkan instance created\n";
 }
 
-void gfx::validate_expected_extensions_exists(
+void render::validate_expected_extensions_exists(
     const vk::InstanceCreateInfo& create_info)
 {
     uint32_t   num_extensions{};
@@ -166,7 +166,7 @@ void gfx::validate_expected_extensions_exists(
         });
 }
 
-void gfx::validate_instance_layer_present(std::string_view instance_layer)
+void render::validate_instance_layer_present(std::string_view instance_layer)
 {
     uint32_t   layer_count{};
     vk::Result r = vk::enumerateInstanceLayerProperties(&layer_count, nullptr);
@@ -235,7 +235,7 @@ static auto find_render_queue(
         });
 }
 
-bool gfx::check_device_suitable(vk::PhysicalDevice& physical)
+bool render::check_device_suitable(vk::PhysicalDevice& physical)
 {
     std::vector<vk::QueueFamilyProperties> queue_properties =
         physical.getQueueFamilyProperties();
@@ -250,8 +250,8 @@ bool gfx::check_device_suitable(vk::PhysicalDevice& physical)
     return render_queue_found && all_extensions_found;
 }
 
-bool gfx::check_device_extension_supported(vk::PhysicalDevice& device,
-                                           std::string_view    extension_name)
+bool render::check_device_extension_supported(vk::PhysicalDevice& device,
+                                              std::string_view extension_name)
 {
     auto extensions = device.enumerateDeviceExtensionProperties();
     auto it         = std::ranges::find_if(
@@ -261,7 +261,7 @@ bool gfx::check_device_extension_supported(vk::PhysicalDevice& device,
     return it != extensions.end();
 }
 
-void gfx::get_physical_device()
+void render::get_physical_device()
 {
     using namespace std::ranges;
     std::vector<vk::PhysicalDevice> physical_devices =
@@ -339,7 +339,7 @@ void gfx::get_physical_device()
         << '\n';
 }
 
-uint32_t gfx::get_render_queue_family_index(
+uint32_t render::get_render_queue_family_index(
     const vk::PhysicalDevice& physical_device)
 {
     auto queue_properties = physical_device.getQueueFamilyProperties();
@@ -358,7 +358,7 @@ uint32_t gfx::get_render_queue_family_index(
     return static_cast<uint32_t>(graphics_queue_index);
 }
 
-uint32_t gfx::get_presentation_queue_family_index(
+uint32_t render::get_presentation_queue_family_index(
     const vk::PhysicalDevice& physical_device,
     const vk::SurfaceKHR&     surface_to_check)
 {
@@ -376,7 +376,7 @@ uint32_t gfx::get_presentation_queue_family_index(
     return static_cast<uint32_t>(graphics_queue_index);
 }
 
-void gfx::create_surface(const create_surface_t& create_vk_surface)
+void render::create_surface(const create_surface_t& create_vk_surface)
 {
     VkSurfaceKHR surfaceKHR = create_vk_surface(instance, nullptr);
     if (surfaceKHR == nullptr)
@@ -389,8 +389,8 @@ void gfx::create_surface(const create_surface_t& create_vk_surface)
     surface = surfaceKHR;
 }
 
-std::ostream& operator<<(std::ostream&                   os,
-                         const gfx::swapchain_details_t& details)
+std::ostream& operator<<(std::ostream&                      os,
+                         const render::swapchain_details_t& details)
 {
     os << "swap_chain_details:\n";
     auto& caps = details.surface_capabilities;
@@ -426,7 +426,7 @@ std::ostream& operator<<(std::ostream&                   os,
     return os;
 }
 
-void gfx::validate_physical_device()
+void render::validate_physical_device()
 {
     // check properties
     // devices.physical.getProperties();
@@ -454,7 +454,7 @@ void gfx::validate_physical_device()
     }
 }
 
-void gfx::create_logical_device()
+void render::create_logical_device()
 {
     std::set<uint32_t> queue_family_indexes = {
         queue_indexes.graphics_family, queue_indexes.presentation_family
@@ -498,7 +498,7 @@ void gfx::create_logical_device()
     log << "got presentation queue\n";
 }
 
-void gfx::create_swapchain()
+void render::create_swapchain()
 {
     swapchain_details_t swapchain_details =
         get_swapchain_details(devices.physical);
@@ -604,7 +604,7 @@ void gfx::create_swapchain()
     log << "create swapchain_image_views count: "
         << swapchain_image_views.size() << std::endl;
 }
-void gfx::create_graphics_pipeline()
+void render::create_graphics_pipeline()
 {
     auto vertex_shader_code = files::read_file(
         "./02-vulkan/07-vk-pipeline-1/shaders/shader.vert.spv");
@@ -627,7 +627,7 @@ void gfx::create_graphics_pipeline()
     std::array<vk::PipelineShaderStageCreateInfo, 2> stages{ stage_info_vert,
                                                              stage_info_frag };
 }
-vk::Extent2D gfx::choose_best_swapchain_image_resolution(
+vk::Extent2D render::choose_best_swapchain_image_resolution(
     const vk::SurfaceCapabilitiesKHR& capabilities)
 {
     auto extent = capabilities.currentExtent;
@@ -665,7 +665,7 @@ vk::Extent2D gfx::choose_best_swapchain_image_resolution(
     return extent;
 }
 
-vk::SurfaceFormatKHR gfx::choose_best_surface_format(
+vk::SurfaceFormatKHR render::choose_best_surface_format(
     std::span<vk::SurfaceFormatKHR> formats)
 {
     vk::SurfaceFormatKHR default_format(vk::Format::eR8G8B8A8Unorm,
@@ -698,7 +698,7 @@ vk::SurfaceFormatKHR gfx::choose_best_surface_format(
     return formats.front();
 }
 
-vk::PresentModeKHR gfx::choose_best_present_mode(
+vk::PresentModeKHR render::choose_best_present_mode(
     std::span<vk::PresentModeKHR> present_modes)
 {
     if (std::ranges::contains(present_modes, vk::PresentModeKHR::eMailbox))
@@ -709,7 +709,8 @@ vk::PresentModeKHR gfx::choose_best_present_mode(
     return vk::PresentModeKHR::eFifo;
 }
 
-gfx::swapchain_details_t gfx::get_swapchain_details(vk::PhysicalDevice& device)
+render::swapchain_details_t render::get_swapchain_details(
+    vk::PhysicalDevice& device)
 {
     swapchain_details_t details{};
     details.surface_capabilities = device.getSurfaceCapabilitiesKHR(surface);
@@ -718,9 +719,9 @@ gfx::swapchain_details_t gfx::get_swapchain_details(vk::PhysicalDevice& device)
     return details;
 }
 
-vk::ImageView gfx::create_image_view(vk::Image            image,
-                                     vk::Format           format,
-                                     vk::ImageAspectFlags aspect_flags) const
+vk::ImageView render::create_image_view(vk::Image            image,
+                                        vk::Format           format,
+                                        vk::ImageAspectFlags aspect_flags) const
 {
     vk::ImageViewCreateInfo info;
     info.image        = image;
@@ -741,7 +742,7 @@ vk::ImageView gfx::create_image_view(vk::Image            image,
     return devices.logical.createImageView(info);
 }
 
-vk::ShaderModule gfx::create_shader(std::span<std::byte> spir_v)
+vk::ShaderModule render::create_shader(std::span<std::byte> spir_v)
 {
     log << "create shader module\n";
     vk::ShaderModuleCreateInfo create_info(
@@ -750,9 +751,9 @@ vk::ShaderModule gfx::create_shader(std::span<std::byte> spir_v)
     return devices.logical.createShaderModule(create_info);
 }
 
-void gfx::destroy(vk::ShaderModule& shader)
+void render::destroy(vk::ShaderModule& shader)
 {
     log << "destroy shader module\n";
     devices.logical.destroy(shader);
 }
-} // namespace om
+} // namespace om::vulkan

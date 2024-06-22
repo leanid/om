@@ -102,11 +102,12 @@ int main(int argc, char** argv)
                 *height = static_cast<uint32_t>(h);
             }
         };
-        om::gfx render(log,
-                       SDL_Vulkan_GetInstanceExtensions,
-                       create_vulkan_surface,
-                       get_window_size,
-                       om::gfx::hints_t{ .verbose = verbose,
+        om::vulkan::render render(
+            log,
+            SDL_Vulkan_GetInstanceExtensions,
+            create_vulkan_surface,
+            get_window_size,
+            om::vulkan::render::hints_t{ .verbose = verbose,
                                          .enable_validation_layers =
                                              vk_enable_validation });
     }
