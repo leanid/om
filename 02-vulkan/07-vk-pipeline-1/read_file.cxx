@@ -1,10 +1,10 @@
-#include "files.hxx"
+#include "read_file.hxx"
 
 #include <exception>
 #include <fstream>
 #include <stdexcept>
 
-namespace om::files
+namespace om::io
 {
 
 content_t read_file(const std::filesystem::path& path)
@@ -32,7 +32,7 @@ content_t read_file(const std::filesystem::path& path)
     {
         string msg;
         msg.reserve(512);
-        msg += "error: can't open file [";
+        msg += "error: can't read file [";
         msg += path;
         msg += "] cause: ";
         msg += e.what();
@@ -42,4 +42,4 @@ content_t read_file(const std::filesystem::path& path)
     return out;
 }
 
-} // namespace om::files
+} // namespace om::io

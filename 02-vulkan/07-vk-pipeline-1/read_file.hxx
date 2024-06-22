@@ -4,12 +4,15 @@
 #include <string_view>
 #include <utility>
 
-namespace om::files
+namespace om::io
 {
 struct content_t
 {
     std::unique_ptr<std::byte[]> memory;
     std::size_t                  size{};
+
+    content_t(const content_t& other)            = delete;
+    content_t& operator=(const content_t& other) = delete;
 
     content_t() noexcept
         : memory{}
@@ -22,16 +25,12 @@ struct content_t
     {
     }
 
-    content_t(const content_t& other) = delete;
-
     content_t& operator=(content_t&& other) noexcept
     {
         memory = std::move(other.memory);
         size   = std::exchange(other.size, 0);
         return *this;
     }
-
-    content_t& operator=(const content_t& other) = delete;
 
     std::string_view as_string_view() const noexcept
     {
@@ -44,4 +43,4 @@ struct content_t
 };
 
 content_t read_file(const std::filesystem::path& path);
-} // namespace om::files
+} // namespace om::io

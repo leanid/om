@@ -7,7 +7,6 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
 
-#include "files.hxx"
 #include "platform_sdl3.hxx"
 
 int main(int argc, char** argv)

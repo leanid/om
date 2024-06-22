@@ -7,11 +7,11 @@ find_package(SDL3 REQUIRED)
 
 add_executable(
     07-vk-pipeline-1
-    files.cxx
-    files.hxx
     main.cxx
     platform_sdl3.cxx
     platform_sdl3.hxx
+    read_file.cxx
+    read_file.hxx
     render.cxx
     render.hxx)
 target_compile_definitions(07-vk-pipeline-1 PRIVATE VK_NULL_HANDLE=nullptr)
