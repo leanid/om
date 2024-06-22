@@ -28,8 +28,8 @@ static std::string api_version_to_string(uint32_t apiVersion)
     return version.str();
 }
 
-render::render(std::ostream& log, platform_interface& platform, hints_t hints)
-    : log{ log }
+render::render(platform_interface& platform, hints_t hints)
+    : log{ platform.get_logger() }
     , platform_{ platform }
     , hints_{ hints }
 {

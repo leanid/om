@@ -1,6 +1,6 @@
 #pragma once
 
-#include <iostream>
+#include <iosfwd>
 #include <limits>
 #include <ostream>
 #include <span>
@@ -32,28 +32,20 @@ struct platform_interface
     virtual VkSurfaceKHR create_surface(
         VkInstance instance, VkAllocationCallbacks* alloc_callbacks) = 0;
     virtual buffer_size get_windows_buffer_size()                    = 0;
+
+    virtual std::ostream& get_logger() = 0;
 };
 
 class render
 {
 public:
-    // // callback functions types
-    // using get_extensions_t = std::function<const char* const*(uint32_t*)>;
-    // using create_surface_t =
-    //     std::function<VkSurfaceKHR(VkInstance, const
-    //     VkAllocationCallbacks*)>;
-    // using get_window_size_t =
-    //     std::function<void(uint32_t* width, uint32_t* height)>;
-
     struct hints_t
     {
         bool verbose;
         bool enable_validation_layers;
     };
 
-    explicit render(std::ostream&       log,
-                    platform_interface& platform,
-                    hints_t             hints);
+    explicit render(platform_interface& platform, hints_t hints);
 
     ~render();
 

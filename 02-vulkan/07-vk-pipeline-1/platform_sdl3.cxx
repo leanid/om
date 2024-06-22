@@ -47,4 +47,9 @@ platform_interface::buffer_size platform_sdl3::get_windows_buffer_size()
     return buffer_size;
 }
 
+std::ostream& platform_sdl3::get_logger()
+{
+    return log;
+}
+
 } // namespace om::vulkan

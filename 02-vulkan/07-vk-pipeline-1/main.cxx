@@ -1,5 +1,7 @@
 #include "gfx.hxx"
 
+#include <cstdlib>
+#include <iostream>
 #include <memory>
 
 #include <SDL3/SDL.h>
@@ -12,12 +14,8 @@ int main(int argc, char** argv)
 {
     using namespace std;
 
-    bool verbose = argc > 1 && argv[1] == "-v"sv;
-#ifdef NDEBUG
-    bool vk_enable_validation = false;
-#else
+    bool verbose              = argc > 1 && argv[1] == "-v"sv;
     bool vk_enable_validation = true;
-#endif
 
     struct null_buffer final : std::streambuf
     {
@@ -33,7 +31,7 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
     log << "create all subsystems\n";
-    [[maybe_unused]] std::experimental::scope_exit quit(
+    std::experimental::scope_exit quit(
         [&log]()
         {
             SDL_Quit();
@@ -46,7 +44,7 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
     log << "load vulkan library\n";
-    [[maybe_unused]] std::experimental::scope_exit unload(
+    std::experimental::scope_exit unload(
         [&log]()
         {
             SDL_Vulkan_UnloadLibrary();
@@ -56,22 +54,22 @@ int main(int argc, char** argv)
     std::unique_ptr<SDL_Window, decltype(&SDL_DestroyWindow)> window(
         SDL_CreateWindow("04-vk-swapchain-1", 800, 600, SDL_WINDOW_VULKAN),
         SDL_DestroyWindow);
-    [[maybe_unused]] std::experimental::scope_exit destroy_window(
+    std::experimental::scope_exit destroy_window(
         [&log]() { log << "destroy sdl window\n"; });
 
     if (!window)
     {
         log << "error: can't create sdl window: " << SDL_GetError()
             << std::endl;
+        return EXIT_FAILURE;
     }
 
     log << "sdl windows created\n";
 
     try
     {
-        om::vulkan::platform_sdl3 platform(window.get());
+        om::vulkan::platform_sdl3 platform(window.get(), log);
         om::vulkan::render        render(
-            log,
             platform,
             om::vulkan::render::hints_t{ .verbose = verbose,
                                                 .enable_validation_layers =
