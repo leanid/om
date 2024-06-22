@@ -2,7 +2,6 @@
 
 #include <iosfwd>
 #include <limits>
-#include <ostream>
 #include <span>
 #include <string_view>
 #include <vector>
@@ -27,6 +26,41 @@ struct platform_interface
         std::uint32_t width  = 0u;
         std::uint32_t height = 0u;
     };
+    struct content
+    {
+        std::unique_ptr<std::byte[]> memory;
+        std::size_t                  size{};
+
+        content(const content& other)            = delete;
+        content& operator=(const content& other) = delete;
+
+        content() noexcept
+            : memory{}
+            , size{}
+        {
+        }
+        content(content&& other) noexcept
+            : memory{ std::move(other.memory) }
+            , size{ std::exchange(other.size, 0) }
+        {
+        }
+
+        content& operator=(content&& other) noexcept
+        {
+            memory = std::move(other.memory);
+            size   = std::exchange(other.size, 0);
+            return *this;
+        }
+
+        std::string_view as_string_view() const noexcept
+        {
+            return { reinterpret_cast<char*>(memory.get()), size };
+        }
+        std::span<std::byte> as_span() const noexcept
+        {
+            return std::span{ memory.get(), size };
+        }
+    };
 
     virtual extensions   get_extensions() = 0;
     virtual VkSurfaceKHR create_surface(
@@ -34,6 +68,8 @@ struct platform_interface
     virtual buffer_size get_windows_buffer_size()                    = 0;
 
     virtual std::ostream& get_logger() = 0;
+
+    virtual content get_file_content(std::string_view path) = 0;
 };
 
 class render

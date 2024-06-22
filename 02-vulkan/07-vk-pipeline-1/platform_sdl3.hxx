@@ -6,7 +6,7 @@
 
 namespace om::vulkan
 {
-struct platform_sdl3 : platform_interface
+struct platform_sdl3 final : platform_interface
 {
     explicit platform_sdl3(SDL_Window* window, std::ostream& logger)
         : window{ window }
@@ -20,6 +20,8 @@ struct platform_sdl3 : platform_interface
     buffer_size get_windows_buffer_size() override;
 
     std::ostream& get_logger() override;
+
+    content get_file_content(std::string_view path) override;
 
 private:
     SDL_Window*   window;

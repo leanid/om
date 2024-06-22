@@ -9,13 +9,6 @@
 #include <sstream>
 #include <stdexcept>
 
-#include <vulkan/vulkan_enums.hpp>
-#include <vulkan/vulkan_handles.hpp>
-#include <vulkan/vulkan_structs.hpp>
-#include <vulkan/vulkan_to_string.hpp>
-
-#include "read_file.hxx"
-
 namespace om::vulkan
 {
 
@@ -603,10 +596,10 @@ void render::create_swapchain()
 }
 void render::create_graphics_pipeline()
 {
-    auto vertex_shader_code =
-        io::read_file("./02-vulkan/07-vk-pipeline-1/shaders/shader.vert.spv");
-    auto fragment_shader_code =
-        io::read_file("./02-vulkan/07-vk-pipeline-1/shaders/shader.frag.spv");
+    auto vertex_shader_code = platform_.get_file_content(
+        "./02-vulkan/07-vk-pipeline-1/shaders/shader.vert.spv");
+    auto fragment_shader_code = platform_.get_file_content(
+        "./02-vulkan/07-vk-pipeline-1/shaders/shader.frag.spv");
     // compile shaders from spir-v into gpu code
     vk::ShaderModule vertex = create_shader(vertex_shader_code.as_span());
     std::experimental::scope_exit vertex_cleanup([this, &vertex]()
