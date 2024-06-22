@@ -1,4 +1,5 @@
-#include <functional>
+#pragma once
+
 #include <iostream>
 #include <limits>
 #include <ostream>
@@ -21,29 +22,28 @@ struct platform_interface
         const char* const* names = nullptr;
         std::uint32_t      count = 0u;
     };
-
-    virtual extensions   get_extensions() = 0;
-    virtual VkSurfaceKHR create_surface(
-        VkInstance instance, VkAllocationCallbacks* alloc_callbacks) = 0;
-
     struct buffer_size
     {
         std::uint32_t width  = 0u;
         std::uint32_t height = 0u;
     };
 
-    virtual buffer_size get_windows_buffer_size() = 0;
+    virtual extensions   get_extensions() = 0;
+    virtual VkSurfaceKHR create_surface(
+        VkInstance instance, VkAllocationCallbacks* alloc_callbacks) = 0;
+    virtual buffer_size get_windows_buffer_size()                    = 0;
 };
 
 class render
 {
 public:
-    // callback functions types
-    using get_extensions_t = std::function<const char* const*(uint32_t*)>;
-    using create_surface_t =
-        std::function<VkSurfaceKHR(VkInstance, const VkAllocationCallbacks*)>;
-    using get_window_size_t =
-        std::function<void(uint32_t* width, uint32_t* height)>;
+    // // callback functions types
+    // using get_extensions_t = std::function<const char* const*(uint32_t*)>;
+    // using create_surface_t =
+    //     std::function<VkSurfaceKHR(VkInstance, const
+    //     VkAllocationCallbacks*)>;
+    // using get_window_size_t =
+    //     std::function<void(uint32_t* width, uint32_t* height)>;
 
     struct hints_t
     {
@@ -51,11 +51,9 @@ public:
         bool enable_validation_layers;
     };
 
-    explicit render(std::ostream&     log,
-                    get_extensions_t  get_instance_extensions,
-                    create_surface_t  create_vk_surface,
-                    get_window_size_t get_window_buffer_size,
-                    hints_t           hints);
+    explicit render(std::ostream&       log,
+                    platform_interface& platform,
+                    hints_t             hints);
 
     ~render();
 
@@ -67,9 +65,9 @@ private:
         std::vector<vk::PresentModeKHR>   presentation_modes;
     };
 
-    void create_instance(get_extensions_t get_instance_extensions);
+    void create_instance();
     void create_logical_device();
-    void create_surface(const create_surface_t& create_vk_surface);
+    void create_surface();
     void create_swapchain();
     void create_graphics_pipeline();
 
@@ -110,9 +108,9 @@ private:
                                     const swapchain_details_t& details);
 
     // render external interface objects
-    std::ostream&     log;
-    hints_t           hints_;
-    get_window_size_t get_window_buffer_size_;
+    std::ostream&       log;
+    platform_interface& platform_;
+    hints_t             hints_;
 
     // vulkan main objects
     vk::Instance instance;

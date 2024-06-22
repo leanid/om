@@ -6,6 +6,7 @@
 #include <SDL3/SDL_vulkan.h>
 
 #include "files.hxx"
+#include "platform_sdl3.hxx"
 
 int main(int argc, char** argv)
 {
@@ -68,47 +69,12 @@ int main(int argc, char** argv)
 
     try
     {
-        auto create_vulkan_surface =
-            [&window, &log](
-                VkInstance                          instance,
-                const struct VkAllocationCallbacks* allocator) -> VkSurfaceKHR
-        {
-            VkSurfaceKHR surface{};
-            SDL_bool     result = SDL_Vulkan_CreateSurface(
-                window.get(), instance, allocator, &surface);
-            if (!result)
-            {
-                log << "error: can't create VkSurfaceKHR: " << SDL_GetError()
-                    << std::endl;
-            }
-            return surface;
-        };
-        auto get_window_size = [&window](uint32_t* width, uint32_t* height)
-        {
-            int w{};
-            int h{};
-            if (0 != SDL_GetWindowSizeInPixels(window.get(), &w, &h))
-            {
-                throw std::runtime_error(SDL_GetError());
-            }
-
-            if (width)
-            {
-                *width = static_cast<uint32_t>(w);
-            }
-
-            if (height)
-            {
-                *height = static_cast<uint32_t>(h);
-            }
-        };
-        om::vulkan::render render(
+        om::vulkan::platform_sdl3 platform(window.get());
+        om::vulkan::render        render(
             log,
-            SDL_Vulkan_GetInstanceExtensions,
-            create_vulkan_surface,
-            get_window_size,
+            platform,
             om::vulkan::render::hints_t{ .verbose = verbose,
-                                         .enable_validation_layers =
+                                                .enable_validation_layers =
                                              vk_enable_validation });
     }
     catch (const std::exception& ex)

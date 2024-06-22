@@ -11,7 +11,9 @@ add_executable(
     files.hxx
     gfx.cxx
     gfx.hxx
-    main.cxx)
+    main.cxx
+    platform_sdl3.cxx
+    platform_sdl3.hxx)
 target_compile_definitions(07-vk-pipeline-1 PRIVATE VK_NULL_HANDLE=nullptr)
 target_compile_features(07-vk-pipeline-1 PRIVATE cxx_std_23)
 target_include_directories(

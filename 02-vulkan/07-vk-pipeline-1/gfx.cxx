@@ -8,7 +8,6 @@
 #include <set>
 #include <sstream>
 #include <stdexcept>
-#include <utility>
 
 #include <vulkan/vulkan_enums.hpp>
 #include <vulkan/vulkan_handles.hpp>
@@ -29,18 +28,13 @@ static std::string api_version_to_string(uint32_t apiVersion)
     return version.str();
 }
 
-render::render(
-    std::ostream&     log,
-    get_extensions_t  get_instance_extensions,
-    create_surface_t  create_vk_surface, // NOLINT(*-unnecessary-value-param)
-    get_window_size_t get_window_size,
-    hints_t           hints)
+render::render(std::ostream& log, platform_interface& platform, hints_t hints)
     : log{ log }
+    , platform_{ platform }
     , hints_{ hints }
-    , get_window_buffer_size_{ std::move(get_window_size) }
 {
-    create_instance(get_instance_extensions);
-    create_surface(create_vk_surface);
+    create_instance();
+    create_surface();
     get_physical_device();
     validate_physical_device();
     create_logical_device();
@@ -64,13 +58,16 @@ render::~render()
     log << "vulkan instance destroyed\n";
 }
 
-void render::create_instance(get_extensions_t get_instance_extensions)
+void render::create_instance()
 {
     vk::ApplicationInfo    application_info;
     vk::InstanceCreateInfo instance_create_info;
     instance_create_info.pApplicationInfo = &application_info;
-    instance_create_info.ppEnabledExtensionNames =
-        get_instance_extensions(&instance_create_info.enabledExtensionCount);
+
+    platform_interface::extensions extensions = platform_.get_extensions();
+
+    instance_create_info.ppEnabledExtensionNames = extensions.names;
+    instance_create_info.enabledExtensionCount   = extensions.count;
 
     if (nullptr == instance_create_info.ppEnabledExtensionNames)
     {
@@ -376,9 +373,9 @@ uint32_t render::get_presentation_queue_family_index(
     return static_cast<uint32_t>(graphics_queue_index);
 }
 
-void render::create_surface(const create_surface_t& create_vk_surface)
+void render::create_surface()
 {
-    VkSurfaceKHR surfaceKHR = create_vk_surface(instance, nullptr);
+    VkSurfaceKHR surfaceKHR = platform_.create_surface(instance, nullptr);
     if (surfaceKHR == nullptr)
     {
         throw std::runtime_error(
@@ -642,10 +639,11 @@ vk::Extent2D render::choose_best_swapchain_image_resolution(
     uint32_t width{};
     uint32_t height{};
 
-    get_window_buffer_size_(&width, &height);
+    platform_interface::buffer_size buffer_size =
+        platform_.get_windows_buffer_size();
 
-    extent.width  = width;
-    extent.height = height;
+    extent.width  = buffer_size.width;
+    extent.height = buffer_size.height;
 
     log << "use extent2d from callback_get_window_buffer_size: " << width << 'x'
         << height << std::endl;
