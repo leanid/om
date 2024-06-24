@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.22...3.28)
 
 project(gamedev_study CXX)
 
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 option(OM_BUILD_DEPS "download and build dependencies as part of current build"
        ON)
 option(OM_BUILD_COURSE_BASIC_PROG "turn ON if need to build 00-basic-prog" ON)
@@ -38,11 +42,15 @@ if(${OM_BUILD_DEPS})
         OVERRIDE_FIND_PACKAGE TRUE)
     fetchcontent_makeavailable(glm)
     find_package(glm REQUIRED)
-endif(${OM_BUILD_DEPS})
 
-set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
+    # use Catch2::Catch2 or Catch2::Catch2WithMain
+    fetchcontent_declare(
+        Catch2 GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+        GIT_TAG v3.4.0 # or a later release
+        )
+    fetchcontent_makeavailable(Catch2)
+
+endif(${OM_BUILD_DEPS})
 
 # curses
 if(OM_BUILD_COURSE_BASIC_PROG)

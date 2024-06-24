@@ -5,13 +5,13 @@ project(07-vk-pipeline-1 CXX)
 find_package(Vulkan REQUIRED COMPONENTS glslangValidator)
 find_package(SDL3 REQUIRED)
 
+add_subdirectory(io)
+
 add_executable(
     07-vk-pipeline-1
     main.cxx
     platform_sdl3.cxx
     platform_sdl3.hxx
-    read_file.cxx
-    read_file.hxx
     render.cxx
     render.hxx)
 target_compile_definitions(07-vk-pipeline-1 PRIVATE VK_NULL_HANDLE=nullptr)
@@ -21,8 +21,12 @@ target_include_directories(
     PRIVATE
         $<$<PLATFORM_ID:Windows,Darwin,Linux>:${CMAKE_SOURCE_DIR}/support/cxx_lib/>
     )
-target_link_libraries(07-vk-pipeline-1 PRIVATE Vulkan::Headers Vulkan::Vulkan
-                                               SDL3::SDL3-shared)
+target_link_libraries(
+    07-vk-pipeline-1
+    PRIVATE om::io::read_file
+            Vulkan::Headers
+            Vulkan::Vulkan
+            SDL3::SDL3-shared)
 
 # Find the shader files
 file(GLOB_RECURSE shader_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
