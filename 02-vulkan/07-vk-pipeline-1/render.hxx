@@ -2,8 +2,10 @@
 
 #include <iosfwd>
 #include <limits>
+#include <memory> // std::unique_ptr
 #include <span>
 #include <string_view>
+#include <utility> // std::exchange
 #include <vector>
 
 #include <experimental/scope> // not found on macOS
