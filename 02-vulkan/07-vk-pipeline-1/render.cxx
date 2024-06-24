@@ -649,15 +649,35 @@ void render::create_graphics_pipeline()
     vk::PipelineViewportStateCreateInfo viewport_state_info{ {},
                                                              viewport,
                                                              scissor };
-    // Dynamic Pipeline States - we need some parts not to be backed in pipeline
-    // enable dynamic states
-    // we need on every resize of Window change our pipeline viewport and
-    // scissor
-    std::array<vk::DynamicState, 2> dynamic_states{
-        vk::DynamicState::eViewport, vk::DynamicState::eScissor
-    };
+    // // Dynamic Pipeline States - we need some parts not to be backed in
+    // pipeline
+    // // enable dynamic states
+    // // we need on every resize of Window change our pipeline viewport and
+    // // scissor
+    // // NOTE: remember to always to recreate swapchain images if you resize
+    // // window
+    // std::array<vk::DynamicState, 2> dynamic_states{
+    //     vk::DynamicState::eViewport, vk::DynamicState::eScissor
+    // };
 
-    vk::PipelineDynamicStateCreateInfo dynamic_state_info{ {}, dynamic_states };
+    // vk::PipelineDynamicStateCreateInfo dynamic_state_info{ {}, dynamic_states
+    // };
+
+    // Rasterizer State
+    vk::PipelineRasterizationStateCreateInfo rasterization_state_info{};
+
+    // to enable -> first enable DepthClamp in
+    // LogicalDeviceFreatures
+    rasterization_state_info.depthClampEnable = vk::False;
+    // whether to discard data and skip rasterazer
+    // never creates fragments
+    // only sutable for pipeline without framebuffer output
+    rasterization_state_info.rasterizerDiscardEnable = vk::False;
+    // how to fill points between verticles
+    rasterization_state_info.polygonMode = vk::PolygonMode::eFill;
+    // how thick line should be drawn (value > 1.0 should enable device
+    // extension)
+    rasterization_state_info.lineWidth = 1.f;
 }
 vk::Extent2D render::choose_best_swapchain_image_resolution(
     const vk::SurfaceCapabilitiesKHR& capabilities)
