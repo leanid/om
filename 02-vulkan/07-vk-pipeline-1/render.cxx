@@ -596,6 +596,7 @@ void render::create_swapchain()
 }
 void render::create_graphics_pipeline()
 {
+    // Static Pipeline States
     auto vertex_shader_code = platform_.get_file_content(
         "./02-vulkan/07-vk-pipeline-1/shaders/shader.vert.spv");
     auto fragment_shader_code = platform_.get_file_content(
@@ -634,10 +635,29 @@ void render::create_graphics_pipeline()
 
     // viewport and scissor
     vk::Viewport viewport{};
-    viewport.x      = 0.f;
-    viewport.y      = 0.f;
-    viewport.width  = swapchain_image_extent.width;
-    viewport.height = swapchain_image_extent.height;
+    viewport.x        = 0.f;
+    viewport.y        = 0.f;
+    viewport.width    = static_cast<float>(swapchain_image_extent.width);
+    viewport.height   = static_cast<float>(swapchain_image_extent.height);
+    viewport.minDepth = 0.f; // min framebuffer depth
+    viewport.maxDepth = 1.f; // max framebuffer depth
+
+    vk::Rect2D scissor{};
+    scissor.offset = { { 0, 0 } };           // offset to use region from
+    scissor.extent = swapchain_image_extent; // region extent
+
+    vk::PipelineViewportStateCreateInfo viewport_state_info{ {},
+                                                             viewport,
+                                                             scissor };
+    // Dynamic Pipeline States - we need some parts not to be backed in pipeline
+    // enable dynamic states
+    // we need on every resize of Window change our pipeline viewport and
+    // scissor
+    std::array<vk::DynamicState, 2> dynamic_states{
+        vk::DynamicState::eViewport, vk::DynamicState::eScissor
+    };
+
+    vk::PipelineDynamicStateCreateInfo dynamic_state_info{ {}, dynamic_states };
 }
 vk::Extent2D render::choose_best_swapchain_image_resolution(
     const vk::SurfaceCapabilitiesKHR& capabilities)

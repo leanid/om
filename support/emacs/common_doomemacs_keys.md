@@ -76,3 +76,19 @@ After you just started fire shortcut(prefix) and help not fit in help window and
 (window 1 of 3)
 like ```SPC+w``` and wait will show you (window 1 of 3) how to see all commands?
 If you use ```vertico``` type ```?``` and you see all.
+
+
+### How to toggle function signature to see arguments
+```emacs
+SPC c l h s
+```
+### How to toggle function overloaded versions
+```emacs
+M+n
+M+p
+```
+### How to toggle list of all functions in current file
+```emacs
+SPC c S
+q - to exit
+```
