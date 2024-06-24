@@ -616,6 +616,28 @@ void render::create_graphics_pipeline()
 
     std::array<vk::PipelineShaderStageCreateInfo, 2> stages{ stage_info_vert,
                                                              stage_info_frag };
+    // vertex input
+    // TODO currently I do not use vertex input. Add it later.
+    vk::PipelineVertexInputStateCreateInfo vertex_input_state_info{};
+    vertex_input_state_info.vertexBindingDescriptionCount = 0;
+    vertex_input_state_info.pVertexBindingDescriptions =
+        nullptr; // spacing/striding vertex info
+    vertex_input_state_info.vertexAttributeDescriptionCount = 0;
+    vertex_input_state_info.pVertexAttributeDescriptions =
+        nullptr; // data format where/from shader attributes
+
+    // input assembly
+    vk::PipelineInputAssemblyStateCreateInfo input_assembly{};
+    input_assembly.topology = vk::PrimitiveTopology::eTriangleList;
+    input_assembly.primitiveRestartEnable =
+        vk::False; // allow override "strip" topology to start new privitives
+
+    // viewport and scissor
+    vk::Viewport viewport{};
+    viewport.x      = 0.f;
+    viewport.y      = 0.f;
+    viewport.width  = swapchain_image_extent.width;
+    viewport.height = swapchain_image_extent.height;
 }
 vk::Extent2D render::choose_best_swapchain_image_resolution(
     const vk::SurfaceCapabilitiesKHR& capabilities)
