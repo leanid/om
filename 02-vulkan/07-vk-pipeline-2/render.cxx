@@ -604,8 +604,26 @@ void render::create_renderpass()
     color_attachment.format = swapchain_image_format;
     // number of samples to write for multisampling
     color_attachment.samples = vk::SampleCountFlagBits::e1;
+    // like in OpenGL glClear() clear buffer
+    // describes what to do with attachment before rendering
+    color_attachment.loadOp = vk::AttachmentLoadOp::eClear;
+    // describes what to do with attachment after rendering
+    color_attachment.storeOp        = vk::AttachmentStoreOp::eStore;
+    color_attachment.stencilLoadOp  = vk::AttachmentLoadOp::eDontCare;
+    color_attachment.stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
+    // Framebuffer data will be stored as an image
+    // but images can be given different data layouts
+    // to give optimal use for certain operations.
+    // Image data layout before renderpass starts
+    color_attachment.initialLayout = vk::ImageLayout::eUndefined;
+    // Image data layout after renderpass (to change to)
+    color_attachment.finalLayout = vk::ImageLayout::ePresentSrcKHR;
+
+    vk::SubpassDescription subpass_description{};
 
     vk::RenderPassCreateInfo renderpath_info{};
+    renderpath_info.attachmentCount = 1;
+    renderpath_info.pAttachments    = &color_attachment;
 }
 
 void render::create_graphics_pipeline()
