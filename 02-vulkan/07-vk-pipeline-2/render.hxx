@@ -99,6 +99,7 @@ private:
     void create_logical_device();
     void create_surface();
     void create_swapchain();
+    void create_renderpass();
     void create_graphics_pipeline();
 
     [[nodiscard]] vk::ImageView create_image_view(
@@ -159,6 +160,9 @@ private:
     vk::SwapchainKHR           swapchain;
     std::vector<vk::Image>     swapchain_images;
     std::vector<vk::ImageView> swapchain_image_views;
+
+    // vulkan pipeline
+    vk::PipelineLayout pipeline_layout{};
 
     // vulkan utilities
     vk::Format   swapchain_image_format{};

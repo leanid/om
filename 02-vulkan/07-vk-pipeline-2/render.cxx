@@ -31,11 +31,14 @@ render::render(platform_interface& platform, hints hints)
     validate_physical_device();
     create_logical_device();
     create_swapchain();
+    create_renderpass();
     create_graphics_pipeline();
 }
 
 render::~render()
 {
+    devices.logical.destroy(pipeline_layout);
+    log << "vulkan pipeline_leyout destroyed\n";
     std::ranges::for_each(swapchain_image_views,
                           [this](vk::ImageView image_view)
                           { devices.logical.destroyImageView(image_view); });
@@ -593,6 +596,18 @@ void render::create_swapchain()
     log << "create swapchain_image_views count: "
         << swapchain_image_views.size() << std::endl;
 }
+
+void render::create_renderpass()
+{
+    // color attachment of render pass
+    vk::AttachmentDescription color_attachment{};
+    color_attachment.format = swapchain_image_format;
+    // number of samples to write for multisampling
+    color_attachment.samples = vk::SampleCountFlagBits::e1;
+
+    vk::RenderPassCreateInfo renderpath_info{};
+}
+
 void render::create_graphics_pipeline()
 {
     // Static Pipeline States
@@ -677,6 +692,48 @@ void render::create_graphics_pipeline()
     // how thick line should be drawn (value > 1.0 should enable device
     // extension)
     rasterization_state_info.lineWidth = 1.f;
+    // which face of triangle to cull
+    rasterization_state_info.cullMode = vk::CullModeFlagBits::eBack;
+    // which triangle face is front face
+    rasterization_state_info.frontFace = vk::FrontFace::eClockwise;
+    // where to add depth bias to fragments (good for stopping "shadow acne" in
+    // shadow mapping)
+    rasterization_state_info.depthBiasEnable = vk::False;
+
+    // Multisampling
+    vk::PipelineMultisampleStateCreateInfo multisample_state_info{};
+    multisample_state_info.sampleShadingEnable = vk::False;
+    // number of samples to use per fragment
+    multisample_state_info.rasterizationSamples = vk::SampleCountFlagBits::e1;
+
+    // Blending (two fragments one - current and other - framebuffer)
+    //
+    // blend_attachment - how blending is handled
+    vk::PipelineColorBlendAttachmentState blend_attachment{};
+    blend_attachment.blendEnable = vk::True;
+    blend_attachment.colorWriteMask =
+        vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
+        vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
+    // blending use equation:
+    // (srcBlendFactor * new color) BlendOp (dstBlendFactor * old color)
+    blend_attachment.srcAlphaBlendFactor = vk::BlendFactor::eSrcAlpha;
+    blend_attachment.dstColorBlendFactor = vk::BlendFactor::eOneMinusSrcAlpha;
+    blend_attachment.colorBlendOp        = vk::BlendOp::eAdd;
+    blend_attachment.srcAlphaBlendFactor = vk::BlendFactor::eOne;
+    blend_attachment.dstAlphaBlendFactor = vk::BlendFactor::eZero;
+    blend_attachment.alphaBlendOp        = vk::BlendOp::eAdd;
+
+    vk::PipelineColorBlendStateCreateInfo blending_state_info{};
+    blending_state_info.logicOpEnable   = vk::False;
+    blending_state_info.attachmentCount = 1;
+    blending_state_info.pAttachments    = &blend_attachment;
+
+    // Pipeline layout (TODO: apply future descriptor sets)
+    vk::PipelineLayoutCreateInfo layout_info{};
+
+    pipeline_layout = devices.logical.createPipelineLayout(layout_info);
+
+    // TODO add Depth and Stensil testing
 }
 vk::Extent2D render::choose_best_swapchain_image_resolution(
     const vk::SurfaceCapabilitiesKHR& capabilities)

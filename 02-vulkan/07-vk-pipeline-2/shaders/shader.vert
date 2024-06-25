@@ -1,5 +1,6 @@
 #version 450 // OpenGL 4.5
 
+// location = 0 means - color attachment buffer 0
 layout(location = 0) out vec3 frag_color; // output color for vertex
 
 // triangle vertex positions directly in shader code
