@@ -37,8 +37,12 @@ render::render(platform_interface& platform, hints hints)
 
 render::~render()
 {
+    devices.logical.destroy(graphics_pipeline);
+    log << "vulkan graphics_pipeline destroyed\n";
     devices.logical.destroy(pipeline_layout);
     log << "vulkan pipeline_leyout destroyed\n";
+    devices.logical.destroy(render_path);
+    log << "vulkan render_path destroyed\n";
     std::ranges::for_each(swapchain_image_views,
                           [this](vk::ImageView image_view)
                           { devices.logical.destroyImageView(image_view); });
@@ -619,11 +623,71 @@ void render::create_renderpass()
     // Image data layout after renderpass (to change to)
     color_attachment.finalLayout = vk::ImageLayout::ePresentSrcKHR;
 
+    // Attachment reference uses an attachment index that refers to index
+    // in the attachment list passed to renderpath_info
+    vk::AttachmentReference attachment_ref{};
+    attachment_ref.attachment = 0; // index of color_attachment in renderpath
+    attachment_ref.layout     = vk::ImageLayout::eColorAttachmentOptimal;
+    // ^^^ this mean that:
+    // 1. starting from color_attachment.initialLayout(eUndefined)
+    // 2. first conversion for subpath into (eColorAttachmentOptimal)
+    // 3. final conversion after subpath to (ePresentSrcKHR)
+
+    // Information about particular subpath the Render path is using
     vk::SubpassDescription subpass_description{};
+    subpass_description.pipelineBindPoint    = vk::PipelineBindPoint::eGraphics;
+    subpass_description.colorAttachmentCount = 1;
+    subpass_description.pColorAttachments    = &attachment_ref;
+
+    // Need to determine when layout transitions occur using subpass
+    // dependencies
+    std::array<vk::SubpassDependency, 2> subpath_dependencies{};
+    // convert from eUndefined to eColorAttachmentOptimal
+    auto& first_conversion = subpath_dependencies[0];
+    // transition must happen after...
+    // subpath index vk::SubpassExternal = special value mean outside of
+    // renderpath
+    first_conversion.srcSubpass = vk::SubpassExternal;
+    // Pipeline stage
+    first_conversion.srcStageMask = vk::PipelineStageFlagBits::eBottomOfPipe;
+    // Stage access mask (memory access)
+    first_conversion.srcAccessMask = vk::AccessFlagBits::eMemoryRead;
+
+    // transition must happen before...
+    first_conversion.dstSubpass = 0; // index of first subpath
+    first_conversion.dstStageMask =
+        vk::PipelineStageFlagBits::eColorAttachmentOutput;
+    first_conversion.dstAccessMask = vk::AccessFlagBits::eColorAttachmentRead |
+                                     vk::AccessFlagBits::eColorAttachmentWrite;
+    first_conversion.dependencyFlags = {};
+
+    // convert from eColorAttachmentOptimal to ePresentSrcKHR
+    auto& second_conversion = subpath_dependencies[1];
+    // transition must happen after...
+    second_conversion.srcSubpass = 0; // index of first subpath
+    // Pipeline stage
+    second_conversion.srcStageMask =
+        vk::PipelineStageFlagBits::eColorAttachmentOutput;
+    // same from previous convertion
+    second_conversion.srcAccessMask = vk::AccessFlagBits::eColorAttachmentRead |
+                                      vk::AccessFlagBits::eColorAttachmentWrite;
+    // transition must happen before...
+    second_conversion.dstSubpass    = vk::SubpassExternal;
+    second_conversion.dstStageMask  = vk::PipelineStageFlagBits::eBottomOfPipe;
+    second_conversion.dstAccessMask = vk::AccessFlagBits::eMemoryRead;
+    second_conversion.dependencyFlags = {};
 
     vk::RenderPassCreateInfo renderpath_info{};
     renderpath_info.attachmentCount = 1;
     renderpath_info.pAttachments    = &color_attachment;
+    renderpath_info.subpassCount    = 1;
+    renderpath_info.pSubpasses      = &subpass_description;
+    renderpath_info.dependencyCount =
+        static_cast<std::uint32_t>(subpath_dependencies.size());
+    renderpath_info.pDependencies = subpath_dependencies.data();
+
+    render_path = devices.logical.createRenderPass(renderpath_info);
+    log << "create vulkan render path\n";
 }
 
 void render::create_graphics_pipeline()
@@ -752,6 +816,41 @@ void render::create_graphics_pipeline()
     pipeline_layout = devices.logical.createPipelineLayout(layout_info);
 
     // TODO add Depth and Stensil testing
+
+    // Graphics Pipeline creation
+    vk::GraphicsPipelineCreateInfo graphics_info{};
+    graphics_info.stageCount        = static_cast<std::uint32_t>(stages.size());
+    graphics_info.pStages           = stages.data(); // shader stages
+    graphics_info.pVertexInputState = &vertex_input_state_info;
+    graphics_info.pInputAssemblyState = &input_assembly;
+    graphics_info.pViewportState      = &viewport_state_info;
+    graphics_info.pDynamicState       = nullptr;
+    graphics_info.pRasterizationState = &rasterization_state_info;
+    graphics_info.pMultisampleState   = &multisample_state_info;
+    graphics_info.pColorBlendState    = &blending_state_info;
+    graphics_info.pDepthStencilState  = nullptr;
+    graphics_info.layout              = pipeline_layout;
+    graphics_info.renderPass          = render_path;
+    graphics_info.subpass             = 0;
+
+    // Pipeline Derivatives
+    // to use vulkan less memory we can create lists of pipelines
+    // so we can create first as we do and all other only with changes
+    // here we do not need it
+    graphics_info.basePipelineHandle =
+        nullptr; // existing pipeline to derive from
+    graphics_info.basePipelineIndex =
+        -1; // or index of pipeline to derive from(in case of creating multiple
+            // at once)
+
+    auto result =
+        devices.logical.createGraphicsPipeline(nullptr, graphics_info);
+    if (result.result != vk::Result::eSuccess)
+    {
+        throw std::runtime_error("error: failed to create vk::Pipeline");
+    }
+
+    graphics_pipeline = std::move(result.value);
 }
 vk::Extent2D render::choose_best_swapchain_image_resolution(
     const vk::SurfaceCapabilitiesKHR& capabilities)

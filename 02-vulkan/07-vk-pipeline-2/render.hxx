@@ -162,7 +162,9 @@ private:
     std::vector<vk::ImageView> swapchain_image_views;
 
     // vulkan pipeline
+    vk::Pipeline       graphics_pipeline{};
     vk::PipelineLayout pipeline_layout{};
+    vk::RenderPass     render_path;
 
     // vulkan utilities
     vk::Format   swapchain_image_format{};
