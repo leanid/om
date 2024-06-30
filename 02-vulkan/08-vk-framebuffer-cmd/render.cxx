@@ -33,10 +33,15 @@ render::render(platform_interface& platform, hints hints)
     create_swapchain();
     create_renderpass();
     create_graphics_pipeline();
+    create_framebuffers();
 }
 
 render::~render()
 {
+    std::ranges::for_each(swapchain_framebuffers,
+                          [this](vk::Framebuffer& framebuffer)
+                          { devices.logical.destroyFramebuffer(framebuffer); });
+    log << "vulkan framebuffers destroyed\n";
     devices.logical.destroy(graphics_pipeline);
     log << "vulkan graphics_pipeline destroyed\n";
     devices.logical.destroy(pipeline_layout);
