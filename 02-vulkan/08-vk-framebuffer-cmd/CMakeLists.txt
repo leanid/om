@@ -1,26 +1,26 @@
 cmake_minimum_required(VERSION 3.27...3.29)
 
-project(07-vk-pipeline-2 CXX)
+project(08-vk-framebuffer-cmd CXX)
 
 find_package(Vulkan REQUIRED COMPONENTS glslangValidator)
 find_package(SDL3 REQUIRED)
 
 add_executable(
-    07-vk-pipeline-2
+    08-vk-framebuffer-cmd
     main.cxx
     platform_sdl3.cxx
     platform_sdl3.hxx
     render.cxx
     render.hxx)
-target_compile_definitions(07-vk-pipeline-2 PRIVATE VK_NULL_HANDLE=nullptr)
-target_compile_features(07-vk-pipeline-2 PRIVATE cxx_std_23)
+target_compile_definitions(08-vk-framebuffer-cmd PRIVATE VK_NULL_HANDLE=nullptr)
+target_compile_features(08-vk-framebuffer-cmd PRIVATE cxx_std_23)
 target_include_directories(
-    07-vk-pipeline-2
+    08-vk-framebuffer-cmd
     PRIVATE
         $<$<PLATFORM_ID:Windows,Darwin,Linux>:${CMAKE_SOURCE_DIR}/support/cxx_lib/>
     )
 target_link_libraries(
-    07-vk-pipeline-2
+    08-vk-framebuffer-cmd
     PRIVATE om::io::read_file
             Vulkan::Headers
             Vulkan::Vulkan
@@ -47,18 +47,19 @@ foreach(shader_file ${shader_files})
 endforeach()
 
 # Add custom target which depends on SPIR-V files
-add_custom_target(generate_spirv_2 ALL DEPENDS ${spirv_files})
+add_custom_target(generate_spirv_3 ALL DEPENDS ${spirv_files})
 
 # Make game target depends on generate_spirv target
-add_dependencies(07-vk-pipeline-2 generate_spirv_2)
+add_dependencies(08-vk-framebuffer-cmd generate_spirv_3)
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     add_custom_command(
-        TARGET 07-vk-pipeline-2
+        TARGET 08-vk-framebuffer-cmd
         POST_BUILD
         COMMAND
             ${CMAKE_COMMAND} -E copy_if_different
-            $<TARGET_FILE:SDL3::SDL3-shared> $<TARGET_FILE_DIR:07-vk-pipeline-2>
+            $<TARGET_FILE:SDL3::SDL3-shared>
+            $<TARGET_FILE_DIR:08-vk-framebuffer-cmd>
         COMMENT "Copying SDL3 library to target directory (Windows only)\n"
                 "vulkan-1.dll also is copied every time - cmake do it for us"
         VERBATIM)
