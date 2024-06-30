@@ -3,6 +3,8 @@
 *.iml
 *.spv
 *.user
+*.frag.spv
+*.vert.spv
 .*
 /cmake-build-*/
 /compile_commands.json
