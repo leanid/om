@@ -21,7 +21,7 @@ add_subdirectory(13-stack-info)
 add_subdirectory(14-cxx17-fs)
 
 add_subdirectory(18-stacktrace)
-if(BOOST_DOWNLOAD_LONG_PROCESS_IS_OK)
+if(OM_BOOST_DOWNLOAD_LONG_PROCESS_IS_OK)
     add_subdirectory(19-boost-file-system)
 else()
     message(STATUS "skip long boost downloading")
