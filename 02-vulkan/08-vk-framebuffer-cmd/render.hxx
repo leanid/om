@@ -101,6 +101,7 @@ private:
     void create_swapchain();
     void create_renderpass();
     void create_graphics_pipeline();
+    void create_framebuffers();
 
     [[nodiscard]] vk::ImageView create_image_view(
         vk::Image            image,
@@ -154,12 +155,13 @@ private:
         vk::Device         logical;
     } devices;
 
-    [[maybe_unused]] vk::Queue render_queue;
-    [[maybe_unused]] vk::Queue presentation_queue;
-    vk::SurfaceKHR             surface; // KHR - extension
-    vk::SwapchainKHR           swapchain;
-    std::vector<vk::Image>     swapchain_images;
-    std::vector<vk::ImageView> swapchain_image_views;
+    [[maybe_unused]] vk::Queue   render_queue;
+    [[maybe_unused]] vk::Queue   presentation_queue;
+    vk::SurfaceKHR               surface; // KHR - extension
+    vk::SwapchainKHR             swapchain;
+    std::vector<vk::Image>       swapchain_images;
+    std::vector<vk::ImageView>   swapchain_image_views;
+    std::vector<vk::Framebuffer> swapchain_framebuffers;
 
     // vulkan pipeline
     vk::Pipeline       graphics_pipeline{};

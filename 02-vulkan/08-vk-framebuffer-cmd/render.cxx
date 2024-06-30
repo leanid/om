@@ -852,6 +852,36 @@ void render::create_graphics_pipeline()
 
     graphics_pipeline = std::move(result.value);
 }
+
+void render::create_framebuffers()
+{
+    swapchain_framebuffers.reserve(swapchain_images.size());
+
+    auto gen_framebuffer = [&](const vk::ImageView& view)
+    {
+        std::array<vk::ImageView, 1> attachments{ view };
+
+        vk::FramebufferCreateInfo info{};
+        info.renderPass      = render_path; // render path layout to be used
+        info.attachmentCount = static_cast<std::uint32_t>(attachments.size());
+        info.pAttachments    = attachments.data(); // 1:1 with renderpath
+        info.width           = swapchain_image_extent.width;
+        info.height          = swapchain_image_extent.height;
+        info.layers          = 1;
+
+        vk::Framebuffer framebuffer = devices.logical.createFramebuffer(info);
+        if (!framebuffer)
+        {
+            throw std::runtime_error("can't create framebuffer");
+        }
+        return framebuffer;
+    };
+
+    std::ranges::transform(swapchain_image_views,
+                           std::back_inserter(swapchain_framebuffers),
+                           gen_framebuffer);
+}
+
 vk::Extent2D render::choose_best_swapchain_image_resolution(
     const vk::SurfaceCapabilitiesKHR& capabilities)
 {
