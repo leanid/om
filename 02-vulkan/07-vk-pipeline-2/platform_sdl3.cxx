@@ -22,10 +22,10 @@ VkSurfaceKHR platform_sdl3::create_vulkan_surface(
     VkInstance instance, VkAllocationCallbacks* alloc_callbacks)
 {
     VkSurfaceKHR surface{};
-    SDL_bool     result =
+    int          result =
         SDL_Vulkan_CreateSurface(window, instance, alloc_callbacks, &surface);
 
-    if (!result)
+    if (0 != result)
     {
         throw std::runtime_error(SDL_GetError());
     }

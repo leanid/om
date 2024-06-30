@@ -74,9 +74,9 @@ int main(int argc, char** argv)
                 const struct VkAllocationCallbacks* allocator) -> VkSurfaceKHR
             {
                 VkSurfaceKHR surface{};
-                SDL_bool     result = SDL_Vulkan_CreateSurface(
+                int          result = SDL_Vulkan_CreateSurface(
                     window.get(), instance, allocator, &surface);
-                if (!result)
+                if (0 != result)
                 {
                     log << "error: can't create VkSurfaceKHR: "
                         << SDL_GetError() << std::endl;
