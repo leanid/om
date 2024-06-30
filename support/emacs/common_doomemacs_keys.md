@@ -92,3 +92,28 @@ M+p
 SPC c S
 q - to exit
 ```
+### How to debug using Doom Emacs on Linux?
+start debugging with
+```emacs
+SPC : gdb
+```
+load binary you wish to debug
+```emacs
+file ./../../build/llvm-ninja/02-vulkan/08-vk-framebuffer-cmd/08-vk-framebuffer
+```
+pass arguments to start like (r - run)
+```emacs
+gdb> r arg1 arg2 arg3
+```
+pass from terminal like
+```emacs
+>gdb --args executable_name arg1 arg2 arg3
+```
+show backtrace with command
+```emacs
+gdb>bt
+```
+stop on any exception throw 
+```emacs
+gdb>catch throw
+```
