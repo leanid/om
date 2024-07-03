@@ -18,10 +18,10 @@ void check_input(const SDL_Event& e)
 {
     using namespace std;
 
-    const array<::bind, 8> keys{ { { SDLK_w, "up" },
-                                   { SDLK_a, "left" },
-                                   { SDLK_s, "down" },
-                                   { SDLK_d, "right" },
+    const array<::bind, 8> keys{ { { SDLK_W, "up" },
+                                   { SDLK_A, "left" },
+                                   { SDLK_S, "down" },
+                                   { SDLK_D, "right" },
                                    { SDLK_LCTRL, "button_one" },
                                    { SDLK_SPACE, "button_two" },
                                    { SDLK_ESCAPE, "select" },

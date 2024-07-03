@@ -566,12 +566,12 @@ bool ImGui_ImplSdlGL3_Init(SDL_Window* window)
     io.KeyMap[ImGuiKey_Backspace]  = SDLK_BACKSPACE;
     io.KeyMap[ImGuiKey_Enter]      = SDLK_RETURN;
     io.KeyMap[ImGuiKey_Escape]     = SDLK_ESCAPE;
-    io.KeyMap[ImGuiKey_A]          = SDLK_a;
-    io.KeyMap[ImGuiKey_C]          = SDLK_c;
-    io.KeyMap[ImGuiKey_V]          = SDLK_v;
-    io.KeyMap[ImGuiKey_X]          = SDLK_x;
-    io.KeyMap[ImGuiKey_Y]          = SDLK_y;
-    io.KeyMap[ImGuiKey_Z]          = SDLK_z;
+    io.KeyMap[ImGuiKey_A]          = SDLK_A;
+    io.KeyMap[ImGuiKey_C]          = SDLK_C;
+    io.KeyMap[ImGuiKey_V]          = SDLK_V;
+    io.KeyMap[ImGuiKey_X]          = SDLK_X;
+    io.KeyMap[ImGuiKey_Y]          = SDLK_Y;
+    io.KeyMap[ImGuiKey_Z]          = SDLK_Z;
 
     io.RenderDrawListsFn =
         ImGui_ImplSdlGL3_RenderDrawLists; // Alternatively you can set this to

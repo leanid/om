@@ -149,10 +149,10 @@ struct bind
 };
 
 const std::array<bind, 8> keys{
-    { { SDLK_w, "up", event::up_pressed, event::up_released },
-      { SDLK_a, "left", event::left_pressed, event::left_released },
-      { SDLK_s, "down", event::down_pressed, event::down_released },
-      { SDLK_d, "right", event::right_pressed, event::right_released },
+    { { SDLK_W, "up", event::up_pressed, event::up_released },
+      { SDLK_A, "left", event::left_pressed, event::left_released },
+      { SDLK_S, "down", event::down_pressed, event::down_released },
+      { SDLK_D, "right", event::right_pressed, event::right_released },
       { SDLK_LCTRL,
         "button1",
         event::button1_pressed,

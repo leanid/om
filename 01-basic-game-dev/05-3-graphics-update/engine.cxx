@@ -409,10 +409,10 @@ struct bind
 #pragma pack(pop)
 
 const std::array<bind, 8> keys{
-    { bind{ "up", SDLK_w, event::up_pressed, event::up_released },
-      bind{ "left", SDLK_a, event::left_pressed, event::left_released },
-      bind{ "down", SDLK_s, event::down_pressed, event::down_released },
-      bind{ "right", SDLK_d, event::right_pressed, event::right_released },
+    { bind{ "up", SDLK_W, event::up_pressed, event::up_released },
+      bind{ "left", SDLK_A, event::left_pressed, event::left_released },
+      bind{ "down", SDLK_S, event::down_pressed, event::down_released },
+      bind{ "right", SDLK_D, event::right_pressed, event::right_released },
       bind{ "button1",
             SDLK_LCTRL,
             event::button1_pressed,

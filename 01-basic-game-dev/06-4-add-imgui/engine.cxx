@@ -633,19 +633,19 @@ struct bind
 };
 
 const std::array<bind, 8> keys{
-    { bind{ "up", SDLK_w, event::up_pressed, event::up_released, keys::up },
+    { bind{ "up", SDLK_W, event::up_pressed, event::up_released, keys::up },
       bind{ "left",
-            SDLK_a,
+            SDLK_A,
             event::left_pressed,
             event::left_released,
             keys::left },
       bind{ "down",
-            SDLK_s,
+            SDLK_S,
             event::down_pressed,
             event::down_released,
             keys::down },
       bind{ "right",
-            SDLK_d,
+            SDLK_D,
             event::right_pressed,
             event::right_released,
             keys::right },

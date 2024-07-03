@@ -696,10 +696,10 @@ struct bind
     om::keys om_key;
 };
 
-const std::array<bind, 8> keys{ { bind{ "up", SDLK_w, keys::up },
-                                  bind{ "left", SDLK_a, keys::left },
-                                  bind{ "down", SDLK_s, keys::down },
-                                  bind{ "right", SDLK_d, keys::right },
+const std::array<bind, 8> keys{ { bind{ "up", SDLK_W, keys::up },
+                                  bind{ "left", SDLK_A, keys::left },
+                                  bind{ "down", SDLK_S, keys::down },
+                                  bind{ "right", SDLK_D, keys::right },
                                   bind{ "button1", SDLK_LCTRL, keys::button1 },
                                   bind{ "button2", SDLK_SPACE, keys::button2 },
                                   bind{ "select", SDLK_ESCAPE, keys::select },
