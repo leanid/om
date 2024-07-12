@@ -15,6 +15,12 @@ Add to configuration
 ### Search Project Text Globally
 ```SPC+/```
 
+### Search current directory content (by text)
+```emacs
+SPC s d
+```
+works in treemacs and in any text buffer
+
 ### Search Project Text in files by type
 ```
 SPC+/
