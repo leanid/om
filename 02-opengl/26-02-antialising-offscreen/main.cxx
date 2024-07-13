@@ -88,7 +88,7 @@ void render_mesh(gles30::shader&          shader,
 static void destroy_opengl_context(void* ptr)
 {
     // for debug check
-    SDL_GL_DeleteContext(ptr);
+    SDL_GL_DestroyContext(ptr);
 }
 
 [[nodiscard]] std::unique_ptr<void, void (*)(void*)> create_opengl_context(

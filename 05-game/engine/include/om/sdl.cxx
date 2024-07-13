@@ -829,7 +829,7 @@ gl_context video::gl_create_context(const window& window)
 
 void video::gl_delete_context(const gl_context& context)
 {
-    SDL_GL_DeleteContext(context.data->context);
+    SDL_GL_DestroyContext(context.data->context);
     return;
 }
 

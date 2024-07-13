@@ -1224,7 +1224,7 @@ static void uninitialize()
 {
     if (already_exist)
     {
-        SDL_GL_DeleteContext(gl_context);
+        SDL_GL_DestroyContext(gl_context);
         SDL_DestroyWindow(window);
         SDL_Quit();
 

@@ -219,7 +219,7 @@ int main(int, char**)
         interpolated_render.draw_triangles(triangle_v, indexes_v);
 
         SDL_Surface* bitmapSurface = SDL_CreateSurfaceFrom(
-            pixels, width, height, pitch, SDL_PIXELFORMAT_RGB24);
+            width, height, SDL_PIXELFORMAT_RGB24, pixels, pitch);
         if (bitmapSurface == nullptr)
         {
             cerr << SDL_GetError() << endl;

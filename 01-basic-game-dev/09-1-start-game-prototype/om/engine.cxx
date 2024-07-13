@@ -1200,7 +1200,7 @@ static void uninitialize()
         /*
         SDL_PauseAudioDevice(audio_device, SDL_TRUE);
         SDL_CloseAudioDevice(audio_device);
-        SDL_GL_DeleteContext(gl_context);
+        SDL_GL_DestroyContext(gl_context);
         SDL_DestroyWindow(window);
         */
         SDL_Quit();

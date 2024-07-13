@@ -185,7 +185,7 @@ void render_mesh(gles30::shader&          shader,
 static void destroy_opengl_context(void* ptr)
 {
     // for debug check
-    SDL_GL_DeleteContext(ptr);
+    SDL_GL_DestroyContext(ptr);
 }
 
 static const char* source_to_strv(GLenum source)

@@ -220,7 +220,7 @@ void render_mesh(gles30::shader&          shader,
     SDL_assert_always(r == 0);
 
     unique_ptr<void, void (*)(void*)> gl_context(SDL_GL_CreateContext(window),
-                                                 SDL_GL_DeleteContext);
+                                                 SDL_GL_DestroyContext);
     if (nullptr == gl_context)
     {
         clog << "Failed to create: " << ask_context
