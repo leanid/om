@@ -123,3 +123,10 @@ stop on any exception throw
 ```emacs
 gdb>catch throw
 ```
+### How to use Doomemacs as calculator?
+1. go to *scratch* buffer
+2. type `(+ 1 1)` and leave cursor at last `)`
+3. execute `C+x C+e` see result in echo area
+4. if you got error `guile` version mismatch
+5. go to variable `SPC+h+v` and type like `guile-binary`
+6. edit to your guile binary name like guile3.0
