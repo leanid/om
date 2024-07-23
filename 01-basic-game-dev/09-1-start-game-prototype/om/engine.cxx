@@ -1149,8 +1149,8 @@ static void initialize_internal(std::string_view   title,
 
         const char* default_audio_device_name = nullptr;
 
-        int                num_audio_devices = 0;
-        SDL_AudioDeviceID* currently_connected =
+        int                      num_audio_devices = 0;
+        const SDL_AudioDeviceID* currently_connected =
             SDL_GetAudioPlaybackDevices(&num_audio_devices);
         if (num_audio_devices > 0)
         {

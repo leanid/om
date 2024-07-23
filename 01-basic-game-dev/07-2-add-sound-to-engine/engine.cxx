@@ -1098,7 +1098,7 @@ std::string engine_impl::initialize(std::string_view)
         return serr.str();
     }
 
-    int gl_major_ver = 0;
+    int                  gl_major_ver = 0;
     [[maybe_unused]] int result =
         SDL_GL_GetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, &gl_major_ver);
     assert(result == 0);
@@ -1284,8 +1284,8 @@ std::string engine_impl::initialize(std::string_view)
     const char* default_audio_device_name = nullptr;
 
     // SDL_FALSE - mean get only OUTPUT audio devices
-    int                num_audio_devices = 0;
-    SDL_AudioDeviceID* audio_devices =
+    int                      num_audio_devices = 0;
+    const SDL_AudioDeviceID* audio_devices =
         SDL_GetAudioPlaybackDevices(&num_audio_devices);
     if (num_audio_devices > 0)
     {

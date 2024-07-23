@@ -153,9 +153,10 @@ public:
         }
         SDL_RenderPresent(renderer);
         /* Open the first available controller. */
-        int             num_connected_gamepads = 0;
-        SDL_Gamepad*    controller             = nullptr;
-        SDL_JoystickID* joysticks = SDL_GetGamepads(&num_connected_gamepads);
+        int                   num_connected_gamepads = 0;
+        SDL_Gamepad*          controller             = nullptr;
+        const SDL_JoystickID* joysticks =
+            SDL_GetGamepads(&num_connected_gamepads);
         for (int i = 0; i < num_connected_gamepads; ++i)
         {
             if (SDL_IsGamepad(i))
