@@ -38,7 +38,8 @@ endfunction
 output_precision(2);
 format('short');
 
-angle = pi/2.0;
+angle = pi/2;
+disp(make_rot(angle));
 make_rot(angle) * [1;
                    0;
                    1]
