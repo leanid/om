@@ -1,0 +1,30 @@
+% see: https://wiki.octave.org/Using_Octave
+% variable scale = 2
+scale = 2; % print nothing cause ends with ;
+scale*scale+scale % print 6
+
+disp(100500) % print 100500
+
+x = 3/4 * pi;
+y = sin(x)
+
+
+scale_mat = [scale 0;
+             0 scale];
+disp(scale_mat);
+
+p = [1;
+     1];
+scale_mat * p
+
+
+step_x = 1.75;
+step_y = 0.74;
+
+move_mat = [1 0 step_x;
+            0 1 step_y;
+            0 0 1];
+disp(move_mat);
+
+p3 = [p(1); p(2); 1]; % indexes in matrix start from 1
+move_mat * p3
