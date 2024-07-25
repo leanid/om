@@ -28,3 +28,18 @@ disp(move_mat);
 
 p3 = [p(1); p(2); 1]; % indexes in matrix start from 1
 move_mat * p3
+
+function rot_mat = make_rot(angle)
+  rot_mat = [cos(angle) -sin(angle) 0;
+             sin(angle) cos(angle) 0;
+             0          0           1];
+endfunction
+
+output_precision(2);
+format('short');
+
+angle = pi/2.0;
+make_rot(angle) * [1;
+                   0;
+                   1]
+% expected output [0; 1; 1]
