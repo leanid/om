@@ -1,4 +1,8 @@
 % пример как сделать функцию
+% что бы запусить его из Doomemacs нужно:
+% 1. M+: run-octave
+% 2. octave> graph
+% 3. new window with graph should apeared
 t = linspace(0, 1, 1000); % от 0 до 1
 
 % X arrow
