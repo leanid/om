@@ -33,3 +33,11 @@ disp(ans2{1}.v3);
 disp(ans2{1}.v4);
 disp(ans2{2}.v3);
 disp(ans2{2}.v4);
+
+% try collision next iter
+% e = {0...1} - 1-полностью упругое столкновение 0-полносью неупругое склеиваются объекты
+syms e real;
+eq5 = e == -(v3-v4)/(v1-v2);
+ans3 = solve(eq3, eq5, v3, v4);
+disp(ans3.v3);
+disp(ans3.v4);
