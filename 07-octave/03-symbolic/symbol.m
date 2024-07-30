@@ -27,7 +27,7 @@ syms v2 real;
 syms v3 real;
 syms v4 real;
 eq3 = m1*v1 + m2*v2 == m1*v3 + m2*v4;
-eq4 = (m1*v1^2)*0.5 + (m2*v2^2)*0.5 == (m1*v3^2)*0.5 + (m2*v4^2)*0.5;
+eq4 = (m1*v1^2)/2 + (m2*v2^2)/2 == (m1*v3^2)/2 + (m2*v4^2)/2;
 ans2 = solve(eq3,eq4, v3, v4);
 disp(ans2{1}.v3);
 disp(ans2{1}.v4);
