@@ -8,7 +8,7 @@ target_compile_features(engine-04-2 PUBLIC cxx_std_20)
 # No such file or directory
 target_compile_definitions(
     engine-04-2
-    PRIVATE "$<$<PLATFORM_ID:Windows>:-DOM_DECLSPEC=__declspec(dllexport)>")
+    PRIVATE "$<$<PLATFORM_ID:Windows>:OM_DECLSPEC=__declspec(dllexport)>")
 # cmake-format: off
 # target_compile_definitions(
 #     engine-04-2
