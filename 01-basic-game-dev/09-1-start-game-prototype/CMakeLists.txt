@@ -14,7 +14,7 @@ target_compile_features(engine-09-1 PRIVATE cxx_std_20)
 
 target_compile_definitions(
     engine-09-1
-    PRIVATE "$<$<PLATFORM_ID:Windows>:-DOM_DECLSPEC=__declspec(dllexport)>")
+    PRIVATE "$<$<PLATFORM_ID:Windows>:OM_DECLSPEC=__declspec(dllexport)>")
 
 find_package(SDL3 REQUIRED)
 find_package(OpenGL REQUIRED)
@@ -38,7 +38,7 @@ target_link_libraries(game-09-1 PRIVATE engine-09-1)
 
 target_compile_definitions(
     game-09-1
-    PRIVATE "$<$<PLATFORM_ID:Windows>:-DOM_DECLSPEC=__declspec(dllimport)>")
+    PRIVATE "$<$<PLATFORM_ID:Windows>:OM_DECLSPEC=__declspec(dllimport)>")
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND APPLE)
     # using regular Clang or AppleClang
