@@ -210,9 +210,9 @@ private:
     std::vector<tri2> triangles;
 };
 
-static std::string_view get_sound_format_name(uint16_t format_value)
+static std::string_view get_sound_format_name(SDL_AudioFormat format_value)
 {
-    static const std::map<int, std::string_view> format = {
+    static const std::map<SDL_AudioFormat, std::string_view> format = {
         { SDL_AUDIO_U8, "AUDIO_U8" },       { SDL_AUDIO_S8, "AUDIO_S8" },
         { SDL_AUDIO_S16LE, "AUDIO_S16LE" }, { SDL_AUDIO_S16BE, "AUDIO_S16BE" },
         { SDL_AUDIO_S32LE, "AUDIO_S32LE" }, { SDL_AUDIO_S32BE, "AUDIO_S32BE" },
@@ -223,9 +223,9 @@ static std::string_view get_sound_format_name(uint16_t format_value)
     return it->second;
 }
 
-static std::size_t get_sound_format_size(uint16_t format_value)
+static std::size_t get_sound_format_size(SDL_AudioFormat format_value)
 {
-    static const std::map<int, std::size_t> format = {
+    static const std::map<SDL_AudioFormat, std::size_t> format = {
         { SDL_AUDIO_U8, 1 },    { SDL_AUDIO_S8, 1 },    { SDL_AUDIO_S16LE, 2 },
         { SDL_AUDIO_S16BE, 2 }, { SDL_AUDIO_S32LE, 4 }, { SDL_AUDIO_S32BE, 4 },
         { SDL_AUDIO_F32LE, 4 }, { SDL_AUDIO_F32BE, 4 },
