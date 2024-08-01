@@ -587,9 +587,15 @@ bool ImGui_ImplSdlGL3_Init(SDL_Window* window)
     // SDL_SysWMinfo wmInfo;
     // SDL_GetWindowWMInfo(window, &wmInfo, SDL_SYSWM_CURRENT_VERSION);
     // io.ImeWindowHandle = wmInfo.info.win.window;
-    HWND hwnd = (HWND)SDL_GetProperty(
-        SDL_GetWindowProperties(window), "SDL.window.win32.hwnd", nullptr);
-    io.ImeWindowHandle = hwnd;
+    SDL_PropertiesID id = SDL_GetWindowProperties(window);
+    SDL_PropertyType propertyType =
+        SDL_GetPropertyType(id, "SDL.window.win32.hwnd");
+    if (propertyType == SDL_PROPERTY_TYPE_POINTER)
+    {
+        HWND hwnd = static_cast<HWND>(
+            SDL_GetPointerProperty(id, "SDL.window.win32.hwnd", nullptr));
+        io.ImeWindowHandle = hwnd;
+    }
 #else
     (void)window;
 #endif
