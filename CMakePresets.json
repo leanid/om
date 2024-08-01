@@ -1,5 +1,5 @@
 {
-  "$schema": "https://gitlab.kitware.com/cmake/cmake/-/raw/master/Help/manual/presets/schema.json",
+  "$schema": "https://cmake.org/cmake/help/latest/_downloads/3e2d73bff478d88a7de0de736ba5e361/schema.json",
   "version": 9,
   "cmakeMinimumRequired": {
     "major": 3,
