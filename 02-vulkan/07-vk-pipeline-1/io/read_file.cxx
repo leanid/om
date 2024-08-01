@@ -33,7 +33,7 @@ content read_file(const std::filesystem::path& path)
         string msg;
         msg.reserve(512);
         msg += "error: can't read file [";
-        msg += path;
+        msg += path.generic_string();
         msg += "] cause: ";
         msg += e.what();
         throw runtime_error(msg);

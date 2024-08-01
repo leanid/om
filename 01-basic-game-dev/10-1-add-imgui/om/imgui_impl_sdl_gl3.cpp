@@ -22,6 +22,7 @@
 // SDL,GL3W
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_mouse.h>
+#include <SDL3/SDL_properties.h>
 #include <SDL3/SDL_video.h>
 
 #include "gles20.hxx"

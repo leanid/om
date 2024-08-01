@@ -30,6 +30,7 @@ if(${OM_BUILD_DEPS})
         OVERRIDE_FIND_PACKAGE TRUE)
     option(SDL_STATIC "" ON)
     option(SDL_SHARED "" ON)
+    set(CMAKE_UNITY_BUILD_MODE "GROUP")
     fetchcontent_makeavailable(SDL3)
     #fetchcontent_populate(SDL3)
     find_package(SDL3 REQUIRED)
@@ -53,6 +54,8 @@ if(${OM_BUILD_DEPS})
     fetchcontent_makeavailable(Catch2)
 
 endif(${OM_BUILD_DEPS})
+
+set(CMAKE_UNITY_BUILD_MODE "BATCH")
 
 # curses
 if(OM_BUILD_COURSE_BASIC_PROG)
