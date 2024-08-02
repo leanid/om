@@ -31,12 +31,7 @@
 // #include "picopng.hxx"
 
 #define STB_IMAGE_IMPLEMENTATION
-#pragma GCC diagnostic push
-
-// turn off the specific warning. Can also use "-Wall"
-#pragma GCC diagnostic ignored "-Wunused-parameter"
 #include "stb_image.h"
-#pragma GCC diagnostic pop
 
 // extern std::unique_ptr<om::lila> om_tat_sat();
 

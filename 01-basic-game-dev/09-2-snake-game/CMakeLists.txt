@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 3.16)
-project(09-2-start-game-protorype)
+cmake_minimum_required(VERSION 3.30)
+project(09-2-start-game-prototype)
 
 add_executable(
     engine-09-2
@@ -23,16 +23,16 @@ target_link_libraries(engine-09-2 PRIVATE SDL3::SDL3-shared OpenGL::GL)
 
 # cmake-format: off
 add_library(
-    game-09-2 SHARED MODULE
-    game/configuration_loader.hxx
-    game/fruit.cxx
-    game/fruit.hxx
-    game/game.cxx
-    game/game_object.cxx
-    game/game_object.hxx
-    game/snake.cxx
-    game/snake.hxx
-    )
+        game-09-2 SHARED MODULE
+        game/configuration_loader.hxx
+        game/fruit.cxx
+        game/fruit.hxx
+        game/game.cxx
+        game/game_object.cxx
+        game/game_object.hxx
+        game/snake.cxx
+        game/snake.hxx
+)
 # cmake-format: on
 
 target_include_directories(game-09-2 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
