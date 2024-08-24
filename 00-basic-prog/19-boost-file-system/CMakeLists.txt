@@ -15,7 +15,7 @@ set(FETCHCONTENT_QUIET OFF)
 fetchcontent_declare(
     Boost
     GIT_REPOSITORY "https://github.com/boostorg/boost.git"
-    GIT_TAG "boost-1.85.0"
+    GIT_TAG "boost-1.86.0"
     GIT_PROGRESS ON
     GIT_SHALLOW ON)
 
