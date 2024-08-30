@@ -70,11 +70,18 @@ if(${OM_BUILD_DEPS})
         GIT_REPOSITORY "https://github.com/boostorg/boost.git"
         GIT_TAG "boost-1.86.0"
         GIT_PROGRESS ON
-        GIT_SHALLOW ON)
+        GIT_SHALLOW ON
+        OVERRIDE_FIND_PACKAGE TRUE)
 
     fetchcontent_makeavailable(Boost)
-    find_package(boost_filesystem CONFIG REQUIRED)
-
+    find_package(Boost
+                 1.86.0 EXACT      # Minimum or EXACT version e.g. 1.67.0
+                 REQUIRED             # Fail with error if Boost is not found
+                 COMPONENTS filesystem # Boost libraries by their canonical name
+                         # e.g. "date_time" for "libboost_date_time"
+                         #[OPTIONAL_COMPONENTS <libs>...]
+                         # Optional Boost libraries by their canonical name)
+                )                      # e.g. "date_time" for "libboost_date_time"
 endif(${OM_BUILD_DEPS})
 
 set(CMAKE_UNITY_BUILD_MODE "BATCH")
