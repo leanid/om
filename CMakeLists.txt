@@ -55,6 +55,25 @@ if(${OM_BUILD_DEPS})
         GIT_PROGRESS TRUE
         OVERRIDE_FIND_PACKAGE TRUE)
     fetchcontent_makeavailable(Catch2)
+    find_package(Catch2 REQUIRED)
+
+    # The logging output during population can be quite verbose,
+    # making the configure stage quite noisy. This cache option
+    # (ON by default) hides all population output unless an error is encountered.
+    # If experiencing problems with hung downloads, temporarily
+    # switching this option off may help diagnose which content population
+    # is causing the issue.
+    set(FETCHCONTENT_QUIET OFF)
+
+    fetchcontent_declare(
+        Boost
+        GIT_REPOSITORY "https://github.com/boostorg/boost.git"
+        GIT_TAG "boost-1.86.0"
+        GIT_PROGRESS ON
+        GIT_SHALLOW ON)
+
+    fetchcontent_makeavailable(Boost)
+    find_package(boost_filesystem CONFIG REQUIRED)
 
 endif(${OM_BUILD_DEPS})
 
