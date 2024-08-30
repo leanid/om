@@ -50,7 +50,7 @@ int main(int /*argc*/, char* /*argv*/[])
 
     clog << "start sdl init" << endl;
 
-    if (SDL_Init(SDL_INIT_AUDIO) < 0)
+    if (!SDL_Init(SDL_INIT_AUDIO))
     {
         cerr << "error: can't init audio: " << SDL_GetError();
         return EXIT_FAILURE;

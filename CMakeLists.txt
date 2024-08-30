@@ -48,9 +48,12 @@ if(${OM_BUILD_DEPS})
 
     # use Catch2::Catch2 or Catch2::Catch2WithMain
     fetchcontent_declare(
-        Catch2 GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+        Catch2
+        GIT_REPOSITORY https://github.com/catchorg/Catch2.git
         GIT_TAG v3.4.0 # or a later release
-        )
+        GIT_SHALLOW TRUE
+        GIT_PROGRESS TRUE
+        OVERRIDE_FIND_PACKAGE TRUE)
     fetchcontent_makeavailable(Catch2)
 
 endif(${OM_BUILD_DEPS})
