@@ -3,6 +3,9 @@
 dnf install vulkan-loader-devel vulkan-tools vulkan-headers vulkan-validation-layers-devel
 ```
 # How to install Vulkan SDK on Windows (nice and easy way)
+on Windows you can just add $env VULKAN_SDK=C:/VulkanSDK/1.3.290.0
+if you already have VulkanSDK installed
+or:
 ```cmd
 .\vcpkg install vulkan 
 ```
