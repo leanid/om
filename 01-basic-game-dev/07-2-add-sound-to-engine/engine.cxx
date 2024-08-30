@@ -1372,8 +1372,7 @@ sound_buffer_impl::sound_buffer_impl(std::string_view  path,
     // freq, format, channels, and samples - used by SDL_LoadWAV_IO
     SDL_AudioSpec file_audio_spec;
 
-    if (-1 ==
-        SDL_LoadWAV_IO(file, SDL_TRUE, &file_audio_spec, &buffer, &length))
+    if (!SDL_LoadWAV_IO(file, SDL_TRUE, &file_audio_spec, &buffer, &length))
     {
         throw std::runtime_error(std::string("can't load wav: ") + path.data());
     }
