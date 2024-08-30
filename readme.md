@@ -10,7 +10,7 @@
 Om is a nice 2d game engine for multiplatform studying.
 
 - Environmental friendliness (take less do more with c++)
-- Modern IT technology (**c++20**, **cmake-3.26**, **gradle**)
+- Modern IT technology (**c++23**, **cmake-3.30**, **gradle**)
 - Creativity (create funny tools with **imgui** library)
 - Fun 🤣
 
