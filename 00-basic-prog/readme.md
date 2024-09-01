@@ -7,3 +7,7 @@
 2. float, double
 3. const char*, std::string
 Пока думаю объяснять эти тыпы, прямой их имплементацией, что бы сразу человек понимал, как они работают.
+
+# TODO
+1. tutorial localization in C++ example with boost.locale
+2. tutorial signing executable on Windows (Install binary or exe or dll)
