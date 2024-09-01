@@ -53,7 +53,8 @@ if(${OM_BUILD_DEPS})
         GIT_TAG v3.4.0 # or a later release
         GIT_SHALLOW TRUE
         GIT_PROGRESS TRUE
-        OVERRIDE_FIND_PACKAGE TRUE)
+        OVERRIDE_FIND_PACKAGE TRUE # to find correct version
+        EXCLUDE_FROM_ALL)
     fetchcontent_makeavailable(Catch2)
     find_package(Catch2 REQUIRED)
 
@@ -64,34 +65,27 @@ if(${OM_BUILD_DEPS})
     # switching this option off may help diagnose which content population
     # is causing the issue.
     set(FETCHCONTENT_QUIET OFF)
-#    # Set this to avoid using Boost's CMake
-#    set(Boost_NO_BOOST_CMAKE ON)
-#
-#    FetchContent_Declare(
-#            Boost
-#            URL "https://archives.boost.io/release/1.86.0/source/boost_1_86_0.tar.bz2"
-#            OVERRIDE_FIND_PACKAGE TRUE
-#            EXCLUDE_FROM_ALL
-#    )
-#    message(STATUS "Boost just declared")
+
     fetchcontent_declare(
         Boost
         GIT_REPOSITORY "https://github.com/boostorg/boost.git"
         GIT_TAG "boost-1.86.0"
         GIT_PROGRESS ON
         GIT_SHALLOW ON
-        OVERRIDE_FIND_PACKAGE TRUE
+        OVERRIDE_FIND_PACKAGE TRUE # needed to find correct Boost
         EXCLUDE_FROM_ALL)
 
     fetchcontent_makeavailable(Boost)
-    find_package(Boost
-                 1.86.0 EXACT      # Minimum or EXACT version e.g. 1.67.0
-                 REQUIRED             # Fail with error if Boost is not found
-                 COMPONENTS filesystem # Boost libraries by their canonical name
-                         # e.g. "date_time" for "libboost_date_time"
-                         #[OPTIONAL_COMPONENTS <libs>...]
-                         # Optional Boost libraries by their canonical name)
-                )                      # e.g. "date_time" for "libboost_date_time"
+    find_package(
+        Boost
+        1.86.0
+        EXACT # Minimum or EXACT version e.g. 1.67.0
+        REQUIRED # Fail with error if Boost is not found
+        COMPONENTS filesystem # Boost libraries by their canonical name
+        # e.g. "date_time" for "libboost_date_time"
+        #[OPTIONAL_COMPONENTS <libs>...]
+        # Optional Boost libraries by their canonical name)
+        ) # e.g. "date_time" for "libboost_date_time"
 endif(${OM_BUILD_DEPS})
 
 set(CMAKE_UNITY_BUILD_MODE "BATCH")
