@@ -64,14 +64,24 @@ if(${OM_BUILD_DEPS})
     # switching this option off may help diagnose which content population
     # is causing the issue.
     set(FETCHCONTENT_QUIET OFF)
-
+#    # Set this to avoid using Boost's CMake
+#    set(Boost_NO_BOOST_CMAKE ON)
+#
+#    FetchContent_Declare(
+#            Boost
+#            URL "https://archives.boost.io/release/1.86.0/source/boost_1_86_0.tar.bz2"
+#            OVERRIDE_FIND_PACKAGE TRUE
+#            EXCLUDE_FROM_ALL
+#    )
+#    message(STATUS "Boost just declared")
     fetchcontent_declare(
         Boost
         GIT_REPOSITORY "https://github.com/boostorg/boost.git"
         GIT_TAG "boost-1.86.0"
         GIT_PROGRESS ON
         GIT_SHALLOW ON
-        OVERRIDE_FIND_PACKAGE TRUE)
+        OVERRIDE_FIND_PACKAGE TRUE
+        EXCLUDE_FROM_ALL)
 
     fetchcontent_makeavailable(Boost)
     find_package(Boost

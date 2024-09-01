@@ -8,6 +8,8 @@ Add next to your Doomemacs .config. Or read about it in (format +on-save)
 ## CMake Presets not working
 Add to configuration
 ```lisp
+(setq projectile-enable-cmake-presets t)
+or
 (projectile-enable-cmake-presets t)
 ```
 ## Search
