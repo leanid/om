@@ -12,6 +12,18 @@ Add to configuration
 or
 (projectile-enable-cmake-presets t)
 ```
+## Quit without acknolidge
+```lisp
+(setq confirm-kill-emacs nil)
+```
+## Maximize on startup
+To maximize or fullscreen Emacs at startup, add one of the following to ~/.doom.d/config.el:
+```lisp
+(add-to-list 'initial-frame-alist '(fullscreen . maximized))
+(add-hook 'window-setup-hook #'toggle-frame-maximized)
+(add-hook 'window-setup-hook #'toggle-frame-fullscreen)
+```
+Each method has slightly different effects that vary from OS to OS. You’ll have to decide for yourself which you prefer.
 ## Search
 
 ### Search Project Text Globally
