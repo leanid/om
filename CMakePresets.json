@@ -96,7 +96,7 @@
         },
         "CMAKE_CXX_SCAN_FOR_MODULES": {
           "type": "INTERNAL",
-          "value": "OFF"
+          "value": "ON"
         }
       }
     },
