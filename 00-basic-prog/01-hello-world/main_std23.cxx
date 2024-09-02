@@ -2,5 +2,6 @@ import std;
 
 int main()
 {
-    std::println("Hello World! From c++23");
+    std::cout << "Hello World! From c++23" << std::endl;
+    return std::cout.fail();
 }
