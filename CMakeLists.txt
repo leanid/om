@@ -1,10 +1,17 @@
 cmake_minimum_required(VERSION 3.30)
 
-project(gamedev_study CXX)
+# Enables the Standard module support. This needs to be done
+# before selecting the languages.
+set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "0e5b6991-d74f-4b3d-a41c-cf096e0b2508")
+
+project("gamedev_study" LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
+# Currently CMake requires extensions enabled when using import std.
+# https://gitlab.kitware.com/cmake/cmake/-/issues/25916
+# https://gitlab.kitware.com/cmake/cmake/-/issues/25539
+set(CMAKE_CXX_EXTENSIONS ON)
 
 option(OM_BUILD_DEPS "download and build dependencies as part of current build"
        ON)

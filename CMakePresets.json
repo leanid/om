@@ -97,6 +97,10 @@
         "CMAKE_CXX_SCAN_FOR_MODULES": {
           "type": "INTERNAL",
           "value": "ON"
+        },
+        "CMAKE_CXX_MODULE_STD": {
+          "type": "INTERNAL",
+          "value": "ON"
         }
       }
     },
