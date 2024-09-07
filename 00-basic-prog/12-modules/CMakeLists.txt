@@ -6,14 +6,10 @@ set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD
     # `Help/dev/experimental.rst` in the CMake source corresponding to
     # your CMake build for the exact value to use.
     "0e5b6991-d74f-4b3d-a41c-cf096e0b2508")
-set(CMAKE_CXX_MODULE_STD ON)
-
 # C++ needs to be enabled.
 project("modules-12" LANGUAGES CXX)
 
-message(STATUS "c++ compiler: ${CMAKE_CXX_COMPILER_ID}-"
-               "${CMAKE_CXX_COMPILER_VERSION}")
-# Set language version used
+set(CMAKE_CXX_MODULE_STD ON)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED YES)
 # Currently CMake requires extensions enabled when using import std.
@@ -21,6 +17,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED YES)
 # https://gitlab.kitware.com/cmake/cmake/-/issues/25539
 set(CMAKE_CXX_EXTENSIONS ON)
 # implement it when cmake+ninja+g++ support modules out of the box
+
+message(STATUS "c++ compiler: ${CMAKE_CXX_COMPILER_ID}-"
+               "${CMAKE_CXX_COMPILER_VERSION}")
+message(STATUS "is import std;"
+               " support present: ${CMAKE_CXX_COMPILER_IMPORT_STD}")
 
 add_executable(modules-12 hello.cxx main.cxx)
 
