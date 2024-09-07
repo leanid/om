@@ -1,16 +1,19 @@
 cmake_minimum_required(VERSION 3.30)
-# Enables the Standard module support. This needs to be done
-# before selecting the languages.
-set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "0e5b6991-d74f-4b3d-a41c-cf096e0b2508")
+# Set experimental flag to enable `import std` support from CMake.
+# This must be enabled before C++ language support.
+set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD
+    # This specific value changes as experimental support evolves. See
+    # `Help/dev/experimental.rst` in the CMake source corresponding to
+    # your CMake build for the exact value to use.
+    "0e5b6991-d74f-4b3d-a41c-cf096e0b2508")
 set(CMAKE_CXX_MODULE_STD ON)
 
+# C++ needs to be enabled.
 project("modules-12" LANGUAGES CXX)
 
 message(STATUS "c++ compiler: ${CMAKE_CXX_COMPILER_ID}-"
                "${CMAKE_CXX_COMPILER_VERSION}")
-#
 # Set language version used
-#
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED YES)
 # Currently CMake requires extensions enabled when using import std.
