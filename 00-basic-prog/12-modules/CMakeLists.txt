@@ -1,3 +1,4 @@
+# this example currently works on msvc-2022 x64 with Ninja generator
 cmake_minimum_required(VERSION 3.30)
 # Set experimental flag to enable `import std` support from CMake.
 # This must be enabled before C++ language support.
@@ -22,8 +23,24 @@ message(STATUS "c++ compiler: ${CMAKE_CXX_COMPILER_ID}-"
                "${CMAKE_CXX_COMPILER_VERSION}")
 message(STATUS "is import std;"
                " support present: ${CMAKE_CXX_COMPILER_IMPORT_STD}")
+message(STATUS "generator is: ${CMAKE_GENERATOR}")
 
-add_executable(modules-12 hello.cxx main.cxx)
+if(CMAKE_GENERATOR STREQUAL "Ninja" OR CMAKE_GENERATOR STREQUAL
+                                       "Ninja Multi-Config")
+    add_executable(modules-12 "main.cxx")
+    target_sources(
+        modules-12
+        PRIVATE FILE_SET
+                modules
+                TYPE
+                CXX_MODULES
+                FILES
+                "hello.cxx")
+    message(STATUS "use import std; with current toolchain")
+else()
+    message(STATUS "Only [Ninja] or [Ninja Multi-Config]"
+                   " generator supported in cmake 3.30")
+endif()
 
 # how to build it on Linux with clang++?
 # mkdir build
