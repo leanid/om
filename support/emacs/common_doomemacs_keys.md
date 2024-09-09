@@ -1,5 +1,9 @@
 # Note about commands in Doomemacs
 # Installation problems
+## doom sync, upgrade on windows in any shell
+Try passing it to emacs manually. E.g.
+- `doom sync` -> `emacs -q --no-site-file --script bin/doom -- sync`
+- `doom upgrade` -> `emacs -q --no-site-file --script bin/doom -- upgrade` (`doom upgrade` won't be able to restart and run `doom sync` afterwards, by itself, when used this way, so you'll have to `doom sync -u` manually after upgrading)
 ## Formatter for your language strange behavior
 Add next to your Doomemacs .config. Or read about it in (format +on-save)
 ```lisp
