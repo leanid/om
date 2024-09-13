@@ -1,4 +1,5 @@
-*.cxx text eof=lf
-*.hxx text eof=lf
-*.md text eof=lf
-CMakeLists.txt text eof=lf
+*.cxx text eol=lf
+*.hxx text eol=lf
+*.md text eol=lf
+CMakeLists.txt text eol=lf
+* text=lf
