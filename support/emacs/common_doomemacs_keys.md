@@ -148,3 +148,11 @@ gdb>catch throw
 4. if you got error `guile` version mismatch
 5. go to variable `SPC+h+v` and type like `guile-binary`
 6. edit to your guile binary name like guile3.0
+## How to see buffer encoding and EOL(end of line)
+1. open doom config (SPC+f+P+config)
+2. add line:
+```emacs
+;; Whether display the buffer encoding.
+(setq doom-modeline-buffer-encoding t)
+```
+3. result will look like: CRLF UTF-8
