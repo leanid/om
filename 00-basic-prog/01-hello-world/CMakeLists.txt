@@ -49,3 +49,7 @@ if(UNIX OR MINGW) # BONUS for curious (works only in xterm, gnome-terminal or in
     add_executable(hello_cout_colored cout_main_colored.cxx)
     target_compile_features(hello_cout_colored PRIVATE cxx_std_20)
 endif(UNIX OR MINGW)
+
+if(WIN32)
+    add_executable(win32_main WIN32 win32_main.cxx)
+endif(WIN32)
