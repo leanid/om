@@ -1,3 +1,5 @@
+#if defined(__linux__) || defined(__MINGW32__)
+
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
@@ -162,3 +164,5 @@ bool is_terminal_support_256color()
     }
     return colored_256;
 }
+
+#endif // defined(__linux__)

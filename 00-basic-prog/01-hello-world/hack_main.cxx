@@ -1,3 +1,5 @@
+#if defined(__linux__)
+
 #include <sys/syscall.h>
 #include <unistd.h>
 
@@ -21,3 +23,5 @@ extern "C"
         syscall(SYS_exit, result_code);
     }
 }
+
+#endif // defined(__linux__)
