@@ -131,7 +131,7 @@
       "cacheVariables": {
         "CMAKE_MSVC_RUNTIME_LIBRARY":  {
           "type": "INTERNAL",
-          "value": "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL"
+          "value": "MultiThreaded$<$<CONFIG:Debug>:Debug>"
         }
       },
       "condition": {
