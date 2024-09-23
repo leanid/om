@@ -128,6 +128,12 @@
       "architecture": "x64",
       "toolset": "v143",
       "binaryDir": "${sourceDir}/build/vs2022-x64",
+      "cacheVariables": {
+        "CMAKE_MSVC_RUNTIME_LIBRARY":  {
+          "type": "INTERNAL",
+          "value": "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL"
+        }
+      },
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",
