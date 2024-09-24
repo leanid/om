@@ -105,6 +105,24 @@
       }
     },
     {
+      "name": "ninja-clang",
+      "inherits": "ninja",
+      "displayName": "Ninja-clang",
+      "description": "build using Ninja generator and clang++ compiler",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/ninja-clang",
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": {
+          "type": "INTERNAL",
+          "value": "clang++"
+        },
+        "CMAKE_C_COMPILER": {
+          "type": "INTERNAL",
+          "value": "clang"
+        }
+      }
+    },
+    {
       "name": "xcode",
       "inherits": "common",
       "displayName": "xcode",
@@ -161,6 +179,10 @@
     {
       "name": "ninja-llvm",
       "configurePreset": "ninja-llvm"
+    },
+    {
+      "name": "ninja-clang",
+      "configurePreset": "ninja-clang"
     },
     {
       "name": "xcode",

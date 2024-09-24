@@ -21,9 +21,17 @@ set(CMAKE_CXX_EXTENSIONS ON)
 
 message(STATUS "c++ compiler: ${CMAKE_CXX_COMPILER_ID}-"
                "${CMAKE_CXX_COMPILER_VERSION}")
-message(STATUS "is import std;"
-               " support present: ${CMAKE_CXX_COMPILER_IMPORT_STD}")
+message(STATUS "toolchain [import std;]" " support present for standards: "
+               "[${CMAKE_CXX_COMPILER_IMPORT_STD}]")
 message(STATUS "generator is: ${CMAKE_GENERATOR}")
+
+if(23 IN_LIST CMAKE_CXX_COMPILER_IMPORT_STD)
+    message(STATUS "current toolchain support [import std;]")
+else()
+    message(STATUS "current toolchain DOES NOT support [import std;]"
+                   "skip modules-12 example")
+    return()
+endif()
 
 if(CMAKE_GENERATOR STREQUAL "Ninja" OR CMAKE_GENERATOR STREQUAL
                                        "Ninja Multi-Config")
