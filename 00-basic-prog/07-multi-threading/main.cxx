@@ -23,7 +23,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
     auto print_chars_unsafe =
         [&out_file](const string_view& str, size_t num_of_iter)
     {
-        for (size_t i = 0; i < num_of_iter; ++i)
+        while (num_of_iter--)
         {
             out_file << str;
             // fix: c++20
@@ -37,9 +37,8 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
         begin(print_patterns),
         end(print_patterns),
         begin(threads),
-        [&print_chars_unsafe, &num_of_iterations](const string_view& pattern) {
-            return thread{ print_chars_unsafe, pattern, num_of_iterations };
-        });
+        [&print_chars_unsafe, &num_of_iterations](const string_view& pattern)
+        { return thread{ print_chars_unsafe, pattern, num_of_iterations }; });
 
     for_each(begin(threads), end(threads), [](thread& t) { t.join(); });
 
