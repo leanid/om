@@ -10,7 +10,11 @@
 # to see file info
 
 ## compilation process
-
+0. to see default macro from your compiler do:
+``` bash
+echo | gcc -dM -E -
+echo | clang -dM -E -
+```
 1. preprocess
 `g++ -E main.cxx > prep.cxx`
 2. compilation info asm
