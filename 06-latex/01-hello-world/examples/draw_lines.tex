@@ -1,0 +1,24 @@
+\begin{tikzpicture}
+	\draw[ultra thick] (0,3) -- (2,3);
+	\draw[very thick] (0,2.5) -- (2,2.5);
+	\draw[thick] (0,2) -- (2,2);
+	\draw[thin] (0,1.5) -- (2,1.5);
+	\draw[very thin] (0,1) -- (2,1);
+	\draw[ultra thin] (0,.5) -- (2,.5);
+
+	\draw node at (3, 3) {\tiny Ultra Thick};
+	\draw node at (3, 2.5) {\tiny Very Thick};
+	\draw node at (3, 2) {\tiny Thick};
+	\draw node at (3, 1.5) {\tiny Thin};
+	\draw node at (3, 1) {\tiny Very Thin };
+	\draw node at (3, 0.5) {\tiny Ultra Thin};
+\end{tikzpicture}
+
+\begin{tikzpicture}
+	\draw[ultra thick, ->] (0,3) -- (2,3);
+	\draw[very thick, >-{Stealth}] (0,2.5) -- (2,2.5);
+	\draw[thick, -{Stealth[red]}] (0,2) -- (2,2);
+	\draw[thin, ->] (0,1.5) -- (2,1.5);
+	\draw[very thin, <->] (0,1) -- (2,1);
+	\draw[ultra thin,-{Stealth[length=8pt,width=2pt]}] (0,.5) -- (2,.5);
+\end{tikzpicture}
