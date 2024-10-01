@@ -81,28 +81,19 @@
 символов: \\ \textbackslash  \textasciicircum \~{}  `` ''
 
 \subsection{Размеры шрифта, относительные}
-\include{examples/text_size_example}
+\input{examples/text_size_example}
 \normalsize
 
 \section{Формулы}
 
 \subsection{Вывод формул, примеры}
-\include{examples/equations_example}
+\input{examples/equations_example}
 \section{Графика}
 
 \subsection{2d графики}
 
 \subsubsection{Минимальный график с сеткой}
-
-\begin{tikzpicture}
-	\begin{axis}[
-			title=Любимая фукнция всех школьников,
-			xlabel={Ось aбсцисс},
-			ylabel={Ось ординат},
-			grid=major]
-		\addplot{x^2};
-	\end{axis}
-\end{tikzpicture}
+\input{examples/2d_func_example}
 
 \subsubsection{Несколько функций, оси координат}
 \begin{figure}
