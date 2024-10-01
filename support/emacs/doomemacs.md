@@ -156,3 +156,15 @@ gdb>catch throw
 (setq doom-modeline-buffer-encoding t)
 ```
 3. result will look like: CRLF UTF-8
+### How to use multiple dictionaries for spell checking in Doomemacs?
+Just see: https://emacs.stackexchange.com/questions/21378/spell-check-with-multiple-dictionaries
+or copy code and paste into doom/config.el (C+f+P+config)
+```elisp
+(with-eval-after-load "ispell"
+  (setq ispell-program-name "hunspell")
+  (setq ispell-dictionary "en_US,ru_RU")
+  ;; ispell-set-spellchecker-params has to be called
+  ;; before ispell-hunspell-add-multi-dic will work
+  (ispell-set-spellchecker-params)
+  (ispell-hunspell-add-multi-dic "en_US,ru_RU"))
+```
