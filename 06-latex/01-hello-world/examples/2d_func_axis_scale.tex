@@ -1,0 +1,28 @@
+%\resizebox{15cm}{7cm}
+\scalebox{1.5}
+{
+	\begin{tikzpicture}
+		\begin{axis}[
+				clip=false,
+				xmin=0, xmax=2.5*pi,
+				ymin=-1.5, ymax=1.5,
+				axis lines=middle,
+				samples=50,
+				xlabel={x},
+				ylabel={y},
+				xtick={0,pi/2,pi,3*pi/2,2*pi},
+				xticklabels={$0$,$\frac{\pi}{2}$,$\pi$,
+						$\frac{3\pi}{2}$,$2\pi$},
+				xticklabel style={anchor=south west},
+				xmajorgrids=true,
+				grid style=dashed
+			]
+			\addplot[color=green,
+				domain=0:2*pi,
+				line width=2pt]{sin(deg(x))}
+			node[right,pos=0.8]{$f(x)=sin(x)$};
+			\addplot[color=red,domain=0:2*pi]{cos(deg(x))}
+			node[right,pos=0.9]{$f(x)=cos(x)$};
+		\end{axis}
+	\end{tikzpicture}
+}
