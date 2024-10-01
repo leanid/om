@@ -1,0 +1,13 @@
+\begin{tikzpicture}[
+		SIR/.style={rectangle, draw=red!60, fill=red!5, very thick, minimum size=5mm},
+	]
+	%Nodes
+	\node[SIR]    (Susceptible)                              {Susceptible $S(t)$};
+	\node[SIR]    (Infectious)       [below=of Susceptible] {Infectious $I(t)$};
+	\node[SIR]    (Recovered)       [below=of Infectious] {Recovered $R(t)$};
+
+	%Lines
+	\draw[->, very thick] (Susceptible.south)  to node[right] {$a$} (Infectious.north);
+	\draw[->, very thick] (Infectious.south)  to node[right] {$b$} (Recovered.north);
+	\draw[->, very thick] (Recovered.east) .. controls  +(right:7mm) and +(right:7mm)   .. (Susceptible.east);
+\end{tikzpicture}

@@ -1,0 +1,23 @@
+\begin{figure}
+	\begin{lstlisting}[
+	  basicstyle=\ttfamily, % without this - char** - problem
+	  language={[11]C++},
+	  %float,
+	  fontadjust=true,
+	  keepspaces=true,
+	  escapeinside={},
+	  showspaces=false,
+	  showstringspaces=false,
+	  stringstyle=\color{green},
+	  frame=single,
+	  numbers=left]
+#include <iostream>
+
+int main(int argc, char** argv)
+{
+    std::cout << "hello world" << std::endl;
+    return std::cout.fail();
+}   \end{lstlisting}
+	\caption{C++ Hello World Example}
+	\label{lst:hello}
+\end{figure}

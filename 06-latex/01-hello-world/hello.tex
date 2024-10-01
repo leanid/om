@@ -115,100 +115,24 @@
 
 \subsection{Окружности, заливка, арки, элипсы}
 
-\begin{figure}[h] %t-top b-bottom h-here
-	\begin{center}
-		\begin{tikzpicture}%[transform canvas={scale=4.0}]  %%[scale=4] ONLY changes distances, not the canvas
-			\draw[blue,line width=2pt] (0,4) arc (90:-90:2cm and 4cm);
-			\draw[dash pattern=on 7pt off 5pt,red,line width=2pt] (0,4) arc (90:270:2cm and 4cm);
-			\draw[line width=2pt] (0,0) circle (4cm);
-			\filldraw[red] (0,4) circle  (0.1); %add fill=, and draw= to have separate colours
-			\filldraw[red] (0,-4) circle (0.1);
-			\shade[ball color=blue!10!white,opacity=0.20] (0,0) circle (4cm);
-		\end{tikzpicture}
-	\end{center}
-	\caption{красивый сложный, многослойный рисунок}
-	\label{fig:circle1}
-\end{figure}
+\input{examples/draw_circle_elipce_arc}
 
 \subsection{Граф, сложный граф со стрелками}
-
-\begin{tikzpicture}[
-		SIR/.style={rectangle, draw=red!60, fill=red!5, very thick, minimum size=5mm},
-	]
-	%Nodes
-	\node[SIR]    (Susceptible)                              {Susceptible $S(t)$};
-	\node[SIR]    (Infectious)       [below=of Susceptible] {Infectious $I(t)$};
-	\node[SIR]    (Recovered)       [below=of Infectious] {Recovered $R(t)$};
-
-	%Lines
-	\draw[->, very thick] (Susceptible.south)  to node[right] {$a$} (Infectious.north);
-	\draw[->, very thick] (Infectious.south)  to node[right] {$b$} (Recovered.north);
-	\draw[->, very thick] (Recovered.east) .. controls  +(right:7mm) and +(right:7mm)   .. (Susceptible.east);
-\end{tikzpicture}
+\input{examples/draw_graph}
 %\vspace{1in}
-\begin{tikzpicture}[
-		youngnode/.style={rectangle, draw=red!60, fill=red!5, very thick, minimum size=40},
-		oldnode/.style={rectangle, draw=blue!60, fill=blue!5, very thick, minimum size=40},
-	]
-	%Nodes
-	\node[oldnode]        (SusO)                            { $S_O(t)$};
-	\node[oldnode]        (InfO)       [below=of SusO]      { $I_O(t)$};
-	\node[oldnode]        (RecO)       [below=of InfO]      { $R_O(t)$};
-
-	\node[youngnode]      (SusY)        [left=of SusO]      { $S_Y(t)$};
-	\node[youngnode]      (InfY)        [left=of InfO]      { $I_Y(t)$};
-	\node[youngnode]      (RecY)        [left=of RecO]      { $R_Y(t)$};
-
-	%Lines
-	\draw[->, very thick] (SusO.south east)  to node[right] {$a_{OO}$} (InfO.north east);
-	\draw[->, very thick] (InfO.south)  to node[right] {$b_O$} (RecO.north);
-	\draw[->, very thick] (RecO.east)  .. controls  +(right:17mm) and +(right:17mm)   .. (SusO.east);
-
-	\draw[->, very thick] (SusY.south west)  to node[left] {$a_{YY}$} (InfY.north west);
-	\draw[->, very thick] (InfY.south)  to node[left] {$b_Y$} (RecY.north);
-	\draw[->, very thick] (RecY.west) .. controls  +(left:17mm) and +(left:17mm)   .. (SusY.west);
-
-	\draw[dashed,->, very thick] (InfO.north west)  to  (SusY.south east);
-	\draw[->, very thick] (SusY.south east)  to node[left] {$a_{OY}$} (InfY.north east);
-
-	\draw[->, very thick] (SusO.south west)  to node[right] {$a_{YO}$} (InfO.north west);
-	\draw[dashed,->, very thick] (InfY.north east)  to  (SusO.south west);
-\end{tikzpicture}
+\input{examples/draw_complex_graph}
 
 \section{Code listings}
 \subsection{Однострочный код}
-Что бы прямо в тексте сделать односточную вставку кода, можно испполльзовать verb вот так \verb|std::string str{"hello"};|, а
-можно еще попробывать вот так, более современный способ:
-\lstinline[language=C++,basicstyle=\ttfamily,]!std::vector<const char*> numbers{"hello world"};!
+
+\input{examples/code_single_line}
 
 \subsection{Многострочный код}
 
-\begin{figure}
-	\begin{lstlisting}[
-	  basicstyle=\ttfamily, % without this - char** - problem
-	  language={[11]C++},
-	  %float,
-	  fontadjust=true,
-	  keepspaces=true,
-	  escapeinside={},
-	  showspaces=false,
-	  showstringspaces=false,
-	  stringstyle=\color{green},
-	  frame=single,
-	  numbers=left]
-#include <iostream>
-
-int main(int argc, char** argv)
-{
-    std::cout << "hello world" << std::endl;
-    return std::cout.fail();
-}   \end{lstlisting}
-	\caption{C++ Hello World Example}
-	\label{lst:hello}
-\end{figure}
-
+\input{examples/code_multiline}
 
 \setcounter{tocdepth}{3}
+
 \tableofcontents
 
 \end{document}
