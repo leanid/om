@@ -748,9 +748,9 @@ public:
 
         if (it != end(keys))
         {
-            const std::uint8_t* state = SDL_GetKeyboardState(nullptr);
-            SDL_Keymod          mod{};
-            int sdl_scan_code = SDL_GetScancodeFromKey(it->key, &mod);
+            const bool* state = SDL_GetKeyboardState(nullptr);
+            SDL_Keymod  mod{};
+            int         sdl_scan_code = SDL_GetScancodeFromKey(it->key, &mod);
             return state[sdl_scan_code];
         }
         return false;

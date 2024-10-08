@@ -68,10 +68,10 @@ int main(int /*argc*/, char* /*argv*/[])
         return EXIT_FAILURE;
     }
 
-    SDL_AudioSpec  audio_spec_from_file{};
-    const SDL_bool auto_delete_file            = SDL_TRUE;
-    uint8_t*       sample_buffer_from_file     = nullptr;
-    uint32_t       sample_buffer_len_from_file = 0;
+    SDL_AudioSpec audio_spec_from_file{};
+    const bool    auto_delete_file            = true;
+    uint8_t*      sample_buffer_from_file     = nullptr;
+    uint32_t      sample_buffer_len_from_file = 0;
 
     clog << "loading sample buffer from file: " << file_name << endl;
 
