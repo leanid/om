@@ -225,7 +225,7 @@ public:
                      sdl_event.type == SDL_EVENT_GAMEPAD_BUTTON_UP)
             {
                 // TODO finish implementation
-                if (sdl_event.button.state == SDL_PRESSED)
+                if (sdl_event.button.down)
                 {
                     e = event::button1_pressed;
                 }
