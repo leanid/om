@@ -251,7 +251,8 @@ private:
         bool render_queue_found = it != queue_properties.end();
         bool all_extensions_found =
             std::ranges::all_of(device_extensions,
-                                [&physical, this](const char* extension_name) {
+                                [&physical, this](const char* extension_name)
+                                {
                                     return check_device_extension_supported(
                                         physical, extension_name);
                                 });
@@ -636,7 +637,7 @@ int main(int argc, char** argv)
                 const struct VkAllocationCallbacks* allocator) -> VkSurfaceKHR
             {
                 VkSurfaceKHR surface{};
-                SDL_bool     result = SDL_Vulkan_CreateSurface(
+                bool         result = SDL_Vulkan_CreateSurface(
                     window.get(), instance, allocator, &surface);
                 if (!result)
                 {

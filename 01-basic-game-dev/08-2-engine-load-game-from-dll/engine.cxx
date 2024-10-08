@@ -319,7 +319,7 @@ sound_buffer_impl::sound_buffer_impl(std::string_view  path,
     // freq, format, channels, and samples - used by SDL_LoadWAV_IO
     SDL_AudioSpec file_audio_spec;
 
-    if (!SDL_LoadWAV_IO(file, SDL_TRUE, &file_audio_spec, &buffer, &length))
+    if (!SDL_LoadWAV_IO(file, true, &file_audio_spec, &buffer, &length))
     {
         throw std::runtime_error(std::string("can't load wav: ") + path.data());
     }
@@ -800,9 +800,9 @@ bool engine::is_key_down(const enum keys key)
 
     if (it != end(keys))
     {
-        const std::uint8_t* state = SDL_GetKeyboardState(nullptr);
-        SDL_Keymod          mod{};
-        int sdl_scan_code = SDL_GetScancodeFromKey(it->key, &mod);
+        const bool* state = SDL_GetKeyboardState(nullptr);
+        SDL_Keymod  mod{};
+        int         sdl_scan_code = SDL_GetScancodeFromKey(it->key, &mod);
         return state[sdl_scan_code];
     }
     return false;
@@ -1014,9 +1014,9 @@ engine::engine(std::string_view)
                  << compiled << " " << linked << endl;
         }
 
-        const int init_result = SDL_Init(
-            SDL_INIT_TIMER | SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_EVENTS |
-            SDL_INIT_JOYSTICK | SDL_INIT_HAPTIC | SDL_INIT_GAMEPAD);
+        const int init_result =
+            SDL_Init(SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_EVENTS |
+                     SDL_INIT_JOYSTICK | SDL_INIT_HAPTIC | SDL_INIT_GAMEPAD);
         if (init_result != 0)
         {
             const char* err_message = SDL_GetError();
