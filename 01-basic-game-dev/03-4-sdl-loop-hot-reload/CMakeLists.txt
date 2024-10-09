@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16...3.23)
+cmake_minimum_required(VERSION 3.30)
 project(03-4-sdl-loop-hot-reload)
 
 add_executable(engine-03-4 engine.cxx engine.cxx engine.hxx)
