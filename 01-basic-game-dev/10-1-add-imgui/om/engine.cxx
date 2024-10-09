@@ -1447,8 +1447,8 @@ int initialize_and_start_main_loop()
                                           "./build/Debug/libgame-10-1.dll",
                                           "./build/build/libgame-10-1.so" } };
 
-    void* so_handle = nullptr;
-    auto  lib_name_it =
+    SDL_SharedObject* so_handle = nullptr;
+    auto              lib_name_it =
         std::find_if(begin(lib_names),
                      end(lib_names),
                      [&so_handle](const char* lib_name)

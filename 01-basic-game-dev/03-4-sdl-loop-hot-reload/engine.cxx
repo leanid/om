@@ -274,11 +274,11 @@ engine::~engine() = default;
 void fix_windows_console();
 #endif
 
-om::game* reload_game(om::game*   old,
-                      const char* library_name,
-                      const char* tmp_library_name,
-                      om::engine& engine,
-                      void*&      old_handle);
+om::game* reload_game(om::game*          old,
+                      const char*        library_name,
+                      const char*        tmp_library_name,
+                      om::engine&        engine,
+                      SDL_SharedObject*& old_handle);
 
 // clang-format off
 #ifdef __cplusplus
@@ -316,8 +316,8 @@ int main(int /*argc*/, char* /*argv*/[])
 
     const char* tmp_library_file = "./temp.dll";
 
-    void*     game_library_handle{};
-    om::game* game = reload_game(
+    SDL_SharedObject* game_library_handle = nullptr;
+    om::game*         game                = reload_game(
         nullptr, library_name, tmp_library_file, *engine, game_library_handle);
 
     auto time_during_loading = last_write_time(library_name);
@@ -389,11 +389,11 @@ int main(int /*argc*/, char* /*argv*/[])
     return EXIT_SUCCESS;
 }
 
-om::game* reload_game(om::game*   old,
-                      const char* library_name,
-                      const char* tmp_library_name,
-                      om::engine& engine,
-                      void*&      old_handle)
+om::game* reload_game(om::game*          old,
+                      const char*        library_name,
+                      const char*        tmp_library_name,
+                      om::engine&        engine,
+                      SDL_SharedObject*& old_handle)
 {
     using namespace std::filesystem;
 
@@ -423,7 +423,7 @@ om::game* reload_game(om::game*   old,
         return nullptr;
     }
 
-    void* game_handle = SDL_LoadObject(tmp_library_name);
+    SDL_SharedObject* game_handle = SDL_LoadObject(tmp_library_name);
 
     if (game_handle == nullptr)
     {

@@ -1853,15 +1853,15 @@ void ImGui_ImplSdlGL3_NewFrame(SDL_Window* window)
         io.MousePos = ImVec2(-FLT_MAX, -FLT_MAX);
 
     io.MouseDown[0] =
-        g_MousePressed[0] || (mouseMask & SDL_BUTTON(SDL_BUTTON_LEFT)) !=
+        g_MousePressed[0] || (mouseMask & SDL_BUTTON_MASK(SDL_BUTTON_LEFT)) !=
                                  0; // If a mouse press event came, always pass
                                     // it as "mouse held this frame", so we
                                     // don't miss click-release events that are
                                     // shorter than 1 frame.
-    io.MouseDown[1] =
-        g_MousePressed[1] || (mouseMask & SDL_BUTTON(SDL_BUTTON_RIGHT)) != 0;
-    io.MouseDown[2] =
-        g_MousePressed[2] || (mouseMask & SDL_BUTTON(SDL_BUTTON_MIDDLE)) != 0;
+    io.MouseDown[1] = g_MousePressed[1] ||
+                      (mouseMask & SDL_BUTTON_MASK(SDL_BUTTON_RIGHT)) != 0;
+    io.MouseDown[2] = g_MousePressed[2] ||
+                      (mouseMask & SDL_BUTTON_MASK(SDL_BUTTON_MIDDLE)) != 0;
     g_MousePressed[0] = g_MousePressed[1] = g_MousePressed[2] = false;
 
     io.MouseWheel = g_MouseWheel;

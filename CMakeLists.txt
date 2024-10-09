@@ -13,8 +13,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # https://gitlab.kitware.com/cmake/cmake/-/issues/25539
 set(CMAKE_CXX_EXTENSIONS ON)
 
-option(OM_BUILD_DEPS "download and build dependencies as part of current build"
-       ON)
+option(
+    OM_BUILD_DEPS
+    "download and build dependencies [SDL3, GLM, Catch2] as part of current build"
+    ON)
+option(OM_BUILD_BOOST "download and build Boost from source" OFF)
 option(OM_BUILD_COURSE_BASIC_PROG "turn ON if need to build 00-basic-prog" ON)
 option(OM_BUILD_COURSE_BASIC_GAME_DEV
        "turn ON if need to build 01-basic-game-dev" ON)
@@ -22,10 +25,8 @@ option(OM_BUILD_COURSE_OPENGL "turn ON if need to build 02-opengl" OFF)
 option(OM_BUILD_COURSE_VULKAN "turn ON if need to build 02-vulkan" ON)
 option(OM_BUILD_GAME_EXAMPLE "turn ON if need to build 05-game" OFF)
 option(OM_BUILD_WEB "turn ON if need to build 08-web" ON)
-option(OM_BOOST_DOWNLOAD_LONG_PROCESS_IS_OK
-       "for 00-basic-prog/19-boost-file-system" OFF)
 
-if(${OM_BUILD_DEPS})
+if(OM_BUILD_DEPS)
     message(STATUS "download and build SDL3 sources")
     include(FetchContent)
     fetchcontent_declare(
@@ -65,6 +66,9 @@ if(${OM_BUILD_DEPS})
     fetchcontent_makeavailable(Catch2)
     find_package(Catch2 REQUIRED)
 
+endif(OM_BUILD_DEPS)
+
+if(OM_BUILD_BOOST)
     # The logging output during population can be quite verbose,
     # making the configure stage quite noisy. This cache option
     # (ON by default) hides all population output unless an error is encountered.
@@ -93,7 +97,7 @@ if(${OM_BUILD_DEPS})
         #[OPTIONAL_COMPONENTS <libs>...]
         # Optional Boost libraries by their canonical name)
         ) # e.g. "date_time" for "libboost_date_time"
-endif(${OM_BUILD_DEPS})
+endif(OM_BUILD_BOOST)
 
 set(CMAKE_UNITY_BUILD_MODE "BATCH")
 
