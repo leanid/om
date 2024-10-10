@@ -164,7 +164,23 @@
       "displayName": "MinGW Makefiles",
       "binaryDir": "${sourceDir}/build/mingw",
       "description": "This build MinGW Makefiles on Windows",
-      "generator": "MinGW Makefiles"
+      "generator": "MinGW Makefiles",
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": {
+          "type": "INTERNAL",
+          "value": "g++"
+        },
+        "CMAKE_C_COMPILER": {
+          "type": "INTERNAL",
+          "value": "gcc"
+        }
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
+
     }
   ],
   "buildPresets": [
@@ -191,6 +207,10 @@
     {
       "name": "vs2022-x64",
       "configurePreset": "vs2022-x64"
+    },
+    {
+      "name": "mingw",
+      "configurePreset": "mingw"
     }
   ],
   "testPresets": [

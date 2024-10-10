@@ -13,6 +13,8 @@ check_include_file_cxx("print" has_cxx_23_print_include)
 if(has_cxx_23_print_include)
     add_executable(hello_std23 main_print_std23.cxx)
     target_compile_features(hello_std23 PRIVATE cxx_std_23)
+    target_link_libraries(hello_std23
+                          PRIVATE $<$<CXX_COMPILER_ID:GNU>:-lstdc++exp>)
 else()
     message(STATUS "skip hello_std23 <print> not found")
 endif(has_cxx_23_print_include)
@@ -50,6 +52,6 @@ if(UNIX OR MINGW) # BONUS for curious (works only in xterm, gnome-terminal or in
     target_compile_features(hello_cout_colored PRIVATE cxx_std_20)
 endif(UNIX OR MINGW)
 
-if(WIN32)
+if(WIN32 AND MSVC)
     add_executable(win32_main WIN32 win32_main.cxx)
 endif(WIN32)
