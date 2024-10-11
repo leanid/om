@@ -56,7 +56,7 @@ void encrypt(const std::string& inFile,
     if (!ifs)
     {
         std::cerr << "Error opening input file: " << inFile << std::endl;
-        return;
+        std::abort();
     }
     std::ofstream ofs(outFile, std::ios::binary);
 
