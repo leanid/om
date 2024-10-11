@@ -1,12 +1,10 @@
 #include <fstream>
-#include <cstring>
 #include <iostream>
 #include <vector>
 
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/rand.h>
-#include <openssl/sha.h>
 
 void handleErrors()
 {
@@ -27,7 +25,7 @@ void encrypt(const std::string& inFile,
 
     // Generate key and IV using PBKDF2
     if (!PKCS5_PBKDF2_HMAC(password.c_str(),
-                           password.length(),
+                           static_cast<int>(password.length()),
                            nullptr,
                            0,
                            iterations,
@@ -55,6 +53,11 @@ void encrypt(const std::string& inFile,
     }
 
     std::ifstream ifs(inFile, std::ios::binary);
+    if (!ifs)
+    {
+        std::cerr << "Error opening input file: " << inFile << std::endl;
+        return;
+    }
     std::ofstream ofs(outFile, std::ios::binary);
 
     ofs.write(reinterpret_cast<const char*>(iv), ivLength);
@@ -64,11 +67,14 @@ void encrypt(const std::string& inFile,
         1024 + EVP_CIPHER_block_size(EVP_aes_128_ctr()));
     int outLen;
 
-    while (ifs.read(reinterpret_cast<char*>(buffer.data()), buffer.size()))
+    while (ifs.read(reinterpret_cast<char*>(buffer.data()),
+                    static_cast<std::streamsize>(buffer.size())))
     {
-        if (1 !=
-            EVP_EncryptUpdate(
-                ctx, cipherBuffer.data(), &outLen, buffer.data(), ifs.gcount()))
+        if (1 != EVP_EncryptUpdate(ctx,
+                                   cipherBuffer.data(),
+                                   &outLen,
+                                   buffer.data(),
+                                   static_cast<int>(ifs.gcount())))
         {
             handleErrors();
         }
