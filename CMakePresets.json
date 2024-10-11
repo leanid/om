@@ -56,7 +56,7 @@
       "binaryDir": "${sourceDir}/build/vcpkg",
       "cacheVariables": {
         "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
-        "CMAKE_MAKE_PROGRAM": "C:/ProgramData/chocolatey/bin/ninja.exe",
+        "CMAKE_MAKE_PROGRAM": "ninja",
         "CMAKE_CXX_COMPILER": "cl",
         "CMAKE_C_COMPILER": "cl"
       }
