@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.30)
 
 project(aes_128 CXX)
 
-find_package(OpenSSL CONFIG REQUIRED)
+find_package(OpenSSL REQUIRED)
 find_package(
     Boost
     # 1.86.0
