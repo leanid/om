@@ -246,28 +246,42 @@ void decrypt(const std::string& in_file,
 
 int main(int argc, char* argv[])
 {
+    std::string arg_cmd;
+    std::string arg_pass;
+    std::string arg_in;
+    std::string arg_out;
+
     namespace po = boost::program_options;
     po::options_description desc("options");
     // clang-format off
     desc.add_options()
         ("help,v", "print this help")
-        ("command", "enc or dec")
-        ("pass", po::value<std::string>(), "your password like in openssl -pass option")
-        ("in_file,i", po::value<std::string>(), "path to input file")
-        ("out_file,o", po::value<std::string>(), "path to output file")
+        ("command", po::value<std::string>(&arg_cmd), "enc or dec")
+        ("pass", po::value<std::string>(&arg_pass), "your password like in openssl -pass option")
+        ("in_file,i", po::value<std::string>(&arg_in), "path to input file")
+        ("out_file,o", po::value<std::string>(&arg_out), "path to output file")
         ;
     po::positional_options_description pd;
     pd.add("command", 1);
     // clang-format on
+    po::command_line_parser parser{ argc, argv };
+    parser.options(desc).positional(pd);
+    po::parsed_options parsed_options = parser.run();
+
     po::variables_map vm;
-    po::store(po::parse_command_line(argc, argv, desc), vm);
-    // po::store(po::parse_command_line(argc, argv, pd), vm);
+    po::store(parsed_options, vm);
     po::notify(vm);
 
     if (vm.count("help"))
     {
         std::cout << desc << std::endl;
         return 0;
+    }
+    else
+    {
+        std::cout << "arg_cmd: " << arg_cmd << " arg_pass: " << arg_pass
+                  << " arg_in: " << arg_in << " arg_out: " << arg_out
+                  << std::endl;
     }
 
     const std::string password     = "leanid";
