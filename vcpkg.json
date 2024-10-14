@@ -1,5 +1,7 @@
 {
   "dependencies": [
-    "openssl"
+    "boost-program-options",
+    "openssl",
+    "boost-locale"
   ]
 }

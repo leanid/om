@@ -1,7 +1,6 @@
 #include <cstdlib>
 #include <exception>
 #include <fstream>
-#include <iomanip>
 #include <iostream>
 #include <stdexcept>
 #include <string>
@@ -24,8 +23,8 @@ void throw_errors()
 
 /// This is direct implementation of:
 /// @code
-/// openssl enc -aes-128-ctr -pass pass:leanid -pbkdf2 -in ru.yaml.enc -out
-/// ru.yaml.enc.dec
+/// openssl enc -aes-128-ctr -pass pass:leanid -pbkdf2 -in ru.yaml -out
+/// ru.yaml.enc
 /// @endcode
 void encrypt(const std::string& in_file,
              const std::string& out_file,
