@@ -22,6 +22,11 @@ void throw_errors()
     throw std::runtime_error(msg);
 }
 
+/// This is direct implementation of:
+/// @code
+/// openssl enc -aes-128-ctr -pass pass:leanid -pbkdf2 -in ru.yaml.enc -out
+/// ru.yaml.enc.dec
+/// @endcode
 void encrypt(const std::string& in_file,
              const std::string& out_file,
              const std::string& password)
@@ -41,7 +46,7 @@ void encrypt(const std::string& in_file,
     // generate key and iv like in openssl(3.2.2) see: apps/enc.c:560
     unsigned char key_and_iv[key_len + iv_len];
 
-    // Generate key and IV using PBKDF2
+    // generate key and IV using PBKDF2
     if (!PKCS5_PBKDF2_HMAC(password.c_str(),
                            static_cast<int>(password.length()),
                            salt,
@@ -67,7 +72,7 @@ void encrypt(const std::string& in_file,
         throw_errors();
     }
 
-    if (1 != EVP_EncryptInit_ex(ctx.get(), EVP_aes_128_ctr(), nullptr, key, iv))
+    if (!EVP_EncryptInit_ex(ctx.get(), EVP_aes_128_ctr(), nullptr, key, iv))
     {
         throw_errors();
     }
@@ -84,46 +89,57 @@ void encrypt(const std::string& in_file,
     std::ofstream ofs(out_file, std::ios::binary);
 
     ofs.write(magic, sizeof(magic) - 1); // without end \0
-    std::cout << "write magic: " << magic << std::endl;
+    // std::cout << "write magic: " << magic << std::endl;
     ofs.write(reinterpret_cast<char*>(salt), salt_len);
-    std::cout << "write salt: ";
-    for (unsigned i = 0; i < 8; i++)
-    {
-        std::cout << std::hex << std::setw(2) << unsigned(salt[i]);
-    }
-    std::cout << std::endl;
+    // std::cout << "write salt: ";
+    // for (unsigned i = 0; i < 8; i++)
+    // {
+    //     std::cout << std::hex << std::setw(2) << unsigned(salt[i]);
+    // }
+    // std::cout << std::dec << std::endl;
 
-    std::vector<unsigned char> buffer(1024);
-    std::vector<unsigned char> cipherBuffer(
-        1024 + EVP_CIPHER_block_size(EVP_aes_128_ctr()));
+    constexpr int buf_size = 1024;
+    unsigned char buf_in[buf_size];
+    // see:
+    // https://docs.openssl.org/3.1/man3/EVP_EncryptInit/#description
+    // EVP_DecryptUpdate() should have sufficient room for (inl +
+    // cipher_block_size) bytes
+    std::vector<unsigned char> out_buf(
+        buf_size + EVP_CIPHER_block_size(EVP_aes_128_ctr()));
 
-    int outLen = 0;
-
-    ifs.read(reinterpret_cast<char*>(buffer.data()),
-             static_cast<std::streamsize>(buffer.size()));
+    ifs.read(reinterpret_cast<char*>(buf_in),
+             static_cast<std::streamsize>(buf_size));
 
     while (ifs.gcount())
     {
-        if (1 != EVP_EncryptUpdate(ctx.get(),
-                                   cipherBuffer.data(),
-                                   &outLen,
-                                   buffer.data(),
-                                   static_cast<int>(ifs.gcount())))
+        int out_len = 0;
+        if (!EVP_EncryptUpdate(ctx.get(),
+                               out_buf.data(),
+                               &out_len,
+                               buf_in,
+                               static_cast<int>(ifs.gcount())))
         {
             throw_errors();
         }
-        ofs.write(reinterpret_cast<const char*>(cipherBuffer.data()), outLen);
-        ifs.read(reinterpret_cast<char*>(buffer.data()),
-                 static_cast<std::streamsize>(buffer.size()));
+
+        ofs.write(reinterpret_cast<char*>(out_buf.data()), out_len);
+        ifs.read(reinterpret_cast<char*>(buf_in),
+                 static_cast<std::streamsize>(buf_size));
     }
 
-    if (1 != EVP_EncryptFinal_ex(ctx.get(), cipherBuffer.data(), &outLen))
+    int final_len = 0;
+    if (!EVP_EncryptFinal_ex(ctx.get(), out_buf.data(), &final_len))
     {
         throw_errors();
     }
-    ofs.write(reinterpret_cast<const char*>(cipherBuffer.data()), outLen);
+    ofs.write(reinterpret_cast<const char*>(out_buf.data()), final_len);
 }
 
+/// This is direct implementation of:
+/// @code
+/// openssl enc -d -aes-128-ctr -pass pass:leanid -pbkdf2 -in ru.yaml.enc -out
+/// ru.yaml.enc.dec
+/// @endcode
 void decrypt(const std::string& in_file,
              const std::string& out_file,
              const std::string& password)
@@ -137,7 +153,7 @@ void decrypt(const std::string& in_file,
     std::ifstream ifs(in_file, std::ios::binary);
     if (!ifs)
     {
-        std::string msg("Error opening input file: ");
+        std::string msg("error: opening input file: ");
         msg += in_file;
         throw std::runtime_error(msg);
     }
@@ -146,7 +162,7 @@ void decrypt(const std::string& in_file,
     ifs.read(file_magic, sizeof(file_magic));
     if (std::memcmp(file_magic, magic, sizeof(magic) - 1) != 0)
     {
-        throw std::runtime_error("Bad magic constant");
+        throw std::runtime_error("error: bad magic constant");
     }
 
     unsigned char salt[salt_len];
@@ -178,7 +194,7 @@ void decrypt(const std::string& in_file,
         throw_errors();
     }
 
-    if (1 != EVP_DecryptInit_ex(ctx.get(), EVP_aes_128_ctr(), nullptr, key, iv))
+    if (!EVP_DecryptInit_ex(ctx.get(), EVP_aes_128_ctr(), nullptr, key, iv))
     {
         throw_errors();
     }
@@ -186,39 +202,45 @@ void decrypt(const std::string& in_file,
     std::ofstream ofs(out_file, std::ios::binary);
     if (!ofs)
     {
-        std::string msg("Error opening output file: ");
+        std::string msg("error: opening output file: ");
         msg += out_file;
         throw std::runtime_error(msg);
     }
 
-    std::vector<unsigned char> buffer(1024);
-    std::vector<unsigned char> plainBuffer(
-        1024 + EVP_CIPHER_block_size(EVP_aes_128_ctr()));
-    int outLen = 0;
+    constexpr int buf_size = 1024;
+    unsigned char buf_in[buf_size];
+    // see:
+    // https://docs.openssl.org/3.1/man3/EVP_EncryptInit/#description
+    // EVP_DecryptUpdate() should have sufficient room for (inl +
+    // cipher_block_size) bytes
+    std::vector<unsigned char> buf_out(
+        buf_size + EVP_CIPHER_block_size(EVP_aes_128_ctr()));
 
-    ifs.read(reinterpret_cast<char*>(buffer.data()),
-             static_cast<std::streamsize>(buffer.size()));
+    ifs.read(reinterpret_cast<char*>(buf_in),
+             static_cast<std::streamsize>(buf_size));
 
     while (ifs.gcount())
     {
-        if (1 != EVP_DecryptUpdate(ctx.get(),
-                                   plainBuffer.data(),
-                                   &outLen,
-                                   buffer.data(),
-                                   static_cast<int>(ifs.gcount())))
+        int out_len = 0;
+        if (!EVP_DecryptUpdate(ctx.get(),
+                               buf_out.data(),
+                               &out_len,
+                               buf_in,
+                               static_cast<int>(ifs.gcount())))
         {
             throw_errors();
         }
-        ofs.write(reinterpret_cast<const char*>(plainBuffer.data()), outLen);
-        ifs.read(reinterpret_cast<char*>(buffer.data()),
-                 static_cast<std::streamsize>(buffer.size()));
+        ofs.write(reinterpret_cast<const char*>(buf_out.data()), out_len);
+        ifs.read(reinterpret_cast<char*>(buf_in),
+                 static_cast<std::streamsize>(buf_size));
     }
 
-    if (1 != EVP_DecryptFinal_ex(ctx.get(), plainBuffer.data(), &outLen))
+    int final_len = 0;
+    if (1 != EVP_DecryptFinal_ex(ctx.get(), buf_out.data(), &final_len))
     {
         throw_errors();
     }
-    ofs.write(reinterpret_cast<const char*>(plainBuffer.data()), outLen);
+    ofs.write(reinterpret_cast<const char*>(buf_out.data()), final_len);
 }
 
 int main()
