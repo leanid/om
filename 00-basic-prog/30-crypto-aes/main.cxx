@@ -10,6 +10,8 @@
 #include <openssl/evp.h>
 #include <openssl/rand.h>
 
+#include <boost/program_options.hpp>
+
 void throw_errors()
 {
     std::shared_ptr<BIO> stream(BIO_new(BIO_s_mem()), BIO_free);
@@ -242,8 +244,32 @@ void decrypt(const std::string& in_file,
     ofs.write(reinterpret_cast<const char*>(buf_out.data()), final_len);
 }
 
-int main()
+int main(int argc, char* argv[])
 {
+    namespace po = boost::program_options;
+    po::options_description desc("options");
+    // clang-format off
+    desc.add_options()
+        ("help,v", "print this help")
+        ("command", "enc or dec")
+        ("pass", po::value<std::string>(), "your password like in openssl -pass option")
+        ("in_file,i", po::value<std::string>(), "path to input file")
+        ("out_file,o", po::value<std::string>(), "path to output file")
+        ;
+    po::positional_options_description pd;
+    pd.add("command", 1);
+    // clang-format on
+    po::variables_map vm;
+    po::store(po::parse_command_line(argc, argv, desc), vm);
+    // po::store(po::parse_command_line(argc, argv, pd), vm);
+    po::notify(vm);
+
+    if (vm.count("help"))
+    {
+        std::cout << desc << std::endl;
+        return 0;
+    }
+
     const std::string password     = "leanid";
     const std::string in_file      = "ru.yaml";
     const std::string out_file_enc = "ru.yaml.enc";
