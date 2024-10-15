@@ -1,7 +1,11 @@
 #include <cstdlib>
 #include <exception>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <istream>
+#include <ostream>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -11,6 +15,9 @@
 #include <openssl/rand.h>
 
 #include <boost/program_options.hpp>
+
+namespace om
+{
 
 void throw_errors()
 {
@@ -23,26 +30,65 @@ void throw_errors()
     throw std::runtime_error(msg);
 }
 
+struct salt_t
+{
+    std::array<unsigned char, 16> bytes;
+    auto                          operator<=>(const salt_t&) const = default;
+};
+
+std::ostream& operator<<(std::ostream& os, const salt_t& salt)
+{
+    auto flags = os.flags();
+    os << std::hex << std::setfill('0');
+    for (auto byte : salt.bytes)
+    {
+        os << std::setw(2) << static_cast<unsigned>(byte);
+    }
+    os.flags(flags);
+    return os;
+}
+
+std::istream& operator>>(std::istream& is, salt_t& salt)
+{
+    for (size_t i = 0; i < salt.bytes.size(); ++i)
+    {
+        char hex[3] = { 0 }; // Buffer to hold 2 hex chars + null terminator
+        is.read(hex, 2);     // Read 2 hex characters
+        if (is.gcount() != 2)
+        {
+            throw std::runtime_error("Failed to read 2 hex characters");
+        }
+        salt.bytes[i] = static_cast<unsigned char>(std::stoi(hex, nullptr, 16));
+    }
+    return is;
+}
+
+salt_t gen_salt()
+{
+    salt_t salt{};
+    if (!RAND_bytes(salt.bytes.data(), salt.bytes.size()))
+    {
+        throw_errors();
+    }
+    return salt;
+}
+
 /// This is direct implementation of:
 /// @code
 /// openssl enc -aes-128-ctr -pass pass:leanid -pbkdf2 -in ru.yaml -out
 /// ru.yaml.enc
 /// @endcode
-void encrypt(const std::string& in_file,
-             const std::string& out_file,
-             const std::string& password)
+/// salt maximum value is 16 bytes:
+/// https://docs.openssl.org/3.3/man1/openssl-enc/#options
+void encrypt(const std::filesystem::path& in_file,
+             const std::filesystem::path& out_file,
+             const std::string&           password,
+             const salt_t&                salt)
 {
-    const int  key_len    = 16;         // AES-128
-    const int  iv_len     = 16;         // AES-CTR IV length
-    const int  iterations = 10000;      // see: PBKDF2_ITER_DEFAULT 10000
-    const int  salt_len   = 8;          // default like in openssl
-    const char magic[]    = "Salted__"; // default like in openssl
-
-    unsigned char salt[salt_len];
-    if (!RAND_bytes(salt, salt_len))
-    {
-        throw_errors();
-    }
+    const int key_len    = 16;    // AES-128
+    const int iv_len     = 16;    // AES-CTR IV length
+    const int iterations = 10000; // see: PBKDF2_ITER_DEFAULT 10000
+    // const char magic[]    = "Salted__"; // default like in openssl
 
     // generate key and iv like in openssl(3.2.2) see: apps/enc.c:560
     unsigned char key_and_iv[key_len + iv_len];
@@ -50,8 +96,8 @@ void encrypt(const std::string& in_file,
     // generate key and IV using PBKDF2
     if (!PKCS5_PBKDF2_HMAC(password.c_str(),
                            static_cast<int>(password.length()),
-                           salt,
-                           salt_len,
+                           salt.bytes.data(),
+                           salt.bytes.size(),
                            iterations,
                            EVP_sha256(),
                            key_len + iv_len,
@@ -83,15 +129,15 @@ void encrypt(const std::string& in_file,
     if (!ifs)
     {
         std::string msg("Error opening input file: ");
-        msg += in_file;
+        msg += in_file.string();
         throw std::runtime_error(msg);
     }
 
     std::ofstream ofs(out_file, std::ios::binary);
 
-    ofs.write(magic, sizeof(magic) - 1); // without end \0
+    // ofs.write(magic, sizeof(magic) - 1); // without end \0
     // std::cout << "write magic: " << magic << std::endl;
-    ofs.write(reinterpret_cast<char*>(salt), salt_len);
+    // ofs.write(reinterpret_cast<char*>(salt), salt_len);
     // std::cout << "write salt: ";
     // for (unsigned i = 0; i < 8; i++)
     // {
@@ -244,10 +290,13 @@ void decrypt(const std::string& in_file,
     ofs.write(reinterpret_cast<const char*>(buf_out.data()), final_len);
 }
 
+} // namespace om
+
 int main(int argc, char* argv[])
 {
     std::string arg_cmd;
     std::string arg_pass;
+    std::string arg_salt;
     std::string arg_in;
     std::string arg_out;
 
@@ -256,8 +305,9 @@ int main(int argc, char* argv[])
     // clang-format off
     desc.add_options()
         ("help,v", "print this help")
-        ("command", po::value<std::string>(&arg_cmd), "enc or dec")
+        ("command", po::value<std::string>(&arg_cmd), "enc or dec or gen_salt")
         ("pass", po::value<std::string>(&arg_pass), "your password like in openssl -pass option")
+        ("salt", po::value<std::string>(&arg_salt), "your salt in hex format 16 bytes")
         ("in_file,i", po::value<std::string>(&arg_in), "path to input file")
         ("out_file,o", po::value<std::string>(&arg_out), "path to output file")
         ;
@@ -275,38 +325,55 @@ int main(int argc, char* argv[])
     if (vm.count("help"))
     {
         std::cout << desc << std::endl;
-        return 0;
-    }
-    else
-    {
-        std::cout << "arg_cmd: " << arg_cmd << " arg_pass: " << arg_pass
-                  << " arg_in: " << arg_in << " arg_out: " << arg_out
-                  << std::endl;
+        return EXIT_SUCCESS;
     }
 
-    const std::string password     = "leanid";
-    const std::string in_file      = "ru.yaml";
-    const std::string out_file_enc = "ru.yaml.enc";
-    const std::string out_file_dec = "ru.yaml.enc.dec";
+    // const std::string password     = "leanid";
+    // const std::string in_file      = "ru.yaml";
+    // const std::string out_file_enc = "ru.yaml.enc";
+    // const std::string out_file_dec = "ru.yaml.enc.dec";
 
-    try
+    using namespace om;
+
+    if (arg_cmd == "gen_salt")
     {
-        encrypt(in_file, out_file_enc, password);
-    }
-    catch (const std::exception& ex)
-    {
-        std::cerr << "error: encrypt failed: " << ex.what() << std::endl;
-        return EXIT_FAILURE;
+        salt_t salt = gen_salt();
+        std::cout << salt << std::endl;
+        return std::cout.fail();
     }
 
-    try
+    if (arg_cmd == "enc")
     {
-        decrypt(out_file_enc, out_file_dec, password);
+        try
+        {
+            std::stringstream ss(arg_salt);
+            salt_t            salt{};
+            ss >> salt;
+            encrypt(arg_in, arg_out, arg_pass, salt);
+        }
+        catch (const std::exception& ex)
+        {
+            std::cerr << "error: encrypt failed: " << ex.what() << std::endl;
+            return EXIT_FAILURE;
+        }
+        return EXIT_SUCCESS;
     }
-    catch (const std::exception& ex)
+
+    if (arg_cmd == "dec")
     {
-        std::cerr << "error: decrypt failed: " << ex.what() << std::endl;
-        return EXIT_FAILURE;
+        try
+        {
+            std::stringstream ss(arg_salt);
+            salt_t            salt{};
+            ss >> salt;
+
+            decrypt(arg_in, arg_out, arg_pass);
+        }
+        catch (const std::exception& ex)
+        {
+            std::cerr << "error: decrypt failed: " << ex.what() << std::endl;
+            return EXIT_FAILURE;
+        }
     }
 
     return EXIT_SUCCESS;
