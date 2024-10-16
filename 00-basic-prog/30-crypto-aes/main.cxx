@@ -73,10 +73,10 @@ salt_t gen_salt()
     return salt;
 }
 
-/// This is direct implementation of:
+/// This is direct implementation of (example):
 /// @code
-/// openssl enc -aes-128-ctr -pass pass:leanid -pbkdf2 -in ru.yaml -out
-/// ru.yaml.enc
+/// openssl enc -salt -S "cc6d4b31bc04f5820f4e27bc3ddbff72" -saltlen 16
+/// -aes-128-ctr -pass pass:leanid -pbkdf2 -in ru.yaml -out ru.yaml.enc.ctr
 /// @endcode
 /// salt maximum value is 16 bytes:
 /// https://docs.openssl.org/3.3/man1/openssl-enc/#options
@@ -182,44 +182,46 @@ void encrypt(const std::filesystem::path& in_file,
     ofs.write(reinterpret_cast<const char*>(out_buf.data()), final_len);
 }
 
-/// This is direct implementation of:
+/// This is direct implementation of (example):
 /// @code
-/// openssl enc -d -aes-128-ctr -pass pass:leanid -pbkdf2 -in ru.yaml.enc -out
-/// ru.yaml.enc.dec
+/// openssl enc -d -salt -S "cc6d4b31bc04f5820f4e27bc3ddbff72" -saltlen 16
+/// -aes-128-ctr -pass pass:leanid -pbkdf2 -in ru.yaml.enc.ctr -out
+/// ru.yaml.enc.ctr.dec
 /// @endcode
-void decrypt(const std::string& in_file,
-             const std::string& out_file,
-             const std::string& password)
+void decrypt(const std::filesystem::path& in_file,
+             const std::filesystem::path& out_file,
+             const std::string&           password,
+             const salt_t&                salt)
 {
-    const int  key_len    = 16;         // AES-128
-    const int  iv_len     = 16;         // AES-CTR IV length
-    const int  iterations = 10000;      // see: PBKDF2_ITER_DEFAULT 10000
-    const int  salt_len   = 8;          // default like in openssl
-    const char magic[]    = "Salted__"; // default like in openssl
+    const int key_len    = 16;    // AES-128
+    const int iv_len     = 16;    // AES-CTR IV length
+    const int iterations = 10000; // see: PBKDF2_ITER_DEFAULT 10000
+    // const int  salt_len   = 8;          // default like in openssl
+    // const char magic[]    = "Salted__"; // default like in openssl
 
     std::ifstream ifs(in_file, std::ios::binary);
     if (!ifs)
     {
         std::string msg("error: opening input file: ");
-        msg += in_file;
+        msg += in_file.string();
         throw std::runtime_error(msg);
     }
 
-    char file_magic[sizeof(magic) - 1]{};
-    ifs.read(file_magic, sizeof(file_magic));
-    if (std::memcmp(file_magic, magic, sizeof(magic) - 1) != 0)
-    {
-        throw std::runtime_error("error: bad magic constant");
-    }
+    // char file_magic[sizeof(magic) - 1]{};
+    // ifs.read(file_magic, sizeof(file_magic));
+    // if (std::memcmp(file_magic, magic, sizeof(magic) - 1) != 0)
+    // {
+    //     throw std::runtime_error("error: bad magic constant");
+    // }
 
-    unsigned char salt[salt_len];
-    ifs.read(reinterpret_cast<char*>(salt), salt_len);
+    // unsigned char salt[salt_len];
+    // ifs.read(reinterpret_cast<char*>(salt), salt_len);
 
     unsigned char key_and_iv[key_len + iv_len];
     if (!PKCS5_PBKDF2_HMAC(password.c_str(),
                            static_cast<int>(password.length()),
-                           salt,
-                           salt_len,
+                           salt.bytes.data(),
+                           salt.bytes.size(),
                            iterations,
                            EVP_sha256(),
                            key_len + iv_len,
@@ -250,7 +252,7 @@ void decrypt(const std::string& in_file,
     if (!ofs)
     {
         std::string msg("error: opening output file: ");
-        msg += out_file;
+        msg += out_file.string();
         throw std::runtime_error(msg);
     }
 
@@ -290,6 +292,21 @@ void decrypt(const std::string& in_file,
     ofs.write(reinterpret_cast<const char*>(buf_out.data()), final_len);
 }
 
+void validate_command(const std::string& command)
+{
+    static const std::vector<std::string> valid_commands = { "enc",
+                                                             "dec",
+                                                             "gen_salt" };
+
+    namespace po = boost::program_options;
+
+    if (std::find(valid_commands.begin(), valid_commands.end(), command) ==
+        valid_commands.end())
+    {
+        throw po::validation_error(
+            po::validation_error::invalid_option_value, "command", command);
+    }
+}
 } // namespace om
 
 int main(int argc, char* argv[])
@@ -300,32 +317,43 @@ int main(int argc, char* argv[])
     std::string arg_in;
     std::string arg_out;
 
-    namespace po = boost::program_options;
-    po::options_description desc("options");
-    // clang-format off
-    desc.add_options()
-        ("help,v", "print this help")
-        ("command", po::value<std::string>(&arg_cmd), "enc or dec or gen_salt")
+    try
+    {
+        namespace po = boost::program_options;
+        po::options_description help("how to");
+        help.add_options()("help,v", "print this help");
+
+        po::options_description desc("options");
+        // clang-format off
+        desc.add_options()
+        ("command", po::value<std::string>(&arg_cmd)->required()->notifier(om::validate_command), "enc or dec or gen_salt")
         ("pass", po::value<std::string>(&arg_pass), "your password like in openssl -pass option")
-        ("salt", po::value<std::string>(&arg_salt), "your salt in hex format 16 bytes")
+        ("salt", po::value<std::string>(&arg_salt), "your salt in hex format 16 bytes 32 chars")
         ("in_file,i", po::value<std::string>(&arg_in), "path to input file")
         ("out_file,o", po::value<std::string>(&arg_out), "path to output file")
         ;
-    po::positional_options_description pd;
-    pd.add("command", 1);
-    // clang-format on
-    po::command_line_parser parser{ argc, argv };
-    parser.options(desc).positional(pd);
-    po::parsed_options parsed_options = parser.run();
+        // clang-format on
+        po::positional_options_description pd;
+        pd.add("command", 1);
+        po::command_line_parser parser{ argc, argv };
+        parser.options(help);
+        parser.options(desc).positional(pd);
+        po::parsed_options parsed_options = parser.run();
 
-    po::variables_map vm;
-    po::store(parsed_options, vm);
-    po::notify(vm);
+        po::variables_map vm;
+        po::store(parsed_options, vm);
+        po::notify(vm);
 
-    if (vm.count("help"))
+        if (vm.count("help"))
+        {
+            std::cout << desc << std::endl;
+            return EXIT_SUCCESS;
+        }
+    }
+    catch (const std::exception& ex)
     {
-        std::cout << desc << std::endl;
-        return EXIT_SUCCESS;
+        std::cerr << ex.what() << std::endl;
+        return EXIT_FAILURE;
     }
 
     // const std::string password     = "leanid";
@@ -367,7 +395,7 @@ int main(int argc, char* argv[])
             salt_t            salt{};
             ss >> salt;
 
-            decrypt(arg_in, arg_out, arg_pass);
+            decrypt(arg_in, arg_out, arg_pass, salt);
         }
         catch (const std::exception& ex)
         {
