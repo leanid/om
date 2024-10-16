@@ -364,7 +364,7 @@ int main(int argc, char* argv[])
 
         if (vm.count("help"))
         {
-            std::cout << encoding_options << std::endl;
+            std::cout << encoding_options << decoding_options << std::endl;
             return EXIT_SUCCESS;
         }
     }
