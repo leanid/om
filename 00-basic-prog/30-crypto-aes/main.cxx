@@ -320,14 +320,13 @@ int main(int argc, char* argv[])
     try
     {
         namespace po = boost::program_options;
-        po::options_description help("how to");
+        po::options_description help("help");
         help.add_options()("help,v", "print this help");
 
         po::options_description encoding_options("encoding");
         // clang-format off
         encoding_options.add_options()
-        ("enc", po::value<std::string>(&arg_cmd)->required()->notifier(om::validate_command),
-                   "one of [enc, dec, gen_salt]")
+        ("enc", "")
         ("pass", po::value<std::string>(&arg_pass), "your password like in openssl -pass option")
         ("salt", po::value<std::string>(&arg_salt), "your salt in hex format 16 bytes 32 chars")
         ("in_file,i", po::value<std::string>(&arg_in), "path to input file")
@@ -350,11 +349,24 @@ int main(int argc, char* argv[])
         po::positional_options_description pd2;
         pd.add("dec", 1);
 
+        po::options_description gen_salt_options("gen_salt");
+        // clang-format off
+        gen_salt_options.add_options()
+        ("dec", po::value<std::string>(&arg_cmd)->required()->notifier(om::validate_command),
+                   "one of [enc, dec, gen_salt]")
+        ("pass", po::value<std::string>(&arg_pass), "your password like in openssl -pass option")
+        ("salt", po::value<std::string>(&arg_salt), "your salt in hex format 16 bytes 32 chars")
+        ("in_file,i", po::value<std::string>(&arg_in), "path to input file")
+        ("out_file,o", po::value<std::string>(&arg_out), "path to output file")
+        ;
+        // clang-format on
+
         po::command_line_parser parser{ argc, argv };
         parser.options(encoding_options)
             .positional(pd)
             .options(decoding_options)
             .positional(pd2)
+            .options(gen_salt_options)
             .options(help);
         po::parsed_options parsed_options = parser.run();
 
@@ -364,7 +376,8 @@ int main(int argc, char* argv[])
 
         if (vm.count("help"))
         {
-            std::cout << encoding_options << decoding_options << std::endl;
+            std::cout << encoding_options << decoding_options
+                      << gen_salt_options << help << std::endl;
             return EXIT_SUCCESS;
         }
     }
