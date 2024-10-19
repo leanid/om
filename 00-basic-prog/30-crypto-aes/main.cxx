@@ -338,8 +338,7 @@ int main(int argc, char* argv[])
         po::options_description decoding_options("decoding");
         // clang-format off
         decoding_options.add_options()
-        ("dec", po::value<std::string>(&arg_cmd)->required()->notifier(om::validate_command),
-                   "one of [enc, dec, gen_salt]")
+        ("dec", "")
         ("pass", po::value<std::string>(&arg_pass), "your password like in openssl -pass option")
         ("salt", po::value<std::string>(&arg_salt), "your salt in hex format 16 bytes 32 chars")
         ("in_file,i", po::value<std::string>(&arg_in), "path to input file")
@@ -347,38 +346,48 @@ int main(int argc, char* argv[])
         ;
         // clang-format on
         po::positional_options_description pd2;
-        pd.add("dec", 1);
+        pd2.add("dec", 1);
 
         po::options_description gen_salt_options("gen_salt");
         // clang-format off
         gen_salt_options.add_options()
-        ("dec", po::value<std::string>(&arg_cmd)->required()->notifier(om::validate_command),
-                   "one of [enc, dec, gen_salt]")
-        ("pass", po::value<std::string>(&arg_pass), "your password like in openssl -pass option")
-        ("salt", po::value<std::string>(&arg_salt), "your salt in hex format 16 bytes 32 chars")
-        ("in_file,i", po::value<std::string>(&arg_in), "path to input file")
-        ("out_file,o", po::value<std::string>(&arg_out), "path to output file")
+        ("gen_salt", "")
         ;
         // clang-format on
+        po::positional_options_description pd3;
+        pd3.add("gen_salt", 1);
+
+        po::options_description all("modes");
+        all.add(help)
+            .add(encoding_options)
+            .add(decoding_options)
+            .add(gen_salt_options);
 
         po::command_line_parser parser{ argc, argv };
-        parser.options(encoding_options)
-            .positional(pd)
-            .options(decoding_options)
-            .positional(pd2)
-            .options(gen_salt_options)
-            .options(help);
+        parser.options(all).positional(pd).positional(pd2).positional(pd3);
         po::parsed_options parsed_options = parser.run();
 
         po::variables_map vm;
         po::store(parsed_options, vm);
-        po::notify(vm);
 
+        po::notify(vm);
         if (vm.count("help"))
         {
-            std::cout << encoding_options << decoding_options
-                      << gen_salt_options << help << std::endl;
+            std::cout << all << std::endl;
             return EXIT_SUCCESS;
+        }
+
+        if (vm.count("enc"))
+        {
+            arg_cmd = "enc";
+        }
+        if (vm.count("dec"))
+        {
+            arg_cmd = "dec";
+        }
+        if (vm.count("gen_salt"))
+        {
+            arg_cmd = "gen_salt";
         }
     }
     catch (const std::exception& ex)
@@ -386,11 +395,6 @@ int main(int argc, char* argv[])
         std::cerr << ex.what() << std::endl;
         return EXIT_FAILURE;
     }
-
-    // const std::string password     = "leanid";
-    // const std::string in_file      = "ru.yaml";
-    // const std::string out_file_enc = "ru.yaml.enc";
-    // const std::string out_file_dec = "ru.yaml.enc.dec";
 
     using namespace om;
 
@@ -435,5 +439,5 @@ int main(int argc, char* argv[])
         }
     }
 
-    return EXIT_SUCCESS;
+    return EXIT_FAILURE;
 }
