@@ -53,18 +53,19 @@ int main()
     std::locale system_default = gen("");
     print_locale_properties(system_default, std::cout);
 
-    std::cout << "system_default locate: " << system_default.name()
-              << std::endl;
     std::locale::global(system_default);
     // "" - the system default locale, set
     // it globally
     std::cout << "true name is: " << std::boolalpha << true << std::endl;
-    std::locale loc = gen("en_US.UTF-8");
+    std::locale eng = gen("en_US.UTF-8");
+    print_locale_properties(eng, std::cout);
 
     generator gen_limited;
     gen_limited.characters(char_facet_t::char_f);
     gen_limited.categories(category_t::collation | category_t::formatting);
-    std::locale::global(gen_limited("de_DE.UTF-8"));
+    std::locale lim_de = gen_limited("de_DE.UTF-8");
+    print_locale_properties(lim_de, std::cout);
+    std::locale::global(lim_de);
     std::cout << "true name is: " << std::boolalpha << true << std::endl;
 
     const char8_t* str = u8"Привет Мир!";
