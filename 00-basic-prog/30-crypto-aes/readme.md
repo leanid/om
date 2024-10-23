@@ -24,12 +24,23 @@ openssl enc -d -salt -S "cc6d4b31bc04f5820f4e27bc3ddbff72" -saltlen 16 \
 
 У нас есть 3 режима:
 1. сгенерироваь соль - gen_salt
-2. зашифровать
-3. расшифровать
+2. зашифровать - enc
+3. расшифровать - dec
+4. если забыли - вызовите --help
 
 Примеры:
 
 ``` bash
-
+aes128 gen_salt
+b56c299fff844e6b477bd983a5bb5a1c
 ```
 
+``` bash
+aes128 enc --pass leanid --salt "b56c299fff844e6b477bd983a5bb5a1c" -i some.file -o some.file.enc
+aes128 dec --pass leanid --salt "b56c299fff844e6b477bd983a5bb5a1c" -i some.file.enc -o some.file.dec
+diff some.file some.file.dec # should be same
+```
+
+## Заметки
+1. Если входной файл был пустым - то выходной тоже будет пустым
+2. выходной файл будет выровнен по 16 байт, т.к. алгоритм aes так работает
