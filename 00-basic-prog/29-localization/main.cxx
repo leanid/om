@@ -65,26 +65,29 @@ void print_locale_properties(const std::locale& loc, std::ostream& os)
 int main()
 {
     using namespace boost::locale;
+    using namespace std;
     generator gen;
     // Create locale generator
-    std::locale system_default = gen("");
-    print_locale_properties(system_default, std::cout);
+    locale system_default = gen("");
+    print_locale_properties(system_default, cout);
 
-    std::locale::global(system_default);
+    locale::global(system_default);
     // "" - the system default locale, set
     // it globally
-    std::cout << "true name is: " << std::boolalpha << true << std::endl;
-    std::locale eng = gen("en_US.UTF-8");
-    print_locale_properties(eng, std::cout);
+    cout << "true name is: " << boolalpha << true << endl;
+    locale eng = gen("en_US.UTF-8");
+    print_locale_properties(eng, cout);
 
     generator gen_limited;
     //    gen_limited.characters(char_facet_t::char_f);
     //   gen_limited.categories(category_t::collation | category_t::formatting);
-    std::locale lim_de = gen_limited("de_DE.UTF-8");
-    print_locale_properties(lim_de, std::cout);
-    std::locale::global(lim_de);
-    std::cout.imbue(lim_de);
-    std::cout << "true name is: " << std::boolalpha << true << std::endl;
+    locale lim_de = gen_limited("fr_FR.UTF-8");
+    print_locale_properties(lim_de, cout);
+    cout.imbue(lim_de);
+    cout << "true name is: " << std::boolalpha << true << std::endl;
+    locale default_de("de_DE.UTF-8");
+    cout.imbue(default_de);
+    cout << "true name is: " << std::boolalpha << true << std::endl;
 
     const char8_t* str = u8"Привет Мир!";
     std::cout << reinterpret_cast<const char*>(str) << std::endl;
