@@ -1,18 +1,20 @@
 #include <iostream>
 
+#include <boost/core/demangle.hpp>
 #include <boost/locale.hpp>
 
 template <typename Facet>
 void is_facet_present(const std::locale& loc, std::ostream& os)
 {
-    const std::type_info& facet_id = typeid(Facet);
+    const std::type_info& facet_id     = typeid(Facet);
+    auto                  facet_id_str = boost::core::demangle(facet_id.name());
     if (std::has_facet<Facet>(loc))
     {
-        os << "locale has facet: " << facet_id.name() << "\n";
+        os << "locale has facet: " << facet_id_str << "\n";
     }
     else
     {
-        os << "locale has not facet: " << facet_id.name() << "\n";
+        os << "locale has not facet: " << facet_id_str << "\n";
     }
 }
 
@@ -76,11 +78,12 @@ int main()
     print_locale_properties(eng, std::cout);
 
     generator gen_limited;
-    gen_limited.characters(char_facet_t::char_f);
-    gen_limited.categories(category_t::collation | category_t::formatting);
+    //    gen_limited.characters(char_facet_t::char_f);
+    //   gen_limited.categories(category_t::collation | category_t::formatting);
     std::locale lim_de = gen_limited("de_DE.UTF-8");
     print_locale_properties(lim_de, std::cout);
     std::locale::global(lim_de);
+    std::cout.imbue(lim_de);
     std::cout << "true name is: " << std::boolalpha << true << std::endl;
 
     const char8_t* str = u8"Привет Мир!";
