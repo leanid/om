@@ -50,15 +50,15 @@ std::ostream& operator<<(std::ostream& os, const salt_t& salt)
 
 std::istream& operator>>(std::istream& is, salt_t& salt)
 {
-    for (size_t i = 0; i < salt.bytes.size(); ++i)
+    for (auto& byte : salt.bytes)
     {
         char hex[3] = { 0 }; // Buffer to hold 2 hex chars + null terminator
         is.read(hex, 2);     // Read 2 hex characters
-        if (is.gcount() != 2)
+        if (!is || is.gcount() != 2)
         {
             throw std::runtime_error("Failed to read 2 hex characters");
         }
-        salt.bytes[i] = static_cast<unsigned char>(std::stoi(hex, nullptr, 16));
+        byte = static_cast<unsigned char>(std::stoi(hex, nullptr, 16));
     }
     return is;
 }
@@ -88,7 +88,6 @@ void encrypt(const std::filesystem::path& in_file,
     const int key_len    = 16;    // AES-128
     const int iv_len     = 16;    // AES-CTR IV length
     const int iterations = 10000; // see: PBKDF2_ITER_DEFAULT 10000
-    // const char magic[]    = "Salted__"; // default like in openssl
 
     // generate key and iv like in openssl(3.2.2) see: apps/enc.c:560
     unsigned char key_and_iv[key_len + iv_len];
@@ -108,7 +107,7 @@ void encrypt(const std::filesystem::path& in_file,
 
     unsigned char key[key_len];
     unsigned char iv[iv_len];
-
+    // split key and iv
     std::memcpy(key, key_and_iv, key_len);
     std::memcpy(iv, key_and_iv + key_len, iv_len);
 
@@ -135,17 +134,7 @@ void encrypt(const std::filesystem::path& in_file,
 
     std::ofstream ofs(out_file, std::ios::binary);
 
-    // ofs.write(magic, sizeof(magic) - 1); // without end \0
-    // std::cout << "write magic: " << magic << std::endl;
-    // ofs.write(reinterpret_cast<char*>(salt), salt_len);
-    // std::cout << "write salt: ";
-    // for (unsigned i = 0; i < 8; i++)
-    // {
-    //     std::cout << std::hex << std::setw(2) << unsigned(salt[i]);
-    // }
-    // std::cout << std::dec << std::endl;
-
-    constexpr int buf_size = 1024;
+    constexpr int buf_size = 4096;
     unsigned char buf_in[buf_size];
     // see:
     // https://docs.openssl.org/3.1/man3/EVP_EncryptInit/#description
@@ -196,8 +185,6 @@ void decrypt(const std::filesystem::path& in_file,
     const int key_len    = 16;    // AES-128
     const int iv_len     = 16;    // AES-CTR IV length
     const int iterations = 10000; // see: PBKDF2_ITER_DEFAULT 10000
-    // const int  salt_len   = 8;          // default like in openssl
-    // const char magic[]    = "Salted__"; // default like in openssl
 
     std::ifstream ifs(in_file, std::ios::binary);
     if (!ifs)
@@ -206,16 +193,6 @@ void decrypt(const std::filesystem::path& in_file,
         msg += in_file.string();
         throw std::runtime_error(msg);
     }
-
-    // char file_magic[sizeof(magic) - 1]{};
-    // ifs.read(file_magic, sizeof(file_magic));
-    // if (std::memcmp(file_magic, magic, sizeof(magic) - 1) != 0)
-    // {
-    //     throw std::runtime_error("error: bad magic constant");
-    // }
-
-    // unsigned char salt[salt_len];
-    // ifs.read(reinterpret_cast<char*>(salt), salt_len);
 
     unsigned char key_and_iv[key_len + iv_len];
     if (!PKCS5_PBKDF2_HMAC(password.c_str(),
@@ -256,7 +233,7 @@ void decrypt(const std::filesystem::path& in_file,
         throw std::runtime_error(msg);
     }
 
-    constexpr int buf_size = 1024;
+    constexpr int buf_size = 4096;
     unsigned char buf_in[buf_size];
     // see:
     // https://docs.openssl.org/3.1/man3/EVP_EncryptInit/#description
@@ -347,12 +324,13 @@ int main(int argc, char* argv[])
         po::variables_map vm;
         po::store(parsed_options, vm);
 
-        po::notify(vm);
         if (vm.count("help"))
         {
             std::cout << all << std::endl;
             return EXIT_SUCCESS;
         }
+
+        po::notify(vm); // skip if "help" any errors
     }
     catch (const std::exception& ex)
     {
@@ -373,9 +351,8 @@ int main(int argc, char* argv[])
     {
         try
         {
-            std::stringstream ss(arg_salt);
-            salt_t            salt{};
-            ss >> salt;
+            salt_t salt{};
+            std::stringstream(arg_salt) >> salt;
             encrypt(arg_in, arg_out, arg_pass, salt);
         }
         catch (const std::exception& ex)
@@ -390,9 +367,8 @@ int main(int argc, char* argv[])
     {
         try
         {
-            std::stringstream ss(arg_salt);
-            salt_t            salt{};
-            ss >> salt;
+            salt_t salt{};
+            std::stringstream(arg_salt) >> salt;
 
             decrypt(arg_in, arg_out, arg_pass, salt);
         }
