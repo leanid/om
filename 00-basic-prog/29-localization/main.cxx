@@ -66,6 +66,11 @@ int main()
 {
     using namespace boost::locale;
     using namespace std;
+
+    localization_backend_manager my = localization_backend_manager::global();
+    // Get global backend
+
+    my.select("icu"); // std, icu, posix
     generator gen;
     // Create locale generator
     locale system_default = gen("");
@@ -87,6 +92,10 @@ int main()
     cout << "true name is: " << std::boolalpha << true << std::endl;
     locale default_de("de_DE.UTF-8");
     cout.imbue(default_de);
+    cout << "true name is: " << std::boolalpha << true << std::endl;
+
+    std::setlocale(LC_ALL, "de_DE");
+    cout.imbue(std::locale("de_DE"));
     cout << "true name is: " << std::boolalpha << true << std::endl;
 
     const char8_t* str = u8"Привет Мир!";
