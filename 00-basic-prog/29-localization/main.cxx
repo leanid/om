@@ -18,7 +18,22 @@ void is_facet_present(const std::locale& loc, std::ostream& os)
 
 void print_locale_properties(const std::locale& loc, std::ostream& os)
 {
-    os << "Locale name: " << loc.name() << '\n';
+    if (std::has_facet<boost::locale::info>(loc))
+    {
+        auto&       info = std::use_facet<boost::locale::info>(loc);
+        std::string tab(4, ' ');
+        os << "boost::locale::info:\n"
+           << tab << "name: " << info.name() << '\n'
+           << tab << "country: " << info.country() << '\n'
+           << tab << "encoding: " << info.encoding() << '\n'
+           << tab << "language: " << info.language() << '\n'
+           << tab << "utf8: " << info.utf8() << '\n'
+           << tab << "variant: " << info.variant() << '\n';
+    }
+    else
+    {
+        os << "Locale name: " << loc.name() << '\n';
+    }
 
     // List of standard facets to check
     is_facet_present<std::collate<char>>(loc, os);
@@ -43,7 +58,7 @@ void print_locale_properties(const std::locale& loc, std::ostream& os)
     is_facet_present<std::time_get<wchar_t>>(loc, os);
     is_facet_present<std::time_put<char>>(loc, os);
     is_facet_present<std::time_put<wchar_t>>(loc, os);
-};
+}
 
 int main()
 {
