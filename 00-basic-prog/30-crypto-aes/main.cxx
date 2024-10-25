@@ -377,6 +377,7 @@ int main(int argc, char* argv[])
             std::cerr << "error: decrypt failed: " << ex.what() << std::endl;
             return EXIT_FAILURE;
         }
+        return EXIT_SUCCESS;
     }
 
     return EXIT_FAILURE;
