@@ -25,7 +25,7 @@ VkSurfaceKHR platform_sdl3::create_vulkan_surface(
     int          result =
         SDL_Vulkan_CreateSurface(window, instance, alloc_callbacks, &surface);
 
-    if (0 != result)
+    if (!result)
     {
         std::string msg = "error: can't create sdl vulkan surface: [";
         msg += SDL_GetError();
