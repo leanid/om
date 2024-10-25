@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.30)
 
-project(aes_128 CXX)
+project(aes128 CXX)
 
 find_package(OpenSSL REQUIRED)
 find_package(
@@ -15,6 +15,6 @@ find_package(
     # Optional Boost libraries by their canonical name)
     ) # e.g. "date_time" for "libboost_date_time"
 
-add_executable(aes_128 main.cxx)
-target_link_libraries(aes_128 PRIVATE OpenSSL::Crypto Boost::program_options)
-target_compile_features(aes_128 PRIVATE cxx_std_23)
+add_executable(aes128 main.cxx)
+target_link_libraries(aes128 PRIVATE OpenSSL::Crypto Boost::program_options)
+target_compile_features(aes128 PRIVATE cxx_std_23)
