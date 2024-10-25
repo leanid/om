@@ -314,11 +314,11 @@ std::string engine_impl::initialize(std::string_view)
         return serr.str();
     }
 
-    int result =
+    bool result =
         SDL_GL_GetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, &gl_major_ver);
-    assert(result == 0);
+    assert(result);
     result = SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, &gl_minor_ver);
-    assert(result == 0);
+    assert(result);
 
     if (gl_major_ver <= 2 && gl_minor_ver < 1)
     {
