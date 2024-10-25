@@ -24,7 +24,7 @@ int main(int argc, char** argv)
     std::ostream  null_stream(&null);
     std::ostream& log = verbose ? std::clog : null_stream;
 
-    if (0 != SDL_Init(SDL_INIT_VIDEO))
+    if (!SDL_Init(SDL_INIT_VIDEO))
     {
         std::cerr << SDL_GetError();
         return EXIT_FAILURE;
@@ -37,7 +37,7 @@ int main(int argc, char** argv)
             log << "destroy all subsystems\n";
         });
 
-    if (0 != SDL_Vulkan_LoadLibrary(nullptr))
+    if (!SDL_Vulkan_LoadLibrary(nullptr))
     {
         std::cerr << SDL_GetError();
         return EXIT_FAILURE;
