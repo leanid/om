@@ -10,12 +10,8 @@ bool is_facet_present(const std::locale& loc, std::ostream& os)
     auto                  facet_id_str = boost::core::demangle(facet_id.name());
     if (std::has_facet<Facet>(loc))
     {
-        os << "locale has facet: " << facet_id_str << "\n";
+        os << "has: " << facet_id_str << "\n";
         return true;
-    }
-    else
-    {
-        os << "locale has not facet: " << facet_id_str << "\n";
     }
     return false;
 }
@@ -75,19 +71,28 @@ void print_locale_properties(const std::locale& loc, std::ostream& os)
 
 int main()
 {
-    using namespace boost::locale;
     using namespace std;
+    std::locale default_cxx = locale("");
+    std::locale default_ru  = locale("ru_RU.UTF-8");
+    std::locale default_en  = locale("en_US.UTF-8");
 
-    localization_backend_manager my = localization_backend_manager::global();
+    print_locale_properties(default_cxx, cout);
+    print_locale_properties(default_ru, cout);
+    print_locale_properties(default_en, cout);
+
+    cout << "c++default locale name: " << default_cxx.name() << endl;
+    namespace bl = boost::locale;
+    bl::localization_backend_manager my =
+        bl::localization_backend_manager::global();
     // Get global backend
     for (auto backend : my.get_all_backends())
     {
         cout << "boost::locale backend: " << backend << endl;
     }
     my.select("icu"); // std, icu, posix
-    generator gen;
+    bl::generator gen;
     // Create locale generator
-    locale system_default = gen("");
+    std::locale system_default = gen("");
     print_locale_properties(system_default, cout);
 
     locale::global(system_default);
@@ -97,10 +102,10 @@ int main()
     locale eng = gen("en_US.UTF-8");
     print_locale_properties(eng, cout);
 
-    generator gen_limited;
-    //    gen_limited.characters(char_facet_t::char_f);
-    //   gen_limited.categories(category_t::collation | category_t::formatting);
-    locale lim_de = gen_limited("fr_FR.UTF-8");
+    bl::generator gen_limited;
+    //  gen_limited.characters(char_facet_t::char_f);
+    //  gen_limited.categories(category_t::collation | category_t::formatting);
+    std::locale lim_de = gen_limited("fr_FR.UTF-8");
     print_locale_properties(lim_de, cout);
     cout.imbue(lim_de);
     cout << "true name is: " << std::boolalpha << true << std::endl;
