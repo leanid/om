@@ -1,5 +1,6 @@
 #include <iostream>
 
+#include <boost/algorithm/string/case_conv.hpp>
 #include <boost/core/demangle.hpp>
 #include <boost/locale.hpp>
 
@@ -69,8 +70,88 @@ void print_locale_properties(const std::locale& loc, std::ostream& os)
     is_facet_present<time_put<wchar_t>>(loc, os);
 }
 
+void boost_locale_hello_example()
+{
+    using namespace boost::locale;
+    generator   gen;
+    std::locale loc = gen("");
+    // Create system default locale
+
+    std::locale::global(loc);
+    // Make it system global
+
+    std::cout.imbue(loc);
+    // Set as default locale for output
+
+    std::cout << format("Today {1,date} at {1,time} we had run our first "
+                        "localization example") %
+                     std::time(nullptr)
+              << std::endl;
+
+    std::cout << "This is how we show numbers in this locale " << as::number
+              << 103.34 << std::endl;
+    std::cout << "This is how we show currency in this locale " << as::currency
+              << 103.34 << std::endl;
+    std::cout << "This is typical date in the locale " << as::date
+              << std::time(nullptr) << std::endl;
+    std::cout << "This is typical time in the locale " << as::time
+              << std::time(nullptr) << std::endl;
+    std::cout << "This is upper case " << to_upper("Hello World!") << std::endl;
+    std::cout << "This is lower case " << to_lower("Hello World!") << std::endl;
+    std::cout << "This is title case " << to_title("Hello World!") << std::endl;
+    std::cout << "This is fold case " << fold_case("Hello World!") << std::endl;
+}
+
+void boost_locale_conversion_example()
+{
+    if (boost::locale::localization_backend_manager::global()
+            .get_all_backends()
+            .at(0) != "icu")
+        std::cout << "Need ICU support for this example!\nConversion below "
+                     "will likely be wrong!\n";
+
+    // Create system default locale
+    boost::locale::generator gen;
+    std::locale              loc = gen("");
+    std::locale::global(loc);
+    std::cout.imbue(loc);
+
+    // This is needed to prevent the C stdio library from
+    // converting strings to narrow on some platforms
+    std::ios_base::sync_with_stdio(false);
+
+    std::cout << "Correct case conversion can't be done by simple, character "
+                 "by character conversion\n";
+    std::cout << "because case conversion is context sensitive and not a "
+                 "1-to-1 conversion.\n";
+    std::cout << "For example:\n";
+    const std::string gruessen("grüßen");
+    std::cout << "   German " << gruessen
+              << " would be incorrectly converted to "
+              << boost::to_upper_copy(gruessen);
+    std::cout << ", while Boost.Locale converts it to "
+              << boost::locale::to_upper(gruessen) << std::endl
+              << "     where ß is replaced with SS.\n";
+    const std::string greek("ὈΔΥΣΣΕΎΣ");
+    std::cout << "   Greek " << greek << " would be incorrectly converted to "
+              << boost::to_lower_copy(greek);
+    std::cout << ", while Boost.Locale correctly converts it to "
+              << boost::locale::to_lower(greek) << std::endl
+              << "     where Σ is converted to σ or to ς, according to "
+                 "position in the word.\n";
+    std::cout << "Such type of conversion just can't be done using "
+                 "std::toupper/boost::to_upper* that work on character "
+                 "by character base.\n"
+                 "Also std::toupper is not fully applicable when working with "
+                 "variable character length like UTF-8 or UTF-16\n"
+                 "limiting the correct behavior to BMP or ASCII only\n";
+}
+
 int main()
 {
+    boost_locale_hello_example();
+    boost_locale_conversion_example();
+
     using namespace std;
     std::locale default_cxx = locale("");
     std::locale default_ru  = locale("ru_RU.UTF-8");
