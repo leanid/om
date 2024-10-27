@@ -70,6 +70,8 @@ example: \(std::\)\|\(namespace\ std\) -- -tcpp --no-ignore
 example rg: rg --no-ignore --files -g "*pickling*"
                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ will print only file path with names contains "pickling"
 example (search only in file names): rg --files | rg "\w*.gradle$"
+example (filter lines with names): locate sed.mo | rg -v flat | rg ru
+                                                       ^ - invert (filter) regexp
 ```
 RipGrep manual here: 
 [RipGrep User Guide](https://github.com/BurntSushi/ripgrep/blob/master/GUIDE.md)
