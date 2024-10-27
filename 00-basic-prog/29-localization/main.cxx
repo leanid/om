@@ -207,11 +207,50 @@ void boost_locale_boundary_example()
     std::cout << "|\n\n";
 }
 
+void std_locale_messages_facet_example()
+{
+    // on my Fedora by default
+    // /usr/share/locale/ru/LC_MESSAGES/sed.mo
+    {
+        std::locale loc("de_DE.utf8");
+
+        std::cout.imbue(loc);
+        auto& facet = std::use_facet<std::messages<char>>(loc);
+        auto  cat   = facet.open("sed", loc);
+        if (cat < 0)
+            std::cout << "Could not open german \"sed\" message catalog\n";
+        else
+            std::cout << "\"No match\" in German: "
+                      << facet.get(cat, 0, 0, "No match") << '\n'
+                      << "\"Memory exhausted\" in German: "
+                      << facet.get(cat, 0, 0, "Memory exhausted") << '\n';
+        facet.close(cat);
+    }
+
+    {
+        std::locale ru("ru_RU.UTF8");
+
+        std::cout.imbue(ru);
+        auto& facet = std::use_facet<std::messages<char>>(ru);
+        auto  cat   = facet.open("sed", ru);
+        if (cat < 0)
+            std::cout << "Could not open german \"sed\" message catalog\n";
+        else
+            std::cout << "\"No match\" in Russian: "
+                      << facet.get(cat, 0, 0, "No match") << '\n'
+                      << "\"Memory exhausted\" in Russian: "
+                      << facet.get(cat, 0, 0, "Memory exhausted") << '\n';
+        facet.close(cat);
+    }
+}
+
 int main()
 {
     boost_locale_hello_example();
     boost_locale_conversion_example();
     boost_locale_boundary_example();
+
+    std_locale_messages_facet_example();
 
     using namespace std;
     std::locale default_cxx = locale("");
