@@ -1,4 +1,5 @@
 #include <iostream>
+#include <system_error>
 
 #include <boost/algorithm/string/case_conv.hpp>
 #include <boost/core/demangle.hpp>
@@ -9,12 +10,12 @@ bool is_facet_present(const std::locale& loc, std::ostream& os)
 {
     const std::type_info& facet_id     = typeid(Facet);
     auto                  facet_id_str = boost::core::demangle(facet_id.name());
-    if (std::has_facet<Facet>(loc))
+    if (!std::has_facet<Facet>(loc))
     {
-        os << "has: " << facet_id_str << "\n";
-        return true;
+        os << "has't: " << facet_id_str << "\n";
+        return false;
     }
-    return false;
+    return true;
 }
 
 void print_locale_properties(const std::locale& loc, std::ostream& os)
@@ -218,7 +219,10 @@ void std_locale_messages_facet_example()
         auto& facet = std::use_facet<std::messages<char>>(loc);
         auto  cat   = facet.open("sed", loc);
         if (cat < 0)
-            std::cout << "Could not open german \"sed\" message catalog\n";
+            std::cout
+                << "Could not open german \"sed\" message catalog\n"
+                << std::make_error_code(static_cast<std::errc>(errno)).message()
+                << '\n';
         else
             std::cout << "\"No match\" in German: "
                       << facet.get(cat, 0, 0, "No match") << '\n'
@@ -234,7 +238,10 @@ void std_locale_messages_facet_example()
         auto& facet = std::use_facet<std::messages<char>>(ru);
         auto  cat   = facet.open("sed", ru);
         if (cat < 0)
-            std::cout << "Could not open german \"sed\" message catalog\n";
+            std::cout
+                << "Could not open german \"sed\" message catalog\n"
+                << std::make_error_code(static_cast<std::errc>(errno)).message()
+                << '\n';
         else
             std::cout << "\"No match\" in Russian: "
                       << facet.get(cat, 0, 0, "No match") << '\n'
