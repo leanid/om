@@ -1,8 +1,12 @@
 {
   "dependencies": [
+    {
+      "name": "boost-locale",
+      "features": [
+        "icu"
+      ]
+    },
     "boost-program-options",
-    "openssl",
-    "boost-locale",
-    "icu"
+    "openssl"
   ]
 }
