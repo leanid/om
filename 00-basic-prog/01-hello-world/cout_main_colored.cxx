@@ -5,9 +5,12 @@
 #include <iostream>
 #include <string_view>
 
+#include <unistd.h> // for isatty
+
 void get_terminal_size(int& width, int& height);
 bool is_terminal_support_truecolor();
 bool is_terminal_support_256color();
+bool is_terminal_stdout();
 
 int main(int, char**)
 {
@@ -21,6 +24,12 @@ int main(int, char**)
     // https://en.wikipedia.org/wiki/Ncurses
     using namespace std::literals;
     using namespace std;
+
+    if (!is_terminal_stdout())
+    {
+        cerr << "error: stdout is not terminal!\n";
+        return EXIT_FAILURE;
+    }
 
     int screen_width  = 80; // default
     int screen_height = 40; // default
@@ -78,6 +87,11 @@ int main(int, char**)
 
     cout << endl; // flush to device from internal buffer
     return cout.good() ? 0 : 1;
+}
+
+bool is_terminal_stdout()
+{
+    return isatty(fileno(stdout)) != 0;
 }
 
 void get_terminal_size(int& width, int& height)
