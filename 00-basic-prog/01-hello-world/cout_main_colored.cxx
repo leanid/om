@@ -6,6 +6,7 @@
 #include <string_view>
 
 #include <unistd.h> // for isatty
+                    // TTY is an abbreviation for teletype, meaning a terminal
 
 void get_terminal_size(int& width, int& height);
 bool is_terminal_support_truecolor();
