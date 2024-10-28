@@ -2,6 +2,7 @@
   "dependencies": [
     "boost-program-options",
     "openssl",
-    "boost-locale"
+    "boost-locale",
+    "icu"
   ]
 }
