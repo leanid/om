@@ -22,7 +22,6 @@ int main(int, char**)
 
     // You can do a lot more with terminal:
     // https://en.wikipedia.org/wiki/Ncurses
-    using namespace std::literals;
     using namespace std;
 
     if (!is_terminal_stdout())
