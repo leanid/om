@@ -1,0 +1,13 @@
+# .gitignore file. This tells git which files or directories to ignore in the project.
+__pycache__/
+*.py[cod]
+*.pyd
+*.pyo
+*.so
+.env
+venv/
+dist/
+build/
+*.egg-info/
+.idea/
+*.log
