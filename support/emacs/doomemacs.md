@@ -170,3 +170,30 @@ or copy code and paste into doom/config.el (C+f+P+config)
   (ispell-set-spellchecker-params)
   (ispell-hunspell-add-multi-dic "en_US,ru_RU"))
 ```
+### How to debug Python code
+Install *debugpy*
+```bash
+pip install "debugpy"
+```
+Add to your doomemacs config next code:
+```elisp
+(require 'dap-python)
+(after! dap-mode
+  (setq dap-python-debugger 'debugpy))
+```
+next *doom sync*
+And now you should see Python::Run Configuration on
+dap-debug-edit-template
+For simple one file debugging you can skip most params see example:
+```elisp
+(dap-register-debug-template
+  "Python :: Run file (buffer) my"
+  (list :type "python"
+        :args ""
+        :cwd "/home/leo/om/00-basic-prog/31-python/hello"
+        :module nil
+        :program nil
+        :request "launch"
+        :name "Python :: Run file (buffer) my"))
+```
+next *dap-hydra* to show key to debug
