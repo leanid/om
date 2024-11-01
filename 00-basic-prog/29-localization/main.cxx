@@ -238,15 +238,19 @@ void std_locale_messages_facet_example()
         auto& facet = std::use_facet<std::messages<char>>(ru);
         auto  cat   = facet.open("sed", ru);
         if (cat < 0)
+        {
             std::cout
                 << "Could not open german \"sed\" message catalog\n"
                 << std::make_error_code(static_cast<std::errc>(errno)).message()
                 << std::endl;
+        }
         else
+        {
             std::cout << "\"No match\" in Russian: "
                       << facet.get(cat, 0, 0, "No match") << '\n'
                       << "\"Memory exhausted\" in Russian: "
                       << facet.get(cat, 0, 0, "Memory exhausted") << std::endl;
+        }
         facet.close(cat);
     }
 }
