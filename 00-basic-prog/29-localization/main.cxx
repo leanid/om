@@ -311,7 +311,7 @@ int main()
 
     locale ru = gen("ru_RU.UTF-8");
     cout.imbue(ru);
-    cout << "true name is: " << std::boolalpha << true << std::endl;
+    cout << "true name is: " << std::boolalpha << true << endl;
 
     const char8_t* str = u8"Привет Мир!";
     std::cout << reinterpret_cast<const char*>(str) << std::endl;
