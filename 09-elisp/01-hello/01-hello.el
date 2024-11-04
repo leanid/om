@@ -50,4 +50,22 @@
 (if t
     'it-was-true
   'it-was-false) ;; => it-was-true
+(when t
+  'it-was-true) ;; => it-was-true
+(unless nil
+  'it-was-true) ;; => it-was-true
+(and t t) ;; => t
+(or nil t) ;; => t
+(not nil) ;; => t
+(if t (progn (message "It was true")
+             (message "next message")
+             (message "last message"))
+  (message "It was false")) ;; => "It was true"
+(let ((x 42))
+  (cond ((= x 0) 'zero)
+        ((> x 0) 'positive)
+        (t 'negative)))
+;;; setting variables
+(setq my-variable 42)
+(setopt my-option 42) ;; has type checking from defcustom
 ;;; 01-hello.el ends here
