@@ -108,8 +108,10 @@ void boost_locale_conversion_example()
     if (boost::locale::localization_backend_manager::global()
             .get_all_backends()
             .at(0) != "icu")
+    {
         std::cout << "Need ICU support for this example!\nConversion below "
                      "will likely be wrong!\n";
+    }
 
     // Create system default locale
     boost::locale::generator gen;
