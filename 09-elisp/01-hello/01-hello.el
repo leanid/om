@@ -68,4 +68,36 @@
 ;;; setting variables
 (setq my-variable 42)
 (setopt my-option 42) ;; has type checking from defcustom
+
+(require 'cl-lib)
+(cl-loop for i from 1 to 5
+         do (message "Hello, world! %d" i))
+
+(setq my/val 1)
+(setq my/truth t)
+(while my/truth
+  (if (= my/val 10)
+      (setq my/truth nil))
+  (setq my/val (+ my/val 1))
+  (message "Hello, world! %d" my/val))
+
+(progn (setq total nil)
+       (dotimes (i 5)
+         (setq total (cons total i)))
+       total) ;;=> (((((nil . 0) . 1) . 2) . 3) . 4)
+
+(dolist (i '("one" "two" "three"))
+  (message "%s" i))
+
+(defun my-func ()
+  (interactive)
+  (run-hooks 'my-hooks)
+  )
+(add-hook 'my-hooks (lambda () (message "one from my-hooks")))
+(add-hook 'my-hooks (lambda () (message "two from my-hooks")))
+(add-hook 'my-hooks (lambda () (message "tree from my-hooks")))
+;;temporary variables
+(let ((x 1)
+      (y 2))
+  (+ x y)) ;; => 3
 ;;; 01-hello.el ends here
