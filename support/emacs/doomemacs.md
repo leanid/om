@@ -6,28 +6,33 @@ Try passing it to emacs manually. E.g.
 - `doom upgrade` -> `emacs -q --no-site-file --script bin/doom -- upgrade` (`doom upgrade` won't be able to restart and run `doom sync` afterwards, by itself, when used this way, so you'll have to `doom sync -u` manually after upgrading)
 ## Formatter for your language strange behavior
 Add next to your Doomemacs .config. Or read about it in (format +on-save)
-```lisp
+```elisp
 (setq +format-with-lsp nil)
 ```
 ## CMake Presets not working
 Add to configuration
-```lisp
+```elisp
 (setq projectile-enable-cmake-presets t)
 or
 (projectile-enable-cmake-presets t)
 ```
 ## Quit without acknolidge
-```lisp
+```elisp
 (setq confirm-kill-emacs nil)
 ```
 ## Maximize on startup
 To maximize or fullscreen Emacs at startup, add one of the following to ~/.doom.d/config.el:
-```lisp
+```elisp
 (add-to-list 'initial-frame-alist '(fullscreen . maximized))
 (add-hook 'window-setup-hook #'toggle-frame-maximized)
 (add-hook 'window-setup-hook #'toggle-frame-fullscreen)
 ```
 Each method has slightly different effects that vary from OS to OS. You’ll have to decide for yourself which you prefer.
+## Font on my install 
+```elisp
+(setq doom-font (font-spec :family "JetBrains Mono" :size 15 :weight 'semi-light)
+      doom-variable-pitch-font (font-spec :family "JetBrains Mono" :size 15))
+```
 ## Search
 
 ### Search Project Text Globally
