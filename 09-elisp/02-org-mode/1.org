@@ -4,11 +4,11 @@ try to add some text
 second line
 third line
 * this is headline, it starts from one or more starts
-if you want to FOLD(unFOLD) use `TAB` on heading line
+if you want to fold(unfold) use `TAB` on heading line
 ** this is sub-heading (** in beginning prints as one *)
 if you want to move-up(down) `ALT+k` or `ALT+j`
 ** moving around headings
-ALT key in emacs docs named as Meta `M`
+ALT key in Emacs docs named as Meta `M`
 promote heading up or down with `M+h` or `M+l`
 1. To start numbered list just type `1` and `.`
    next line
