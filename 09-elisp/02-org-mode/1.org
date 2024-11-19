@@ -1,5 +1,4 @@
 * welcome to org.mode
-
 try to add some text
 second line
 third line
@@ -14,3 +13,11 @@ promote heading up or down with `M+h` or `M+l`
    next line
    then `M+Enter`
 2. and second numbered item in list
+* how to use bold italic underlined code verbatim
+1. to use bold just add *bold* nice
+2. to use italic add /italic/ nice
+3. to use underline add _underline_ nice
+4. to use code add =int main(int argc, char** argv);= nice
+5. to use verbatim add ~verbatim~ (означает дословный)
+6. to use strike-throw +some text with strike throw+ nice
+** TODO buy airplane
