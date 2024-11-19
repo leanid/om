@@ -21,3 +21,33 @@ promote heading up or down with `M+h` or `M+l`
 5. to use verbatim add ~verbatim~ (означает дословный)
 6. to use strike-throw +some text with strike throw+ nice
 ** TODO buy airplane
+* How to integrate code samples in org
++ define block of code and point in it cursor
++ after it your should call
++ : org-babel-execute-maybe or (C-c C-v C-e)
+
+#+begin_src python
+return 'hello from python code!'
+#+end_src
+
+#+RESULTS:
+: hello from python code!
+
+#+begin_src bash
+echo "hello world"
+#+end_src
+
+#+RESULTS:
+: hello world
+
+#+begin_src C
+#include <stdio.h>
+int main()
+{
+    printf("%s", "hello form C lang!\n");
+    return 0;
+}
+#+end_src
+
+#+RESULTS:
+: hello form C lang!
