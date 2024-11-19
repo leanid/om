@@ -51,3 +51,14 @@ int main()
 
 #+RESULTS:
 : hello form C lang!
+
+#+begin_src cpp
+#include <iostream>
+int main()
+{
+    std::cout << "hello world from C++!" << std::endl;
+}
+#+end_src
+
+#+RESULTS:
+: hello world from C++!
