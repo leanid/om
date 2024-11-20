@@ -27,38 +27,38 @@ promote heading up or down with `M+h` or `M+l`
 + : org-babel-execute-maybe or (C-c C-v C-e)
 
 #+begin_src python
-return 'hello from python code!'
+return 'hello from python code! on Windows'
 #+end_src
 
 #+RESULTS:
-: hello from python code!
+: hello from python code! on Windows
 
 #+begin_src bash
-echo "hello world"
+echo "hello world (on Windows too)"
 #+end_src
 
 #+RESULTS:
-: hello world
+: hello world (on Windows too)
 
 #+begin_src C
 #include <stdio.h>
 int main()
 {
-    printf("%s", "hello form C lang!\n");
+    printf("%s", "hello form C lang even on Windows!\n");
     return 0;
 }
 #+end_src
 
 #+RESULTS:
-: hello form C lang!
+: hello form C lang even on Windows!
 
-#+begin_src cpp
+#+begin_src C++
 #include <iostream>
 int main()
 {
     std::cout << "hello world from C++!" << std::endl;
+    return 0;
 }
 #+end_src
 
 #+RESULTS:
-: hello world from C++!
