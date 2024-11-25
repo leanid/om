@@ -62,3 +62,4 @@ int main()
 #+end_src
 
 #+RESULTS:
+: hello world from C++!
