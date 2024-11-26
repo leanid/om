@@ -77,6 +77,7 @@ int main()
 ** or just read: https://orgmode.org/worg/org-tutorials/tables.html
 ** to recalculate all fields in table SPC+: org-table-iterate to update all cells
 ** also good tutorial for spreadsheet https://orgmode.org/worg/org-tutorials/org-spreadsheet-intro.html
+** all available function from 'calc' your may see just open menu-bar-mode and then M+calc and search Calc menu
 
 
 | n | n^2 | n^3 | n^4 |   sqrt(n) |  sum(row) |
