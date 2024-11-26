@@ -76,12 +76,13 @@ int main()
 ** after header add |- and press ENTER and -+---+----+--- apeared
 ** or just read: https://orgmode.org/worg/org-tutorials/tables.html
 ** to recalculate all fields in table SPC+: org-table-iterate to update all cells
+** also good tutorial for spreadsheet https://orgmode.org/worg/org-tutorials/org-spreadsheet-intro.html
 
 
-| n | n^2 | n^3 | n^4 |   sqrt(n) |
-|---+-----+-----+-----+-----------|
-| 1 |   1 |   1 |   1 |         1 |
-| 2 |   4 |   8 |  16 | 1.4142136 |
-| 3 |   9 |  27 |  81 | 1.7320508 |
-| 4 |  16 |  64 | 256 |         2 |
-#+TBLFM: $2=$1*$1::$3=$1*$1*$1::$4=$1*$1*$1*$1::$5=sqrt($1)
+| n | n^2 | n^3 | n^4 |   sqrt(n) |  sum(row) |
+|---+-----+-----+-----+-----------+-----------|
+| 1 |   1 |   1 |   1 |         1 |         5 |
+| 2 |   4 |   8 |  16 | 1.4142136 | 31.414214 |
+| 3 |   9 |  27 |  81 | 1.7320508 | 121.73205 |
+| 4 |  16 |  64 | 256 |         2 |       342 |
+#+TBLFM: $2=$1*$1::$3=$1*$1*$1::$4=$1*$1*$1*$1::$5=sqrt($1)::$6=vsum($1..$5)
