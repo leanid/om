@@ -2,3 +2,5 @@
 ** сразу используем Boost без него нереально сделать что-то профессиональное на с++ для локализации
 ** учим как создать нужную локаль и через нее работать с датами, сортировками, числами
 ** TODO профессиональная локализация строк, пример через Boost и GNU GetText http://www.gnu.org/software/gettext/manual/gettext.html
+** TODO Internalization (or I18n)
+** TODO Localization (or L10n)
