@@ -4,3 +4,35 @@
 ** TODO профессиональная локализация строк, пример через Boost и GNU GetText http://www.gnu.org/software/gettext/manual/gettext.html
 ** TODO Internalization (or I18n)
 ** TODO Localization (or L10n)
+** TODO .po files mean Portable Files - for humans to read-edit
+*** single .po file for single target language
+*** package consist of several languages each in separeted .po file
+*** .po files created with ~xgettext~ program
+*** .po files updated with ~msgmerge~ program
+*** .pot files is base template in .po format
+** TODO .mo files mean Mashine Files - for programs and in binary format
+*** .mo files is often different from system to system, and non-portable
+*** .gmo are really MO files, when it is known that these files use the GNU format.
+** Schema of i18n with gnu gettext
+=
+Original C Sources ───> Preparation ───> Marked C Sources ───╮
+                                                             │
+              ╭─────────<─── GNU gettext Library             │
+╭─── make <───┤                                              │
+│             ╰─────────<────────────────────┬───────────────╯
+│                                            │
+│   ╭─────<─── PACKAGE.pot <─── xgettext <───╯   ╭───<─── PO Compendium
+│   │                                            │              ↑
+│   │                                            ╰───╮          │
+│   ╰───╮                                            ├───> PO editor ───╮
+│       ├────> msgmerge ──────> LANG.po ────>────────╯                  │
+│   ╭───╯                                                               │
+│   │                                                                   │
+│   ╰─────────────<───────────────╮                                     │
+│                                 ├─── New LANG.po <────────────────────╯
+│   ╭─── LANG.gmo <─── msgfmt <───╯
+│   │
+│   ╰───> install ───> /.../LANG/PACKAGE.mo ───╮
+│                                              ├───> "Hello world!"
+╰───────> install ───> /.../bin/PROGRAM ───────╯
+=
