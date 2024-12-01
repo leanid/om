@@ -36,3 +36,18 @@ Original C Sources ───> Preparation ───> Marked C Sources ───�
 │                                              ├───> "Hello world!"
 ╰───────> install ───> /.../bin/PROGRAM ───────╯
 =
+** add to your main header file
+#+begin_src C++
+#define _(String) (String)
+#define N_(String) String
+#define textdomain(Domain)
+#define bindtextdomain(Package, Directory)
+#+end_src
+** later replace previous definitions with:
+#+begin_src C++
+#include <libintl.h>
+#define _(String) gettext (String)
+#define gettext_noop(String) String
+#define N_(String) gettext_noop (String)
+#+end_src
+** and link with =libintl.a= or =libintl.so= (on Linux it is already linked with glibc)
