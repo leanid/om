@@ -51,3 +51,19 @@ Original C Sources ───> Preparation ───> Marked C Sources ───�
 #define N_(String) gettext_noop (String)
 #+end_src
 ** and link with =libintl.a= or =libintl.so= (on Linux it is already linked with glibc)
+* Locale Names Environment variable
+** Format ll_CC where
+1. ll two letter (or three letter) ISO-639 (https://www.iso.org/iso-639-language-code
+   https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes
+   https://www.gnu.org/software/gettext/manual/gettext.html#Language-Codes
+   https://www.gnu.org/software/gettext/manual/gettext.html#Country-Codes)
+2. CC tow letter of country or territory
+3. example de_DE (German Germany)
+4. extended ll_CC.encoding or ll_CC.variant
+5. same stable locale on modern Unix is "C.UTF-8" or simple "C"
+** Environment varibals
+1. LANGUAGE - list of priorities languages
+2. LC_ALL - override all LC_xxx
+3. LC_xxx (LC_CTYPE, LC_NUMERIC, LC_TIME, LC_COLLATE, LC_MONETARY, LC_MESSAGES)
+   override LANG
+4. LANG - example ru_RU.UTF-8 (you should use it by default)
