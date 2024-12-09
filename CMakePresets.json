@@ -35,6 +35,10 @@
       },
       "vendor":
       {
+        "$comment": [
+          This is just example of custom settings
+          for any vendor IDE or else
+        ],
         "example.com/ExampleIDE/1.0": {
           "autoFormat": true
         },
