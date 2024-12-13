@@ -46,7 +46,14 @@ public:
     {
     }
 
-    void operator()(char8_t octet)
+    void reset()
+    {
+        octet_count_     = 0;
+        codepoint_count_ = 0;
+        expected_octets_ = 0;
+    }
+
+    void operator+=(char8_t octet)
     {
         unsigned char ch = static_cast<unsigned char>(octet);
         if (expected_octets_ == 0)
@@ -118,17 +125,17 @@ std::u8string wrap_lines<std::u8string>(const std::u8string& text,
     {
         if (ch == new_line_char)
         {
-            counter = utf8_counter{};
+            counter.reset();
         }
         else if (counter.codepoints() >= width)
         {
             os << static_cast<char>(new_line_char);
-            counter = utf8_counter{};
-            counter(ch);
+            counter.reset();
+            counter += ch;
         }
         else
         {
-            counter(ch);
+            counter += ch;
         }
         os << static_cast<char>(ch);
     };
