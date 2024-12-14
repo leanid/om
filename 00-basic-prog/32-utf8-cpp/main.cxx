@@ -112,8 +112,8 @@ private:
 };
 
 template <>
-std::u8string wrap_lines<std::u8string>(const std::u8string& text,
-                                        std::size_t          width)
+std::u8string wrap_lines<std::u8string_view>(const std::u8string_view& text,
+                                             std::size_t               width)
 {
     std::basic_ostringstream<char> os;
 
@@ -150,21 +150,27 @@ std::u8string wrap_lines<std::u8string>(const std::u8string& text,
 int main()
 {
     using namespace std;
-    /*
-    string       text;
-    stringstream is;
-    cin >> is.rdbuf();
-    text                  = is.str();
-    string_view text_view = text;
-    cout << wrap_lines(text_view, 80) << endl;
+    // string       text;
+    // stringstream is;
+    // cin >> is.rdbuf();
+    // text                  = is.str();
+    // string_view text_view = text;
+    // cout << wrap_lines(text_view, 80) << endl;
 
-    wstring text_w = L"some\n long\n line more then 10 chars";
-    wcout << wrap_lines(text_w, 10) << endl;
-    */
-    u8string u8str     = u8"тут странный текст на русском языке, 37+ символов";
-    u8string wraped_u8 = wrap_lines(u8str, 10);
-    string   u8ascii   = reinterpret_cast<string&>(wraped_u8);
+    // wstring text_w = L"some\n long\n line more then 10 chars";
+    // wcout << wrap_lines(text_w, 10) << endl;
+
+    u8string_view u8str = u8"тут странный текст на русском языке, 37+ символов";
+    u8string      wraped_u8 = wrap_lines(u8str, 10);
+    string        u8ascii   = reinterpret_cast<string&>(wraped_u8);
     cout << u8ascii << endl;
+
+    cout << "-------------------" << endl;
+
+    u8string u8str_2 = u8"тут странный текст на русском языке, 37+ символов";
+    u8string wraped_u8_2 = wrap_lines(u8str_2, 10);
+    string   u8ascii_2   = reinterpret_cast<string&>(wraped_u8_2);
+    cout << u8ascii_2 << endl;
 
     return 0;
 }
