@@ -90,7 +90,8 @@ public:
                 throw std::runtime_error("invalid UTF-8 sequence");
             }
             ++octet_count;
-            if (--expected_octets == 0)
+            --expected_octets;
+            if (expected_octets == 0)
             {
                 ++codepoint_count;
             }
