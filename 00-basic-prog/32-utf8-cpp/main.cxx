@@ -42,13 +42,6 @@ std::basic_string<typename S::value_type> wrap_lines(const S&    text,
 class utf8_codepoint_counter
 {
 public:
-    utf8_codepoint_counter()
-        : octet_count(0)
-        , codepoint_count(0)
-        , expected_octets(0)
-    {
-    }
-
     void reset()
     {
         octet_count     = 0;
@@ -56,7 +49,7 @@ public:
         expected_octets = 0;
     }
 
-    void operator+=(char8_t octet)
+    void next_octet(char8_t octet)
     {
         unsigned char ch = static_cast<unsigned char>(octet);
         if (expected_octets == 0)
@@ -109,9 +102,9 @@ public:
     size_t num_codepoints() const { return codepoint_count; }
 
 private:
-    size_t octet_count;
-    size_t codepoint_count;
-    size_t expected_octets;
+    size_t octet_count     = 0;
+    size_t codepoint_count = 0;
+    size_t expected_octets = 0;
 };
 
 template <>
@@ -134,11 +127,11 @@ std::u8string wrap_lines<std::u8string_view>(const std::u8string_view& text,
         {
             os << static_cast<char>(new_line_char);
             line_counter.reset();
-            line_counter += octet;
+            line_counter.next_octet(octet);
         }
         else
         {
-            line_counter += octet;
+            line_counter.next_octet(octet);
         }
         os << static_cast<char>(octet);
     };
