@@ -49,7 +49,7 @@ public:
         expected_octets = 0;
     }
 
-    void next_octet(char8_t octet)
+    void next(char8_t octet)
     {
         unsigned char ch = static_cast<unsigned char>(octet);
         if (expected_octets == 0)
@@ -127,11 +127,11 @@ std::u8string wrap_lines<std::u8string_view>(const std::u8string_view& text,
         {
             os << static_cast<char>(new_line_char);
             line_counter.reset();
-            line_counter.next_octet(octet);
+            line_counter.next(octet);
         }
         else
         {
-            line_counter.next_octet(octet);
+            line_counter.next(octet);
         }
         os << static_cast<char>(octet);
     };
