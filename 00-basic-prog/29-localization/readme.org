@@ -62,8 +62,21 @@ Original C Sources ───> Preparation ───> Marked C Sources ───�
 4. extended ll_CC.encoding or ll_CC.variant
 5. same stable locale on modern Unix is "C.UTF-8" or simple "C"
 ** Environment varibals
-1. LANGUAGE - list of priorities languages
-2. LC_ALL - override all LC_xxx
-3. LC_xxx (LC_CTYPE, LC_NUMERIC, LC_TIME, LC_COLLATE, LC_MONETARY, LC_MESSAGES)
+1. LANGUAGE - list of priorities languages example: zh_HK:zh_TW
+2. LC_ALL - override all LC_xxx3. LC_xxx (LC_CTYPE, LC_NUMERIC, LC_TIME, LC_COLLATE, LC_MONETARY, LC_MESSAGES)
    override LANG
 4. LANG - example ru_RU.UTF-8 (you should use it by default)
+** Windows console
+1. set OUTPUT_CHARSET=CP850 influence only on message catalogs
+2. table of windows common ANSI and OEM code pages:
+| territory                 | ANSI encoding | OEM encoding |
+|---------------------------+---------------+--------------|
+| Western Europe            | CP1252        | CP850        |
+| Slavic countries(Latin 2) | CP1250        | CP852        |
+| Baltic countries          | CP1257        | CP775        |
+| Russia                    | CP1251        | CP866        |
+3. I personaly prefer in modern Windows 10/11 set utf-8 as default Terminal encoding
+4. To verify utf-8 is enabled:
+#+begin_src cmd
+chcpActive code page: 65001
+#+end_src
