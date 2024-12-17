@@ -80,3 +80,66 @@ Original C Sources ───> Preparation ───> Marked C Sources ───�
 #+begin_src cmd
 chcpActive code page: 65001
 #+end_src
+** The format of PO files
+1. from documentation:
+#+begin_src PO
+white-space
+#  translator-comments
+#. extracted-comments
+#: reference…
+#, flag…
+#| msgid previous-untranslated-string
+msgid untranslated-string
+msgstr translated-string
+#+end_src
+2. minimal example:
+#+begin_src PO
+#: lib/error.c:116
+msgid "Unknown system error"
+msgstr "Error desconegut del sistema"
+#+end_src
+3. flag format for `#,`: *c-format* *c++-format* from =xgettext= program
+4. also note about `context` to disambiguate messages with the same untranslated-string
+5. plural forms:
+#+begin_src .po
+white-space
+#  translator-comments
+#. extracted-comments
+#: reference…
+#, flag…
+#| msgid previous-untranslated-string-singular
+#| msgid_plural previous-untranslated-string-plural
+msgid untranslated-string-singular
+msgid_plural untranslated-string-plural
+msgstr[0] translated-string-case-0
+...
+msgstr[N] translated-string-case-n
+#+end_src
+example:
+#+begin_src .po
+#: src/msgcmp.c:338 src/po-lex.c:699
+#, c-format
+msgid "found %d fatal error"
+msgid_plural "found %d fatal errors"
+msgstr[0] "s'ha trobat %d error fatal"
+msgstr[1] "s'han trobat %d errors fatals"
+#+end_src
+6. multiline string how to:
+#+begin_src .po
+msgid ""
+"Here is an example of how one might continue a very long string\n"
+"for the common case the string represents multi-line output.\n"
+#+end_src
+** Preparing Program Sources
+1. for C sources: `#include <libintl.h>`
+2. initialization for C program:
+#+begin_src C
+int main(int argc, char* argv[])
+{
+  // ...
+  setlocale(LC_ALL, "");
+  bindtextdomain(PACKAGE, LOCALEDIR);
+  textdomain(PACKAGE);
+  // ...
+}
+#+end_src
