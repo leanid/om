@@ -124,7 +124,7 @@ msgid_plural "found %d fatal errors"
 msgstr[0] "s'ha trobat %d error fatal"
 msgstr[1] "s'han trobat %d errors fatals"
 #+end_src
-6. multiline string how to:
+6. multi-line string how to:
 #+begin_src .po
 msgid ""
 "Here is an example of how one might continue a very long string\n"
