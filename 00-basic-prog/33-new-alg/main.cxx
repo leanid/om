@@ -1,6 +1,8 @@
 #include <iomanip>
+// #include <generator> // for ultra cool colution not found on msvc compiler
 #include <iostream>
 #include <iterator>
+#include <numeric>
 #include <string>
 #include <string_view>
 
@@ -11,6 +13,36 @@ void some_algorithm_name(auto it_beg, auto it_end, auto it_out, auto func)
         func(*it_beg, it_out);
     }
 }
+// std::generator<char> decodeCharacter(char ch)
+// {
+//     switch (ch)
+//     {
+//         case 'a': // duplicate
+//         {
+//             co_yield 'a';
+//             co_yield 'a';
+//             break;
+//         }
+//         case 'b':
+//         {
+//             break;
+//         }
+//         case 'c': // change/transform
+//         {
+//             co_yield 'd';
+//             break;
+//         }
+//         case 'd': // change/transform
+//         {
+//             co_yield 'c';
+//             break;
+//         }
+//         default: // copy
+//         {
+//             co_yield ch;
+//         }
+//     }
+// }
 
 int main(int argc, char** argv)
 {
@@ -55,5 +87,56 @@ int main(int argc, char** argv)
     cout << "input: " << quoted(in) << endl;
     cout << "output: " << quoted(expected) << (expected == out ? "==" : "!=")
          << quoted(out) << endl;
+
+    string out2;
+    auto   it_out = back_inserter(out2);
+
+    std::ignore = accumulate(begin(in),
+                             end(in),
+                             it_out,
+                             [](auto it_out, char ch)
+                             {
+                                 switch (ch)
+                                 {
+                                     case 'a': // duplicate
+                                     {
+                                         *it_out++ = 'a';
+                                         *it_out++ = 'a';
+                                         break;
+                                     }
+                                     case 'b': // skip
+                                     {
+                                         break;
+                                     }
+                                     case 'c': // change/transform
+                                     {
+                                         *it_out++ = 'd';
+                                         break;
+                                     }
+                                     case 'd': // change/transform
+                                     {
+                                         *it_out++ = 'c';
+                                         break;
+                                     }
+                                     default: // copy
+                                     {
+                                         *it_out++ = ch;
+                                     }
+                                 }
+                                 return it_out;
+                             });
+
+    cout << "--- --- --- --- ---" << endl;
+    cout << "using std::accumulate: " << quoted(out2) << endl;
+
+    cout << "--- --- --- --- ---" << endl;
+
+    // auto decode = [](std::string_view in) -> std::string
+    // {
+    //     using namespace std::views;
+    //     return std::ranges::to<std::string>(in | transform(decodeCharacter) |
+    //                                         join);
+    // }
+
     return 0;
 }
