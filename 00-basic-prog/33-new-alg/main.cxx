@@ -15,7 +15,7 @@ void some_algorithm_name(auto it_beg, auto it_end, auto it_out, auto func)
 int main(int argc, char** argv)
 {
     using namespace std;
-    string_view in = "abcdef";
+    string_view in = "abcdefaa";
     string      out;
     some_algorithm_name(begin(in),
                         end(in),
@@ -51,8 +51,9 @@ int main(int argc, char** argv)
                             }
                         });
 
-    string expected = "aadcef";
-    cout << quoted(expected) << (expected == out ? "==" : "!=") << quoted(out)
-         << endl;
+    string expected = "aadcefaaaa";
+    cout << "input: " << quoted(in) << endl;
+    cout << "output: " << quoted(expected) << (expected == out ? "==" : "!=")
+         << quoted(out) << endl;
     return 0;
 }
