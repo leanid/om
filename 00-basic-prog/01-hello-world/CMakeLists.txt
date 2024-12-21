@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.30)
 
 project(01-hello-world LANGUAGES CXX)
 
+include(CheckCXXCompilerFlag)
+
 set(CMAKE_CXX_EXTENSIONS ON) # needed for cxx modules
 
 add_executable(hello_cout_dynamic cout_main.cxx)
@@ -26,24 +28,33 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     # ~~~
     # install static version of standard libraries
     # >sudo dnf install libstdc++-static glibc-static
-    add_executable(hello_cout_static cout_main.cxx)
-    target_link_options(hello_cout_static PRIVATE -static)
-    target_compile_features(hello_cout_static PRIVATE cxx_std_20)
 
-    add_executable(hello_nostartfiles hack_main.cxx)
-    target_link_options(hello_nostartfiles PRIVATE -nostartfiles)
-    target_compile_features(hello_nostartfiles PRIVATE cxx_std_20)
+    check_cxx_compiler_flag("-static" CXX_SUPPORTS_STATIC_LINKING)
+    if(CXX_SUPPORTS_STATIC_LINKING)
+        add_executable(hello_cout_static cout_main.cxx)
+        target_link_options(hello_cout_static PRIVATE -static)
+        target_compile_features(hello_cout_static PRIVATE cxx_std_20)
 
-    enable_language(ASM)
-    add_executable(hello_asm)
-    target_sources(hello_asm PRIVATE syscall_x86_64.s hack_asm_main.cxx)
-    target_link_options(
-        hello_asm
-        PRIVATE
-        -z
-        noexecstack # fix linking warning on g++13
-        -nostartfiles
-        -nostdlib)
+        add_executable(hello_nostartfiles hack_main.cxx)
+        target_link_options(hello_nostartfiles PRIVATE -nostartfiles)
+        target_compile_features(hello_nostartfiles PRIVATE cxx_std_20)
+
+        enable_language(ASM)
+        add_executable(hello_asm)
+        target_sources(hello_asm PRIVATE syscall_x86_64.s hack_asm_main.cxx)
+        target_link_options(
+            hello_asm
+            PRIVATE
+            -z
+            noexecstack # fix linking warning on g++13
+            -nostartfiles
+            -nostdlib)
+    else()
+        message(
+            STATUS "static linking is not supported or you need to install"
+                   " libcxx-devel libcxx-static for clang++"
+                   " or you need to install libc++-devel libc++-static for g++")
+    endif()
 endif()
 
 if(UNIX OR MINGW) # BONUS for curious (works only in xterm, gnome-terminal or in
