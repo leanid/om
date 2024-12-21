@@ -2,12 +2,14 @@ cmake_minimum_required(VERSION 3.22)
 project(hello-bin CXX)
 
 include(CheckCXXCompilerFlag)
+include(CheckLinkerFlag)
 
 if(NOT MINGW AND NOT MSVC AND NOT APPLE)
     check_cxx_compiler_flag("-static" CXX_SUPPORTS_STATIC_LINKING)
+    check_linker_flag(CXX "-static" LINKER_SUPPORTS_STATIC_LINKING)
     message(STATUS "try to fix MinGW64 static linking error for F31 MinGW 6.0")
 
-    if(CXX_SUPPORTS_STATIC_LINKING)
+    if(CXX_SUPPORTS_STATIC_LINKING AND LINKER_SUPPORTS_STATIC_LINKING)
         add_executable(hello-bin-static src/main.cxx)
         target_compile_features(hello-bin-static PRIVATE cxx_std_20)
         target_link_libraries(hello-bin-static PUBLIC hello-lib-static)

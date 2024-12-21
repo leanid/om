@@ -10,6 +10,8 @@ add_executable(hello_cout_dynamic cout_main.cxx)
 target_compile_features(hello_cout_dynamic PRIVATE cxx_std_20)
 
 include(CheckIncludeFileCXX)
+include(CheckLinkerFlag)
+
 check_include_file_cxx("print" has_cxx_23_print_include)
 
 if(has_cxx_23_print_include)
@@ -30,7 +32,11 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     # >sudo dnf install libstdc++-static glibc-static
 
     check_cxx_compiler_flag("-static" CXX_SUPPORTS_STATIC_LINKING)
-    if(CXX_SUPPORTS_STATIC_LINKING)
+    check_linker_flag(CXX "-static" LINKER_SUPPORTS_STATIC_LINKING)
+    message(MESSAGE
+            "CXX_SUPPORTS_STATIC_LINKING: ${CXX_SUPPORTS_STATIC_LINKING}\n"
+            "LINKER_SUPPORTS_STATIC_LINKING: ${LINKER_SUPPORTS_STATIC_LINKING}")
+    if(CXX_SUPPORTS_STATIC_LINKING AND LINKER_SUPPORTS_STATIC_LINKING)
         add_executable(hello_cout_static cout_main.cxx)
         target_link_options(hello_cout_static PRIVATE -static)
         target_compile_features(hello_cout_static PRIVATE cxx_std_20)
@@ -53,7 +59,8 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
         message(
             STATUS "static linking is not supported or you need to install"
                    " libcxx-devel libcxx-static for clang++"
-                   " or you need to install libc++-devel libc++-static for g++")
+                   " or you need to install libc++-devel libc++-static for g++"
+                   " sudo dnf install libstdc++-static glibc-static")
     endif()
 endif()
 
