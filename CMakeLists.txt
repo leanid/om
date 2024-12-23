@@ -101,6 +101,8 @@ endif(OM_BUILD_BOOST)
 
 set(CMAKE_UNITY_BUILD_MODE "BATCH")
 
+enable_testing()
+
 # curses
 if(OM_BUILD_COURSE_BASIC_PROG)
     add_subdirectory(00-basic-prog)
