@@ -4,6 +4,8 @@
  - install ```sudo dnf config-manager \
                 --add-repo \
                 https://download.docker.com/linux/fedora/docker-ce.repo```
+ - for F41 ```sudo dnf config-manager addrepo \
+              --from-repofile="https://download.docker.com/linux/fedora/docker-ce.repo"```
  - install ```sudo dnf install docker-ce docker-ce-cli containerd.io```
  - for F31 ```sudo grubby --update-kernel=ALL --args="systemd.unified_cgroup_hierarchy=0"```
  - for F31 ```sudo reboot```

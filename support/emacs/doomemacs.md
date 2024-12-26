@@ -207,3 +207,5 @@ Doom emacs: `SPC+t+c` Fill Column indicator
 ### How to format text block in ORG mode?
 select block of text and `M-q`
 if you need to set 80 characters `C-x f 80 RET`
+### How to change file encodings and line endings?
+```M+:``` and then: `set-buffer-file-coding-system`
