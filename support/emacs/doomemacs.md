@@ -202,3 +202,5 @@ For simple one file debugging you can skip most params see example:
         :name "Python :: Run file (buffer) my"))
 ```
 next *dap-hydra* to show key to debug
+### How to visualize vertical wrap line?
+Doom emacs: `SPC+t+c` Fill Column indicator
