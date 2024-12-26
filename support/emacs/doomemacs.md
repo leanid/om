@@ -204,3 +204,6 @@ For simple one file debugging you can skip most params see example:
 next *dap-hydra* to show key to debug
 ### How to visualize vertical wrap line?
 Doom emacs: `SPC+t+c` Fill Column indicator
+### How to format text block in ORG mode?
+select block of text and `M-q`
+if you need to set 80 characters `C-x f 80 RET`
