@@ -3,9 +3,18 @@ FROM fedora:latest
 RUN dnf update -y && dnf upgrade -y
 
 # take this from https://github.com/libsdl-org/SDL/blob/main/docs/README-linux.md#build-dependencies
-RUN dnf install -y gcc git-core \
+RUN dnf install -y gcc \
+    gcc-c++ \
+    libstdc++-static \
+    glibc-static \
+    clang \
+    git-core \
+    wine \
+    mingw64-gcc \
+    mingw64-gcc-c++ \
     make \
     cmake \
+    ninja-build \
     alsa-lib-devel \
     pulseaudio-libs-devel \
     nas-devel pipewire-devel \
