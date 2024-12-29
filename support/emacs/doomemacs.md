@@ -209,3 +209,9 @@ select block of text and `M-q`
 if you need to set 80 characters `C-x f 80 RET`
 ### How to change file encodings and line endings?
 ```M+:``` and then: `set-buffer-file-coding-system`
+### How to prepare doomemacs for l18n (localization) PO po-mode
+1. install system package with `po-mode.el` file
+2. search it on Fedora like `dnf provides "*/po-mode.el"`
+3. on Fedora it is: `emacs-gettext-0.22.5-6.fc41.noarch`
+4. now you restart emacs `SPC+q+R` or exit emacs `doom sync`
+5. open emacs and `M+:` and then `po-mode` - should be found
