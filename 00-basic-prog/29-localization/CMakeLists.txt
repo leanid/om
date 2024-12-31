@@ -32,16 +32,17 @@ endif()
 
 message(STATUS "xgettext found: ${XGETTEXT_EXECUTABLE}")
 add_custom_command(
-    OUTPUT 29-l12n.pot
-    COMMAND xgettext -o ${CMAKE_CURRENT_SOURCE_DIR}/29-l12n.pot
+    OUTPUT messages.pot
+    COMMAND xgettext -o ${CMAKE_CURRENT_SOURCE_DIR}/messages.pot
             --add-comments="TRANSLATORS:"
             --keyword=_ --flag=_:1:pass-c-format
             --directory=${CMAKE_CURRENT_SOURCE_DIR}
+            # --join-existing
             ${CMAKE_CURRENT_SOURCE_DIR}/main.cxx
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/main.cxx
     VERBATIM
-    COMMENT "generating localization template [29-l12n.pot] from source main.cxx"
+    COMMENT "generating localization template [messages.pot] from source main.cxx"
 )
-add_custom_target(generate_29-l12n ALL DEPENDS 29-l12n.pot)
+add_custom_target(generate_messages ALL DEPENDS messages.pot)
 
-add_dependencies(29-localization generate_29-l12n)
+add_dependencies(29-localization generate_messages)
