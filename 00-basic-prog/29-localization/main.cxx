@@ -1,9 +1,13 @@
+#include <format>
 #include <iostream>
 #include <system_error>
 
 #include <boost/algorithm/string/case_conv.hpp>
 #include <boost/core/demangle.hpp>
 #include <boost/locale.hpp>
+
+#include <libintl.h>
+#define _(String) gettext(String)
 
 template <typename Facet>
 bool is_facet_present(const std::locale& loc, std::ostream& os)
@@ -255,6 +259,16 @@ void std_locale_messages_facet_example()
         }
         facet.close(cat);
     }
+}
+
+void boost_localization_example()
+{
+    auto str = std::format("{}, I have {} apples in my pocket", "Leo", 42);
+    // needs to be changed to
+    auto str2 = std::vformat(_("{}, I have {} apples in my pocket"),
+                             std::make_format_args("Leo", "42"));
+    std::cout << str << std::endl;
+    std::cout << str2 << std::endl;
 }
 
 int main()
