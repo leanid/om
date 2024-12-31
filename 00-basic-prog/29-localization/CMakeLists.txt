@@ -32,7 +32,7 @@ endif()
 
 message(STATUS "xgettext found: ${XGETTEXT_EXECUTABLE}")
 add_custom_command(
-    OUTPUT messages.pot
+    OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/messages.pot
     COMMAND xgettext -o ${CMAKE_CURRENT_SOURCE_DIR}/messages.pot
             --add-comments="TRANSLATORS:"
             --keyword=_ --flag=_:1:pass-c-format
