@@ -143,3 +143,12 @@ int main(int argc, char* argv[])
   // ...
 }
 #+end_src
+
+** generating po files
+1. generate messages.pot file from source =main.cxx=
+2. copy =messages.pot= to PACKAGE-VERSION/po/messages.pot
+3. in terminal call =msginit= in directory PACKAGE-VERSION/po/messages.pot
+4. in my default ru_BY.UTF-8 locale generated one file ru.po with correct
+   =nplural= form detection for Russian lang
+5. to generate English lang call =msginit -i messages.pot -o en.po -l en_US=
+6. you should find en.po file with correct english nplural form detection
