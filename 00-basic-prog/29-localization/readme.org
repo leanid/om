@@ -158,3 +158,9 @@ int main(int argc, char* argv[])
 8. use programm =msgmerge= to update old po file with new strings from new
    sources ref.po file =msgmerge old.po ref.po=
 9. generate binary files =mo= from =*.po= with command: =msgfmt ru.po -o ru.mo=
+
+** locating message catalog files
+1. example: ~dirname/locale/LC_category/domain_name.mo~
+2. default directory: ~/usr/local/share/locale~
+3. locale is the name of the locale category which is designated by LC_category.
+   For gettext and dgettext this LC_category is always LC_MESSAGES

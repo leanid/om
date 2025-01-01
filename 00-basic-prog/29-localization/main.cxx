@@ -1,3 +1,4 @@
+#include <filesystem>
 #include <format>
 #include <iostream>
 #include <system_error>
@@ -5,9 +6,7 @@
 #include <boost/algorithm/string/case_conv.hpp>
 #include <boost/core/demangle.hpp>
 #include <boost/locale.hpp>
-
-#include <libintl.h>
-#define _(String) gettext(String)
+#include <boost/locale/generator.hpp>
 
 template <typename Facet>
 bool is_facet_present(const std::locale& loc, std::ostream& os)
@@ -265,70 +264,91 @@ void boost_localization_example()
 {
     auto str = std::format("{}, I have {} apples in my pocket", "Leo", 42);
     // needs to be changed to
-    auto str2 = std::vformat(_("{}, I have {} apples in my pocket"),
-                             std::make_format_args("Leo", "42"));
-    std::cout << str << std::endl;
-    std::cout << str2 << std::endl;
+    using namespace boost::locale;
+    generator gen;
+    // add message catalog path
+    std::filesystem::path cwd = std::filesystem::current_path();
+    auto full_path            = cwd.string() + "/00-basic-prog/29-localization";
+    std::cout << "full path: " << full_path << std::endl;
+    gen.add_messages_path(full_path);
+    gen.add_messages_domain("29-l12n");
+
+    // generate locales
+    std::locale ru = gen("ru_RU.UTF-8");
+    std::locale en = gen("en_US.UTF-8");
+
+    auto msg = translate("{}, I have {} apples in my pocket");
+
+    auto translated_ru = msg.str(ru);
+    auto translated_en = msg.str(en);
+    auto str_ru =
+        std::vformat(translated_ru, std::make_format_args("Leo", "42"));
+    auto str_en =
+        std::vformat(translated_en, std::make_format_args("Leo", "42"));
+    std::cout << "original: " << str << std::endl;
+    std::cout << "ru: " << str_ru << std::endl;
+    std::cout << "en: " << str_en << std::endl;
 }
 
 int main()
 {
-    boost_locale_hello_example();
-    boost_locale_conversion_example();
-    boost_locale_boundary_example();
+    // boost_locale_hello_example();
+    // boost_locale_conversion_example();
+    // boost_locale_boundary_example();
+    boost_localization_example();
 
-    std_locale_messages_facet_example();
+    // std_locale_messages_facet_example();
 
-    using namespace std;
-    std::locale default_cxx = locale("");
-    std::locale default_ru  = locale("ru_RU.UTF-8");
-    std::locale default_en  = locale("en_US.UTF-8");
+    // using namespace std;
+    // std::locale default_cxx = locale("");
+    // std::locale default_ru  = locale("ru_RU.UTF-8");
+    // std::locale default_en  = locale("en_US.UTF-8");
 
-    print_locale_properties(default_cxx, cout);
-    print_locale_properties(default_ru, cout);
-    print_locale_properties(default_en, cout);
+    // print_locale_properties(default_cxx, cout);
+    // print_locale_properties(default_ru, cout);
+    // print_locale_properties(default_en, cout);
 
-    cout << "c++default locale name: " << default_cxx.name() << endl;
-    namespace bl = boost::locale;
-    bl::localization_backend_manager my =
-        bl::localization_backend_manager::global();
-    // Get global backend
-    for (auto backend : my.get_all_backends())
-    {
-        cout << "boost::locale backend: " << backend << endl;
-    }
-    my.select("icu"); // std, icu, posix
-    bl::generator gen;
-    // Create locale generator
-    std::locale system_default = gen("");
-    print_locale_properties(system_default, cout);
+    // cout << "c++default locale name: " << default_cxx.name() << endl;
+    // namespace bl = boost::locale;
+    // bl::localization_backend_manager my =
+    //     bl::localization_backend_manager::global();
+    // // Get global backend
+    // for (auto backend : my.get_all_backends())
+    // {
+    //     cout << "boost::locale backend: " << backend << endl;
+    // }
+    // my.select("icu"); // std, icu, posix
+    // bl::generator gen;
+    // // Create locale generator
+    // std::locale system_default = gen("");
+    // print_locale_properties(system_default, cout);
 
-    locale::global(system_default);
-    // "" - the system default locale, set
-    // it globally
-    cout << "true name is: " << boolalpha << true << endl;
-    locale eng = gen("en_US.UTF-8");
-    print_locale_properties(eng, cout);
+    // locale::global(system_default);
+    // // "" - the system default locale, set
+    // // it globally
+    // cout << "true name is: " << boolalpha << true << endl;
+    // locale eng = gen("en_US.UTF-8");
+    // print_locale_properties(eng, cout);
 
-    bl::generator gen_limited;
-    //  gen_limited.characters(char_facet_t::char_f);
-    //  gen_limited.categories(category_t::collation | category_t::formatting);
-    std::locale lim_de = gen_limited("fr_FR.UTF-8");
-    print_locale_properties(lim_de, cout);
-    cout.imbue(lim_de);
-    cout << "true name is: " << std::boolalpha << true << std::endl;
-    locale default_de("de_DE.UTF-8");
-    cout.imbue(default_de);
-    cout << "true name is: " << std::boolalpha << true << std::endl;
+    // bl::generator gen_limited;
+    // //  gen_limited.characters(char_facet_t::char_f);
+    // //  gen_limited.categories(category_t::collation |
+    // category_t::formatting); std::locale lim_de = gen_limited("fr_FR.UTF-8");
+    // print_locale_properties(lim_de, cout);
+    // cout.imbue(lim_de);
+    // cout << "true name is: " << std::boolalpha << true << std::endl;
+    // locale default_de("de_DE.UTF-8");
+    // cout.imbue(default_de);
+    // cout << "true name is: " << std::boolalpha << true << std::endl;
 
-    std::setlocale(LC_ALL, "de_DE");
-    cout.imbue(std::locale("de_DE"));
-    cout << "true name is: " << std::boolalpha << true << std::endl;
+    // std::setlocale(LC_ALL, "de_DE");
+    // cout.imbue(std::locale("de_DE"));
+    // cout << "true name is: " << std::boolalpha << true << std::endl;
 
-    locale ru = gen("ru_RU.UTF-8");
-    cout.imbue(ru);
-    cout << "true name is: " << std::boolalpha << true << endl;
+    // locale ru = gen("ru_RU.UTF-8");
+    // cout.imbue(ru);
+    // cout << "true name is: " << std::boolalpha << true << endl;
 
-    const char8_t* str = u8"Привет Мир!";
-    std::cout << reinterpret_cast<const char*>(str) << std::endl;
+    // const char8_t* str = u8"Привет Мир!";
+    // std::cout << reinterpret_cast<const char*>(str) << std::endl;
 }
