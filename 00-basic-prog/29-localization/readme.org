@@ -144,7 +144,7 @@ int main(int argc, char* argv[])
 }
 #+end_src
 
-** generating po files
+** generating po, mo files
 1. generate messages.pot file from source =main.cxx= (see CMakeLists.txt
    generate_messages target)
 2. copy =messages.pot= to PACKAGE-VERSION/po/messages.pot
@@ -157,3 +157,4 @@ int main(int argc, char* argv[])
    any languages
 8. use programm =msgmerge= to update old po file with new strings from new
    sources ref.po file =msgmerge old.po ref.po=
+9. generate binary files =mo= from =*.po= with command: =msgfmt ru.po -o ru.mo=
