@@ -1,0 +1,25 @@
+# Russian translations for soft_raid package
+# Английские переводы для пакета soft_raid.
+# Copyright (C) 2025 THE soft_raid'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the soft_raid package.
+# Леонид Чайка <leo@fedora>, 2025.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: soft_raid 0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-01-01 02:16+0300\n"
+"PO-Revision-Date: 2025-01-01 02:46+0300\n"
+"Last-Translator: Леонид Чайка <leo@fedora>\n"
+"Language-Team: Russian\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+#: /soft_raid0/fun/om/00-basic-prog/29-localization/main.cxx:268
+#, c++-format
+msgid "{}, I have {} apples in my pocket"
+msgstr "{}, У меня в кармане есть {} яблок"

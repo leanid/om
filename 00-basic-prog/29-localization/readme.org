@@ -153,3 +153,7 @@ int main(int argc, char* argv[])
    =nplural= form detection for Russian lang
 5. to generate English lang call =msginit -i messages.pot -o en.po -l en_US=
 6. you should find en.po file with correct english nplural form detection
+7. always check your charset is UTF-8 - it can correctly add any charecter in
+   any languages
+8. use programm =msgmerge= to update old po file with new strings from new
+   sources ref.po file =msgmerge old.po ref.po=
