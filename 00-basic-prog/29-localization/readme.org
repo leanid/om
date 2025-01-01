@@ -145,7 +145,8 @@ int main(int argc, char* argv[])
 #+end_src
 
 ** generating po files
-1. generate messages.pot file from source =main.cxx=
+1. generate messages.pot file from source =main.cxx= (see CMakeLists.txt
+   generate_messages target)
 2. copy =messages.pot= to PACKAGE-VERSION/po/messages.pot
 3. in terminal call =msginit= in directory PACKAGE-VERSION/po/messages.pot
 4. in my default ru_BY.UTF-8 locale generated one file ru.po with correct
