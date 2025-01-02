@@ -67,12 +67,11 @@ int main(int argc, char** argv)
 
     try
     {
-        om::vulkan::platform_sdl3 platform(window.get(), log);
-        om::vulkan::render        render(
-            platform,
-            om::vulkan::render::hints{ .verbose = verbose,
-                                              .enable_validation_layers =
-                                           vk_enable_validation });
+        using namespace om::vulkan;
+        platform_sdl3 platform(window.get(), log);
+        render::hints hints{ .verbose                  = verbose,
+                             .enable_validation_layers = vk_enable_validation };
+        render        render(platform, hints);
     }
     catch (const std::exception& ex)
     {
