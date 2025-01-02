@@ -35,7 +35,9 @@ add_custom_command(
     OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/messages.pot
     COMMAND xgettext -o ${CMAKE_CURRENT_SOURCE_DIR}/messages.pot
             --add-comments="TRANSLATORS:"
-            --keyword=_ --flag=_:1:pass-c-format
+            --keyword=translate
+            --keyword=translate:1,2
+            --keyword=translate:1,2,3 # --flag=translate:1:pass-c-format
             --directory=${CMAKE_CURRENT_SOURCE_DIR}
             # --join-existing
             ${CMAKE_CURRENT_SOURCE_DIR}/main.cxx

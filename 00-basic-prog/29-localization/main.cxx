@@ -277,10 +277,27 @@ void boost_localization_example()
     std::locale ru = gen("ru_RU.UTF-8");
     std::locale en = gen("en_US.UTF-8");
 
-    auto msg = translate("{}, I have {} apples in my pocket");
+    auto msg_simple = translate("I like localization very much!");
+    std::cout << "ru: " << msg_simple.str(ru) << std::endl;
+    std::cout << "en: " << msg_simple.str(en) << std::endl;
 
-    auto translated_ru = msg.str(ru);
-    auto translated_en = msg.str(en);
+    auto msg_position_arg      = translate("Now I'm {0} years old in {1} year");
+    auto translated_msg_pos_ru = msg_position_arg.str(ru);
+    auto translated_msg_pos_en = msg_position_arg.str(en);
+    auto str_ru_pos            = std::vformat(translated_msg_pos_ru,
+                                   std::make_format_args("40", "2025"));
+    auto str_en_pos            = std::vformat(translated_msg_pos_en,
+                                   std::make_format_args("40", "2025"));
+    std::cout << "ru: " << str_ru_pos << std::endl;
+    std::cout << "en: " << str_en_pos << std::endl;
+
+    auto n          = 42;
+    auto msg_plural = translate("{0}, I have {1} apple in my pocket",
+                                "{0}, I have {1} apples in my pocket",
+                                n);
+
+    auto translated_ru = msg_plural.str(ru);
+    auto translated_en = msg_plural.str(en);
     auto str_ru =
         std::vformat(translated_ru, std::make_format_args("Leo", "42"));
     auto str_en =

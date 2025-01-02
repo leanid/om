@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: soft_raid 0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-01-01 02:16+0300\n"
-"PO-Revision-Date: 2025-01-01 02:46+0300\n"
+"POT-Creation-Date: 2025-01-02 19:36+0300\n"
+"PO-Revision-Date: 2025-01-02 20:04+0300\n"
 "Last-Translator: Леонид Чайка <leo@fedora>\n"
 "Language-Team: Russian\n"
 "Language: ru\n"
@@ -19,7 +19,19 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
-#: /soft_raid0/fun/om/00-basic-prog/29-localization/main.cxx:268
+#: /soft_raid0/fun/om/00-basic-prog/29-localization/main.cxx:280
+msgid "I like localization very much!"
+msgstr "Я люблю локализацию очень сильно!"
+
+#: /soft_raid0/fun/om/00-basic-prog/29-localization/main.cxx:284
 #, c++-format
-msgid "{}, I have {} apples in my pocket"
-msgstr "{}, У меня в кармане есть {} яблок"
+msgid "Now I'm {0} years old in {1} year"
+msgstr "Сейчас мне {0} лет в {1} году"
+
+#: /soft_raid0/fun/om/00-basic-prog/29-localization/main.cxx:295
+#, c++-format
+msgid "{0}, I have {1} apple in my pocket"
+msgid_plural "{0}, I have {1} apples in my pocket"
+msgstr[0] "{0}, У меня есть {1} яблоко в кармане"
+msgstr[1] "{0}, У меня есть {1} яблока в кармане"
+msgstr[2] "{0}, У меня есть {1} яблок в кармане"

@@ -151,7 +151,8 @@ int main(int argc, char* argv[])
 3. in terminal call =msginit= in directory PACKAGE-VERSION/po/messages.pot
 4. in my default ru_BY.UTF-8 locale generated one file ru.po with correct
    =nplural= form detection for Russian lang
-5. to generate English lang call =msginit -i messages.pot -o en.po -l en_US=
+5. to generate English lang call =msginit -i messages.pot -o ru.po --locale=
+   =en_US.UTF-8=
 6. you should find en.po file with correct english nplural form detection
 7. always check your charset is UTF-8 - it can correctly add any charecter in
    any languages
