@@ -291,20 +291,26 @@ void boost_localization_example()
     std::cout << "ru: " << str_ru_pos << std::endl;
     std::cout << "en: " << str_en_pos << std::endl;
 
-    auto n          = 42;
-    auto msg_plural = translate("{0}, I have {1} apple in my pocket",
-                                "{0}, I have {1} apples in my pocket",
-                                n);
+    auto print_num_of_apples = [&](int n)
+    {
+        auto msg_plural = translate("{0}, I have {1} apple in my pocket",
+                                    "{0}, I have {1} apples in my pocket",
+                                    n);
 
-    auto translated_ru = msg_plural.str(ru);
-    auto translated_en = msg_plural.str(en);
-    auto str_ru =
-        std::vformat(translated_ru, std::make_format_args("Leo", "42"));
-    auto str_en =
-        std::vformat(translated_en, std::make_format_args("Leo", "42"));
-    std::cout << "original: " << str << std::endl;
-    std::cout << "ru: " << str_ru << std::endl;
-    std::cout << "en: " << str_en << std::endl;
+        auto translated_ru = msg_plural.str(ru);
+        auto translated_en = msg_plural.str(en);
+        auto str_n         = std::to_string(n);
+        auto str_ru =
+            std::vformat(translated_ru, std::make_format_args("Leo", str_n));
+        auto str_en =
+            std::vformat(translated_en, std::make_format_args("Leo", str_n));
+        std::cout << "ru: " << str_ru << std::endl;
+        std::cout << "en: " << str_en << std::endl;
+    };
+    for (auto n : { 0, 1, 2, 3, 4, 5, 10, 11, 12, 15, 20, 21, 22, 25 })
+    {
+        print_num_of_apples(n);
+    }
 }
 
 int main()
