@@ -5,7 +5,7 @@
 #include <string_view>
 
 #include "read_file.hxx"
-
+// NOLINTBEGIN(*)
 TEST_CASE("check file reading", "io::read_file")
 {
     std::filesystem::path path =
@@ -38,3 +38,4 @@ TEST_CASE("check file reading", "io::read_file")
                 std::ranges::count(bytes, std::byte{ '\n' }));
     }
 }
+// NOLINTEND(*)

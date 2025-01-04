@@ -1,5 +1,6 @@
 #include <cstdlib>
 #include <exception>
+#include <expected>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -19,7 +20,7 @@
 namespace om
 {
 
-void throw_errors()
+std::string build_last_errors_openssl()
 {
     std::shared_ptr<BIO> stream(BIO_new(BIO_s_mem()), BIO_free);
     ERR_print_errors(stream.get());
@@ -27,7 +28,7 @@ void throw_errors()
     size_t len = BIO_get_mem_data(stream.get(), &buf);
 
     std::string msg(buf, len);
-    throw std::runtime_error(msg);
+    return msg;
 }
 
 struct salt_t
@@ -63,12 +64,12 @@ std::istream& operator>>(std::istream& is, salt_t& salt)
     return is;
 }
 
-salt_t gen_salt()
+std::expected<salt_t, std::string> gen_salt() noexcept
 {
     salt_t salt{};
     if (!RAND_bytes(salt.bytes.data(), salt.bytes.size()))
     {
-        throw_errors();
+        return std::unexpected(build_last_errors_openssl());
     }
     return salt;
 }
@@ -81,9 +82,9 @@ salt_t gen_salt()
 /// salt maximum value is 16 bytes:
 /// https://docs.openssl.org/3.3/man1/openssl-enc/#options
 void encrypt(const std::filesystem::path& in_file,
-             const std::filesystem::path& out_file,
              const std::string&           password,
-             const salt_t&                salt)
+             const salt_t&                salt,
+             const std::filesystem::path& out_file)
 {
     const int key_len    = 16;    // AES-128
     const int iv_len     = 16;    // AES-CTR IV length
@@ -96,13 +97,13 @@ void encrypt(const std::filesystem::path& in_file,
     if (!PKCS5_PBKDF2_HMAC(password.c_str(),
                            static_cast<int>(password.length()),
                            salt.bytes.data(),
-                           salt.bytes.size(),
+                           static_cast<int>(salt.bytes.size()),
                            iterations,
                            EVP_sha256(),
                            key_len + iv_len,
                            key_and_iv))
     {
-        throw_errors();
+        build_last_errors_openssl();
     }
 
     unsigned char key[key_len];
@@ -115,12 +116,12 @@ void encrypt(const std::filesystem::path& in_file,
                                         EVP_CIPHER_CTX_free);
     if (!ctx)
     {
-        throw_errors();
+        build_last_errors_openssl();
     }
 
     if (!EVP_EncryptInit_ex(ctx.get(), EVP_aes_128_ctr(), nullptr, key, iv))
     {
-        throw_errors();
+        build_last_errors_openssl();
     }
 
     std::ifstream ifs(in_file, std::ios::binary);
@@ -155,7 +156,7 @@ void encrypt(const std::filesystem::path& in_file,
                                buf_in,
                                static_cast<int>(ifs.gcount())))
         {
-            throw_errors();
+            build_last_errors_openssl();
         }
 
         ofs.write(reinterpret_cast<char*>(out_buf.data()), out_len);
@@ -166,7 +167,7 @@ void encrypt(const std::filesystem::path& in_file,
     int final_len = 0;
     if (!EVP_EncryptFinal_ex(ctx.get(), out_buf.data(), &final_len))
     {
-        throw_errors();
+        build_last_errors_openssl();
     }
     ofs.write(reinterpret_cast<const char*>(out_buf.data()), final_len);
 }
@@ -198,13 +199,13 @@ void decrypt(const std::filesystem::path& in_file,
     if (!PKCS5_PBKDF2_HMAC(password.c_str(),
                            static_cast<int>(password.length()),
                            salt.bytes.data(),
-                           salt.bytes.size(),
+                           static_cast<int>(salt.bytes.size()),
                            iterations,
                            EVP_sha256(),
                            key_len + iv_len,
                            key_and_iv))
     {
-        throw_errors();
+        build_last_errors_openssl();
     }
 
     unsigned char key[key_len];
@@ -217,12 +218,12 @@ void decrypt(const std::filesystem::path& in_file,
                                         EVP_CIPHER_CTX_free);
     if (!ctx)
     {
-        throw_errors();
+        build_last_errors_openssl();
     }
 
     if (!EVP_DecryptInit_ex(ctx.get(), EVP_aes_128_ctr(), nullptr, key, iv))
     {
-        throw_errors();
+        build_last_errors_openssl();
     }
 
     std::ofstream ofs(out_file, std::ios::binary);
@@ -254,7 +255,7 @@ void decrypt(const std::filesystem::path& in_file,
                                buf_in,
                                static_cast<int>(ifs.gcount())))
         {
-            throw_errors();
+            build_last_errors_openssl();
         }
         ofs.write(reinterpret_cast<const char*>(buf_out.data()), out_len);
         ifs.read(reinterpret_cast<char*>(buf_in),
@@ -264,7 +265,7 @@ void decrypt(const std::filesystem::path& in_file,
     int final_len = 0;
     if (1 != EVP_DecryptFinal_ex(ctx.get(), buf_out.data(), &final_len))
     {
-        throw_errors();
+        build_last_errors_openssl();
     }
     ofs.write(reinterpret_cast<const char*>(buf_out.data()), final_len);
 }
@@ -342,8 +343,15 @@ int main(int argc, char* argv[])
 
     if (arg_cmd == "gen_salt")
     {
-        salt_t salt = gen_salt();
-        std::cout << salt << std::endl;
+        auto salt = gen_salt();
+        if (salt.has_value())
+        {
+            std::cout << salt.value() << std::endl;
+        }
+        else
+        {
+            std::cout << salt.error() << std::endl;
+        }
         return std::cout.fail();
     }
 
@@ -353,7 +361,7 @@ int main(int argc, char* argv[])
         {
             salt_t salt{};
             std::stringstream(arg_salt) >> salt;
-            encrypt(arg_in, arg_out, arg_pass, salt);
+            encrypt(arg_in, arg_pass, salt, arg_out);
         }
         catch (const std::exception& ex)
         {

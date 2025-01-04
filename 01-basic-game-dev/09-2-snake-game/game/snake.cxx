@@ -48,7 +48,7 @@ snake::snake(om::vec2                        pos,
     snake_part tail = gen_part(tail_index, pos + om::vec2(-20, 0));
     parts.push_back(tail);
 
-    render_list_.reserve(28 * 28);
+    render_list_.reserve(28ul * 28ul);
 }
 
 snake::direction snake::get_next_direction(const snake_part& head)

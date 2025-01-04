@@ -11,7 +11,7 @@
 //  This file is an amalgamation of multiple different files.
 //  You probably shouldn't edit it directly.
 //  ----------------------------------------------------------
-
+// NOLINTBEGIN(*)
 #include "catch_amalgamated.hpp"
 
 #ifndef CATCH_WINDOWS_H_PROXY_HPP_INCLUDED
@@ -350,7 +350,7 @@ static double standard_deviation(double const* first, double const* last)
                                           double diff = b - m;
                                           return a + diff * diff;
                                       }) /
-                      (last - first);
+                      (last - first); // NOLINT
     return std::sqrt(variance);
 }
 
@@ -13847,3 +13847,4 @@ void XmlReporter::listTags(std::vector<TagInfo> const& tags)
 #if defined(_MSC_VER)
 #pragma warning(pop)
 #endif
+// NOLINTEND(*)

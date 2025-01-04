@@ -17,7 +17,7 @@ int factorial(int number)
 {
     return number <= 1 ? number : factorial(number - 1) * number;
 }
-
+// NOLINTBEGIN(*)
 TEST_CASE("testing the factorial function")
 {
     CHECK(factorial(0) == 1);
@@ -96,3 +96,5 @@ TEST_CASE("lots of nested subcases")
         }
     }
 }
+
+// NOLINTEND(*)

@@ -1,3 +1,4 @@
+#include <cstdlib>
 #include <filesystem>
 #include <format>
 #include <iostream>
@@ -263,6 +264,7 @@ void std_locale_messages_facet_example()
 void boost_localization_example()
 {
     auto str = std::format("{}, I have {} apples in my pocket", "Leo", 42);
+    std::cout << str << std::endl;
     // needs to be changed to
     using namespace boost::locale;
     generator gen;
@@ -315,63 +317,70 @@ void boost_localization_example()
 
 int main()
 {
-    // boost_locale_hello_example();
-    // boost_locale_conversion_example();
-    // boost_locale_boundary_example();
-    boost_localization_example();
+    try
+    {
+        // boost_locale_hello_example();
+        // boost_locale_conversion_example();
+        // boost_locale_boundary_example();
+        boost_localization_example();
 
-    // std_locale_messages_facet_example();
+        // std_locale_messages_facet_example();
 
-    // using namespace std;
-    // std::locale default_cxx = locale("");
-    // std::locale default_ru  = locale("ru_RU.UTF-8");
-    // std::locale default_en  = locale("en_US.UTF-8");
+        // using namespace std;
+        // std::locale default_cxx = locale("");
+        // std::locale default_ru  = locale("ru_RU.UTF-8");
+        // std::locale default_en  = locale("en_US.UTF-8");
 
-    // print_locale_properties(default_cxx, cout);
-    // print_locale_properties(default_ru, cout);
-    // print_locale_properties(default_en, cout);
+        // print_locale_properties(default_cxx, cout);
+        // print_locale_properties(default_ru, cout);
+        // print_locale_properties(default_en, cout);
 
-    // cout << "c++default locale name: " << default_cxx.name() << endl;
-    // namespace bl = boost::locale;
-    // bl::localization_backend_manager my =
-    //     bl::localization_backend_manager::global();
-    // // Get global backend
-    // for (auto backend : my.get_all_backends())
-    // {
-    //     cout << "boost::locale backend: " << backend << endl;
-    // }
-    // my.select("icu"); // std, icu, posix
-    // bl::generator gen;
-    // // Create locale generator
-    // std::locale system_default = gen("");
-    // print_locale_properties(system_default, cout);
+        // cout << "c++default locale name: " << default_cxx.name() << endl;
+        // namespace bl = boost::locale;
+        // bl::localization_backend_manager my =
+        //     bl::localization_backend_manager::global();
+        // // Get global backend
+        // for (auto backend : my.get_all_backends())
+        // {
+        //     cout << "boost::locale backend: " << backend << endl;
+        // }
+        // my.select("icu"); // std, icu, posix
+        // bl::generator gen;
+        // // Create locale generator
+        // std::locale system_default = gen("");
+        // print_locale_properties(system_default, cout);
 
-    // locale::global(system_default);
-    // // "" - the system default locale, set
-    // // it globally
-    // cout << "true name is: " << boolalpha << true << endl;
-    // locale eng = gen("en_US.UTF-8");
-    // print_locale_properties(eng, cout);
+        // locale::global(system_default);
+        // // "" - the system default locale, set
+        // // it globally
+        // cout << "true name is: " << boolalpha << true << endl;
+        // locale eng = gen("en_US.UTF-8");
+        // print_locale_properties(eng, cout);
 
-    // bl::generator gen_limited;
-    // //  gen_limited.characters(char_facet_t::char_f);
-    // //  gen_limited.categories(category_t::collation |
-    // category_t::formatting); std::locale lim_de = gen_limited("fr_FR.UTF-8");
-    // print_locale_properties(lim_de, cout);
-    // cout.imbue(lim_de);
-    // cout << "true name is: " << std::boolalpha << true << std::endl;
-    // locale default_de("de_DE.UTF-8");
-    // cout.imbue(default_de);
-    // cout << "true name is: " << std::boolalpha << true << std::endl;
+        // bl::generator gen_limited;
+        // //  gen_limited.characters(char_facet_t::char_f);
+        // //  gen_limited.categories(category_t::collation |
+        // category_t::formatting); std::locale lim_de =
+        // gen_limited("fr_FR.UTF-8"); print_locale_properties(lim_de, cout);
+        // cout.imbue(lim_de);
+        // cout << "true name is: " << std::boolalpha << true << std::endl;
+        // locale default_de("de_DE.UTF-8");
+        // cout.imbue(default_de);
+        // cout << "true name is: " << std::boolalpha << true << std::endl;
 
-    // std::setlocale(LC_ALL, "de_DE");
-    // cout.imbue(std::locale("de_DE"));
-    // cout << "true name is: " << std::boolalpha << true << std::endl;
+        // std::setlocale(LC_ALL, "de_DE");
+        // cout.imbue(std::locale("de_DE"));
+        // cout << "true name is: " << std::boolalpha << true << std::endl;
 
-    // locale ru = gen("ru_RU.UTF-8");
-    // cout.imbue(ru);
-    // cout << "true name is: " << std::boolalpha << true << endl;
+        // locale ru = gen("ru_RU.UTF-8");
+        // cout.imbue(ru);
+        // cout << "true name is: " << std::boolalpha << true << endl;
 
-    // const char8_t* str = u8"Привет Мир!";
-    // std::cout << reinterpret_cast<const char*>(str) << std::endl;
+        // const char8_t* str = u8"Привет Мир!";
+        // std::cout << reinterpret_cast<const char*>(str) << std::endl;
+    }
+    catch (...)
+    {
+        return EXIT_FAILURE;
+    }
 }

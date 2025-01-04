@@ -55,7 +55,7 @@ struct bind
 {
     bind(SDL_Keycode      k,
          std::string_view s,
-         event            pressed,
+         event            pressed, // NOLINT
          event            released) noexcept
         : key(k)
         , name(s)

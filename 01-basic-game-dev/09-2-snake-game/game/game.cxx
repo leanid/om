@@ -71,7 +71,7 @@ om::vbo* load_mesh_from_file_with_scale(const std::string_view path,
 void snake_game::update_free_cells()
 {
     cell_state.clear();
-    cell_state.resize(28 * 28);
+    cell_state.resize(28ul * 28ul);
     snake_->fill_cells(cell_state);
     free_cells.clear();
     for (uint32_t i = 0; i < 28 * 28; ++i)
@@ -85,7 +85,7 @@ void snake_game::update_free_cells()
 
 void snake_game::on_initialize()
 {
-    free_cells.reserve(28 * 28);
+    free_cells.reserve(28ul * 28ul);
 
     debug_texture = om::create_texture("res/debug.png");
 
@@ -134,7 +134,7 @@ void snake_game::on_event(om::event& event)
             if (key_data.is_down)
             {
                 if (key_data.key == om::keys::button1)
-                {
+                { // NOLINT
                 }
                 else if (key_data.key == om::keys::button2)
                 {
@@ -174,7 +174,7 @@ void snake_game::on_update(std::chrono::milliseconds frame_delta)
         }
         // 4. if same - add one snake_part
 
-        float dt_in_seconds = frame_delta.count() * 0.001f;
+        float dt_in_seconds = static_cast<float>(frame_delta.count()) * 0.001f;
         snake_->update(dt_in_seconds);
     }
 }
@@ -234,7 +234,8 @@ void snake_game::on_render() const
 
     std::for_each(begin(render_order),
                   end(render_order),
-                  [&](object_type type) {
+                  [&](object_type type)
+                  {
                       std::for_each(
                           begin(objects), end(objects), draw(type, world_size));
                   });

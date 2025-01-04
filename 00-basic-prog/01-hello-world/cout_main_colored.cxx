@@ -124,11 +124,11 @@ void get_terminal_size(int& width, int& height)
 
     // expected file with content like: xxx yyy
     // where xxx - rows, yyy - columns in decimal format
-    ifstream file_with_terminal_size(tmp_file_name.data());
+    ifstream file_with_terminal_size(tmp_file_name.data()); // NOLINT
     file_with_terminal_size >> height >> width;
     file_with_terminal_size.close();
 
-    remove(tmp_file_name.data()); // remove tmp file
+    remove(tmp_file_name.data()); // NOLINT // remove tmp file
 }
 
 bool is_terminal_support_truecolor()

@@ -96,6 +96,8 @@ template <typename T> static void load_gl_func(const char* func_name, T& result)
                 case GL_OUT_OF_MEMORY:                                         \
                     std::cerr << "GL_OUT_OF_MEMORY" << std::endl;              \
                     break;                                                     \
+                default:                                                       \
+                    std::cerr << "bad gl enum value: " << err << std::endl;    \
             }                                                                  \
             assert(false);                                                     \
         }                                                                      \
@@ -342,7 +344,7 @@ sound_buffer_impl::sound_buffer_impl(std::string_view  path,
     , length(0)
     , device(device_)
 {
-    SDL_IOStream* file = SDL_IOFromFile(path.data(), "rb");
+    SDL_IOStream* file = SDL_IOFromFile(path.data(), "rb"); // NOLINT
     if (file == nullptr)
     {
         throw std::runtime_error(std::string("can't open audio file: ") +
@@ -368,8 +370,10 @@ sound_buffer_impl::sound_buffer_impl(std::string_view  path,
               << "length: " << length << '\n'
               << "time: "
               << static_cast<double>(length) /
-                     (file_audio_spec.channels * file_audio_spec.freq *
-                      get_sound_format_size(file_audio_spec.format))
+                     static_cast<double>(
+                         static_cast<size_t>(file_audio_spec.channels *
+                                             file_audio_spec.freq) *
+                         get_sound_format_size(file_audio_spec.format))
               << "sec" << std::endl;
 
     if (file_audio_spec.channels != device_audio_spec.channels ||
@@ -445,8 +449,8 @@ class shader_gl_es20
 {
 public:
     shader_gl_es20(
-        std::string_view                                      vertex_src,
-        std::string_view                                      fragment_src,
+        std::string_view vertex_src, // NOLINT
+        std::string_view fragment_src,
         const std::vector<std::tuple<GLuint, const GLchar*>>& attributes)
     {
         vert_shader = compile_shader(GL_VERTEX_SHADER, vertex_src);
@@ -473,7 +477,7 @@ public:
     {
         assert(texture != nullptr);
         const int location =
-            glGetUniformLocation(program_id, uniform_name.data());
+            glGetUniformLocation(program_id, uniform_name.data()); // NOLINT
         OM_GL_CHECK()
         if (location == -1)
         {
@@ -494,7 +498,7 @@ public:
     void set_uniform(std::string_view uniform_name, const color& c)
     {
         const int location =
-            glGetUniformLocation(program_id, uniform_name.data());
+            glGetUniformLocation(program_id, uniform_name.data()); // NOLINT
         OM_GL_CHECK()
         if (location == -1)
         {
@@ -509,7 +513,7 @@ public:
     void set_uniform(std::string_view uniform_name, const matrix& m)
     {
         const int location =
-            glGetUniformLocation(program_id, uniform_name.data());
+            glGetUniformLocation(program_id, uniform_name.data()); // NOLINT
         OM_GL_CHECK()
         if (location == -1)
         {
@@ -555,7 +559,7 @@ private:
 
             std::string shader_type_name =
                 shader_type == GL_VERTEX_SHADER ? "vertex" : "fragment";
-            std::cerr << "Error compiling shader(vertex)\n"
+            std::cerr << "Error compiling " << shader_type_name << " \n"
                       << vertex_shader_src << "\n"
                       << info_chars.data();
             return 0;
@@ -735,7 +739,7 @@ static bool check_input(const SDL_Event& e, const bind*& result)
 float get_time_from_init()
 {
     std::uint32_t ms_from_library_initialization = SDL_GetTicks();
-    float         seconds = ms_from_library_initialization * 0.001f;
+    float seconds = static_cast<float>(ms_from_library_initialization) * 0.001f;
     return seconds;
 }
 /// pool event from input queue
@@ -751,9 +755,10 @@ bool pool_event(event& e)
 
         if (sdl_event.type == SDL_EVENT_QUIT)
         {
-            e.info      = om::hardware_data{ true };
-            e.timestamp = sdl_event.common.timestamp * 0.001;
-            e.type      = om::event_type::hardware;
+            e.info = om::hardware_data{ true };
+            e.timestamp =
+                static_cast<double>(sdl_event.common.timestamp) * 0.001;
+            e.type = om::event_type::hardware;
             return true;
         }
         else if (sdl_event.type == SDL_EVENT_KEY_DOWN ||
@@ -769,8 +774,9 @@ bool pool_event(event& e)
             {
                 bool is_down = sdl_event.type == SDL_EVENT_KEY_DOWN;
                 e.info       = om::input_data{ binding->om_key, is_down };
-                e.timestamp  = sdl_event.common.timestamp * 0.001;
-                e.type       = om::event_type::input_key;
+                e.timestamp =
+                    static_cast<double>(sdl_event.common.timestamp) * 0.001;
+                e.type = om::event_type::input_key;
                 return true;
             }
         }
@@ -961,8 +967,10 @@ static void initialize_internal(std::string_view   title,
         int window_size_w = static_cast<int>(desired_window_mode.width);
         int window_size_h = static_cast<int>(desired_window_mode.heigth);
 
-        window = SDL_CreateWindow(
-            title.data(), window_size_w, window_size_h, SDL_WINDOW_OPENGL);
+        window = SDL_CreateWindow(title.data(), // NOLINT
+                                  window_size_w,
+                                  window_size_h,
+                                  SDL_WINDOW_OPENGL);
 
         if (window == nullptr)
         {
@@ -1230,7 +1238,7 @@ color::color(std::uint32_t rgba_)
     : rgba(rgba_)
 {
 }
-color::color(float r, float g, float b, float a)
+color::color(float r, float g, float b, float a) // NOLINT
 {
     assert(r <= 1 && r >= 0);
     assert(g <= 1 && g >= 0);
@@ -1248,22 +1256,22 @@ color::color(float r, float g, float b, float a)
 float color::get_r() const
 {
     std::uint32_t r_ = (rgba & 0x000000FF) >> 0;
-    return r_ / 255.f;
+    return static_cast<float>(r_) / 255.f;
 }
 float color::get_g() const
 {
     std::uint32_t g_ = (rgba & 0x0000FF00) >> 8;
-    return g_ / 255.f;
+    return static_cast<float>(g_) / 255.f;
 }
 float color::get_b() const
 {
     std::uint32_t b_ = (rgba & 0x00FF0000) >> 16;
-    return b_ / 255.f;
+    return static_cast<float>(b_) / 255.f;
 }
 float color::get_a() const
 {
     std::uint32_t a_ = (rgba & 0xFF000000) >> 24;
-    return a_ / 255.f;
+    return static_cast<float>(a_) / 255.f;
 }
 
 void color::set_r(const float r)
@@ -1324,7 +1332,7 @@ texture_gl_es20::texture_gl_es20(std::string_view path)
     int            height     = 0;
     int            components = 0;
     unsigned char* decoded_img =
-        stbi_load(path.data(), &width, &height, &components, 4);
+        stbi_load(path.data(), &width, &height, &components, 4); // NOLINT
 
     // if there's an error, display it
     if (decoded_img == nullptr)
@@ -1482,7 +1490,7 @@ int initialize_and_start_main_loop()
 #endif
 
     SDL_FunctionPointer func_addres =
-        SDL_LoadFunction(so_handle, om_tat_sat_func.data());
+        SDL_LoadFunction(so_handle, om_tat_sat_func.data()); // NOLINT
 
     if (func_addres == nullptr)
     {

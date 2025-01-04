@@ -25,7 +25,7 @@ void worker_job(web_app_context& context)
 
     int          rc;
     FCGX_Request request;
-    std::string  server_name;
+    // std::string  server_name;
 
     if (FCGX_InitRequest(&request, context.socket_id, 0) != 0)
     {

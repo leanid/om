@@ -12,7 +12,7 @@ long int print(const char* message, int size)
 
 int main(int /*argc*/, char* /*argv*/[])
 {
-    return print("hello world\n", 12);
+    return static_cast<int>(print("hello world\n", 12));
 }
 
 extern "C"
