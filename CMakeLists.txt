@@ -8,7 +8,6 @@ set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "0e5b6991-d74f-4b3d-a41c-cf096e0b2508")
 
 project("gamedev_study" LANGUAGES CXX)
 om_add_custom_build_types()
-om_clang_tidy_enable()
 
 set(CMAKE_CXX_STANDARD 26)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -107,7 +106,9 @@ set(CMAKE_UNITY_BUILD_MODE "BATCH")
 
 enable_testing()
 
-# curses
+om_clang_tidy_enable()
+
+# courses
 if(OM_BUILD_COURSE_BASIC_PROG)
     add_subdirectory(00-basic-prog)
 endif()
