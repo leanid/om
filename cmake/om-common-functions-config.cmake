@@ -27,3 +27,9 @@ function (om_add_custom_build_types)
                             " command you should add your custom build types")
     endif()
 endfunction()
+
+# should be called just after project(...) before any targets
+function (om_clang_tidy_enable)
+    find_program(tidy_binary clang-tidy REQUIRED)
+    set(CMAKE_CXX_CLANG_TIDY ${tidy_binary} PARENT_SCOPE)
+endfunction()
