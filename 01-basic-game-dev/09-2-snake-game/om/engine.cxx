@@ -106,11 +106,8 @@ template <typename T> static void load_gl_func(const char* func_name, T& result)
 namespace om
 {
 
-vec2::vec2()
-    : x(0.f)
-    , y(0.f)
-{
-}
+vec2::vec2() = default;
+
 vec2::vec2(float x_, float y_)
     : x(x_)
     , y(y_)
@@ -216,9 +213,9 @@ matrix operator*(const matrix& m1, const matrix& m2)
     return r;
 }
 
-texture::~texture() {}
+texture::~texture() = default;
 
-vbo::~vbo() {}
+vbo::~vbo() = default;
 
 class vertex_buffer_impl final : public vbo
 {
@@ -231,8 +228,8 @@ public:
     }
     ~vertex_buffer_impl() final;
 
-    const vertex*  data() const final { return vertexes.data(); }
-    virtual size_t size() const final { return vertexes.size(); }
+    [[nodiscard]] const vertex* data() const final { return vertexes.data(); }
+    [[nodiscard]] size_t        size() const final { return vertexes.size(); }
 
 private:
     std::vector<vertex> vertexes;
@@ -312,8 +309,8 @@ public:
 
         SDL_ResumeAudioDevice(device);
     }
-    bool is_playing() const final { return is_playing_; }
-    void stop() final
+    [[nodiscard]] bool is_playing() const final { return is_playing_; }
+    void               stop() final
     {
         // Lock callback function
         SDL_PauseAudioDevice(device);
@@ -328,9 +325,9 @@ public:
         SDL_ResumeAudioDevice(device);
     }
 
-    std::unique_ptr<uint8_t[]> tmp_buf;
-    uint8_t*                   buffer;
-    uint32_t                   length;
+    std::unique_ptr<uint8_t[]> tmp_buf; // NOLINT
+    uint8_t*                   buffer{};
+    uint32_t                   length{};
     uint32_t                   current_index = 0;
     SDL_AudioDeviceID          device;
     bool                       is_playing_ = false;
@@ -340,9 +337,7 @@ public:
 sound_buffer_impl::sound_buffer_impl(std::string_view  path,
                                      SDL_AudioDeviceID device_,
                                      SDL_AudioSpec     device_audio_spec)
-    : buffer(nullptr)
-    , length(0)
-    , device(device_)
+    : device(device_)
 {
     SDL_IOStream* file = SDL_IOFromFile(path.data(), "rb"); // NOLINT
     if (file == nullptr)
@@ -406,7 +401,7 @@ sound_buffer_impl::sound_buffer_impl(std::string_view  path,
     }
 }
 
-sound::~sound() {}
+sound::~sound() = default;
 
 sound_buffer_impl::~sound_buffer_impl()
 {
@@ -418,7 +413,7 @@ sound_buffer_impl::~sound_buffer_impl()
     length = 0;
 }
 
-vertex_buffer_impl::~vertex_buffer_impl() {}
+vertex_buffer_impl::~vertex_buffer_impl() = default;
 
 class texture_gl_es20 final : public texture
 {
@@ -435,8 +430,8 @@ public:
         OM_GL_CHECK()
     }
 
-    std::uint32_t get_width() const final { return width; }
-    std::uint32_t get_height() const final { return height; }
+    [[nodiscard]] std::uint32_t get_width() const final { return width; }
+    [[nodiscard]] std::uint32_t get_height() const final { return height; }
 
 private:
     std::string   file_path;
