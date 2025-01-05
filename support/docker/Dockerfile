@@ -3,8 +3,12 @@ FROM fedora:latest
 RUN dnf update -y && dnf upgrade -y
 
 # take this from https://github.com/libsdl-org/SDL/blob/main/docs/README-linux.md#build-dependencies
+# autoconf, automake, autoconf-archive - needs to build boost[icu] with vcpkg toolchain
 RUN dnf install -y \
     alsa-lib-devel \
+    autoconf \
+    automake \
+    autoconf-archive \
     clang \
     cmake \
     dbus-devel \
