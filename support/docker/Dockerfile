@@ -29,6 +29,7 @@ RUN dnf install -y \
     libdrm-devel \
     libstdc++-static \
     liburing-devel
+    libusb1-devel \
     libxkbcommon-devel \
     make \
     mesa-libEGL-devel \
