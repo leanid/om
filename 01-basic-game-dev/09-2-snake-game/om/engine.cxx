@@ -500,8 +500,10 @@ public:
             std::cerr << "can't get uniform location from shader\n";
             throw std::runtime_error("can't get uniform location");
         }
-        float values[4] = { c.get_r(), c.get_g(), c.get_b(), c.get_a() };
-        glUniform4fv(location, 1, &values[0]);
+        std::array<float, 4> values = {
+            c.get_r(), c.get_g(), c.get_b(), c.get_a()
+        };
+        glUniform4fv(location, 1, values.data());
         OM_GL_CHECK()
     }
 
@@ -517,11 +519,12 @@ public:
         }
         // OpenGL wants matrix in column major order
         // clang-format off
-        float values[9] = { m.row0.x,  m.row0.y, m.row2.x,
+        std::array<float,9> values =
+                          { m.row0.x,  m.row0.y, m.row2.x,
                             m.row1.x, m.row1.y, m.row2.y,
                             0.f,      0.f,       1.f };
         // clang-format on
-        glUniformMatrix3fv(location, 1, GL_FALSE, &values[0]);
+        glUniformMatrix3fv(location, 1, GL_FALSE, values.data());
         OM_GL_CHECK()
     }
 
