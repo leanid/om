@@ -3,6 +3,7 @@
 
 #include <array>
 #include <iterator>
+#include <numbers>
 
 static const std::array<om::vec2, 4> steps{
     om::vec2(-10, 0), om::vec2(0, 10), om::vec2(10, 0), om::vec2(0, -10)
@@ -17,7 +18,7 @@ constexpr std::array<snake::direction, 4> next_right{ snake::direction::up,
                                                       snake::direction::down,
                                                       snake::direction::left };
 
-constexpr float                pi = 3.14159f;
+constexpr float                pi = std::numbers::pi_v<float>;
 constexpr std::array<float, 4> angles{ pi, -pi / 2.0f, 0, -3.f * pi / 2.f };
 
 snake::snake(om::vec2                        pos,
@@ -114,7 +115,7 @@ void snake::remove_old_tail()
 
 void snake::update_new_tail()
 {
-    constexpr float pi        = 3.14159f;
+    constexpr float pi        = std::numbers::pi_v<float>;
     snake_part&     tail      = *parts.rbegin();
     snake_part&     new_tail  = *(++parts.rbegin());
     new_tail.game_obj.texture = tail.game_obj.texture;
@@ -204,7 +205,7 @@ void snake::fill_cells(std::vector<bool>& all_field) const
         float    cell_mod_28 = (x + 140 - 5) / 10;
         float    cell_div_28 = (y + 140 - 5) / 10;
         float    index_float = cell_mod_28 + cell_div_28 * 28;
-        uint32_t index       = static_cast<uint32_t>(index_float);
+        auto index       = static_cast<uint32_t>(index_float);
         all_field.at(index)  = true;
     }
 }

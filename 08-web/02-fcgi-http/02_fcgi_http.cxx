@@ -159,7 +159,7 @@ int main(int argc, char** argv)
     // создаём рабочие потоки
     while (num_of_cpu--)
     {
-        threads.push_back(std::jthread(om::worker_job, std::ref(context)));
+        threads.emplace_back(om::worker_job, std::ref(context));
     }
 
     return 0;

@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cstdlib>
 #include <exception>
 #include <expected>
@@ -53,6 +54,7 @@ std::istream& operator>>(std::istream& is, salt_t& salt)
 {
     for (auto& byte : salt.bytes)
     {
+        // NOLINTNEXTLINE
         char hex[3] = { 0 }; // Buffer to hold 2 hex chars + null terminator
         is.read(hex, 2);     // Read 2 hex characters
         if (!is || is.gcount() != 2)
@@ -86,12 +88,12 @@ void encrypt(const std::filesystem::path& in_file,
              const salt_t&                salt,
              const std::filesystem::path& out_file)
 {
-    const int key_len    = 16;    // AES-128
-    const int iv_len     = 16;    // AES-CTR IV length
-    const int iterations = 10000; // see: PBKDF2_ITER_DEFAULT 10000
+    constexpr int key_len    = 16;    // AES-128
+    constexpr int iv_len     = 16;    // AES-CTR IV length
+    constexpr int iterations = 10000; // see: PBKDF2_ITER_DEFAULT 10000
 
     // generate key and iv like in openssl(3.2.2) see: apps/enc.c:560
-    unsigned char key_and_iv[key_len + iv_len];
+    std::array<unsigned char, key_len + iv_len> key_and_iv;
 
     // generate key and IV using PBKDF2
     if (!PKCS5_PBKDF2_HMAC(password.c_str(),
@@ -101,7 +103,7 @@ void encrypt(const std::filesystem::path& in_file,
                            iterations,
                            EVP_sha256(),
                            key_len + iv_len,
-                           key_and_iv))
+                           key_and_iv.data()))
     {
         build_last_errors_openssl();
     }
@@ -109,8 +111,8 @@ void encrypt(const std::filesystem::path& in_file,
     unsigned char key[key_len];
     unsigned char iv[iv_len];
     // split key and iv
-    std::memcpy(key, key_and_iv, key_len);
-    std::memcpy(iv, key_and_iv + key_len, iv_len);
+    std::memcpy(key, key_and_iv.data(), key_len);
+    std::memcpy(iv, key_and_iv.data() + key_len, iv_len);
 
     std::shared_ptr<EVP_CIPHER_CTX> ctx(EVP_CIPHER_CTX_new(),
                                         EVP_CIPHER_CTX_free);
@@ -278,8 +280,7 @@ void validate_command(const std::string& command)
 
     namespace po = boost::program_options;
 
-    if (std::find(valid_commands.begin(), valid_commands.end(), command) ==
-        valid_commands.end())
+    if (std::ranges::find(valid_commands, command) == valid_commands.end())
     {
         throw po::validation_error(
             po::validation_error::invalid_option_value, "command", command);

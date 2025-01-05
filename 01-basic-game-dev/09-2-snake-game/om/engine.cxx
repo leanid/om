@@ -721,9 +721,8 @@ static bool check_input(const SDL_Event& e, const bind*& result)
 {
     using namespace std;
 
-    const auto it = find_if(begin(keys),
-                            end(keys),
-                            [&](const bind& b) { return b.key == e.key.key; });
+    const auto it = std::ranges::find_if(
+        keys, [&](const bind& b) { return b.key == e.key.key; });
 
     if (it != end(keys))
     {
@@ -771,7 +770,8 @@ bool pool_event(event& e)
             if (check_input(sdl_event, binding))
             {
                 bool is_down = sdl_event.type == SDL_EVENT_KEY_DOWN;
-                e.info       = om::input_data{ binding->om_key, is_down };
+                e.info       = om::input_data{ .key     = binding->om_key,
+                                               .is_down = is_down };
                 e.timestamp =
                     static_cast<double>(sdl_event.common.timestamp) * 0.001;
                 e.type = om::event_type::input_key;
@@ -784,8 +784,8 @@ bool pool_event(event& e)
 
 bool is_key_down(const enum keys key)
 {
-    const auto it = std::find_if(
-        begin(keys), end(keys), [&](const bind& b) { return b.om_key == key; });
+    const auto it = std::ranges::find_if(
+        keys, [&](const bind& b) { return b.om_key == key; });
 
     if (it != end(keys))
     {
@@ -818,8 +818,7 @@ void destroy_vbo(vbo* buffer)
 sound* create_sound(std::string_view path)
 {
     SDL_PauseAudioDevice(audio_device);
-    sound_buffer_impl* s =
-        new sound_buffer_impl(path, audio_device, audio_device_spec);
+    auto* s = new sound_buffer_impl(path, audio_device, audio_device_spec);
     sounds.push_back(s);
     SDL_ResumeAudioDevice(audio_device);
     return s;
@@ -842,7 +841,7 @@ void render(const primitives primitive_type,
             const matrix&    m)
 {
     shader03->use();
-    const texture_gl_es20* texture = static_cast<const texture_gl_es20*>(tex);
+    const auto* texture = static_cast<const texture_gl_es20*>(tex);
     texture->bind();
     shader03->set_uniform("s_texture", texture);
     shader03->set_uniform("u_matrix", m);
@@ -866,8 +865,8 @@ void render(const primitives primitive_type,
     glEnableVertexAttribArray(2);
     OM_GL_CHECK()
 
-    GLsizei num_of_vertexes = static_cast<GLsizei>(buff.size());
-    GLenum  priv_type = primitive_types[static_cast<uint32_t>(primitive_type)];
+    auto   num_of_vertexes = static_cast<GLsizei>(buff.size());
+    GLenum priv_type = primitive_types[static_cast<uint32_t>(primitive_type)];
     glDrawArrays(priv_type, 0, num_of_vertexes);
     OM_GL_CHECK()
 
@@ -1243,10 +1242,10 @@ color::color(float r, float g, float b, float a) // NOLINT
     assert(b <= 1 && b >= 0);
     assert(a <= 1 && a >= 0);
 
-    std::uint32_t r_ = static_cast<std::uint32_t>(r * 255);
-    std::uint32_t g_ = static_cast<std::uint32_t>(g * 255);
-    std::uint32_t b_ = static_cast<std::uint32_t>(b * 255);
-    std::uint32_t a_ = static_cast<std::uint32_t>(a * 255);
+    auto r_ = static_cast<std::uint32_t>(r * 255);
+    auto g_ = static_cast<std::uint32_t>(g * 255);
+    auto b_ = static_cast<std::uint32_t>(b * 255);
+    auto a_ = static_cast<std::uint32_t>(a * 255);
 
     rgba = a_ << 24 | b_ << 16 | g_ << 8 | r_;
 }
@@ -1274,25 +1273,25 @@ float color::get_a() const
 
 void color::set_r(const float r)
 {
-    std::uint32_t r_ = static_cast<std::uint32_t>(r * 255);
+    auto r_ = static_cast<std::uint32_t>(r * 255);
     rgba &= 0xFFFFFF00;
     rgba |= (r_ << 0);
 }
 void color::set_g(const float g)
 {
-    std::uint32_t g_ = static_cast<std::uint32_t>(g * 255);
+    auto g_ = static_cast<std::uint32_t>(g * 255);
     rgba &= 0xFFFF00FF;
     rgba |= (g_ << 8);
 }
 void color::set_b(const float b)
 {
-    std::uint32_t b_ = static_cast<std::uint32_t>(b * 255);
+    auto b_ = static_cast<std::uint32_t>(b * 255);
     rgba &= 0xFF00FFFF;
     rgba |= (b_ << 16);
 }
 void color::set_a(const float a)
 {
-    std::uint32_t a_ = static_cast<std::uint32_t>(a * 255);
+    auto a_ = static_cast<std::uint32_t>(a * 255);
     rgba &= 0x00FFFFFF;
     rgba |= a_ << 24;
 }
@@ -1422,7 +1421,7 @@ void initialize(std::string_view title, const window_mode& desired_window_mode)
 window_mode get_current_window_mode()
 {
     // TODO implement me
-    return window_mode{ 0, 0, false };
+    return window_mode{ .width = 0, .heigth = 0, .is_fullscreen = false };
 }
 
 lila::~lila() = default;
@@ -1433,7 +1432,7 @@ int initialize_and_start_main_loop()
 {
     struct start
     {
-        start() {}
+        start() = default;
         ~start() { om::uninitialize(); }
     } guard;
 
@@ -1446,30 +1445,29 @@ int initialize_and_start_main_loop()
                                           "./build-Debug/libgame-09-2.so",
                                           "./build/libgame-09-2.so" } };
 
-    SDL_SharedObject* so_handle = nullptr;
-    auto              lib_name_it =
-        std::find_if(begin(lib_names),
-                     end(lib_names),
-                     [&so_handle](const char* lib_name)
-                     {
-                         {
-                             om::log << "try loading game from: " << lib_name
-                                     << std::endl;
-                             so_handle = SDL_LoadObject(lib_name);
-                             if (so_handle == nullptr)
-                             {
-                                 om::log << SDL_GetError() << std::endl;
-                             }
-                         }
-                         return so_handle != nullptr;
-                     });
+    SDL_SharedObject* so_handle   = nullptr;
+    auto              lib_name_it = std::ranges::find_if(
+        lib_names,
+
+        [&so_handle](const char* lib_name)
+        {
+            {
+                om::log << "try loading game from: " << lib_name << std::endl;
+                so_handle = SDL_LoadObject(lib_name);
+                if (so_handle == nullptr)
+                {
+                    om::log << SDL_GetError() << std::endl;
+                }
+            }
+            return so_handle != nullptr;
+        });
 
     if (so_handle == nullptr)
     {
         om::log << "can't load: ";
-        std::copy(begin(lib_names),
-                  end(lib_names),
-                  std::ostream_iterator<const char*>(om::log, ", "));
+        std::ranges::copy(lib_names,
+
+                          std::ostream_iterator<const char*>(om::log, ", "));
         om::log << std::endl;
         return EXIT_FAILURE;
     }

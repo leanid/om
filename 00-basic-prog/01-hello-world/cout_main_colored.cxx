@@ -81,8 +81,9 @@ int main(int, char**)
         // finish play with terminal
         cout << "\033[0m"; // reset to default
         cout << "\x1b[0m"; // this is the same as abome! You know why?
-        char array[] = { 27, 91, 48, 109, 0 };
-        cout << array; // this is the same too! You know what is ASCII is?
+        array<char, 5> array = { 27, 91, 48, 109, 0 };
+        cout
+            << array.data(); // this is the same too! You know what is ASCII is?
     }
 
     cout << endl; // flush to device from internal buffer

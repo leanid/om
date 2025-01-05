@@ -56,7 +56,7 @@ OM_EXPORT std::unique_ptr<om::lila> om_tat_sat()
 {
     om::log << "initialize engine" << std::endl;
 
-    om::window_mode window_mode = { screen_width, screen_height, false };
+    om::window_mode window_mode = { .width=screen_width, .heigth=screen_height, .is_fullscreen=false };
     om::initialize("snake", window_mode);
 
     om::log << "creating main game object..." << std::endl;
@@ -107,10 +107,10 @@ void snake_game::on_initialize()
                 objects_num,
                 std::back_inserter(objects));
 
-    snake_.reset(
-        new ::snake(om::vec2(35, 5), snake::direction::right, objects));
+    snake_ = std::make_unique<::snake>(
+        om::vec2(35, 5), snake::direction::right, objects);
 
-    fruit_.reset(new fruit());
+    fruit_ = std::make_unique<fruit>();
     fruit_->sprite = objects.at(1);
 
     update_free_cells();
@@ -220,8 +220,8 @@ void snake_game::on_render() const
 
     static const std::vector<object_type> render_order = { object_type::level };
 
-    auto it = std::find_if(begin(objects),
-                           end(objects),
+    auto it = std::ranges::find_if(objects,
+                          
                            [](const game_object& obj)
                            { return obj.type == object_type::level; });
 
@@ -232,12 +232,12 @@ void snake_game::on_render() const
 
     const om::vec2 world_size = it->size;
 
-    std::for_each(begin(render_order),
-                  end(render_order),
+    std::ranges::for_each(render_order,
+                 
                   [&](object_type type)
                   {
-                      std::for_each(
-                          begin(objects), end(objects), draw(type, world_size));
+                      std::ranges::for_each(
+                          objects, draw(type, world_size));
                   });
 
     if (fruit_)
@@ -288,8 +288,8 @@ om::vbo* load_mesh_from_file_with_scale(const std::string_view path,
 
     om::matrix scale_mat = om::matrix::scale(scale.x, scale.y);
 
-    std::transform(begin(vertexes),
-                   end(vertexes),
+    std::ranges::transform(vertexes,
+                  
                    begin(vertexes),
                    [&scale_mat](om::vertex v)
                    {

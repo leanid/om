@@ -31,5 +31,5 @@ endfunction()
 # should be called just after project(...) before any targets
 function (om_clang_tidy_enable)
     find_program(tidy_binary clang-tidy REQUIRED)
-    set(CMAKE_CXX_CLANG_TIDY ${tidy_binary} -warnings-as-errors=-*,bugprone-* PARENT_SCOPE)
+    set(CMAKE_CXX_CLANG_TIDY ${tidy_binary} -warnings-as-errors=-*,bugprone-* --fix PARENT_SCOPE)
 endfunction()
