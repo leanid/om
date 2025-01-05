@@ -7,8 +7,8 @@ RUN dnf update -y && dnf upgrade -y
 RUN dnf install -y \
     alsa-lib-devel \
     autoconf \
-    automake \
     autoconf-archive \
+    automake \
     clang \
     cmake \
     dbus-devel \
@@ -28,6 +28,7 @@ RUN dnf install -y \
     libdecor-devel \
     libdrm-devel \
     libstdc++-static \
+    libunwind-devel \
     liburing-devel
     libusb1-devel \
     libxkbcommon-devel \
