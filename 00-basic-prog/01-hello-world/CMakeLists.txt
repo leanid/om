@@ -33,9 +33,11 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 
     check_cxx_compiler_flag("-static" CXX_SUPPORTS_STATIC_LINKING)
     check_linker_flag(CXX "-static" LINKER_SUPPORTS_STATIC_LINKING)
-    message(MESSAGE
+    message(
+        STATUS
             "CXX_SUPPORTS_STATIC_LINKING: ${CXX_SUPPORTS_STATIC_LINKING}\n"
-            "LINKER_SUPPORTS_STATIC_LINKING: ${LINKER_SUPPORTS_STATIC_LINKING}")
+            " LINKER_SUPPORTS_STATIC_LINKING: ${LINKER_SUPPORTS_STATIC_LINKING}"
+        )
     if(CXX_SUPPORTS_STATIC_LINKING AND LINKER_SUPPORTS_STATIC_LINKING)
         add_executable(hello_cout_static cout_main.cxx)
         target_link_options(hello_cout_static PRIVATE -static)
