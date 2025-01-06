@@ -4,6 +4,8 @@ RUN dnf update -y && dnf upgrade -y
 
 # take this from https://github.com/libsdl-org/SDL/blob/main/docs/README-linux.md#build-dependencies
 # autoconf, automake, autoconf-archive - needs to build boost[icu] with vcpkg toolchain
+# static linking is not supported or you need to install libcxx-devel libcxx-static for clang++
+# or you need to install libc++-devel libc++-static for g++ sudo dnf install libstdc++-static glibc-static
 RUN dnf install -y \
     alsa-lib-devel \
     autoconf \
@@ -25,6 +27,8 @@ RUN dnf install -y \
     libXfixes-devel \
     libXi-devel \
     libXrandr-devel \
+    libcxx-devel \
+    libcxx-static \
     libdecor-devel \
     libdrm-devel \
     libstdc++-static \
