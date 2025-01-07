@@ -5,6 +5,8 @@ project(08-vk-framebuffer-cmd CXX)
 find_package(Vulkan REQUIRED COMPONENTS glslangValidator)
 find_package(SDL3 REQUIRED)
 
+om_clang_tidy_enable()
+
 add_executable(
     08-vk-framebuffer-cmd
     main.cxx

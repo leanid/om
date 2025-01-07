@@ -106,7 +106,7 @@ set(CMAKE_UNITY_BUILD_MODE "BATCH")
 
 enable_testing()
 
-om_clang_tidy_enable()
+# om_clang_tidy_enable()
 
 # courses
 if(OM_BUILD_COURSE_BASIC_PROG)
