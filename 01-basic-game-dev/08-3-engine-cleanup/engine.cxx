@@ -89,6 +89,8 @@ template <typename T> static void load_gl_func(const char* func_name, T& result)
                 case GL_OUT_OF_MEMORY:                                         \
                     std::cerr << "GL_OUT_OF_MEMORY" << std::endl;              \
                     break;                                                     \
+                default:                                                       \
+                    std::cerr << "unknown error" << std::endl;                 \
             }                                                                  \
             assert(false);                                                     \
         }                                                                      \
@@ -1360,7 +1362,7 @@ void initialize(std::string_view title, const window_mode& desired_window_mode)
 window_mode get_current_window_mode()
 {
     // TODO implement me
-    return window_mode{ 0, 0, false };
+    return window_mode{ .width = 0, .heigth = 0, .is_fullscreen = false };
 }
 
 lila::~lila() = default;
@@ -1371,7 +1373,7 @@ int initialize_and_start_main_loop()
 {
     struct start
     {
-        start() {}
+        start() = default;
         ~start() { om::uninitialize(); }
     } guard;
 
@@ -1387,20 +1389,19 @@ int initialize_and_start_main_loop()
     // clang-format on
 
     SDL_SharedObject* so_handle   = nullptr;
-    auto              lib_name_it = std::find_if(begin(lib_names),
-                                    end(lib_names),
-                                    [&so_handle](const char* lib_name)
-                                    {
-                                        so_handle = SDL_LoadObject(lib_name);
-                                        return so_handle != nullptr;
-                                    });
+    auto              lib_name_it = std::ranges::find_if(lib_names,
+                                            [&so_handle](const char* lib_name)
+                                            {
+                                                so_handle =
+                                                    SDL_LoadObject(lib_name);
+                                                return so_handle != nullptr;
+                                            });
 
     if (so_handle == nullptr)
     {
         om::log << "can't load: ";
-        std::copy(begin(lib_names),
-                  end(lib_names),
-                  std::ostream_iterator<const char*>(om::log, ", "));
+        std::ranges::copy(lib_names,
+                          std::ostream_iterator<const char*>(om::log, ", "));
         om::log << std::endl;
         return EXIT_FAILURE;
     }
@@ -1416,7 +1417,7 @@ int initialize_and_start_main_loop()
 #endif
 
     SDL_FunctionPointer func_addres =
-        SDL_LoadFunction(so_handle, om_tat_sat_func.data());
+        SDL_LoadFunction(so_handle, om_tat_sat_func.data()); // NOLINT
 
     if (func_addres == nullptr)
     {

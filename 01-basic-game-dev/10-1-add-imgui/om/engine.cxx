@@ -1281,25 +1281,25 @@ float color::get_a() const
 
 void color::set_r(const float r)
 {
-    std::uint32_t r_ = static_cast<std::uint32_t>(r * 255);
+    auto r_ = static_cast<std::uint32_t>(r * 255);
     rgba &= 0xFFFFFF00;
     rgba |= (r_ << 0);
 }
 void color::set_g(const float g)
 {
-    std::uint32_t g_ = static_cast<std::uint32_t>(g * 255);
+    auto g_ = static_cast<std::uint32_t>(g * 255);
     rgba &= 0xFFFF00FF;
     rgba |= (g_ << 8);
 }
 void color::set_b(const float b)
 {
-    std::uint32_t b_ = static_cast<std::uint32_t>(b * 255);
+    auto b_ = static_cast<std::uint32_t>(b * 255);
     rgba &= 0xFF00FFFF;
     rgba |= (b_ << 16);
 }
 void color::set_a(const float a)
 {
-    std::uint32_t a_ = static_cast<std::uint32_t>(a * 255);
+    auto a_ = static_cast<std::uint32_t>(a * 255);
     rgba &= 0x00FFFFFF;
     rgba |= a_ << 24;
 }
@@ -1308,7 +1308,8 @@ texture_gl_es20::texture_gl_es20(std::string_view path)
     : file_path(path)
 {
     std::vector<unsigned char> png_file_in_memory;
-    std::ifstream              ifs(path.data(), std::ios_base::binary);
+    // NOLINTNEXTLINE
+    std::ifstream ifs(path.data(), std::ios_base::binary);
     if (!ifs)
     {
         throw std::runtime_error("can't load texture");
@@ -1345,10 +1346,10 @@ texture_gl_es20::texture_gl_es20(std::string_view path)
     glBindTexture(GL_TEXTURE_2D, tex_handl);
     OM_GL_CHECK();
 
-    GLint   mipmap_level = 0;
-    GLint   border       = 0;
-    GLsizei width        = static_cast<GLsizei>(img.width);
-    GLsizei height       = static_cast<GLsizei>(img.height);
+    GLint mipmap_level = 0;
+    GLint border       = 0;
+    auto  width        = static_cast<GLsizei>(img.width);
+    auto  height       = static_cast<GLsizei>(img.height);
     glTexImage2D(GL_TEXTURE_2D,
                  mipmap_level,
                  GL_RGBA,
@@ -1425,7 +1426,7 @@ void initialize(std::string_view title, const window_mode& desired_window_mode)
 window_mode get_current_window_mode()
 {
     // TODO implement me
-    return window_mode{ 0, 0, false };
+    return window_mode{ .width = 0, .heigth = 0, .is_fullscreen = false };
 }
 
 lila::~lila() = default;
@@ -1436,7 +1437,7 @@ int initialize_and_start_main_loop()
 {
     struct start
     {
-        start() {}
+        start() = default;
         ~start() { om::uninitialize(); }
     } guard;
 
@@ -1447,30 +1448,27 @@ int initialize_and_start_main_loop()
                                           "./build/Debug/libgame-10-1.dll",
                                           "./build/build/libgame-10-1.so" } };
 
-    SDL_SharedObject* so_handle = nullptr;
-    auto              lib_name_it =
-        std::find_if(begin(lib_names),
-                     end(lib_names),
-                     [&so_handle](const char* lib_name)
-                     {
-                         {
-                             om::log << "try loading game from: " << lib_name
-                                     << std::endl;
-                             so_handle = SDL_LoadObject(lib_name);
-                             if (so_handle == nullptr)
-                             {
-                                 om::log << SDL_GetError() << std::endl;
-                             }
-                         }
-                         return so_handle != nullptr;
-                     });
+    SDL_SharedObject* so_handle   = nullptr;
+    auto              lib_name_it = std::ranges::find_if(
+        lib_names,
+        [&so_handle](const char* lib_name)
+        {
+            {
+                om::log << "try loading game from: " << lib_name << std::endl;
+                so_handle = SDL_LoadObject(lib_name);
+                if (so_handle == nullptr)
+                {
+                    om::log << SDL_GetError() << std::endl;
+                }
+            }
+            return so_handle != nullptr;
+        });
 
     if (so_handle == nullptr)
     {
         om::log << "can't load: ";
-        std::copy(begin(lib_names),
-                  end(lib_names),
-                  std::ostream_iterator<const char*>(om::log, ", "));
+        std::ranges::copy(lib_names,
+                          std::ostream_iterator<const char*>(om::log, ", "));
         om::log << std::endl;
         return EXIT_FAILURE;
     }
@@ -1488,7 +1486,7 @@ int initialize_and_start_main_loop()
 #endif
 
     SDL_FunctionPointer func_addres =
-        SDL_LoadFunction(so_handle, om_tat_sat_func.data());
+        SDL_LoadFunction(so_handle, om_tat_sat_func.data()); // NOLINT
 
     if (func_addres == nullptr)
     {

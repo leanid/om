@@ -85,6 +85,8 @@ template <typename T> static void load_gl_func(const char* func_name, T& result)
                 case GL_OUT_OF_MEMORY:                                         \
                     std::cerr << "GL_OUT_OF_MEMORY" << std::endl;              \
                     break;                                                     \
+                default:                                                       \
+                    std::cerr << "unknown error" << std::endl;                 \
             }                                                                  \
             assert(false);                                                     \
         }                                                                      \
@@ -1351,25 +1353,25 @@ float color::get_a() const
 
 void color::set_r(const float r)
 {
-    std::uint32_t r_ = static_cast<std::uint32_t>(r * 255);
+    auto r_ = static_cast<std::uint32_t>(r * 255);
     rgba &= 0xFFFFFF00;
     rgba |= (r_ << 0);
 }
 void color::set_g(const float g)
 {
-    std::uint32_t g_ = static_cast<std::uint32_t>(g * 255);
+    auto g_ = static_cast<std::uint32_t>(g * 255);
     rgba &= 0xFFFF00FF;
     rgba |= (g_ << 8);
 }
 void color::set_b(const float b)
 {
-    std::uint32_t b_ = static_cast<std::uint32_t>(b * 255);
+    auto b_ = static_cast<std::uint32_t>(b * 255);
     rgba &= 0xFF00FFFF;
     rgba |= (b_ << 16);
 }
 void color::set_a(const float a)
 {
-    std::uint32_t a_ = static_cast<std::uint32_t>(a * 255);
+    auto a_ = static_cast<std::uint32_t>(a * 255);
     rgba &= 0x00FFFFFF;
     rgba |= a_ << 24;
 }
@@ -1378,7 +1380,8 @@ texture_gl_es20::texture_gl_es20(std::string_view path)
     : file_path(path)
 {
     std::vector<unsigned char> png_file_in_memory;
-    std::ifstream              ifs(path.data(), std::ios_base::binary);
+    // NOLINTNEXTLINE
+    std::ifstream ifs(path.data(), std::ios_base::binary);
     if (!ifs)
     {
         throw std::runtime_error("can't load texture");
@@ -1415,10 +1418,10 @@ texture_gl_es20::texture_gl_es20(std::string_view path)
     glBindTexture(GL_TEXTURE_2D, tex_handl);
     OM_GL_CHECK();
 
-    GLint   mipmap_level = 0;
-    GLint   border       = 0;
-    GLsizei width        = static_cast<GLsizei>(img.width);
-    GLsizei height       = static_cast<GLsizei>(img.height);
+    GLint mipmap_level = 0;
+    GLint border       = 0;
+    auto  width        = static_cast<GLsizei>(img.width);
+    auto  height       = static_cast<GLsizei>(img.height);
     glTexImage2D(GL_TEXTURE_2D,
                  mipmap_level,
                  GL_RGBA,
@@ -1499,6 +1502,7 @@ int initialize_and_start_main_loop()
     // "libgame-08-2.so" - works on MacOSX and Linux
     std::string_view game_so_name("./build-Debug/libgame-08-2.so");
 
+    // NOLINTNEXTLINE
     SDL_SharedObject* so_handle = SDL_LoadObject(game_so_name.data());
     if (so_handle == nullptr)
     {
@@ -1522,7 +1526,7 @@ int initialize_and_start_main_loop()
 #endif
 
     SDL_FunctionPointer func_addres =
-        SDL_LoadFunction(so_handle, om_tat_sat_func.data());
+        SDL_LoadFunction(so_handle, om_tat_sat_func.data()); // NOLINT
 
     if (func_addres == nullptr)
     {

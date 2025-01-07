@@ -65,6 +65,8 @@ extern PFNGLBLENDEQUATIONPROC            glBlendEquation_;
                 case GL_OUT_OF_MEMORY:                                         \
                     std::cerr << "GL_OUT_OF_MEMORY" << std::endl;              \
                     break;                                                     \
+                default:                                                       \
+                    std::cerr << "unknown error" << std::endl;                 \
             }                                                                  \
             assert(false);                                                     \
         }                                                                      \
