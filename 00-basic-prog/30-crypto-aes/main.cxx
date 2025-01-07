@@ -108,8 +108,8 @@ void encrypt(const std::filesystem::path& in_file,
         build_last_errors_openssl();
     }
 
-    unsigned char key[key_len];
-    unsigned char iv[iv_len];
+    unsigned char key[key_len]; // NOLINT
+    unsigned char iv[iv_len];   // NOLINT
     // split key and iv
     std::memcpy(key, key_and_iv.data(), key_len);
     std::memcpy(iv, key_and_iv.data() + key_len, iv_len);
@@ -137,8 +137,8 @@ void encrypt(const std::filesystem::path& in_file,
 
     std::ofstream ofs(out_file, std::ios::binary);
 
-    constexpr int buf_size = 4096;
-    unsigned char buf_in[buf_size];
+    constexpr int                       buf_size = 4096;
+    std::array<unsigned char, buf_size> buf_in;
     // see:
     // https://docs.openssl.org/3.1/man3/EVP_EncryptInit/#description
     // EVP_DecryptUpdate() should have sufficient room for (inl +
@@ -146,7 +146,7 @@ void encrypt(const std::filesystem::path& in_file,
     std::vector<unsigned char> out_buf(
         buf_size + EVP_CIPHER_block_size(EVP_aes_128_ctr()));
 
-    ifs.read(reinterpret_cast<char*>(buf_in),
+    ifs.read(reinterpret_cast<char*>(buf_in.data()),
              static_cast<std::streamsize>(buf_size));
 
     while (ifs.gcount())
@@ -155,14 +155,14 @@ void encrypt(const std::filesystem::path& in_file,
         if (!EVP_EncryptUpdate(ctx.get(),
                                out_buf.data(),
                                &out_len,
-                               buf_in,
+                               buf_in.data(),
                                static_cast<int>(ifs.gcount())))
         {
             build_last_errors_openssl();
         }
 
         ofs.write(reinterpret_cast<char*>(out_buf.data()), out_len);
-        ifs.read(reinterpret_cast<char*>(buf_in),
+        ifs.read(reinterpret_cast<char*>(buf_in.data()),
                  static_cast<std::streamsize>(buf_size));
     }
 
@@ -197,7 +197,8 @@ void decrypt(const std::filesystem::path& in_file,
         throw std::runtime_error(msg);
     }
 
-    unsigned char key_and_iv[key_len + iv_len];
+    std::array<unsigned char, key_len + iv_len> key_and_iv;
+
     if (!PKCS5_PBKDF2_HMAC(password.c_str(),
                            static_cast<int>(password.length()),
                            salt.bytes.data(),
@@ -205,16 +206,16 @@ void decrypt(const std::filesystem::path& in_file,
                            iterations,
                            EVP_sha256(),
                            key_len + iv_len,
-                           key_and_iv))
+                           key_and_iv.data()))
     {
         build_last_errors_openssl();
     }
 
-    unsigned char key[key_len];
-    unsigned char iv[iv_len];
+    std::array<unsigned char, key_len> key;
+    std::array<unsigned char, iv_len>  iv;
 
-    std::memcpy(key, key_and_iv, key_len);
-    std::memcpy(iv, key_and_iv + key_len, iv_len);
+    std::memcpy(key.data(), key_and_iv.data(), key_len);
+    std::memcpy(iv.data(), &key_and_iv[key_len], iv_len);
 
     std::shared_ptr<EVP_CIPHER_CTX> ctx(EVP_CIPHER_CTX_new(),
                                         EVP_CIPHER_CTX_free);
@@ -223,7 +224,8 @@ void decrypt(const std::filesystem::path& in_file,
         build_last_errors_openssl();
     }
 
-    if (!EVP_DecryptInit_ex(ctx.get(), EVP_aes_128_ctr(), nullptr, key, iv))
+    if (!EVP_DecryptInit_ex(
+            ctx.get(), EVP_aes_128_ctr(), nullptr, key.data(), iv.data()))
     {
         build_last_errors_openssl();
     }
@@ -236,8 +238,8 @@ void decrypt(const std::filesystem::path& in_file,
         throw std::runtime_error(msg);
     }
 
-    constexpr int buf_size = 4096;
-    unsigned char buf_in[buf_size];
+    constexpr int                       buf_size = 4096;
+    std::array<unsigned char, buf_size> buf_in;
     // see:
     // https://docs.openssl.org/3.1/man3/EVP_EncryptInit/#description
     // EVP_DecryptUpdate() should have sufficient room for (inl +
@@ -245,8 +247,8 @@ void decrypt(const std::filesystem::path& in_file,
     std::vector<unsigned char> buf_out(
         buf_size + EVP_CIPHER_block_size(EVP_aes_128_ctr()));
 
-    ifs.read(reinterpret_cast<char*>(buf_in),
-             static_cast<std::streamsize>(buf_size));
+    ifs.read(reinterpret_cast<char*>(buf_in.data()),
+             static_cast<std::streamsize>(buf_in.size()));
 
     while (ifs.gcount())
     {
@@ -254,14 +256,14 @@ void decrypt(const std::filesystem::path& in_file,
         if (!EVP_DecryptUpdate(ctx.get(),
                                buf_out.data(),
                                &out_len,
-                               buf_in,
+                               buf_in.data(),
                                static_cast<int>(ifs.gcount())))
         {
             build_last_errors_openssl();
         }
         ofs.write(reinterpret_cast<const char*>(buf_out.data()), out_len);
-        ifs.read(reinterpret_cast<char*>(buf_in),
-                 static_cast<std::streamsize>(buf_size));
+        ifs.read(reinterpret_cast<char*>(buf_in.data()),
+                 static_cast<std::streamsize>(buf_in.size()));
     }
 
     int final_len = 0;
