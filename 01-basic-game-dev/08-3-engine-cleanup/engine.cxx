@@ -314,7 +314,7 @@ sound_buffer_impl::sound_buffer_impl(std::string_view  path,
     , length(0)
     , device(device_)
 {
-    SDL_IOStream* file = SDL_IOFromFile(path.data(), "rb");
+    SDL_IOStream* file = SDL_IOFromFile(path.data(), "rb"); // NOLINT
     if (file == nullptr)
     {
         throw std::runtime_error(std::string("can't open audio file: ") +
@@ -340,8 +340,10 @@ sound_buffer_impl::sound_buffer_impl(std::string_view  path,
               << "length: " << length << '\n'
               << "time: "
               << static_cast<double>(length) /
-                     (file_audio_spec.channels * file_audio_spec.freq *
-                      get_sound_format_size(file_audio_spec.format))
+                     static_cast<double>(
+                         static_cast<size_t>(file_audio_spec.channels) *
+                         file_audio_spec.freq *
+                         get_sound_format_size(file_audio_spec.format))
               << "sec" << std::endl;
 
     if (file_audio_spec.channels != device_audio_spec.channels ||
