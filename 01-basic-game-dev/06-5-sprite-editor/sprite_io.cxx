@@ -71,6 +71,7 @@ void sprite_io::save(const std::vector<sprite>& list, std::ostream& ss)
             throw std::runtime_error{ "error: no texture in spite!!!" };
         }
 
+        // NOLINTNEXTLINE
         const std::string_view name = texture->get_name(); // do not fix it!!!
         ss << left << setw(12) << "texture: " << name << '\n';
         ss << left << setw(12) << "uv_rect: ";
