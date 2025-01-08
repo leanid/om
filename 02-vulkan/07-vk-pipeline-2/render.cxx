@@ -134,12 +134,12 @@ void render::validate_expected_extensions_exists(
 
     log << "all vulkan instance extensions: \n";
     std::ranges::for_each(extension_properties,
-                 
-                  [this](const vk::ExtensionProperties& extension)
-                  {
-                      log << std::setw(3) << extension.specVersion << ' '
-                          << extension.extensionName << '\n';
-                  });
+
+                          [this](const vk::ExtensionProperties& extension)
+                          {
+                              log << std::setw(3) << extension.specVersion
+                                  << ' ' << extension.extensionName << '\n';
+                          });
 
     std::for_each_n(
         create_info.ppEnabledExtensionNames,
@@ -148,7 +148,7 @@ void render::validate_expected_extensions_exists(
         {
             auto it = std::ranges::find_if(
                 extension_properties,
-               
+
                 [extension](const vk::ExtensionProperties& other_extension)
                 { return other_extension.extensionName.data() == extension; });
 
@@ -180,19 +180,19 @@ void render::validate_instance_layer_present(std::string_view instance_layer)
     log << "all vulkan layers count [" << layer_count << "]\n";
     log << "spec-version | impl-version | name and description\n";
     std::ranges::for_each(available_layers,
-                 
-                  [this](const vk::LayerProperties& layer)
-                  {
-                      log << api_version_to_string(layer.specVersion) << ' '
-                          << layer.implementationVersion << ' '
-                          << layer.layerName << " " << layer.description
-                          << '\n';
-                  });
-    auto it = std::ranges::find_if(available_layers,
-                          
-                           [&instance_layer](const vk::LayerProperties& layer) {
-                               return layer.layerName.data() == instance_layer;
-                           });
+
+                          [this](const vk::LayerProperties& layer)
+                          {
+                              log << api_version_to_string(layer.specVersion)
+                                  << ' ' << layer.implementationVersion << ' '
+                                  << layer.layerName << " " << layer.description
+                                  << '\n';
+                          });
+    auto it = std::ranges::find_if(
+        available_layers,
+
+        [&instance_layer](const vk::LayerProperties& layer)
+        { return layer.layerName.data() == instance_layer; });
 
     if (it == available_layers.end())
     {
@@ -906,7 +906,7 @@ vk::SurfaceFormatKHR render::choose_best_surface_format(
         return default_format;
     }
     // not all supported search for RGB or BGR
-    vk::SurfaceFormatKHR suitable_formats[] = {
+    std::array<vk::SurfaceFormatKHR, 2> suitable_formats = {
         default_format,
         { vk::Format::eB8G8R8A8Unorm, vk::ColorSpaceKHR::eSrgbNonlinear }
     };
