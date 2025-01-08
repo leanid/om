@@ -34,10 +34,16 @@ render::render(platform_interface& platform, hints hints)
     create_renderpass();
     create_graphics_pipeline();
     create_framebuffers();
+    create_command_pool();
+    create_command_buffers();
 }
 
 render::~render()
 {
+    devices.logical.freeCommandBuffers(graphics_command_pool, command_buffers);
+    log << "vulkan command buffers freed\n";
+    devices.logical.destroyCommandPool(graphics_command_pool);
+    log << "vulkan destroy command pool\n";
     std::ranges::for_each(swapchain_framebuffers,
                           [this](vk::Framebuffer& framebuffer)
                           { devices.logical.destroyFramebuffer(framebuffer); });
@@ -885,6 +891,47 @@ void render::create_framebuffers()
     std::ranges::transform(swapchain_image_views,
                            std::back_inserter(swapchain_framebuffers),
                            gen_framebuffer);
+}
+
+void render::create_command_pool()
+{
+    if (!queue_indexes.is_valid())
+    {
+        throw std::runtime_error("error: queue indexes not valid");
+    }
+
+    vk::CommandPoolCreateInfo info{};
+    info.queueFamilyIndex = queue_indexes.graphics_family;
+    info.flags            = vk::CommandPoolCreateFlagBits::eResetCommandBuffer;
+    graphics_command_pool = devices.logical.createCommandPool(info);
+
+    if (!graphics_command_pool)
+    {
+        throw std::runtime_error("error: can't create graphics command pool");
+    }
+}
+
+void render::create_command_buffers()
+{
+    vk::CommandBufferAllocateInfo info{};
+    info.commandPool = graphics_command_pool;
+    info.level       = vk::CommandBufferLevel::ePrimary;
+    // vk::CommandBufferLevel::ePrimary; // can't be called from other buffers
+    //                                   // only will be executed by the queue
+    // vk::CommandBufferLevel::eSecondary; // Buffer can't be called directly.
+    //                                     // Can be called from other command
+    //                                     // using vkCmdExecuteCommands when
+    //                                     // recording commands in primary
+    //                                     // buffer
+    info.commandBufferCount =
+        static_cast<std::uint32_t>(swapchain_framebuffers.size());
+
+    command_buffers = devices.logical.allocateCommandBuffers(info);
+
+    if (command_buffers.empty())
+    {
+        throw std::runtime_error("error: can't allocate command buffers");
+    }
 }
 
 vk::Extent2D render::choose_best_swapchain_image_resolution(

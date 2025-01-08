@@ -87,13 +87,6 @@ public:
     ~render();
 
 private:
-    struct swapchain_details_t
-    {
-        vk::SurfaceCapabilitiesKHR        surface_capabilities;
-        std::vector<vk::SurfaceFormatKHR> surface_formats;
-        std::vector<vk::PresentModeKHR>   presentation_modes;
-    };
-
     void create_instance();
     void create_logical_device();
     void create_surface();
@@ -101,6 +94,8 @@ private:
     void create_renderpass();
     void create_graphics_pipeline();
     void create_framebuffers();
+    void create_command_pool();
+    void create_command_buffers();
 
     [[nodiscard]] vk::ImageView create_image_view(
         vk::Image            image,
@@ -121,7 +116,15 @@ private:
     static bool check_device_extension_supported(
         vk::PhysicalDevice& device, std::string_view extension_name);
 
-    void                get_physical_device();
+    void get_physical_device();
+
+    struct swapchain_details_t
+    {
+        vk::SurfaceCapabilitiesKHR        surface_capabilities;
+        std::vector<vk::SurfaceFormatKHR> surface_formats;
+        std::vector<vk::PresentModeKHR>   presentation_modes;
+    };
+
     swapchain_details_t get_swapchain_details(vk::PhysicalDevice& device);
 
     static uint32_t get_render_queue_family_index(
@@ -154,18 +157,22 @@ private:
         vk::Device         logical;
     } devices;
 
-    [[maybe_unused]] vk::Queue   render_queue;
-    [[maybe_unused]] vk::Queue   presentation_queue;
-    vk::SurfaceKHR               surface; // KHR - extension
-    vk::SwapchainKHR             swapchain;
-    std::vector<vk::Image>       swapchain_images;
-    std::vector<vk::ImageView>   swapchain_image_views;
-    std::vector<vk::Framebuffer> swapchain_framebuffers;
+    [[maybe_unused]] vk::Queue     render_queue;
+    [[maybe_unused]] vk::Queue     presentation_queue;
+    vk::SurfaceKHR                 surface; // KHR - extension
+    vk::SwapchainKHR               swapchain;
+    std::vector<vk::Image>         swapchain_images;
+    std::vector<vk::ImageView>     swapchain_image_views;
+    std::vector<vk::Framebuffer>   swapchain_framebuffers;
+    std::vector<vk::CommandBuffer> command_buffers;
 
     // vulkan pipeline
     vk::Pipeline       graphics_pipeline{};
     vk::PipelineLayout pipeline_layout{};
-    vk::RenderPass     render_path;
+    vk::RenderPass     render_path{};
+
+    // pools
+    vk::CommandPool graphics_command_pool{};
 
     // vulkan utilities
     vk::Format   swapchain_image_format{};
