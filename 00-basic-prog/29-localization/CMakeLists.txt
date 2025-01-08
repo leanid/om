@@ -45,6 +45,7 @@ add_custom_command(
     VERBATIM
     COMMENT "generating localization template [messages.pot] from source main.cxx"
 )
-add_custom_target(generate_messages ALL DEPENDS messages.pot)
+add_custom_target(generate_messages ALL DEPENDS
+                  ${CMAKE_CURRENT_SOURCE_DIR}/messages.pot)
 
 add_dependencies(29-localization generate_messages)

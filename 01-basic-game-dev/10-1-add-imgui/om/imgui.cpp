@@ -1,3 +1,4 @@
+// NOLINTBEGIN(*)
 // dear imgui, v1.54 WIP
 // (main code and documentation)
 
@@ -1291,7 +1292,7 @@ void ImGuiIO::AddInputCharactersUTF8(const char* utf8_chars)
 //-----------------------------------------------------------------------------
 
 #define IM_F32_TO_INT8_UNBOUND(_VAL)                                           \
-    ((int)((_VAL)*255.0f +                                                     \
+    ((int)((_VAL) * 255.0f +                                                   \
            ((_VAL) >= 0 ? 0.5f : -0.5f))) // Unsaturated, for display purpose
 #define IM_F32_TO_INT8_SAT(_VAL)                                               \
     ((int)(ImSaturate(_VAL) * 255.0f + 0.5f)) // Saturated, always output 0..255
@@ -1701,7 +1702,7 @@ static inline int ImTextCharToUtf8(char* buf, int buf_size, unsigned int c)
         buf[0] = (char)(0xf0 + (c >> 18));
         buf[1] = (char)(0x80 + ((c >> 12) & 0x3f));
         buf[2] = (char)(0x80 + ((c >> 6) & 0x3f));
-        buf[3] = (char)(0x80 + ((c)&0x3f));
+        buf[3] = (char)(0x80 + ((c) & 0x3f));
         return 4;
     }
     // else if (c < 0x10000)
@@ -1710,7 +1711,7 @@ static inline int ImTextCharToUtf8(char* buf, int buf_size, unsigned int c)
             return 0;
         buf[0] = (char)(0xe0 + (c >> 12));
         buf[1] = (char)(0x80 + ((c >> 6) & 0x3f));
-        buf[2] = (char)(0x80 + ((c)&0x3f));
+        buf[2] = (char)(0x80 + ((c) & 0x3f));
         return 3;
     }
 }
@@ -14119,10 +14120,8 @@ bool ImGui::ColorEdit4(const char*         label,
               "G:%3.0f",
               "B:%3.0f",
               "A:%3.0f" }, // Long display for RGBA
-            { "H:%3.0f",
-              "S:%3.0f",
-              "V:%3.0f",
-              "A:%3.0f" } // Long display for HSVA
+            { "H:%3.0f", "S:%3.0f", "V:%3.0f", "A:%3.0f" }
+            // Long display for HSVA
         };
         const char* fmt_table_float[3][4] = {
             { "%0.3f", "%0.3f", "%0.3f", "%0.3f" }, // Short display
@@ -14130,10 +14129,8 @@ bool ImGui::ColorEdit4(const char*         label,
               "G:%0.3f",
               "B:%0.3f",
               "A:%0.3f" }, // Long display for RGBA
-            { "H:%0.3f",
-              "S:%0.3f",
-              "V:%0.3f",
-              "A:%0.3f" } // Long display for HSVA
+            { "H:%0.3f", "S:%0.3f", "V:%0.3f", "A:%0.3f" }
+            // Long display for HSVA
         };
         const int fmt_idx = hide_prefix                         ? 0
                             : (flags & ImGuiColorEditFlags_HSV) ? 2
@@ -16425,3 +16422,4 @@ void ImGui::ShowMetricsWindow(bool* p_open)
 #endif
 
 //-----------------------------------------------------------------------------
+// NOLINTEND(*)

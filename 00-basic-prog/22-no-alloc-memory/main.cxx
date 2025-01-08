@@ -10,7 +10,7 @@
 
 #include <sys/mman.h>
 
-constexpr size_t Mb = 1024 * 1024;
+constexpr size_t Mb = 1024ull * 1024;
 constexpr size_t Gb = Mb * 1024;
 
 /// If you change size of next array you may see error:

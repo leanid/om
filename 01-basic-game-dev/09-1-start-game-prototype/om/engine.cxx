@@ -104,11 +104,7 @@ template <typename T> static void load_gl_func(const char* func_name, T& result)
 namespace om
 {
 
-vec2::vec2()
-    : x(0.f)
-    , y(0.f)
-{
-}
+vec2::vec2() = default;
 vec2::vec2(float x_, float y_)
     : x(x_)
     , y(y_)
@@ -194,9 +190,9 @@ matrix operator*(const matrix& m1, const matrix& m2)
     return r;
 }
 
-texture::~texture() {}
+texture::~texture() = default;
 
-vbo::~vbo() {}
+vbo::~vbo() = default;
 
 class vertex_buffer_impl final : public vbo
 {
@@ -209,8 +205,10 @@ public:
     }
     ~vertex_buffer_impl() final;
 
-    const vertex*  data() const final { return vertexes.data(); }
-    virtual size_t size() const final { return vertexes.size(); }
+    // NOLINTNEXTLINE
+    const vertex* data() const final { return vertexes.data(); }
+    // NOLINTNEXTLINE
+    size_t size() const final { return vertexes.size(); }
 
 private:
     std::vector<vertex> vertexes;
@@ -294,8 +292,8 @@ public:
 
         SDL_ResumeAudioDevice(device);
     }
-    bool is_playing() const final { return is_playing_; }
-    void stop() final
+    [[nodiscard]] bool is_playing() const final { return is_playing_; }
+    void               stop() final
     {
         // Lock callback function
         SDL_PauseAudioDevice(device);
@@ -309,10 +307,10 @@ public:
         // unlock callback for continue mixing of audio
         SDL_ResumeAudioDevice(device);
     }
-
+    // NOLINTNEXTLINE
     std::unique_ptr<uint8_t[]> tmp_buf;
-    uint8_t*                   buffer;
-    uint32_t                   length;
+    uint8_t*                   buffer; // NOLINT
+    uint32_t                   length        = 0;
     uint32_t                   current_index = 0;
     SDL_AudioDeviceID          device;
     bool                       is_playing_ = false;
@@ -324,10 +322,9 @@ sound_buffer_impl::sound_buffer_impl(std::string_view  path,
                                      SDL_AudioDeviceID device_,
                                      SDL_AudioSpec     device_audio_spec)
     : buffer(nullptr)
-    , length(0)
     , device(device_)
 {
-    SDL_IOStream* file = SDL_IOFromFile(path.data(), "rb");
+    SDL_IOStream* file = SDL_IOFromFile(path.data(), "rb"); // NOLINT
     if (file == nullptr)
     {
         throw std::runtime_error(std::string("can't open audio file: ") +
@@ -389,7 +386,7 @@ sound_buffer_impl::sound_buffer_impl(std::string_view  path,
     }
 }
 
-sound::~sound() {}
+sound::~sound() = default;
 
 sound_buffer_impl::~sound_buffer_impl()
 {
@@ -419,8 +416,8 @@ public:
         OM_GL_CHECK()
     }
 
-    std::uint32_t get_width() const final { return width; }
-    std::uint32_t get_height() const final { return height; }
+    [[nodiscard]] std::uint32_t get_width() const final { return width; }
+    [[nodiscard]] std::uint32_t get_height() const final { return height; }
 
 private:
     std::string   file_path;
@@ -434,8 +431,8 @@ class shader_gl_es20
 {
 public:
     shader_gl_es20(
-        std::string_view                                      vertex_src,
-        std::string_view                                      fragment_src,
+        std::string_view vertex_src, // NOLINT
+        std::string_view fragment_src,
         const std::vector<std::tuple<GLuint, const GLchar*>>& attributes)
     {
         vert_shader = compile_shader(GL_VERTEX_SHADER, vertex_src);
@@ -462,7 +459,7 @@ public:
     {
         assert(texture != nullptr);
         const int location =
-            glGetUniformLocation(program_id, uniform_name.data());
+            glGetUniformLocation(program_id, uniform_name.data()); // NOLINT
         OM_GL_CHECK()
         if (location == -1)
         {
@@ -483,13 +480,14 @@ public:
     void set_uniform(std::string_view uniform_name, const color& c)
     {
         const int location =
-            glGetUniformLocation(program_id, uniform_name.data());
+            glGetUniformLocation(program_id, uniform_name.data()); // NOLINT
         OM_GL_CHECK()
         if (location == -1)
         {
             std::cerr << "can't get uniform location from shader\n";
             throw std::runtime_error("can't get uniform location");
         }
+        // NOLINTNEXTLINE
         float values[4] = { c.get_r(), c.get_g(), c.get_b(), c.get_a() };
         glUniform4fv(location, 1, &values[0]);
         OM_GL_CHECK()
@@ -498,7 +496,7 @@ public:
     void set_uniform(std::string_view uniform_name, const matrix& m)
     {
         const int location =
-            glGetUniformLocation(program_id, uniform_name.data());
+            glGetUniformLocation(program_id, uniform_name.data()); // NOLINT
         OM_GL_CHECK()
         if (location == -1)
         {
@@ -507,6 +505,7 @@ public:
         }
         // OpenGL wants matrix in column major order
         // clang-format off
+        // NOLINTNEXTLINE
         float values[9] = { m.row0.x,  m.row0.y, m.row2.x,
                             m.row1.x, m.row1.y, m.row2.y,
                             0.f,      0.f,       1.f };
@@ -544,7 +543,7 @@ private:
 
             std::string shader_type_name =
                 shader_type == GL_VERTEX_SHADER ? "vertex" : "fragment";
-            std::cerr << "Error compiling shader(vertex)\n"
+            std::cerr << "Error compiling " << shader_type_name << "\n"
                       << vertex_shader_src << "\n"
                       << info_chars.data();
             return 0;

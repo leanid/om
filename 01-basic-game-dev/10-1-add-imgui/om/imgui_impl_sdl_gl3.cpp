@@ -1,3 +1,4 @@
+// NOLINTBEGIN(*)
 // ImGui SDL2 binding with OpenGL3
 // In this binding, ImTextureID is used to store an OpenGL 'GLuint' texture
 // identifier. Read the FAQ about ImTextureID in imgui.cpp.
@@ -33,9 +34,9 @@
 
 // Data
 static double g_Time            = 0.0f;
-static bool   g_MousePressed[3] = { false, false, false };
+static bool   g_MousePressed[3] = { false, false, false }; // NOLINT
 static float  g_MouseWheel      = 0.0f;
-static GLuint g_FontTexture     = 0;
+static GLuint g_FontTexture     = 0; // NOLINT
 static int    g_ShaderHandle = 0, g_VertHandle = 0, g_FragHandle = 0;
 static int    g_AttribLocationTex = 0, g_AttribLocationProjMtx = 0;
 static int    g_AttribLocationPosition = 0, g_AttribLocationUV = 0,
@@ -89,10 +90,10 @@ void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
     // GLint last_polygon_mode[2]; open gl 4?
     // glGetIntegerv(GL_POLYGON_MODE, last_polygon_mode);
     OM_GL_CHECK();
-    GLint last_viewport[4];
+    GLint last_viewport[4]; // NOLINT
     glGetIntegerv(GL_VIEWPORT, last_viewport);
     OM_GL_CHECK();
-    GLint last_scissor_box[4];
+    GLint last_scissor_box[4]; // NOLINT
     glGetIntegerv(GL_SCISSOR_BOX, last_scissor_box);
     OM_GL_CHECK();
     GLenum last_blend_src_rgb;
@@ -141,6 +142,7 @@ void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
 
     // Setup viewport, orthographic projection matrix
     glViewport(0, 0, (GLsizei)fb_width, (GLsizei)fb_height);
+    // NOLINTNEXTLINE
     const float ortho_projection[4][4] = {
         { 2.0f / io.DisplaySize.x, 0.0f, 0.0f, 0.0f },
         { 0.0f, 2.0f / -io.DisplaySize.y, 0.0f, 0.0f },
@@ -160,11 +162,12 @@ void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
     for (int n = 0; n < draw_data->CmdListsCount; n++)
     {
         const ImDrawList* cmd_list          = draw_data->CmdLists[n];
-        const ImDrawIdx*  idx_buffer_offset = 0;
+        const ImDrawIdx*  idx_buffer_offset = nullptr;
 
         glBindBuffer(GL_ARRAY_BUFFER, g_VboHandle);
         OM_GL_CHECK();
         glBufferData(GL_ARRAY_BUFFER,
+                     // NOLINTNEXTLINE
                      (GLsizeiptr)cmd_list->VtxBuffer.Size * sizeof(ImDrawVert),
                      (const GLvoid*)cmd_list->VtxBuffer.Data,
                      GL_STREAM_DRAW);
@@ -173,6 +176,7 @@ void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_ElementsHandle);
         OM_GL_CHECK();
         glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+                     // NOLINTNEXTLINE
                      (GLsizeiptr)cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx),
                      (const GLvoid*)cmd_list->IdxBuffer.Data,
                      GL_STREAM_DRAW);
@@ -672,3 +676,4 @@ void ImGui_ImplSdlGL3_NewFrame(SDL_Window* window)
     // to your application.
     ImGui::NewFrame();
 }
+// NOLINTEND(*)

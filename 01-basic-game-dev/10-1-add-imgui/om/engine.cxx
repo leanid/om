@@ -78,11 +78,7 @@ template <typename T> static void load_gl_func(const char* func_name, T& result)
 namespace om
 {
 
-vec2::vec2()
-    : x(0.f)
-    , y(0.f)
-{
-}
+vec2::vec2() = default;
 vec2::vec2(float x_, float y_)
     : x(x_)
     , y(y_)
@@ -168,9 +164,9 @@ matrix operator*(const matrix& m1, const matrix& m2)
     return r;
 }
 
-texture::~texture() {}
+texture::~texture() = default;
 
-vbo::~vbo() {}
+vbo::~vbo() = default;
 
 class vertex_buffer_impl final : public vbo
 {
@@ -183,8 +179,8 @@ public:
     }
     ~vertex_buffer_impl() final;
 
-    const vertex*  data() const final { return vertexes.data(); }
-    virtual size_t size() const final { return vertexes.size(); }
+    [[nodiscard]] const vertex* data() const final { return vertexes.data(); }
+    [[nodiscard]] size_t        size() const final { return vertexes.size(); }
 
 private:
     std::vector<vertex> vertexes;
@@ -264,8 +260,8 @@ public:
 
         SDL_ResumeAudioDevice(device);
     }
-    bool is_playing() const final { return is_playing_; }
-    void stop() final
+    [[nodiscard]] bool is_playing() const final { return is_playing_; }
+    void               stop() final
     {
         // Lock callback function
         SDL_PauseAudioDevice(device);
@@ -279,10 +275,10 @@ public:
         // unlock callback for continue mixing of audio
         SDL_ResumeAudioDevice(device);
     }
-
+    // NOLINTNEXTLINE
     std::unique_ptr<uint8_t[]> tmp_buf;
-    uint8_t*                   buffer;
-    uint32_t                   length;
+    uint8_t*                   buffer; // NOLINT
+    uint32_t                   length        = 0;
     uint32_t                   current_index = 0;
     SDL_AudioDeviceID          device;
     bool                       is_playing_ = false;
@@ -293,10 +289,9 @@ sound_buffer_impl::sound_buffer_impl(std::string_view  path,
                                      SDL_AudioDeviceID device_,
                                      SDL_AudioSpec     device_audio_spec)
     : buffer(nullptr)
-    , length(0)
     , device(device_)
 {
-    SDL_IOStream* file = SDL_IOFromFile(path.data(), "rb");
+    SDL_IOStream* file = SDL_IOFromFile(path.data(), "rb"); // NOLINT
     if (file == nullptr)
     {
         throw std::runtime_error(std::string("can't open audio file: ") +
@@ -322,8 +317,10 @@ sound_buffer_impl::sound_buffer_impl(std::string_view  path,
               << "length: " << length << '\n'
               << "time: "
               << static_cast<double>(length) /
-                     (file_audio_spec.channels * file_audio_spec.freq *
-                      get_sound_format_size(file_audio_spec.format))
+                     static_cast<double>(
+                         static_cast<size_t>(file_audio_spec.channels) *
+                         file_audio_spec.freq *
+                         get_sound_format_size(file_audio_spec.format))
               << "sec" << std::endl;
 
     if (file_audio_spec.channels != device_audio_spec.channels ||
@@ -356,7 +353,7 @@ sound_buffer_impl::sound_buffer_impl(std::string_view  path,
     }
 }
 
-sound::~sound() {}
+sound::~sound() = default;
 
 sound_buffer_impl::~sound_buffer_impl()
 {
@@ -368,7 +365,7 @@ sound_buffer_impl::~sound_buffer_impl()
     length = 0;
 }
 
-vertex_buffer_impl::~vertex_buffer_impl() {}
+vertex_buffer_impl::~vertex_buffer_impl() = default;
 
 class texture_gl_es20 final : public texture
 {
@@ -385,8 +382,8 @@ public:
         OM_GL_CHECK();
     }
 
-    std::uint32_t get_width() const final { return width; }
-    std::uint32_t get_height() const final { return height; }
+    [[nodiscard]] std::uint32_t get_width() const final { return width; }
+    [[nodiscard]] std::uint32_t get_height() const final { return height; }
 
 private:
     std::string   file_path;
@@ -399,8 +396,8 @@ class shader_gl_es20
 {
 public:
     shader_gl_es20(
-        std::string_view                                      vertex_src,
-        std::string_view                                      fragment_src,
+        std::string_view vertex_src, // NOLINT
+        std::string_view fragment_src,
         const std::vector<std::tuple<GLuint, const GLchar*>>& attributes)
     {
         vert_shader = compile_shader(GL_VERTEX_SHADER, vertex_src);
@@ -427,7 +424,7 @@ public:
     {
         assert(texture != nullptr);
         const int location =
-            glGetUniformLocation(program_id, uniform_name.data());
+            glGetUniformLocation(program_id, uniform_name.data()); // NOLINT
         OM_GL_CHECK();
         if (location == -1)
         {
