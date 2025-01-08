@@ -30,7 +30,7 @@ struct platform_interface
     };
     struct content
     {
-        std::unique_ptr<std::byte[]> memory;
+        std::unique_ptr<std::byte[]> memory; // NOLINT
         std::size_t                  size{};
 
         content(const content& other)            = delete;
@@ -38,7 +38,6 @@ struct platform_interface
 
         content() noexcept
             : memory{}
-            , size{}
         {
         }
         content(content&& other) noexcept
