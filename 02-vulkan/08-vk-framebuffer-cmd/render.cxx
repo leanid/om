@@ -934,6 +934,33 @@ void render::create_command_buffers()
     }
 }
 
+void render::record_commands()
+{
+    vk::CommandBufferBeginInfo begin_info{};
+    // can be submitted multiple times without waiting for previous submission
+    begin_info.flags = vk::CommandBufferUsageFlagBits::eSimultaneousUse;
+
+    vk::RenderPassBeginInfo render_pass_info{};
+    render_pass_info.renderPass        = render_path;
+    render_pass_info.renderArea.offset = vk::Offset2D{ 0, 0 }; // in pixels
+    render_pass_info.renderArea.extent = swapchain_image_extent;
+
+    vk::ClearValue clear_color = vk::ClearColorValue(
+        std::array<float, 4>{ 0.6f, 0.65f, 0.4f, 1.f }); // RGBA
+
+    render_pass_info.pClearValues = &clear_color; // TODO depth attachment later
+    render_pass_info.clearValueCount = 1;
+
+    auto record_commands = [&](const vk::CommandBuffer& buffer)
+    {
+        // start recording
+        buffer.begin(begin_info);
+
+        // finish recording
+        buffer.end();
+    };
+}
+
 vk::Extent2D render::choose_best_swapchain_image_resolution(
     const vk::SurfaceCapabilitiesKHR& capabilities)
 {

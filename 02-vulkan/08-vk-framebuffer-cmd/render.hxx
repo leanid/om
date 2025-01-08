@@ -87,6 +87,7 @@ public:
     ~render();
 
 private:
+    // create functions
     void create_instance();
     void create_logical_device();
     void create_surface();
@@ -104,9 +105,14 @@ private:
 
     vk::ShaderModule create_shader(std::span<std::byte> spir_v);
 
+    // record functions
+    void record_commands();
+
+    // destroy functions
     void destroy_surface();
     void destroy(vk::ShaderModule& shader);
 
+    // validation functions
     void validate_expected_extensions_exists(
         const vk::InstanceCreateInfo& create_info);
     void validate_instance_layer_present(std::string_view instance_layer);
@@ -116,6 +122,7 @@ private:
     static bool check_device_extension_supported(
         vk::PhysicalDevice& device, std::string_view extension_name);
 
+    // get functions
     void get_physical_device();
 
     struct swapchain_details_t
@@ -133,6 +140,7 @@ private:
         const vk::PhysicalDevice& physical_device,
         const vk::SurfaceKHR&     surface_to_check);
 
+    // choose functions
     vk::Extent2D choose_best_swapchain_image_resolution(
         const vk::SurfaceCapabilitiesKHR& capabilities);
     static vk::SurfaceFormatKHR choose_best_surface_format(
