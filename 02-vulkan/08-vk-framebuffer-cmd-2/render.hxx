@@ -88,7 +88,7 @@ public:
 
 private:
     // create functions
-    void create_instance();
+    void create_instance(bool enable_validation_layers);
     void create_logical_device();
     void create_surface();
     void create_swapchain();

@@ -27,7 +27,7 @@ render::render(platform_interface& platform, hints hints)
     , platform_{ platform }
     , hints_{ hints }
 {
-    create_instance();
+    create_instance(hints.enable_validation_layers);
     create_surface();
     get_physical_device();
     validate_physical_device();
@@ -71,7 +71,7 @@ render::~render()
     log << "vulkan instance destroyed\n";
 }
 
-void render::create_instance()
+void render::create_instance(bool enable_validation_layers)
 {
     vk::ApplicationInfo    application_info;
     vk::InstanceCreateInfo instance_create_info;
@@ -98,7 +98,7 @@ void render::create_instance()
 
     validate_expected_extensions_exists(instance_create_info);
 
-    if (hints_.enable_validation_layers)
+    if (enable_validation_layers)
     {
         const char* layer = "VK_LAYER_KHRONOS_validation";
         validate_instance_layer_present(layer);
