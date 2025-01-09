@@ -4,9 +4,11 @@
 #include <array>
 #include <cstdlib>
 #include <iomanip>
+#include <ranges>
 #include <set>
 #include <sstream>
 #include <stdexcept>
+#include <tuple>
 
 namespace om::vulkan
 {
@@ -36,6 +38,7 @@ render::render(platform_interface& platform, hints hints)
     create_framebuffers();
     create_command_pool();
     create_command_buffers();
+    record_commands();
 }
 
 render::~render()
@@ -900,6 +903,8 @@ void render::create_command_pool()
         throw std::runtime_error("error: queue indexes not valid");
     }
 
+    log << "create command pool\n";
+
     vk::CommandPoolCreateInfo info{};
     info.queueFamilyIndex = queue_indexes.graphics_family;
     info.flags            = vk::CommandPoolCreateFlagBits::eResetCommandBuffer;
@@ -913,6 +918,9 @@ void render::create_command_pool()
 
 void render::create_command_buffers()
 {
+    log << "create command buffers count: " << swapchain_framebuffers.size()
+        << "\n";
+
     vk::CommandBufferAllocateInfo info{};
     info.commandPool = graphics_command_pool;
     info.level       = vk::CommandBufferLevel::ePrimary;
@@ -951,14 +959,32 @@ void render::record_commands()
     render_pass_info.pClearValues = &clear_color; // TODO depth attachment later
     render_pass_info.clearValueCount = 1;
 
-    auto record_commands = [&](const vk::CommandBuffer& buffer)
+    auto record_commands =
+        [&](std::tuple<vk::CommandBuffer&, vk::Framebuffer&> cmd_and_fb)
     {
+        auto& [buffer, framebuffer] = cmd_and_fb;
         // start recording
         buffer.begin(begin_info);
+        {
+            render_pass_info.framebuffer = framebuffer;
+            buffer.beginRenderPass(render_pass_info,
+                                   vk::SubpassContents::eInline);
+            {
 
+                buffer.bindPipeline(vk::PipelineBindPoint::eGraphics,
+                                    graphics_pipeline);
+
+                buffer.draw(3, 1, 0, 0); // 3 vertices, 1 instance, 0 offset
+            }
+            buffer.endRenderPass();
+        }
         // finish recording
         buffer.end();
     };
+
+    std::ranges::for_each(
+        std::views::zip(command_buffers, swapchain_framebuffers),
+        record_commands);
 }
 
 vk::Extent2D render::choose_best_swapchain_image_resolution(
