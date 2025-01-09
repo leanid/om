@@ -15,30 +15,29 @@ namespace om::vulkan
 {
 
 static VKAPI_ATTR vk::Bool32 VKAPI_CALL
-debug_callback(VkDebugUtilsMessageSeverityFlagBitsEXT      messageSeverity,
-               VkDebugUtilsMessageTypeFlagsEXT             messageType,
-               const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-               void*                                       pUserData)
+debug_callback(VkDebugUtilsMessageSeverityFlagBitsEXT      severity,
+               VkDebugUtilsMessageTypeFlagsEXT             msg_type,
+               const VkDebugUtilsMessengerCallbackDataEXT* data,
+               void*                                       user_data)
 {
-    switch (messageSeverity)
+    using namespace std;
+    switch (severity)
     {
         case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
-            std::cerr << "verbose: [vk] " << pCallbackData->pMessage
-                      << std::endl;
+            cerr << "verbose: [vk] " << data->pMessage << endl;
             break;
         case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
-            std::cerr << "info: [vk] " << pCallbackData->pMessage << std::endl;
+            cerr << "info: [vk] " << data->pMessage << endl;
             break;
         case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
-            std::cerr << "warning: [vk] " << pCallbackData->pMessage
-                      << std::endl;
+            cerr << "warning: [vk] " << data->pMessage << endl;
             break;
         case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
-            std::cerr << "error: [vk] " << pCallbackData->pMessage << std::endl;
+            cerr << "error: [vk] " << data->pMessage << endl;
+            throw runtime_error("vulkan error: "s + data->pMessage);
             break;
         default:
-            std::cerr << "unknown: [vk] " << pCallbackData->pMessage
-                      << std::endl;
+            cerr << "unknown: [vk] " << data->pMessage << endl;
             break;
     }
 
@@ -175,11 +174,14 @@ void render::create_debug_callback(bool enable_debug_callback)
     vk::DebugUtilsMessengerCreateInfoEXT debug_info;
     debug_info.messageSeverity =
         vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose |
+        vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo |
         vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning |
         vk::DebugUtilsMessageSeverityFlagBitsEXT::eError;
-    debug_info.messageType = vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral |
-                             vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation |
-                             vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance;
+    debug_info.messageType =
+        vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral |
+        vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation |
+        vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance |
+        vk::DebugUtilsMessageTypeFlagBitsEXT::eDeviceAddressBinding;
     debug_info.pfnUserCallback = debug_callback;
     debug_info.pUserData       = nullptr;
 
