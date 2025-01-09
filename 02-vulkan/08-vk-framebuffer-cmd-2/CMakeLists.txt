@@ -49,10 +49,10 @@ foreach(shader_file ${shader_files})
 endforeach()
 
 # Add custom target which depends on SPIR-V files
-add_custom_target(generate_spirv_3 ALL DEPENDS ${spirv_files})
+add_custom_target(generate_spirv_4 ALL DEPENDS ${spirv_files})
 
 # Make game target depends on generate_spirv target
-add_dependencies(08-vk-framebuffer-cmd-2 generate_spirv_3)
+add_dependencies(08-vk-framebuffer-cmd-2 generate_spirv_4)
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     add_custom_command(
