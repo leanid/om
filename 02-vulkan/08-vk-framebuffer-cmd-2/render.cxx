@@ -4,6 +4,7 @@
 #include <array>
 #include <cstdlib>
 #include <iomanip>
+#include <iostream>
 #include <ranges>
 #include <set>
 #include <sstream>
@@ -12,6 +13,37 @@
 
 namespace om::vulkan
 {
+
+static VKAPI_ATTR vk::Bool32 VKAPI_CALL
+debug_callback(VkDebugUtilsMessageSeverityFlagBitsEXT      messageSeverity,
+               VkDebugUtilsMessageTypeFlagsEXT             messageType,
+               const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+               void*                                       pUserData)
+{
+    switch (messageSeverity)
+    {
+        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
+            std::cerr << "verbose: [vk] " << pCallbackData->pMessage
+                      << std::endl;
+            break;
+        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
+            std::cerr << "info: [vk] " << pCallbackData->pMessage << std::endl;
+            break;
+        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
+            std::cerr << "warning: [vk] " << pCallbackData->pMessage
+                      << std::endl;
+            break;
+        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
+            std::cerr << "error: [vk] " << pCallbackData->pMessage << std::endl;
+            break;
+        default:
+            std::cerr << "unknown: [vk] " << pCallbackData->pMessage
+                      << std::endl;
+            break;
+    }
+
+    return VK_FALSE;
+}
 
 static std::string api_version_to_string(uint32_t apiVersion)
 {
@@ -29,6 +61,7 @@ render::render(platform_interface& platform, hints hints)
 {
     create_instance(hints.enable_validation_layers,
                     hints.enable_debug_callback_ext);
+    create_debug_callback(hints.enable_debug_callback_ext);
     create_surface();
     get_physical_device();
     validate_physical_device();
@@ -68,6 +101,8 @@ render::~render()
     log << "vulkan logical device destroyed\n";
     destroy_surface();
 
+    destroy_debug_callback();
+    log << "vulkan debug callback destroyed\n";
     instance.destroy();
     log << "vulkan instance destroyed\n";
 }
@@ -123,6 +158,10 @@ void render::create_instance(bool enable_validation_layers,
 
     instance = vk::createInstance(instance_create_info);
     log << "vulkan instance created\n";
+
+    dynamic_loader =
+        vk::DispatchLoaderDynamic{ instance, vkGetInstanceProcAddr };
+    log << "vulkan dynamic loader created\n";
 }
 
 void render::create_debug_callback(bool enable_debug_callback)
@@ -133,20 +172,31 @@ void render::create_debug_callback(bool enable_debug_callback)
         return;
     }
 
-    // vk::DebugUtilsMessengerCreateInfoEXT debug_info;
-    // debug_info.messageSeverity =
-    //     vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose |
-    //     vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning |
-    //     vk::DebugUtilsMessageSeverityFlagBitsEXT::eError;
-    // debug_info.messageType = vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral |
-    //                          vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation
-    //                          |
-    //                          vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance;
-    // debug_info.pfnUserCallback = debug_callback;
-    // debug_info.pUserData       = nullptr;
+    vk::DebugUtilsMessengerCreateInfoEXT debug_info;
+    debug_info.messageSeverity =
+        vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose |
+        vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning |
+        vk::DebugUtilsMessageSeverityFlagBitsEXT::eError;
+    debug_info.messageType = vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral |
+                             vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation |
+                             vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance;
+    debug_info.pfnUserCallback = debug_callback;
+    debug_info.pUserData       = nullptr;
 
-    // debug_extension = instance.createDebugUtilsMessengerEXT(debug_info);
+    debug_extension = instance.createDebugUtilsMessengerEXT(
+        debug_info, nullptr, dynamic_loader);
+
     log << "vulkan debug callback created\n";
+}
+
+void render::destroy_debug_callback()
+{
+    if (debug_extension)
+    {
+        instance.destroyDebugUtilsMessengerEXT(
+            debug_extension, nullptr, dynamic_loader);
+        log << "vulkan debug callback destroyed\n";
+    }
 }
 
 void render::validate_expected_extensions_exists(

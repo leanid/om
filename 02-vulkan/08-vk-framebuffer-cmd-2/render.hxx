@@ -111,6 +111,7 @@ private:
     void record_commands();
 
     // destroy functions
+    void destroy_debug_callback();
     void destroy_surface();
     void destroy(vk::ShaderModule& shader);
 
@@ -160,8 +161,10 @@ private:
 
     // vulkan main objects
     vk::Instance instance;
+    // dynamic loader is used to load vulkan functions for extensions
+    vk::DispatchLoaderDynamic dynamic_loader;
     // debug extension is not available on macOS
-    vk::DebugReportCallbackEXT debug_extension;
+    vk::DebugUtilsMessengerEXT debug_extension;
 
     struct
     {
