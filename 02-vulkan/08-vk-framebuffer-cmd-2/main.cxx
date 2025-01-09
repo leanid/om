@@ -96,5 +96,7 @@ int main(int argc, char** argv)
         std::cerr << "unknown exception!" << std::endl;
     }
 
+    std::cerr << "exit" << std::endl;
+
     return std::cerr.fail();
 }

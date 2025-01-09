@@ -34,8 +34,7 @@ debug_callback(VkDebugUtilsMessageSeverityFlagBitsEXT      severity,
             break;
         case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
             cerr << "error: [vk] " << data->pMessage << endl;
-            throw runtime_error("vulkan error: "s + data->pMessage);
-            break;
+            return VK_TRUE; // we can return VK_TRUE to stop execution
         default:
             cerr << "unknown: [vk] " << data->pMessage << endl;
             break;
