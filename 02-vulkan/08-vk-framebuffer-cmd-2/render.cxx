@@ -82,6 +82,12 @@ void render::create_instance(bool enable_validation_layers,
     platform_interface::extensions extensions =
         platform_.get_vulkan_extensions();
 
+    if (extensions.names.empty())
+    {
+        throw std::runtime_error(
+            "get_instance_extensions callback return nullptr");
+    }
+
     log << "minimal vulkan expected extensions from "
            "platform.get_vulkan_extensions():\n";
 
@@ -92,17 +98,12 @@ void render::create_instance(bool enable_validation_layers,
     if (enable_debug_callback_ext)
     {
         extensions.names.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+        log << "    - " << extensions.names.back() << '\n';
     }
 
     instance_create_info.ppEnabledExtensionNames = extensions.names.data();
     instance_create_info.enabledExtensionCount =
         static_cast<uint32_t>(extensions.names.size());
-
-    if (nullptr == instance_create_info.ppEnabledExtensionNames)
-    {
-        throw std::runtime_error(
-            "get_instance_extensions callback return nullptr");
-    }
 
     validate_expected_extensions_exists(instance_create_info);
 
