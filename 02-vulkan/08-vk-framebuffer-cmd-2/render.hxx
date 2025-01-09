@@ -20,8 +20,7 @@ struct platform_interface
 
     struct extensions
     {
-        const char* const* names = nullptr;
-        std::uint32_t      count = 0u;
+        std::vector<const char*> names;
     };
     struct buffer_size
     {
@@ -80,6 +79,7 @@ public:
     {
         bool verbose;
         bool enable_validation_layers;
+        bool enable_debug_callback_ext;
     };
 
     explicit render(platform_interface& platform, hints hints);
@@ -88,7 +88,9 @@ public:
 
 private:
     // create functions
-    void create_instance(bool enable_validation_layers);
+    void create_instance(bool enable_validation_layers,
+                         bool enable_debug_callback_ext);
+    void create_debug_callback(bool enable_debug_callback);
     void create_logical_device();
     void create_surface();
     void create_swapchain();
@@ -158,6 +160,8 @@ private:
 
     // vulkan main objects
     vk::Instance instance;
+    // debug extension is not available on macOS
+    vk::DebugReportCallbackEXT debug_extension;
 
     struct
     {

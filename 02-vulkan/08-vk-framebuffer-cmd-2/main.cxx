@@ -5,6 +5,7 @@
 #include <memory>
 
 #include <SDL3/SDL.h>
+#include <SDL3/SDL_hints.h>
 #include <SDL3/SDL_vulkan.h>
 
 #include "platform_sdl3.hxx"
@@ -13,8 +14,9 @@ int main(int argc, char** argv)
 {
     using namespace std;
 
-    bool verbose              = argc > 1 && argv[1] == "-v"sv;
-    bool vk_enable_validation = true;
+    bool verbose               = argc > 1 && argv[1] == "-v"sv;
+    bool vk_validation_layer   = true;
+    bool vk_debug_callback_ext = true;
 
     struct null_buffer final : std::streambuf
     {
@@ -23,6 +25,16 @@ int main(int argc, char** argv)
 
     std::ostream  null_stream(&null);
     std::ostream& log = verbose ? std::clog : null_stream;
+
+    if (vk_validation_layer)
+    {
+        log << "enable vulkan validation layers\n";
+        if (!SDL_SetHint(SDL_HINT_RENDER_VULKAN_DEBUG, "1"))
+        {
+            std::cerr << SDL_GetError();
+            return EXIT_FAILURE;
+        }
+    }
 
     if (!SDL_Init(SDL_INIT_VIDEO))
     {
@@ -70,7 +82,9 @@ int main(int argc, char** argv)
         using namespace om::vulkan;
         platform_sdl3 platform(window.get(), log);
         render::hints hints{ .verbose                  = verbose,
-                             .enable_validation_layers = vk_enable_validation };
+                             .enable_validation_layers = vk_validation_layer,
+                             .enable_debug_callback_ext =
+                                 vk_debug_callback_ext };
         render        render(platform, hints);
     }
     catch (const std::exception& ex)

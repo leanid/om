@@ -13,7 +13,10 @@ platform_interface::extensions platform_sdl3::get_vulkan_extensions()
 {
     platform_interface::extensions extensions{};
 
-    extensions.names = SDL_Vulkan_GetInstanceExtensions(&extensions.count);
+    uint32_t           count{};
+    const char* const* names = SDL_Vulkan_GetInstanceExtensions(&count);
+
+    std::copy_n(names, count, std::back_inserter(extensions.names));
 
     return extensions;
 }

@@ -27,7 +27,8 @@ render::render(platform_interface& platform, hints hints)
     , platform_{ platform }
     , hints_{ hints }
 {
-    create_instance(hints.enable_validation_layers);
+    create_instance(hints.enable_validation_layers,
+                    hints.enable_debug_callback_ext);
     create_surface();
     get_physical_device();
     validate_physical_device();
@@ -71,7 +72,8 @@ render::~render()
     log << "vulkan instance destroyed\n";
 }
 
-void render::create_instance(bool enable_validation_layers)
+void render::create_instance(bool enable_validation_layers,
+                             bool enable_debug_callback_ext)
 {
     vk::ApplicationInfo    application_info;
     vk::InstanceCreateInfo instance_create_info;
@@ -80,21 +82,27 @@ void render::create_instance(bool enable_validation_layers)
     platform_interface::extensions extensions =
         platform_.get_vulkan_extensions();
 
-    instance_create_info.ppEnabledExtensionNames = extensions.names;
-    instance_create_info.enabledExtensionCount   = extensions.count;
+    log << "minimal vulkan expected extensions from "
+           "platform.get_vulkan_extensions():\n";
+
+    std::ranges::for_each(extensions.names,
+                          [this](std::string_view instance_extension)
+                          { log << "    - " << instance_extension << '\n'; });
+
+    if (enable_debug_callback_ext)
+    {
+        extensions.names.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+    }
+
+    instance_create_info.ppEnabledExtensionNames = extensions.names.data();
+    instance_create_info.enabledExtensionCount =
+        static_cast<uint32_t>(extensions.names.size());
 
     if (nullptr == instance_create_info.ppEnabledExtensionNames)
     {
         throw std::runtime_error(
             "get_instance_extensions callback return nullptr");
     }
-
-    log << "minimal vulkan expected extensions from "
-           "get_instance_extensions callback\n";
-    std::for_each_n(instance_create_info.ppEnabledExtensionNames,
-                    instance_create_info.enabledExtensionCount,
-                    [this](std::string_view instance_extension)
-                    { log << instance_extension << '\n'; });
 
     validate_expected_extensions_exists(instance_create_info);
 
@@ -114,6 +122,30 @@ void render::create_instance(bool enable_validation_layers)
 
     instance = vk::createInstance(instance_create_info);
     log << "vulkan instance created\n";
+}
+
+void render::create_debug_callback(bool enable_debug_callback)
+{
+    if (!enable_debug_callback)
+    {
+        log << "vulkan debug callback disabled\n";
+        return;
+    }
+
+    // vk::DebugUtilsMessengerCreateInfoEXT debug_info;
+    // debug_info.messageSeverity =
+    //     vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose |
+    //     vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning |
+    //     vk::DebugUtilsMessageSeverityFlagBitsEXT::eError;
+    // debug_info.messageType = vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral |
+    //                          vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation
+    //                          |
+    //                          vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance;
+    // debug_info.pfnUserCallback = debug_callback;
+    // debug_info.pUserData       = nullptr;
+
+    // debug_extension = instance.createDebugUtilsMessengerEXT(debug_info);
+    log << "vulkan debug callback created\n";
 }
 
 void render::validate_expected_extensions_exists(
