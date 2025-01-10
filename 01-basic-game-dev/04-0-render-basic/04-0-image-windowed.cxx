@@ -64,16 +64,16 @@ int main(int, char**)
         {
             color out;
 
-            float tex_x = v_in.f5; // 0..1
-            float tex_y = v_in.f6; // 0..1
+            float tex_x = v_in.f5; // 0..1 // NOLINT
+            float tex_y = v_in.f6; // 0..1 // NOLINT
 
             canvas* texture = uniforms_.texture0;
 
             size_t tex_width  = texture->get_width();
             size_t tex_height = texture->get_height();
 
-            auto t_x = static_cast<size_t>((tex_width - 1) * tex_x);
-            auto t_y = static_cast<size_t>((tex_height - 1) * tex_y);
+            auto t_x = static_cast<size_t>((tex_width - 1) * tex_x);  // NOLINT
+            auto t_y = static_cast<size_t>((tex_height - 1) * tex_y); // NOLINT
 
             out = texture->get_pixel(t_x, t_y);
 
@@ -87,16 +87,16 @@ int main(int, char**)
         {
             color out;
 
-            float tex_x = v_in.f5; // 0..1
-            float tex_y = v_in.f6; // 0..1
+            float tex_x = v_in.f5; // 0..1 // NOLINT
+            float tex_y = v_in.f6; // 0..1 // NOLINT
 
             canvas* texture = uniforms_.texture0;
 
             size_t tex_width  = texture->get_width();
             size_t tex_height = texture->get_height();
 
-            auto t_x = static_cast<size_t>((tex_width - 1) * tex_x);
-            auto t_y = static_cast<size_t>((tex_height - 1) * tex_y);
+            auto t_x = static_cast<size_t>((tex_width - 1) * tex_x);  // NOLINT
+            auto t_y = static_cast<size_t>((tex_height - 1) * tex_y); // NOLINT
 
             out = texture->get_pixel(t_x, t_y);
 

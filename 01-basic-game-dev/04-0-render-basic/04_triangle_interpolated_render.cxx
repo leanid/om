@@ -1,7 +1,6 @@
 #include "04_triangle_interpolated_render.hxx"
 
 #include <algorithm>
-#include <iostream>
 
 double interpolate(const double f0, const double f1, const double t)
 {
@@ -141,11 +140,13 @@ std::vector<vertex> triangle_interpolated::rasterize_triangle(const vertex& v0,
     {
         // just render line start -> middle
 
-        position delta        = start - end;
-        size_t   count_pixels = 4 * (std::abs(delta.x) + std::abs(delta.y) + 1);
+        position delta = start - end;
+        size_t   count_pixels =
+            4ull * (std::abs(delta.x) + std::abs(delta.y) + 1);
         for (size_t i = 0; i < count_pixels; ++i)
         {
-            double t      = static_cast<double>(i) / count_pixels;
+            double t =
+                static_cast<double>(i) / static_cast<double>(count_pixels);
             vertex vertex = interpolate(top, bottom, t);
             out.push_back(vertex);
         }
@@ -157,11 +158,13 @@ std::vector<vertex> triangle_interpolated::rasterize_triangle(const vertex& v0,
     {
         // just render line start -> middle
 
-        position delta        = start - middle_pos;
-        size_t   count_pixels = 4 * (std::abs(delta.x) + std::abs(delta.y) + 1);
+        position delta = start - middle_pos;
+        size_t   count_pixels =
+            4ull * (std::abs(delta.x) + std::abs(delta.y) + 1);
         for (size_t i = 0; i < count_pixels; ++i)
         {
-            double t      = static_cast<double>(i) / count_pixels;
+            double t =
+                static_cast<double>(i) / static_cast<double>(count_pixels);
             vertex vertex = interpolate(top, middle, t);
             out.push_back(vertex);
         }
