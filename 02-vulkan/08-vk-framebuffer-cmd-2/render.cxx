@@ -9,11 +9,25 @@
 #include <set>
 #include <sstream>
 #include <stdexcept>
+#include <string_view>
 #include <tuple>
 
 namespace om::vulkan
 {
-
+/// @concurency note
+/// A callback will always be executed in the same thread as the originating
+/// Vulkan call.
+///
+/// A callback can be called from multiple threads simultaneously (if the
+/// application is making Vulkan calls from multiple threads).
+///
+/// @param data note data->pMessage is NULL if messageTypes is equal to
+/// VK_DEBUG_UTILS_MESSAGE_TYPE_DEVICE_ADDRESS_BINDING_BIT_EXT, or a
+/// null-terminated UTF-8 string detailing the trigger conditions.
+///
+/// @return VkBool32 The callback returns a VkBool32, which is interpreted in a
+/// layer-specified manner. The application should always return VK_FALSE. The
+/// VK_TRUE value is reserved for use in layer development.
 static VKAPI_ATTR vk::Bool32 VKAPI_CALL
 debug_callback(VkDebugUtilsMessageSeverityFlagBitsEXT      severity,
                VkDebugUtilsMessageTypeFlagsEXT             msg_type,
@@ -21,24 +35,72 @@ debug_callback(VkDebugUtilsMessageSeverityFlagBitsEXT      severity,
                void*                                       user_data)
 {
     using namespace std;
+
+    const char* msg_type_name = "unknown";
+    const char* msg           = data->pMessage;
+    string      msg_extended;
+
+    auto build_list_of_objects_info =
+        [](const VkDebugUtilsObjectNameInfoEXT* objects,
+           uint32_t                             count) -> string
+    {
+        stringstream ss;
+        for_each_n(objects,
+                   count,
+                   [&ss](const auto& object)
+                   {
+                       vk::DebugUtilsObjectNameInfoEXT object_info = object;
+                       ss << "type: " << vk::to_string(object_info.objectType)
+                          << ' ';
+                       ss << "name: " << object_info.pObjectName << ' ';
+                   });
+        return ss.str();
+    };
+
+    switch (msg_type)
+    {
+        case VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT:
+            msg_type_name = "general";
+            break;
+        case VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT:
+            msg_type_name = "validation";
+            break;
+        case VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT:
+            msg_type_name = "performance";
+            break;
+        case VK_DEBUG_UTILS_MESSAGE_TYPE_DEVICE_ADDRESS_BINDING_BIT_EXT:
+            msg_type_name = "device_address_binding";
+            msg           = "";
+            break;
+        default:
+            break;
+    }
+
+    const char* severity_name = "unknown";
+
     switch (severity)
     {
         case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
-            cerr << "verbose: [vk] " << data->pMessage << endl;
+            severity_name = "verbose";
             break;
         case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
-            cerr << "info: [vk] " << data->pMessage << endl;
+            severity_name = "info";
             break;
         case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
-            cerr << "warning: [vk] " << data->pMessage << endl;
+            severity_name = "warning";
             break;
         case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
-            cerr << "error: [vk] " << data->pMessage << endl;
-            return VK_TRUE; // we can return VK_TRUE to stop execution
+            severity_name = "error";
+            break;
         default:
-            cerr << "unknown: [vk] " << data->pMessage << endl;
             break;
     }
+
+    msg_extended =
+        build_list_of_objects_info(data->pObjects, data->objectCount);
+
+    cerr << "vk: [" << severity_name << "] [" << msg_type_name << "] " << msg
+         << "\n    objects: " << msg_extended << endl;
 
     return VK_FALSE;
 }

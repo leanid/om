@@ -1,6 +1,7 @@
 #include "render.hxx"
 
 #include <cstdlib>
+#include <ios>
 #include <iostream>
 #include <memory>
 
@@ -13,6 +14,10 @@
 int main(int argc, char** argv)
 {
     using namespace std;
+
+    ios_base::sync_with_stdio(false); // faster iostream work
+
+    cerr.exceptions(ios_base::failbit | ios_base::badbit);
 
     bool verbose               = argc > 1 && argv[1] == "-v"sv;
     bool vk_validation_layer   = true;
@@ -96,7 +101,5 @@ int main(int argc, char** argv)
         std::cerr << "unknown exception!" << std::endl;
     }
 
-    std::cerr << "exit" << std::endl;
-
-    return std::cerr.fail();
+    return std::cerr.fail() || std::cout.fail() ? EXIT_FAILURE : EXIT_SUCCESS;
 }
