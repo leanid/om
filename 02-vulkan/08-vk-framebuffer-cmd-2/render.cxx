@@ -754,6 +754,14 @@ void render::create_swapchain()
         std::back_inserter(swapchain_image_views),
         [this](vk::Image image) -> vk::ImageView
         {
+            vk::DebugUtilsObjectNameInfoEXT name_info;
+            name_info.objectType   = image.objectType;
+            name_info.objectHandle = reinterpret_cast<uint64_t>(
+                static_cast<vk::Image::NativeType>(image));
+            name_info.pObjectName = "my_image";
+            devices.logical.setDebugUtilsObjectNameEXT(name_info,
+                                                       dynamic_loader);
+
             return create_image_view(
                 image, swapchain_image_format, vk::ImageAspectFlagBits::eColor);
         });
@@ -1243,7 +1251,9 @@ vk::ImageView render::create_image_view(vk::Image            image,
     range.baseArrayLayer = 0;            // start array level to view from
     range.layerCount     = 1;
 
-    return devices.logical.createImageView(info);
+    auto image_view = devices.logical.createImageView(info);
+
+    return image_view;
 }
 
 vk::ShaderModule render::create_shader(std::span<std::byte> spir_v)
