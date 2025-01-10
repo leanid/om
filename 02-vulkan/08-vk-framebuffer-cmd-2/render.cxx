@@ -1092,6 +1092,11 @@ void render::create_command_buffers()
     {
         throw std::runtime_error("error: can't allocate command buffers");
     }
+
+    std::ranges::for_each(
+        command_buffers,
+        [this](vk::CommandBuffer& buffer)
+        { set_object_name(buffer, "command_buffer_per_swapchain"); });
 }
 
 void render::record_commands()
