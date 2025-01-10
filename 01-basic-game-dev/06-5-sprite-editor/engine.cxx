@@ -115,6 +115,9 @@ template <typename T> static void load_gl_func(const char* func_name, T& result)
                 case GL_OUT_OF_MEMORY:                                         \
                     std::cerr << "GL_OUT_OF_MEMORY" << std::endl;              \
                     break;                                                     \
+                default:                                                       \
+                    std::cerr << "unknown error" << std::endl;                 \
+                    break;                                                     \
             }                                                                  \
             assert(false);                                                     \
         }                                                                      \
@@ -124,10 +127,8 @@ namespace om
 {
 
 vec2::vec2()
-    : x(0.f)
-    , y(0.f)
-{
-}
+
+    = default;
 vec2::vec2(float x_, float y_)
     : x(x_)
     , y(y_)
@@ -224,10 +225,10 @@ mat2x3 operator*(const mat2x3& m1, const mat2x3& m2)
     return r;
 }
 
-texture::~texture() {}
+texture::~texture() = default;
 
-vertex_buffer::~vertex_buffer() {}
-index_buffer::~index_buffer() {}
+vertex_buffer::~vertex_buffer() = default;
+index_buffer::~index_buffer()   = default;
 
 class vertex_buffer_impl final : public vertex_buffer
 {
@@ -268,13 +269,13 @@ public:
         OM_GL_CHECK();
     }
 
-    void bind() const
+    void bind() const override
     {
         glBindBuffer(GL_ARRAY_BUFFER, gl_handle);
         OM_GL_CHECK();
     }
 
-    std::uint32_t size() const { return count; }
+    [[nodiscard]] std::uint32_t size() const override { return count; }
 
 private:
     std::uint32_t gl_handle{ 0 };
@@ -297,20 +298,20 @@ public:
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, size_in_bytes, i, GL_STATIC_DRAW);
         OM_GL_CHECK();
     }
-    ~index_buffer_impl()
+    ~index_buffer_impl() override
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
         OM_GL_CHECK();
         glDeleteBuffers(1, &gl_handle);
         OM_GL_CHECK();
     }
-    void bind() const
+    void bind() const override
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl_handle);
         OM_GL_CHECK();
     }
 
-    std::uint32_t size() const { return count; }
+    [[nodiscard]] std::uint32_t size() const override { return count; }
 
 private:
     std::uint32_t gl_handle{ 0 };
@@ -333,9 +334,9 @@ public:
         OM_GL_CHECK();
     }
 
-    std::uint32_t get_width() const final { return width; }
-    std::uint32_t get_height() const final { return height; }
-    std::string   get_name() const final { return file_path; }
+    [[nodiscard]] std::uint32_t get_width() const final { return width; }
+    [[nodiscard]] std::uint32_t get_height() const final { return height; }
+    [[nodiscard]] std::string   get_name() const final { return file_path; }
 
     void add_ref() { ++ref_counter; }
 
@@ -447,7 +448,7 @@ public:
         OM_GL_CHECK();
     }
 
-    GLuint get_program_id() const { return program_id; }
+    [[nodiscard]] GLuint get_program_id() const { return program_id; }
 
 private:
     GLuint compile_shader(GLenum shader_type, std::string_view src)
@@ -562,9 +563,9 @@ static std::array<std::string_view, 17> event_names = {
 
 std::ostream& operator<<(std::ostream& stream, const event e)
 {
-    std::uint32_t value   = static_cast<std::uint32_t>(e);
-    std::uint32_t minimal = static_cast<std::uint32_t>(event::left_pressed);
-    std::uint32_t maximal = static_cast<std::uint32_t>(event::turn_off);
+    auto value   = static_cast<std::uint32_t>(e);
+    auto minimal = static_cast<std::uint32_t>(event::left_pressed);
+    auto maximal = static_cast<std::uint32_t>(event::turn_off);
     if (value >= minimal && value <= maximal)
     {
         stream << event_names[value];
@@ -733,9 +734,10 @@ static bool check_input(const SDL_Event& e, const bind*& result)
 {
     using namespace std;
 
-    const auto it = find_if(begin(keys),
-                            end(keys),
-                            [&](const bind& b) { return b.key == e.key.key; });
+    const auto it =
+        std::ranges::find_if(keys,
+
+                             [&](const bind& b) { return b.key == e.key.key; });
 
     if (it != end(keys))
     {
@@ -753,7 +755,7 @@ public:
     /// on success return empty string
     std::string initialize(std::string_view /*config*/) final;
     /// return window size
-    virtual om::vec2 screen_size() const final;
+    [[nodiscard]] om::vec2 screen_size() const final;
     /// return seconds from initialization
     float get_time_from_init() final
     {
@@ -822,10 +824,10 @@ public:
 
     bool is_key_down(const enum keys key) final
     {
-        const auto it =
-            std::find_if(begin(keys),
-                         end(keys),
-                         [&](const bind& b) { return b.om_key == key; });
+        const auto it = std::ranges::find_if(keys,
+
+                                             [&](const bind& b)
+                                             { return b.om_key == key; });
 
         if (it != end(keys))
         {
@@ -850,7 +852,7 @@ public:
         auto        it = texture_cache.find(key);
         if (it == end(texture_cache))
         {
-            texture_gl_es20* t = new texture_gl_es20(path);
+            auto* t = new texture_gl_es20(path);
             texture_cache.insert({ key, t });
             return t;
         }
@@ -861,7 +863,7 @@ public:
 
     texture* create_texture_rgba32(const void*  pixels,
                                    const size_t width,
-                                   const size_t height)
+                                   const size_t height) override
     {
         return new texture_gl_es20(pixels, width, height);
     }
@@ -880,24 +882,29 @@ public:
         }
     }
 
-    vertex_buffer* create_vertex_buffer(const tri2* triangles, std::size_t n)
+    vertex_buffer* create_vertex_buffer(const tri2* triangles,
+                                        std::size_t n) override
     {
         assert(triangles != nullptr);
         return new vertex_buffer_impl(triangles, n);
     }
-    vertex_buffer* create_vertex_buffer(const v2* vert, std::size_t count)
+    vertex_buffer* create_vertex_buffer(const v2*   vert,
+                                        std::size_t count) override
     {
         assert(vert != nullptr);
         return new vertex_buffer_impl(vert, count);
     }
-    void destroy_vertex_buffer(vertex_buffer* buffer) { delete buffer; }
+    void destroy_vertex_buffer(vertex_buffer* buffer) override
+    {
+        delete buffer;
+    }
 
     index_buffer* create_index_buffer(const std::uint16_t* indexes,
-                                      std::size_t          count)
+                                      std::size_t          count) override
     {
         return new index_buffer_impl(indexes, count);
     }
-    void destroy_index_buffer(index_buffer* buffer) { delete buffer; }
+    void destroy_index_buffer(index_buffer* buffer) override { delete buffer; }
 
     void render(const tri0& t, const color& c) final
     {
@@ -938,7 +945,7 @@ public:
     void render(const tri2& t, texture* tex) final
     {
         shader02->use();
-        texture_gl_es20* texture = static_cast<texture_gl_es20*>(tex);
+        auto* texture = static_cast<texture_gl_es20*>(tex);
         texture->bind();
         shader02->set_uniform("s_texture", texture);
         // positions
@@ -976,7 +983,7 @@ public:
         OM_GL_CHECK();
 
         shader03->use();
-        texture_gl_es20* texture = static_cast<texture_gl_es20*>(tex);
+        auto* texture = static_cast<texture_gl_es20*>(tex);
         texture->bind();
         shader03->set_uniform("s_texture", texture);
         shader03->set_uniform("u_matrix", m);
@@ -1011,7 +1018,7 @@ public:
     void render(const vertex_buffer& buff, texture* tex, const mat2x3& m) final
     {
         shader03->use();
-        texture_gl_es20* texture = static_cast<texture_gl_es20*>(tex);
+        auto* texture = static_cast<texture_gl_es20*>(tex);
         texture->bind();
         shader03->set_uniform("s_texture", texture);
         shader03->set_uniform("u_matrix", m);
@@ -1046,7 +1053,7 @@ public:
         glEnableVertexAttribArray(2);
         OM_GL_CHECK();
 
-        GLsizei num_of_vertexes = static_cast<GLsizei>(buff.size());
+        auto num_of_vertexes = static_cast<GLsizei>(buff.size());
         glDrawArrays(GL_TRIANGLES, 0, num_of_vertexes);
         OM_GL_CHECK();
 
@@ -1060,7 +1067,7 @@ public:
                 const index_buffer*  indexes,
                 const texture*       tex,
                 const std::uint16_t* start_vertex_index,
-                size_t               num_vertexes)
+                size_t               num_vertexes) override
     {
         tex->bind();
 
@@ -1171,10 +1178,10 @@ color::color(float r, float g, float b, float a)
     assert(b <= 1 && b >= 0);
     assert(a <= 1 && a >= 0);
 
-    std::uint32_t r_ = static_cast<std::uint32_t>(r * 255);
-    std::uint32_t g_ = static_cast<std::uint32_t>(g * 255);
-    std::uint32_t b_ = static_cast<std::uint32_t>(b * 255);
-    std::uint32_t a_ = static_cast<std::uint32_t>(a * 255);
+    auto r_ = static_cast<std::uint32_t>(r * 255);
+    auto g_ = static_cast<std::uint32_t>(g * 255);
+    auto b_ = static_cast<std::uint32_t>(b * 255);
+    auto a_ = static_cast<std::uint32_t>(a * 255);
 
     rgba = a_ << 24 | b_ << 16 | g_ << 8 | r_;
 }
@@ -1202,30 +1209,30 @@ float color::get_a() const
 
 void color::set_r(const float r)
 {
-    std::uint32_t r_ = static_cast<std::uint32_t>(r * 255);
+    auto r_ = static_cast<std::uint32_t>(r * 255);
     rgba &= 0xFFFFFF00;
     rgba |= (r_ << 0);
 }
 void color::set_g(const float g)
 {
-    std::uint32_t g_ = static_cast<std::uint32_t>(g * 255);
+    auto g_ = static_cast<std::uint32_t>(g * 255);
     rgba &= 0xFFFF00FF;
     rgba |= (g_ << 8);
 }
 void color::set_b(const float b)
 {
-    std::uint32_t b_ = static_cast<std::uint32_t>(b * 255);
+    auto b_ = static_cast<std::uint32_t>(b * 255);
     rgba &= 0xFF00FFFF;
     rgba |= (b_ << 16);
 }
 void color::set_a(const float a)
 {
-    std::uint32_t a_ = static_cast<std::uint32_t>(a * 255);
+    auto a_ = static_cast<std::uint32_t>(a * 255);
     rgba &= 0x00FFFFFF;
     rgba |= a_ << 24;
 }
 
-engine::~engine() {}
+engine::~engine() = default;
 
 texture_gl_es20::texture_gl_es20(std::string_view path)
     : file_path(path)
@@ -1291,10 +1298,10 @@ void texture_gl_es20::gen_texture_from_pixels(const void*  pixels,
     glBindTexture(GL_TEXTURE_2D, tex_handl);
     OM_GL_CHECK();
 
-    GLint   mipmap_level = 0;
-    GLint   border       = 0;
-    GLsizei width_       = static_cast<GLsizei>(w);
-    GLsizei height_      = static_cast<GLsizei>(h);
+    GLint mipmap_level = 0;
+    GLint border       = 0;
+    auto  width_       = static_cast<GLsizei>(w);
+    auto  height_      = static_cast<GLsizei>(h);
     glTexImage2D(GL_TEXTURE_2D,
                  mipmap_level,
                  GL_RGBA,
@@ -1587,7 +1594,7 @@ om::vec2 engine_impl::screen_size() const
     int w;
     int h;
     SDL_GetWindowSize(window, &w, &h);
-    return om::vec2(static_cast<float>(w), static_cast<float>(h));
+    return { static_cast<float>(w), static_cast<float>(h) };
 }
 
 } // end namespace om
@@ -1621,8 +1628,7 @@ void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
     }
     draw_data->ScaleClipRects(io.DisplayFramebufferScale);
 
-    om::texture_gl_es20* texture =
-        reinterpret_cast<om::texture_gl_es20*>(io.Fonts->TexID);
+    auto* texture = reinterpret_cast<om::texture_gl_es20*>(io.Fonts->TexID);
     assert(texture != nullptr);
 
     om::mat2x3 orto_matrix =
@@ -1639,21 +1645,21 @@ void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
         const ImDrawIdx*  idx_buffer_offset = nullptr;
 
         // om engine vertex format completely the same, prof:
-        static_assert(sizeof(om::v2) == sizeof(ImDrawVert), "");
-        static_assert(sizeof(om::v2::pos) == sizeof(ImDrawVert::pos), "");
-        static_assert(sizeof(om::v2::uv) == sizeof(ImDrawVert::uv), "");
-        static_assert(offsetof(om::v2, pos) == offsetof(ImDrawVert, pos), "");
-        static_assert(offsetof(om::v2, uv) == offsetof(ImDrawVert, uv), "");
+        static_assert(sizeof(om::v2) == sizeof(ImDrawVert));
+        static_assert(sizeof(om::v2::pos) == sizeof(ImDrawVert::pos));
+        static_assert(sizeof(om::v2::uv) == sizeof(ImDrawVert::uv));
+        static_assert(offsetof(om::v2, pos) == offsetof(ImDrawVert, pos));
+        static_assert(offsetof(om::v2, uv) == offsetof(ImDrawVert, uv));
 
-        const om::v2* vertex_data =
+        const auto* vertex_data =
             reinterpret_cast<const om::v2*>(cmd_list->VtxBuffer.Data);
-        size_t vert_count = static_cast<size_t>(cmd_list->VtxBuffer.size());
+        auto vert_count = static_cast<size_t>(cmd_list->VtxBuffer.size());
 
         om::vertex_buffer* vertex_buff =
             om::g_engine->create_vertex_buffer(vertex_data, vert_count);
 
         const std::uint16_t* indexes = cmd_list->IdxBuffer.Data;
-        size_t index_count = static_cast<size_t>(cmd_list->IdxBuffer.size());
+        auto index_count = static_cast<size_t>(cmd_list->IdxBuffer.size());
 
         om::index_buffer* index_buff =
             om::g_engine->create_index_buffer(indexes, index_count);
@@ -1663,7 +1669,7 @@ void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
             const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
             assert(pcmd->UserCallback == nullptr); // we not use it
 
-            om::texture* tex = reinterpret_cast<om::texture*>(pcmd->TextureId);
+            auto* tex = reinterpret_cast<om::texture*>(pcmd->TextureId);
 
             om::g_engine->render(vertex_buff,
                                  index_buff,
@@ -1799,8 +1805,8 @@ bool ImGui_ImplSdlGL3_CreateDeviceObjects()
 
 void ImGui_ImplSdlGL3_InvalidateDeviceObjects()
 {
-    void*        ptr     = ImGui::GetIO().Fonts->TexID;
-    om::texture* texture = reinterpret_cast<om::texture*>(ptr);
+    void* ptr     = ImGui::GetIO().Fonts->TexID;
+    auto* texture = reinterpret_cast<om::texture*>(ptr);
     om::g_engine->destroy_texture(texture);
 
     delete g_im_gui_shader;

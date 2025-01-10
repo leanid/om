@@ -75,6 +75,9 @@ template <typename T> static void load_gl_func(const char* func_name, T& result)
                 case GL_OUT_OF_MEMORY:                                         \
                     std::cerr << "GL_OUT_OF_MEMORY" << std::endl;              \
                     break;                                                     \
+                default:                                                       \
+                    std::cerr << "unknown error" << std::endl;                 \
+                    break;                                                     \
             }                                                                  \
             assert(false);                                                     \
         }                                                                      \
@@ -107,9 +110,9 @@ static std::array<std::string_view, 17> event_names = {
 
 std::ostream& operator<<(std::ostream& stream, const event e)
 {
-    std::uint32_t value   = static_cast<std::uint32_t>(e);
-    std::uint32_t minimal = static_cast<std::uint32_t>(event::left_pressed);
-    std::uint32_t maximal = static_cast<std::uint32_t>(event::turn_off);
+    auto value   = static_cast<std::uint32_t>(e);
+    auto minimal = static_cast<std::uint32_t>(event::left_pressed);
+    auto maximal = static_cast<std::uint32_t>(event::turn_off);
     if (value >= minimal && value <= maximal)
     {
         stream << event_names[value];
@@ -148,30 +151,48 @@ struct bind
     event            event_released;
 };
 
-const std::array<bind, 8> keys{
-    { { SDLK_W, "up", event::up_pressed, event::up_released },
-      { SDLK_A, "left", event::left_pressed, event::left_released },
-      { SDLK_S, "down", event::down_pressed, event::down_released },
-      { SDLK_D, "right", event::right_pressed, event::right_released },
-      { SDLK_LCTRL,
-        "button1",
-        event::button1_pressed,
-        event::button1_released },
-      { SDLK_SPACE,
-        "button2",
-        event::button2_pressed,
-        event::button2_released },
-      { SDLK_ESCAPE, "select", event::select_pressed, event::select_released },
-      { SDLK_RETURN, "start", event::start_pressed, event::start_released } }
-};
+const std::array<bind, 8> keys{ { { .key            = SDLK_W,
+                                    .name           = "up",
+                                    .event_pressed  = event::up_pressed,
+                                    .event_released = event::up_released },
+                                  { .key            = SDLK_A,
+                                    .name           = "left",
+                                    .event_pressed  = event::left_pressed,
+                                    .event_released = event::left_released },
+                                  { .key            = SDLK_S,
+                                    .name           = "down",
+                                    .event_pressed  = event::down_pressed,
+                                    .event_released = event::down_released },
+                                  { .key            = SDLK_D,
+                                    .name           = "right",
+                                    .event_pressed  = event::right_pressed,
+                                    .event_released = event::right_released },
+                                  { .key            = SDLK_LCTRL,
+                                    .name           = "button1",
+                                    .event_pressed  = event::button1_pressed,
+                                    .event_released = event::button1_released },
+                                  { .key            = SDLK_SPACE,
+                                    .name           = "button2",
+                                    .event_pressed  = event::button2_pressed,
+                                    .event_released = event::button2_released },
+                                  { .key            = SDLK_ESCAPE,
+                                    .name           = "select",
+                                    .event_pressed  = event::select_pressed,
+                                    .event_released = event::select_released },
+                                  { .key           = SDLK_RETURN,
+                                    .name          = "start",
+                                    .event_pressed = event::start_pressed,
+                                    .event_released =
+                                        event::start_released } } };
 
 static bool check_input(const SDL_Event& e, const bind*& result)
 {
     using namespace std;
 
-    const auto it = find_if(begin(keys),
-                            end(keys),
-                            [&](const bind& b) { return b.key == e.key.key; });
+    const auto it =
+        std::ranges::find_if(keys,
+
+                             [&](const bind& b) { return b.key == e.key.key; });
 
     if (it != end(keys))
     {
@@ -307,7 +328,7 @@ void main()
             OM_GL_CHECK()
 
             std::string shader_type_name = "vertex";
-            serr << "Error compiling shader(vertex)\n"
+            serr << "Error compiling " << shader_type_name << "\n"
                  << vertex_shader_src << "\n"
                  << info_chars.data();
             return serr.str();
@@ -596,6 +617,6 @@ void destroy_engine(engine* e)
     delete e;
 }
 
-engine::~engine() {}
+engine::~engine() = default;
 
 } // end namespace om

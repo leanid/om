@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cstring>
 #include <iostream>
+#include <numbers>
 #include <sstream>
 #include <vector>
 
@@ -22,7 +23,7 @@ void operator delete(void* p, std::size_t n) noexcept(true)
     std::cout << "delete " << p << " size " << n << '\n';
     ::free(p);
 }
-
+// NOLINTNEXTLINE
 int main(int argc, char* argv[])
 {
     std::cout
@@ -30,7 +31,7 @@ int main(int argc, char* argv[])
         << std::flush;
     {
         std::cout << "next line will not allocate any memory\n" << std::flush;
-        std::cout << "hello world " << argc << ' ' << 3.14159 << ' '
+        std::cout << "hello world " << argc << ' ' << std::numbers::pi << ' '
                   << argv[argc - 1] << '\n';
         std::string str(
             "next line allocate memory for string some long string not "
@@ -38,7 +39,7 @@ int main(int argc, char* argv[])
         std::cout << "length of str is " << std::size(str) << '\n';
         std::vector<char> vec;
         std::cout << "prepare for 16Mb allocation!" << std::endl;
-        vec.resize(1024 * 1024 * 16); // 16 Mb allocation!!!
+        vec.resize(1024ull * 1024 * 16); // 16 Mb allocation!!!
         std::cout << "no more allocations\n";
         std::cout << str << '\n';
         std::cout << std::flush;

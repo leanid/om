@@ -139,9 +139,15 @@ static void get_stack_min_and_max_adresses(size_t& min, size_t& max)
             }
             else
             {
-                // skip current line
-                std::shift_left(line.begin(), line.end(), new_line_index + 1);
-                status -= new_line_index + 1;
+// skip current line
+#if defined(__cpp_lib_shift) && __cpp_lib_shift >= 202202L
+                std::ranges::shift_left(line, new_line_index + 1);
+#else
+                std::memmove(line.data(),
+                             line.data() + new_line_index + 1,
+                             status - new_line_index - 1);
+#endif
+                status -= new_line_index + 1; // NOLINT
             }
         }
         else

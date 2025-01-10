@@ -10,12 +10,14 @@ struct table_row
     std::string   name;
     std::string   info;
 };
-
+// NOLINTNEXTLINE
 int main(int argc, char** argv)
 {
-    std::vector<table_row> table = { { 1, "leo", "developer" },
-                                     { 2, "dima", "developer" },
-                                     { 3, "igor", "developer" } };
+    std::vector<table_row> table = {
+        { .uid = 1, .name = "leo", .info = "developer" },
+        { .uid = 2, .name = "dima", .info = "developer" },
+        { .uid = 3, .name = "igor", .info = "developer" }
+    };
 
     auto it = std::ranges::find(table, "igor", &table_row::name);
 

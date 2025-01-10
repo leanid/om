@@ -46,11 +46,11 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #else
 
-#include <errno.h>
+#include <cerrno>
 #include <fcntl.h>
 #include <pthread.h>
-#include <signal.h>
-#include <string.h>
+#include <csignal>
+#include <cstring>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -90,7 +90,7 @@ public:
     void clear();
 
 private:
-    typedef std::list<buffer_t> buffers_t;
+    using buffers_t = std::list<buffer_t>;
     buffers_t                   m_buffers;
     std::size_t                 m_read_offset; // offset into the first buffer
     std::size_t                 m_total_size;
@@ -217,9 +217,9 @@ bool buffer_list_t::full(std::size_t limit)
 
 void buffer_list_t::clear()
 {
-    for (buffers_t::iterator i = m_buffers.begin(); i != m_buffers.end(); ++i)
+    for (auto & m_buffer : m_buffers)
     {
-        delete[] i->data;
+        delete[] m_buffer.data;
     }
     m_buffers.clear();
     m_read_offset = 0;
@@ -249,14 +249,14 @@ class exec_stream_buffer_t : public std::streambuf
 public:
     exec_stream_buffer_t(exec_stream_t::stream_kind_t kind,
                          thread_buffer_t&             thread_buffer);
-    virtual ~exec_stream_buffer_t();
+    ~exec_stream_buffer_t() override;
 
     void clear();
 
 protected:
-    virtual int_type underflow();
-    virtual int_type overflow(int_type c);
-    virtual int      sync();
+    int_type underflow() override;
+    int_type overflow(int_type c) override;
+    int      sync() override;
 
 private:
     bool send_buffer();
@@ -493,7 +493,7 @@ std::string int2str(unsigned long i, int base, std::size_t width)
 
 } // namespace
 
-exec_stream_t::error_t::error_t() {}
+exec_stream_t::error_t::error_t() = default;
 
 exec_stream_t::error_t::error_t(std::string const& msg)
 {
@@ -505,9 +505,9 @@ exec_stream_t::error_t::error_t(std::string const& msg, error_code_t code)
     compose(msg, code);
 }
 
-exec_stream_t::error_t::~error_t() throw() {}
+exec_stream_t::error_t::~error_t() noexcept = default;
 
-char const* exec_stream_t::error_t::what() const throw()
+char const* exec_stream_t::error_t::what() const noexcept
 {
     return m_msg.c_str();
 }

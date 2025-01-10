@@ -445,13 +445,14 @@ public:
     void set_uniform(std::string_view uniform_name, const color& c)
     {
         const int location =
-            glGetUniformLocation(program_id, uniform_name.data());
+            glGetUniformLocation(program_id, uniform_name.data()); // NOLINT
         OM_GL_CHECK();
         if (location == -1)
         {
             std::cerr << "can't get uniform location from shader\n";
             throw std::runtime_error("can't get uniform location");
         }
+        // NOLINTNEXTLINE
         float values[4] = { c.get_r(), c.get_g(), c.get_b(), c.get_a() };
         glUniform4fv(location, 1, &values[0]);
         OM_GL_CHECK();
@@ -460,7 +461,7 @@ public:
     void set_uniform(std::string_view uniform_name, const matrix& m)
     {
         const int location =
-            glGetUniformLocation(program_id, uniform_name.data());
+            glGetUniformLocation(program_id, uniform_name.data()); // NOLINT
         OM_GL_CHECK();
         if (location == -1)
         {
@@ -469,6 +470,7 @@ public:
         }
         // OpenGL wants matrix in column major order
         // clang-format off
+        // NOLINTNEXTLINE
         float values[9] = { m.row0.x,  m.row0.y, m.row2.x,
                             m.row1.x, m.row1.y, m.row2.y,
                             0.f,      0.f,       1.f };
@@ -499,7 +501,7 @@ private:
             glGetShaderiv(shader_id, GL_INFO_LOG_LENGTH, &info_len);
             OM_GL_CHECK();
             std::vector<char> info_chars(static_cast<size_t>(info_len));
-            glGetShaderInfoLog(shader_id, info_len, NULL, info_chars.data());
+            glGetShaderInfoLog(shader_id, info_len, nullptr, info_chars.data());
             OM_GL_CHECK();
             glDeleteShader(shader_id);
             OM_GL_CHECK();
@@ -551,7 +553,7 @@ private:
             glGetProgramiv(program_id_, GL_INFO_LOG_LENGTH, &infoLen);
             OM_GL_CHECK();
             std::vector<char> infoLog(static_cast<size_t>(infoLen));
-            glGetProgramInfoLog(program_id_, infoLen, NULL, infoLog.data());
+            glGetProgramInfoLog(program_id_, infoLen, nullptr, infoLog.data());
             OM_GL_CHECK();
             std::cerr << "Error linking program:\n" << infoLog.data();
             glDeleteProgram(program_id_);
@@ -670,9 +672,10 @@ static bool check_input(const SDL_Event& e, const bind*& result)
 {
     using namespace std;
 
-    const auto it = find_if(begin(keys),
-                            end(keys),
-                            [&](const bind& b) { return b.key == e.key.key; });
+    const auto it =
+        std::ranges::find_if(keys,
+
+                             [&](const bind& b) { return b.key == e.key.key; });
 
     if (it != end(keys))
     {
@@ -721,7 +724,8 @@ bool pool_event(event& e)
             if (check_input(sdl_event, binding))
             {
                 bool is_down = sdl_event.type == SDL_EVENT_KEY_DOWN;
-                e.info       = om::input_data{ binding->om_key, is_down };
+                e.info       = om::input_data{ .key     = binding->om_key,
+                                               .is_down = is_down };
                 e.timestamp  = sdl_event.common.timestamp * 0.001;
                 e.type       = om::event_type::input_key;
                 return true;
@@ -733,8 +737,8 @@ bool pool_event(event& e)
 
 bool is_key_down(const enum keys key)
 {
-    const auto it = std::find_if(
-        begin(keys), end(keys), [&](const bind& b) { return b.om_key == key; });
+    const auto it = std::ranges::find_if(
+        keys, [&](const bind& b) { return b.om_key == key; });
 
     if (it != end(keys))
     {
@@ -767,8 +771,7 @@ void destroy_vbo(vbo* buffer)
 sound* create_sound(std::string_view path)
 {
     SDL_PauseAudioDevice(audio_device);
-    sound_buffer_impl* s =
-        new sound_buffer_impl(path, audio_device, audio_device_spec);
+    auto* s = new sound_buffer_impl(path, audio_device, audio_device_spec);
     sounds.push_back(s);
     SDL_ResumeAudioDevice(audio_device);
     return s;
@@ -791,7 +794,7 @@ void render(const primitives primitive_type,
             const matrix&    m)
 {
     shader03->use();
-    const texture_gl_es20* texture = static_cast<const texture_gl_es20*>(tex);
+    const auto* texture = static_cast<const texture_gl_es20*>(tex);
     texture->bind();
     shader03->set_uniform("s_texture", texture);
     shader03->set_uniform("u_matrix", m);
@@ -815,8 +818,8 @@ void render(const primitives primitive_type,
     glEnableVertexAttribArray(2);
     OM_GL_CHECK();
 
-    GLsizei num_of_vertexes = static_cast<GLsizei>(buff.size());
-    GLenum  priv_type = primitive_types[static_cast<uint32_t>(primitive_type)];
+    auto   num_of_vertexes = static_cast<GLsizei>(buff.size());
+    GLenum priv_type = primitive_types[static_cast<uint32_t>(primitive_type)];
     glDrawArrays(priv_type, 0, num_of_vertexes);
     OM_GL_CHECK();
 
@@ -1247,10 +1250,10 @@ color::color(float r, float g, float b, float a)
     assert(b <= 1 && b >= 0);
     assert(a <= 1 && a >= 0);
 
-    std::uint32_t r_ = static_cast<std::uint32_t>(r * 255);
-    std::uint32_t g_ = static_cast<std::uint32_t>(g * 255);
-    std::uint32_t b_ = static_cast<std::uint32_t>(b * 255);
-    std::uint32_t a_ = static_cast<std::uint32_t>(a * 255);
+    auto r_ = static_cast<std::uint32_t>(r * 255);
+    auto g_ = static_cast<std::uint32_t>(g * 255);
+    auto b_ = static_cast<std::uint32_t>(b * 255);
+    auto a_ = static_cast<std::uint32_t>(a * 255);
 
     rgba = a_ << 24 | b_ << 16 | g_ << 8 | r_;
 }
@@ -1526,7 +1529,7 @@ start_game_again:
             game->on_event(event);
         }
 
-        milli_sec frame_delta =
+        auto frame_delta =
             std::chrono::duration_cast<milli_sec>(end_last_frame - start);
 
         if (frame_delta.count() < 15) // 1000 % 60 = 16.666 FPS

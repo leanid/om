@@ -43,7 +43,7 @@ void some_algorithm_name(auto it_beg, auto it_end, auto it_out, auto func)
 //         }
 //     }
 // }
-
+// NOLINTNEXTLINE
 int main(int argc, char** argv)
 {
     using namespace std;

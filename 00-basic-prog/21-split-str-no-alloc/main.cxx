@@ -53,21 +53,25 @@ struct split_by_spaces
         auto start = text.find_first_not_of(delim);
         if (start == std::string_view::npos)
         {
-            return iterator{ text, text.size(), text.size() };
+            return iterator{ .text    = text,
+                             .cur_pos = text.size(),
+                             .end_pos = text.size() };
         }
         auto end_word = text.find(delim, start);
         if (end_word == std::string_view::npos)
         {
             end_word = text.size();
         }
-        return iterator{ text, start, end_word };
+        return iterator{ .text = text, .cur_pos = start, .end_pos = end_word };
     }
     [[nodiscard]] iterator end() const
     {
-        return iterator{ text, text.size(), text.size() };
+        return iterator{ .text    = text,
+                         .cur_pos = text.size(),
+                         .end_pos = text.size() };
     }
 };
-
+// NOLINTNEXTLINE
 int main([[maybe_unused]] int argc, [[maybe_unused]] char** argv)
 {
     using namespace std::literals;

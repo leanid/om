@@ -71,6 +71,9 @@ template <typename T> static void load_gl_func(const char* func_name, T& result)
                 case GL_OUT_OF_MEMORY:                                         \
                     std::cerr << "GL_OUT_OF_MEMORY" << std::endl;              \
                     break;                                                     \
+                default:                                                       \
+                    std::cerr << "unknown error" << std::endl;                 \
+                    break;                                                     \
             }                                                                  \
             std::cerr << __FILE__ << ':' << __LINE__ << '(' << __FUNCTION__    \
                       << ')' << std::endl;                                     \
@@ -105,9 +108,9 @@ static std::array<std::string_view, 17> event_names = {
 
 std::ostream& operator<<(std::ostream& stream, const event e)
 {
-    std::uint32_t value   = static_cast<std::uint32_t>(e);
-    std::uint32_t minimal = static_cast<std::uint32_t>(event::left_pressed);
-    std::uint32_t maximal = static_cast<std::uint32_t>(event::turn_off);
+    auto value   = static_cast<std::uint32_t>(e);
+    auto minimal = static_cast<std::uint32_t>(event::left_pressed);
+    auto maximal = static_cast<std::uint32_t>(event::turn_off);
     if (value >= minimal && value <= maximal)
     {
         stream << event_names[value];
@@ -172,9 +175,10 @@ static bool check_input(const SDL_Event& e, const bind*& result)
 {
     using namespace std;
 
-    const auto it = find_if(begin(keys),
-                            end(keys),
-                            [&](const bind& b) { return b.key == e.key.key; });
+    const auto it =
+        std::ranges::find_if(keys,
+
+                             [&](const bind& b) { return b.key == e.key.key; });
 
     if (it != end(keys))
     {
@@ -229,7 +233,7 @@ void destroy_engine(engine* e)
     delete e;
 }
 
-engine::~engine() {}
+engine::~engine() = default;
 
 std::string engine_impl::initialize(std::string_view)
 {
@@ -279,7 +283,7 @@ std::string engine_impl::initialize(std::string_view)
     using namespace std::string_view_literals;
     using namespace std;
     auto list = { "Windows"sv, "Mac OS X"sv };
-    auto it   = find(begin(list), end(list), platform);
+    auto it   = std::ranges::find(list, platform);
     if (it != end(list))
     {
         gl_major_ver       = 4;

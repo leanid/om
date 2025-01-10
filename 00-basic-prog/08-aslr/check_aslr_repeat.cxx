@@ -85,8 +85,8 @@ static void run_program_while_find_same_stack_adress()
 
     vector<future<size_t>> jobs(num_cores);
 
-    for_each(begin(jobs),
-             end(jobs),
+    std::ranges::for_each(jobs,
+            
              [](future<size_t>& num_iter) { num_iter = async(thread_func); });
 
     cout << "all thread are running..." << endl;

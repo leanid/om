@@ -33,14 +33,14 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 
     array<thread, std::size(print_patterns)> threads;
 
-    std::transform(
-        begin(print_patterns),
-        end(print_patterns),
+    std::ranges::transform(
+        print_patterns,
+       
         begin(threads),
         [&print_chars_unsafe, &num_of_iterations](const string_view& pattern)
         { return thread{ print_chars_unsafe, pattern, num_of_iterations }; });
 
-    for_each(begin(threads), end(threads), [](thread& t) { t.join(); });
+    std::ranges::for_each(threads, [](thread& t) { t.join(); });
 
     out_file.close();
 

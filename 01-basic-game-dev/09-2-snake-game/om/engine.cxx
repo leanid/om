@@ -1529,7 +1529,7 @@ start_game_again:
             game->on_event(event);
         }
 
-        milli_sec frame_delta =
+        auto frame_delta =
             std::chrono::duration_cast<milli_sec>(end_last_frame - start);
 
         if (frame_delta.count() < 15) // 1000 % 60 = 16.666 FPS

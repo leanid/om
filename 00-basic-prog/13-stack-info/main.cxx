@@ -1,8 +1,6 @@
 #include <array>
-#include <chrono>
 #include <condition_variable>
 #include <iostream>
-#include <memory>
 #include <mutex>
 #include <numeric>
 #include <sstream>
@@ -11,7 +9,7 @@
 
 #include "stack_info.hxx"
 
-constexpr size_t stack_frame_size = 512 * 10;
+constexpr size_t stack_frame_size = 512ull * 10;
 
 std::mutex              m;
 std::condition_variable cv;
@@ -30,14 +28,15 @@ size_t recursive_stack_checking(std::array<char, stack_frame_size>& prev,
                                 size_t                              frame_index,
                                 size_t          dump_every_nth_frame,
                                 om::stack_info& prev_stack_info,
-                                size_t          any_value,
+                                size_t          any_value, // NOLINT
                                 size_t          thread_index)
 {
     std::array<char, stack_frame_size> tmp_one_kb;
 
     // read memory - we don't let OS any chance not to allocation it
-    char any_value_local =
-        std::accumulate(begin(tmp_one_kb), end(tmp_one_kb), char()) + any_value;
+    char any_value_local = static_cast<char>(
+        std::accumulate(begin(tmp_one_kb), end(tmp_one_kb), char()) +
+        any_value);
 
     om::stack_info current_stack_info;
 
@@ -85,7 +84,8 @@ void print_stack_info(const om::stack_info& info, size_t thread_index)
     using namespace std;
     stringstream ss;
     ss << thread_index << " " << info << " " << fixed
-       << (info.get_stack_size() / (1024.0 * 1024.0)) << "MB" << endl;
+       << (static_cast<double>(info.get_stack_size()) / (1024.0 * 1024.0))
+       << "MB" << endl;
     cout << ss.str();
 }
 

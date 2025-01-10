@@ -12,7 +12,7 @@ void get_terminal_size(int& width, int& height);
 bool is_terminal_support_truecolor();
 bool is_terminal_support_256color();
 bool is_terminal_stdout();
-
+// NOLINTNEXTLINE
 int main(int, char**)
 {
     // This example works on Windows 10 in MinGW terminal (tested in

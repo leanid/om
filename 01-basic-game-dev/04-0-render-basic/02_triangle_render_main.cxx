@@ -1,9 +1,9 @@
 #include "02_triangle_render.hxx"
-
+// NOLINTNEXTLINE
 int main(int, char**)
 {
-    const color black = { 0, 0, 0 };
-    const color green = { 0, 255, 0 };
+    const color black = { .r = 0, .g = 0, .b = 0 };
+    const color green = { .r = 0, .g = 255, .b = 0 };
 
     constexpr size_t width  = 320;
     constexpr size_t height = 240;
@@ -14,10 +14,11 @@ int main(int, char**)
     render_tri.clear(black);
 
     std::vector<position> triangle_vertices;
-    triangle_vertices.push_back(position{ 0, 0 });
+    triangle_vertices.push_back(position{ .x = 0, .y = 0 });
+    triangle_vertices.push_back(position{ .x = static_cast<int>(width - 1),
+                                          .y = static_cast<int>(height - 1) });
     triangle_vertices.push_back(
-        position{ static_cast<int>(width - 1), static_cast<int>(height - 1) });
-    triangle_vertices.push_back(position{ 0, static_cast<int>(height - 1) });
+        position{ .x = 0, .y = static_cast<int>(height - 1) });
 
     render_tri.draw_triangles(triangle_vertices, 3, green);
 
@@ -37,11 +38,11 @@ int main(int, char**)
     {
         for (size_t j = 0; j < max_y; ++j)
         {
-            position v0{ 0 + static_cast<int>(i) * step_x,
-                         0 + static_cast<int>(j) * step_y };
-            position v1{ v0.x + step_x, v0.y + step_y };
-            position v2{ v0.x, v0.y + step_y };
-            position v3{ v0.x + step_x, v0.y };
+            position v0{ .x = 0 + static_cast<int>(i) * step_x,
+                         .y = 0 + static_cast<int>(j) * step_y };
+            position v1{ .x = v0.x + step_x, .y = v0.y + step_y };
+            position v2{ .x = v0.x, .y = v0.y + step_y };
+            position v3{ .x = v0.x + step_x, .y = v0.y };
 
             triangles.push_back(v0);
             triangles.push_back(v1);

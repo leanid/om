@@ -5,7 +5,6 @@
 #include <cassert>
 #include <cstdint>
 #include <exception>
-#include <fstream>
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
@@ -71,6 +70,9 @@ template <typename T> static void load_gl_func(const char* func_name, T& result)
                 case GL_OUT_OF_MEMORY:                                         \
                     std::cerr << "GL_OUT_OF_MEMORY" << std::endl;              \
                     break;                                                     \
+                default:                                                       \
+                    std::cerr << "unknown error" << std::endl;                 \
+                    break;                                                     \
             }                                                                  \
             assert(false);                                                     \
         }                                                                      \
@@ -103,9 +105,9 @@ static std::array<std::string_view, 17> event_names = {
 
 std::ostream& operator<<(std::ostream& stream, const event e)
 {
-    std::uint32_t value   = static_cast<std::uint32_t>(e);
-    std::uint32_t minimal = static_cast<std::uint32_t>(event::left_pressed);
-    std::uint32_t maximal = static_cast<std::uint32_t>(event::turn_off);
+    auto value   = static_cast<std::uint32_t>(e);
+    auto minimal = static_cast<std::uint32_t>(event::left_pressed);
+    auto maximal = static_cast<std::uint32_t>(event::turn_off);
     if (value >= minimal && value <= maximal)
     {
         stream << event_names[value];
@@ -135,6 +137,7 @@ std::istream& operator>>(std::istream& is, triangle& t)
 #pragma pack(push, 1)
 struct bind
 {
+    // NOLINTNEXTLINE
     bind(SDL_Keycode k, std::string_view s, event pressed, event released)
         : name(s)
         , key(k)
@@ -171,9 +174,10 @@ static bool check_input(const SDL_Event& e, const bind*& result)
 {
     using namespace std;
 
-    const auto it = find_if(begin(keys),
-                            end(keys),
-                            [&](const bind& b) { return b.key == e.key.key; });
+    const auto it =
+        std::ranges::find_if(keys,
+
+                             [&](const bind& b) { return b.key == e.key.key; });
 
     if (it != end(keys))
     {
@@ -193,7 +197,8 @@ public:
     float get_time_from_init() final
     {
         std::uint32_t ms_from_library_initialization = SDL_GetTicks();
-        float         seconds = ms_from_library_initialization * 0.001f;
+        float         seconds =
+            static_cast<float>(ms_from_library_initialization) * 0.001f;
         return seconds;
     }
     /// pool event from input queue
@@ -288,7 +293,7 @@ void destroy_engine(engine* e)
     delete e;
 }
 
-engine::~engine() {}
+engine::~engine() = default;
 
 std::string engine_impl::initialize(std::string_view)
 {
@@ -404,7 +409,7 @@ std::string engine_impl::initialize(std::string_view)
         OM_GL_CHECK()
 
         std::string shader_type_name = "vertex";
-        serr << "Error compiling shader(vertex)\n"
+        serr << "Error compiling " << shader_type_name << "\n"
              << vertex_shader_src << "\n"
              << info_chars.data();
         return serr.str();
