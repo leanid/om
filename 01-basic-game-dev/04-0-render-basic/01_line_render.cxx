@@ -2,7 +2,7 @@
 
 #include <algorithm>
 #include <cassert>
-
+// NOLINTNEXTLINE
 line_render::line_render(canvas& buffer_, size_t width, size_t height)
     : buffer(buffer_)
     , w(width)
@@ -27,7 +27,7 @@ pixels line_render::pixels_positions(position start, position end)
     int    y0 = start.y;
     int    x1 = end.x;
     int    y1 = end.y;
-
+    // NOLINTNEXTLINE
     auto plot_line_low = [&](int x0, int y0, int x1, int y1)
     {
         int dx = x1 - x0;
@@ -43,7 +43,7 @@ pixels line_render::pixels_positions(position start, position end)
 
         for (int x = x0; x <= x1; ++x)
         {
-            result.push_back(position{ .x=x, .y=y });
+            result.push_back(position{ .x = x, .y = y });
             if (D > 0)
             {
                 y += yi;
@@ -52,7 +52,7 @@ pixels line_render::pixels_positions(position start, position end)
             D += 2 * dy;
         }
     };
-
+    // NOLINTNEXTLINE
     auto plot_line_high = [&](int x0, int y0, int x1, int y1)
     {
         int dx = x1 - x0;
@@ -68,7 +68,7 @@ pixels line_render::pixels_positions(position start, position end)
 
         for (int y = y0; y <= y1; ++y)
         {
-            result.push_back(position{ .x=x, .y=y });
+            result.push_back(position{ .x = x, .y = y });
             if (D > 0)
             {
                 x += xi;

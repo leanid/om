@@ -69,7 +69,7 @@ struct light_t
 
     std::variant<ambient, point, directional> info;
 
-    type get_type() const { return static_cast<type>(info.index()); }
+    [[nodiscard]] type get_type() const { return static_cast<type>(info.index()); }
 };
 
 color_t ray_trace(const glm::vec3&             origin,
@@ -96,9 +96,9 @@ void canvas_put_pixel(int x, int y, color_t col, canvas& image)
         return;
     }
 
-    const color c{ static_cast<uint8_t>(col.r * 255),
-                   static_cast<uint8_t>(col.g * 255),
-                   static_cast<uint8_t>(col.b * 255) };
+    const color c{ .r=static_cast<uint8_t>(col.r * 255),
+                   .g=static_cast<uint8_t>(col.g * 255),
+                   .b=static_cast<uint8_t>(col.b * 255) };
 
     image.set_pixel(image_x, image_y, c);
 }
@@ -109,19 +109,19 @@ int main(int argc, char** argv)
 
     std::vector<sphere_t> scene;
 
-    scene.push_back(sphere_t{ glm::vec3{ 0.f, -1.f, 3.f }, red, 1.f, 500.f });
-    scene.push_back(sphere_t{ glm::vec3{ 2.f, 0.f, 4.f }, blue, 1.f, 500.f });
-    scene.push_back(sphere_t{ glm::vec3{ -2.f, 0.f, 4.f }, green, 1.f, 10.f });
+    scene.push_back(sphere_t{ .center_position=glm::vec3{ 0.f, -1.f, 3.f }, .color=red, .radius=1.f, .spec_reflection_exp=500.f });
+    scene.push_back(sphere_t{ .center_position=glm::vec3{ 2.f, 0.f, 4.f }, .color=blue, .radius=1.f, .spec_reflection_exp=500.f });
+    scene.push_back(sphere_t{ .center_position=glm::vec3{ -2.f, 0.f, 4.f }, .color=green, .radius=1.f, .spec_reflection_exp=10.f });
     scene.push_back(
-        sphere_t{ glm::vec3{ 0.f, -5001.f, 0.f }, yellow, 5000.f, 1000.f });
+        sphere_t{ .center_position=glm::vec3{ 0.f, -5001.f, 0.f }, .color=yellow, .radius=5000.f, .spec_reflection_exp=1000.f });
 
     std::vector<light_t> lights;
 
     lights.push_back(light_t{ light_t::ambient{ 0.2f } });
     lights.push_back(
-        light_t{ light_t::point{ glm::vec3{ 2.f, 1.f, 0.f }, 0.6f } });
+        light_t{ light_t::point{ .position=glm::vec3{ 2.f, 1.f, 0.f }, .intensity=0.6f } });
     lights.push_back(
-        light_t{ light_t::directional{ glm::vec3{ 1.f, 4.f, 4.f }, 0.2f } });
+        light_t{ light_t::directional{ .direction=glm::vec3{ 1.f, 4.f, 4.f }, .intensity=0.2f } });
 
     for (int x = -Cw / 2; x < Cw / 2; ++x)
     {
@@ -155,13 +155,13 @@ intersection ray_intersect_sphere(const glm::vec3& ray_start,
     const float discriminant = b * b - 4 * a * c;
     if (discriminant < 0)
     {
-        return intersection{ inf, inf };
+        return intersection{ .t_0=inf, .t_1=inf };
     }
 
     const float t1 = (-b + std::sqrt(discriminant)) / (2 * a);
     const float t2 = (-b - std::sqrt(discriminant)) / (2 * a);
 
-    return intersection{ t1, t2 };
+    return intersection{ .t_0=t1, .t_1=t2 };
 }
 
 color_t ray_trace(const glm::vec3&             origin,
@@ -224,13 +224,13 @@ float compute_lighting(const glm::vec3&            P,
             float     light_intensity;
             if (type == light_t::type::point)
             {
-                const light_t::point& p = std::get<light_t::point>(light.info);
+                const auto& p = std::get<light_t::point>(light.info);
                 L                       = p.position - P;
                 light_intensity         = p.intensity;
             }
             else
             {
-                const light_t::directional& p =
+                const auto& p =
                     std::get<light_t::directional>(light.info);
                 L               = p.direction;
                 light_intensity = p.intensity;

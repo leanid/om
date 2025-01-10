@@ -2,10 +2,10 @@
 
 #include <algorithm>
 #include <iostream>
-
+// NOLINTNEXTLINE
 int main(int, char**)
 {
-    const color green = { .r=0, .g=255, .b=0 };
+    const color green = { .r = 0, .g = 255, .b = 0 };
 
     size_t width  = 320;
     size_t height = 240;

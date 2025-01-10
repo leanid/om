@@ -54,9 +54,9 @@ void canvas_put_pixel(int x, int y, color_t col, canvas& image)
         return;
     }
 
-    const color c{ static_cast<uint8_t>(col.r * 255),
-                   static_cast<uint8_t>(col.g * 255),
-                   static_cast<uint8_t>(col.b * 255) };
+    const color c{ .r=static_cast<uint8_t>(col.r * 255),
+                   .g=static_cast<uint8_t>(col.g * 255),
+                   .b=static_cast<uint8_t>(col.b * 255) };
 
     image.set_pixel(image_x, image_y, c);
 }
@@ -67,10 +67,10 @@ int main(int argc, char** argv)
 
     std::vector<sphere_t> scene;
 
-    scene.push_back(sphere_t{ glm::vec3{ 0.f, -1.f, 3.f }, red, 1.f });
-    scene.push_back(sphere_t{ glm::vec3{ 2.f, 0.f, 4.f }, blue, 1.f });
-    scene.push_back(sphere_t{ glm::vec3{ -2.f, 0.f, 4.f }, green, 1.f });
-    scene.push_back(sphere_t{ glm::vec3{ 0.f, -5001.f, 0.f }, yellow, 5000.f });
+    scene.push_back(sphere_t{ .center_position=glm::vec3{ 0.f, -1.f, 3.f }, .color=red, .radius=1.f });
+    scene.push_back(sphere_t{ .center_position=glm::vec3{ 2.f, 0.f, 4.f }, .color=blue, .radius=1.f });
+    scene.push_back(sphere_t{ .center_position=glm::vec3{ -2.f, 0.f, 4.f }, .color=green, .radius=1.f });
+    scene.push_back(sphere_t{ .center_position=glm::vec3{ 0.f, -5001.f, 0.f }, .color=yellow, .radius=5000.f });
 
     for (int x = -Cw / 2; x < Cw / 2; ++x)
     {
@@ -104,13 +104,13 @@ intersection ray_intersect_sphere(const glm::vec3& ray_start,
     float discriminant = b * b - 4 * a * c;
     if (discriminant < 0)
     {
-        return intersection{ inf, inf };
+        return intersection{ .t_0=inf, .t_1=inf };
     }
 
     float t1 = (-b + std::sqrt(discriminant)) / (2 * a);
     float t2 = (-b - std::sqrt(discriminant)) / (2 * a);
 
-    return intersection{ t1, t2 };
+    return intersection{ .t_0=t1, .t_1=t2 };
 }
 
 color_t ray_trace(const glm::vec3&             origin,

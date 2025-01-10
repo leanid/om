@@ -33,7 +33,7 @@ int main(int, char**)
         return EXIT_FAILURE;
     }
 
-    const color black = { 0, 0, 0 };
+    const color black = { .r=0, .g=0, .b=0 };
 
     canvas image(width, height);
 
@@ -89,9 +89,9 @@ int main(int, char**)
         }
     } program01;
 
-    std::vector<vertex>   triangle_v{ { 0, 0, 1, 0, 0, 0, 0, 0 },
-                                      { 0, 239, 0, 1, 0, 0, 239, 0 },
-                                      { 319, 239, 0, 0, 1, 319, 239, 0 } };
+    std::vector<vertex>   triangle_v{ { .x=0, .y=0, .z=1, .f3=0, .f4=0, .f5=0, .f6=0, .f7=0 },
+                                      { .x=0, .y=239, .z=0, .f3=1, .f4=0, .f5=0, .f6=239, .f7=0 },
+                                      { .x=319, .y=239, .z=0, .f3=0, .f4=1, .f5=319, .f6=239, .f7=0 } };
     std::vector<uint16_t> indexes_v{ 0, 1, 2 };
 
     void*     pixels = image.get_pixels().data();
@@ -132,7 +132,7 @@ int main(int, char**)
         }
 
         interpolated_render.clear(black);
-        program01.set_uniforms(uniforms{ mouse_x, mouse_y, radius });
+        program01.set_uniforms(uniforms{ .f0=mouse_x, .f1=mouse_y, .f2=radius });
 
         interpolated_render.draw_triangles(triangle_v, indexes_v);
 

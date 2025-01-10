@@ -139,7 +139,7 @@ std::istream& operator>>(std::istream& is, triangle& t)
 }
 
 struct bind
-{
+{ // NOLINTNEXTLINE
     bind(SDL_Keycode k, std::string_view s, event pressed, event released)
         : key(k)
         , name(s)
@@ -393,7 +393,7 @@ std::string engine_impl::initialize(std::string_view)
         OM_GL_CHECK()
 
         std::string shader_type_name = "vertex";
-        serr << "Error compiling shader(vertex)\n"
+        serr << "Error compiling " << shader_type_name << "\n"
              << vertex_shader_src << "\n"
              << info_chars.data();
         return serr.str();

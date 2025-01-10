@@ -486,7 +486,7 @@ void main()
     bool load_texture(std::string_view path) final
     {
         std::vector<std::byte> png_file_in_memory;
-        std::ifstream          ifs(path.data(), std::ios_base::binary);
+        std::ifstream ifs(path.data(), std::ios_base::binary); // NOLINT
         if (!ifs)
         {
             return false;

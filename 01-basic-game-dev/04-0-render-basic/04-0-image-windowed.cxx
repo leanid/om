@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <chrono>
 #include <iostream>
+#include <numbers>
 
 int main(int, char**)
 {
@@ -38,7 +39,7 @@ int main(int, char**)
         return EXIT_FAILURE;
     }
 
-    const color black = { 0, 0, 0 };
+    const color black = { .r = 0, .g = 0, .b = 0 };
 
     canvas texture(0, 0);
     texture.load_image("./01-basic-game-dev/04-0-render-basic/leo.ppm");
@@ -71,8 +72,8 @@ int main(int, char**)
             size_t tex_width  = texture->get_width();
             size_t tex_height = texture->get_height();
 
-            size_t t_x = static_cast<size_t>((tex_width - 1) * tex_x);
-            size_t t_y = static_cast<size_t>((tex_height - 1) * tex_y);
+            auto t_x = static_cast<size_t>((tex_width - 1) * tex_x);
+            auto t_y = static_cast<size_t>((tex_height - 1) * tex_y);
 
             out = texture->get_pixel(t_x, t_y);
 
@@ -94,13 +95,13 @@ int main(int, char**)
             size_t tex_width  = texture->get_width();
             size_t tex_height = texture->get_height();
 
-            size_t t_x = static_cast<size_t>((tex_width - 1) * tex_x);
-            size_t t_y = static_cast<size_t>((tex_height - 1) * tex_y);
+            auto t_x = static_cast<size_t>((tex_width - 1) * tex_x);
+            auto t_y = static_cast<size_t>((tex_height - 1) * tex_y);
 
             out = texture->get_pixel(t_x, t_y);
 
-            uint8_t gray = static_cast<uint8_t>(
-                0.2125 * out.r + 0.7152 * out.g + 0.0721 * out.b);
+            auto gray = static_cast<uint8_t>(0.2125 * out.r + 0.7152 * out.g +
+                                             0.0721 * out.b);
 
             out.r = gray;
             out.g = gray;
@@ -122,7 +123,7 @@ int main(int, char**)
             out.y *= 0.5;
 
             // rotate
-            double alpha = (3.14159 / 2) * uniforms_.f7 * -1;
+            double alpha = (std::numbers::pi / 2) * uniforms_.f7 * -1;
             double x     = out.x;
             double y     = out.y;
             out.x        = x * std::cos(alpha) - y * std::sin(alpha);
@@ -141,14 +142,15 @@ int main(int, char**)
 
     size_t w = width;
     size_t h = height;
-
+    // NOLINTBEGIN(*)
     // clang-format off
     //                                x  y              r  g  b  tx ty
-    std::vector<vertex> triangle_v{ { 0, 0,             1, 1, 1, 0, 0, 0 },
-                                    { w - 1.0, h - 1.0, 1, 1, 1, 1, 1, 0 },
-                                    { 0, h - 1.0,       1, 1, 1, 0, 1, 0 },
-                                    { w - 1.0, 0,       1, 1, 1, 1, 0, 0 } };
+    std::vector<vertex> triangle_v{ { .x=0, .y=0,             .z=1, .f3=1, .f4=1, .f5=0, .f6=0, .f7=0 },
+                                    { .x=w - 1.0, .y=h - 1.0, .z=1, .f3=1, .f4=1, .f5=1, .f6=1, .f7=0 },
+                                    { .x=0, .y=h - 1.0,       .z=1, .f3=1, .f4=1, .f5=0, .f6=1, .f7=0 },
+                                    { .x=w - 1.0, .y=0,       .z=1, .f3=1, .f4=1, .f5=1, .f6=0, .f7=0 } };
     // clang-format on
+    // NOLINTEND(*)
     std::vector<uint16_t> indexes_v{ { 0, 1, 2, 0, 3, 1 } };
 
     void*     pixels = image.get_pixels().data();
@@ -191,8 +193,15 @@ int main(int, char**)
 
         interpolated_render.clear(black);
         double time_from_start = SDL_GetTicks() / 1000.0;
-        current_program->set_uniforms(
-            uniforms{ 0, 0, 0, 0, 0, 0, 0, time_from_start, &texture });
+        current_program->set_uniforms(uniforms{ .f0       = 0,
+                                                .f1       = 0,
+                                                .f2       = 0,
+                                                .f3       = 0,
+                                                .f4       = 0,
+                                                .f5       = 0,
+                                                .f6       = 0,
+                                                .f7       = time_from_start,
+                                                .texture0 = &texture });
 
         interpolated_render.draw_triangles(triangle_v, indexes_v);
 

@@ -263,7 +263,7 @@ public:
     void set_uniform(std::string_view uniform_name, const mat2x3& m)
     {
         const int location =
-            glGetUniformLocation(program_id, uniform_name.data());
+            glGetUniformLocation(program_id, uniform_name.data()); // NOLINT
         OM_GL_CHECK();
         if (location == -1)
         {
@@ -272,6 +272,7 @@ public:
         }
         // OpenGL wants matrix in column major order
         // clang-format off
+        // NOLINTNEXTLINE
         float values[9] = { m.col0.x,  m.col0.y, m.delta.x,
                             m.col1.x, m.col1.y, m.delta.y,
                             0.f,      0.f,       1.f };

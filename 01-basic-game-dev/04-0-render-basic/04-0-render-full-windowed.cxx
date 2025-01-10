@@ -36,7 +36,7 @@ int main(int, char**)
         return EXIT_FAILURE;
     }
 
-    const color black = { 0, 0, 0 };
+    const color black = { .r=0, .g=0, .b=0 };
 
     canvas image(width, height);
 
@@ -214,7 +214,7 @@ int main(int, char**)
         }
 
         interpolated_render.clear(black);
-        program01.set_uniforms(uniforms{ mouse_x, mouse_y, radius });
+        program01.set_uniforms(uniforms{ .f0=mouse_x, .f1=mouse_y, .f2=radius });
 
         interpolated_render.draw_triangles(triangle_v, indexes_v);
 

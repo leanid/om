@@ -396,13 +396,15 @@ static const char* source_to_strv(GLenum source)
             return "APPLICATION";
         case GL_DEBUG_SOURCE_OTHER:
             return "OTHER";
+        default:
+            break;
     }
     return "unknown";
 }
 
 static const char* type_to_strv(GLenum type)
 {
-    switch (type)
+    switch (type) // NOLINT
     {
         case GL_DEBUG_TYPE_ERROR:
             return "ERROR";
@@ -428,7 +430,7 @@ static const char* type_to_strv(GLenum type)
 
 static const char* severity_to_strv(GLenum severity)
 {
-    switch (severity)
+    switch (severity) // NOLINT
     {
         case GL_DEBUG_SEVERITY_HIGH:
             return "HIGH";
