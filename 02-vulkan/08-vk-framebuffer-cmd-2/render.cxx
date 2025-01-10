@@ -754,13 +754,7 @@ void render::create_swapchain()
         std::back_inserter(swapchain_image_views),
         [this](vk::Image image) -> vk::ImageView
         {
-            vk::DebugUtilsObjectNameInfoEXT name_info;
-            name_info.objectType   = image.objectType;
-            name_info.objectHandle = reinterpret_cast<uint64_t>(
-                static_cast<vk::Image::NativeType>(image));
-            name_info.pObjectName = "my_image";
-            devices.logical.setDebugUtilsObjectNameEXT(name_info,
-                                                       dynamic_loader);
+            set_object_name(image, "swapchain_image");
 
             return create_image_view(
                 image, swapchain_image_format, vk::ImageAspectFlagBits::eColor);
@@ -856,6 +850,8 @@ void render::create_renderpass()
 
     render_path = devices.logical.createRenderPass(renderpath_info);
     log << "create vulkan render path\n";
+
+    set_object_name(render_path, "only_render_path");
 }
 
 void render::create_graphics_pipeline()
@@ -1019,6 +1015,8 @@ void render::create_graphics_pipeline()
     }
 
     graphics_pipeline = std::move(result.value);
+
+    set_object_name(graphics_pipeline, "only_graphics_pipeline");
 }
 
 void render::create_framebuffers()

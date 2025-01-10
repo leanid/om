@@ -153,6 +153,21 @@ private:
 
     friend std::ostream& operator<<(std::ostream&              os,
                                     const swapchain_details_t& details);
+    // debug functions
+    void set_object_name(auto object, const char* name)
+    {
+        if (!hints_.enable_debug_callback_ext)
+        {
+            return;
+        }
+
+        vk::DebugUtilsObjectNameInfoEXT name_info;
+        name_info.objectType   = object.objectType;
+        name_info.objectHandle = reinterpret_cast<uint64_t>(
+            static_cast<decltype(object)::NativeType>(object));
+        name_info.pObjectName = name;
+        devices.logical.setDebugUtilsObjectNameEXT(name_info, dynamic_loader);
+    }
 
     // render external interface objects
     std::ostream&       log;
