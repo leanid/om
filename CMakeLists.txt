@@ -28,6 +28,7 @@ option(OM_BUILD_COURSE_OPENGL "turn ON if need to build 02-opengl" OFF)
 option(OM_BUILD_COURSE_VULKAN "turn ON if need to build 02-vulkan" ON)
 option(OM_BUILD_GAME_EXAMPLE "turn ON if need to build 05-game" OFF)
 option(OM_BUILD_WEB "turn ON if need to build 08-web" ON)
+option(OM_CLANG_TIDY "turn ON if need to run clang-tidy" OFF)
 
 if(OM_BUILD_DEPS)
     message(STATUS "download and build SDL3 sources")
