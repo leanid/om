@@ -241,7 +241,7 @@ public:
 
         bind();
 
-        GLsizeiptr size_in_bytes = n * 3 * sizeof(v2);
+        GLsizeiptr size_in_bytes = n * 3 * sizeof(v2); // NOLINT
 
         glBufferData(
             GL_ARRAY_BUFFER, size_in_bytes, &tri->v[0], GL_STATIC_DRAW);
@@ -255,7 +255,7 @@ public:
 
         bind();
 
-        GLsizeiptr size_in_bytes = n * sizeof(v2);
+        GLsizeiptr size_in_bytes = n * sizeof(v2); // NOLINT
 
         glBufferData(GL_ARRAY_BUFFER, size_in_bytes, vert, GL_STATIC_DRAW);
         OM_GL_CHECK();
@@ -293,7 +293,7 @@ public:
 
         bind();
 
-        GLsizeiptr size_in_bytes = n * sizeof(std::uint16_t);
+        GLsizeiptr size_in_bytes = n * sizeof(std::uint16_t); // NOLINT
 
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, size_in_bytes, i, GL_STATIC_DRAW);
         OM_GL_CHECK();
@@ -368,8 +368,8 @@ class shader_gl_es20
 {
 public:
     shader_gl_es20(
-        std::string_view                                      vertex_src,
-        std::string_view                                      fragment_src,
+        std::string_view vertex_src, // NOLINT
+        std::string_view fragment_src,
         const std::vector<std::tuple<GLuint, const GLchar*>>& attributes)
     {
         vert_shader = compile_shader(GL_VERTEX_SHADER, vertex_src);
@@ -395,7 +395,7 @@ public:
     {
         assert(texture != nullptr);
         const int location =
-            glGetUniformLocation(program_id, uniform_name.data());
+            glGetUniformLocation(program_id, uniform_name.data()); // NOLINT
         OM_GL_CHECK();
         if (location == -1)
         {
@@ -416,13 +416,14 @@ public:
     void set_uniform(std::string_view uniform_name, const color& c)
     {
         const int location =
-            glGetUniformLocation(program_id, uniform_name.data());
+            glGetUniformLocation(program_id, uniform_name.data()); // NOLINT
         OM_GL_CHECK();
         if (location == -1)
         {
             std::cerr << "can't get uniform location from shader\n";
             throw std::runtime_error("can't get uniform location");
         }
+        // NOLINTNEXTLINE
         float values[4] = { c.get_r(), c.get_g(), c.get_b(), c.get_a() };
         glUniform4fv(location, 1, &values[0]);
         OM_GL_CHECK();
@@ -431,7 +432,7 @@ public:
     void set_uniform(std::string_view uniform_name, const mat2x3& m)
     {
         const int location =
-            glGetUniformLocation(program_id, uniform_name.data());
+            glGetUniformLocation(program_id, uniform_name.data()); // NOLINT
         OM_GL_CHECK();
         if (location == -1)
         {
@@ -440,6 +441,7 @@ public:
         }
         // OpenGL wants matrix in column major order
         // clang-format off
+        // NOLINTNEXTLINE
         float values[9] = { m.col0.x,  m.col0.y,  0.f,
                             m.col1.x,  m.col1.y,  0.f,
                             m.delta.x, m.delta.y, 1.f };
@@ -671,7 +673,7 @@ struct bind
 {
     bind(std::string_view s,
          SDL_Keycode      k,
-         event            pressed,
+         event            pressed, // NOLINT
          event            released,
          keys             om_k)
         : name(s)
@@ -760,7 +762,7 @@ public:
     float get_time_from_init() final
     {
         std::uint32_t ms_from_library_initialization = SDL_GetTicks();
-        float         seconds = ms_from_library_initialization * 0.001f;
+        float seconds = ms_from_library_initialization * 0.001f; // NOLINT
         return seconds;
     }
     /// pool event from input queue
@@ -1100,8 +1102,10 @@ public:
                               reinterpret_cast<void*>(4 * sizeof(float)));
         OM_GL_CHECK();
 
-        glDrawElements(
-            GL_TRIANGLES, num_vertexes, GL_UNSIGNED_SHORT, start_vertex_index);
+        glDrawElements(GL_TRIANGLES,
+                       num_vertexes, // NOLINT
+                       GL_UNSIGNED_SHORT,
+                       start_vertex_index);
 
         OM_GL_CHECK();
     }
@@ -1171,6 +1175,7 @@ color::color(std::uint32_t rgba_)
     : rgba(rgba_)
 {
 }
+// NOLINTNEXTLINE
 color::color(float r, float g, float b, float a)
 {
     assert(r <= 1 && r >= 0);
@@ -1189,22 +1194,22 @@ color::color(float r, float g, float b, float a)
 float color::get_r() const
 {
     std::uint32_t r_ = (rgba & 0x000000FF) >> 0;
-    return r_ / 255.f;
+    return r_ / 255.f; // NOLINT
 }
 float color::get_g() const
 {
     std::uint32_t g_ = (rgba & 0x0000FF00) >> 8;
-    return g_ / 255.f;
+    return g_ / 255.f; // NOLINT
 }
 float color::get_b() const
 {
     std::uint32_t b_ = (rgba & 0x00FF0000) >> 16;
-    return b_ / 255.f;
+    return b_ / 255.f; // NOLINT
 }
 float color::get_a() const
 {
     std::uint32_t a_ = (rgba & 0xFF000000) >> 24;
-    return a_ / 255.f;
+    return a_ / 255.f; // NOLINT
 }
 
 void color::set_r(const float r)
@@ -1238,7 +1243,7 @@ texture_gl_es20::texture_gl_es20(std::string_view path)
     : file_path(path)
 {
     std::vector<unsigned char> png_file_in_memory;
-    std::ifstream              ifs(path.data(), std::ios_base::binary);
+    std::ifstream ifs(path.data(), std::ios_base::binary); // NOLINT
     if (!ifs)
     {
         throw std::runtime_error("can't load texture[" + std::string(path) +
@@ -1290,7 +1295,7 @@ texture_gl_es20::texture_gl_es20(std::string_view path)
 }
 
 void texture_gl_es20::gen_texture_from_pixels(const void*  pixels,
-                                              const size_t w,
+                                              const size_t w, // NOLINT
                                               const size_t h)
 {
     glGenTextures(1, &tex_handl);
@@ -1575,7 +1580,7 @@ std::string engine_impl::initialize(std::string_view)
 
     om::vec2 window_size = screen_size();
 
-    glViewport(0, 0, window_size.x, window_size.y);
+    glViewport(0, 0, window_size.x, window_size.y); // NOLINT
     OM_GL_CHECK();
 
     if (!ImGui_ImplSdlGL3_Init(window))
@@ -1602,10 +1607,10 @@ om::vec2 engine_impl::screen_size() const
 // ImGui SDL2 binding with our custom engine fuctions (no optimization,
 // just study)
 // Data
-static float               g_Time            = 0.0;
-static bool                g_MousePressed[3] = { false, false, false };
-static float               g_MouseWheel      = 0.0f;
-static om::shader_gl_es20* g_im_gui_shader   = nullptr;
+static float g_Time                        = 0.0;
+static bool  g_MousePressed[3]             = { false, false, false }; // NOLINT
+static float g_MouseWheel                  = 0.0f;
+static om::shader_gl_es20* g_im_gui_shader = nullptr;
 
 // This is the main rendering function that you have to implement and provide to
 // ImGui (via setting up 'RenderDrawListsFn' in the ImGuiIO structure)
@@ -1705,7 +1710,7 @@ static void ImGui_ImplSdlGL3_SetClipboardText(void*, const char* text)
 bool ImGui_ImplSdlGL3_ProcessEvent(const SDL_Event* event)
 {
     ImGuiIO& io = ImGui::GetIO();
-    switch (event->type)
+    switch (event->type) // NOLINT
     {
         case SDL_EVENT_MOUSE_WHEEL:
         {
@@ -1733,7 +1738,7 @@ bool ImGui_ImplSdlGL3_ProcessEvent(const SDL_Event* event)
         case SDL_EVENT_KEY_DOWN:
         case SDL_EVENT_KEY_UP:
         {
-            int key          = event->key.key; // & ~SDLK_SCANCODE_MASK;
+            unsigned key     = event->key.key; // & ~SDLK_SCANCODE_MASK;
             io.KeysDown[key] = (event->type == SDL_EVENT_KEY_DOWN);
             io.KeyShift      = ((SDL_GetModState() & SDL_KMOD_SHIFT) != 0);
             io.KeyCtrl       = ((SDL_GetModState() & SDL_KMOD_CTRL) != 0);
@@ -1900,7 +1905,7 @@ bool ImGui_ImplSdlGL3_Init(SDL_Window* window)
     (void)window;
 #endif
 
-    g_Time = SDL_GetTicks() / 1000.f;
+    g_Time = static_cast<float>(SDL_GetTicks()) / 1000.f;
 
     return true;
 }
@@ -1925,13 +1930,14 @@ void ImGui_ImplSdlGL3_NewFrame(SDL_Window* window)
     int display_w, display_h;
     SDL_GetWindowSize(window, &w, &h);
     SDL_GetWindowSizeInPixels(window, &display_w, &display_h);
-    io.DisplaySize             = ImVec2(float(w), float(h));
-    io.DisplayFramebufferScale = ImVec2(w > 0 ? float(display_w / w) : 0.f,
-                                        h > 0 ? float(display_h / h) : 0.f);
+    io.DisplaySize = ImVec2(float(w), float(h));
+    io.DisplayFramebufferScale =
+        ImVec2(w > 0 ? float(display_w / w) : 0.f,  // NOLINT
+               h > 0 ? float(display_h / h) : 0.f); // NOLINT
 
     // Setup time step
     Uint32 time         = SDL_GetTicks();
-    float  current_time = time / 1000.0f;
+    float  current_time = static_cast<float>(time) / 1000.0f;
     io.DeltaTime        = current_time - g_Time; // (1.0f / 60.0f);
     if (io.DeltaTime <= 0)
     {

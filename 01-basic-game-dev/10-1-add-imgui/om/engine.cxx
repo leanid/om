@@ -508,7 +508,7 @@ private:
 
             std::string shader_type_name =
                 shader_type == GL_VERTEX_SHADER ? "vertex" : "fragment";
-            std::cerr << "Error compiling shader(vertex)\n"
+            std::cerr << "Error compiling " << shader_type_name << "\n"
                       << vertex_shader_src << "\n"
                       << info_chars.data();
             return 0;
@@ -689,7 +689,7 @@ static bool check_input(const SDL_Event& e, const bind*& result)
 float get_time_from_init()
 {
     std::uint32_t ms_from_library_initialization = SDL_GetTicks();
-    float         seconds = ms_from_library_initialization * 0.001f;
+    float         seconds = ms_from_library_initialization * 0.001f; // NOLINT
     return seconds;
 }
 /// pool event from input queue
@@ -708,7 +708,7 @@ bool pool_event(event& e)
         if (sdl_event.type == SDL_EVENT_QUIT)
         {
             e.info      = om::hardware_data{ true };
-            e.timestamp = sdl_event.common.timestamp * 0.001;
+            e.timestamp = sdl_event.common.timestamp * 0.001; // NOLINT
             e.type      = om::event_type::hardware;
             return true;
         }
@@ -726,7 +726,7 @@ bool pool_event(event& e)
                 bool is_down = sdl_event.type == SDL_EVENT_KEY_DOWN;
                 e.info       = om::input_data{ .key     = binding->om_key,
                                                .is_down = is_down };
-                e.timestamp  = sdl_event.common.timestamp * 0.001;
+                e.timestamp  = sdl_event.common.timestamp * 0.001; // NOLINT
                 e.type       = om::event_type::input_key;
                 return true;
             }
@@ -926,8 +926,10 @@ static void initialize_internal(std::string_view   title,
         int window_size_w = static_cast<int>(desired_window_mode.width);
         int window_size_h = static_cast<int>(desired_window_mode.heigth);
 
-        window = SDL_CreateWindow(
-            title.data(), window_size_w, window_size_h, SDL_WINDOW_OPENGL);
+        window = SDL_CreateWindow(title.data(), // NOLINT
+                                  window_size_w,
+                                  window_size_h,
+                                  SDL_WINDOW_OPENGL);
 
         if (window == nullptr)
         {
@@ -1243,6 +1245,7 @@ color::color(std::uint32_t rgba_)
     : rgba(rgba_)
 {
 }
+// NOLINTNEXTLINE
 color::color(float r, float g, float b, float a)
 {
     assert(r <= 1 && r >= 0);
@@ -1261,22 +1264,22 @@ color::color(float r, float g, float b, float a)
 float color::get_r() const
 {
     std::uint32_t r_ = (rgba & 0x000000FF) >> 0;
-    return r_ / 255.f;
+    return r_ / 255.f; // NOLINT
 }
 float color::get_g() const
 {
     std::uint32_t g_ = (rgba & 0x0000FF00) >> 8;
-    return g_ / 255.f;
+    return g_ / 255.f; // NOLINT
 }
 float color::get_b() const
 {
     std::uint32_t b_ = (rgba & 0x00FF0000) >> 16;
-    return b_ / 255.f;
+    return b_ / 255.f; // NOLINT
 }
 float color::get_a() const
 {
     std::uint32_t a_ = (rgba & 0xFF000000) >> 24;
-    return a_ / 255.f;
+    return a_ / 255.f; // NOLINT
 }
 
 void color::set_r(const float r)

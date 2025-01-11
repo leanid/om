@@ -707,9 +707,10 @@ static bool check_input(const SDL_Event& e, const bind*& result)
 {
     using namespace std;
 
-    const auto it = std::ranges::find_if(keys,
-                           
-                            [&](const bind& b) { return b.key == e.key.key; });
+    const auto it =
+        std::ranges::find_if(keys,
+
+                             [&](const bind& b) { return b.key == e.key.key; });
 
     if (it != end(keys))
     {
@@ -723,7 +724,7 @@ static bool check_input(const SDL_Event& e, const bind*& result)
 float get_time_from_init()
 {
     std::uint32_t ms_from_library_initialization = SDL_GetTicks();
-    float         seconds = ms_from_library_initialization * 0.001f;
+    float         seconds = ms_from_library_initialization * 0.001f; // NOLINT
     return seconds;
 }
 /// pool event from input queue
@@ -740,7 +741,7 @@ bool pool_event(event& e)
         if (sdl_event.type == SDL_EVENT_QUIT)
         {
             e.info      = om::hardware_data{ true };
-            e.timestamp = sdl_event.common.timestamp * 0.001;
+            e.timestamp = sdl_event.common.timestamp * 0.001; // NOLINT
             e.type      = om::event_type::hardware;
             return true;
         }
@@ -756,8 +757,9 @@ bool pool_event(event& e)
             if (check_input(sdl_event, binding))
             {
                 bool is_down = sdl_event.type == SDL_EVENT_KEY_DOWN;
-                e.info       = om::input_data{ .key=binding->om_key, .is_down=is_down };
-                e.timestamp  = sdl_event.common.timestamp * 0.001;
+                e.info       = om::input_data{ .key     = binding->om_key,
+                                               .is_down = is_down };
+                e.timestamp  = sdl_event.common.timestamp * 0.001; // NOLINT
                 e.type       = om::event_type::input_key;
                 return true;
             }
@@ -802,8 +804,7 @@ void destroy_vbo(vbo* buffer)
 sound* create_sound(std::string_view path)
 {
     SDL_PauseAudioDevice(audio_device);
-    auto* s =
-        new sound_buffer_impl(path, audio_device, audio_device_spec);
+    auto* s = new sound_buffer_impl(path, audio_device, audio_device_spec);
     sounds.push_back(s);
     SDL_ResumeAudioDevice(audio_device);
     return s;
@@ -850,8 +851,8 @@ void render(const primitives primitive_type,
     glEnableVertexAttribArray(2);
     OM_GL_CHECK()
 
-    auto num_of_vertexes = static_cast<GLsizei>(buff.size());
-    GLenum  priv_type = primitive_types[static_cast<uint32_t>(primitive_type)];
+    auto   num_of_vertexes = static_cast<GLsizei>(buff.size());
+    GLenum priv_type = primitive_types[static_cast<uint32_t>(primitive_type)];
     glDrawArrays(priv_type, 0, num_of_vertexes);
     OM_GL_CHECK()
 
@@ -938,8 +939,10 @@ static void initialize_internal(std::string_view   title,
         int window_size_w = static_cast<int>(desired_window_mode.width);
         int window_size_h = static_cast<int>(desired_window_mode.heigth);
 
-        window = SDL_CreateWindow(
-            title.data(), window_size_w, window_size_h, SDL_WINDOW_OPENGL);
+        window = SDL_CreateWindow(title.data(), // NOLINT
+                                  window_size_w,
+                                  window_size_h,
+                                  SDL_WINDOW_OPENGL);
 
         if (window == nullptr)
         {
@@ -1211,6 +1214,7 @@ color::color(std::uint32_t rgba_)
     : rgba(rgba_)
 {
 }
+// NOLINTNEXTLINE
 color::color(float r, float g, float b, float a)
 {
     assert(r <= 1 && r >= 0);
@@ -1229,22 +1233,22 @@ color::color(float r, float g, float b, float a)
 float color::get_r() const
 {
     std::uint32_t r_ = (rgba & 0x000000FF) >> 0;
-    return r_ / 255.f;
+    return r_ / 255.f; // NOLINT
 }
 float color::get_g() const
 {
     std::uint32_t g_ = (rgba & 0x0000FF00) >> 8;
-    return g_ / 255.f;
+    return g_ / 255.f; // NOLINT
 }
 float color::get_b() const
 {
     std::uint32_t b_ = (rgba & 0x00FF0000) >> 16;
-    return b_ / 255.f;
+    return b_ / 255.f; // NOLINT
 }
 float color::get_a() const
 {
     std::uint32_t a_ = (rgba & 0xFF000000) >> 24;
-    return a_ / 255.f;
+    return a_ / 255.f; // NOLINT
 }
 
 void color::set_r(const float r)
@@ -1276,7 +1280,7 @@ texture_gl_es20::texture_gl_es20(std::string_view path)
     : file_path(path)
 {
     std::vector<unsigned char> png_file_in_memory;
-    std::ifstream              ifs(path.data(), std::ios_base::binary);
+    std::ifstream ifs(path.data(), std::ios_base::binary); // NOLINT
     if (!ifs)
     {
         throw std::runtime_error("can't load texture");
@@ -1313,10 +1317,10 @@ texture_gl_es20::texture_gl_es20(std::string_view path)
     glBindTexture(GL_TEXTURE_2D, tex_handl);
     OM_GL_CHECK()
 
-    GLint   mipmap_level = 0;
-    GLint   border       = 0;
-    auto width        = static_cast<GLsizei>(img.width);
-    auto height       = static_cast<GLsizei>(img.height);
+    GLint mipmap_level = 0;
+    GLint border       = 0;
+    auto  width        = static_cast<GLsizei>(img.width);
+    auto  height       = static_cast<GLsizei>(img.height);
     glTexImage2D(GL_TEXTURE_2D,
                  mipmap_level,
                  GL_RGBA,
@@ -1393,7 +1397,7 @@ void initialize(std::string_view title, const window_mode& desired_window_mode)
 window_mode get_current_window_mode()
 {
     // TODO implement me
-    return window_mode{ .width=0, .heigth=0, .is_fullscreen=false };
+    return window_mode{ .width = 0, .heigth = 0, .is_fullscreen = false };
 }
 
 lila::~lila() = default;
@@ -1418,30 +1422,29 @@ int initialize_and_start_main_loop()
           "./build/RelWithDebInfo/libgame-09-1.so" }
     };
 
-    SDL_SharedObject* so_handle = nullptr;
-    auto              lib_name_it =
-        std::ranges::find_if(lib_names,
-                    
-                     [&so_handle](const char* lib_name)
-                     {
-                         {
-                             om::log << "try loading game from: " << lib_name
-                                     << std::endl;
-                             so_handle = SDL_LoadObject(lib_name);
-                             if (so_handle == nullptr)
-                             {
-                                 om::log << SDL_GetError() << std::endl;
-                             }
-                         }
-                         return so_handle != nullptr;
-                     });
+    SDL_SharedObject* so_handle   = nullptr;
+    auto              lib_name_it = std::ranges::find_if(
+        lib_names,
+
+        [&so_handle](const char* lib_name)
+        {
+            {
+                om::log << "try loading game from: " << lib_name << std::endl;
+                so_handle = SDL_LoadObject(lib_name);
+                if (so_handle == nullptr)
+                {
+                    om::log << SDL_GetError() << std::endl;
+                }
+            }
+            return so_handle != nullptr;
+        });
 
     if (so_handle == nullptr)
     {
         om::log << "can't load: ";
         std::ranges::copy(lib_names,
-                 
-                  std::ostream_iterator<const char*>(om::log, ", "));
+
+                          std::ostream_iterator<const char*>(om::log, ", "));
         om::log << std::endl;
         return EXIT_FAILURE;
     }
@@ -1459,7 +1462,7 @@ int initialize_and_start_main_loop()
 #endif
 
     SDL_FunctionPointer func_addres =
-        SDL_LoadFunction(so_handle, om_tat_sat_func.data());
+        SDL_LoadFunction(so_handle, om_tat_sat_func.data()); // NOLINT
 
     if (func_addres == nullptr)
     {

@@ -1,4 +1,4 @@
-
+// NOLINTBEGIN(*)
 #include <exception>
 #define CATCH_CONFIG_MAIN
 
@@ -14,7 +14,7 @@ TEST_CASE("save and load one sprite")
 {
     using namespace std;
 
-    const rect     r{ .pos={ 0.3f, 0.3f }, .size={ 0.5f, 0.5f } };
+    const rect     r{ .pos = { 0.3f, 0.3f }, .size = { 0.5f, 0.5f } };
     const om::vec2 pos(0.123f, 0.123f);
     const om::vec2 size(1.0f, 0.3f);
     const float    angle{ 270 };
@@ -89,3 +89,4 @@ TEST_CASE("save and load one sprite")
     REQUIRE(std::abs(spr.rotation() - angle) <= 0.000001f);
     REQUIRE(sprites_saved == sprites);
 }
+// NOLINTEND(*)

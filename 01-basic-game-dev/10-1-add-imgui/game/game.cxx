@@ -40,7 +40,9 @@ std::unique_ptr<om::lila> om_tat_sat()
 {
     om::log << "initialize engine" << std::endl;
 
-    om::window_mode window_mode = { screen_width, screen_height, false };
+    om::window_mode window_mode = { .width         = screen_width,
+                                    .heigth        = screen_height,
+                                    .is_fullscreen = false };
     om::initialize("tanks", window_mode);
 
     om::log << "creating main game object..." << std::endl;
@@ -73,36 +75,36 @@ void     tanks_game::on_initialize()
                 objects_num,
                 std::back_inserter(objects));
 
-    std::for_each(begin(objects),
-                  end(objects),
-                  [&](game_object& obj)
-                  {
-                      auto it_mesh = meshes.find(obj.path_mesh);
-                      if (it_mesh == end(meshes))
-                      {
-                          om::vbo* mesh = load_mesh_from_file_with_scale(
-                              obj.path_mesh, obj.size);
-                          assert(mesh);
+    std::ranges::for_each(
+        objects,
 
-                          meshes[obj.path_mesh] = mesh;
-                          it_mesh               = meshes.find(obj.path_mesh);
-                          assert(it_mesh != end(meshes));
-                      }
-                      obj.mesh = it_mesh->second;
+        [&](game_object& obj)
+        {
+            auto it_mesh = meshes.find(obj.path_mesh);
+            if (it_mesh == end(meshes))
+            {
+                om::vbo* mesh =
+                    load_mesh_from_file_with_scale(obj.path_mesh, obj.size);
+                assert(mesh);
 
-                      auto it_tex = textures.find(obj.path_texture);
-                      if (it_tex == end(textures))
-                      {
-                          om::texture* tex =
-                              om::create_texture(obj.path_texture);
-                          assert(tex);
+                meshes[obj.path_mesh] = mesh;
+                it_mesh               = meshes.find(obj.path_mesh);
+                assert(it_mesh != end(meshes));
+            }
+            obj.mesh = it_mesh->second;
 
-                          textures[obj.path_texture] = tex;
-                          it_tex = textures.find(obj.path_texture);
-                          assert(it_tex != end(textures));
-                      }
-                      obj.texture = it_tex->second;
-                  });
+            auto it_tex = textures.find(obj.path_texture);
+            if (it_tex == end(textures))
+            {
+                om::texture* tex = om::create_texture(obj.path_texture);
+                assert(tex);
+
+                textures[obj.path_texture] = tex;
+                it_tex                     = textures.find(obj.path_texture);
+                assert(it_tex != end(textures));
+            }
+            obj.texture = it_tex->second;
+        });
 }
 
 void tanks_game::on_event(om::event& event)
@@ -122,7 +124,7 @@ void tanks_game::on_event(om::event& event)
             if (key_data.is_down)
             {
                 if (key_data.key == om::keys::button1)
-                {
+                { // NOLINT
                 }
                 else if (key_data.key == om::keys::button2)
                 {
@@ -136,9 +138,9 @@ void tanks_game::on_event(om::event& event)
 void tanks_game::on_update(std::chrono::milliseconds /*frame_delta*/)
 {
     if (om::is_key_down(om::keys::left))
-    {
-        //        current_tank_pos.x -= 0.01f;
-        //        current_tank_direction = -pi / 2.f;
+    { // NOLINT
+      //        current_tank_pos.x -= 0.01f;
+      //        current_tank_direction = -pi / 2.f;
     }
     else if (om::is_key_down(om::keys::right))
     {
@@ -216,10 +218,10 @@ void tanks_game::on_render() const
           object_type::user_tank }
     };
 
-    auto it = std::find_if(begin(objects),
-                           end(objects),
-                           [](const game_object& obj)
-                           { return obj.type == object_type::level; });
+    auto it = std::ranges::find_if(objects,
+
+                                   [](const game_object& obj)
+                                   { return obj.type == object_type::level; });
 
     if (it == end(objects))
     {
@@ -229,14 +231,15 @@ void tanks_game::on_render() const
     const om::vec2 world_size = it->size;
     const float    aspect = static_cast<float>(screen_height) / screen_width;
 
-    std::for_each(begin(render_order),
-                  end(render_order),
-                  [&](object_type type)
-                  {
-                      std::for_each(begin(objects),
-                                    end(objects),
-                                    draw(type, world_size, aspect));
-                  });
+    std::ranges::for_each(render_order,
+
+                          [&](object_type type)
+                          {
+                              std::ranges::for_each(
+                                  objects,
+
+                                  draw(type, world_size, aspect));
+                          });
 
     // use default ImGui Demo example
     bool show_demo_window = true;
@@ -280,14 +283,14 @@ om::vbo* load_mesh_from_file_with_scale(const std::string_view path,
 
     om::matrix scale_mat = om::matrix::scale(scale.x, scale.y);
 
-    std::transform(begin(vertexes),
-                   end(vertexes),
-                   begin(vertexes),
-                   [&scale_mat](om::vertex v)
-                   {
-                       v.pos = v.pos * scale_mat;
-                       return v;
-                   });
+    std::ranges::transform(vertexes,
+
+                           begin(vertexes),
+                           [&scale_mat](om::vertex v)
+                           {
+                               v.pos = v.pos * scale_mat;
+                               return v;
+                           });
 
     om::vbo* vbo = om::create_vbo(vertexes.data(), num_of_vertexes);
     assert(vbo);

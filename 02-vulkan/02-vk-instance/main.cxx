@@ -113,12 +113,12 @@ private:
 
         log << "all vulkan instance extensions: \n";
         std::ranges::for_each(extension_properties,
-                     
-                      [this](const vk::ExtensionProperties& extension)
-                      {
-                          log << std::setw(3) << extension.specVersion << ' '
-                              << extension.extensionName << '\n';
-                      });
+
+                              [this](const vk::ExtensionProperties& extension)
+                              {
+                                  log << std::setw(3) << extension.specVersion
+                                      << ' ' << extension.extensionName << '\n';
+                              });
 
         std::for_each_n(
             instance_create_info.ppEnabledExtensionNames,
@@ -127,7 +127,7 @@ private:
             {
                 auto it = std::ranges::find_if(
                     extension_properties,
-                   
+
                     [extension](const vk::ExtensionProperties& other_extension)
                     {
                         return other_extension.extensionName.data() ==
@@ -307,7 +307,7 @@ private:
     } queue_indexes;
 };
 } // namespace om
-
+// NOLINTNEXTLINE
 int main(int argc, char** argv)
 {
     using namespace std::literals;

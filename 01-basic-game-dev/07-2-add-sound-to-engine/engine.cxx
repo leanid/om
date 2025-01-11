@@ -87,6 +87,9 @@ template <typename T> static void load_gl_func(const char* func_name, T& result)
                 case GL_OUT_OF_MEMORY:                                         \
                     std::cerr << "GL_OUT_OF_MEMORY" << std::endl;              \
                     break;                                                     \
+                default:                                                       \
+                    std::cerr << "unknown error" << std::endl;                 \
+                    break;                                                     \
             }                                                                  \
             assert(false);                                                     \
         }                                                                      \
@@ -271,8 +274,8 @@ class shader_gl_es20
 {
 public:
     shader_gl_es20(
-        std::string_view                                      vertex_src,
-        std::string_view                                      fragment_src,
+        std::string_view vertex_src, // NOLINT
+        std::string_view fragment_src,
         const std::vector<std::tuple<GLuint, const GLchar*>>& attributes)
     {
         vert_shader = compile_shader(GL_VERTEX_SHADER, vertex_src);
@@ -298,7 +301,7 @@ public:
     {
         assert(texture != nullptr);
         const int location =
-            glGetUniformLocation(program_id, uniform_name.data());
+            glGetUniformLocation(program_id, uniform_name.data()); // NOLINT
         OM_GL_CHECK()
         if (location == -1)
         {
@@ -319,13 +322,14 @@ public:
     void set_uniform(std::string_view uniform_name, const color& c)
     {
         const int location =
-            glGetUniformLocation(program_id, uniform_name.data());
+            glGetUniformLocation(program_id, uniform_name.data()); // NOLINT
         OM_GL_CHECK()
         if (location == -1)
         {
             std::cerr << "can't get uniform location from shader\n";
             throw std::runtime_error("can't get uniform location");
         }
+        // NOLINTNEXTLINE
         float values[4] = { c.get_r(), c.get_g(), c.get_b(), c.get_a() };
         glUniform4fv(location, 1, &values[0]);
         OM_GL_CHECK()
@@ -334,7 +338,7 @@ public:
     void set_uniform(std::string_view uniform_name, const mat2x3& m)
     {
         const int location =
-            glGetUniformLocation(program_id, uniform_name.data());
+            glGetUniformLocation(program_id, uniform_name.data()); // NOLINT
         OM_GL_CHECK()
         if (location == -1)
         {
@@ -343,6 +347,7 @@ public:
         }
         // OpenGL wants matrix in column major order
         // clang-format off
+        // NOLINTNEXTLINE
         float values[9] = { m.col0.x,  m.col0.y, m.delta.x,
                             m.col1.x, m.col1.y, m.delta.y,
                             0.f,      0.f,       1.f };
@@ -380,7 +385,7 @@ private:
 
             std::string shader_type_name =
                 shader_type == GL_VERTEX_SHADER ? "vertex" : "fragment";
-            std::cerr << "Error compiling shader(vertex)\n"
+            std::cerr << "Error compiling " << shader_type_name << "\n"
                       << vertex_shader_src << "\n"
                       << info_chars.data();
             return 0;
@@ -625,7 +630,7 @@ public:
     float get_time_from_init() final
     {
         std::uint64_t ms_from_library_initialization = SDL_GetTicks();
-        float         seconds = ms_from_library_initialization * 0.001f;
+        float seconds = ms_from_library_initialization * 0.001f; // NOLINT
         return seconds;
     }
     /// pool event from input queue
@@ -642,7 +647,7 @@ public:
             if (sdl_event.type == SDL_EVENT_QUIT)
             {
                 e.info      = om::hardware_data{ true };
-                e.timestamp = sdl_event.common.timestamp * 0.001;
+                e.timestamp = sdl_event.common.timestamp * 0.001; // NOLINT
                 e.type      = om::event_type::hardware;
                 return true;
             }
@@ -654,7 +659,7 @@ public:
                     bool is_down = sdl_event.type == SDL_EVENT_KEY_DOWN;
                     e.info       = om::input_data{ .key     = binding->om_key,
                                                    .is_down = is_down };
-                    e.timestamp  = sdl_event.common.timestamp * 0.001;
+                    e.timestamp  = sdl_event.common.timestamp * 0.001; // NOLINT
                     e.type       = om::event_type::input_key;
                     return true;
                 }
@@ -927,22 +932,22 @@ color::color(float r, float g, float b, float a)
 float color::get_r() const
 {
     std::uint32_t r_ = (rgba & 0x000000FF) >> 0;
-    return r_ / 255.f;
+    return r_ / 255.f; // NOLINT
 }
 float color::get_g() const
 {
     std::uint32_t g_ = (rgba & 0x0000FF00) >> 8;
-    return g_ / 255.f;
+    return g_ / 255.f; // NOLINT
 }
 float color::get_b() const
 {
     std::uint32_t b_ = (rgba & 0x00FF0000) >> 16;
-    return b_ / 255.f;
+    return b_ / 255.f; // NOLINT
 }
 float color::get_a() const
 {
     std::uint32_t a_ = (rgba & 0xFF000000) >> 24;
-    return a_ / 255.f;
+    return a_ / 255.f; // NOLINT
 }
 
 void color::set_r(const float r)
@@ -976,7 +981,7 @@ texture_gl_es20::texture_gl_es20(std::string_view path)
     : file_path(path)
 {
     std::vector<unsigned char> png_file_in_memory;
-    std::ifstream              ifs(path.data(), std::ios_base::binary);
+    std::ifstream ifs(path.data(), std::ios_base::binary); // NOLINT
     if (!ifs)
     {
         throw std::runtime_error("can't load texture");
@@ -1353,7 +1358,7 @@ public:
         is_looped     = (prop == properties::looped);
     }
 
-    std::unique_ptr<uint8_t[]> tmp_buf;
+    std::unique_ptr<uint8_t[]> tmp_buf; // NOLINT
     uint8_t*                   buffer{ nullptr };
     uint32_t                   length{ 0 };
     uint32_t                   current_index = 0;
@@ -1368,7 +1373,7 @@ sound_buffer_impl::sound_buffer_impl(std::string_view  path,
                                      SDL_AudioSpec     device_audio_spec)
     : device(device_)
 {
-    SDL_IOStream* file = SDL_IOFromFile(path.data(), "rb");
+    SDL_IOStream* file = SDL_IOFromFile(path.data(), "rb"); // NOLINT
     if (file == nullptr)
     {
         throw std::runtime_error(std::string("can't open audio file: ") +

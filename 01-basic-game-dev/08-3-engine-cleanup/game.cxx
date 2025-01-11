@@ -6,6 +6,7 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <numbers>
 #include <string_view>
 
 #include "engine.hxx"
@@ -32,14 +33,14 @@ private:
 
     om::vec2               current_tank_pos       = om::vec2(0.f, 0.f);
     float                  current_tank_direction = 0.f;
-    static constexpr float pi                     = 3.1415926f;
+    static constexpr float pi                     = std::numbers::pi_v<float>;
 };
 
 std::unique_ptr<om::lila> om_tat_sat()
 {
     om::log << "initialize engine" << std::endl;
 
-    om::window_mode window_mode = { screen_width, screen_height, false };
+    om::window_mode window_mode = { .width=screen_width, .heigth=screen_height, .is_fullscreen=false };
     om::initialize("tanks", window_mode);
 
     om::log << "creating main game object..." << std::endl;
@@ -70,9 +71,9 @@ void tanks_game::on_initialize()
     else
     {
         std::array<om::vertex, 6> vertexes;
-        for (size_t i = 0; i < vertexes.size(); ++i)
+        for (auto & vertexe : vertexes)
         {
-            file >> vertexes[i];
+            file >> vertexe;
         }
 
         vertex_buf = create_vbo(vertexes.data(), vertexes.size());

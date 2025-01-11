@@ -1142,7 +1142,7 @@ texture_gl_es20::texture_gl_es20(std::string_view path)
     : file_path(path)
 {
     std::vector<unsigned char> png_file_in_memory;
-    std::ifstream              ifs(path.data(), std::ios_base::binary);
+    std::ifstream ifs(path.data(), std::ios_base::binary); // NOLINT
     if (!ifs)
     {
         throw std::runtime_error("can't load texture");
@@ -1179,7 +1179,7 @@ texture_gl_es20::texture_gl_es20(std::string_view path)
 }
 
 void texture_gl_es20::gen_texture_from_pixels(const void*  pixels,
-                                              const size_t w,
+                                              const size_t w, // NOLINT
                                               const size_t h)
 {
     glGenTextures(1, &tex_handl);
@@ -1507,10 +1507,10 @@ vertex_buffer_impl::~vertex_buffer_impl()
 // ImGui SDL2 binding with our custom engine fuctions (no optimization,
 // just study)
 // Data
-static float               g_Time            = 0.0;
-static bool                g_MousePressed[3] = { false, false, false };
-static float               g_MouseWheel      = 0.0f;
-static om::shader_gl_es20* g_im_gui_shader   = nullptr;
+static float g_Time                        = 0.0;
+static bool  g_MousePressed[3]             = { false, false, false }; // NOLINT
+static float g_MouseWheel                  = 0.0f;
+static om::shader_gl_es20* g_im_gui_shader = nullptr;
 
 // This is the main rendering function that you have to implement and provide to
 // ImGui (via setting up 'RenderDrawListsFn' in the ImGuiIO structure)
@@ -1610,7 +1610,7 @@ static void ImGui_ImplSdlGL3_SetClipboardText(void*, const char* text)
 bool ImGui_ImplSdlGL3_ProcessEvent(const SDL_Event* event)
 {
     ImGuiIO& io = ImGui::GetIO();
-    switch (event->type)
+    switch (event->type) // NOLINT
     {
         case SDL_EVENT_MOUSE_WHEEL:
         {
@@ -1638,7 +1638,7 @@ bool ImGui_ImplSdlGL3_ProcessEvent(const SDL_Event* event)
         case SDL_EVENT_KEY_DOWN:
         case SDL_EVENT_KEY_UP:
         {
-            int key                = event->key.key;
+            unsigned key           = event->key.key;
             io.KeysDown[key]       = (event->type == SDL_EVENT_KEY_DOWN);
             uint32_t mod_keys_mask = SDL_GetModState();
             io.KeyShift            = ((mod_keys_mask & SDL_KMOD_SHIFT) != 0);
@@ -1806,7 +1806,7 @@ bool ImGui_ImplSdlGL3_Init(SDL_Window* window)
     (void)window;
 #endif
 
-    g_Time = SDL_GetTicks() / 1000.f;
+    g_Time = static_cast<float>(SDL_GetTicks()) / 1000.f;
 
     return true;
 }
@@ -1831,13 +1831,14 @@ void ImGui_ImplSdlGL3_NewFrame(SDL_Window* window)
     int display_w, display_h;
     SDL_GetWindowSize(window, &w, &h);
     SDL_GetWindowSizeInPixels(window, &display_w, &display_h);
-    io.DisplaySize             = ImVec2(float(w), float(h));
-    io.DisplayFramebufferScale = ImVec2(w > 0 ? float(display_w / w) : 0.f,
-                                        h > 0 ? float(display_h / h) : 0.f);
+    io.DisplaySize = ImVec2(float(w), float(h));
+    io.DisplayFramebufferScale =
+        ImVec2(w > 0 ? float(display_w / w) : 0.f,  // NOLINT
+               h > 0 ? float(display_h / h) : 0.f); // NOLINT
 
     // Setup time step
     Uint32 time         = SDL_GetTicks();
-    float  current_time = time / 1000.0f;
+    float  current_time = static_cast<float>(time) / 1000.0f;
     io.DeltaTime        = current_time - g_Time; // (1.0f / 60.0f);
     if (io.DeltaTime <= 0)
     {
