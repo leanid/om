@@ -13,7 +13,7 @@ static size_t get_stack_quard_size()
 }
 #else
 
-#include <algorithm> // c++20 std::shift_left
+#include <algorithm> // c++20 std::shift_left // NOLINT
 #include <array>
 #include <charconv>
 #include <cstddef>

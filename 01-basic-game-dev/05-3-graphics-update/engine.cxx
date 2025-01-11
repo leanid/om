@@ -175,6 +175,7 @@ public:
             std::cerr << "can't get uniform location from shader\n";
             throw std::runtime_error("can't get uniform location");
         }
+        // NOLINTNEXTLINE
         float values[4] = { c.get_r(), c.get_g(), c.get_b(), c.get_a() };
         glUniform4fv(location, 1, &values[0]);
         OM_GL_CHECK()
@@ -209,7 +210,7 @@ private:
 
             std::string shader_type_name =
                 shader_type == GL_VERTEX_SHADER ? "vertex" : "fragment";
-            std::cerr << "Error compiling shader(vertex)\n"
+            std::cerr << "Error compiling " << shader_type_name << "\n"
                       << vertex_shader_src << "\n"
                       << info_chars.data();
             return 0;
@@ -395,6 +396,7 @@ std::istream& operator>>(std::istream& is, tri2& t)
 #pragma pack(push, 1)
 struct bind
 {
+    // NOLINTNEXTLINE
     bind(std::string_view s, SDL_Keycode k, event pressed, event released)
         : name(s)
         , key(k)
@@ -459,7 +461,7 @@ public:
     float get_time_from_init() final
     {
         std::uint32_t ms_from_library_initialization = SDL_GetTicks();
-        float         seconds = ms_from_library_initialization * 0.001f;
+        float seconds = ms_from_library_initialization * 0.001f; // NOLINT
         return seconds;
     }
     /// pool event from input queue
@@ -634,6 +636,7 @@ color::color(std::uint32_t rgba_)
     : rgba(rgba_)
 {
 }
+// NOLINTNEXTLINE
 color::color(float r, float g, float b, float a)
 {
     assert(r <= 1 && r >= 0);

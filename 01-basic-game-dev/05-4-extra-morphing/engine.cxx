@@ -146,7 +146,7 @@ public:
     {
         assert(texture != nullptr);
         const int location =
-            glGetUniformLocation(program_id, uniform_name.data());
+            glGetUniformLocation(program_id, uniform_name.data()); // NOLINT
         OM_GL_CHECK()
         if (location == -1)
         {
@@ -167,13 +167,14 @@ public:
     void set_uniform(std::string_view uniform_name, const color& c)
     {
         const int location =
-            glGetUniformLocation(program_id, uniform_name.data());
+            glGetUniformLocation(program_id, uniform_name.data()); // NOLINT
         OM_GL_CHECK()
         if (location == -1)
         {
             std::cerr << "can't get uniform location from shader\n";
             throw std::runtime_error("can't get uniform location");
         }
+        // NOLINTNEXTLINE
         float values[4] = { c.get_r(), c.get_g(), c.get_b(), c.get_a() };
         glUniform4fv(location, 1, &values[0]);
         OM_GL_CHECK()
@@ -208,7 +209,7 @@ private:
 
             std::string shader_type_name =
                 shader_type == GL_VERTEX_SHADER ? "vertex" : "fragment";
-            std::cerr << "Error compiling shader(vertex)\n"
+            std::cerr << "Error compiling " << shader_type_name << "\n"
                       << vertex_shader_src << "\n"
                       << info_chars.data();
             return 0;
@@ -394,6 +395,7 @@ std::istream& operator>>(std::istream& is, tri2& t)
 #pragma pack(push, 1)
 struct bind
 {
+    // NOLINTNEXTLINE
     bind(std::string_view s, SDL_Keycode k, event pressed, event released)
         : name(s)
         , key(k)
@@ -458,7 +460,7 @@ public:
     float get_time_from_init() final
     {
         std::uint32_t ms_from_library_initialization = SDL_GetTicks();
-        float         seconds = ms_from_library_initialization * 0.001f;
+        float seconds = ms_from_library_initialization * 0.001f; // NOLINT
         return seconds;
     }
     /// pool event from input queue
@@ -642,6 +644,7 @@ color::color(std::uint32_t rgba_)
     : rgba(rgba_)
 {
 }
+// NOLINTNEXTLINE
 color::color(float r, float g, float b, float a)
 {
     assert(r <= 1 && r >= 0);
@@ -660,22 +663,22 @@ color::color(float r, float g, float b, float a)
 float color::get_r() const
 {
     std::uint32_t r_ = (rgba & 0x000000FF) >> 0;
-    return r_ / 255.f;
+    return r_ / 255.f; // NOLINT
 }
 float color::get_g() const
 {
     std::uint32_t g_ = (rgba & 0x0000FF00) >> 8;
-    return g_ / 255.f;
+    return g_ / 255.f; // NOLINT
 }
 float color::get_b() const
 {
     std::uint32_t b_ = (rgba & 0x00FF0000) >> 16;
-    return b_ / 255.f;
+    return b_ / 255.f; // NOLINT
 }
 float color::get_a() const
 {
     std::uint32_t a_ = (rgba & 0xFF000000) >> 24;
-    return a_ / 255.f;
+    return a_ / 255.f; // NOLINT
 }
 
 void color::set_r(const float r)
@@ -709,7 +712,7 @@ texture_gl_es20::texture_gl_es20(std::string_view path)
     : file_path(path)
 {
     std::vector<unsigned char> png_file_in_memory;
-    std::ifstream              ifs(path.data(), std::ios_base::binary);
+    std::ifstream ifs(path.data(), std::ios_base::binary); // NOLINT
     if (!ifs)
     {
         throw std::runtime_error("can't load texture");

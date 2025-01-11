@@ -481,7 +481,7 @@ public:
     void set_uniform(std::string_view uniform_name, const matrix& m)
     {
         const int location =
-            glGetUniformLocation(program_id, uniform_name.data());
+            glGetUniformLocation(program_id, uniform_name.data()); // NOLINT
         OM_GL_CHECK();
         if (location == -1)
         {
@@ -490,6 +490,7 @@ public:
         }
         // OpenGL wants matrix in column major order
         // clang-format off
+        // NOLINTNEXTLINE
         float values[9] = { m.row0.x,  m.row0.y, m.row2.x,
                             m.row1.x, m.row1.y, m.row2.y,
                             0.f,      0.f,       1.f };
@@ -527,7 +528,7 @@ private:
 
             std::string shader_type_name =
                 shader_type == GL_VERTEX_SHADER ? "vertex" : "fragment";
-            std::cerr << "Error compiling shader(vertex)\n"
+            std::cerr << "Error compiling " << shader_type_name << "\n"
                       << vertex_shader_src << "\n"
                       << info_chars.data();
             return 0;
@@ -691,9 +692,10 @@ static bool check_input(const SDL_Event& e, const bind*& result)
 {
     using namespace std;
 
-    const auto it = std::ranges::find_if(keys,
-                           
-                            [&](const bind& b) { return b.key == e.key.key; });
+    const auto it =
+        std::ranges::find_if(keys,
+
+                             [&](const bind& b) { return b.key == e.key.key; });
 
     if (it != end(keys))
     {
@@ -707,7 +709,7 @@ static bool check_input(const SDL_Event& e, const bind*& result)
 float get_time_from_init()
 {
     std::uint32_t ms_from_library_initialization = SDL_GetTicks();
-    float         seconds = ms_from_library_initialization * 0.001f;
+    float         seconds = ms_from_library_initialization * 0.001f; // NOLINT
     return seconds;
 }
 /// pool event from input queue
@@ -734,7 +736,8 @@ bool pool_event(event& e)
             if (check_input(sdl_event, binding))
             {
                 bool is_down = sdl_event.type == SDL_EVENT_KEY_DOWN;
-                e.info       = om::input_data{ .key=binding->om_key, .is_down=is_down };
+                e.info       = om::input_data{ .key     = binding->om_key,
+                                               .is_down = is_down };
                 e.timestamp  = sdl_event.common.timestamp * 0.001;
                 e.type       = om::event_type::input_key;
                 return true;
@@ -780,8 +783,7 @@ void destroy_vbo(vbo* buffer)
 sound* create_sound(std::string_view path)
 {
     SDL_PauseAudioDevice(audio_device);
-    auto* s =
-        new sound_buffer_impl(path, audio_device, audio_device_spec);
+    auto* s = new sound_buffer_impl(path, audio_device, audio_device_spec);
     sounds.push_back(s);
     SDL_ResumeAudioDevice(audio_device);
     return s;
@@ -828,8 +830,8 @@ void render(const primitives primitive_type,
     glEnableVertexAttribArray(2);
     OM_GL_CHECK();
 
-    auto num_of_vertexes = static_cast<GLsizei>(buff.size());
-    GLenum  priv_type = primitive_types[static_cast<uint32_t>(primitive_type)];
+    auto   num_of_vertexes = static_cast<GLsizei>(buff.size());
+    GLenum priv_type = primitive_types[static_cast<uint32_t>(primitive_type)];
     glDrawArrays(priv_type, 0, num_of_vertexes);
     OM_GL_CHECK();
 
@@ -1282,10 +1284,10 @@ texture_gl_es20::texture_gl_es20(std::string_view path)
     glBindTexture(GL_TEXTURE_2D, tex_handl);
     OM_GL_CHECK();
 
-    GLint   mipmap_level = 0;
-    GLint   border       = 0;
-    auto width        = static_cast<GLsizei>(img.width);
-    auto height       = static_cast<GLsizei>(img.height);
+    GLint mipmap_level = 0;
+    GLint border       = 0;
+    auto  width        = static_cast<GLsizei>(img.width);
+    auto  height       = static_cast<GLsizei>(img.height);
     glTexImage2D(GL_TEXTURE_2D,
                  mipmap_level,
                  GL_RGBA,

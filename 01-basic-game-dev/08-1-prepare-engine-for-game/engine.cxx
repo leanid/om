@@ -1387,7 +1387,7 @@ texture_gl_es20::texture_gl_es20(std::string_view path)
     : file_path(path)
 {
     std::vector<unsigned char> png_file_in_memory;
-    std::ifstream              ifs(path.data(), std::ios_base::binary);
+    std::ifstream ifs(path.data(), std::ios_base::binary); // NOLINT
     if (!ifs)
     {
         throw std::runtime_error("can't load texture");
