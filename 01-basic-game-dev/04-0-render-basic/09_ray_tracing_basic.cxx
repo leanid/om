@@ -302,7 +302,7 @@ float compute_lighting(const glm::vec3&             P, // NOLINT
 
             if (cos_R_V > 0.f)
             {
-                intensity += light_intensity *
+                intensity += light_intensity * // NOLINT
                              pow(cos_R_V / (glm::length(R) * glm::length(V)),
                                  specular_reflection_exp);
             }

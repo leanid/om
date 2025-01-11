@@ -20,7 +20,7 @@ constexpr size_t Gb = Mb * 1024;
 /// `.bss' main.cxx:(.text+0x178): relocation truncated to fit: R_X86_64_32
 /// against `.bss'
 /// Gb*3 - works on amd64 with g++
-char init_time_memory[Gb * 3] = { 0 };
+char init_time_memory[Gb * 3] = { 0 }; // NOLINT
 
 int main(int argc, char** argv)
 {

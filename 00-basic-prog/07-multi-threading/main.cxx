@@ -12,7 +12,8 @@
 int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 {
     using namespace std;
-    const char*       tmp_file          = "tmp_file.txt";
+    const char* tmp_file = "tmp_file.txt";
+    // NOLINTNEXTLINE
     const string_view print_patterns[]  = { "012\n", "abcd\n", "|||||\n" };
     const size_t      num_of_iterations = 1024;
 
@@ -35,7 +36,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 
     std::ranges::transform(
         print_patterns,
-       
+
         begin(threads),
         [&print_chars_unsafe, &num_of_iterations](const string_view& pattern)
         { return thread{ print_chars_unsafe, pattern, num_of_iterations }; });

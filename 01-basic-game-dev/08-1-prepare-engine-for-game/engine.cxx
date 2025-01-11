@@ -299,7 +299,7 @@ public:
         SDL_ResumeAudioDevice(device);
     }
 
-    std::unique_ptr<uint8_t[]> tmp_buf;
+    std::unique_ptr<uint8_t[]> tmp_buf; // NOLINT
     uint8_t*                   buffer{ nullptr };
     uint32_t                   length{ 0 };
     uint32_t                   current_index = 0;
@@ -473,6 +473,7 @@ public:
             std::cerr << "can't get uniform location from shader\n";
             throw std::runtime_error("can't get uniform location");
         }
+        // NOLINTNEXTLINE
         float values[4] = { c.get_r(), c.get_g(), c.get_b(), c.get_a() };
         glUniform4fv(location, 1, &values[0]);
         OM_GL_CHECK();
@@ -490,6 +491,7 @@ public:
         }
         // OpenGL wants matrix in column major order
         // clang-format off
+        // NOLINTNEXTLINE
         float values[9] = { m.col0.x,  m.col0.y, m.delta.x,
                             m.col1.x, m.col1.y, m.delta.y,
                             0.f,      0.f,       1.f };

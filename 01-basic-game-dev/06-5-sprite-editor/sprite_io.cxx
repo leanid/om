@@ -72,7 +72,8 @@ void sprite_io::save(const std::vector<sprite>& list, std::ostream& ss)
         }
 
         // NOLINTNEXTLINE
-        const std::string_view name = texture->get_name(); // do not fix it!!!
+        const std::string_view name =
+            texture->get_name(); // do not fix it!!! // NOLINT
         ss << left << setw(12) << "texture: " << name << '\n';
         ss << left << setw(12) << "uv_rect: ";
         const rect& r = spr.uv_rect();

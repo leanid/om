@@ -64,19 +64,7 @@
       "cacheVariables": {
         "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
         "CMAKE_MAKE_PROGRAM": "ninja",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-        "CMAKE_CXX_COMPILER": {
-          "type": "INTERNAL",
-          "value": "clang++"
-        },
-        "CMAKE_CXX_FLAGS": {
-          "type": "STRING",
-          "value": "-stdlib=libc++"
-        },
-        "CMAKE_C_COMPILER": {
-          "type": "INTERNAL",
-          "value": "clang"
-        }
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
       }
     },
     {
