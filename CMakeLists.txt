@@ -18,7 +18,8 @@ set(CMAKE_CXX_EXTENSIONS ON)
 
 option(
     OM_BUILD_DEPS
-    "download and build dependencies [SDL3, GLM, Catch2] as part of current build"
+    [=[download and build dependencies [SDL3, GLM, Catch2]
+    as part of current build]=]
     ON)
 option(OM_BUILD_BOOST "download and build Boost from source" OFF)
 option(OM_BUILD_COURSE_BASIC_PROG "turn ON if need to build 00-basic-prog" ON)
