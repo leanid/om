@@ -10,6 +10,8 @@
 
 #include <experimental/scope> // not found on macOS
 
+#undef VULKAN_HPP_NO_EXCEPTIONS // exceptions are enabled by default
+                                // but we want to be explicit
 #include <vulkan/vulkan.hpp>
 
 namespace om::vulkan
@@ -86,6 +88,9 @@ public:
 
     ~render();
 
+    /// @brief Render the frame
+    void draw();
+
 private:
     // create functions
     void create_instance(bool enable_validation_layers,
@@ -99,6 +104,7 @@ private:
     void create_framebuffers();
     void create_command_pool();
     void create_command_buffers();
+    void create_synchronization_objects();
 
     [[nodiscard]] vk::ImageView create_image_view(
         vk::Image            image,
@@ -111,6 +117,7 @@ private:
     void record_commands();
 
     // destroy functions
+    void destroy_synchronization_objects();
     void destroy_debug_callback();
     void destroy_surface();
     void destroy(vk::ShaderModule& shader);
@@ -207,6 +214,13 @@ private:
     // vulkan utilities
     vk::Format   swapchain_image_format{};
     vk::Extent2D swapchain_image_extent{};
+
+    // sinhronization
+    struct
+    {
+        vk::Semaphore image_available{};
+        vk::Semaphore render_finished{};
+    } semaphores;
 
     struct queue_family_indexes
     {

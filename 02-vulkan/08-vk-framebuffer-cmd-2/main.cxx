@@ -8,6 +8,7 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_hints.h>
 #include <SDL3/SDL_vulkan.h>
+#include <thread>
 
 #include "platform_sdl3.hxx"
 
@@ -15,7 +16,8 @@ int main(int argc, char** argv)
 {
     using namespace std;
 
-    ios_base::sync_with_stdio(false); // faster iostream work
+    ios_base::sync_with_stdio(false); // faster iostream work and we don't need
+                                      // to sync with cstdio
 
     cerr.exceptions(ios_base::failbit | ios_base::badbit);
 
@@ -91,14 +93,20 @@ int main(int argc, char** argv)
                              .enable_debug_callback_ext =
                                  vk_debug_callback_ext };
         render        render(platform, hints);
+
+        render.draw();
+
+        std::this_thread::sleep_for(std::chrono::seconds(2));
+    }
+    catch (const vk::SystemError& ex)
+    {
+        std::cerr << "error: vk::SystemError what: [" << ex.what() << ']'
+                  << "\n    code: [" << ex.code().message() << "]" << std::endl;
+        std::terminate();
     }
     catch (const std::exception& ex)
     {
         std::cerr << "error: got exception [" << ex.what() << ']' << std::endl;
-    }
-    catch (...)
-    {
-        std::cerr << "unknown exception!" << std::endl;
     }
 
     return std::cerr.fail() || std::cout.fail() ? EXIT_FAILURE : EXIT_SUCCESS;

@@ -133,10 +133,13 @@ render::render(platform_interface& platform, hints hints)
     create_command_pool();
     create_command_buffers();
     record_commands();
+    create_synchronization_objects();
 }
 
 render::~render()
 {
+    destroy_synchronization_objects();
+    log << "vulkan synchronization objects destroyed\n";
     devices.logical.freeCommandBuffers(graphics_command_pool, command_buffers);
     log << "vulkan command buffers freed\n";
     devices.logical.destroyCommandPool(graphics_command_pool);
@@ -165,6 +168,15 @@ render::~render()
     log << "vulkan debug callback destroyed\n";
     instance.destroy();
     log << "vulkan instance destroyed\n";
+}
+
+void render::draw()
+{
+    // 1. Acquire available image to draw and fire semaphore when it's ready
+    // 2. Submit command buffer to queue for execution. Making sure that waits
+    //    for the image to be available before drawing and signals when it has
+    //    finished drawing
+    // 3. Present image to screen when it has signaled finished drawing
 }
 
 void render::create_instance(bool enable_validation_layers,
@@ -1142,6 +1154,21 @@ void render::record_commands()
     std::ranges::for_each(
         std::views::zip(command_buffers, swapchain_framebuffers),
         record_commands);
+}
+
+void render::create_synchronization_objects()
+{
+    vk::SemaphoreCreateInfo semaphore_info{};
+    semaphores.image_available =
+        devices.logical.createSemaphore(semaphore_info);
+    semaphores.render_finished =
+        devices.logical.createSemaphore(semaphore_info);
+}
+
+void render::destroy_synchronization_objects()
+{
+    devices.logical.destroy(semaphores.image_available);
+    devices.logical.destroy(semaphores.render_finished);
 }
 
 vk::Extent2D render::choose_best_swapchain_image_resolution(
