@@ -242,8 +242,8 @@ class shader_gl_es20
 {
 public:
     shader_gl_es20(
-        std::string_view                                      vertex_src,
-        std::string_view                                      fragment_src,
+        std::string_view vertex_src, // NOLINT
+        std::string_view fragment_src,
         const std::vector<std::tuple<GLuint, const GLchar*>>& attributes)
     {
         vert_shader = compile_shader(GL_VERTEX_SHADER, vertex_src);
@@ -269,7 +269,7 @@ public:
     {
         assert(texture != nullptr);
         const int location =
-            glGetUniformLocation(program_id, uniform_name.data());
+            glGetUniformLocation(program_id, uniform_name.data()); // NOLINT
         OM_GL_CHECK();
         if (location == -1)
         {
@@ -290,13 +290,14 @@ public:
     void set_uniform(std::string_view uniform_name, const color& c)
     {
         const int location =
-            glGetUniformLocation(program_id, uniform_name.data());
+            glGetUniformLocation(program_id, uniform_name.data()); // NOLINT
         OM_GL_CHECK();
         if (location == -1)
         {
             std::cerr << "can't get uniform location from shader\n";
             throw std::runtime_error("can't get uniform location");
         }
+        // NOLINTNEXTLINE
         float values[4] = { c.get_r(), c.get_g(), c.get_b(), c.get_a() };
         glUniform4fv(location, 1, &values[0]);
         OM_GL_CHECK();
@@ -305,7 +306,7 @@ public:
     void set_uniform(std::string_view uniform_name, const mat2x3& m)
     {
         const int location =
-            glGetUniformLocation(program_id, uniform_name.data());
+            glGetUniformLocation(program_id, uniform_name.data()); // NOLINT
         OM_GL_CHECK();
         if (location == -1)
         {
@@ -314,6 +315,7 @@ public:
         }
         // OpenGL wants matrix in column major order
         // clang-format off
+        // NOLINTNEXTLINE
         float values[9] = { m.col0.x,  m.col0.y, m.delta.x,
                             m.col1.x, m.col1.y, m.delta.y,
                             0.f,      0.f,       1.f };
@@ -351,7 +353,7 @@ private:
 
             std::string shader_type_name =
                 shader_type == GL_VERTEX_SHADER ? "vertex" : "fragment";
-            std::cerr << "Error compiling shader(vertex)\n"
+            std::cerr << "Error compiling " << shader_type_name << "\n"
                       << vertex_shader_src << "\n"
                       << info_chars.data();
             return 0;
@@ -547,7 +549,7 @@ struct bind
 {
     bind(std::string_view s,
          SDL_Keycode      k,
-         event            pressed,
+         event            pressed, // NOLINT
          event            released,
          keys             om_k)
         : name(s)
@@ -634,7 +636,7 @@ public:
     float get_time_from_init() final
     {
         std::uint32_t ms_from_library_initialization = SDL_GetTicks();
-        float         seconds = ms_from_library_initialization * 0.001f;
+        float seconds = ms_from_library_initialization * 0.001f; // NOLINT
         return seconds;
     }
     /// pool event from input queue

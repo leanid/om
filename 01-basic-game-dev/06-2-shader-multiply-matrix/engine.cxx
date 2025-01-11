@@ -505,6 +505,7 @@ std::istream& operator>>(std::istream& is, tri2& t)
 
 struct bind
 {
+    // NOLINTNEXTLINE
     bind(std::string_view s, SDL_Keycode k, event pressed, event released)
         : name(s)
         , key(k)
@@ -568,7 +569,7 @@ public:
     float get_time_from_init() final
     {
         std::uint32_t ms_from_library_initialization = SDL_GetTicks();
-        float         seconds = ms_from_library_initialization * 0.001f;
+        float seconds = ms_from_library_initialization * 0.001f; // NOLINT
         return seconds;
     }
     /// pool event from input queue
@@ -840,7 +841,7 @@ texture_gl_es20::texture_gl_es20(std::string_view path)
     : file_path(path)
 {
     std::vector<unsigned char> png_file_in_memory;
-    std::ifstream              ifs(path.data(), std::ios_base::binary);
+    std::ifstream ifs(path.data(), std::ios_base::binary); // NOLINT
     if (!ifs)
     {
         throw std::runtime_error("can't load texture");

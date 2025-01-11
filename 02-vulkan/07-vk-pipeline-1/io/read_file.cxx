@@ -22,7 +22,7 @@ content read_file(const std::filesystem::path& path)
         ifstream::pos_type size         = f.tellg();
         streamoff          size_integer = size;
 
-        out.memory = make_unique<byte[]>(size_integer);
+        out.memory = make_unique<byte[]>(size_integer); // NOLINT
 
         f.seekg(0, ios_base::beg);
         f.read(reinterpret_cast<char*>(out.memory.get()), size_integer);

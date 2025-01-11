@@ -1395,7 +1395,7 @@ sound_buffer_impl::sound_buffer_impl(std::string_view  path,
               << "length: " << length << '\n'
               << "time: "
               << static_cast<double>(length) /
-                     (file_audio_spec.channels *
+                     (file_audio_spec.channels * // NOLINT
                       static_cast<uint32_t>(file_audio_spec.freq) *
                       get_sound_format_size(file_audio_spec.format))
               << "sec" << std::endl;
