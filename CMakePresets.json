@@ -118,7 +118,8 @@
         "CMAKE_CXX_MODULE_STD": {
           "type": "INTERNAL",
           "value": "ON"
-        }
+        },
+        "OM_CLANG_TIDY": "ON"
       }
     },
     {
@@ -136,7 +137,8 @@
         "CMAKE_C_COMPILER": {
           "type": "INTERNAL",
           "value": "clang"
-        }
+        },
+        "OM_CLANG_TIDY": "ON"
       }
     },
     {
