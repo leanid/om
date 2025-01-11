@@ -6,8 +6,8 @@ find_package(OpenSSL #REQUIRED
              )
 find_package(
     Boost
-    # 1.86.0
-    # EXACT # Minimum or EXACT version e.g. 1.67.0
+    1.87.0 # same version with same compiler settings
+    EXACT # Minimum or EXACT version e.g. 1.67.0
     # REQUIRED # Fail with error if Boost is not found
     COMPONENTS program_options # Boost libraries by their canonical name
     # REQUIRED
@@ -24,4 +24,4 @@ endif()
 
 add_executable(aes128 main.cxx)
 target_link_libraries(aes128 PRIVATE OpenSSL::Crypto Boost::program_options)
-target_compile_features(aes128 PRIVATE cxx_std_23)
+target_compile_features(aes128 PRIVATE cxx_std_26)

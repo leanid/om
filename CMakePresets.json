@@ -119,7 +119,9 @@
           "type": "INTERNAL",
           "value": "ON"
         },
-        "OM_CLANG_TIDY": "ON"
+        "OM_CLANG_TIDY": "ON",
+        "$comment": "We have to build boost with clang++ cause of libc++",
+        "OM_BUILD_BOOST": "ON"
       }
     },
     {
