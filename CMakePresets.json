@@ -88,7 +88,9 @@
         "CMAKE_BUILD_TYPE": {
           "type": "STRING",
           "value": "Debug"
-        }
+        },
+        "$comment": "We have to build boost to match version 1.87",
+        "OM_BUILD_BOOST": "ON"
       }
     },
     {
