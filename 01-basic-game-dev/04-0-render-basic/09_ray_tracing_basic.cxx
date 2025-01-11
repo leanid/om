@@ -118,7 +118,7 @@ void canvas_put_pixel(int x, int y, color_t col, canvas& image)
 
     image.set_pixel(image_x, image_y, c);
 }
-
+// NOLINTNEXTLINE
 int main(int argc, char** argv)
 {
     canvas image(Cw, Ch); // NOLINT

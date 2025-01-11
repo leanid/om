@@ -112,8 +112,8 @@ private:
         }
 
         log << "all vulkan instance extensions: \n";
-        std::for_each(extension_properties.begin(),
-                      extension_properties.end(),
+        std::ranges::for_each(extension_properties,
+                     
                       [this](const vk::ExtensionProperties& extension)
                       {
                           log << std::setw(3) << extension.specVersion << ' '
@@ -125,9 +125,9 @@ private:
             instance_create_info.enabledExtensionCount,
             [&extension_properties](std::string_view extension)
             {
-                auto it = std::find_if(
-                    extension_properties.begin(),
-                    extension_properties.end(),
+                auto it = std::ranges::find_if(
+                    extension_properties,
+                   
                     [extension](const vk::ExtensionProperties& other_extension)
                     {
                         return other_extension.extensionName.data() ==
@@ -300,7 +300,7 @@ private:
     {
         uint32_t graphics_family = std::numeric_limits<uint32_t>::max();
 
-        bool is_valid() const
+        [[nodiscard]] bool is_valid() const
         {
             return graphics_family != std::numeric_limits<uint32_t>::max();
         }
@@ -316,7 +316,7 @@ int main(int argc, char** argv)
 
     struct null_buffer : std::streambuf
     {
-        int overflow(int c) { return c; }
+        int overflow(int c) override { return c; }
     } null;
 
     std::ostream  null_stream(&null);

@@ -14,7 +14,7 @@ TEST_CASE("save and load one sprite")
 {
     using namespace std;
 
-    const rect     r{ { 0.3f, 0.3f }, { 0.5f, 0.5f } };
+    const rect     r{ .pos={ 0.3f, 0.3f }, .size={ 0.5f, 0.5f } };
     const om::vec2 pos(0.123f, 0.123f);
     const om::vec2 size(1.0f, 0.3f);
     const float    angle{ 270 };

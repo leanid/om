@@ -33,7 +33,7 @@ std::vector<std::string_view> split_line_into_words(std::string_view line,
         }
     };
 
-    for_each(begin(line), end(line), copy_space_index);
+    std::ranges::for_each(line, copy_space_index);
 
     vector<string_view> result;
     result.reserve(count_spaces + 1);
@@ -95,7 +95,7 @@ loader_obj::point parse_point(std::string_view indexes_substr) noexcept(false)
             int v  = to_int(indexes_str.at(0));
             int vt = to_int(indexes_str.at(1));
             p.type = loader_obj::point_type::vetex_and_texture_indexes;
-            p.vt   = loader_obj::v_vt{ v, vt };
+            p.vt   = loader_obj::v_vt{ .v = v, .vt = vt };
         }
         break;
         case 3:
@@ -104,7 +104,7 @@ loader_obj::point parse_point(std::string_view indexes_substr) noexcept(false)
             int vt = to_int(indexes_str.at(1));
             int n  = to_int(indexes_str.at(2));
             p.type = loader_obj::point_type::vetex_texture_normal_indexes;
-            p.vtn  = loader_obj::v_vt_vn{ v, vt, n };
+            p.vtn  = loader_obj::v_vt_vn{ .v = v, .vt = vt, .vn = n };
         }
         break;
         default:
@@ -123,7 +123,7 @@ loader_obj::loader_obj(std::istream& byte_stream)
         auto words = split_line_into_words(line, ' ');
 
         if (words.empty())
-        {
+        { // NOLINT
             continue;
         }
         else if (words.front() == "#")
@@ -135,20 +135,21 @@ loader_obj::loader_obj(std::istream& byte_stream)
             float x = to_float(words.at(1));
             float y = to_float(words.at(2));
             float z = to_float(words.at(3));
-            vertexes_.push_back(vertex{ x, y, z, 1.f });
+            vertexes_.push_back(vertex{ .x = x, .y = y, .z = z, .w = 1.f });
         }
         else if (words.front() == "vt")
         {
             float tu = to_float(words.at(1));
             float tv = to_float(words.at(2));
-            texture_coords_.push_back(texture_coord{ tu, tv, 0.f });
+            texture_coords_.push_back(
+                texture_coord{ .u = tu, .v = tv, .w = 0.f });
         }
         else if (words.front() == "vn")
         {
             float vnx = to_float(words.at(1));
             float vny = to_float(words.at(2));
             float vnz = to_float(words.at(3));
-            normals_.push_back(normal{ vnx, vny, vnz });
+            normals_.push_back(normal{ .x = vnx, .y = vny, .z = vnz });
         }
         else if (words.front() == "f")
         {

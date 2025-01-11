@@ -19,7 +19,7 @@ int main(int, char**)
     size_t height = 240;
 
     SDL_Window* window = SDL_CreateWindow(
-        "runtime soft render", width, height, SDL_WINDOW_OPENGL);
+        "runtime soft render", width, height, SDL_WINDOW_OPENGL); // NOLINT
     if (window == nullptr)
     {
         cerr << SDL_GetError() << endl;
@@ -80,9 +80,9 @@ int main(int, char**)
                 // radius
                 // gray scale with formula: 0.21 R + 0.72 G + 0.07 B.
                 double gray = 0.21 * out.r + 0.72 * out.g + 0.07 * out.b;
-                out.r       = gray;
-                out.g       = gray;
-                out.b       = gray;
+                out.r       = static_cast<uint8_t>(gray);
+                out.g       = static_cast<uint8_t>(gray);
+                out.b       = static_cast<uint8_t>(gray);
             }
 
             return out;
@@ -112,7 +112,7 @@ int main(int, char**)
 
     void*     pixels = image.get_pixels().data();
     const int depth  = sizeof(color) * 8;
-    const int pitch  = width * sizeof(color);
+    const int pitch  = static_cast<int>(width * sizeof(color));
     const int rmask  = 0x000000ff;
     const int gmask  = 0x0000ff00;
     const int bmask  = 0x00ff0000;
@@ -154,7 +154,7 @@ int main(int, char**)
         interpolated_render.draw_triangles(triangle_v, indexes_v);
 
         SDL_Surface* bitmapSurface = SDL_CreateSurfaceFrom(
-            width, height, SDL_PIXELFORMAT_RGB24, pixels, pitch);
+            width, height, SDL_PIXELFORMAT_RGB24, pixels, pitch); // NOLINT
         if (bitmapSurface == nullptr)
         {
             cerr << SDL_GetError() << endl;

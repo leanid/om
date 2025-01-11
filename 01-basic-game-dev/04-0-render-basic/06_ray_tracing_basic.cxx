@@ -20,7 +20,7 @@ const float inf{ std::numeric_limits<float>::infinity() }; /// c++ infinity
 /// position in 3D space of pixel from canvas
 glm::vec3 canvas_to_viewport(int pixel_x, int pixel_y)
 {
-    return glm::vec3{ pixel_x * Vw / Cw, pixel_y * Vh / Ch, d };
+    return glm::vec3{ pixel_x * Vw / Cw, pixel_y * Vh / Ch, d }; // NOLINT
 }
 
 using color_t = glm::vec3;
@@ -43,38 +43,46 @@ color_t ray_trace(const glm::vec3&             origin,
                   float                        start,
                   float                        inf,
                   const std::vector<sphere_t>& objects);
-
+// NOLINTNEXTLINE
 void canvas_put_pixel(int x, int y, color_t col, canvas& image)
 {
-    const size_t image_x = (Cw / 2) + x;
-    const size_t image_y = (Ch / 2) - y;
+    const size_t image_x = (Cw / 2) + x; // NOLINT
+    const size_t image_y = (Ch / 2) - y; // NOLINT
 
-    if (image_x >= Cw || image_y >= Ch)
+    if (image_x >= Cw || image_y >= Ch) // NOLINT
     {
         return;
     }
 
-    const color c{ .r=static_cast<uint8_t>(col.r * 255),
-                   .g=static_cast<uint8_t>(col.g * 255),
-                   .b=static_cast<uint8_t>(col.b * 255) };
+    const color c{ .r = static_cast<uint8_t>(col.r * 255),
+                   .g = static_cast<uint8_t>(col.g * 255),
+                   .b = static_cast<uint8_t>(col.b * 255) };
 
     image.set_pixel(image_x, image_y, c);
 }
-
+// NOLINTNEXTLINE
 int main(int argc, char** argv)
 {
-    canvas image(Cw, Ch);
+    canvas image(Cw, Ch); // NOLINT
 
     std::vector<sphere_t> scene;
 
-    scene.push_back(sphere_t{ .center_position=glm::vec3{ 0.f, -1.f, 3.f }, .color=red, .radius=1.f });
-    scene.push_back(sphere_t{ .center_position=glm::vec3{ 2.f, 0.f, 4.f }, .color=blue, .radius=1.f });
-    scene.push_back(sphere_t{ .center_position=glm::vec3{ -2.f, 0.f, 4.f }, .color=green, .radius=1.f });
-    scene.push_back(sphere_t{ .center_position=glm::vec3{ 0.f, -5001.f, 0.f }, .color=yellow, .radius=5000.f });
+    scene.push_back(sphere_t{ .center_position = glm::vec3{ 0.f, -1.f, 3.f },
+                              .color           = red,
+                              .radius          = 1.f });
+    scene.push_back(sphere_t{ .center_position = glm::vec3{ 2.f, 0.f, 4.f },
+                              .color           = blue,
+                              .radius          = 1.f });
+    scene.push_back(sphere_t{ .center_position = glm::vec3{ -2.f, 0.f, 4.f },
+                              .color           = green,
+                              .radius          = 1.f });
+    scene.push_back(sphere_t{ .center_position = glm::vec3{ 0.f, -5001.f, 0.f },
+                              .color           = yellow,
+                              .radius          = 5000.f });
 
-    for (int x = -Cw / 2; x < Cw / 2; ++x)
+    for (int x = -Cw / 2; x < Cw / 2; ++x) // NOLINT
     {
-        for (int y = -Ch / 2; y < Ch / 2; ++y)
+        for (int y = -Ch / 2; y < Ch / 2; ++y) // NOLINT
         {
             const glm::vec3 Direction{ canvas_to_viewport(x, y) };
             const auto      color{ ray_trace(O, Direction, 1.f, inf, scene) };
@@ -92,7 +100,7 @@ struct intersection
     float t_1;
 };
 
-intersection ray_intersect_sphere(const glm::vec3& ray_start,
+intersection ray_intersect_sphere(const glm::vec3& ray_start, // NOLINT
                                   const glm::vec3& ray_direction,
                                   const sphere_t&  sphere)
 {
@@ -104,13 +112,13 @@ intersection ray_intersect_sphere(const glm::vec3& ray_start,
     float discriminant = b * b - 4 * a * c;
     if (discriminant < 0)
     {
-        return intersection{ .t_0=inf, .t_1=inf };
+        return intersection{ .t_0 = inf, .t_1 = inf };
     }
 
     float t1 = (-b + std::sqrt(discriminant)) / (2 * a);
     float t2 = (-b - std::sqrt(discriminant)) / (2 * a);
 
-    return intersection{ .t_0=t1, .t_1=t2 };
+    return intersection{ .t_0 = t1, .t_1 = t2 };
 }
 
 color_t ray_trace(const glm::vec3&             origin,

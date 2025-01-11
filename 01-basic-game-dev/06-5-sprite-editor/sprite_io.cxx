@@ -90,5 +90,5 @@ void sprite_io::save(const std::vector<sprite>& list, std::ostream& ss)
         ss << left << setw(12) << "angle: " << spr.rotation() << '\n';
     };
 
-    std::for_each(begin(list), end(list), save_one_sprite);
+    std::ranges::for_each(list, save_one_sprite);
 }

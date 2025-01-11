@@ -5,6 +5,7 @@
 #include <cstring>
 #include <iomanip>
 #include <iostream>
+#include <numbers>
 #include <string>
 
 #include <SDL3/SDL.h>
@@ -174,7 +175,7 @@ int main(int /*argc*/, char* /*argv*/[])
                 break;
             case 2:
                 clog << "current music pos: "
-                     << loaded_audio_buff.current_pos /
+                     << loaded_audio_buff.current_pos / // NOLINT
                             double(loaded_audio_buff.size) * 100
                      << " %" << endl;
                 break;
@@ -185,7 +186,7 @@ int main(int /*argc*/, char* /*argv*/[])
 
                 double time_in_minutes = double(loaded_audio_buff.size) /
                                          audio_spec_from_file.channels /
-                                         format_size /
+                                         format_size / // NOLINT
                                          audio_spec_from_file.freq / 60;
 
                 double minutes;
@@ -268,11 +269,11 @@ static void audio_callback(void* userdata, uint8_t* stream, int len)
     start  = finish;
     finish = std::chrono::high_resolution_clock::now();
 
-    size_t stream_len = static_cast<size_t>(len);
+    auto stream_len = static_cast<size_t>(len);
     // silence
     std::memset(stream, 0, static_cast<size_t>(len));
 
-    audio_buff* audio_buff_data = reinterpret_cast<audio_buff*>(userdata);
+    auto* audio_buff_data = reinterpret_cast<audio_buff*>(userdata);
     assert(audio_buff_data != nullptr);
 
     if (audio_buff_data->note.frequncy != 0)
@@ -280,15 +281,16 @@ static void audio_callback(void* userdata, uint8_t* stream, int len)
         size_t num_samples = stream_len / 2 / 2;
         double dt          = 1.0 / 48000.0;
 
-        int16_t* output = reinterpret_cast<int16_t*>(stream);
+        auto* output = reinterpret_cast<int16_t*>(stream);
 
         for (size_t sample = 0; sample < num_samples; ++sample)
         {
-            double omega_t = audio_buff_data->note.time * 2.0 * 3.1415926 *
-                             audio_buff_data->note.frequncy;
+            double omega_t = audio_buff_data->note.time * 2.0 *
+                             std::numbers::pi *
+                             audio_buff_data->note.frequncy; // NOLINT
             double curr_sample =
                 std::numeric_limits<int16_t>::max() * sin(omega_t);
-            int16_t curr_val = static_cast<int16_t>(curr_sample);
+            auto curr_val = static_cast<int16_t>(curr_sample);
 
             switch (channels)
             {

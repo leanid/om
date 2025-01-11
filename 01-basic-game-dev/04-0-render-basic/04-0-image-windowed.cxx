@@ -2,15 +2,12 @@
 
 #include <SDL3/SDL.h>
 
-#include <bitset>
 #include <cmath>
 #include <cstdlib>
 
-#include <algorithm>
-#include <chrono>
 #include <iostream>
 #include <numbers>
-
+// NOLINTNEXTLINE
 int main(int, char**)
 {
     using namespace std;
@@ -116,8 +113,8 @@ int main(int, char**)
         vertex vertex_shader(const vertex& v_in) override
         {
             vertex out = v_in;
-            out.x -= (320 / 2);
-            out.y -= (240 / 2);
+            out.x -= (320.0 / 2);
+            out.y -= (240.0 / 2);
 
             out.x *= 0.5;
             out.y *= 0.5;
@@ -129,8 +126,8 @@ int main(int, char**)
             out.x        = x * std::cos(alpha) - y * std::sin(alpha);
             out.y        = x * std::sin(alpha) + y * std::cos(alpha);
 
-            out.x += (320 / 2);
-            out.y += (240 / 2);
+            out.x += (320.0 / 2.0);
+            out.y += (240.0 / 2.0);
 
             return out;
         }
@@ -184,15 +181,15 @@ int main(int, char**)
                 interpolated_render.set_gfx_program(*current_program);
             }
             else if (e.type == SDL_EVENT_MOUSE_MOTION)
-            {
+            { // NOLINT
             }
             else if (e.type == SDL_EVENT_MOUSE_WHEEL)
-            {
+            { // NOLINT
             }
         }
 
         interpolated_render.clear(black);
-        double time_from_start = SDL_GetTicks() / 1000.0;
+        double time_from_start = static_cast<double>(SDL_GetTicks()) / 1000.0;
         current_program->set_uniforms(uniforms{ .f0       = 0,
                                                 .f1       = 0,
                                                 .f2       = 0,

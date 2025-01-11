@@ -1,5 +1,3 @@
-#include <algorithm>
-#include <array>
 #include <cassert>
 #include <cmath>
 #include <cstdlib>
@@ -38,17 +36,17 @@ om::tri0 to_om_triangle(const loader_obj&       mesh_data,
     const float scale_y = 1.f;
 
     const loader_obj::vertex& v0 = mesh_data.vertexes().at(face.p0.vtn.v - 1);
-    result.v[0].p                = om::pos{ v0.x * scale_x, v0.y * scale_y };
+    result.v[0].p = om::pos{ .x = v0.x * scale_x, .y = v0.y * scale_y };
 
     const loader_obj::vertex& v1 = mesh_data.vertexes().at(face.p1.vtn.v - 1);
-    result.v[1].p                = om::pos{ v1.x * scale_x, v1.y * scale_y };
+    result.v[1].p = om::pos{ .x = v1.x * scale_x, .y = v1.y * scale_y };
 
     const loader_obj::vertex& v2 = mesh_data.vertexes().at(face.p2.vtn.v - 1);
-    result.v[2].p                = om::pos{ v2.x * scale_x, v2.y * scale_y };
+    result.v[2].p = om::pos{ .x = v2.x * scale_x, .y = v2.y * scale_y };
 
     return result;
 }
-
+// NOLINTNEXTLINE
 int main(int /*argc*/, char* /*argv*/[])
 {
     std::ifstream file("./01-basic-game-dev/05-4-extra-morphing/circle.obj",
