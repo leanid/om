@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <iomanip>
 #include <iostream>
+#include <limits>
 #include <ranges>
 #include <set>
 #include <sstream>
@@ -138,6 +139,7 @@ render::render(platform_interface& platform, hints hints)
 
 render::~render()
 {
+    devices.logical.waitIdle();
     destroy_synchronization_objects();
     log << "vulkan synchronization objects destroyed\n";
     devices.logical.freeCommandBuffers(graphics_command_pool, command_buffers);
@@ -172,11 +174,57 @@ render::~render()
 
 void render::draw()
 {
+    // breafly:
     // 1. Acquire available image to draw and fire semaphore when it's ready
     // 2. Submit command buffer to queue for execution. Making sure that waits
     //    for the image to be available before drawing and signals when it has
     //    finished drawing
     // 3. Present image to screen when it has signaled finished drawing
+
+    // Get Image from swapchain
+    auto image_index = devices.logical.acquireNextImageKHR(
+        swapchain,
+        std::numeric_limits<uint64_t>::max(),
+        semaphores.image_available,
+        nullptr);
+
+    if (image_index.result != vk::Result::eSuccess)
+    {
+        throw std::runtime_error("error: can't acquire next image");
+    }
+
+    // Submit command buffer to queue
+
+    vk::PipelineStageFlags wait_stages =
+        vk::PipelineStageFlagBits::eColorAttachmentOutput;
+
+    auto& cmd_buffer = command_buffers.at(image_index.value);
+
+    vk::SubmitInfo submit_info{};
+    submit_info.waitSemaphoreCount   = 1;
+    submit_info.pWaitSemaphores      = &semaphores.image_available;
+    submit_info.pWaitDstStageMask    = &wait_stages;
+    submit_info.commandBufferCount   = 1;
+    submit_info.pCommandBuffers      = &cmd_buffer;
+    submit_info.signalSemaphoreCount = 1;
+    submit_info.pSignalSemaphores    = &semaphores.render_finished;
+
+    render_queue.submit(submit_info, {});
+
+    // Present image to screen
+    vk::PresentInfoKHR present_info{};
+    present_info.waitSemaphoreCount = 1;
+    present_info.pWaitSemaphores    = &semaphores.render_finished;
+    present_info.swapchainCount     = 1;
+    present_info.pSwapchains        = &swapchain;
+    present_info.pImageIndices      = &image_index.value;
+
+    auto result = presentation_queue.presentKHR(present_info);
+
+    if (result != vk::Result::eSuccess)
+    {
+        throw std::runtime_error("error: can't present image to screen");
+    }
 }
 
 void render::create_instance(bool enable_validation_layers,
@@ -1167,8 +1215,8 @@ void render::create_synchronization_objects()
 
 void render::destroy_synchronization_objects()
 {
-    devices.logical.destroy(semaphores.image_available);
     devices.logical.destroy(semaphores.render_finished);
+    devices.logical.destroy(semaphores.image_available);
 }
 
 vk::Extent2D render::choose_best_swapchain_image_resolution(
