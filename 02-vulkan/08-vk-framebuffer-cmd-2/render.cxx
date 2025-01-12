@@ -198,7 +198,7 @@ void render::draw()
         swapchain,
         std::numeric_limits<uint64_t>::max(),
         synchronization.image_available.at(current_frame_index),
-        synchronization.gpu_fence.at(current_frame_index));
+        {});
 
     if (image_index.result != vk::Result::eSuccess)
     {
