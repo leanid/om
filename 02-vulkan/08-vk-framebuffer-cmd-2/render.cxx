@@ -194,72 +194,80 @@ void render::draw()
     // 3. Present image to screen when it has signaled finished drawing
 
     // Get Image from swapchain
-    auto image_index = devices.logical.acquireNextImageKHR(
-        swapchain,
-        std::numeric_limits<uint64_t>::max(),
-        synchronization.image_available.at(current_frame_index),
-        {});
-
-    if (image_index.result != vk::Result::eSuccess)
+    uint32_t index_from_swapchain = std::numeric_limits<uint32_t>::max();
     {
-        throw std::runtime_error("error: can't acquire next image");
-    }
+        auto fence_op_result = devices.logical.waitForFences(
+            1,
+            &synchronization.gpu_fence.at(current_frame_index),
+            vk::True,
+            std::numeric_limits<uint64_t>::max());
 
-    auto fence_op_result = devices.logical.waitForFences(
-        1,
-        &synchronization.gpu_fence.at(current_frame_index),
-        vk::True,
-        std::numeric_limits<uint64_t>::max());
+        if (fence_op_result != vk::Result::eSuccess)
+        {
+            throw std::runtime_error("error: can't wait for fence");
+        }
 
-    if (fence_op_result != vk::Result::eSuccess)
-    {
-        throw std::runtime_error("error: can't wait for fence");
-    }
+        fence_op_result = devices.logical.resetFences(
+            1, &synchronization.gpu_fence.at(current_frame_index));
 
-    fence_op_result = devices.logical.resetFences(
-        1, &synchronization.gpu_fence.at(current_frame_index));
+        if (fence_op_result != vk::Result::eSuccess)
+        {
+            throw std::runtime_error("error: can't reset fence");
+        }
 
-    if (fence_op_result != vk::Result::eSuccess)
-    {
-        throw std::runtime_error("error: can't reset fence");
+        auto image_index = devices.logical.acquireNextImageKHR(
+            swapchain,
+            std::numeric_limits<uint64_t>::max(),
+            synchronization.image_available.at(current_frame_index),
+            {});
+
+        if (image_index.result != vk::Result::eSuccess)
+        {
+            throw std::runtime_error("error: can't acquire next image");
+        }
+        index_from_swapchain = image_index.value;
     }
 
     // Submit command buffer to queue
+    {
+        vk::PipelineStageFlags wait_stages =
+            vk::PipelineStageFlagBits::eColorAttachmentOutput;
 
-    vk::PipelineStageFlags wait_stages =
-        vk::PipelineStageFlagBits::eColorAttachmentOutput;
+        auto& cmd_buffer = command_buffers.at(index_from_swapchain);
 
-    auto& cmd_buffer = command_buffers.at(image_index.value);
+        vk::SubmitInfo submit_info{};
+        submit_info.waitSemaphoreCount = 1;
+        submit_info.pWaitSemaphores =
+            &synchronization.image_available.at(current_frame_index);
+        submit_info.pWaitDstStageMask    = &wait_stages;
+        submit_info.commandBufferCount   = 1;
+        submit_info.pCommandBuffers      = &cmd_buffer;
+        submit_info.signalSemaphoreCount = 1;
+        submit_info.pSignalSemaphores =
+            &synchronization.render_finished.at(current_frame_index);
 
-    vk::SubmitInfo submit_info{};
-    submit_info.waitSemaphoreCount = 1;
-    submit_info.pWaitSemaphores =
-        &synchronization.image_available.at(current_frame_index);
-    submit_info.pWaitDstStageMask    = &wait_stages;
-    submit_info.commandBufferCount   = 1;
-    submit_info.pCommandBuffers      = &cmd_buffer;
-    submit_info.signalSemaphoreCount = 1;
-    submit_info.pSignalSemaphores =
-        &synchronization.render_finished.at(current_frame_index);
-
-    render_queue.submit(submit_info,
-                        // set fence to vk::True after queue finish execution
-                        synchronization.gpu_fence.at(current_frame_index));
+        render_queue.submit(
+            submit_info,
+            // set fence to vk::True after queue finish execution
+            synchronization.gpu_fence.at(current_frame_index));
+    }
 
     // Present image to screen
-    vk::PresentInfoKHR present_info{};
-    present_info.waitSemaphoreCount = 1;
-    present_info.pWaitSemaphores =
-        &synchronization.render_finished.at(current_frame_index);
-    present_info.swapchainCount = 1;
-    present_info.pSwapchains    = &swapchain;
-    present_info.pImageIndices  = &image_index.value;
-
-    auto result = presentation_queue.presentKHR(present_info);
-
-    if (result != vk::Result::eSuccess)
     {
-        throw std::runtime_error("error: can't present image to screen");
+        vk::PresentInfoKHR present_info{};
+        present_info.waitSemaphoreCount = 1;
+        present_info.pWaitSemaphores =
+            &synchronization.render_finished.at(current_frame_index);
+        present_info.swapchainCount = 1;
+        present_info.pSwapchains    = &swapchain;
+        present_info.pImageIndices  = &index_from_swapchain;
+
+        auto result = presentation_queue.presentKHR(present_info);
+
+        if (result != vk::Result::eSuccess)
+        {
+            throw std::runtime_error("error: can't present image to screen");
+        }
     }
 
     current_frame_index = (current_frame_index + 1) % max_frames_in_gpu;
@@ -1275,6 +1283,7 @@ void render::create_synchronization_objects()
                           [this, i = 0]() mutable
                           {
                               vk::FenceCreateInfo info{};
+                              info.flags = vk::FenceCreateFlagBits::eSignaled;
                               auto fence = devices.logical.createFence(info);
                               set_object_name(fence,
                                               "fence_" + std::to_string(i++));
