@@ -4,11 +4,11 @@
 #include <ios>
 #include <iostream>
 #include <memory>
+#include <thread>
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_hints.h>
 #include <SDL3/SDL_vulkan.h>
-#include <thread>
 
 #include "platform_sdl3.hxx"
 
@@ -94,6 +94,29 @@ int main(int argc, char** argv)
                                  vk_debug_callback_ext };
         render        render(platform, hints);
 
+        bool running = true;
+        while (running)
+        {
+            SDL_Event event;
+            while (SDL_PollEvent(&event))
+            {
+                switch (event.type) // NOLINT
+                {
+                    case SDL_EVENT_QUIT:
+                        running = false;
+                        break;
+                    case SDL_EVENT_KEY_DOWN:
+                        if (event.key.key == SDLK_ESCAPE)
+                            running = false;
+                        break;
+                }
+            }
+
+            render.draw();
+
+            // running = false;
+            // std::this_thread::sleep_for(std::chrono::seconds(2));
+        }
         render.draw();
 
         std::this_thread::sleep_for(std::chrono::seconds(2));

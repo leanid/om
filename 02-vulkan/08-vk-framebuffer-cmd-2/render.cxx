@@ -9,12 +9,16 @@
 #include <ranges>
 #include <set>
 #include <sstream>
+#include <stacktrace>
 #include <stdexcept>
 #include <string_view>
 #include <tuple>
 
 namespace om::vulkan
 {
+/// @breaf maximum number of frames to be processed simultaneously by the GPU
+static constexpr size_t max_frames_in_gpu = 2;
+
 /// @concurency note
 /// A callback will always be executed in the same thread as the originating
 /// Vulkan call.
@@ -77,7 +81,8 @@ debug_callback(VkDebugUtilsMessageSeverityFlagBitsEXT      severity,
             break;
     }
 
-    const char* severity_name = "unknown";
+    const char* severity_name    = "unknown";
+    bool        print_stacktrace = false;
 
     switch (severity)
     {
@@ -91,7 +96,8 @@ debug_callback(VkDebugUtilsMessageSeverityFlagBitsEXT      severity,
             severity_name = "warning";
             break;
         case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
-            severity_name = "error";
+            severity_name    = "error";
+            print_stacktrace = true;
             break;
         default:
             break;
@@ -102,6 +108,12 @@ debug_callback(VkDebugUtilsMessageSeverityFlagBitsEXT      severity,
 
     cerr << "vk: [" << severity_name << "] [" << msg_type_name << "] " << msg
          << "\n    objects: " << msg_extended << endl;
+
+    if (print_stacktrace)
+    {
+        cerr << std::stacktrace::current() << endl;
+        std::terminate();
+    }
 
     return VK_FALSE;
 }
@@ -185,12 +197,31 @@ void render::draw()
     auto image_index = devices.logical.acquireNextImageKHR(
         swapchain,
         std::numeric_limits<uint64_t>::max(),
-        semaphores.image_available,
-        nullptr);
+        synchronization.image_available.at(current_frame_index),
+        synchronization.gpu_fence.at(current_frame_index));
 
     if (image_index.result != vk::Result::eSuccess)
     {
         throw std::runtime_error("error: can't acquire next image");
+    }
+
+    auto fence_op_result = devices.logical.waitForFences(
+        1,
+        &synchronization.gpu_fence.at(current_frame_index),
+        vk::True,
+        std::numeric_limits<uint64_t>::max());
+
+    if (fence_op_result != vk::Result::eSuccess)
+    {
+        throw std::runtime_error("error: can't wait for fence");
+    }
+
+    fence_op_result = devices.logical.resetFences(
+        1, &synchronization.gpu_fence.at(current_frame_index));
+
+    if (fence_op_result != vk::Result::eSuccess)
+    {
+        throw std::runtime_error("error: can't reset fence");
     }
 
     // Submit command buffer to queue
@@ -201,23 +232,28 @@ void render::draw()
     auto& cmd_buffer = command_buffers.at(image_index.value);
 
     vk::SubmitInfo submit_info{};
-    submit_info.waitSemaphoreCount   = 1;
-    submit_info.pWaitSemaphores      = &semaphores.image_available;
+    submit_info.waitSemaphoreCount = 1;
+    submit_info.pWaitSemaphores =
+        &synchronization.image_available.at(current_frame_index);
     submit_info.pWaitDstStageMask    = &wait_stages;
     submit_info.commandBufferCount   = 1;
     submit_info.pCommandBuffers      = &cmd_buffer;
     submit_info.signalSemaphoreCount = 1;
-    submit_info.pSignalSemaphores    = &semaphores.render_finished;
+    submit_info.pSignalSemaphores =
+        &synchronization.render_finished.at(current_frame_index);
 
-    render_queue.submit(submit_info, {});
+    render_queue.submit(submit_info,
+                        // set fence to vk::True after queue finish execution
+                        synchronization.gpu_fence.at(current_frame_index));
 
     // Present image to screen
     vk::PresentInfoKHR present_info{};
     present_info.waitSemaphoreCount = 1;
-    present_info.pWaitSemaphores    = &semaphores.render_finished;
-    present_info.swapchainCount     = 1;
-    present_info.pSwapchains        = &swapchain;
-    present_info.pImageIndices      = &image_index.value;
+    present_info.pWaitSemaphores =
+        &synchronization.render_finished.at(current_frame_index);
+    present_info.swapchainCount = 1;
+    present_info.pSwapchains    = &swapchain;
+    present_info.pImageIndices  = &image_index.value;
 
     auto result = presentation_queue.presentKHR(present_info);
 
@@ -225,6 +261,8 @@ void render::draw()
     {
         throw std::runtime_error("error: can't present image to screen");
     }
+
+    current_frame_index = (current_frame_index + 1) % max_frames_in_gpu;
 }
 
 void render::create_instance(bool enable_validation_layers,
@@ -1207,17 +1245,54 @@ void render::record_commands()
 
 void render::create_synchronization_objects()
 {
-    vk::SemaphoreCreateInfo semaphore_info{};
-    semaphores.image_available =
-        devices.logical.createSemaphore(semaphore_info);
-    semaphores.render_finished =
-        devices.logical.createSemaphore(semaphore_info);
+    synchronization.image_available.resize(max_frames_in_gpu);
+    synchronization.render_finished.resize(max_frames_in_gpu);
+    synchronization.gpu_fence.resize(max_frames_in_gpu);
+
+    struct gen_sem
+    {
+        render&     self;
+        std::string name;
+        int         index;
+
+        vk::Semaphore operator()()
+        {
+            auto semaphore = self.devices.logical.createSemaphore({});
+            self.set_object_name(semaphore, name + std::to_string(index++));
+            return semaphore;
+        }
+    };
+
+    std::ranges::generate(
+        synchronization.image_available,
+        gen_sem{ .self = *this, .name = "image_available_", .index = 0 });
+
+    std::ranges::generate(
+        synchronization.render_finished,
+        gen_sem{ .self = *this, .name = "render_finished_", .index = 0 });
+
+    std::ranges::generate(synchronization.gpu_fence,
+                          [this, i = 0]() mutable
+                          {
+                              vk::FenceCreateInfo info{};
+                              auto fence = devices.logical.createFence(info);
+                              set_object_name(fence,
+                                              "fence_" + std::to_string(i++));
+                              return fence;
+                          });
 }
 
 void render::destroy_synchronization_objects()
 {
-    devices.logical.destroy(semaphores.render_finished);
-    devices.logical.destroy(semaphores.image_available);
+    auto destroy_sem = [this](vk::Semaphore& semaphore)
+    { devices.logical.destroy(semaphore); };
+
+    std::ranges::for_each(synchronization.image_available, destroy_sem);
+    std::ranges::for_each(synchronization.render_finished, destroy_sem);
+
+    std::ranges::for_each(synchronization.gpu_fence,
+                          [this](vk::Fence& fence)
+                          { devices.logical.destroy(fence); });
 }
 
 vk::Extent2D render::choose_best_swapchain_image_resolution(

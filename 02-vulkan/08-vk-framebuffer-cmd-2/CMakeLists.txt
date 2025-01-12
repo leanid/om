@@ -28,6 +28,19 @@ target_link_libraries(
             Vulkan::Vulkan
             SDL3::SDL3-shared)
 
+# cmake-format: off
+target_link_libraries(
+08-vk-framebuffer-cmd-2
+PRIVATE
+    $<$<CXX_COMPILER_ID:GNU>:
+    $<IF:$<VERSION_GREATER_EQUAL:${CMAKE_CXX_COMPILER_VERSION},14.0.0>,
+        stdc++exp,
+        $<$<VERSION_GREATER_EQUAL:${CMAKE_CXX_COMPILER_VERSION},12.1.1>:
+            stdc++_libbacktrace>
+        >
+    >)
+# cmake-format: on
+
 # Find the shader files
 file(GLOB_RECURSE shader_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
      ${CMAKE_CURRENT_SOURCE_DIR}/shaders/*.vert

@@ -161,7 +161,7 @@ private:
     friend std::ostream& operator<<(std::ostream&              os,
                                     const swapchain_details_t& details);
     // debug functions
-    void set_object_name(auto object, const char* name)
+    void set_object_name(auto object, const std::string& name)
     {
         if (!hints_.enable_debug_callback_ext)
         {
@@ -172,7 +172,7 @@ private:
         name_info.objectType   = object.objectType;
         name_info.objectHandle = reinterpret_cast<uint64_t>(
             static_cast<decltype(object)::NativeType>(object));
-        name_info.pObjectName = name;
+        name_info.pObjectName = name.c_str();
         devices.logical.setDebugUtilsObjectNameEXT(name_info, dynamic_loader);
     }
 
@@ -187,6 +187,9 @@ private:
     vk::DispatchLoaderDynamic dynamic_loader;
     // debug extension is not available on macOS
     vk::DebugUtilsMessengerEXT debug_extension;
+
+    // mod(max_frames_in_gpu) used to avoid blocking the CPU
+    uint32_t current_frame_index = 0;
 
     struct
     {
@@ -218,9 +221,10 @@ private:
     // sinhronization
     struct
     {
-        vk::Semaphore image_available{};
-        vk::Semaphore render_finished{};
-    } semaphores;
+        std::vector<vk::Semaphore> image_available{}; // GPU to GPU only sync
+        std::vector<vk::Semaphore> render_finished{}; // GPU to CPU sync
+        std::vector<vk::Fence>     gpu_fence{};
+    } synchronization;
 
     struct queue_family_indexes
     {
