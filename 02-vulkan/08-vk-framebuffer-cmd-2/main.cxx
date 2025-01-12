@@ -117,9 +117,6 @@ int main(int argc, char** argv)
             // running = false;
             // std::this_thread::sleep_for(std::chrono::seconds(2));
         }
-        render.draw();
-
-        std::this_thread::sleep_for(std::chrono::seconds(2));
     }
     catch (const vk::SystemError& ex)
     {

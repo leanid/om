@@ -20,6 +20,7 @@ target_include_directories(
     08-vk-framebuffer-cmd-2
     PRIVATE
         $<$<PLATFORM_ID:Windows,Darwin,Linux>:${CMAKE_SOURCE_DIR}/support/cxx_lib/>
+        ${CMAKE_SOURCE_DIR}/support/cxx_lib/
     )
 target_link_libraries(
     08-vk-framebuffer-cmd-2

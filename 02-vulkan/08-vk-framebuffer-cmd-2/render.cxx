@@ -14,6 +14,8 @@
 #include <string_view>
 #include <tuple>
 
+#include "experimental/report_duration.hxx"
+
 namespace om::vulkan
 {
 /// @breaf maximum number of frames to be processed simultaneously by the GPU
@@ -151,7 +153,12 @@ render::render(platform_interface& platform, hints hints)
 
 render::~render()
 {
-    devices.logical.waitIdle();
+    om::tools::report_duration duration{ log, "render::~render()" };
+    {
+        om::tools::report_duration duration{ log,
+                                             "devices.logical.waitIdle()" };
+        devices.logical.waitIdle();
+    }
     destroy_synchronization_objects();
     log << "vulkan synchronization objects destroyed\n";
     devices.logical.freeCommandBuffers(graphics_command_pool, command_buffers);
@@ -1210,7 +1217,8 @@ void render::record_commands()
 {
     vk::CommandBufferBeginInfo begin_info{};
     // can be submitted multiple times without waiting for previous submission
-    begin_info.flags = vk::CommandBufferUsageFlagBits::eSimultaneousUse;
+    // we do not need to use simutaneous use cause we have start using fence
+    // begin_info.flags = vk::CommandBufferUsageFlagBits::eSimultaneousUse;
 
     vk::RenderPassBeginInfo render_pass_info{};
     render_pass_info.renderPass        = render_path;
