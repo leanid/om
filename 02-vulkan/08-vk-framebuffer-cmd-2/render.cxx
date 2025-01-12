@@ -1022,9 +1022,10 @@ void render::create_graphics_pipeline()
         vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
     // blending use equation:
     // (srcBlendFactor * new color) BlendOp (dstBlendFactor * old color)
-    blend_attachment.srcAlphaBlendFactor = vk::BlendFactor::eSrcAlpha;
+    blend_attachment.srcColorBlendFactor = vk::BlendFactor::eSrcAlpha;
     blend_attachment.dstColorBlendFactor = vk::BlendFactor::eOneMinusSrcAlpha;
     blend_attachment.colorBlendOp        = vk::BlendOp::eAdd;
+
     blend_attachment.srcAlphaBlendFactor = vk::BlendFactor::eOne;
     blend_attachment.dstAlphaBlendFactor = vk::BlendFactor::eZero;
     blend_attachment.alphaBlendOp        = vk::BlendOp::eAdd;
