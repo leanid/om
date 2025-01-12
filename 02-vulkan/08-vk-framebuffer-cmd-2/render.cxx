@@ -918,9 +918,9 @@ void render::create_graphics_pipeline()
 {
     // Static Pipeline States
     auto vertex_shader_code = platform_.get_file_content(
-        "./02-vulkan/07-vk-pipeline-2/shaders/shader.vert.spv");
+        "./02-vulkan/08-vk-framebuffer-cmd-2/shaders/shader.vert.spv");
     auto fragment_shader_code = platform_.get_file_content(
-        "./02-vulkan/07-vk-pipeline-2/shaders/shader.frag.spv");
+        "./02-vulkan/08-vk-framebuffer-cmd-2/shaders/shader.frag.spv");
     // compile shaders from spir-v into gpu code
     vk::ShaderModule vertex = create_shader(vertex_shader_code.as_span());
     std::experimental::scope_exit vertex_cleanup([this, &vertex]()
@@ -1179,11 +1179,11 @@ void render::record_commands()
     auto record_commands =
         [&](std::tuple<vk::CommandBuffer&, vk::Framebuffer&> cmd_and_fb)
     {
-        auto& [buffer, framebuffer] = cmd_and_fb;
+        auto& [buffer, fb] = cmd_and_fb;
         // start recording
         buffer.begin(begin_info);
         {
-            render_pass_info.framebuffer = framebuffer;
+            render_pass_info.framebuffer = fb;
             buffer.beginRenderPass(render_pass_info,
                                    vk::SubpassContents::eInline);
             {
