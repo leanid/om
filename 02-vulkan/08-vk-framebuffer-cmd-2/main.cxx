@@ -22,7 +22,7 @@ int main(int argc, char** argv)
     cerr.exceptions(ios_base::failbit | ios_base::badbit);
 
     bool verbose               = argc > 1 && argv[1] == "-v"sv;
-    bool vk_validation_layer   = true;
+    bool vk_validation_layer   = verbose;
     bool vk_debug_callback_ext = true;
 
     struct null_buffer final : std::streambuf
