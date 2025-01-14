@@ -3,11 +3,10 @@ cmake_minimum_required(VERSION 3.30)
 project(29-localization CXX)
 
 find_package(
-    Boost
-    1.86.0 # should match version in root CMakeLists.txt
+    Boost 1.86.0 # should match version in root CMakeLists.txt
     EXACT # Minimum or EXACT version e.g. 1.67.0
     # REQUIRED # Fail with error if Boost is not found
-    COMPONENTS locale # Boost libraries by their canonical name
+    COMPONENTS locale algorithm # Boost libraries by their canonical name
     # REQUIRED
     # e.g. "date_time" for "libboost_date_time"
     #[OPTIONAL_COMPONENTS <libs>...]
@@ -33,19 +32,19 @@ endif()
 message(STATUS "xgettext found: ${XGETTEXT_EXECUTABLE}")
 add_custom_command(
     OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/messages.pot
-    COMMAND xgettext -o ${CMAKE_CURRENT_SOURCE_DIR}/messages.pot
-            --add-comments="TRANSLATORS:"
-            --keyword=translate
-            --keyword=translate:1,2
-            --keyword=translate:1,2,3 # --flag=translate:1:pass-c-format
-            --directory=${CMAKE_CURRENT_SOURCE_DIR}
-            # --join-existing
-            ${CMAKE_CURRENT_SOURCE_DIR}/main.cxx
+    COMMAND
+        xgettext -o ${CMAKE_CURRENT_SOURCE_DIR}/messages.pot
+        --add-comments="TRANSLATORS:" --keyword=translate
+        --keyword=translate:1,2
+        --keyword=translate:1,2,3 # --flag=translate:1:pass-c-format
+        --directory=${CMAKE_CURRENT_SOURCE_DIR}
+        # --join-existing
+        ${CMAKE_CURRENT_SOURCE_DIR}/main.cxx
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/main.cxx
     VERBATIM
-    COMMENT "generating localization template [messages.pot] from source main.cxx"
-)
-add_custom_target(generate_messages ALL DEPENDS
-                  ${CMAKE_CURRENT_SOURCE_DIR}/messages.pot)
+    COMMENT
+        "generating localization template [messages.pot] from source main.cxx")
+add_custom_target(generate_messages ALL
+                  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/messages.pot)
 
 add_dependencies(29-localization generate_messages)

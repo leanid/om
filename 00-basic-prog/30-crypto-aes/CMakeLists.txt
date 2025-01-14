@@ -4,9 +4,13 @@ project(aes128 CXX)
 
 find_package(OpenSSL #REQUIRED
              )
+if(NOT OpenSSL_FOUND)
+    message(STATUS "OpenSSL not found, skip this example")
+    return()
+endif()
+
 find_package(
-    Boost
-    1.86.0 # same version with same compiler settings
+    Boost 1.86.0 # same version with same compiler settings
     EXACT # Minimum or EXACT version e.g. 1.67.0
     # REQUIRED # Fail with error if Boost is not found
     COMPONENTS program_options # Boost libraries by their canonical name
