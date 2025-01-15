@@ -14,14 +14,14 @@ add_executable(
     platform_sdl3.hxx
     render.cxx
     render.hxx)
-target_compile_definitions(08-vk-framebuffer-cmd-2 PRIVATE VK_NULL_HANDLE=nullptr)
+target_compile_definitions(08-vk-framebuffer-cmd-2
+                           PRIVATE VK_NULL_HANDLE=nullptr)
 target_compile_features(08-vk-framebuffer-cmd-2 PRIVATE cxx_std_23)
 target_include_directories(
     08-vk-framebuffer-cmd-2
     PRIVATE
         $<$<PLATFORM_ID:Windows,Darwin,Linux>:${CMAKE_SOURCE_DIR}/support/cxx_lib/>
-        ${CMAKE_SOURCE_DIR}/support/cxx_lib/
-    )
+        ${CMAKE_SOURCE_DIR}/support/cxx_lib/)
 target_link_libraries(
     08-vk-framebuffer-cmd-2
     PRIVATE om::io::read_file
@@ -57,6 +57,7 @@ foreach(shader_file ${shader_files})
         COMMAND
             Vulkan::glslangValidator -V
             ${CMAKE_CURRENT_SOURCE_DIR}/${shader_file} -o ${spirv_file}
+        VERBATIM
         DEPENDS ${shader_file})
 
     list(APPEND spirv_files ${spirv_file})
