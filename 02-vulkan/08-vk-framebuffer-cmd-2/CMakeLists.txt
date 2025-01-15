@@ -55,7 +55,7 @@ foreach(shader_file ${shader_files})
     add_custom_command(
         OUTPUT ${spirv_file}
         COMMAND
-            Vulkan::glslangValidator -V
+            Vulkan::glslangValidator -V --target-env vulkan1.0
             ${CMAKE_CURRENT_SOURCE_DIR}/${shader_file} -o ${spirv_file}
         VERBATIM
         DEPENDS ${shader_file})
