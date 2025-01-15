@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <array>
 #include <cstdlib>
+#include <exception>
 #include <iomanip>
 #include <iostream>
 #include <limits>
@@ -318,11 +319,18 @@ void render::create_instance(bool enable_validation_layers,
     if (enable_validation_layers)
     {
         const char* layer = "VK_LAYER_KHRONOS_validation";
-        validate_instance_layer_present(layer);
+        try
+        {
+            validate_instance_layer_present(layer);
 
-        instance_create_info.enabledLayerCount   = 1;
-        instance_create_info.ppEnabledLayerNames = &layer;
-        log << "enable layer: " << layer << '\n';
+            instance_create_info.enabledLayerCount   = 1;
+            instance_create_info.ppEnabledLayerNames = &layer;
+            log << "enable layer: " << layer << '\n';
+        }
+        catch (std::exception& e)
+        {
+            log << e.what() << std::endl;
+        }
     }
     else
     {
