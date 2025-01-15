@@ -291,7 +291,9 @@ void render::draw()
 void render::create_instance(bool enable_validation_layers,
                              bool enable_debug_callback_ext)
 {
-    vk::ApplicationInfo    application_info;
+    vk::ApplicationInfo application_info;
+    application_info.apiVersion =
+        VK_API_VERSION_1_0; // without this validation of SPIR-V failed
     vk::InstanceCreateInfo instance_create_info;
     instance_create_info.pApplicationInfo = &application_info;
 
