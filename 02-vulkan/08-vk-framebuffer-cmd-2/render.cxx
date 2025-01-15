@@ -36,11 +36,18 @@ static constexpr size_t max_frames_in_gpu = 2;
 /// @return VkBool32 The callback returns a VkBool32, which is interpreted in a
 /// layer-specified manner. The application should always return VK_FALSE. The
 /// VK_TRUE value is reserved for use in layer development.
+/// c++ vulkan.hpp declaration from Vulkan SDK 1.4.304
+///   typedef vk::Bool32( VKAPI_PTR * PFN_DebugUtilsMessengerCallbackEXT )(
+///    vk::DebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+///    vk::DebugUtilsMessageTypeFlagsEXT messageTypes,
+///    const vk::DebugUtilsMessengerCallbackDataEXT * pCallbackData,
+///    void * pUserData );
+
 static VKAPI_ATTR vk::Bool32 VKAPI_CALL
-debug_callback(VkDebugUtilsMessageSeverityFlagBitsEXT      severity,
-               VkDebugUtilsMessageTypeFlagsEXT             msg_type,
-               const VkDebugUtilsMessengerCallbackDataEXT* data,
-               void*                                       user_data)
+debug_callback(vk::DebugUtilsMessageSeverityFlagBitsEXT      severity,
+               vk::DebugUtilsMessageTypeFlagsEXT             msg_type,
+               const vk::DebugUtilsMessengerCallbackDataEXT* data,
+               void*                                         user_data)
 {
     using namespace std;
 
@@ -48,24 +55,7 @@ debug_callback(VkDebugUtilsMessageSeverityFlagBitsEXT      severity,
     const char* msg           = data->pMessage;
     string      msg_extended;
 
-    auto build_list_of_objects_info =
-        [](const VkDebugUtilsObjectNameInfoEXT* objects,
-           uint32_t                             count) -> string
-    {
-        stringstream ss;
-        for_each_n(objects,
-                   count,
-                   [&ss](const auto& object)
-                   {
-                       vk::DebugUtilsObjectNameInfoEXT object_info = object;
-                       ss << "type: " << vk::to_string(object_info.objectType)
-                          << ' ';
-                       ss << "name: " << object_info.pObjectName << ' ';
-                   });
-        return ss.str();
-    };
-
-    switch (msg_type)
+    switch (static_cast<decltype(msg_type)::MaskType>(msg_type))
     {
         case VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT:
             msg_type_name = "general";
@@ -89,22 +79,39 @@ debug_callback(VkDebugUtilsMessageSeverityFlagBitsEXT      severity,
 
     switch (severity)
     {
-        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
+        case vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose:
             severity_name = "verbose";
             break;
-        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
+        case vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo:
             severity_name = "info";
             break;
-        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
+        case vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning:
             severity_name = "warning";
             break;
-        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
+        case vk::DebugUtilsMessageSeverityFlagBitsEXT::eError:
             severity_name    = "error";
             print_stacktrace = true;
             break;
         default:
             break;
     }
+
+    auto build_list_of_objects_info =
+        [](const vk::DebugUtilsObjectNameInfoEXT* objects,
+           uint32_t                               count) -> string
+    {
+        stringstream ss;
+        for_each_n(objects,
+                   count,
+                   [&ss](const auto& object)
+                   {
+                       vk::DebugUtilsObjectNameInfoEXT object_info = object;
+                       ss << "type: " << vk::to_string(object_info.objectType)
+                          << ' ';
+                       ss << "name: " << object_info.pObjectName << ' ';
+                   });
+        return ss.str();
+    };
 
     msg_extended =
         build_list_of_objects_info(data->pObjects, data->objectCount);
@@ -341,7 +348,7 @@ void render::create_instance(bool enable_validation_layers,
     log << "vulkan instance created\n";
 
     dynamic_loader =
-        vk::DispatchLoaderDynamic{ instance, vkGetInstanceProcAddr };
+        vk::detail::DispatchLoaderDynamic{ instance, vkGetInstanceProcAddr };
     log << "vulkan dynamic loader created\n";
 }
 

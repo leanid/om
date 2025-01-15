@@ -12,6 +12,7 @@
 
 #undef VULKAN_HPP_NO_EXCEPTIONS // exceptions are enabled by default
                                 // but we want to be explicit
+#define VULKAN_HPP_NAMESPACE vk // explicit namespace to help IDE
 #include <vulkan/vulkan.hpp>
 
 namespace om::vulkan
@@ -184,7 +185,7 @@ private:
     // vulkan main objects
     vk::Instance instance;
     // dynamic loader is used to load vulkan functions for extensions
-    vk::DispatchLoaderDynamic dynamic_loader;
+    vk::detail::DispatchLoaderDynamic dynamic_loader;
     // debug extension is not available on macOS
     vk::DebugUtilsMessengerEXT debug_extension;
 
