@@ -293,7 +293,7 @@ void render::create_instance(bool enable_validation_layers,
 {
     vk::ApplicationInfo application_info;
     application_info.apiVersion =
-        VK_API_VERSION_1_0; // without this validation of SPIR-V failed
+        VK_API_VERSION_1_3; // without this validation of SPIR-V failed
     vk::InstanceCreateInfo instance_create_info;
     instance_create_info.pApplicationInfo = &application_info;
 
@@ -988,7 +988,7 @@ void render::create_graphics_pipeline()
 {
     // Static Pipeline States
     auto vertex_shader_code = platform_.get_file_content(
-        "./02-vulkan/08-vk-framebuffer-cmd-2/shaders/shader.vert.spv");
+        "./02-vulkan/08-vk-framebuffer-cmd-2/shaders/shader.vert.slang.spv");
     auto fragment_shader_code = platform_.get_file_content(
         "./02-vulkan/08-vk-framebuffer-cmd-2/shaders/shader.frag.spv");
     // compile shaders from spir-v into gpu code
