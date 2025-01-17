@@ -80,9 +80,10 @@ class render
 public:
     struct hints
     {
-        bool verbose;
-        bool enable_validation_layers;
-        bool enable_debug_callback_ext;
+        std::string vulkan_version;
+        bool        verbose;
+        bool        enable_validation_layers;
+        bool        enable_debug_callback_ext;
     };
 
     explicit render(platform_interface& platform, hints hints);
