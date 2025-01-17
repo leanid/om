@@ -80,7 +80,8 @@ int main(int argc, char** argv)
         });
 
     std::unique_ptr<SDL_Window, decltype(&SDL_DestroyWindow)> window(
-        SDL_CreateWindow("04-vk-swapchain-1", 800, 600, SDL_WINDOW_VULKAN),
+        SDL_CreateWindow(
+            "08-vk-framebuffer-cmd-2", 800, 600, SDL_WINDOW_VULKAN),
         SDL_DestroyWindow);
     std::experimental::scope_exit destroy_window(
         [&log]() { log << "destroy sdl window\n"; });

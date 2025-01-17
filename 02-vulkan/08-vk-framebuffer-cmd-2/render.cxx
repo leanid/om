@@ -990,7 +990,7 @@ void render::create_graphics_pipeline()
     auto vertex_shader_code = platform_.get_file_content(
         "./02-vulkan/08-vk-framebuffer-cmd-2/shaders/shader.vert.slang.spv");
     auto fragment_shader_code = platform_.get_file_content(
-        "./02-vulkan/08-vk-framebuffer-cmd-2/shaders/shader.frag.spv");
+        "./02-vulkan/08-vk-framebuffer-cmd-2/shaders/shader.frag.slang.spv");
     // compile shaders from spir-v into gpu code
     vk::ShaderModule vertex = create_shader(vertex_shader_code.as_span());
     std::experimental::scope_exit vertex_cleanup([this, &vertex]()

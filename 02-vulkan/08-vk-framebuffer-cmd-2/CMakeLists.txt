@@ -14,6 +14,7 @@ find_package(
     #[OPTIONAL_COMPONENTS <libs>...]
     # Optional Boost libraries by their canonical name)
     ) # e.g. "date_time" for "libboost_date_time"
+find_program(SLANGC slangc REQUIRED)
 
 
 om_clang_tidy_enable()
@@ -57,22 +58,42 @@ PRIVATE
 # cmake-format: on
 
 # Find the shader files
-file(GLOB_RECURSE shader_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+file(GLOB_RECURSE glsl_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
      ${CMAKE_CURRENT_SOURCE_DIR}/shaders/*.vert
      ${CMAKE_CURRENT_SOURCE_DIR}/shaders/*.frag)
 
-# For each shader file
-foreach(shader_file ${shader_files})
-    set(spirv_file "${CMAKE_CURRENT_SOURCE_DIR}/${shader_file}.spv")
+file(GLOB_RECURSE slang_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+     ${CMAKE_CURRENT_SOURCE_DIR}/shaders/*.slang)
+
+foreach(glsl_file ${glsl_files})
+    set(spirv_file "${CMAKE_CURRENT_SOURCE_DIR}/${glsl_file}.spv")
 
     # Add custom command to compile shader file to SPIR-V
     add_custom_command(
         OUTPUT ${spirv_file}
         COMMAND
             Vulkan::glslangValidator -V --target-env vulkan1.0
-            ${CMAKE_CURRENT_SOURCE_DIR}/${shader_file} -o ${spirv_file}
+            ${CMAKE_CURRENT_SOURCE_DIR}/${glsl_file} -o ${spirv_file}
         VERBATIM
-        DEPENDS ${shader_file})
+        DEPENDS ${glsl_file})
+
+    list(APPEND spirv_files ${spirv_file})
+endforeach()
+
+foreach(slang_file ${slang_files})
+    set(spirv_file "${CMAKE_CURRENT_SOURCE_DIR}/${slang_file}.spv")
+
+    # Add custom command to compile shader file to SPIR-V
+    add_custom_command(
+        OUTPUT ${spirv_file}
+        COMMAND
+            slangc ${CMAKE_CURRENT_SOURCE_DIR}/${slang_file}
+                   -target spirv -o ${spirv_file}
+                   -profile spirv_1_0
+                   -emit-spirv-directly # only for RenderDoc debuging
+                   -g2 # enable debug info in SPIR-V for RenderDoc
+        VERBATIM
+        DEPENDS ${slang_file})
 
     list(APPEND spirv_files ${spirv_file})
 endforeach()
