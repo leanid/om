@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <iosfwd>
 #include <limits>
 #include <memory> // std::unique_ptr
@@ -80,10 +81,14 @@ class render
 public:
     struct hints
     {
-        std::string vulkan_version;
-        bool        verbose;
-        bool        enable_validation_layers;
-        bool        enable_debug_callback_ext;
+        struct
+        {
+            std::uint32_t major = 1;
+            std::uint32_t minor = 0;
+        } vulkan_version;
+        bool verbose                   = false;
+        bool enable_validation_layers  = false;
+        bool enable_debug_callback_ext = false;
     };
 
     explicit render(platform_interface& platform, hints hints);

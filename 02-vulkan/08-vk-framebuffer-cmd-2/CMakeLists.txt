@@ -21,6 +21,8 @@ om_clang_tidy_enable()
 add_executable(
     08-vk-framebuffer-cmd-2
     main.cxx
+    parser_args_vulkan.cxx
+    parser_args_vulkan.hxx
     platform_sdl3.cxx
     platform_sdl3.hxx
     render.cxx

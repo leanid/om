@@ -10,6 +10,7 @@
 #include <SDL3/SDL_hints.h>
 #include <SDL3/SDL_vulkan.h>
 
+#include "parser_args_vulkan.hxx"
 #include "platform_sdl3.hxx"
 
 int main(int argc, char** argv)
@@ -21,9 +22,18 @@ int main(int argc, char** argv)
 
     cerr.exceptions(ios_base::failbit | ios_base::badbit);
 
-    bool verbose               = argc > 1 && argv[1] == "-v"sv;
-    bool vk_validation_layer   = verbose;
-    bool vk_debug_callback_ext = true;
+    om::tools::parser_args_vulkan args_parser(argc, argv);
+
+    if (!args_parser.help.empty())
+    {
+
+        cout << "usage: " << args_parser.help << '\n';
+        return EXIT_SUCCESS;
+    }
+
+    bool verbose               = args_parser.verbose;
+    bool vk_validation_layer   = args_parser.validation_layer;
+    bool vk_debug_callback_ext = args_parser.debug_callback;
 
     struct null_buffer final : std::streambuf
     {
@@ -88,11 +98,14 @@ int main(int argc, char** argv)
     {
         using namespace om::vulkan;
         platform_sdl3 platform(window.get(), log);
-        render::hints hints{ .verbose                  = verbose,
-                             .enable_validation_layers = vk_validation_layer,
-                             .enable_debug_callback_ext =
-                                 vk_debug_callback_ext };
-        render        render(platform, hints);
+        render::hints hints{
+            .vulkan_version = { .major = args_parser.vulkan_version_major,
+                                .minor = args_parser.vulkan_version_minor },
+            .verbose        = verbose,
+            .enable_validation_layers  = vk_validation_layer,
+            .enable_debug_callback_ext = vk_debug_callback_ext
+        };
+        render render(platform, hints);
 
         bool running = true;
         while (running)
