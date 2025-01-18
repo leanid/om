@@ -48,10 +48,10 @@ target_link_libraries(
 target_link_libraries(
 08-vk-framebuffer-cmd-2
 PRIVATE
-    $<$<CXX_COMPILER_ID:GNU>:
-    $<IF:$<VERSION_GREATER_EQUAL:${CMAKE_CXX_COMPILER_VERSION},14.0.0>,
+    $<$<CXX_COMPILER_ID:GNU,Clang>:
+    $<IF:$<VERSION_GREATER_EQUAL:$<CXX_COMPILER_VERSION>,14.0.0>,
         stdc++exp,
-        $<$<VERSION_GREATER_EQUAL:${CMAKE_CXX_COMPILER_VERSION},12.1.1>:
+        $<$<VERSION_GREATER_EQUAL:$<CXX_COMPILER_VERSION>,12.1.1>:
             stdc++_libbacktrace>
         >
     >)

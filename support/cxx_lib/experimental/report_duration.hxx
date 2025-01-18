@@ -15,13 +15,20 @@ public:
     {
     }
 
-    ~report_duration()
+    ~report_duration() noexcept
     {
-        out << name << " took: "
-            << std::chrono::duration_cast<std::chrono::milliseconds>(
-                   std::chrono::high_resolution_clock::now() - start)
-                   .count()
-            << "ms" << std::endl;
+        try
+        {
+            out << name << " took: "
+                << std::chrono::duration_cast<std::chrono::milliseconds>(
+                       std::chrono::high_resolution_clock::now() - start)
+                       .count()
+                << "ms" << std::endl;
+        }
+        catch (...) // NOLINT
+        {
+            // can't throw from a destructor
+        }
     }
 
 private:

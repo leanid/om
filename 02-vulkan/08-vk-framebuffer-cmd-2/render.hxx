@@ -68,10 +68,10 @@ struct platform_interface
     virtual void destroy_vulkan_surface(
         VkInstance             instance,
         VkSurfaceKHR           surface,
-        VkAllocationCallbacks* alloc_callbacks)  = 0;
-    virtual buffer_size get_window_buffer_size() = 0;
+        VkAllocationCallbacks* alloc_callbacks) noexcept = 0;
+    virtual buffer_size get_window_buffer_size()         = 0;
 
-    virtual std::ostream& get_logger() = 0;
+    virtual std::ostream& get_logger() noexcept = 0;
 
     virtual content get_file_content(std::string_view path) = 0;
 };
@@ -124,10 +124,10 @@ private:
     void record_commands();
 
     // destroy functions
-    void destroy_synchronization_objects();
-    void destroy_debug_callback();
-    void destroy_surface();
-    void destroy(vk::ShaderModule& shader);
+    void destroy_synchronization_objects() noexcept;
+    void destroy_debug_callback() noexcept;
+    void destroy_surface() noexcept;
+    void destroy(vk::ShaderModule& shader) noexcept;
 
     // validation functions
     void validate_expected_extensions_exists(

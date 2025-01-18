@@ -161,42 +161,52 @@ render::render(platform_interface& platform, hints hints)
 
 render::~render()
 {
-    om::tools::report_duration duration{ log, "render::~render()" };
+    try
     {
-        om::tools::report_duration duration{ log,
-                                             "devices.logical.waitIdle()" };
-        devices.logical.waitIdle();
-    }
-    destroy_synchronization_objects();
-    log << "vulkan synchronization objects destroyed\n";
-    devices.logical.freeCommandBuffers(graphics_command_pool, command_buffers);
-    log << "vulkan command buffers freed\n";
-    devices.logical.destroyCommandPool(graphics_command_pool);
-    log << "vulkan destroy command pool\n";
-    std::ranges::for_each(swapchain_framebuffers,
-                          [this](vk::Framebuffer& framebuffer)
-                          { devices.logical.destroyFramebuffer(framebuffer); });
-    log << "vulkan framebuffers destroyed\n";
-    devices.logical.destroy(graphics_pipeline);
-    log << "vulkan graphics_pipeline destroyed\n";
-    devices.logical.destroy(pipeline_layout);
-    log << "vulkan pipeline_leyout destroyed\n";
-    devices.logical.destroy(render_path);
-    log << "vulkan render_path destroyed\n";
-    std::ranges::for_each(swapchain_image_views,
-                          [this](vk::ImageView image_view)
-                          { devices.logical.destroyImageView(image_view); });
-    log << "vulkan swapchain image views destroyed\n";
-    devices.logical.destroy(swapchain);
-    log << "vulkan swapchain destroyed\n";
-    devices.logical.destroy();
-    log << "vulkan logical device destroyed\n";
-    destroy_surface();
+        om::tools::report_duration duration{ log, "render::~render()" };
+        {
+            om::tools::report_duration duration{ log,
+                                                 "devices.logical.waitIdle()" };
+            devices.logical.waitIdle();
+        }
+        destroy_synchronization_objects();
+        log << "vulkan synchronization objects destroyed\n";
+        devices.logical.freeCommandBuffers(graphics_command_pool,
+                                           command_buffers);
+        log << "vulkan command buffers freed\n";
+        devices.logical.destroyCommandPool(graphics_command_pool);
+        log << "vulkan destroy command pool\n";
+        std::ranges::for_each(
+            swapchain_framebuffers,
+            [this](vk::Framebuffer& framebuffer)
+            { devices.logical.destroyFramebuffer(framebuffer); });
+        log << "vulkan framebuffers destroyed\n";
+        devices.logical.destroy(graphics_pipeline);
+        log << "vulkan graphics_pipeline destroyed\n";
+        devices.logical.destroy(pipeline_layout);
+        log << "vulkan pipeline_leyout destroyed\n";
+        devices.logical.destroy(render_path);
+        log << "vulkan render_path destroyed\n";
+        std::ranges::for_each(
+            swapchain_image_views,
+            [this](vk::ImageView image_view)
+            { devices.logical.destroyImageView(image_view); });
+        log << "vulkan swapchain image views destroyed\n";
+        devices.logical.destroy(swapchain);
+        log << "vulkan swapchain destroyed\n";
+        devices.logical.destroy();
+        log << "vulkan logical device destroyed\n";
+        destroy_surface();
 
-    destroy_debug_callback();
-    log << "vulkan debug callback destroyed\n";
-    instance.destroy();
-    log << "vulkan instance destroyed\n";
+        destroy_debug_callback();
+        log << "vulkan debug callback destroyed\n";
+        instance.destroy();
+        log << "vulkan instance destroyed\n";
+    }
+    catch (std::exception& e)
+    {
+        log << "error: during render::~render() " << e.what() << std::endl;
+    }
 }
 
 void render::draw()
@@ -382,7 +392,7 @@ void render::create_debug_callback(bool enable_debug_callback)
     log << "vulkan debug callback created\n";
 }
 
-void render::destroy_debug_callback()
+void render::destroy_debug_callback() noexcept
 {
     if (debug_extension)
     {
@@ -1316,7 +1326,7 @@ void render::create_synchronization_objects()
                           });
 }
 
-void render::destroy_synchronization_objects()
+void render::destroy_synchronization_objects() noexcept
 {
     auto destroy_sem = [this](vk::Semaphore& semaphore)
     { devices.logical.destroy(semaphore); };
@@ -1453,13 +1463,13 @@ vk::ShaderModule render::create_shader(std::span<std::byte> spir_v)
     return devices.logical.createShaderModule(create_info);
 }
 
-void render::destroy_surface()
+void render::destroy_surface() noexcept
 {
     platform_.destroy_vulkan_surface(instance, surface, nullptr);
     log << "vulkan surface destroyed\n";
 }
 
-void render::destroy(vk::ShaderModule& shader)
+void render::destroy(vk::ShaderModule& shader) noexcept
 {
     log << "destroy shader module\n";
     devices.logical.destroy(shader);
