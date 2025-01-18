@@ -40,10 +40,7 @@ vk::SurfaceKHR platform_sdl3::create_vulkan_surface(
 
     if (!result)
     {
-        std::string msg = "error: can't create sdl vulkan surface: [";
-        msg += SDL_GetError();
-        msg += ']';
-        throw std::runtime_error(msg);
+        throw std::runtime_error(SDL_GetError());
     }
 
     return surface;
