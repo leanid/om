@@ -12,4 +12,4 @@ InlayHints:
   Enabled: Yes
   ParameterNames: Yes
   DeducedTypes: Yes
-  TypeNameLimit: 24
+  TypeNameLimit: 0 # 0 - mean no limit
