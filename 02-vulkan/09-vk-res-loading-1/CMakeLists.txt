@@ -28,8 +28,6 @@ add_executable(
     platform_sdl3.hxx
     render.cxx
     render.hxx)
-target_compile_definitions(09-vk-res-loading-1
-                           PRIVATE VK_NULL_HANDLE=nullptr)
 target_compile_features(09-vk-res-loading-1 PRIVATE cxx_std_26)
 target_include_directories(
     09-vk-res-loading-1

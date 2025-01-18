@@ -28,13 +28,10 @@ add_executable(
     platform_sdl3.hxx
     render.cxx
     render.hxx)
-target_compile_definitions(08-vk-framebuffer-cmd-2
-                           PRIVATE VK_NULL_HANDLE=nullptr)
 target_compile_features(08-vk-framebuffer-cmd-2 PRIVATE cxx_std_23)
 target_include_directories(
     08-vk-framebuffer-cmd-2
     PRIVATE
-        $<$<PLATFORM_ID:Windows,Darwin,Linux>:${CMAKE_SOURCE_DIR}/support/cxx_lib/>
         ${CMAKE_SOURCE_DIR}/support/cxx_lib/)
 target_link_libraries(
     08-vk-framebuffer-cmd-2
