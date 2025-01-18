@@ -11,9 +11,6 @@
 
 #include <experimental/scope> // not found on macOS
 
-#undef VULKAN_HPP_NO_EXCEPTIONS // exceptions are enabled by default
-                                // but we want to be explicit
-#define VULKAN_HPP_NAMESPACE vk // explicit namespace to help IDE
 #include <vulkan/vulkan.hpp>
 
 namespace om::vulkan
@@ -62,14 +59,14 @@ struct platform_interface
         }
     };
 
-    virtual extensions   get_vulkan_extensions() = 0;
-    virtual VkSurfaceKHR create_vulkan_surface(
-        VkInstance instance, VkAllocationCallbacks* alloc_callbacks) = 0;
+    virtual extensions     get_vulkan_extensions() = 0;
+    virtual vk::SurfaceKHR create_vulkan_surface(
+        vk::Instance instance, vk::AllocationCallbacks* alloc_callbacks) = 0;
     virtual void destroy_vulkan_surface(
-        VkInstance             instance,
-        VkSurfaceKHR           surface,
-        VkAllocationCallbacks* alloc_callbacks) noexcept = 0;
-    virtual buffer_size get_window_buffer_size()         = 0;
+        vk::Instance             instance,
+        vk::SurfaceKHR           surface,
+        vk::AllocationCallbacks* alloc_callbacks) noexcept = 0;
+    virtual buffer_size get_window_buffer_size()           = 0;
 
     virtual std::ostream& get_logger() noexcept = 0;
 

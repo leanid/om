@@ -28,12 +28,15 @@ platform_interface::extensions platform_sdl3::get_vulkan_extensions()
     return extensions;
 }
 
-VkSurfaceKHR platform_sdl3::create_vulkan_surface(
-    VkInstance instance, VkAllocationCallbacks* alloc_callbacks)
+vk::SurfaceKHR platform_sdl3::create_vulkan_surface(
+    vk::Instance instance, vk::AllocationCallbacks* alloc_callbacks)
 {
     VkSurfaceKHR surface{};
-    int          result =
-        SDL_Vulkan_CreateSurface(window, instance, alloc_callbacks, &surface);
+    int          result = SDL_Vulkan_CreateSurface(
+        window,
+        static_cast<VkInstance>(instance),
+        reinterpret_cast<VkAllocationCallbacks*>(alloc_callbacks),
+        &surface);
 
     if (!result)
     {
@@ -47,11 +50,14 @@ VkSurfaceKHR platform_sdl3::create_vulkan_surface(
 }
 
 void platform_sdl3::destroy_vulkan_surface(
-    VkInstance             instance,
-    VkSurfaceKHR           surface,
-    VkAllocationCallbacks* alloc_callbacks) noexcept
+    vk::Instance             instance,
+    vk::SurfaceKHR           surface,
+    vk::AllocationCallbacks* alloc_callbacks) noexcept
 {
-    SDL_Vulkan_DestroySurface(instance, surface, alloc_callbacks);
+    SDL_Vulkan_DestroySurface(
+        static_cast<VkInstance>(instance),
+        static_cast<VkSurfaceKHR>(surface),
+        reinterpret_cast<VkAllocationCallbacks*>(alloc_callbacks));
 }
 
 platform_interface::buffer_size platform_sdl3::get_window_buffer_size()
