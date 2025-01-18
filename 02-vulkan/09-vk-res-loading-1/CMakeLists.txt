@@ -14,6 +14,7 @@ find_package(
     #[OPTIONAL_COMPONENTS <libs>...]
     # Optional Boost libraries by their canonical name)
     ) # e.g. "date_time" for "libboost_date_time"
+find_package(glm REQUIRED)
 find_program(SLANGC slangc REQUIRED)
 
 om_clang_tidy_enable()
@@ -33,7 +34,6 @@ target_compile_features(09-vk-res-loading-1 PRIVATE cxx_std_26)
 target_include_directories(
     09-vk-res-loading-1
     PRIVATE
-        $<$<PLATFORM_ID:Windows,Darwin,Linux>:${CMAKE_SOURCE_DIR}/support/cxx_lib/>
         ${CMAKE_SOURCE_DIR}/support/cxx_lib/)
 target_link_libraries(
     09-vk-res-loading-1
@@ -41,7 +41,8 @@ target_link_libraries(
             Vulkan::Headers
             Vulkan::Vulkan
             SDL3::SDL3-shared
-            Boost::program_options)
+            Boost::program_options
+            glm::glm)
 
 # cmake-format: off
 target_link_libraries(
