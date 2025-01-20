@@ -28,4 +28,3 @@ endif()
 
 add_executable(aes128 main.cxx)
 target_link_libraries(aes128 PRIVATE OpenSSL::Crypto Boost::program_options)
-target_compile_features(aes128 PRIVATE cxx_std_26)

@@ -28,11 +28,9 @@ add_executable(
     platform_sdl3.hxx
     render.cxx
     render.hxx)
-target_compile_features(09-vk-res-loading-1 PRIVATE cxx_std_26)
-target_include_directories(
-    09-vk-res-loading-1
-    PRIVATE
-        ${CMAKE_SOURCE_DIR}/support/cxx_lib/)
+target_compile_features(09-vk-res-loading-1 PRIVATE cxx_std_23)
+target_include_directories(09-vk-res-loading-1
+                           PRIVATE ${CMAKE_SOURCE_DIR}/support/cxx_lib/)
 target_link_libraries(
     09-vk-res-loading-1
     PRIVATE om::io::read_file
@@ -85,11 +83,10 @@ foreach(slang_file ${slang_files})
     add_custom_command(
         OUTPUT ${spirv_file}
         COMMAND
-            slangc ${CMAKE_CURRENT_SOURCE_DIR}/${slang_file}
-                   -target spirv -o ${spirv_file}
-                   -profile spirv_1_0
-                   -emit-spirv-directly # only for RenderDoc debuging
-                   -g2 # enable debug info in SPIR-V for RenderDoc
+            slangc ${CMAKE_CURRENT_SOURCE_DIR}/${slang_file} -target spirv -o
+            ${spirv_file} -profile spirv_1_0
+            -emit-spirv-directly # only for RenderDoc debuging
+            -g2 # enable debug info in SPIR-V for RenderDoc
         VERBATIM
         DEPENDS ${slang_file})
 
@@ -110,7 +107,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
             ${CMAKE_COMMAND} -E copy_if_different
             $<TARGET_FILE:SDL3::SDL3-shared>
             $<TARGET_FILE_DIR:09-vk-res-loading-1>
-        COMMENT "Copying SDL3 library to target directory (Windows only)\n"
-                "vulkan-1.dll also is copied every time - cmake do it for us"
+        COMMENT [=[Copying SDL3 library to target directory (Windows only)\n
+                vulkan-1.dll also is copied every time - cmake do it for us]=]
         VERBATIM)
 endif()
