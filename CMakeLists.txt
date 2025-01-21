@@ -9,18 +9,20 @@ set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "0e5b6991-d74f-4b3d-a41c-cf096e0b2508")
 project("gamedev_study" LANGUAGES CXX)
 om_add_custom_build_types()
 
-set(CMAKE_CXX_STANDARD 26)
+if(MSVC)
+    set(CMAKE_CXX_STANDARD 23) # to get c++latest flag
+else()
+    set(CMAKE_CXX_STANDARD 26)
+endif()
+
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Currently CMake requires extensions enabled when using import std.
 # https://gitlab.kitware.com/cmake/cmake/-/issues/25916
 # https://gitlab.kitware.com/cmake/cmake/-/issues/25539
 set(CMAKE_CXX_EXTENSIONS ON)
 
-option(
-    OM_BUILD_DEPS
-    [=[download and build dependencies [SDL3, GLM, Catch2]
-    as part of current build]=]
-    ON)
+option(OM_BUILD_DEPS [=[download and build dependencies [SDL3, GLM, Catch2]
+    as part of current build]=] ON)
 option(OM_BUILD_BOOST "download and build Boost from source" OFF)
 option(OM_BUILD_COURSE_BASIC_PROG "turn ON if need to build 00-basic-prog" ON)
 option(OM_BUILD_COURSE_BASIC_GAME_DEV

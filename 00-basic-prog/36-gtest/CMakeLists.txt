@@ -3,7 +3,6 @@ cmake_minimum_required(VERSION 3.31)
 project(36-gtest)
 
 # GoogleTest requires at least C++14
-set(CMAKE_CXX_STANDARD 26)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 om_clang_tidy_disable()

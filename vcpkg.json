@@ -7,6 +7,7 @@
       ]
     },
     "boost-program-options",
+    "boost-algorithm",
     "openssl"
   ],
   "overrides":  [
@@ -16,6 +17,10 @@
     },
     {
       "name": "boost-program-options",
+      "version": "1.86.0"
+    },
+    {
+      "name": "boost-algorithm",
       "version": "1.86.0"
     }
   ]
