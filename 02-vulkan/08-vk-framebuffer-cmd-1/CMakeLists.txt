@@ -14,7 +14,6 @@ add_executable(
     platform_sdl3.hxx
     render.cxx
     render.hxx)
-target_compile_definitions(08-vk-framebuffer-cmd-1 PRIVATE VK_NULL_HANDLE=nullptr)
 target_compile_features(08-vk-framebuffer-cmd-1 PRIVATE cxx_std_23)
 target_include_directories(
     08-vk-framebuffer-cmd-1
@@ -62,7 +61,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
             ${CMAKE_COMMAND} -E copy_if_different
             $<TARGET_FILE:SDL3::SDL3-shared>
             $<TARGET_FILE_DIR:08-vk-framebuffer-cmd-1>
-        COMMENT "Copying SDL3 library to target directory (Windows only)\n"
-                "vulkan-1.dll also is copied every time - cmake do it for us"
+        COMMENT [=[Copying SDL3 library to target directory (Windows only)\n
+                vulkan-1.dll also is copied every time - cmake do it for us]=]
         VERBATIM)
 endif()

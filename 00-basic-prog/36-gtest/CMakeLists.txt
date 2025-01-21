@@ -23,5 +23,9 @@ om_clang_tidy_enable()
 add_executable(36-gtest main.cxx)
 target_link_libraries(36-gtest GTest::gtest_main)
 
+add_executable(36-gmock main_moc.cxx)
+target_link_libraries(36-gmock GTest::gtest_main GTest::gmock)
+
 include(GoogleTest)
 gtest_discover_tests(36-gtest)
+gtest_discover_tests(36-gmock)

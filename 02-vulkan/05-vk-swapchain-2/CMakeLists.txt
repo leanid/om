@@ -7,7 +7,6 @@ find_package(SDL3 REQUIRED)
 
 add_executable(05-vk-swapchain-2 main.cxx)
 
-target_compile_definitions(05-vk-swapchain-2 PRIVATE VK_NULL_HANDLE=nullptr)
 target_compile_features(05-vk-swapchain-2 PRIVATE cxx_std_23)
 target_include_directories(
     05-vk-swapchain-2
@@ -25,7 +24,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
             ${CMAKE_COMMAND} -E copy_if_different
             $<TARGET_FILE:SDL3::SDL3-shared>
             $<TARGET_FILE_DIR:05-vk-swapchain-2>
-        COMMENT "Copying SDL3 library to target directory (Windows only)\n"
-                "vulkan-1.dll also is copied every time - cmake to it for us"
+        COMMENT [=["Copying SDL3 library to target directory (Windows only)\n"
+                "vulkan-1.dll also is copied every time - cmake to it for us"]=]
         VERBATIM)
 endif()
