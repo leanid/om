@@ -32,11 +32,11 @@ TEST(PainterTest, CanDrawSomething)
 {
     MockTurtle turtle;
     using namespace ::testing;
-    EXPECT_CALL(turtle, PenDown()).Times(AtLeast(1));
+    Expectation pen_down = EXPECT_CALL(turtle, PenDown()).Times(AtLeast(1));
     EXPECT_CALL(turtle, Forward(10)).Times(AtLeast(1));
     EXPECT_CALL(turtle, Turn(45)).Times(AtLeast(1));
     EXPECT_CALL(turtle, GoTo(42, 50)).Times(AtLeast(1));
-    EXPECT_CALL(turtle, PenUp()).Times(AtLeast(1));
+    EXPECT_CALL(turtle, PenUp()).Times(AtLeast(1)).After(pen_down);
     EXPECT_CALL(turtle, GetX()).Times(AtLeast(1)).WillOnce(Return(42));
 
     auto painter = [](Turtle* turtle)
