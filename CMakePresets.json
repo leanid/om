@@ -249,7 +249,21 @@
       "name": "ninja",
       "configurePreset": "ninja",
       "output": {"outputOnFailure": true},
-      "execution": {"noTestsAction": "error", "stopOnFailure": true}
+      "execution": {"noTestsAction": "error", "stopOnFailure": false}
+    },
+    {
+      "name": "vcpkg",
+      "description": "vcpkg presets config description tests",
+      "configurePreset": "vcpkg",
+      "output": {
+        "shortProgress": true,
+        "verbosity": "verbose",
+        "outputOnFailure": true},
+      "execution": {
+        "stopOnFailure": false,
+        "enableFailover": true,
+        "jobs": 1,
+        "noTestsAction": "error" }
     }
   ],
   "packagePresets": [
