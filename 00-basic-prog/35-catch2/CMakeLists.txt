@@ -4,6 +4,8 @@ project(35-catch2 CXX)
 
 add_library(amalgamated_catch2 OBJECT catch_amalgamated.cpp
                                       catch_amalgamated.hpp)
+target_include_directories(amalgamated_catch2 PUBLIC ${CMAKE_CURRENT_LIST_DIR})
+
 add_library(fakeit INTERFACE)
 target_include_directories(fakeit INTERFACE ${CMAKE_CURRENT_LIST_DIR})
 
