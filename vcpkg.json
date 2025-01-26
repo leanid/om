@@ -1,5 +1,6 @@
 {
   "dependencies": [
+    "boost-algorithm",
     {
       "name": "boost-locale",
       "features": [
@@ -7,10 +8,10 @@
       ]
     },
     "boost-program-options",
-    "boost-algorithm",
-    "openssl"
+    "openssl",
+    "icu"
   ],
-  "overrides":  [
+  "overrides": [
     {
       "name": "boost-locale",
       "version": "1.86.0"

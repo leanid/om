@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.30)
+cmake_minimum_required(VERSION 3.31)
 
 project(29-localization CXX)
 
@@ -19,15 +19,21 @@ if(NOT Boost_FOUND)
     return()
 endif()
 
-add_executable(29-localization main.cxx)
-target_link_libraries(29-localization PRIVATE Boost::locale)
-target_compile_features(29-localization PRIVATE cxx_std_23)
+# find_package(ICU REQUIRED COMPONENTS data uc i18n io)
 
 find_program(XGETTEXT_EXECUTABLE xgettext)
 if(NOT XGETTEXT_EXECUTABLE)
     message(STATUS "xgettext not found skip generation of .pot file")
     return()
 endif()
+
+add_executable(29-localization main.cxx)
+target_link_libraries(29-localization PRIVATE Boost::locale
+    # ICU::data
+    # ICU::io
+    # ICU::uc
+    # ICU::i18n
+)
 
 message(STATUS "xgettext found: ${XGETTEXT_EXECUTABLE}")
 add_custom_command(
