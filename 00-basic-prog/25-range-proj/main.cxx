@@ -25,12 +25,21 @@ int main(int argc, char** argv)
               << "name: " << it->name << '\n'
               << "info: " << it->info << '\n';
 
-    auto it2 = std::ranges::find_if(
-        table, [](auto& name) { return "leo" != name; }, &table_row::name);
+    auto it2 = std::ranges::find_if_not(
+        table, [](auto& name) { return "leo" == name; }, &table_row::name);
 
     std::cout << "uid: " << it2->uid << '\n'
               << "name: " << it2->name << '\n'
               << "info: " << it2->info << '\n';
+
+    auto fn_name0 = []() -> std::string { return ""; };
+    auto fn_name1 = []() -> std::string { return "leo"; };
+    auto fn_name2 = []() -> std::string { return "dima"; };
+    auto fn_name3 = []() -> std::string { return "igor"; };
+
+    [[maybe_unused]] std::array<std::string (*)(), 4> arr = {
+        fn_name0, fn_name1, fn_name2, fn_name3
+    };
 
     return std::cout.fail();
 }
