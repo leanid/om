@@ -13,7 +13,7 @@ struct table_row
 // NOLINTNEXTLINE
 int main(int argc, char** argv)
 {
-    std::vector<table_row> table = {
+    const std::vector<table_row> table = {
         { .uid = 1, .name = "leo", .info = "developer" },
         { .uid = 2, .name = "dima", .info = "developer" },
         { .uid = 3, .name = "igor", .info = "developer" }
@@ -24,5 +24,13 @@ int main(int argc, char** argv)
     std::cout << "uid: " << it->uid << '\n'
               << "name: " << it->name << '\n'
               << "info: " << it->info << '\n';
+
+    auto it2 = std::ranges::find_if(
+        table, [](auto& name) { return "leo" != name; }, &table_row::name);
+
+    std::cout << "uid: " << it2->uid << '\n'
+              << "name: " << it2->name << '\n'
+              << "info: " << it2->info << '\n';
+
     return std::cout.fail();
 }
