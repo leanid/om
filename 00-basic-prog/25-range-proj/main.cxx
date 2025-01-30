@@ -2,6 +2,7 @@
 #include <array>
 #include <cstdint>
 #include <iostream>
+#include <ranges>
 #include <string>
 #include <vector>
 
@@ -38,9 +39,22 @@ int main(int argc, char** argv)
     auto fn_name2 = []() -> std::string { return "dima"; };
     auto fn_name3 = []() -> std::string { return "igor"; };
 
-    [[maybe_unused]] std::array<std::string (*)(), 4> arr = {
+    std::array<std::string (*)(), 4> arr{
         fn_name0, fn_name1, fn_name2, fn_name3
     };
+
+    auto not_empty = [](const std::string& str) { return !str.empty(); };
+    auto get_str   = [](auto fn) -> std::string { return fn(); };
+
+    auto first_not_empty_str = arr | std::views::transform(get_str) |
+                               std::views::filter(not_empty) |
+                               std::views::take(1);
+
+    if (first_not_empty_str.begin() != first_not_empty_str.end())
+    {
+        std::cout << "found first not empty string: ["
+                  << *first_not_empty_str.begin() << "]" << std::endl;
+    }
 
     return std::cout.fail();
 }
