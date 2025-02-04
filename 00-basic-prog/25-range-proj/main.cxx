@@ -35,7 +35,11 @@ int main(int argc, char** argv)
               << "info: " << it2->info << '\n';
 
     auto fn_name0 = []() -> std::string { return ""; };
-    auto fn_name1 = []() -> std::string { return "leo"; };
+    auto fn_name1 = []() -> std::string
+    {
+        std::cout << "call fn_name1\n"; // this will be called twice!
+        return "leo";
+    };
     auto fn_name2 = []() -> std::string { return "dima"; };
     auto fn_name3 = []() -> std::string { return "igor"; };
 
@@ -50,10 +54,13 @@ int main(int argc, char** argv)
                                std::views::filter(not_empty) |
                                std::views::take(1);
 
-    if (first_not_empty_str.begin() != first_not_empty_str.end())
+    std::string result_name;
+    std::ranges::copy(first_not_empty_str, &result_name);
+
+    if (!result_name.empty())
     {
-        std::cout << "found first not empty string: ["
-                  << *first_not_empty_str.begin() << "]" << std::endl;
+        std::cout << "found first not empty string: [" << result_name << "]"
+                  << std::endl;
     }
 
     return std::cout.fail();
