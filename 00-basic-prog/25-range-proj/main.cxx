@@ -54,8 +54,9 @@ int main(int argc, char** argv)
                                std::views::filter(not_empty) |
                                std::views::take(1);
 
-    std::string result_name;
-    std::ranges::copy(first_not_empty_str, &result_name);
+    auto        it3 = first_not_empty_str.begin();
+    std::string result_name =
+        it3 != first_not_empty_str.end() ? *it3 : "not found";
 
     if (!result_name.empty())
     {
