@@ -9,6 +9,10 @@ set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "0e5b6991-d74f-4b3d-a41c-cf096e0b2508")
 project("gamedev_study" LANGUAGES CXX)
 om_add_custom_build_types()
 
+# Tell CMake that we explicitly want `import std`. This will initialize the
+# property on all targets declared after this to 1
+set(CMAKE_CXX_MODULE_STD 1)
+
 if(MSVC)
     set(CMAKE_CXX_STANDARD 23) # to get c++latest flag
 else()
@@ -28,7 +32,7 @@ option(OM_BUILD_COURSE_BASIC_PROG "turn ON if need to build 00-basic-prog" ON)
 option(OM_BUILD_COURSE_BASIC_GAME_DEV
        "turn ON if need to build 01-basic-game-dev" ON)
 option(OM_BUILD_COURSE_OPENGL "turn ON if need to build 02-opengl" OFF)
-option(OM_BUILD_COURSE_VULKAN "turn ON if need to build 02-vulkan" ON)
+option(OM_BUILD_COURSE_VULKAN "turn ON if need to build 02-vulkan" OFF)
 option(OM_BUILD_GAME_EXAMPLE "turn ON if need to build 05-game" OFF)
 option(OM_BUILD_WEB "turn ON if need to build 08-web" ON)
 option(OM_CLANG_TIDY "turn ON if need to run clang-tidy" OFF)

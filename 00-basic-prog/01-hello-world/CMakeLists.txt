@@ -1,10 +1,16 @@
-cmake_minimum_required(VERSION 3.30)
+cmake_minimum_required(VERSION 3.31)
 
 project(01-hello-world LANGUAGES CXX)
+# Tell CMake that we explicitly want `import std`. This will initialize the
+# property on all targets declared after this to 1
+set(CMAKE_CXX_MODULE_STD 1)
 
 include(CheckCXXCompilerFlag)
 
 set(CMAKE_CXX_EXTENSIONS ON) # needed for cxx modules
+om_clang_tidy_disable()
+add_executable(main_std23 main_std23.cxx)
+om_clang_tidy_enable()
 
 add_executable(hello_cout_dynamic cout_main.cxx)
 target_compile_features(hello_cout_dynamic PRIVATE cxx_std_20)

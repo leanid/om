@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.31)
-
+return() # TODO disable for ninja-llvm - compilation failed
 project(35-catch2 CXX)
 
 add_library(amalgamated_catch2 OBJECT catch_amalgamated.cpp
