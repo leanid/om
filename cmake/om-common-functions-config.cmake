@@ -38,6 +38,6 @@ endfunction()
 
 function (om_clang_tidy_disable)
     if (OM_CLANG_TIDY)
-        set(CMAKE_CXX_CLANG_TIDY "" PARENT_SCOPE)
+        unset(CMAKE_CXX_CLANG_TIDY PARENT_SCOPE)
     endif()
 endfunction()
