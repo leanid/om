@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.30)
 project(03-4-sdl-loop-hot-reload)
-
+if(APPLE)
+    message(STATUS "skip on apple arm platform")
+    return()
+endif()
 add_executable(engine-03-4 engine.cxx engine.cxx engine.hxx)
 set_target_properties(
     engine-03-4

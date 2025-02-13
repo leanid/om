@@ -9,7 +9,9 @@ include(CheckCXXCompilerFlag)
 
 set(CMAKE_CXX_EXTENSIONS ON) # needed for cxx modules
 om_clang_tidy_disable()
-add_executable(main_std23 main_std23.cxx)
+if(NOT APPLE)
+    add_executable(main_std23 main_std23.cxx)
+endif()
 om_clang_tidy_enable()
 
 add_executable(hello_cout_dynamic cout_main.cxx)
@@ -72,7 +74,8 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     endif()
 endif()
 
-if(UNIX OR MINGW) # BONUS for curious (works only in xterm, gnome-terminal or in
+if(UNIX OR MINGW AND NOT APPLE
+   )# BONUS for curious (works only in xterm, gnome-terminal or in
     # Konsole
     add_executable(hello_cout_colored cout_main_colored.cxx)
     target_compile_features(hello_cout_colored PRIVATE cxx_std_20)

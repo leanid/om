@@ -13,7 +13,7 @@ om_add_custom_build_types()
 # property on all targets declared after this to 1
 set(CMAKE_CXX_MODULE_STD 1)
 
-if(MSVC)
+if(MSVC OR APPLE)
     set(CMAKE_CXX_STANDARD 23) # to get c++latest flag
 else()
     set(CMAKE_CXX_STANDARD 26)

@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.16)
 project(03-sdl-loop)
-
+if(APPLE)
+    message(STATUS "skip on apple arm platform")
+    return()
+endif()
 add_executable(03-sdl-loop main.cxx)
 target_compile_features(03-sdl-loop PUBLIC cxx_std_20)
 

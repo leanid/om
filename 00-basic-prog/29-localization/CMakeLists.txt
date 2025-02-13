@@ -13,7 +13,7 @@ find_package(
     # Optional Boost libraries by their canonical name)
     ) # e.g. "date_time" for "libboost_date_time"
 
-if(NOT Boost_FOUND)
+if(NOT Boost_FOUND OR APPLE)
     message(STATUS "Boost and/or required components not found"
                    " skip this example")
     return()
@@ -28,12 +28,13 @@ if(NOT XGETTEXT_EXECUTABLE)
 endif()
 
 add_executable(29-localization main.cxx)
-target_link_libraries(29-localization PRIVATE Boost::locale
+target_link_libraries(
+    29-localization PRIVATE Boost::locale
     # ICU::data
     # ICU::io
     # ICU::uc
     # ICU::i18n
-)
+    )
 
 message(STATUS "xgettext found: ${XGETTEXT_EXECUTABLE}")
 add_custom_command(

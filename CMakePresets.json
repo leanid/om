@@ -144,7 +144,7 @@
           "type": "INTERNAL",
           "value": "clang"
         },
-        "OM_CLANG_TIDY": "ON",
+        "OM_CLANG_TIDY": "OFF",
         "$comment": "We have to build boost with clang++ to match version 1.87",
         "OM_BUILD_BOOST": "ON"
       }
