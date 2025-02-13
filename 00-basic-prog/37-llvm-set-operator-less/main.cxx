@@ -44,18 +44,22 @@ bool operator!=(const MyAllocator<T>&, const MyAllocator<U>&) noexcept
     return false;
 }
 
-#if 0 // 1 to fix error
+#if 1 // 1 to fix error
 namespace std
 {
 // we need three template parameters to find this if using custom _Allocator
 template <class _Key, class Comparator, class _Allocator>
 auto operator<=>(const set<_Key, Comparator, _Allocator>& __x,
-                 const set<_Key, Comparator, _Allocator>& __y) {
-  return std::lexicographical_compare_three_way(
-      __x.begin(), __x.end(),
-      __y.begin(), __y.end(),
-      std::__synth_three_way<_Key, _Key>);
+                 const set<_Key, Comparator, _Allocator>& __y)
+{
+    return std::lexicographical_compare_three_way(
+        __x.begin(),
+        __x.end(),
+        __y.begin(),
+        __y.end(),
+        std::__synth_three_way<_Key, _Key>);
 }
+} // namespace std
 #endif
 
 int main()
