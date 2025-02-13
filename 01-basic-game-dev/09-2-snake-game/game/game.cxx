@@ -56,7 +56,7 @@ OM_EXPORT std::unique_ptr<om::lila> om_tat_sat()
 {
     om::log << "initialize engine" << std::endl;
 
-    om::window_mode window_mode = { screen_width, screen_height, false };
+    om::window_mode window_mode = { .width=screen_width, .heigth=screen_height, .is_fullscreen=false };
     om::initialize("snake", window_mode);
 
     om::log << "creating main game object..." << std::endl;
@@ -71,7 +71,7 @@ om::vbo* load_mesh_from_file_with_scale(const std::string_view path,
 void snake_game::update_free_cells()
 {
     cell_state.clear();
-    cell_state.resize(28 * 28);
+    cell_state.resize(28ul * 28ul);
     snake_->fill_cells(cell_state);
     free_cells.clear();
     for (uint32_t i = 0; i < 28 * 28; ++i)
@@ -85,7 +85,7 @@ void snake_game::update_free_cells()
 
 void snake_game::on_initialize()
 {
-    free_cells.reserve(28 * 28);
+    free_cells.reserve(28ul * 28ul);
 
     debug_texture = om::create_texture("res/debug.png");
 
@@ -107,10 +107,10 @@ void snake_game::on_initialize()
                 objects_num,
                 std::back_inserter(objects));
 
-    snake_.reset(
-        new ::snake(om::vec2(35, 5), snake::direction::right, objects));
+    snake_ = std::make_unique<::snake>(
+        om::vec2(35, 5), snake::direction::right, objects);
 
-    fruit_.reset(new fruit());
+    fruit_ = std::make_unique<fruit>();
     fruit_->sprite = objects.at(1);
 
     update_free_cells();
@@ -134,7 +134,7 @@ void snake_game::on_event(om::event& event)
             if (key_data.is_down)
             {
                 if (key_data.key == om::keys::button1)
-                {
+                { // NOLINT
                 }
                 else if (key_data.key == om::keys::button2)
                 {
@@ -174,7 +174,7 @@ void snake_game::on_update(std::chrono::milliseconds frame_delta)
         }
         // 4. if same - add one snake_part
 
-        float dt_in_seconds = frame_delta.count() * 0.001f;
+        float dt_in_seconds = static_cast<float>(frame_delta.count()) * 0.001f;
         snake_->update(dt_in_seconds);
     }
 }
@@ -220,8 +220,8 @@ void snake_game::on_render() const
 
     static const std::vector<object_type> render_order = { object_type::level };
 
-    auto it = std::find_if(begin(objects),
-                           end(objects),
+    auto it = std::ranges::find_if(objects,
+                          
                            [](const game_object& obj)
                            { return obj.type == object_type::level; });
 
@@ -232,11 +232,12 @@ void snake_game::on_render() const
 
     const om::vec2 world_size = it->size;
 
-    std::for_each(begin(render_order),
-                  end(render_order),
-                  [&](object_type type) {
-                      std::for_each(
-                          begin(objects), end(objects), draw(type, world_size));
+    std::ranges::for_each(render_order,
+                 
+                  [&](object_type type)
+                  {
+                      std::ranges::for_each(
+                          objects, draw(type, world_size));
                   });
 
     if (fruit_)
@@ -287,8 +288,8 @@ om::vbo* load_mesh_from_file_with_scale(const std::string_view path,
 
     om::matrix scale_mat = om::matrix::scale(scale.x, scale.y);
 
-    std::transform(begin(vertexes),
-                   end(vertexes),
+    std::ranges::transform(vertexes,
+                  
                    begin(vertexes),
                    [&scale_mat](om::vertex v)
                    {

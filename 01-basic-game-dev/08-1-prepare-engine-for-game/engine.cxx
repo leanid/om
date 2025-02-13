@@ -87,6 +87,9 @@ template <typename T> static void load_gl_func(const char* func_name, T& result)
                 case GL_OUT_OF_MEMORY:                                         \
                     std::cerr << "GL_OUT_OF_MEMORY" << std::endl;              \
                     break;                                                     \
+                default:                                                       \
+                    std::cerr << "unknown error" << std::endl;                 \
+                    break;                                                     \
             }                                                                  \
             assert(false);                                                     \
         }                                                                      \
@@ -96,10 +99,8 @@ namespace om
 {
 
 vec2::vec2()
-    : x(0.f)
-    , y(0.f)
-{
-}
+
+    = default;
 vec2::vec2(float x_, float y_)
     : x(x_)
     , y(y_)
@@ -185,9 +186,9 @@ mat2x3 operator*(const mat2x3& m1, const mat2x3& m2)
     return r;
 }
 
-texture::~texture() {}
+texture::~texture() = default;
 
-vbo::~vbo() {}
+vbo::~vbo() = default;
 
 class vertex_buffer_impl final : public vbo
 {
@@ -203,8 +204,11 @@ public:
     }
     ~vertex_buffer_impl() final;
 
-    const v2*      data() const final { return &triangles.data()->v[0]; }
-    virtual size_t size() const final { return triangles.size() * 3; }
+    [[nodiscard]] const v2* data() const final
+    {
+        return &triangles.data()->v[0];
+    }
+    [[nodiscard]] size_t size() const final { return triangles.size() * 3; }
 
 private:
     std::vector<tri2> triangles;
@@ -279,8 +283,8 @@ public:
 
         SDL_ResumeAudioDevice(device);
     }
-    bool is_playing() const final { return is_playing_; }
-    void stop() final
+    [[nodiscard]] bool is_playing() const final { return is_playing_; }
+    void               stop() final
     {
         // Lock callback function
         SDL_PauseAudioDevice(device);
@@ -295,9 +299,9 @@ public:
         SDL_ResumeAudioDevice(device);
     }
 
-    std::unique_ptr<uint8_t[]> tmp_buf;
-    uint8_t*                   buffer;
-    uint32_t                   length;
+    std::unique_ptr<uint8_t[]> tmp_buf; // NOLINT
+    uint8_t*                   buffer{ nullptr };
+    uint32_t                   length{ 0 };
     uint32_t                   current_index = 0;
     SDL_AudioDeviceID          device;
     bool                       is_playing_ = false;
@@ -307,11 +311,9 @@ public:
 sound_buffer_impl::sound_buffer_impl(std::string_view  path,
                                      SDL_AudioDeviceID device_,
                                      SDL_AudioSpec     device_audio_spec)
-    : buffer(nullptr)
-    , length(0)
-    , device(device_)
+    : device(device_)
 {
-    SDL_IOStream* file = SDL_IOFromFile(path.data(), "rb");
+    SDL_IOStream* file = SDL_IOFromFile(path.data(), "rb"); // NOLINT
     if (file == nullptr)
     {
         throw std::runtime_error(std::string("can't open audio file: ") +
@@ -337,8 +339,10 @@ sound_buffer_impl::sound_buffer_impl(std::string_view  path,
               << "length: " << length << '\n'
               << "time: "
               << static_cast<double>(length) /
-                     (file_audio_spec.channels * file_audio_spec.freq *
-                      get_sound_format_size(file_audio_spec.format))
+                     static_cast<double>(
+                         static_cast<size_t>(file_audio_spec.channels) *
+                         file_audio_spec.freq *
+                         get_sound_format_size(file_audio_spec.format))
               << "sec" << std::endl;
 
     if (file_audio_spec.channels != device_audio_spec.channels ||
@@ -371,7 +375,7 @@ sound_buffer_impl::sound_buffer_impl(std::string_view  path,
     }
 }
 
-sound::~sound() {}
+sound::~sound() = default;
 
 sound_buffer_impl::~sound_buffer_impl()
 {
@@ -383,7 +387,7 @@ sound_buffer_impl::~sound_buffer_impl()
     length = 0;
 }
 
-vertex_buffer_impl::~vertex_buffer_impl() {}
+vertex_buffer_impl::~vertex_buffer_impl() = default;
 
 class texture_gl_es20 final : public texture
 {
@@ -400,8 +404,8 @@ public:
         OM_GL_CHECK();
     }
 
-    std::uint32_t get_width() const final { return width; }
-    std::uint32_t get_height() const final { return height; }
+    [[nodiscard]] std::uint32_t get_width() const final { return width; }
+    [[nodiscard]] std::uint32_t get_height() const final { return height; }
 
 private:
     std::string   file_path;
@@ -414,8 +418,8 @@ class shader_gl_es20
 {
 public:
     shader_gl_es20(
-        std::string_view                                      vertex_src,
-        std::string_view                                      fragment_src,
+        std::string_view vertex_src, // NOLINT
+        std::string_view fragment_src,
         const std::vector<std::tuple<GLuint, const GLchar*>>& attributes)
     {
         vert_shader = compile_shader(GL_VERTEX_SHADER, vertex_src);
@@ -441,7 +445,7 @@ public:
     {
         assert(texture != nullptr);
         const int location =
-            glGetUniformLocation(program_id, uniform_name.data());
+            glGetUniformLocation(program_id, uniform_name.data()); // NOLINT
         OM_GL_CHECK();
         if (location == -1)
         {
@@ -462,13 +466,14 @@ public:
     void set_uniform(std::string_view uniform_name, const color& c)
     {
         const int location =
-            glGetUniformLocation(program_id, uniform_name.data());
+            glGetUniformLocation(program_id, uniform_name.data()); // NOLINT
         OM_GL_CHECK();
         if (location == -1)
         {
             std::cerr << "can't get uniform location from shader\n";
             throw std::runtime_error("can't get uniform location");
         }
+        // NOLINTNEXTLINE
         float values[4] = { c.get_r(), c.get_g(), c.get_b(), c.get_a() };
         glUniform4fv(location, 1, &values[0]);
         OM_GL_CHECK();
@@ -477,7 +482,7 @@ public:
     void set_uniform(std::string_view uniform_name, const mat2x3& m)
     {
         const int location =
-            glGetUniformLocation(program_id, uniform_name.data());
+            glGetUniformLocation(program_id, uniform_name.data()); // NOLINT
         OM_GL_CHECK();
         if (location == -1)
         {
@@ -486,6 +491,7 @@ public:
         }
         // OpenGL wants matrix in column major order
         // clang-format off
+        // NOLINTNEXTLINE
         float values[9] = { m.col0.x,  m.col0.y, m.delta.x,
                             m.col1.x, m.col1.y, m.delta.y,
                             0.f,      0.f,       1.f };
@@ -516,14 +522,14 @@ private:
             glGetShaderiv(shader_id, GL_INFO_LOG_LENGTH, &info_len);
             OM_GL_CHECK();
             std::vector<char> info_chars(static_cast<size_t>(info_len));
-            glGetShaderInfoLog(shader_id, info_len, NULL, info_chars.data());
+            glGetShaderInfoLog(shader_id, info_len, nullptr, info_chars.data());
             OM_GL_CHECK();
             glDeleteShader(shader_id);
             OM_GL_CHECK();
 
             std::string shader_type_name =
                 shader_type == GL_VERTEX_SHADER ? "vertex" : "fragment";
-            std::cerr << "Error compiling shader(vertex)\n"
+            std::cerr << "Error compiling " << shader_type_name << "\n"
                       << vertex_shader_src << "\n"
                       << info_chars.data();
             return 0;
@@ -568,7 +574,7 @@ private:
             glGetProgramiv(program_id_, GL_INFO_LOG_LENGTH, &infoLen);
             OM_GL_CHECK();
             std::vector<char> infoLog(static_cast<size_t>(infoLen));
-            glGetProgramInfoLog(program_id_, infoLen, NULL, infoLog.data());
+            glGetProgramInfoLog(program_id_, infoLen, nullptr, infoLog.data());
             OM_GL_CHECK();
             std::cerr << "Error linking program:\n" << infoLog.data();
             glDeleteProgram(program_id_);
@@ -742,9 +748,10 @@ static bool check_input(const SDL_Event& e, const bind*& result)
 {
     using namespace std;
 
-    const auto it = find_if(begin(keys),
-                            end(keys),
-                            [&](const bind& b) { return b.key == e.key.key; });
+    const auto it =
+        std::ranges::find_if(keys,
+
+                             [&](const bind& b) { return b.key == e.key.key; });
 
     if (it != end(keys))
     {
@@ -758,7 +765,7 @@ static bool check_input(const SDL_Event& e, const bind*& result)
 float engine::get_time_from_init()
 {
     std::uint32_t ms_from_library_initialization = SDL_GetTicks();
-    float         seconds = ms_from_library_initialization * 0.001f;
+    float         seconds = ms_from_library_initialization * 0.001f; // NOLINT
     return seconds;
 }
 /// pool event from input queue
@@ -775,7 +782,7 @@ bool engine::read_event(event& e)
         if (sdl_event.type == SDL_EVENT_QUIT)
         {
             e.info      = om::hardware_data{ true };
-            e.timestamp = sdl_event.common.timestamp * 0.001;
+            e.timestamp = sdl_event.common.timestamp * 0.001; // NOLINT
             e.type      = om::event_type::hardware;
             return true;
         }
@@ -785,8 +792,9 @@ bool engine::read_event(event& e)
             if (check_input(sdl_event, binding))
             {
                 bool is_down = sdl_event.type == SDL_EVENT_KEY_DOWN;
-                e.info       = om::input_data{ binding->om_key, is_down };
-                e.timestamp  = sdl_event.common.timestamp * 0.001;
+                e.info       = om::input_data{ .key     = binding->om_key,
+                                               .is_down = is_down };
+                e.timestamp  = sdl_event.common.timestamp * 0.001; // NOLINT
                 e.type       = om::event_type::input_key;
                 return true;
             }
@@ -797,8 +805,8 @@ bool engine::read_event(event& e)
 
 bool engine::is_key_down(const enum keys key)
 {
-    const auto it = std::find_if(
-        begin(keys), end(keys), [&](const bind& b) { return b.om_key == key; });
+    const auto it = std::ranges::find_if(
+        keys, [&](const bind& b) { return b.om_key == key; });
 
     if (it != end(keys))
     {
@@ -831,8 +839,7 @@ void engine::destroy_vbo(vbo* buffer)
 sound* engine::create_sound(std::string_view path)
 {
     SDL_PauseAudioDevice(audio_device);
-    sound_buffer_impl* s =
-        new sound_buffer_impl(path, audio_device, audio_device_spec);
+    auto* s = new sound_buffer_impl(path, audio_device, audio_device_spec);
     sounds.push_back(s);
     SDL_ResumeAudioDevice(audio_device);
     return s;
@@ -880,7 +887,7 @@ void engine::render(const tri1& t)
 void engine::render(const tri2& t, texture* tex)
 {
     shader02->use();
-    texture_gl_es20* texture = static_cast<texture_gl_es20*>(tex);
+    auto* texture = static_cast<texture_gl_es20*>(tex);
     texture->bind();
     shader02->set_uniform("s_texture", texture);
     // positions
@@ -913,7 +920,7 @@ void engine::render(const tri2& t, texture* tex)
 void engine::render(const tri2& t, texture* tex, const mat2x3& m)
 {
     shader03->use();
-    texture_gl_es20* texture = static_cast<texture_gl_es20*>(tex);
+    auto* texture = static_cast<texture_gl_es20*>(tex);
     texture->bind();
     shader03->set_uniform("s_texture", texture);
     shader03->set_uniform("u_matrix", m);
@@ -947,7 +954,7 @@ void engine::render(const tri2& t, texture* tex, const mat2x3& m)
 void engine::render(const vbo& buff, texture* tex, const mat2x3& m)
 {
     shader03->use();
-    texture_gl_es20* texture = static_cast<texture_gl_es20*>(tex);
+    auto* texture = static_cast<texture_gl_es20*>(tex);
     texture->bind();
     shader03->set_uniform("s_texture", texture);
     shader03->set_uniform("u_matrix", m);
@@ -970,7 +977,7 @@ void engine::render(const vbo& buff, texture* tex, const mat2x3& m)
     glEnableVertexAttribArray(2);
     OM_GL_CHECK();
 
-    GLsizei num_of_vertexes = static_cast<GLsizei>(buff.size());
+    auto num_of_vertexes = static_cast<GLsizei>(buff.size());
     glDrawArrays(GL_TRIANGLES, 0, num_of_vertexes);
     OM_GL_CHECK();
 
@@ -1316,6 +1323,7 @@ color::color(std::uint32_t rgba_)
     : rgba(rgba_)
 {
 }
+// NOLINTNEXTLINE
 color::color(float r, float g, float b, float a)
 {
     assert(r <= 1 && r >= 0);
@@ -1323,10 +1331,10 @@ color::color(float r, float g, float b, float a)
     assert(b <= 1 && b >= 0);
     assert(a <= 1 && a >= 0);
 
-    std::uint32_t r_ = static_cast<std::uint32_t>(r * 255);
-    std::uint32_t g_ = static_cast<std::uint32_t>(g * 255);
-    std::uint32_t b_ = static_cast<std::uint32_t>(b * 255);
-    std::uint32_t a_ = static_cast<std::uint32_t>(a * 255);
+    auto r_ = static_cast<std::uint32_t>(r * 255);
+    auto g_ = static_cast<std::uint32_t>(g * 255);
+    auto b_ = static_cast<std::uint32_t>(b * 255);
+    auto a_ = static_cast<std::uint32_t>(a * 255);
 
     rgba = a_ << 24 | b_ << 16 | g_ << 8 | r_;
 }
@@ -1334,45 +1342,45 @@ color::color(float r, float g, float b, float a)
 float color::get_r() const
 {
     std::uint32_t r_ = (rgba & 0x000000FF) >> 0;
-    return r_ / 255.f;
+    return static_cast<float>(r_) / 255.f;
 }
 float color::get_g() const
 {
     std::uint32_t g_ = (rgba & 0x0000FF00) >> 8;
-    return g_ / 255.f;
+    return static_cast<float>(g_) / 255.f;
 }
 float color::get_b() const
 {
     std::uint32_t b_ = (rgba & 0x00FF0000) >> 16;
-    return b_ / 255.f;
+    return static_cast<float>(b_) / 255.f;
 }
 float color::get_a() const
 {
     std::uint32_t a_ = (rgba & 0xFF000000) >> 24;
-    return a_ / 255.f;
+    return static_cast<float>(a_) / 255.f;
 }
 
 void color::set_r(const float r)
 {
-    std::uint32_t r_ = static_cast<std::uint32_t>(r * 255);
+    auto r_ = static_cast<std::uint32_t>(r * 255);
     rgba &= 0xFFFFFF00;
     rgba |= (r_ << 0);
 }
 void color::set_g(const float g)
 {
-    std::uint32_t g_ = static_cast<std::uint32_t>(g * 255);
+    auto g_ = static_cast<std::uint32_t>(g * 255);
     rgba &= 0xFFFF00FF;
     rgba |= (g_ << 8);
 }
 void color::set_b(const float b)
 {
-    std::uint32_t b_ = static_cast<std::uint32_t>(b * 255);
+    auto b_ = static_cast<std::uint32_t>(b * 255);
     rgba &= 0xFF00FFFF;
     rgba |= (b_ << 16);
 }
 void color::set_a(const float a)
 {
-    std::uint32_t a_ = static_cast<std::uint32_t>(a * 255);
+    auto a_ = static_cast<std::uint32_t>(a * 255);
     rgba &= 0x00FFFFFF;
     rgba |= a_ << 24;
 }
@@ -1381,7 +1389,7 @@ texture_gl_es20::texture_gl_es20(std::string_view path)
     : file_path(path)
 {
     std::vector<unsigned char> png_file_in_memory;
-    std::ifstream              ifs(path.data(), std::ios_base::binary);
+    std::ifstream ifs(path.data(), std::ios_base::binary); // NOLINT
     if (!ifs)
     {
         throw std::runtime_error("can't load texture");
@@ -1418,10 +1426,10 @@ texture_gl_es20::texture_gl_es20(std::string_view path)
     glBindTexture(GL_TEXTURE_2D, tex_handl);
     OM_GL_CHECK();
 
-    GLint   mipmap_level = 0;
-    GLint   border       = 0;
-    GLsizei width        = static_cast<GLsizei>(img.width);
-    GLsizei height       = static_cast<GLsizei>(img.height);
+    GLint mipmap_level = 0;
+    GLint border       = 0;
+    auto  width        = static_cast<GLsizei>(img.width);
+    auto  height       = static_cast<GLsizei>(img.height);
     glTexImage2D(GL_TEXTURE_2D,
                  mipmap_level,
                  GL_RGBA,

@@ -4,7 +4,7 @@
 
 #include <cstdlib>
 #include <iostream>
-
+// NOLINTNEXTLINE
 int main(int, char**)
 {
     using namespace std;
@@ -19,7 +19,7 @@ int main(int, char**)
     size_t height = 240;
 
     SDL_Window* window = SDL_CreateWindow(
-        "runtime soft render", width, height, SDL_WINDOW_OPENGL);
+        "runtime soft render", width, height, SDL_WINDOW_OPENGL); // NOLINT
     if (window == nullptr)
     {
         cerr << SDL_GetError() << endl;
@@ -33,7 +33,7 @@ int main(int, char**)
         return EXIT_FAILURE;
     }
 
-    const color black = { 0, 0, 0 };
+    const color black = { .r = 0, .g = 0, .b = 0 };
 
     canvas image(width, height);
 
@@ -80,23 +80,39 @@ int main(int, char**)
                 // radius
                 // gray scale with formula: 0.21 R + 0.72 G + 0.07 B.
                 double gray = 0.21 * out.r + 0.72 * out.g + 0.07 * out.b;
-                out.r       = gray;
-                out.g       = gray;
-                out.b       = gray;
+                out.r       = static_cast<uint8_t>(gray);
+                out.g       = static_cast<uint8_t>(gray);
+                out.b       = static_cast<uint8_t>(gray);
             }
 
             return out;
         }
     } program01;
 
-    std::vector<vertex>   triangle_v{ { 0, 0, 1, 0, 0, 0, 0, 0 },
-                                      { 0, 239, 0, 1, 0, 0, 239, 0 },
-                                      { 319, 239, 0, 0, 1, 319, 239, 0 } };
+    std::vector<vertex> triangle_v{
+        { .x = 0, .y = 0, .z = 1, .f3 = 0, .f4 = 0, .f5 = 0, .f6 = 0, .f7 = 0 },
+        { .x  = 0,
+          .y  = 239,
+          .z  = 0,
+          .f3 = 1,
+          .f4 = 0,
+          .f5 = 0,
+          .f6 = 239,
+          .f7 = 0 },
+        { .x  = 319,
+          .y  = 239,
+          .z  = 0,
+          .f3 = 0,
+          .f4 = 1,
+          .f5 = 319,
+          .f6 = 239,
+          .f7 = 0 }
+    };
     std::vector<uint16_t> indexes_v{ 0, 1, 2 };
 
     void*     pixels = image.get_pixels().data();
     const int depth  = sizeof(color) * 8;
-    const int pitch  = width * sizeof(color);
+    const int pitch  = static_cast<int>(width * sizeof(color));
     const int rmask  = 0x000000ff;
     const int gmask  = 0x0000ff00;
     const int bmask  = 0x00ff0000;
@@ -132,12 +148,13 @@ int main(int, char**)
         }
 
         interpolated_render.clear(black);
-        program01.set_uniforms(uniforms{ mouse_x, mouse_y, radius });
+        program01.set_uniforms(
+            uniforms{ .f0 = mouse_x, .f1 = mouse_y, .f2 = radius });
 
         interpolated_render.draw_triangles(triangle_v, indexes_v);
 
         SDL_Surface* bitmapSurface = SDL_CreateSurfaceFrom(
-            width, height, SDL_PIXELFORMAT_RGB24, pixels, pitch);
+            width, height, SDL_PIXELFORMAT_RGB24, pixels, pitch); // NOLINT
         if (bitmapSurface == nullptr)
         {
             cerr << SDL_GetError() << endl;

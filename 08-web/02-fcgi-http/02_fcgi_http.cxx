@@ -25,7 +25,7 @@ void worker_job(web_app_context& context)
 
     int          rc;
     FCGX_Request request;
-    std::string  server_name;
+    // std::string  server_name;
 
     if (FCGX_InitRequest(&request, context.socket_id, 0) != 0)
     {
@@ -159,7 +159,7 @@ int main(int argc, char** argv)
     // создаём рабочие потоки
     while (num_of_cpu--)
     {
-        threads.push_back(std::jthread(om::worker_job, std::ref(context)));
+        threads.emplace_back(om::worker_job, std::ref(context));
     }
 
     return 0;

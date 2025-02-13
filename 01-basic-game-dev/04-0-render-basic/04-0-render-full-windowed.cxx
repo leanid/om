@@ -7,7 +7,7 @@
 
 #include <algorithm>
 #include <iostream>
-
+// NOLINTNEXTLINE
 int main(int, char**)
 {
     using namespace std;
@@ -36,7 +36,7 @@ int main(int, char**)
         return EXIT_FAILURE;
     }
 
-    const color black = { 0, 0, 0 };
+    const color black = { .r = 0, .g = 0, .b = 0 };
 
     canvas image(width, height);
 
@@ -104,9 +104,9 @@ int main(int, char**)
                 double len          = std::sqrt(dx * dx + dy * dy);
                 double green_to_red = (len / radius) - 0.35;
                 green_to_red        = std::clamp(green_to_red, 0.0, 1.0);
-                out.r               = (1 - green_to_red) * 255;
-                out.g               = (green_to_red) * 255;
-                out.b               = 0;
+                out.r = static_cast<uint8_t>((1 - green_to_red) * 255);
+                out.g = static_cast<uint8_t>((green_to_red) * 255);
+                out.b = 0;
             }
 
             return out;
@@ -125,8 +125,8 @@ int main(int, char**)
     {
         for (size_t i = 0; i < cell_x_count; ++i)
         {
-            double x = i * cell_width;
-            double y = j * cell_height;
+            double x = i * cell_width;  // NOLINT
+            double y = j * cell_height; // NOLINT
             double r = 0;
             double g = 1;
             double b = 0;
@@ -214,7 +214,8 @@ int main(int, char**)
         }
 
         interpolated_render.clear(black);
-        program01.set_uniforms(uniforms{ mouse_x, mouse_y, radius });
+        program01.set_uniforms(
+            uniforms{ .f0 = mouse_x, .f1 = mouse_y, .f2 = radius });
 
         interpolated_render.draw_triangles(triangle_v, indexes_v);
 

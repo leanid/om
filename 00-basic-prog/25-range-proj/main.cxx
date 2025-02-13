@@ -1,6 +1,8 @@
 #include <algorithm>
+#include <array>
 #include <cstdint>
 #include <iostream>
+#include <ranges>
 #include <string>
 #include <vector>
 
@@ -10,17 +12,57 @@ struct table_row
     std::string   name;
     std::string   info;
 };
-
+// NOLINTNEXTLINE
 int main(int argc, char** argv)
 {
-    std::vector<table_row> table = { { 1, "leo", "developer" },
-                                     { 2, "dima", "developer" },
-                                     { 3, "igor", "developer" } };
+    const std::vector<table_row> table = {
+        { .uid = 1, .name = "leo", .info = "developer" },
+        { .uid = 2, .name = "dima", .info = "developer" },
+        { .uid = 3, .name = "igor", .info = "developer" }
+    };
 
     auto it = std::ranges::find(table, "igor", &table_row::name);
 
     std::cout << "uid: " << it->uid << '\n'
               << "name: " << it->name << '\n'
               << "info: " << it->info << '\n';
+
+    auto it2 = std::ranges::find_if_not(
+        table, [](auto& name) { return "leo" == name; }, &table_row::name);
+
+    std::cout << "uid: " << it2->uid << '\n'
+              << "name: " << it2->name << '\n'
+              << "info: " << it2->info << '\n';
+
+    auto fn_name0 = []() -> std::string { return ""; };
+    auto fn_name1 = []() -> std::string
+    {
+        std::cout << "call fn_name1\n"; // this will be called twice!
+        return "leo";
+    };
+    auto fn_name2 = []() -> std::string { return "dima"; };
+    auto fn_name3 = []() -> std::string { return "igor"; };
+
+    std::array<std::string (*)(), 4> arr{
+        fn_name0, fn_name1, fn_name2, fn_name3
+    };
+
+    auto not_empty = [](const std::string& str) { return !str.empty(); };
+    auto get_str   = [](auto fn) -> std::string { return fn(); };
+
+    auto first_not_empty_str = arr | std::views::transform(get_str) |
+                               std::views::filter(not_empty) |
+                               std::views::take(1);
+
+    auto        it3 = first_not_empty_str.begin();
+    std::string result_name =
+        it3 != first_not_empty_str.end() ? *it3 : "not found";
+
+    if (!result_name.empty())
+    {
+        std::cout << "found first not empty string: [" << result_name << "]"
+                  << std::endl;
+    }
+
     return std::cout.fail();
 }

@@ -1,8 +1,12 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
-#include "doctest.h"
+#include <doctest.h>
 
 int factorial(int number)
 {
+    if (number == 0)
+    {
+        return 1;
+    }
     return number <= 1 ? number : factorial(number - 1) * number;
 }
 

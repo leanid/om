@@ -1,0 +1,15 @@
+# take this file from ~/.config/clangd/config.yaml
+Hover:
+  ShowAKA: Yes
+Diagnostics:
+  UnusedIncludes: Strict
+Index:
+  Background: Build
+  StandardLibrary: Yes
+InlayHints:
+  BlockEnd: Yes
+  Designators: Yes
+  Enabled: Yes
+  ParameterNames: Yes
+  DeducedTypes: Yes
+  TypeNameLimit: 0 # 0 - mean no limit

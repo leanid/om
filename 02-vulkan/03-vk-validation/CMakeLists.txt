@@ -26,7 +26,6 @@ find_package(SDL3 REQUIRED)
 #    Objects: 0
 
 add_executable(03-vk-validation main.cxx)
-target_compile_definitions(03-vk-validation PRIVATE VK_NULL_HANDLE=nullptr)
 target_compile_features(03-vk-validation PRIVATE cxx_std_20)
 target_include_directories(
     03-vk-validation
@@ -43,7 +42,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
         COMMAND
             ${CMAKE_COMMAND} -E copy_if_different
             $<TARGET_FILE:SDL3::SDL3-shared> $<TARGET_FILE_DIR:03-vk-validation>
-        COMMENT "Copying SDL3 library to target directory (Windows only)\n"
-                "vulkan-1.dll also is copied every time - cmake to it for us"
+        COMMENT [=["Copying SDL3 library to target directory (Windows only)\n"
+                "vulkan-1.dll also is copied every time - cmake to it for us"]=]
         VERBATIM)
 endif()

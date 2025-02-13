@@ -6,6 +6,7 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <numbers>
 #include <string_view>
 
 #include "engine.hxx"
@@ -54,7 +55,7 @@ int main(int /*argc*/, char* /*argv*/[])
 
     om::vec2    current_tank_pos(0.f, 0.f);
     float       current_tank_direction(0.f);
-    const float pi = 3.1415926f;
+    const float pi = std::numbers::pi_v<float>;
 
     while (continue_loop)
     {

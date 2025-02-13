@@ -12,3 +12,4 @@ build-*/
 build/
 imgui.ini
 local.properties
+/00-basic-prog/29-localization/messages.pot

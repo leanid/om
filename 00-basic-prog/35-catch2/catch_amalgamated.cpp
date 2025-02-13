@@ -12,6 +12,7 @@
 //  You probably shouldn't edit it directly.
 //  ----------------------------------------------------------
 
+// NOLINTBEGIN(*)
 #include "catch_amalgamated.hpp"
 
 #ifndef CATCH_WINDOWS_H_PROXY_HPP_INCLUDED
@@ -350,7 +351,7 @@ static double standard_deviation(double const* first, double const* last)
                                           double diff = b - m;
                                           return a + diff * diff;
                                       }) /
-                      (last - first);
+                      (last - first); // NOLINT
     return std::sqrt(variance);
 }
 
@@ -1604,11 +1605,12 @@ void Session::showHelp() const
 }
 void Session::libIdentify()
 {
-    Catch::cout() << std::left << std::setw(16)
-                  << "description: " << "A Catch2 test executable\n"
-                  << std::left << std::setw(16)
-                  << "category: " << "testframework\n"
-                  << std::left << std::setw(16) << "framework: " << "Catch2\n"
+    Catch::cout() << std::left << std::setw(16) << "description: "
+                  << "A Catch2 test executable\n"
+                  << std::left << std::setw(16) << "category: "
+                  << "testframework\n"
+                  << std::left << std::setw(16) << "framework: "
+                  << "Catch2\n"
                   << std::left << std::setw(16)
                   << "version: " << libraryVersion() << '\n'
                   << std::flush;
@@ -2764,8 +2766,7 @@ namespace Generators
 namespace Detail
 {
 
-[[noreturn]]
-void throw_generator_exception(char const* msg)
+[[noreturn]] void throw_generator_exception(char const* msg)
 {
     Catch::throw_exception(GeneratorException{ msg });
 }
@@ -3882,8 +3883,7 @@ Clara::Parser makeCommandLineParser(ConfigData& config)
         Opt(accept_many, setWarning, "warning name")["-w"]["--warn"](
             "enable warnings") |
         Opt(
-            [&](bool flag)
-            {
+            [&](bool flag) {
                 config.showDurations =
                     flag ? ShowDurations::Always : ShowDurations::Never;
             },
@@ -4507,8 +4507,7 @@ namespace Catch
 {
 #if defined(CATCH_CONFIG_DISABLE_EXCEPTIONS) &&                                \
     !defined(CATCH_CONFIG_DISABLE_EXCEPTIONS_CUSTOM_HANDLER)
-[[noreturn]]
-void throw_exception(std::exception const& e)
+[[noreturn]] void throw_exception(std::exception const& e)
 {
     Catch::cerr()
         << "Catch will terminate because it needed to throw an exception.\n"
@@ -4517,20 +4516,17 @@ void throw_exception(std::exception const& e)
 }
 #endif
 
-[[noreturn]]
-void throw_logic_error(std::string const& msg)
+[[noreturn]] void throw_logic_error(std::string const& msg)
 {
     throw_exception(std::logic_error(msg));
 }
 
-[[noreturn]]
-void throw_domain_error(std::string const& msg)
+[[noreturn]] void throw_domain_error(std::string const& msg)
 {
     throw_exception(std::domain_error(msg));
 }
 
-[[noreturn]]
-void throw_runtime_error(std::string const& msg)
+[[noreturn]] void throw_runtime_error(std::string const& msg)
 {
     throw_exception(std::runtime_error(msg));
 }
@@ -6658,9 +6654,9 @@ struct GeneratorTracker final : TestCaseTracking::TrackerBase, IGeneratorTracker
             // If at least one child started executing, don't wait
             if (std::find_if(m_children.begin(),
                              m_children.end(),
-                             [](TestCaseTracking::ITrackerPtr const& tracker)
-                             { return tracker->hasStarted(); }) !=
-                m_children.end())
+                             [](TestCaseTracking::ITrackerPtr const& tracker) {
+                                 return tracker->hasStarted();
+                             }) != m_children.end())
             {
                 return false;
             }
@@ -7896,11 +7892,11 @@ std::vector<TestCaseHandle> sortTests(
         case TestRunOrder::LexicographicallySorted:
         {
             std::vector<TestCaseHandle> sorted = unsortedTestCases;
-            std::sort(
-                sorted.begin(),
-                sorted.end(),
-                [](TestCaseHandle const& lhs, TestCaseHandle const& rhs)
-                { return lhs.getTestCaseInfo() < rhs.getTestCaseInfo(); });
+            std::sort(sorted.begin(),
+                      sorted.end(),
+                      [](TestCaseHandle const& lhs, TestCaseHandle const& rhs) {
+                          return lhs.getTestCaseInfo() < rhs.getTestCaseInfo();
+                      });
             return sorted;
         }
         case TestRunOrder::Randomized:
@@ -12304,11 +12300,12 @@ std::string getCurrentTimestamp()
 
 std::string fileNameTag(std::vector<Tag> const& tags)
 {
-    auto it = std::find_if(
-        begin(tags),
-        end(tags),
-        [](Tag const& tag)
-        { return tag.original.size() > 0 && tag.original[0] == '#'; });
+    auto it = std::find_if(begin(tags),
+                           end(tags),
+                           [](Tag const& tag) {
+                               return tag.original.size() > 0 &&
+                                      tag.original[0] == '#';
+                           });
     if (it != tags.end())
     {
         return static_cast<std::string>(
@@ -12572,7 +12569,8 @@ void JunitReporter::writeAssertion(AssertionStats const& stats)
         }
         else
         {
-            rss << "FAILED" << ":\n";
+            rss << "FAILED"
+                << ":\n";
             if (result.hasExpression())
             {
                 rss << "  ";
@@ -13847,3 +13845,4 @@ void XmlReporter::listTags(std::vector<TagInfo> const& tags)
 #if defined(_MSC_VER)
 #pragma warning(pop)
 #endif
+// NOLINTEND(*)

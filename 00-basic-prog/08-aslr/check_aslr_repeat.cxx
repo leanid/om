@@ -47,7 +47,7 @@ static std::optional<std::string> one_iter()
 {
     using namespace std;
 
-    exec_stream_t stream(program_to_run.data(), "");
+    exec_stream_t stream(program_to_run.data(), ""); // NOLINT
 
     stringstream output;
     output << stream.out().rdbuf();
@@ -85,9 +85,10 @@ static void run_program_while_find_same_stack_adress()
 
     vector<future<size_t>> jobs(num_cores);
 
-    for_each(begin(jobs),
-             end(jobs),
-             [](future<size_t>& num_iter) { num_iter = async(thread_func); });
+    std::ranges::for_each(jobs,
+
+                          [](future<size_t>& num_iter)
+                          { num_iter = async(thread_func); });
 
     cout << "all thread are running..." << endl;
 

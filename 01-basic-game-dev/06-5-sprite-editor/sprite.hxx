@@ -1,6 +1,7 @@
 #pragma once
 
 #include "engine.hxx"
+#include <cstdlib>
 
 struct rect
 {

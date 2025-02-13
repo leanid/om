@@ -3,13 +3,130 @@
 #include <algorithm>
 #include <array>
 #include <cstdlib>
+#include <exception>
 #include <iomanip>
+#include <iostream>
+#include <limits>
+#include <ranges>
 #include <set>
 #include <sstream>
+#include <stacktrace>
 #include <stdexcept>
+#include <string_view>
+#include <tuple>
+
+#include "experimental/report_duration.hxx"
 
 namespace om::vulkan
 {
+/// @breaf maximum number of frames to be processed simultaneously by the GPU
+static constexpr size_t max_frames_in_gpu = 2;
+
+/// @concurency note
+/// A callback will always be executed in the same thread as the originating
+/// Vulkan call.
+///
+/// A callback can be called from multiple threads simultaneously (if the
+/// application is making Vulkan calls from multiple threads).
+///
+/// @param data note data->pMessage is NULL if messageTypes is equal to
+/// VK_DEBUG_UTILS_MESSAGE_TYPE_DEVICE_ADDRESS_BINDING_BIT_EXT, or a
+/// null-terminated UTF-8 string detailing the trigger conditions.
+///
+/// @return VkBool32 The callback returns a VkBool32, which is interpreted in a
+/// layer-specified manner. The application should always return VK_FALSE. The
+/// VK_TRUE value is reserved for use in layer development.
+/// c++ vulkan.hpp declaration from Vulkan SDK 1.4.304
+///   typedef vk::Bool32( VKAPI_PTR * PFN_DebugUtilsMessengerCallbackEXT )(
+///    vk::DebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+///    vk::DebugUtilsMessageTypeFlagsEXT messageTypes,
+///    const vk::DebugUtilsMessengerCallbackDataEXT * pCallbackData,
+///    void * pUserData );
+
+static VKAPI_ATTR vk::Bool32 VKAPI_CALL
+debug_callback(vk::DebugUtilsMessageSeverityFlagBitsEXT      severity,
+               vk::DebugUtilsMessageTypeFlagsEXT             msg_type,
+               const vk::DebugUtilsMessengerCallbackDataEXT* data,
+               void*                                         user_data)
+{
+    using namespace std;
+
+    const char* msg_type_name = "unknown";
+    const char* msg           = data->pMessage;
+    string      msg_extended;
+
+    switch (static_cast<decltype(msg_type)::MaskType>(msg_type))
+    {
+        case VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT:
+            msg_type_name = "general";
+            break;
+        case VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT:
+            msg_type_name = "validation";
+            break;
+        case VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT:
+            msg_type_name = "performance";
+            break;
+        case VK_DEBUG_UTILS_MESSAGE_TYPE_DEVICE_ADDRESS_BINDING_BIT_EXT:
+            msg_type_name = "device_address_binding";
+            msg           = "";
+            break;
+        default:
+            break;
+    }
+
+    const char* severity_name    = "unknown";
+    bool        print_stacktrace = false;
+
+    switch (severity)
+    {
+        case vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose:
+            severity_name = "verbose";
+            break;
+        case vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo:
+            severity_name = "info";
+            break;
+        case vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning:
+            severity_name = "warning";
+            break;
+        case vk::DebugUtilsMessageSeverityFlagBitsEXT::eError:
+            severity_name    = "error";
+            print_stacktrace = true;
+            break;
+        default:
+            break;
+    }
+
+    auto build_list_of_objects_info =
+        [](const vk::DebugUtilsObjectNameInfoEXT* objects,
+           uint32_t                               count) -> string
+    {
+        stringstream ss;
+        for_each_n(objects,
+                   count,
+                   [&ss](const auto& object)
+                   {
+                       vk::DebugUtilsObjectNameInfoEXT object_info = object;
+                       ss << "type: " << vk::to_string(object_info.objectType)
+                          << ' ';
+                       ss << "name: " << object_info.pObjectName << ' ';
+                   });
+        return ss.str();
+    };
+
+    msg_extended =
+        build_list_of_objects_info(data->pObjects, data->objectCount);
+
+    cerr << "vk: [" << severity_name << "] [" << msg_type_name << "] " << msg
+         << "\n    objects: " << msg_extended << endl;
+
+    if (print_stacktrace)
+    {
+        cerr << std::stacktrace::current() << endl;
+        std::terminate();
+    }
+
+    return VK_FALSE;
+}
 
 static std::string api_version_to_string(uint32_t apiVersion)
 {
@@ -25,7 +142,9 @@ render::render(platform_interface& platform, hints hints)
     , platform_{ platform }
     , hints_{ hints }
 {
-    create_instance();
+    create_instance(hints.enable_validation_layers,
+                    hints.enable_debug_callback_ext);
+    create_debug_callback(hints.enable_debug_callback_ext);
     create_surface();
     get_physical_device();
     validate_physical_device();
@@ -34,69 +153,203 @@ render::render(platform_interface& platform, hints hints)
     create_renderpass();
     create_graphics_pipeline();
     create_framebuffers();
+    create_command_pool();
+    create_command_buffers();
+    record_commands();
+    create_synchronization_objects();
 }
 
 render::~render()
 {
-    std::ranges::for_each(swapchain_framebuffers,
-                          [this](vk::Framebuffer& framebuffer)
-                          { devices.logical.destroyFramebuffer(framebuffer); });
-    log << "vulkan framebuffers destroyed\n";
-    devices.logical.destroy(graphics_pipeline);
-    log << "vulkan graphics_pipeline destroyed\n";
-    devices.logical.destroy(pipeline_layout);
-    log << "vulkan pipeline_leyout destroyed\n";
-    devices.logical.destroy(render_path);
-    log << "vulkan render_path destroyed\n";
-    std::ranges::for_each(swapchain_image_views,
-                          [this](vk::ImageView image_view)
-                          { devices.logical.destroyImageView(image_view); });
-    log << "vulkan swapchain image views destroyed\n";
-    devices.logical.destroy(swapchain);
-    log << "vulkan swapchain destroyed\n";
-    devices.logical.destroy();
-    log << "vulkan logical device destroyed\n";
-    destroy_surface();
+    try
+    {
+        om::tools::report_duration duration{ log, "render::~render()" };
+        {
+            om::tools::report_duration duration{ log,
+                                                 "devices.logical.waitIdle()" };
+            devices.logical.waitIdle();
+        }
+        destroy_synchronization_objects();
+        log << "vulkan synchronization objects destroyed\n";
+        devices.logical.freeCommandBuffers(graphics_command_pool,
+                                           command_buffers);
+        log << "vulkan command buffers freed\n";
+        devices.logical.destroyCommandPool(graphics_command_pool);
+        log << "vulkan destroy command pool\n";
+        std::ranges::for_each(
+            swapchain_framebuffers,
+            [this](vk::Framebuffer& framebuffer)
+            { devices.logical.destroyFramebuffer(framebuffer); });
+        log << "vulkan framebuffers destroyed\n";
+        devices.logical.destroy(graphics_pipeline);
+        log << "vulkan graphics_pipeline destroyed\n";
+        devices.logical.destroy(pipeline_layout);
+        log << "vulkan pipeline_leyout destroyed\n";
+        devices.logical.destroy(render_path);
+        log << "vulkan render_path destroyed\n";
+        std::ranges::for_each(
+            swapchain_image_views,
+            [this](vk::ImageView image_view)
+            { devices.logical.destroyImageView(image_view); });
+        log << "vulkan swapchain image views destroyed\n";
+        devices.logical.destroy(swapchain);
+        log << "vulkan swapchain destroyed\n";
+        devices.logical.destroy();
+        log << "vulkan logical device destroyed\n";
+        destroy_surface();
 
-    instance.destroy();
-    log << "vulkan instance destroyed\n";
+        destroy_debug_callback();
+        log << "vulkan debug callback destroyed\n";
+        instance.destroy();
+        log << "vulkan instance destroyed\n";
+    }
+    catch (std::exception& e)
+    {
+        log << "error: during render::~render() " << e.what() << std::endl;
+    }
 }
 
-void render::create_instance()
+void render::draw()
 {
-    vk::ApplicationInfo    application_info;
+    // breafly:
+    // 1. Acquire available image to draw and fire semaphore when it's ready
+    // 2. Submit command buffer to queue for execution. Making sure that waits
+    //    for the image to be available before drawing and signals when it has
+    //    finished drawing
+    // 3. Present image to screen when it has signaled finished drawing
+
+    // Get Image from swapchain
+    uint32_t index_from_swapchain = std::numeric_limits<uint32_t>::max();
+    {
+        auto fence_op_result = devices.logical.waitForFences(
+            1,
+            &synchronization.gpu_fence.at(current_frame_index),
+            vk::True,
+            std::numeric_limits<uint64_t>::max());
+
+        if (fence_op_result != vk::Result::eSuccess)
+        {
+            throw std::runtime_error("error: can't wait for fence");
+        }
+
+        fence_op_result = devices.logical.resetFences(
+            1, &synchronization.gpu_fence.at(current_frame_index));
+
+        if (fence_op_result != vk::Result::eSuccess)
+        {
+            throw std::runtime_error("error: can't reset fence");
+        }
+
+        auto image_index = devices.logical.acquireNextImageKHR(
+            swapchain,
+            std::numeric_limits<uint64_t>::max(),
+            synchronization.image_available.at(current_frame_index),
+            {});
+
+        if (image_index.result != vk::Result::eSuccess)
+        {
+            throw std::runtime_error("error: can't acquire next image");
+        }
+        index_from_swapchain = image_index.value;
+    }
+
+    // Submit command buffer to queue
+    {
+        vk::PipelineStageFlags wait_stages =
+            vk::PipelineStageFlagBits::eColorAttachmentOutput;
+
+        auto& cmd_buffer = command_buffers.at(index_from_swapchain);
+
+        vk::SubmitInfo submit_info{};
+        submit_info.waitSemaphoreCount = 1;
+        submit_info.pWaitSemaphores =
+            &synchronization.image_available.at(current_frame_index);
+        submit_info.pWaitDstStageMask    = &wait_stages;
+        submit_info.commandBufferCount   = 1;
+        submit_info.pCommandBuffers      = &cmd_buffer;
+        submit_info.signalSemaphoreCount = 1;
+        submit_info.pSignalSemaphores =
+            &synchronization.render_finished.at(current_frame_index);
+
+        render_queue.submit(
+            submit_info,
+            // set fence to vk::True after queue finish execution
+            synchronization.gpu_fence.at(current_frame_index));
+    }
+
+    // Present image to screen
+    {
+        vk::PresentInfoKHR present_info{};
+        present_info.waitSemaphoreCount = 1;
+        present_info.pWaitSemaphores =
+            &synchronization.render_finished.at(current_frame_index);
+        present_info.swapchainCount = 1;
+        present_info.pSwapchains    = &swapchain;
+        present_info.pImageIndices  = &index_from_swapchain;
+
+        auto result = presentation_queue.presentKHR(present_info);
+
+        if (result != vk::Result::eSuccess)
+        {
+            throw std::runtime_error("error: can't present image to screen");
+        }
+    }
+
+    current_frame_index = (current_frame_index + 1) % max_frames_in_gpu;
+}
+
+void render::create_instance(bool enable_validation_layers,
+                             bool enable_debug_callback_ext)
+{
+    vk::ApplicationInfo application_info;
+    application_info.apiVersion = VK_MAKE_API_VERSION(
+        0, hints_.vulkan_version.major, hints_.vulkan_version.minor, 0);
     vk::InstanceCreateInfo instance_create_info;
     instance_create_info.pApplicationInfo = &application_info;
 
     platform_interface::extensions extensions =
         platform_.get_vulkan_extensions();
 
-    instance_create_info.ppEnabledExtensionNames = extensions.names;
-    instance_create_info.enabledExtensionCount   = extensions.count;
-
-    if (nullptr == instance_create_info.ppEnabledExtensionNames)
+    if (extensions.names.empty())
     {
         throw std::runtime_error(
             "get_instance_extensions callback return nullptr");
     }
 
     log << "minimal vulkan expected extensions from "
-           "get_instance_extensions callback\n";
-    std::for_each_n(instance_create_info.ppEnabledExtensionNames,
-                    instance_create_info.enabledExtensionCount,
-                    [this](std::string_view instance_extension)
-                    { log << instance_extension << '\n'; });
+           "platform.get_vulkan_extensions():\n";
+
+    std::ranges::for_each(extensions.names,
+                          [this](std::string_view instance_extension)
+                          { log << "    - " << instance_extension << '\n'; });
+
+    if (enable_debug_callback_ext)
+    {
+        extensions.names.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+        log << "    - " << extensions.names.back() << '\n';
+    }
+
+    instance_create_info.ppEnabledExtensionNames = extensions.names.data();
+    instance_create_info.enabledExtensionCount =
+        static_cast<uint32_t>(extensions.names.size());
 
     validate_expected_extensions_exists(instance_create_info);
 
-    if (hints_.enable_validation_layers)
+    if (enable_validation_layers)
     {
         const char* layer = "VK_LAYER_KHRONOS_validation";
-        validate_instance_layer_present(layer);
+        try
+        {
+            validate_instance_layer_present(layer);
 
-        instance_create_info.enabledLayerCount   = 1;
-        instance_create_info.ppEnabledLayerNames = &layer;
-        log << "enable layer: " << layer << '\n';
+            instance_create_info.enabledLayerCount   = 1;
+            instance_create_info.ppEnabledLayerNames = &layer;
+            log << "enable layer: " << layer << '\n';
+        }
+        catch (std::exception& e)
+        {
+            log << e.what() << std::endl;
+        }
     }
     else
     {
@@ -105,6 +358,48 @@ void render::create_instance()
 
     instance = vk::createInstance(instance_create_info);
     log << "vulkan instance created\n";
+
+    dynamic_loader =
+        vk::detail::DispatchLoaderDynamic{ instance, vkGetInstanceProcAddr };
+    log << "vulkan dynamic loader created\n";
+}
+
+void render::create_debug_callback(bool enable_debug_callback)
+{
+    if (!enable_debug_callback)
+    {
+        log << "vulkan debug callback disabled\n";
+        return;
+    }
+
+    vk::DebugUtilsMessengerCreateInfoEXT debug_info;
+    debug_info.messageSeverity =
+        vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose |
+        vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo |
+        vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning |
+        vk::DebugUtilsMessageSeverityFlagBitsEXT::eError;
+    debug_info.messageType =
+        vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral |
+        vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation |
+        vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance |
+        vk::DebugUtilsMessageTypeFlagBitsEXT::eDeviceAddressBinding;
+    debug_info.pfnUserCallback = debug_callback;
+    debug_info.pUserData       = nullptr;
+
+    debug_extension = instance.createDebugUtilsMessengerEXT(
+        debug_info, nullptr, dynamic_loader);
+
+    log << "vulkan debug callback created\n";
+}
+
+void render::destroy_debug_callback() noexcept
+{
+    if (debug_extension)
+    {
+        instance.destroyDebugUtilsMessengerEXT(
+            debug_extension, nullptr, dynamic_loader);
+        log << "vulkan debug callback destroyed\n";
+    }
 }
 
 void render::validate_expected_extensions_exists(
@@ -138,22 +433,22 @@ void render::validate_expected_extensions_exists(
     }
 
     log << "all vulkan instance extensions: \n";
-    std::for_each(extension_properties.begin(),
-                  extension_properties.end(),
-                  [this](const vk::ExtensionProperties& extension)
-                  {
-                      log << std::setw(3) << extension.specVersion << ' '
-                          << extension.extensionName << '\n';
-                  });
+    std::ranges::for_each(extension_properties,
+
+                          [this](const vk::ExtensionProperties& extension)
+                          {
+                              log << std::setw(3) << extension.specVersion
+                                  << ' ' << extension.extensionName << '\n';
+                          });
 
     std::for_each_n(
         create_info.ppEnabledExtensionNames,
         create_info.enabledExtensionCount,
         [&extension_properties](std::string_view extension)
         {
-            auto it = std::find_if(
-                extension_properties.begin(),
-                extension_properties.end(),
+            auto it = std::ranges::find_if(
+                extension_properties,
+
                 [extension](const vk::ExtensionProperties& other_extension)
                 { return other_extension.extensionName.data() == extension; });
 
@@ -184,20 +479,20 @@ void render::validate_instance_layer_present(std::string_view instance_layer)
 
     log << "all vulkan layers count [" << layer_count << "]\n";
     log << "spec-version | impl-version | name and description\n";
-    std::for_each(available_layers.begin(),
-                  available_layers.end(),
-                  [this](const vk::LayerProperties& layer)
-                  {
-                      log << api_version_to_string(layer.specVersion) << ' '
-                          << layer.implementationVersion << ' '
-                          << layer.layerName << " " << layer.description
-                          << '\n';
-                  });
-    auto it = std::find_if(available_layers.begin(),
-                           available_layers.end(),
-                           [&instance_layer](const vk::LayerProperties& layer) {
-                               return layer.layerName.data() == instance_layer;
-                           });
+    std::ranges::for_each(available_layers,
+
+                          [this](const vk::LayerProperties& layer)
+                          {
+                              log << api_version_to_string(layer.specVersion)
+                                  << ' ' << layer.implementationVersion << ' '
+                                  << layer.layerName << " " << layer.description
+                                  << '\n';
+                          });
+    auto it = std::ranges::find_if(
+        available_layers,
+
+        [&instance_layer](const vk::LayerProperties& layer)
+        { return layer.layerName.data() == instance_layer; });
 
     if (it == available_layers.end())
     {
@@ -599,6 +894,8 @@ void render::create_swapchain()
         std::back_inserter(swapchain_image_views),
         [this](vk::Image image) -> vk::ImageView
         {
+            set_object_name(image, "swapchain_image");
+
             return create_image_view(
                 image, swapchain_image_format, vk::ImageAspectFlagBits::eColor);
         });
@@ -693,15 +990,17 @@ void render::create_renderpass()
 
     render_path = devices.logical.createRenderPass(renderpath_info);
     log << "create vulkan render path\n";
+
+    set_object_name(render_path, "only_render_path");
 }
 
 void render::create_graphics_pipeline()
 {
     // Static Pipeline States
     auto vertex_shader_code = platform_.get_file_content(
-        "./02-vulkan/07-vk-pipeline-2/shaders/shader.vert.spv");
+        "./02-vulkan/08-vk-framebuffer-cmd-2/shaders/shader.vert.slang.spv");
     auto fragment_shader_code = platform_.get_file_content(
-        "./02-vulkan/07-vk-pipeline-2/shaders/shader.frag.spv");
+        "./02-vulkan/08-vk-framebuffer-cmd-2/shaders/shader.frag.slang.spv");
     // compile shaders from spir-v into gpu code
     vk::ShaderModule vertex = create_shader(vertex_shader_code.as_span());
     std::experimental::scope_exit vertex_cleanup([this, &vertex]()
@@ -803,9 +1102,10 @@ void render::create_graphics_pipeline()
         vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
     // blending use equation:
     // (srcBlendFactor * new color) BlendOp (dstBlendFactor * old color)
-    blend_attachment.srcAlphaBlendFactor = vk::BlendFactor::eSrcAlpha;
+    blend_attachment.srcColorBlendFactor = vk::BlendFactor::eSrcAlpha;
     blend_attachment.dstColorBlendFactor = vk::BlendFactor::eOneMinusSrcAlpha;
     blend_attachment.colorBlendOp        = vk::BlendOp::eAdd;
+
     blend_attachment.srcAlphaBlendFactor = vk::BlendFactor::eOne;
     blend_attachment.dstAlphaBlendFactor = vk::BlendFactor::eZero;
     blend_attachment.alphaBlendOp        = vk::BlendOp::eAdd;
@@ -856,6 +1156,8 @@ void render::create_graphics_pipeline()
     }
 
     graphics_pipeline = std::move(result.value);
+
+    set_object_name(graphics_pipeline, "only_graphics_pipeline");
 }
 
 void render::create_framebuffers()
@@ -885,6 +1187,156 @@ void render::create_framebuffers()
     std::ranges::transform(swapchain_image_views,
                            std::back_inserter(swapchain_framebuffers),
                            gen_framebuffer);
+}
+
+void render::create_command_pool()
+{
+    if (!queue_indexes.is_valid())
+    {
+        throw std::runtime_error("error: queue indexes not valid");
+    }
+
+    log << "create command pool\n";
+
+    vk::CommandPoolCreateInfo info{};
+    info.queueFamilyIndex = queue_indexes.graphics_family;
+    info.flags            = vk::CommandPoolCreateFlagBits::eResetCommandBuffer;
+    graphics_command_pool = devices.logical.createCommandPool(info);
+
+    if (!graphics_command_pool)
+    {
+        throw std::runtime_error("error: can't create graphics command pool");
+    }
+}
+
+void render::create_command_buffers()
+{
+    log << "create command buffers count: " << swapchain_framebuffers.size()
+        << "\n";
+
+    vk::CommandBufferAllocateInfo info{};
+    info.commandPool = graphics_command_pool;
+    info.level       = vk::CommandBufferLevel::ePrimary;
+    // vk::CommandBufferLevel::ePrimary; // can't be called from other buffers
+    //                                   // only will be executed by the queue
+    // vk::CommandBufferLevel::eSecondary; // Buffer can't be called directly.
+    //                                     // Can be called from other command
+    //                                     // using vkCmdExecuteCommands when
+    //                                     // recording commands in primary
+    //                                     // buffer
+    info.commandBufferCount =
+        static_cast<std::uint32_t>(swapchain_framebuffers.size());
+
+    command_buffers = devices.logical.allocateCommandBuffers(info);
+
+    if (command_buffers.empty())
+    {
+        throw std::runtime_error("error: can't allocate command buffers");
+    }
+
+    std::ranges::for_each(
+        command_buffers,
+        [this](vk::CommandBuffer& buffer)
+        { set_object_name(buffer, "command_buffer_per_swapchain"); });
+}
+
+void render::record_commands()
+{
+    vk::CommandBufferBeginInfo begin_info{};
+    // can be submitted multiple times without waiting for previous submission
+    // we do not need to use simutaneous use cause we have start using fence
+    // begin_info.flags = vk::CommandBufferUsageFlagBits::eSimultaneousUse;
+
+    vk::RenderPassBeginInfo render_pass_info{};
+    render_pass_info.renderPass        = render_path;
+    render_pass_info.renderArea.offset = vk::Offset2D{ 0, 0 }; // in pixels
+    render_pass_info.renderArea.extent = swapchain_image_extent;
+
+    vk::ClearValue clear_color = vk::ClearColorValue(
+        std::array<float, 4>{ 0.6f, 0.65f, 0.4f, 1.f }); // RGBA
+
+    render_pass_info.pClearValues = &clear_color; // TODO depth attachment later
+    render_pass_info.clearValueCount = 1;
+
+    auto record_commands =
+        [&](std::tuple<vk::CommandBuffer&, vk::Framebuffer&> cmd_and_fb)
+    {
+        auto& [buffer, fb] = cmd_and_fb;
+        // start recording
+        buffer.begin(begin_info);
+        {
+            render_pass_info.framebuffer = fb;
+            buffer.beginRenderPass(render_pass_info,
+                                   vk::SubpassContents::eInline);
+            {
+
+                buffer.bindPipeline(vk::PipelineBindPoint::eGraphics,
+                                    graphics_pipeline);
+
+                buffer.draw(3, 1, 0, 0); // 3 vertices, 1 instance, 0 offset
+            }
+            buffer.endRenderPass();
+        }
+        // finish recording
+        buffer.end();
+    };
+
+    std::ranges::for_each(
+        std::views::zip(command_buffers, swapchain_framebuffers),
+        record_commands);
+}
+
+void render::create_synchronization_objects()
+{
+    synchronization.image_available.resize(max_frames_in_gpu);
+    synchronization.render_finished.resize(max_frames_in_gpu);
+    synchronization.gpu_fence.resize(max_frames_in_gpu);
+
+    struct gen_sem
+    {
+        render&     self;
+        std::string name;
+        int         index;
+
+        vk::Semaphore operator()()
+        {
+            auto semaphore = self.devices.logical.createSemaphore({});
+            self.set_object_name(semaphore, name + std::to_string(index++));
+            return semaphore;
+        }
+    };
+
+    std::ranges::generate(
+        synchronization.image_available,
+        gen_sem{ .self = *this, .name = "image_available_", .index = 0 });
+
+    std::ranges::generate(
+        synchronization.render_finished,
+        gen_sem{ .self = *this, .name = "render_finished_", .index = 0 });
+
+    std::ranges::generate(synchronization.gpu_fence,
+                          [this, i = 0]() mutable
+                          {
+                              vk::FenceCreateInfo info{};
+                              info.flags = vk::FenceCreateFlagBits::eSignaled;
+                              auto fence = devices.logical.createFence(info);
+                              set_object_name(fence,
+                                              "fence_" + std::to_string(i++));
+                              return fence;
+                          });
+}
+
+void render::destroy_synchronization_objects() noexcept
+{
+    auto destroy_sem = [this](vk::Semaphore& semaphore)
+    { devices.logical.destroy(semaphore); };
+
+    std::ranges::for_each(synchronization.image_available, destroy_sem);
+    std::ranges::for_each(synchronization.render_finished, destroy_sem);
+
+    std::ranges::for_each(synchronization.gpu_fence,
+                          [this](vk::Fence& fence)
+                          { devices.logical.destroy(fence); });
 }
 
 vk::Extent2D render::choose_best_swapchain_image_resolution(
@@ -941,7 +1393,7 @@ vk::SurfaceFormatKHR render::choose_best_surface_format(
         return default_format;
     }
     // not all supported search for RGB or BGR
-    vk::SurfaceFormatKHR suitable_formats[] = {
+    std::array<vk::SurfaceFormatKHR, 2> suitable_formats = {
         default_format,
         { vk::Format::eB8G8R8A8Unorm, vk::ColorSpaceKHR::eSrgbNonlinear }
     };
@@ -997,7 +1449,9 @@ vk::ImageView render::create_image_view(vk::Image            image,
     range.baseArrayLayer = 0;            // start array level to view from
     range.layerCount     = 1;
 
-    return devices.logical.createImageView(info);
+    auto image_view = devices.logical.createImageView(info);
+
+    return image_view;
 }
 
 vk::ShaderModule render::create_shader(std::span<std::byte> spir_v)
@@ -1009,13 +1463,13 @@ vk::ShaderModule render::create_shader(std::span<std::byte> spir_v)
     return devices.logical.createShaderModule(create_info);
 }
 
-void render::destroy_surface()
+void render::destroy_surface() noexcept
 {
     platform_.destroy_vulkan_surface(instance, surface, nullptr);
     log << "vulkan surface destroyed\n";
 }
 
-void render::destroy(vk::ShaderModule& shader)
+void render::destroy(vk::ShaderModule& shader) noexcept
 {
     log << "destroy shader module\n";
     devices.logical.destroy(shader);

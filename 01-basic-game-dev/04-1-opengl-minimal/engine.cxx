@@ -39,6 +39,15 @@
                 case GL_OUT_OF_MEMORY:                                         \
                     std::cerr << "GL_OUT_OF_MEMORY" << std::endl;              \
                     break;                                                     \
+                case GL_STACK_UNDERFLOW:                                       \
+                    std::cerr << "GL_STACK_UNDERFLOW" << std::endl;            \
+                    break;                                                     \
+                case GL_STACK_OVERFLOW:                                        \
+                    std::cerr << "GL_STACK_OVERFLOW" << std::endl;             \
+                    break;                                                     \
+                default:                                                       \
+                    std::cerr << "unknown error" << std::endl;                 \
+                    break;                                                     \
             }                                                                  \
             assert(false);                                                     \
         }                                                                      \
@@ -80,9 +89,9 @@ static std::array<std::string_view, 17> event_names = {
 
 std::ostream& operator<<(std::ostream& stream, const event e)
 {
-    std::uint32_t value   = static_cast<std::uint32_t>(e);
-    std::uint32_t minimal = static_cast<std::uint32_t>(event::left_pressed);
-    std::uint32_t maximal = static_cast<std::uint32_t>(event::turn_off);
+    auto value   = static_cast<std::uint32_t>(e);
+    auto minimal = static_cast<std::uint32_t>(event::left_pressed);
+    auto maximal = static_cast<std::uint32_t>(event::turn_off);
     if (value >= minimal && value <= maximal)
     {
         stream << event_names[value];
@@ -117,30 +126,48 @@ struct bind
     event            event_released;
 };
 
-const std::array<bind, 8> keys{
-    { { SDLK_W, "up", event::up_pressed, event::up_released },
-      { SDLK_A, "left", event::left_pressed, event::left_released },
-      { SDLK_S, "down", event::down_pressed, event::down_released },
-      { SDLK_D, "right", event::right_pressed, event::right_released },
-      { SDLK_LCTRL,
-        "button1",
-        event::button1_pressed,
-        event::button1_released },
-      { SDLK_SPACE,
-        "button2",
-        event::button2_pressed,
-        event::button2_released },
-      { SDLK_ESCAPE, "select", event::select_pressed, event::select_released },
-      { SDLK_RETURN, "start", event::start_pressed, event::start_released } }
-};
+const std::array<bind, 8> keys{ { { .key            = SDLK_W,
+                                    .name           = "up",
+                                    .event_pressed  = event::up_pressed,
+                                    .event_released = event::up_released },
+                                  { .key            = SDLK_A,
+                                    .name           = "left",
+                                    .event_pressed  = event::left_pressed,
+                                    .event_released = event::left_released },
+                                  { .key            = SDLK_S,
+                                    .name           = "down",
+                                    .event_pressed  = event::down_pressed,
+                                    .event_released = event::down_released },
+                                  { .key            = SDLK_D,
+                                    .name           = "right",
+                                    .event_pressed  = event::right_pressed,
+                                    .event_released = event::right_released },
+                                  { .key            = SDLK_LCTRL,
+                                    .name           = "button1",
+                                    .event_pressed  = event::button1_pressed,
+                                    .event_released = event::button1_released },
+                                  { .key            = SDLK_SPACE,
+                                    .name           = "button2",
+                                    .event_pressed  = event::button2_pressed,
+                                    .event_released = event::button2_released },
+                                  { .key            = SDLK_ESCAPE,
+                                    .name           = "select",
+                                    .event_pressed  = event::select_pressed,
+                                    .event_released = event::select_released },
+                                  { .key           = SDLK_RETURN,
+                                    .name          = "start",
+                                    .event_pressed = event::start_pressed,
+                                    .event_released =
+                                        event::start_released } } };
 
 static bool check_input(const SDL_Event& e, const bind*& result)
 {
     using namespace std;
 
-    const auto it = find_if(begin(keys),
-                            end(keys),
-                            [&](const bind& b) { return b.key == e.key.key; });
+    const auto it =
+        std::ranges::find_if(keys,
+
+                             [&](const bind& b) { return b.key == e.key.key; });
 
     if (it != end(keys))
     {
@@ -199,7 +226,7 @@ public:
         using namespace std::string_view_literals;
         using namespace std;
         auto list = { "Windows"sv, "Mac OS X"sv };
-        auto it   = find(begin(list), end(list), platform);
+        auto it   = std::ranges::find(list, platform);
         if (it != end(list))
         {
             gl_major_ver       = 4;
@@ -309,7 +336,7 @@ public:
         auto                 time_point       = clock.now();
         auto                 time_since_epoch = time_point.time_since_epoch();
         auto                 ns               = time_since_epoch.count();
-        auto                 seconds          = ns / 1000'000'000.0f;
+        auto                 seconds          = ns / 1000'000'000.0f; // NOLINT
         auto                 current_color = 0.5f * (std::sin(seconds) + 1.0f);
 
         glClearColor(0.f, current_color, 1.f - current_color, 0.0f);
@@ -351,7 +378,7 @@ void destroy_engine(engine* e)
     delete e;
 }
 
-engine::~engine() {}
+engine::~engine() = default;
 
 static const char* source_to_strv(GLenum source)
 {
@@ -369,13 +396,15 @@ static const char* source_to_strv(GLenum source)
             return "APPLICATION";
         case GL_DEBUG_SOURCE_OTHER:
             return "OTHER";
+        default:
+            break;
     }
     return "unknown";
 }
 
 static const char* type_to_strv(GLenum type)
 {
-    switch (type)
+    switch (type) // NOLINT
     {
         case GL_DEBUG_TYPE_ERROR:
             return "ERROR";
@@ -401,7 +430,7 @@ static const char* type_to_strv(GLenum type)
 
 static const char* severity_to_strv(GLenum severity)
 {
-    switch (severity)
+    switch (severity) // NOLINT
     {
         case GL_DEBUG_SEVERITY_HIGH:
             return "HIGH";

@@ -3,12 +3,12 @@
 
 void some_func();
 
-int main(int argc, char* argv[])
+int main(int argc, char** argv)
 {
     using namespace std;
     const int i{};
     cout << "&argc = 0x" << hex << &argc << endl;
-    cout << "&argv = 0x" << hex << &argv << endl;
+    cout << "&argv = 0x" << hex << static_cast<void*>(&argv) << endl;
     cout << "&i = 0x" << hex << &i << endl;
     cout << "&some_func = " << hex << reinterpret_cast<void*>(&some_func)
          << endl;

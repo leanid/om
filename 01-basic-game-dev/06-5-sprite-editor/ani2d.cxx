@@ -1,6 +1,6 @@
 #include "ani2d.hxx"
 
-ani2d::ani2d() {}
+ani2d::ani2d() = default;
 
 void ani2d::draw(om::engine& e, float delta_time)
 {
@@ -13,7 +13,7 @@ void ani2d::draw(om::engine& e, float delta_time)
 
     float one_frame_delta = 1.f / fps_;
 
-    size_t how_may_frames_from_start =
+    auto how_may_frames_from_start =
         static_cast<size_t>(current_time_ / one_frame_delta);
 
     size_t current_frame_index = how_may_frames_from_start % sprites_.size();

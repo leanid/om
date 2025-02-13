@@ -4,10 +4,10 @@
 position project_vertex(const vertex& in);
 position viewport_to_canvas(const vertex& in);
 vertex   v3d(double x, double y, double z);
-
+// NOLINTNEXTLINE
 int main(int, char**)
 {
-    const color black = { 0, 0, 0 };
+    const color black = { .r = 0, .g = 0, .b = 0 };
 
     constexpr size_t width  = 320;
     constexpr size_t height = 240;
@@ -94,12 +94,13 @@ position viewport_to_canvas(const vertex& in)
 
     position out;
 
-    out.x = in.x * (canvas_width - 1) / viewport_width + canvas_width;
-    out.y = in.y * (canvas_height - 1) / viewport_height + canvas_height;
+    out.x = in.x * (canvas_width - 1) / viewport_width + canvas_width; // NOLINT
+    out.y =
+        in.y * (canvas_height - 1) / viewport_height + canvas_height; // NOLINT
 
     return out;
 }
-
+// NOLINTNEXTLINE
 vertex v3d(double x, double y, double z)
 {
     vertex v;

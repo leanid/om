@@ -33,18 +33,18 @@ git clone https://github.com/microsoft/vcpkg $VCPKG_ROOT
 ```
 ## First create vcpkg.json + vcpkg-configuration.json files
 
-``` cmd
+```cmd
 vcpkg new --application
 vcpkg add port boost-program-options
 vcpkg add port openssl
 ```
 ## Second add packages with dependencies like boost[icu]
-``` cmd
+```cmd
 vcpkg add port boost-locale[icu]
 ```
 this will create:
 
-``` json
+```json
 {
   "dependencies": [
     {

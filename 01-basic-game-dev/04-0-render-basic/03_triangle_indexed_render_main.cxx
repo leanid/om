@@ -1,9 +1,10 @@
 #include "03_triangle_indexed_render.hxx"
 
+// NOLINTNEXTLINE
 int main(int, char**)
 {
-    constexpr color black = { 0, 0, 0 };
-    constexpr color green = { 0, 255, 0 };
+    constexpr color black = { .r = 0, .g = 0, .b = 0 };
+    constexpr color green = { .r = 0, .g = 255, .b = 0 };
 
     constexpr size_t width  = 320;
     constexpr size_t height = 240;
@@ -22,8 +23,8 @@ int main(int, char**)
     {
         for (size_t j = 0; j <= max_x; ++j)
         {
-            position v{ static_cast<int>(j) * step_x,
-                        static_cast<int>(i) * step_y };
+            position v{ .x = static_cast<int>(j) * step_x,
+                        .y = static_cast<int>(i) * step_y };
 
             vertex_buffer.push_back(v);
         }
@@ -37,8 +38,8 @@ int main(int, char**)
     {
         for (size_t y = 0; y < max_y; ++y)
         {
-            uint8_t index0 = static_cast<uint8_t>(y * (max_y + 1) + x);
-            uint8_t index1 = static_cast<uint8_t>(index0 + (max_y + 1) + 1);
+            auto    index0 = static_cast<uint8_t>(y * (max_y + 1) + x);
+            auto    index1 = static_cast<uint8_t>(index0 + (max_y + 1) + 1);
             uint8_t index2 = index1 - 1;
             uint8_t index3 = index0 + 1;
 

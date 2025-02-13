@@ -32,8 +32,11 @@ std::error_code make_error_code(om::custom_errc err) noexcept
     class custom_category : public error_category
     {
     public:
-        const char* name() const noexcept override { return "custom"; }
-        string      message(int err) const override
+        [[nodiscard]] const char* name() const noexcept override
+        {
+            return "custom";
+        }
+        [[nodiscard]] string message(int err) const override
         {
             auto code = static_cast<om::custom_errc>(err);
             switch (code)
@@ -49,7 +52,8 @@ std::error_code make_error_code(om::custom_errc err) noexcept
             }
             throw std::invalid_argument("error: now such enum value");
         };
-        error_condition default_error_condition(int i) const noexcept override
+        [[nodiscard]] error_condition default_error_condition(
+            int i) const noexcept override
         {
             if (static_cast<om::custom_errc>(i) ==
                 om::custom_errc::some_strange_error)
@@ -62,11 +66,11 @@ std::error_code make_error_code(om::custom_errc err) noexcept
 
     static custom_category category{};
 
-    return std::error_code(static_cast<int>(err), category);
+    return { static_cast<int>(err), category };
 }
 
 } // namespace std
-
+// NOLINTNEXTLINE
 int main(int argc, char** argv)
 {
     using namespace std;
@@ -97,13 +101,13 @@ int main(int argc, char** argv)
 
     struct table_row
     {
-        string        i_str;
-        string        message;
-        string        category;
-        string        category2;
-        string        msg2;
-        const string* begin() const noexcept { return &i_str; }
-        const string* end() const noexcept { return &msg2 + 1; }
+        string                      i_str;
+        string                      message;
+        string                      category;
+        string                      category2;
+        string                      msg2;
+        [[nodiscard]] const string* begin() const noexcept { return &i_str; }
+        [[nodiscard]] const string* end() const noexcept { return &msg2 + 1; }
     };
 
     auto to_error_code_member_strings = [](int errno_code) -> table_row
@@ -118,7 +122,11 @@ int main(int argc, char** argv)
         string category2 = condition.category().name();
         string msg2      = condition.message();
 
-        return { i_str, message, category, category2, msg2 };
+        return { .i_str     = i_str,
+                 .message   = message,
+                 .category  = category,
+                 .category2 = category2,
+                 .msg2      = msg2 };
     };
 
     const int start  = 0;

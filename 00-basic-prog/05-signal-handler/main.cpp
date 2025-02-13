@@ -1,4 +1,3 @@
-#include <algorithm>
 #include <csignal>
 #include <iostream>
 #include <memory>
@@ -6,7 +5,7 @@
 #include <sstream>
 #include <string_view>
 
-static volatile std::sig_atomic_t         g_sig_counters[16] = { 0 };
+static volatile std::sig_atomic_t         g_sig_counters[16] = { 0 }; // NOLINT
 static std::unique_ptr<std::stringstream> g_statistics;
 
 extern "C" void custom_signal_handler(int signal_index);
@@ -15,7 +14,7 @@ void print_signal_statistics(std::string_view prefix);
 int  select_action_or_signal();
 int  user_select_signal_or_action(int user_selection);
 void experiment_with_signal(int user_select_signal);
-
+// NOLINTNEXTLINE
 int main()
 {
     using namespace std;
@@ -165,8 +164,9 @@ void print_signal_statistics(std::string_view prefix)
         out << p.first << ": " << p.second << std::endl;
         return out;
     };
-
-    int32_t     signals[]{ SIGABRT, SIGFPE, SIGILL, SIGINT, SIGSEGV, SIGTERM };
+    // NOLINTNEXTLINE
+    int32_t signals[]{ SIGABRT, SIGFPE, SIGILL, SIGINT, SIGSEGV, SIGTERM };
+    // NOLINTNEXTLINE
     string_view names[]{ "SIGABRT", "SIGFPE",  "SIGILL",
                          "SIGINT",  "SIGSEGV", "SIGTERM" };
 

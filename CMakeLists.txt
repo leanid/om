@@ -1,30 +1,41 @@
-cmake_minimum_required(VERSION 3.30)
+cmake_minimum_required(VERSION 3.31)
 
+list(APPEND CMAKE_PREFIX_PATH ${CMAKE_SOURCE_DIR}/cmake)
+find_package(om-common-functions REQUIRED)
 # Enables the Standard module support. This needs to be done
 # before selecting the languages.
 set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "0e5b6991-d74f-4b3d-a41c-cf096e0b2508")
 
 project("gamedev_study" LANGUAGES CXX)
+om_add_custom_build_types()
 
-set(CMAKE_CXX_STANDARD 23)
+# Tell CMake that we explicitly want `import std`. This will initialize the
+# property on all targets declared after this to 1
+set(CMAKE_CXX_MODULE_STD 1)
+
+if(MSVC)
+    set(CMAKE_CXX_STANDARD 23) # to get c++latest flag
+else()
+    set(CMAKE_CXX_STANDARD 26)
+endif()
+
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Currently CMake requires extensions enabled when using import std.
 # https://gitlab.kitware.com/cmake/cmake/-/issues/25916
 # https://gitlab.kitware.com/cmake/cmake/-/issues/25539
 set(CMAKE_CXX_EXTENSIONS ON)
 
-option(
-    OM_BUILD_DEPS
-    "download and build dependencies [SDL3, GLM, Catch2] as part of current build"
-    ON)
+option(OM_BUILD_DEPS [=[download and build dependencies [SDL3, GLM, Catch2]
+    as part of current build]=] ON)
 option(OM_BUILD_BOOST "download and build Boost from source" OFF)
 option(OM_BUILD_COURSE_BASIC_PROG "turn ON if need to build 00-basic-prog" ON)
 option(OM_BUILD_COURSE_BASIC_GAME_DEV
        "turn ON if need to build 01-basic-game-dev" ON)
 option(OM_BUILD_COURSE_OPENGL "turn ON if need to build 02-opengl" OFF)
-option(OM_BUILD_COURSE_VULKAN "turn ON if need to build 02-vulkan" ON)
+option(OM_BUILD_COURSE_VULKAN "turn ON if need to build 02-vulkan" OFF)
 option(OM_BUILD_GAME_EXAMPLE "turn ON if need to build 05-game" OFF)
 option(OM_BUILD_WEB "turn ON if need to build 08-web" ON)
+option(OM_CLANG_TIDY "turn ON if need to run clang-tidy" OFF)
 
 if(OM_BUILD_DEPS)
     message(STATUS "download and build SDL3 sources")
@@ -103,7 +114,9 @@ set(CMAKE_UNITY_BUILD_MODE "BATCH")
 
 enable_testing()
 
-# curses
+om_clang_tidy_enable()
+
+# courses
 if(OM_BUILD_COURSE_BASIC_PROG)
     add_subdirectory(00-basic-prog)
 endif()

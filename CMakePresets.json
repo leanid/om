@@ -64,9 +64,9 @@
       "cacheVariables": {
         "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
         "CMAKE_MAKE_PROGRAM": "ninja",
-        "CMAKE_CXX_COMPILER": "cl",
-        "CMAKE_C_COMPILER": "cl",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "$comment": "We have to build boost to match version 1.86.0",
+        "OM_BUILD_BOOST": "OFF"
       }
     },
     {
@@ -90,7 +90,9 @@
         "CMAKE_BUILD_TYPE": {
           "type": "STRING",
           "value": "Debug"
-        }
+        },
+        "$comment": "We have to build boost to match version 1.87",
+        "OM_BUILD_BOOST": "ON"
       }
     },
     {
@@ -120,7 +122,10 @@
         "CMAKE_CXX_MODULE_STD": {
           "type": "INTERNAL",
           "value": "ON"
-        }
+        },
+        "OM_CLANG_TIDY": "OFF",
+        "$comment": "We have to build boost with clang++ cause of libc++",
+        "OM_BUILD_BOOST": "ON"
       }
     },
     {
@@ -138,7 +143,10 @@
         "CMAKE_C_COMPILER": {
           "type": "INTERNAL",
           "value": "clang"
-        }
+        },
+        "OM_CLANG_TIDY": "ON",
+        "$comment": "We have to build boost with clang++ to match version 1.87",
+        "OM_BUILD_BOOST": "ON"
       }
     },
     {
@@ -241,7 +249,21 @@
       "name": "ninja",
       "configurePreset": "ninja",
       "output": {"outputOnFailure": true},
-      "execution": {"noTestsAction": "error", "stopOnFailure": true}
+      "execution": {"noTestsAction": "error", "stopOnFailure": false}
+    },
+    {
+      "name": "vcpkg",
+      "description": "vcpkg presets config description tests",
+      "configurePreset": "vcpkg",
+      "output": {
+        "shortProgress": true,
+        "verbosity": "verbose",
+        "outputOnFailure": true},
+      "execution": {
+        "stopOnFailure": false,
+        "enableFailover": true,
+        "jobs": 1,
+        "noTestsAction": "error" }
     }
   ],
   "packagePresets": [

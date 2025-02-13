@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.27...3.29)
+cmake_minimum_required(VERSION 3.31)
 
 project(19-boost-file-system CXX)
 

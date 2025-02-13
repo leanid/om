@@ -1,8 +1,10 @@
-#include "04_triangle_interpolated_render.hxx"
+#include <numbers>
 
+#include "04_triangle_interpolated_render.hxx"
+// NOLINTNEXTLINE
 int main(int, char**)
 {
-    const color black = { 0, 0, 0 };
+    const color black = { .r = 0, .g = 0, .b = 0 };
 
     constexpr size_t width  = 320;
     constexpr size_t height = 240;
@@ -19,7 +21,7 @@ int main(int, char**)
             vertex out = v_in;
 
             // rotate
-            double alpha = 3.14159 / 6; // 30 degree
+            double alpha = std::numbers::pi / 6; // 30 degree
             double x     = out.x;
             double y     = out.y;
             out.x        = x * std::cos(alpha) - y * std::sin(alpha);
@@ -48,9 +50,25 @@ int main(int, char**)
     interpolated_render.clear(black);
     interpolated_render.set_gfx_program(program01);
 
-    std::vector<vertex>   triangle_v{ { 0, 0, 1, 0, 0, 0, 0, 0 },
-                                      { 0, 239, 0, 1, 0, 0, 239, 0 },
-                                      { 319, 239, 0, 0, 1, 319, 239, 0 } };
+    std::vector<vertex> triangle_v{
+        { .x = 0, .y = 0, .z = 1, .f3 = 0, .f4 = 0, .f5 = 0, .f6 = 0, .f7 = 0 },
+        { .x  = 0,
+          .y  = 239,
+          .z  = 0,
+          .f3 = 1,
+          .f4 = 0,
+          .f5 = 0,
+          .f6 = 239,
+          .f7 = 0 },
+        { .x  = 319,
+          .y  = 239,
+          .z  = 0,
+          .f3 = 0,
+          .f4 = 1,
+          .f5 = 319,
+          .f6 = 239,
+          .f7 = 0 }
+    };
     std::vector<uint16_t> indexes_v{ 0, 1, 2 };
 
     interpolated_render.draw_triangles(triangle_v, indexes_v);
@@ -106,8 +124,8 @@ int main(int, char**)
 
         color sample2d(double u_, double v_)
         {
-            uint32_t u = static_cast<uint32_t>(std::round(u_));
-            uint32_t v = static_cast<uint32_t>(std::round(v_));
+            auto u = static_cast<uint32_t>(std::round(u_));
+            auto v = static_cast<uint32_t>(std::round(v_));
 
             color c = texture.at(v * width + u);
             return c;

@@ -1,7 +1,6 @@
 #include "04_triangle_interpolated_render.hxx"
 
 #include <algorithm>
-#include <iostream>
 
 double interpolate(const double f0, const double f1, const double t)
 {
@@ -12,10 +11,14 @@ double interpolate(const double f0, const double f1, const double t)
 
 vertex interpolate(const vertex& v0, const vertex& v1, const double t)
 {
-    return { interpolate(v0.x, v1.x, t),   interpolate(v0.y, v1.y, t),
-             interpolate(v0.z, v1.z, t),   interpolate(v0.f3, v1.f3, t),
-             interpolate(v0.f4, v1.f4, t), interpolate(v0.f5, v1.f5, t),
-             interpolate(v0.f6, v1.f6, t), interpolate(v0.f7, v1.f7, t) };
+    return { .x  = interpolate(v0.x, v1.x, t),
+             .y  = interpolate(v0.y, v1.y, t),
+             .z  = interpolate(v0.z, v1.z, t),
+             .f3 = interpolate(v0.f3, v1.f3, t),
+             .f4 = interpolate(v0.f4, v1.f4, t),
+             .f5 = interpolate(v0.f5, v1.f5, t),
+             .f6 = interpolate(v0.f6, v1.f6, t),
+             .f7 = interpolate(v0.f7, v1.f7, t) };
 }
 
 triangle_interpolated::triangle_interpolated(canvas& buffer,
@@ -30,7 +33,7 @@ void triangle_interpolated::raster_one_horizontal_line(
     const vertex&        right_vertex,
     std::vector<vertex>& out)
 {
-    size_t num_of_pixels_in_line = static_cast<size_t>(
+    auto num_of_pixels_in_line = static_cast<size_t>(
         std::round(std::abs(left_vertex.x - right_vertex.x)));
     if (num_of_pixels_in_line > 0)
     {
@@ -38,7 +41,7 @@ void triangle_interpolated::raster_one_horizontal_line(
         for (size_t p = 0; p <= num_of_pixels_in_line + 1; ++p)
         {
             double t_pixel =
-                static_cast<double>(p) / (num_of_pixels_in_line + 1);
+                static_cast<double>(p) / (num_of_pixels_in_line + 1); // NOLINT
             vertex pixel = interpolate(left_vertex, right_vertex, t_pixel);
 
             out.push_back(pixel);
@@ -59,14 +62,15 @@ std::vector<vertex> triangle_interpolated::raster_horizontal_triangle(
     // 2. step to next left and right points and draw next horizontal line
     // 3. do the same till last single point
 
-    size_t num_of_hlines =
+    auto num_of_hlines =
         static_cast<size_t>(std::round(std::abs(single.y - left.y)));
 
     if (num_of_hlines > 0)
     {
         for (size_t i = 0; i <= num_of_hlines; ++i)
         {
-            double t_vertical   = static_cast<double>(i) / num_of_hlines;
+            double t_vertical =
+                static_cast<double>(i) / static_cast<double>(num_of_hlines);
             vertex left_vertex  = interpolate(left, single, t_vertical);
             vertex right_vertex = interpolate(right, single, t_vertical);
 
@@ -94,10 +98,10 @@ std::vector<vertex> triangle_interpolated::rasterize_triangle(const vertex& v0,
 
     // sort by Y position input triangles:
     std::array<const vertex*, 3> in_vertexes{ &v0, &v1, &v2 };
-    std::sort(begin(in_vertexes),
-              end(in_vertexes),
-              [](const vertex* left, const vertex* right)
-              { return left->y < right->y; });
+    std::ranges::sort(in_vertexes,
+
+                      [](const vertex* left, const vertex* right)
+                      { return left->y < right->y; });
 
     const vertex& top    = *in_vertexes.at(0);
     const vertex& middle = *in_vertexes.at(1);
@@ -106,23 +110,25 @@ std::vector<vertex> triangle_interpolated::rasterize_triangle(const vertex& v0,
     // first and last vertex will be longest triangle side
     // we need to find middle point on longest triangle side with same Y
     // coordinate like in middle vertex after sort
-    position start{ static_cast<int32_t>(std::round(top.x)),
-                    static_cast<int32_t>(std::round(top.y)) };
-    position end{ static_cast<int32_t>(std::round(bottom.x)),
-                  static_cast<int32_t>(std::round(bottom.y)) };
-    position middle_pos{ static_cast<int32_t>(std::round(middle.x)),
-                         static_cast<int32_t>(std::round(middle.y)) };
+    position start{ .x = static_cast<int32_t>(std::round(top.x)),
+                    .y = static_cast<int32_t>(std::round(top.y)) };
+    position end{ .x = static_cast<int32_t>(std::round(bottom.x)),
+                  .y = static_cast<int32_t>(std::round(bottom.y)) };
+    position middle_pos{ .x = static_cast<int32_t>(std::round(middle.x)),
+                         .y = static_cast<int32_t>(std::round(middle.y)) };
 
     // Here 3 quik and durty HACK if triangle consist from same points
     if (start == end)
     {
         // just render line start -> middle
 
-        position delta        = start - middle_pos;
-        size_t   count_pixels = 4 * (std::abs(delta.x) + std::abs(delta.y) + 1);
+        position delta = start - middle_pos;
+        size_t   count_pixels =
+            4ull * (std::abs(delta.x) + std::abs(delta.y) + 1);
         for (size_t i = 0; i < count_pixels; ++i)
         {
-            double t      = static_cast<double>(i) / count_pixels;
+            double t =
+                static_cast<double>(i) / static_cast<double>(count_pixels);
             vertex vertex = interpolate(top, middle, t);
             out.push_back(vertex);
         }
@@ -134,11 +140,13 @@ std::vector<vertex> triangle_interpolated::rasterize_triangle(const vertex& v0,
     {
         // just render line start -> middle
 
-        position delta        = start - end;
-        size_t   count_pixels = 4 * (std::abs(delta.x) + std::abs(delta.y) + 1);
+        position delta = start - end;
+        size_t   count_pixels =
+            4ull * (std::abs(delta.x) + std::abs(delta.y) + 1);
         for (size_t i = 0; i < count_pixels; ++i)
         {
-            double t      = static_cast<double>(i) / count_pixels;
+            double t =
+                static_cast<double>(i) / static_cast<double>(count_pixels);
             vertex vertex = interpolate(top, bottom, t);
             out.push_back(vertex);
         }
@@ -150,11 +158,13 @@ std::vector<vertex> triangle_interpolated::rasterize_triangle(const vertex& v0,
     {
         // just render line start -> middle
 
-        position delta        = start - middle_pos;
-        size_t   count_pixels = 4 * (std::abs(delta.x) + std::abs(delta.y) + 1);
+        position delta = start - middle_pos;
+        size_t   count_pixels =
+            4ull * (std::abs(delta.x) + std::abs(delta.y) + 1);
         for (size_t i = 0; i < count_pixels; ++i)
         {
-            double t      = static_cast<double>(i) / count_pixels;
+            double t =
+                static_cast<double>(i) / static_cast<double>(count_pixels);
             vertex vertex = interpolate(top, middle, t);
             out.push_back(vertex);
         }
@@ -164,9 +174,9 @@ std::vector<vertex> triangle_interpolated::rasterize_triangle(const vertex& v0,
 
     std::vector<position> longest_side_line = pixels_positions(start, end);
 
-    auto it_middle = std::find_if(
-        begin(longest_side_line),
-        std::end(longest_side_line),
+    auto it_middle = std::ranges::find_if(
+        longest_side_line,
+
         [&](const position& pos)
         { return pos.y == static_cast<int32_t>(std::round(middle.y)); });
     assert(it_middle != std::end(longest_side_line));
@@ -225,8 +235,8 @@ void triangle_interpolated::draw_triangles(std::vector<vertex>&   vertexes,
         {
             const color    c = program_->fragment_shader(interpolated_vertex);
             const position pos{
-                static_cast<int32_t>(std::round(interpolated_vertex.x)),
-                static_cast<int32_t>(std::round(interpolated_vertex.y))
+                .x = static_cast<int32_t>(std::round(interpolated_vertex.x)),
+                .y = static_cast<int32_t>(std::round(interpolated_vertex.y))
             };
             set_pixel(pos, c);
         }

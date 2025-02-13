@@ -14,16 +14,17 @@ struct platform_sdl3 final : platform_interface
     {
     }
 
-    extensions   get_vulkan_extensions() override;
-    VkSurfaceKHR create_vulkan_surface(
-        VkInstance instance, VkAllocationCallbacks* alloc_callbacks) override;
+    extensions     get_vulkan_extensions() override;
+    vk::SurfaceKHR create_vulkan_surface(
+        vk::Instance             instance,
+        vk::AllocationCallbacks* alloc_callbacks) override;
     void destroy_vulkan_surface(
-        VkInstance             instance,
-        VkSurfaceKHR           surface,
-        VkAllocationCallbacks* alloc_callbacks) override;
+        vk::Instance             instance,
+        vk::SurfaceKHR           surface,
+        vk::AllocationCallbacks* alloc_callbacks) noexcept override;
     buffer_size get_window_buffer_size() override;
 
-    std::ostream& get_logger() override;
+    std::ostream& get_logger() noexcept override;
 
     content get_file_content(std::string_view path) override;
 

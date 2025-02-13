@@ -1,12 +1,9 @@
 #include <fstream>
-#include <iomanip>
 #include <ios>
 #include <iosfwd>
 #include <iostream>
 #include <memory>
-#include <string>
-#include <string_view>
-
+// NOLINTNEXTLINE
 int main(int argc, char** argv)
 {
     using namespace std;
@@ -48,9 +45,9 @@ int main(int argc, char** argv)
         cout << "file_size: " << file_size << " in_avail: " << availiable_size
              << endl;
         in.pubseekoff(0, ios_base::beg, ios_base::in);
-        unique_ptr<char[]> content = make_unique<char[]>(file_size);
-        streamsize         size    = file_size;
-        streamsize         copied  = in.sgetn(content.get(), file_size);
+        unique_ptr<char[]> content = make_unique<char[]>(file_size); // NOLINT
+        streamsize         size    = file_size;                      // NOLINT
+        streamsize copied = in.sgetn(content.get(), file_size);      // NOLINT
 
         if (copied != file_size)
         {
@@ -58,7 +55,7 @@ int main(int argc, char** argv)
             return 1;
         }
 
-        const uint32_t* data_as_u32 =
+        const auto* data_as_u32 =
             reinterpret_cast<const uint32_t*>(content.get());
         cout << "file fully loaded: " << hex << *data_as_u32 << endl;
         // try to drop cache and see free memory status (all from root)

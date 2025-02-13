@@ -79,6 +79,9 @@ template <typename T> static void load_gl_func(const char* func_name, T& result)
                 case GL_OUT_OF_MEMORY:                                         \
                     std::cerr << "GL_OUT_OF_MEMORY" << std::endl;              \
                     break;                                                     \
+                default:                                                       \
+                    std::cerr << "unknown error" << std::endl;                 \
+                    break;                                                     \
             }                                                                  \
             assert(false);                                                     \
         }                                                                      \
@@ -102,8 +105,8 @@ public:
         OM_GL_CHECK()
     }
 
-    std::uint32_t get_width() const final { return width; }
-    std::uint32_t get_height() const final { return height; }
+    [[nodiscard]] std::uint32_t get_width() const final { return width; }
+    [[nodiscard]] std::uint32_t get_height() const final { return height; }
 
 private:
     std::string   file_path;
@@ -117,8 +120,8 @@ class shader_gl_es20
 {
 public:
     shader_gl_es20(
-        std::string_view                                      vertex_src,
-        std::string_view                                      fragment_src,
+        std::string_view vertex_src, // NOLINT
+        std::string_view fragment_src,
         const std::vector<std::tuple<GLuint, const GLchar*>>& attributes)
     {
         vert_shader = compile_shader(GL_VERTEX_SHADER, vertex_src);
@@ -144,7 +147,7 @@ public:
     {
         assert(texture != nullptr);
         const int location =
-            glGetUniformLocation(program_id, uniform_name.data());
+            glGetUniformLocation(program_id, uniform_name.data()); // NOLINT
         OM_GL_CHECK()
         if (location == -1)
         {
@@ -165,13 +168,14 @@ public:
     void set_uniform(std::string_view uniform_name, const color& c)
     {
         const int location =
-            glGetUniformLocation(program_id, uniform_name.data());
+            glGetUniformLocation(program_id, uniform_name.data()); // NOLINT
         OM_GL_CHECK()
         if (location == -1)
         {
             std::cerr << "can't get uniform location from shader\n";
             throw std::runtime_error("can't get uniform location");
         }
+        // NOLINTNEXTLINE
         float values[4] = { c.get_r(), c.get_g(), c.get_b(), c.get_a() };
         glUniform4fv(location, 1, &values[0]);
         OM_GL_CHECK()
@@ -206,7 +210,7 @@ private:
 
             std::string shader_type_name =
                 shader_type == GL_VERTEX_SHADER ? "vertex" : "fragment";
-            std::cerr << "Error compiling shader(vertex)\n"
+            std::cerr << "Error compiling " << shader_type_name << "\n"
                       << vertex_shader_src << "\n"
                       << info_chars.data();
             return 0;
@@ -290,9 +294,9 @@ static std::array<std::string_view, 17> event_names = {
 
 std::ostream& operator<<(std::ostream& stream, const event e)
 {
-    std::uint32_t value   = static_cast<std::uint32_t>(e);
-    std::uint32_t minimal = static_cast<std::uint32_t>(event::left_pressed);
-    std::uint32_t maximal = static_cast<std::uint32_t>(event::turn_off);
+    auto value   = static_cast<std::uint32_t>(e);
+    auto minimal = static_cast<std::uint32_t>(event::left_pressed);
+    auto maximal = static_cast<std::uint32_t>(event::turn_off);
     if (value >= minimal && value <= maximal)
     {
         stream << event_names[value];
@@ -392,6 +396,7 @@ std::istream& operator>>(std::istream& is, tri2& t)
 #pragma pack(push, 1)
 struct bind
 {
+    // NOLINTNEXTLINE
     bind(std::string_view s, SDL_Keycode k, event pressed, event released)
         : name(s)
         , key(k)
@@ -433,9 +438,10 @@ static bool check_input(const SDL_Event& e, const bind*& result)
 {
     using namespace std;
 
-    const auto it = find_if(begin(keys),
-                            end(keys),
-                            [&](const bind& b) { return b.key == e.key.key; });
+    const auto it =
+        std::ranges::find_if(keys,
+
+                             [&](const bind& b) { return b.key == e.key.key; });
 
     if (it != end(keys))
     {
@@ -455,7 +461,7 @@ public:
     float get_time_from_init() final
     {
         std::uint32_t ms_from_library_initialization = SDL_GetTicks();
-        float         seconds = ms_from_library_initialization * 0.001f;
+        float seconds = ms_from_library_initialization * 0.001f; // NOLINT
         return seconds;
     }
     /// pool event from input queue
@@ -546,7 +552,7 @@ public:
     void render(const tri2& t, texture* tex) final
     {
         shader02->use();
-        texture_gl_es20* texture = static_cast<texture_gl_es20*>(tex);
+        auto* texture = static_cast<texture_gl_es20*>(tex);
         texture->bind();
         shader02->set_uniform("s_texture", texture);
         // positions
@@ -630,6 +636,7 @@ color::color(std::uint32_t rgba_)
     : rgba(rgba_)
 {
 }
+// NOLINTNEXTLINE
 color::color(float r, float g, float b, float a)
 {
     assert(r <= 1 && r >= 0);
@@ -637,10 +644,10 @@ color::color(float r, float g, float b, float a)
     assert(b <= 1 && b >= 0);
     assert(a <= 1 && a >= 0);
 
-    std::uint32_t r_ = static_cast<std::uint32_t>(r * 255);
-    std::uint32_t g_ = static_cast<std::uint32_t>(g * 255);
-    std::uint32_t b_ = static_cast<std::uint32_t>(b * 255);
-    std::uint32_t a_ = static_cast<std::uint32_t>(a * 255);
+    auto r_ = static_cast<std::uint32_t>(r * 255);
+    auto g_ = static_cast<std::uint32_t>(g * 255);
+    auto b_ = static_cast<std::uint32_t>(b * 255);
+    auto a_ = static_cast<std::uint32_t>(a * 255);
 
     rgba = a_ << 24 | b_ << 16 | g_ << 8 | r_;
 }
@@ -648,56 +655,56 @@ color::color(float r, float g, float b, float a)
 float color::get_r() const
 {
     std::uint32_t r_ = (rgba & 0x000000FF) >> 0;
-    return r_ / 255.f;
+    return r_ / 255.f; // NOLINT
 }
 float color::get_g() const
 {
     std::uint32_t g_ = (rgba & 0x0000FF00) >> 8;
-    return g_ / 255.f;
+    return g_ / 255.f; // NOLINT
 }
 float color::get_b() const
 {
     std::uint32_t b_ = (rgba & 0x00FF0000) >> 16;
-    return b_ / 255.f;
+    return b_ / 255.f; // NOLINT
 }
 float color::get_a() const
 {
     std::uint32_t a_ = (rgba & 0xFF000000) >> 24;
-    return a_ / 255.f;
+    return a_ / 255.f; // NOLINT
 }
 
 void color::set_r(const float r)
 {
-    std::uint32_t r_ = static_cast<std::uint32_t>(r * 255);
+    auto r_ = static_cast<std::uint32_t>(r * 255);
     rgba &= 0xFFFFFF00;
     rgba |= (r_ << 0);
 }
 void color::set_g(const float g)
 {
-    std::uint32_t g_ = static_cast<std::uint32_t>(g * 255);
+    auto g_ = static_cast<std::uint32_t>(g * 255);
     rgba &= 0xFFFF00FF;
     rgba |= (g_ << 8);
 }
 void color::set_b(const float b)
 {
-    std::uint32_t b_ = static_cast<std::uint32_t>(b * 255);
+    auto b_ = static_cast<std::uint32_t>(b * 255);
     rgba &= 0xFF00FFFF;
     rgba |= (b_ << 16);
 }
 void color::set_a(const float a)
 {
-    std::uint32_t a_ = static_cast<std::uint32_t>(a * 255);
+    auto a_ = static_cast<std::uint32_t>(a * 255);
     rgba &= 0x00FFFFFF;
     rgba |= a_ << 24;
 }
 
-engine::~engine() {}
+engine::~engine() = default;
 
 texture_gl_es20::texture_gl_es20(std::string_view path)
     : file_path(path)
 {
     std::vector<unsigned char> png_file_in_memory;
-    std::ifstream              ifs(path.data(), std::ios_base::binary);
+    std::ifstream ifs(path.data(), std::ios_base::binary); // NOLINT
     if (!ifs)
     {
         throw std::runtime_error("can't load texture");
@@ -735,10 +742,10 @@ texture_gl_es20::texture_gl_es20(std::string_view path)
     glBindTexture(GL_TEXTURE_2D, tex_handl);
     OM_GL_CHECK()
 
-    GLint   mipmap_level = 0;
-    GLint   border       = 0;
-    GLsizei width_       = static_cast<GLsizei>(w);
-    GLsizei height_      = static_cast<GLsizei>(h);
+    GLint mipmap_level = 0;
+    GLint border       = 0;
+    auto  width_       = static_cast<GLsizei>(w);
+    auto  height_      = static_cast<GLsizei>(h);
     glTexImage2D(GL_TEXTURE_2D,
                  mipmap_level,
                  GL_RGBA,

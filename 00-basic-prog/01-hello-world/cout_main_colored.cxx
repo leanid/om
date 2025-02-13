@@ -12,7 +12,7 @@ void get_terminal_size(int& width, int& height);
 bool is_terminal_support_truecolor();
 bool is_terminal_support_256color();
 bool is_terminal_stdout();
-
+// NOLINTNEXTLINE
 int main(int, char**)
 {
     // This example works on Windows 10 in MinGW terminal (tested in
@@ -81,8 +81,9 @@ int main(int, char**)
         // finish play with terminal
         cout << "\033[0m"; // reset to default
         cout << "\x1b[0m"; // this is the same as abome! You know why?
-        char array[] = { 27, 91, 48, 109, 0 };
-        cout << array; // this is the same too! You know what is ASCII is?
+        array<char, 5> array = { 27, 91, 48, 109, 0 };
+        cout
+            << array.data(); // this is the same too! You know what is ASCII is?
     }
 
     cout << endl; // flush to device from internal buffer
@@ -124,11 +125,11 @@ void get_terminal_size(int& width, int& height)
 
     // expected file with content like: xxx yyy
     // where xxx - rows, yyy - columns in decimal format
-    ifstream file_with_terminal_size(tmp_file_name.data());
+    ifstream file_with_terminal_size(tmp_file_name.data()); // NOLINT
     file_with_terminal_size >> height >> width;
     file_with_terminal_size.close();
 
-    remove(tmp_file_name.data()); // remove tmp file
+    remove(tmp_file_name.data()); // NOLINT // remove tmp file
 }
 
 bool is_terminal_support_truecolor()

@@ -1,6 +1,6 @@
 #include "00_canvas_basic.hxx"
 
-irender::~irender() {}
+irender::~irender() = default;
 
 bool operator==(const color& l, const color& r)
 {
@@ -13,7 +13,7 @@ static_assert(3 == color_size, "24 bit per pixel(r,g,b)");
 
 position operator-(const position& left, const position& right)
 {
-    return { left.x - right.x, left.y - right.y };
+    return { .x = left.x - right.x, .y = left.y - right.y };
 }
 
 bool operator==(const position& left, const position& right)
@@ -23,5 +23,5 @@ bool operator==(const position& left, const position& right)
 
 position position::generate_random(int width, int height)
 {
-    return { rand() % width, rand() % height };
+    return { .x = rand() % width, .y = rand() % height };
 }

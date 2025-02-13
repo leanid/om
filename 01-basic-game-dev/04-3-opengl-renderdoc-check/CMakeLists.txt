@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.31)
 project(04-3-opengl-renderdoc-check)
 
 add_library(engine-04-3 STATIC engine.cxx engine.hxx)
@@ -17,7 +17,8 @@ add_executable(game-04-3 game.cxx)
 target_compile_features(game-04-3 PUBLIC cxx_std_20)
 target_link_libraries(game-04-3 PRIVATE engine-04-3)
 
-install(TARGETS engine-04-3 game-04-3
-        RUNTIME DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../../bin/tests
-        LIBRARY DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../../bin/tests
-        ARCHIVE DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../../bin/tests)
+install(
+    TARGETS engine-04-3 game-04-3
+    RUNTIME DESTINATION ${CMAKE_SOURCE_DIR}/bin/tests
+    LIBRARY DESTINATION ${CMAKE_SOURCE_DIR}/bin/tests
+    ARCHIVE DESTINATION ${CMAKE_SOURCE_DIR}/bin/tests)

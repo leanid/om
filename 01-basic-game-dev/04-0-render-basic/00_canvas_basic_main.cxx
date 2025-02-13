@@ -1,17 +1,18 @@
 #include "00_canvas_basic.hxx"
 
+#include <algorithm>
 #include <iostream>
-
+// NOLINTNEXTLINE
 int main(int, char**)
 {
-    const color green = { 0, 255, 0 };
+    const color green = { .r = 0, .g = 255, .b = 0 };
 
     size_t width  = 320;
     size_t height = 240;
 
     canvas image(width, height);
 
-    std::fill(image.begin(), image.end(), green);
+    std::ranges::fill(image, green);
 
     const char* file_name = "00_green_image.ppm";
 

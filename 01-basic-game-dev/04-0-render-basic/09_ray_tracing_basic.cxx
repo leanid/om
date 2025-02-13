@@ -22,7 +22,7 @@ const float inf{ std::numeric_limits<float>::infinity() }; /// c++ infinity
 /// position in 3D space of pixel from canvas
 glm::vec3 canvas_to_viewport(int pixel_x, int pixel_y)
 {
-    return glm::vec3{ pixel_x * Vw / Cw, pixel_y * Vh / Ch, d };
+    return glm::vec3{ pixel_x * Vw / Cw, pixel_y * Vh / Ch, d }; // NOLINT
 }
 
 using color_t = glm::vec3;
@@ -69,7 +69,10 @@ struct light_t
 
     std::variant<ambient, point, directional> info;
 
-    type get_type() const { return static_cast<type>(info.index()); }
+    [[nodiscard]] type get_type() const
+    {
+        return static_cast<type>(info.index());
+    }
 };
 
 color_t ray_trace(const glm::vec3&             origin,
@@ -98,47 +101,58 @@ intersection_sphere closest_intersection(const glm::vec3&             origin,
                                          const float&                 t_min,
                                          const float&                 t_max,
                                          const std::vector<sphere_t>& objects);
-
+// NOLINTNEXTLINE
 void canvas_put_pixel(int x, int y, color_t col, canvas& image)
 {
-    const size_t image_x = (Cw / 2) + x;
-    const size_t image_y = (Ch / 2) - y;
+    const size_t image_x = static_cast<size_t>(Cw / 2) + x;
+    const size_t image_y = static_cast<size_t>(Ch / 2) - y;
 
-    if (image_x < 0 || image_x >= Cw || image_y < 0 || image_y >= Ch)
+    if (image_x < 0 || image_x >= Cw || image_y < 0 || image_y >= Ch) // NOLINT
     {
         return;
     }
 
-    const color c{ static_cast<uint8_t>(col.r * 255),
-                   static_cast<uint8_t>(col.g * 255),
-                   static_cast<uint8_t>(col.b * 255) };
+    const color c{ .r = static_cast<uint8_t>(col.r * 255),
+                   .g = static_cast<uint8_t>(col.g * 255),
+                   .b = static_cast<uint8_t>(col.b * 255) };
 
     image.set_pixel(image_x, image_y, c);
 }
-
+// NOLINTNEXTLINE
 int main(int argc, char** argv)
 {
-    canvas image(Cw, Ch);
+    canvas image(Cw, Ch); // NOLINT
 
     std::vector<sphere_t> scene;
 
-    scene.push_back(sphere_t{ glm::vec3{ 0.f, -1.f, 3.f }, red, 1.f, 500.f });
-    scene.push_back(sphere_t{ glm::vec3{ 2.f, 0.f, 4.f }, blue, 1.f, 500.f });
-    scene.push_back(sphere_t{ glm::vec3{ -2.f, 0.f, 4.f }, green, 1.f, 10.f });
-    scene.push_back(
-        sphere_t{ glm::vec3{ 0.f, -5001.f, 0.f }, yellow, 5000.f, 1000.f });
+    scene.push_back(sphere_t{ .center_position = glm::vec3{ 0.f, -1.f, 3.f },
+                              .color           = red,
+                              .radius          = 1.f,
+                              .spec_reflection_exp = 500.f });
+    scene.push_back(sphere_t{ .center_position     = glm::vec3{ 2.f, 0.f, 4.f },
+                              .color               = blue,
+                              .radius              = 1.f,
+                              .spec_reflection_exp = 500.f });
+    scene.push_back(sphere_t{ .center_position = glm::vec3{ -2.f, 0.f, 4.f },
+                              .color           = green,
+                              .radius          = 1.f,
+                              .spec_reflection_exp = 10.f });
+    scene.push_back(sphere_t{ .center_position = glm::vec3{ 0.f, -5001.f, 0.f },
+                              .color           = yellow,
+                              .radius          = 5000.f,
+                              .spec_reflection_exp = 1000.f });
 
     std::vector<light_t> lights;
 
     lights.push_back(light_t{ light_t::ambient{ 0.2f } });
-    lights.push_back(
-        light_t{ light_t::point{ glm::vec3{ 2.f, 1.f, 0.f }, 0.6f } });
-    lights.push_back(
-        light_t{ light_t::directional{ glm::vec3{ 1.f, 4.f, 4.f }, 0.2f } });
+    lights.push_back(light_t{ light_t::point{
+        .position = glm::vec3{ 2.f, 1.f, 0.f }, .intensity = 0.6f } });
+    lights.push_back(light_t{ light_t::directional{
+        .direction = glm::vec3{ 1.f, 4.f, 4.f }, .intensity = 0.2f } });
 
-    for (int x = -Cw / 2; x < Cw / 2; ++x)
+    for (int x = -Cw / 2; x < Cw / 2; ++x) // NOLINT
     {
-        for (int y = -Ch / 2; y < Ch / 2; ++y)
+        for (int y = -Ch / 2; y < Ch / 2; ++y) // NOLINT
         {
             glm::vec3 Direction{ canvas_to_viewport(x, y) };
             auto      color{ ray_trace(O, Direction, 1.f, inf, scene, lights) };
@@ -155,7 +169,7 @@ struct intersection
     float t_0;
     float t_1;
 };
-
+// NOLINTNEXTLINE
 intersection ray_intersect_sphere(const glm::vec3& ray_start,
                                   const glm::vec3& ray_direction,
                                   const sphere_t&  sphere)
@@ -168,13 +182,13 @@ intersection ray_intersect_sphere(const glm::vec3& ray_start,
     const float discriminant = b * b - 4 * a * c;
     if (discriminant < 0)
     {
-        return intersection{ inf, inf };
+        return intersection{ .t_0 = inf, .t_1 = inf };
     }
 
     const float t1 = (-b + std::sqrt(discriminant)) / (2 * a);
     const float t2 = (-b - std::sqrt(discriminant)) / (2 * a);
 
-    return intersection{ t1, t2 };
+    return intersection{ .t_0 = t1, .t_1 = t2 };
 }
 
 intersection_sphere closest_intersection(const glm::vec3&             origin,
@@ -201,13 +215,13 @@ intersection_sphere closest_intersection(const glm::vec3&             origin,
         }
     }
 
-    intersection_sphere result{ closest, closest_t };
+    intersection_sphere result{ .sphere = closest, .t = closest_t };
     return result;
 }
 
 color_t ray_trace(const glm::vec3&             origin,
                   const glm::vec3&             direction,
-                  const float&                 start_t,
+                  const float&                 start_t, // NOLINT
                   const float&                 end_t,
                   const std::vector<sphere_t>& objects,
                   const std::vector<light_t>&  lights)
@@ -229,7 +243,7 @@ color_t ray_trace(const glm::vec3&             origin,
     return closest.sphere->color * intensity;
 }
 
-float compute_lighting(const glm::vec3&             P,
+float compute_lighting(const glm::vec3&             P, // NOLINT
                        const glm::vec3&             N,
                        const glm::vec3&             V,
                        const float                  specular_reflection_exp,
@@ -251,15 +265,14 @@ float compute_lighting(const glm::vec3&             P,
             float     t_max;
             if (type == light_t::type::point)
             {
-                const light_t::point& p = std::get<light_t::point>(light.info);
-                L                       = p.position - P;
-                light_intensity         = p.intensity;
-                t_max                   = 1.f;
+                const auto& p   = std::get<light_t::point>(light.info);
+                L               = p.position - P;
+                light_intensity = p.intensity;
+                t_max           = 1.f;
             }
             else
             {
-                const light_t::directional& p =
-                    std::get<light_t::directional>(light.info);
+                const auto& p   = std::get<light_t::directional>(light.info);
                 L               = p.direction;
                 light_intensity = p.intensity;
                 t_max           = inf;
@@ -289,7 +302,7 @@ float compute_lighting(const glm::vec3&             P,
 
             if (cos_R_V > 0.f)
             {
-                intensity += light_intensity *
+                intensity += light_intensity * // NOLINT
                              pow(cos_R_V / (glm::length(R) * glm::length(V)),
                                  specular_reflection_exp);
             }

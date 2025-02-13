@@ -143,3 +143,25 @@ int main(int argc, char* argv[])
   // ...
 }
 #+end_src
+
+** generating po, mo files
+1. generate messages.pot file from source =main.cxx= (see CMakeLists.txt
+   generate_messages target)
+2. copy =messages.pot= to PACKAGE-VERSION/po/messages.pot
+3. in terminal call =msginit= in directory PACKAGE-VERSION/po/messages.pot
+4. in my default ru_BY.UTF-8 locale generated one file ru.po with correct
+   =nplural= form detection for Russian lang
+5. to generate English lang call =msginit -i messages.pot -o ru.po --locale=
+   =en_US.UTF-8=
+6. you should find en.po file with correct english nplural form detection
+7. always check your charset is UTF-8 - it can correctly add any charecter in
+   any languages
+8. use programm =msgmerge= to update old po file with new strings from new
+   sources ref.po file =msgmerge old.po ref.po=
+9. generate binary files =mo= from =*.po= with command: =msgfmt ru.po -o ru.mo=
+
+** locating message catalog files
+1. example: ~dirname/locale/LC_category/domain_name.mo~
+2. default directory: ~/usr/local/share/locale~
+3. locale is the name of the locale category which is designated by LC_category.
+   For gettext and dgettext this LC_category is always LC_MESSAGES

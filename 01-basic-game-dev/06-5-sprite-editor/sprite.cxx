@@ -1,3 +1,5 @@
+#include <numbers>
+
 #include "sprite.hxx"
 
 sprite::sprite()
@@ -8,7 +10,7 @@ sprite::sprite()
 sprite::sprite(const std::string_view id,
                om::texture*           tex,
                const rect&            rect_on_texture,
-               const om::vec2&        pos,
+               const om::vec2&        pos, // NOLINT
                const om::vec2&        size,
                const float            angle)
     : id_{ id }
@@ -41,7 +43,7 @@ void sprite::draw(om::engine& render) const
 
     using namespace om;
 
-    v2 vertexes[4];
+    v2 vertexes[4]; // NOLINT
     /// remember in OpenGL texture lower left angle is (0, 0) coordinate
     vertexes[0].uv = uv_rect_.pos + vec2(0.f, uv_rect_.size.y);
     vertexes[1].uv = uv_rect_.pos + vec2(uv_rect_.size.x, uv_rect_.size.y);
@@ -78,8 +80,9 @@ void sprite::draw(om::engine& render) const
     float    aspect        = screen_size.y / screen_size.x;
     mat2x3   window_aspect = mat2x3::scale(aspect, 1.0);
 
-    mat2x3 move     = mat2x3::move(pos_);
-    mat2x3 rotation = mat2x3::rotation(rotation_ * (3.14159f / 180));
+    mat2x3 move = mat2x3::move(pos_);
+    mat2x3 rotation =
+        mat2x3::rotation(rotation_ * (std::numbers::pi_v<float> / 180));
 
     mat2x3 world_transform = move * rotation * window_aspect;
 

@@ -1,4 +1,3 @@
-#include <algorithm>
 #include <array>
 #include <chrono>
 #include <cstdlib>
@@ -43,7 +42,7 @@ private:
 
     std::chrono::time_point<clock_t> m_beg;
 };
-
+// NOLINTNEXTLINE
 int main(int /*argc*/, char* /*argv*/[])
 {
     using namespace std;
