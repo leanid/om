@@ -10,7 +10,17 @@
 #include <ranges>
 #include <set>
 #include <sstream>
+#if __has_include(<stacktrace>)
 #include <stacktrace>
+#else
+namespace std::stacktrace
+{
+auto current()
+{
+    return "no stacktrace";
+}
+} // namespace std::stacktrace
+#endif
 #include <stdexcept>
 #include <string_view>
 #include <tuple>
