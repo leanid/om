@@ -2703,7 +2703,8 @@ using VULKAN_HPP_NAMESPACE::PFN_FreeFunction;
 using VULKAN_HPP_NAMESPACE::PFN_InternalAllocationNotification;
 using VULKAN_HPP_NAMESPACE::PFN_InternalFreeNotification;
 using VULKAN_HPP_NAMESPACE::PFN_ReallocationFunction;
-// using VULKAN_HPP_NAMESPACE::PFN_vkVoidFunction; // TODO why?
+// using VULKAN_HPP_NAMESPACE::PFN_VoidFunction; // TODO why?
+using ::PFN_vkVoidFunction; // TODO why?
 
 //=== VK_EXT_debug_report ===
 using VULKAN_HPP_NAMESPACE::PFN_DebugReportCallbackEXT;

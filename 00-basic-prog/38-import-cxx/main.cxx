@@ -1,5 +1,6 @@
 import std;
 import glm;
+import vulkan_hpp;
 
 int main()
 {
@@ -17,5 +18,19 @@ int main()
     std::cout << v[0] << std::endl;
     std::cout << up << std::endl;
     std::cout << pi_2 << std::endl;
+
+    try
+    {
+        vk::detail::DispatchLoaderDynamic dynamic_loader;
+        vk::InstanceCreateInfo            create_info{};
+        vk::Instance                      instance =
+            vk::createInstance(create_info, nullptr, dynamic_loader);
+        std::cout << "vulkan instance created\n";
+    }
+    catch (std::exception& ex)
+    {
+        std::cerr << "can't create vk::Instance: " << ex.what() << std::endl;
+    }
+
     return std::cout.fail();
 }
