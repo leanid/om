@@ -70,6 +70,19 @@
       }
     },
     {
+      "name": "vcpkg-msvc",
+      "generator": "Visual Studio 17 2022",
+      "architecture": "x64",
+      "toolset": "v143",
+      "binaryDir": "${sourceDir}/build/vcpkg-msvc",
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "$comment": "We have to build boost to match version 1.86.0",
+        "OM_BUILD_BOOST": "ON"
+      }
+    },
+    {
       "name": "ninja-multi",
       "inherits": "common",
       "displayName": "Ninja Multi-Config",
