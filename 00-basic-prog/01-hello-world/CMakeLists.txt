@@ -58,13 +58,25 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
         enable_language(ASM)
         add_executable(hello_asm)
         target_sources(hello_asm PRIVATE syscall_x86_64.s hack_asm_main.cxx)
+        target_compile_options(
+            hello_asm
+            PRIVATE -Os
+                    -flto
+                    -fno-exceptions
+                    -fno-rtti
+                    -fno-asynchronous-unwind-tables
+                    -Qn)
         target_link_options(
             hello_asm
             PRIVATE
+            -flto
+            # -dead_strip # not working on clang++
             -z
             noexecstack # fix linking warning on g++13
             -nostartfiles
             -nostdlib)
+        # read this if you intresting in binary size:
+        # https://www.muppetlabs.com/~breadbox/software/tiny/teensy.html
     else()
         message(
             STATUS "static linking is not supported or you need to install"
