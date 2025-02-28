@@ -45,27 +45,36 @@ int main(int argc, char** argv)
     std::vector<std::u8string> buttons_in;
     if (vm.count("button"))
     {
-        buttons_in = vm["button"].as<std::vector<std::u8string>>();
+        auto values = vm["button"].as<std::vector<std::string>>();
+        for (auto& v : values)
+        {
+            buttons_in.emplace_back();
+            buttons_in.back().append_range(v);
+        }
     }
 
     std::u8string text;
     if (vm.count("text"))
     {
-        text = vm["text"].as<std::u8string>();
+        auto str = vm["text"].as<std::string>();
+        text.append_range(str);
     }
 
     std::u8string title;
     if (vm.count("title"))
     {
-        title = vm["title"].as<std::u8string>();
+        auto str = vm["title"].as<std::string>();
+        title.append_range(str);
     }
 
     if (!text.empty())
     {
-        om::show_message(
-            title,
-            text,
-            std::span<std::u8string>(buttons_in.begin(), buttons_in.end()));
+        std::vector<std::u8string_view> buttons_sv(buttons_in.begin(),
+                                                   buttons_in.end());
+        auto index = om::show_message(title, text, buttons_sv);
+        auto str   = reinterpret_cast<const char*>(buttons_in.at(index).data());
+        std::cout << "your selection is: " << str;
+        return EXIT_SUCCESS;
     }
 
     std::array<std::u8string_view, 4> buttons = {
