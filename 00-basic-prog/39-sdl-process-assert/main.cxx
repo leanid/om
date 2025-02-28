@@ -13,19 +13,14 @@ int main(int argc, char** argv)
 #endif
 
     std::array<std::u8string_view, 4> buttons = {
-        u8"ok", u8"cansel", u8"next", u8"break"
+        u8"да", u8"отмена", u8"далее", u8"стоп"
     };
 
-    auto result = om::show_message(
+    uint32_t result = om::show_message(
         u8"заголовок сообщения", u8"произвольный текст для примера", buttons);
 
-    if (!result.has_value())
-    {
-        std::cerr << "error: " << result.error().message() << '\n';
-        return EXIT_FAILURE;
-    }
-    auto& button_text = buttons.at(result.value());
-    std::cout << "your select: "
+    auto& button_text = buttons.at(result);
+    std::cout << "your selection is: "
               << reinterpret_cast<const char*>(button_text.data()) << '\n';
     return EXIT_SUCCESS;
 }
