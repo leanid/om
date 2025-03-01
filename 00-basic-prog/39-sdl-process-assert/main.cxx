@@ -16,11 +16,11 @@ int main(int argc, char** argv)
 #endif
 
     namespace po = boost::program_options;
-    po::options_description help("help");
-    help.add_options()("help,v", "print this help");
 
     po::options_description message_options("message options");
     message_options.add_options()("help", "print usage");
+    message_options.add_options()(
+        "pipe", "use stdin/stdout/stderr pipe to communicate");
     message_options.add_options()("button",
                                   po::value<std::vector<std::string>>(),
                                   "multiple buttons names, order is important");
@@ -71,7 +71,7 @@ int main(int argc, char** argv)
     {
         std::vector<std::u8string_view> buttons_sv(buttons_in.begin(),
                                                    buttons_in.end());
-        auto index = om::show_message(title, text, buttons_sv);
+        auto index = om::gui::show_message(title, text, buttons_sv);
         auto str   = reinterpret_cast<const char*>(buttons_in.at(index).data());
         std::cout << "your selection is: " << str;
         return EXIT_SUCCESS;
@@ -81,7 +81,7 @@ int main(int argc, char** argv)
         u8"да", u8"отмена", u8"далее", u8"стоп"
     };
 
-    uint32_t result = om::show_message(
+    uint32_t result = om::gui::show_message(
         u8"заголовок сообщения", u8"произвольный текст для примера", buttons);
 
     auto& button_text = buttons.at(result);

@@ -4,10 +4,10 @@
 #include "SDL3/SDL_error.h"
 
 #include <stdexcept>
-#include <vector>
 
-namespace om
+namespace om::gui
 {
+
 uint32_t show_message(std::u8string_view            title,
                       std::u8string_view            text,
                       std::span<std::u8string_view> button_names)
@@ -43,5 +43,4 @@ uint32_t show_message(std::u8string_view            title,
 
     return buttonid;
 }
-
-} // namespace om
+} // namespace om::gui
