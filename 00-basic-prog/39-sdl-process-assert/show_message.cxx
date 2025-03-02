@@ -1,16 +1,23 @@
 #include "show_message.hxx"
 
 #include "SDL3/SDL.h"
-#include "SDL3/SDL_error.h"
 
+#include <algorithm>
+#include <filesystem>
+#include <iostream>
+#include <iterator>
+#include <memory>
+#include <sstream>
 #include <stdexcept>
+#include <string>
+#include <string_view>
 
 namespace om::gui
 {
 
-uint32_t show_message(std::u8string_view            title,
-                      std::u8string_view            text,
-                      std::span<std::u8string_view> button_names)
+uint32_t show_message(std::u8string            title,
+                      std::u8string            text,
+                      std::span<std::u8string> button_names)
 {
     std::vector<SDL_MessageBoxButtonData> button_data;
     button_data.reserve(button_names.size());
@@ -42,5 +49,67 @@ uint32_t show_message(std::u8string_view            title,
     }
 
     return buttonid;
+}
+
+uint32_t msg_box::show()
+{
+    std::cout << __func__ << std::endl;
+    std::vector<std::u8string> button_names;
+    button_names.reserve(buttons_.size());
+    std::ranges::transform(buttons_,
+                           std::back_inserter(button_names),
+                           [](auto& btn) { return btn.name; });
+    return gui::show_message(title_, text_, button_names);
+}
+
+uint32_t msg_box::show_in_child_process()
+{
+    std::filesystem::path      base        = SDL_GetBasePath();
+    std::filesystem::path      binary_name = base / "39-sdl-process-assert";
+    std::array<const char*, 3> args        = { binary_name.c_str(),
+                                               "--pipe",
+                                               nullptr };
+    std::unique_ptr<SDL_Process, void (*)(SDL_Process*)> child{
+        SDL_CreateProcess(args.data(), true), SDL_DestroyProcess
+    };
+
+    if (!child)
+    {
+        throw std::runtime_error(SDL_GetError());
+    }
+    SDL_IOStream* child_input = SDL_GetProcessInput(child.get());
+
+    std::ostringstream ss;
+    ss << "title " << std::string(title_.begin(), title_.end()) << '\n';
+    for (auto& bnt : buttons_)
+    {
+        ss << "button " << std::string(title_.begin(), title_.end()) << '\n';
+    }
+    ss << "text " << std::string(text_.begin(), text_.end()) << '\n';
+    std::string data    = ss.str();
+    size_t      written = SDL_WriteIO(child_input, data.data(), data.size());
+    if (written != data.size())
+    {
+        throw std::runtime_error("can't write data to child stdin");
+    }
+
+    SDL_IOStream* child_output = SDL_GetProcessOutput(child.get());
+
+    std::stringstream iss;
+    std::string       tmp(1024u, '\0');
+    for (size_t num = SDL_ReadIO(child_output, tmp.data(), tmp.size()); num > 0;
+         num        = SDL_ReadIO(child_output, tmp.data(), tmp.size()))
+    {
+        iss << tmp.substr(num);
+    }
+
+    int exitcode{};
+    std::ignore = SDL_WaitProcess(child.get(), true, &exitcode);
+
+    int32_t user_select = -1;
+    iss >> user_select;
+
+    std::cout << "user select button index: " << user_select << '\n';
+    return 0;
 }
 } // namespace om::gui

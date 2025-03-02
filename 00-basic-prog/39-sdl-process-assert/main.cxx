@@ -7,6 +7,7 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <string>
 #include <string_view>
 
 int main(int argc, char** argv)
@@ -48,8 +49,12 @@ int main(int argc, char** argv)
         auto values = vm["button"].as<std::vector<std::string>>();
         for (auto& v : values)
         {
+            std::cout << v << std::endl;
             buttons_in.emplace_back();
             buttons_in.back().append_range(v);
+            std::cout << std::string(buttons_in.back().begin(),
+                                     buttons_in.back().end())
+                      << std::endl;
         }
     }
 
@@ -69,15 +74,42 @@ int main(int argc, char** argv)
 
     if (!text.empty())
     {
-        std::vector<std::u8string_view> buttons_sv(buttons_in.begin(),
-                                                   buttons_in.end());
-        auto index = om::gui::show_message(title, text, buttons_sv);
-        auto str   = reinterpret_cast<const char*>(buttons_in.at(index).data());
-        std::cout << "your selection is: " << str;
+        auto        index = om::gui::show_message(title, text, buttons_in);
+        auto        str   = buttons_in.at(index);
+        std::string str_ascii(str.begin(), str.end());
+        std::cout << "your selection is: " << str_ascii << std::endl;
         return EXIT_SUCCESS;
     }
 
-    std::array<std::u8string_view, 4> buttons = {
+    if (vm.count("pipe"))
+    {
+        std::cout << "start pipe" << std::endl;
+        om::gui::msg_box message;
+        std::string      command;
+        for (std::cin >> command; !command.empty(); std::cin >> command)
+        {
+            if (command == "button")
+            {
+                std::string button;
+                std::cin >> button;
+                std::cout << "add button: " << button << std::endl;
+                message.add_button(std::u8string(button.begin(), button.end()));
+            }
+            else if (command == "text")
+            {
+                std::string line;
+                std::getline(std::cin, line);
+                std::cout << "add text: " << line << std::endl;
+                message.text(std::u8string(line.begin(), line.end()));
+            }
+            command.clear();
+        }
+        uint32_t selected_button = message.show();
+        std::cout << selected_button << std::endl;
+        return EXIT_SUCCESS;
+    }
+
+    std::array<std::u8string, 4> buttons = {
         u8"да", u8"отмена", u8"далее", u8"стоп"
     };
 
