@@ -8,13 +8,32 @@
 #include <cstdlib>
 #include <iostream>
 #include <string>
-#include <string_view>
+
+namespace om
+{
+om::gui::msg_box parse_args_or_stdin(int argc, char** argv);
+}
 
 int main(int argc, char** argv)
 {
-#if !__cpp_lib_span_initializer_list
-#error "need __cpp_lib_span_initializer_list"
+    om::gui::msg_box msg_box = om::parse_args_or_stdin(argc, argv);
+
+#if 1
+    std::cout << "after parsing: " << msg_box << std::endl;
 #endif
+
+    using namespace std;
+    bool     use_pipe = argc == 2 && argv[1] == "--pipe"s;
+    uint32_t selected_button_index =
+        use_pipe ? msg_box.show() : msg_box.show_in_child_process();
+    std::cout << "user select button: " << selected_button_index << std::endl;
+    return EXIT_SUCCESS;
+}
+namespace om
+{
+om::gui::msg_box parse_args_or_stdin(int argc, char** argv)
+{
+    om::gui::msg_box msg_box;
 
     namespace po = boost::program_options;
 
@@ -40,52 +59,34 @@ int main(int argc, char** argv)
     if (vm.count("help"))
     {
         std::cout << message_options << std::endl;
-        return EXIT_SUCCESS;
+        std::exit(EXIT_SUCCESS);
     }
 
-    std::vector<std::u8string> buttons_in;
     if (vm.count("button"))
     {
         auto values = vm["button"].as<std::vector<std::string>>();
         for (auto& v : values)
         {
-            std::cout << v << std::endl;
-            buttons_in.emplace_back();
-            buttons_in.back().append_range(v);
-            std::cout << std::string(buttons_in.back().begin(),
-                                     buttons_in.back().end())
-                      << std::endl;
+            msg_box.add_button(v);
         }
     }
 
-    std::u8string text;
     if (vm.count("text"))
     {
         auto str = vm["text"].as<std::string>();
-        text.append_range(str);
+        msg_box.text(str);
     }
 
-    std::u8string title;
     if (vm.count("title"))
     {
         auto str = vm["title"].as<std::string>();
-        title.append_range(str);
-    }
-
-    if (!text.empty())
-    {
-        auto        index = om::gui::show_message(title, text, buttons_in);
-        auto        str   = buttons_in.at(index);
-        std::string str_ascii(str.begin(), str.end());
-        std::cout << "your selection is: " << str_ascii << std::endl;
-        return EXIT_SUCCESS;
+        msg_box.title(str);
     }
 
     if (vm.count("pipe"))
     {
         std::cout << "start pipe" << std::endl;
-        om::gui::msg_box message;
-        std::string      command;
+        std::string command;
         for (std::cin >> command; !command.empty(); std::cin >> command)
         {
             if (command == "button")
@@ -93,31 +94,18 @@ int main(int argc, char** argv)
                 std::string button;
                 std::cin >> button;
                 std::cout << "add button: " << button << std::endl;
-                message.add_button(std::u8string(button.begin(), button.end()));
+                msg_box.add_button(button);
             }
             else if (command == "text")
             {
                 std::string line;
                 std::getline(std::cin, line);
                 std::cout << "add text: " << line << std::endl;
-                message.text(std::u8string(line.begin(), line.end()));
+                msg_box.text(line);
             }
             command.clear();
         }
-        uint32_t selected_button = message.show();
-        std::cout << selected_button << std::endl;
-        return EXIT_SUCCESS;
     }
-
-    std::array<std::u8string, 4> buttons = {
-        u8"да", u8"отмена", u8"далее", u8"стоп"
-    };
-
-    uint32_t result = om::gui::show_message(
-        u8"заголовок сообщения", u8"произвольный текст для примера", buttons);
-
-    auto& button_text = buttons.at(result);
-    std::cout << "your selection is: "
-              << reinterpret_cast<const char*>(button_text.data()) << '\n';
-    return EXIT_SUCCESS;
+    return msg_box;
 }
+} // namespace om

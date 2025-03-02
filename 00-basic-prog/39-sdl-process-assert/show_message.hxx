@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <ostream>
 #include <span>
 #include <string>
 #include <vector>
@@ -10,9 +11,9 @@ namespace om::gui
 /// @brief show gui message with text and caption and text on buttons
 /// @return uint32_t - index of button user press
 /// @note on error throw std::runtime_error with message from SDL
-uint32_t show_message(std::u8string            title,
-                      std::u8string            text,
-                      std::span<std::u8string> buttons_text);
+uint32_t show_message(std::string            title,
+                      std::string            text,
+                      std::span<std::string> buttons_text);
 
 /// @brief MessageBox class frontend to call from parent process
 class msg_box
@@ -36,9 +37,9 @@ public:
         right_to_left
     };
     void type(icon);
-    void title(std::u8string);
-    void text(std::u8string);
-    void add_button(std::u8string, button_flag flag = button_flag::none);
+    void title(std::string);
+    void text(std::string);
+    void add_button(std::string, button_flag flag = button_flag::none);
     void mode(button_mode);
 
     /// @brief display OS specific dialog with custom icon, title, text and
@@ -52,35 +53,38 @@ public:
     uint32_t show_in_child_process();
 
 private:
+    friend std::ostream& operator<<(std::ostream&, const msg_box&);
+
     struct button
     {
-        std::u8string name;
-        button_flag   flag;
+        std::string name;
+        button_flag flag;
     };
 
-    std::u8string       title_;
-    std::u8string       text_;
+    std::string         title_;
+    std::string         text_;
     std::vector<button> buttons_;
     icon                icon_;
     button_mode         mode_;
 };
+std::ostream& operator<<(std::ostream&, const msg_box&);
 
 inline void msg_box::type(icon a_icon)
 {
     icon_ = a_icon;
 }
 
-inline void msg_box::title(std::u8string title)
+inline void msg_box::title(std::string title)
 {
     title_ = title;
 }
 
-inline void msg_box::text(std::u8string text)
+inline void msg_box::text(std::string text)
 {
     text_ = text;
 }
 
-inline void msg_box::add_button(std::u8string name, button_flag flag)
+inline void msg_box::add_button(std::string name, button_flag flag)
 {
     buttons_.emplace_back(name, flag);
 }
