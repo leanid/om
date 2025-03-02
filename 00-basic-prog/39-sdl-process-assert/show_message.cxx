@@ -10,6 +10,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 
 namespace om::gui
 {
@@ -76,42 +77,34 @@ uint32_t msg_box::show_in_child_process()
         throw std::runtime_error(SDL_GetError());
     }
     std::cout << "process created" << std::endl;
-    SDL_IOStream* child_input = SDL_GetProcessInput(child.get());
 
-    std::ostringstream ss;
-    ss << *this;
-    std::string data    = ss.str();
-    size_t      written = SDL_WriteIO(child_input, data.data(), data.size());
-    if (written != data.size())
     {
-        throw std::runtime_error("can't write data to child stdin");
+        std::unique_ptr<SDL_IOStream, bool (*)(SDL_IOStream*)> child_input{
+            SDL_GetProcessInput(child.get()), SDL_CloseIO
+        };
+
+        std::ostringstream ss;
+        ss << *this;
+        std::string data = ss.str();
+        size_t      written =
+            SDL_WriteIO(child_input.get(), data.data(), data.size());
+        if (written != data.size())
+        {
+            throw std::runtime_error("can't write data to child stdin");
+        }
     }
 
-    if (!SDL_CloseIO(child_input))
-    {
-        throw std::runtime_error("can't close child input");
-    }
+    size_t                                 datasize{};
+    int                                    exitcode{};
+    std::unique_ptr<void, void (*)(void*)> ptr{
+        SDL_ReadProcess(child.get(), &datasize, &exitcode), SDL_free
+    };
+    std::string_view output(static_cast<char*>(ptr.get()), datasize);
 
-    SDL_IOStream* child_output = SDL_GetProcessOutput(child.get());
+    std::cout << "subprocess stdout: " << output << std::endl;
 
-    std::stringstream iss;
-    std::string       tmp(1024u, '\0');
-    for (size_t num = SDL_ReadIO(child_output, tmp.data(), tmp.size()); num > 0;
-         num        = SDL_ReadIO(child_output, tmp.data(), tmp.size()))
-    {
-        iss << tmp.substr(num);
-    }
-
-    std::cout << "subprocess stdout: " << iss.str() << std::endl;
-
-    int exitcode{};
-    std::ignore = SDL_WaitProcess(child.get(), true, &exitcode);
     std::cout << "subprocess exitcode: " << exitcode << std::endl;
 
-    int32_t user_select = -1;
-    iss >> user_select;
-
-    std::cout << "user select button index: " << user_select << '\n';
     return 0;
 }
 
