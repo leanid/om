@@ -20,7 +20,8 @@ if(NOT Boost_FOUND)
     return()
 endif()
 
-add_executable(39-sdl-process-assert main.cxx show_message.cxx show_message.hxx)
+add_executable(39-sdl-process-assert WIN32 main.cxx show_message.cxx
+                                           show_message.hxx)
 
 target_link_libraries(39-sdl-process-assert PRIVATE SDL3::SDL3
                                                     Boost::program_options)

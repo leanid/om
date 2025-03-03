@@ -3,6 +3,7 @@
 #include "SDL3/SDL.h"
 
 #include <algorithm>
+#include <array>
 #include <filesystem>
 #include <iostream>
 #include <iterator>
@@ -63,11 +64,12 @@ uint32_t msg_box::show()
 uint32_t msg_box::show_in_child_process()
 {
     std::cout << __FUNCTION__ << std::endl;
-    std::filesystem::path      base        = SDL_GetBasePath();
-    std::filesystem::path      binary_name = base / "39-sdl-process-assert";
-    std::array<const char*, 3> args        = { binary_name.c_str(),
-                                               "--pipe",
-                                               nullptr };
+    std::filesystem::path      base          = SDL_GetBasePath();
+    std::filesystem::path      binary_name   = base / "39-sdl-process-assert";
+    std::u8string              u8binary_name = binary_name.u8string();
+    std::array<const char*, 3> args          = {
+        reinterpret_cast<const char*>(u8binary_name.c_str()), "--pipe", nullptr
+    };
     std::unique_ptr<SDL_Process, void (*)(SDL_Process*)> child{
         SDL_CreateProcess(args.data(), true), SDL_DestroyProcess
     };
