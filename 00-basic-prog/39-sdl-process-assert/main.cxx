@@ -6,6 +6,7 @@
 #include <boost/program_options.hpp>
 
 #include <cstdlib>
+#include <exception>
 #include <iostream>
 #include <string>
 
@@ -16,17 +17,27 @@ om::gui::msg_box parse_args_or_stdin(int argc, char** argv);
 
 int main(int argc, char** argv)
 {
-    om::gui::msg_box msg_box = om::parse_args_or_stdin(argc, argv);
+    //try
+    {
+
+        om::gui::msg_box msg_box = om::parse_args_or_stdin(argc, argv);
 
 #if 1
-    std::cout << "after parsing: " << msg_box << std::endl;
+        std::cout << "after parsing: " << msg_box << std::endl;
 #endif
 
-    using namespace std;
-    bool     use_pipe = argc == 2 && argv[1] == "--pipe"s;
-    uint32_t selected_button_index =
-        use_pipe ? msg_box.show() : msg_box.show_in_child_process();
-    std::cout << "user select button: " << selected_button_index << std::endl;
+        using namespace std;
+        bool     use_pipe = argc == 2 && argv[1] == "--pipe"s;
+        uint32_t selected_button_index =
+            use_pipe ? msg_box.show() : msg_box.show_in_child_process();
+        std::cout << "user select button: " << selected_button_index
+                  << std::endl;
+    }
+    //catch (std::exception& e)
+    {
+      //  std::cerr << "error: " << e.what() << std::endl;
+      //  return EXIT_FAILURE;
+    }
     return EXIT_SUCCESS;
 }
 namespace om

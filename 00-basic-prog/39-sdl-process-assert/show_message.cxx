@@ -76,7 +76,8 @@ uint32_t msg_box::show_in_child_process()
 
     if (!child)
     {
-        throw std::runtime_error(SDL_GetError());
+        const char* error_msg = SDL_GetError();
+        throw std::runtime_error(error_msg);
     }
     std::cout << "process created" << std::endl;
 
