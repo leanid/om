@@ -108,7 +108,7 @@ uint32_t msg_box::show_in_child_process()
 
     std::cout << "subprocess exitcode: " << exitcode << std::endl;
 
-    return 0;
+    return exitcode;
 }
 
 std::ostream& operator<<(std::ostream& out, const msg_box& msg)

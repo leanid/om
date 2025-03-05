@@ -6,7 +6,6 @@
 #include <boost/program_options.hpp>
 
 #include <cstdlib>
-#include <exception>
 #include <iostream>
 #include <string>
 
@@ -17,7 +16,6 @@ om::gui::msg_box parse_args_or_stdin(int argc, char** argv);
 
 int main(int argc, char** argv)
 {
-    //try
     {
 
         om::gui::msg_box msg_box = om::parse_args_or_stdin(argc, argv);
@@ -27,18 +25,13 @@ int main(int argc, char** argv)
 #endif
 
         using namespace std;
-        bool     use_pipe = argc == 2 && argv[1] == "--pipe"s;
+        bool     is_child_process = argc == 2 && argv[1] == "--pipe"s;
         uint32_t selected_button_index =
-            use_pipe ? msg_box.show() : msg_box.show_in_child_process();
+            is_child_process ? msg_box.show() : msg_box.show_in_child_process();
         std::cout << "user select button: " << selected_button_index
                   << std::endl;
+        return static_cast<int>(selected_button_index);
     }
-    //catch (std::exception& e)
-    {
-      //  std::cerr << "error: " << e.what() << std::endl;
-      //  return EXIT_FAILURE;
-    }
-    return EXIT_SUCCESS;
 }
 namespace om
 {
