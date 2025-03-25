@@ -1,10 +1,10 @@
 #include "render.hxx"
 
 #include <cstdlib>
+#include <exception>
 #include <ios>
 #include <iostream>
 #include <memory>
-#include <thread>
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_hints.h>
