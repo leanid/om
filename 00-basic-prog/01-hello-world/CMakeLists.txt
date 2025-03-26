@@ -14,8 +14,8 @@ if(NOT APPLE)
 endif()
 om_clang_tidy_enable()
 
-add_executable(hello_cout_dynamic cout_main.cxx)
-target_compile_features(hello_cout_dynamic PRIVATE cxx_std_20)
+add_executable(cout_main cout_main.cxx)
+target_compile_features(cout_main PRIVATE cxx_std_20)
 
 include(CheckIncludeFileCXX)
 include(CheckLinkerFlag)
@@ -23,12 +23,12 @@ include(CheckLinkerFlag)
 check_include_file_cxx("print" has_cxx_23_print_include)
 
 if(has_cxx_23_print_include)
-    add_executable(hello_std23 main_print_std23.cxx)
-    target_compile_features(hello_std23 PRIVATE cxx_std_23)
-    target_link_libraries(hello_std23
+    add_executable(main_print_std23 main_print_std23.cxx)
+    target_compile_features(main_print_std23 PRIVATE cxx_std_23)
+    target_link_libraries(main_print_std23
                           PRIVATE $<$<CXX_COMPILER_ID:GNU>:-lstdc++exp>)
 else()
-    message(STATUS "skip hello_std23 <print> not found")
+    message(STATUS "skip main_print_std23 <print> not found")
 endif(has_cxx_23_print_include)
 
 message(VERBOSE "${CMAKE_SYSTEM_NAME}")
@@ -47,19 +47,19 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
             " LINKER_SUPPORTS_STATIC_LINKING: ${LINKER_SUPPORTS_STATIC_LINKING}"
         )
     if(CXX_SUPPORTS_STATIC_LINKING AND LINKER_SUPPORTS_STATIC_LINKING)
-        add_executable(hello_cout_static cout_main.cxx)
-        target_link_options(hello_cout_static PRIVATE -static)
-        target_compile_features(hello_cout_static PRIVATE cxx_std_20)
+        add_executable(cout_main_static cout_main.cxx)
+        target_link_options(cout_main_static PRIVATE -static)
+        target_compile_features(cout_main_static PRIVATE cxx_std_20)
 
-        add_executable(hello_nostartfiles hack_main.cxx)
-        target_link_options(hello_nostartfiles PRIVATE -nostartfiles)
-        target_compile_features(hello_nostartfiles PRIVATE cxx_std_20)
+        add_executable(hack_main hack_main.cxx)
+        target_link_options(hack_main PRIVATE -nostartfiles)
+        target_compile_features(hack_main PRIVATE cxx_std_20)
 
         enable_language(ASM)
-        add_executable(hello_asm)
-        target_sources(hello_asm PRIVATE syscall_x86_64.s hack_asm_main.cxx)
+        add_executable(hack_asm_main)
+        target_sources(hack_asm_main PRIVATE syscall_x86_64.s hack_asm_main.cxx)
         target_compile_options(
-            hello_asm
+            hack_asm_main
             PRIVATE -Os
                     -flto
                     -fno-exceptions
@@ -67,7 +67,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
                     -fno-asynchronous-unwind-tables
                     -Qn)
         target_link_options(
-            hello_asm
+            hack_asm_main
             PRIVATE
             -flto
             # -dead_strip # not working on clang++
@@ -89,8 +89,8 @@ endif()
 if(UNIX OR MINGW AND NOT APPLE
    )# BONUS for curious (works only in xterm, gnome-terminal or in
     # Konsole
-    add_executable(hello_cout_colored cout_main_colored.cxx)
-    target_compile_features(hello_cout_colored PRIVATE cxx_std_20)
+    add_executable(cout_main_colored cout_main_colored.cxx)
+    target_compile_features(cout_main_colored PRIVATE cxx_std_20)
 endif(UNIX OR MINGW)
 
 if(WIN32 AND MSVC)
