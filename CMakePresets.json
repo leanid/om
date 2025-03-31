@@ -29,12 +29,10 @@
           "value": "Debug;Release;RelWithDebInfo;MinSizeRel;"
         }
       },
-      "environment":
-      {
-         "MY_ENVIRONMENT_VARIABLE": "just_example"
+      "environment": {
+        "MY_ENVIRONMENT_VARIABLE": "just_example"
       },
-      "vendor":
-      {
+      "vendor": {
         "$comment": [
           "This is just example of custom settings",
           "for any vendor IDE or else",
@@ -46,8 +44,7 @@
           "autoFormat": true
         },
         "qt.io/QtCreator/1.0": {
-          "debugger":
-          {
+          "debugger": {
             "DisplayName": "GNU gdb 11.2.0 for MinGW 11.2.0 64-bit",
             "Abis": ["x86-windows-msys-pe-64bit"],
             "Binary": "C:/Qt/Tools/mingw1120_64/bin/gdb.exe",
@@ -91,8 +88,7 @@
       "description": "build using Ninja generator",
       "generator": "Ninja Multi-Config",
       "binaryDir": "${sourceDir}/build/ninja-multi",
-      "cacheVariables": {
-      }
+      "cacheVariables": {}
     },
     {
       "name": "ninja",
@@ -171,8 +167,7 @@
       "description": "build using Xcode generator",
       "generator": "Xcode",
       "binaryDir": "${sourceDir}/build/xcode",
-      "cacheVariables": {
-      },
+      "cacheVariables": {},
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",
@@ -189,7 +184,7 @@
       "toolset": "v143",
       "binaryDir": "${sourceDir}/build/vs2022-x64",
       "cacheVariables": {
-        "CMAKE_MSVC_RUNTIME_LIBRARY":  {
+        "CMAKE_MSVC_RUNTIME_LIBRARY": {
           "type": "INTERNAL",
           "value": "MultiThreaded$<$<CONFIG:Debug>:Debug>"
         }
@@ -222,7 +217,6 @@
         "lhs": "${hostSystemName}",
         "rhs": "Windows"
       }
-
     }
   ],
   "buildPresets": [
@@ -267,8 +261,8 @@
     {
       "name": "ninja",
       "configurePreset": "ninja",
-      "output": {"outputOnFailure": true},
-      "execution": {"noTestsAction": "error", "stopOnFailure": false}
+      "output": { "outputOnFailure": true },
+      "execution": { "noTestsAction": "error", "stopOnFailure": false }
     },
     {
       "name": "vcpkg",
@@ -277,12 +271,14 @@
       "output": {
         "shortProgress": true,
         "verbosity": "verbose",
-        "outputOnFailure": true},
+        "outputOnFailure": true
+      },
       "execution": {
         "stopOnFailure": false,
         "enableFailover": true,
         "jobs": 1,
-        "noTestsAction": "error" }
+        "noTestsAction": "error"
+      }
     }
   ],
   "packagePresets": [
