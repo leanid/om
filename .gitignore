@@ -1,15 +1,15 @@
 !/.gitignore
 *.aab
+*.frag.spv
 *.iml
 *.spv
 *.user
-*.frag.spv
 *.vert.spv
 .*
+/00-basic-prog/29-localization/messages.pot
 /cmake-build-*/
 /compile_commands.json
 build-*/
 build/
 imgui.ini
 local.properties
-/00-basic-prog/29-localization/messages.pot
