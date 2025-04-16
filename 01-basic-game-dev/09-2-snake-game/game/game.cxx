@@ -25,7 +25,7 @@ static constexpr size_t screen_width  = 960.f;
 static constexpr size_t screen_height = 540.f;
 static om::texture*     debug_texture = nullptr;
 
-constexpr float operator"" _px(unsigned long long n)
+constexpr float operator""_px(unsigned long long n)
 {
     return static_cast<float>(n);
 }
@@ -56,7 +56,9 @@ OM_EXPORT std::unique_ptr<om::lila> om_tat_sat()
 {
     om::log << "initialize engine" << std::endl;
 
-    om::window_mode window_mode = { .width=screen_width, .heigth=screen_height, .is_fullscreen=false };
+    om::window_mode window_mode = { .width         = screen_width,
+                                    .heigth        = screen_height,
+                                    .is_fullscreen = false };
     om::initialize("snake", window_mode);
 
     om::log << "creating main game object..." << std::endl;
@@ -110,7 +112,7 @@ void snake_game::on_initialize()
     snake_ = std::make_unique<::snake>(
         om::vec2(35, 5), snake::direction::right, objects);
 
-    fruit_ = std::make_unique<fruit>();
+    fruit_         = std::make_unique<fruit>();
     fruit_->sprite = objects.at(1);
 
     update_free_cells();
@@ -221,9 +223,9 @@ void snake_game::on_render() const
     static const std::vector<object_type> render_order = { object_type::level };
 
     auto it = std::ranges::find_if(objects,
-                          
-                           [](const game_object& obj)
-                           { return obj.type == object_type::level; });
+
+                                   [](const game_object& obj)
+                                   { return obj.type == object_type::level; });
 
     if (it == end(objects))
     {
@@ -232,13 +234,11 @@ void snake_game::on_render() const
 
     const om::vec2 world_size = it->size;
 
-    std::ranges::for_each(render_order,
-                 
-                  [&](object_type type)
-                  {
-                      std::ranges::for_each(
-                          objects, draw(type, world_size));
-                  });
+    std::ranges::for_each(
+        render_order,
+
+        [&](object_type type)
+        { std::ranges::for_each(objects, draw(type, world_size)); });
 
     if (fruit_)
     {
@@ -289,13 +289,13 @@ om::vbo* load_mesh_from_file_with_scale(const std::string_view path,
     om::matrix scale_mat = om::matrix::scale(scale.x, scale.y);
 
     std::ranges::transform(vertexes,
-                  
-                   begin(vertexes),
-                   [&scale_mat](om::vertex v)
-                   {
-                       v.pos = v.pos * scale_mat;
-                       return v;
-                   });
+
+                           begin(vertexes),
+                           [&scale_mat](om::vertex v)
+                           {
+                               v.pos = v.pos * scale_mat;
+                               return v;
+                           });
 
     om::vbo* vbo = om::create_vbo(vertexes.data(), num_of_vertexes);
     return vbo;
