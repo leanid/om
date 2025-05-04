@@ -3,10 +3,10 @@ cmake_minimum_required(VERSION 3.31)
 project(29-localization CXX)
 
 find_package(
-    Boost 1.86.0 # should match version in root CMakeLists.txt
+    Boost 1.88.0 # should match version in root CMakeLists.txt
     EXACT # Minimum or EXACT version e.g. 1.67.0
     # REQUIRED # Fail with error if Boost is not found
-    COMPONENTS locale algorithm # Boost libraries by their canonical name
+    COMPONENTS locale algorithm range # Boost libraries by their canonical name
     # REQUIRED
     # e.g. "date_time" for "libboost_date_time"
     #[OPTIONAL_COMPONENTS <libs>...]
@@ -29,12 +29,15 @@ endif()
 
 add_executable(29-localization main.cxx)
 target_link_libraries(
-    29-localization PRIVATE Boost::locale
-    # ICU::data
-    # ICU::io
-    # ICU::uc
-    # ICU::i18n
+    29-localization
+    PRIVATE Boost::locale
+            # ICU::data
+            # ICU::io
+            # ICU::uc
+            # ICU::i18n
     )
+
+# target_compile_options(29-localization PRIVATE -w) # disabling warnings not working for g++ boost error
 
 message(STATUS "xgettext found: ${XGETTEXT_EXECUTABLE}")
 add_custom_command(

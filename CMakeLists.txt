@@ -70,7 +70,7 @@ if(OM_BUILD_DEPS)
     fetchcontent_declare(
         Catch2
         GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-        GIT_TAG v3.4.0 # or a later release
+        GIT_TAG v3.8.1 # or a later release
         GIT_SHALLOW TRUE
         GIT_PROGRESS TRUE
         OVERRIDE_FIND_PACKAGE TRUE # to find correct version
@@ -92,7 +92,7 @@ if(OM_BUILD_BOOST)
     fetchcontent_declare(
         Boost
         GIT_REPOSITORY "https://github.com/boostorg/boost.git"
-        GIT_TAG "boost-1.86.0"
+        GIT_TAG "boost-1.88.0"
         GIT_PROGRESS ON
         GIT_SHALLOW ON
         OVERRIDE_FIND_PACKAGE TRUE # needed to find correct Boost
@@ -101,7 +101,7 @@ if(OM_BUILD_BOOST)
     fetchcontent_makeavailable(Boost)
     find_package(
         Boost
-        1.86.0
+        1.88.0
         EXACT # Minimum or EXACT version e.g. 1.67.0
         REQUIRED # Fail with error if Boost is not found
         COMPONENTS filesystem # Boost libraries by their canonical name

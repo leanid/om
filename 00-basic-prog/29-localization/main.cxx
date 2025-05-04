@@ -4,7 +4,7 @@
 #include <iostream>
 #include <system_error>
 
-#include <boost/algorithm/string/case_conv.hpp>
+// #include <boost/algorithm/string.hpp>
 #include <boost/core/demangle.hpp>
 #include <boost/locale.hpp>
 #include <boost/locale/generator.hpp>
@@ -134,14 +134,14 @@ void boost_locale_conversion_example()
     std::cout << "For example:\n";
     const std::string gruessen("grüßen");
     std::cout << "   German " << gruessen
-              << " would be incorrectly converted to "
-              << boost::to_upper_copy(gruessen);
+              << " would be incorrectly converted to ";
+    // << boost::to_upper_copy(gruessen);
     std::cout << ", while Boost.Locale converts it to "
               << boost::locale::to_upper(gruessen) << std::endl
               << "     where ß is replaced with SS.\n";
     const std::string greek("ὈΔΥΣΣΕΎΣ");
-    std::cout << "   Greek " << greek << " would be incorrectly converted to "
-              << boost::to_lower_copy(greek);
+    std::cout << "   Greek " << greek << " would be incorrectly converted to ";
+    // << boost::to_lower_copy(greek);
     std::cout << ", while Boost.Locale correctly converts it to "
               << boost::locale::to_lower(greek) << std::endl
               << "     where Σ is converted to σ or to ς, according to "
