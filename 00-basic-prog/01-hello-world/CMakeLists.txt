@@ -86,12 +86,12 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     endif()
 endif()
 
-if(UNIX OR MINGW AND NOT APPLE
-   )# BONUS for curious (works only in xterm, gnome-terminal or in
+if(UNIX OR MINGW AND NOT APPLE)
+    # BONUS for curious (works only in xterm, gnome-terminal or in
     # Konsole
     add_executable(cout_main_colored cout_main_colored.cxx)
     target_compile_features(cout_main_colored PRIVATE cxx_std_20)
-endif(UNIX OR MINGW)
+endif(UNIX OR MINGW AND NOT APPLE)
 
 if(WIN32 AND MSVC)
     add_executable(win32_main WIN32 win32_main.cxx)
