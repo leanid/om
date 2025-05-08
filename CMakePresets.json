@@ -63,7 +63,7 @@
         "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
         "CMAKE_MAKE_PROGRAM": "ninja",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-        "$comment": "We have to build boost to match version 1.86.0",
+        "$comment": "We have to build boost to match version 1.88.0",
         "OM_BUILD_BOOST": "OFF"
       }
     },
@@ -77,7 +77,7 @@
       "cacheVariables": {
         "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-        "$comment": "We have to build boost to match version 1.86.0",
+        "$comment": "We have to build boost to match version 1.88.0",
         "OM_BUILD_BOOST": "ON"
       }
     },

@@ -14,15 +14,15 @@
   "overrides": [
     {
       "name": "boost-locale",
-      "version": "1.86.0"
+      "version": "1.88.0"
     },
     {
       "name": "boost-program-options",
-      "version": "1.86.0"
+      "version": "1.88.0"
     },
     {
       "name": "boost-algorithm",
-      "version": "1.86.0"
+      "version": "1.88.0"
     }
   ]
 }
