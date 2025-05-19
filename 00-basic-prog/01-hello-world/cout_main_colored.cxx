@@ -39,7 +39,7 @@ int main(int, char**)
     const bool truecolor_supported = is_terminal_support_truecolor();
     const bool color_256_supported = is_terminal_support_256color();
 
-    string_view output_text = "hello world";
+    string_view output_text = "cout_main_colored.cxx hello world";
 
     if (truecolor_supported)
     {

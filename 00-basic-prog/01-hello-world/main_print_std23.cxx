@@ -5,7 +5,8 @@ int main()
 {
     try
     {
-        std::println("hello world form c++23 #include <print>");
+        std::println(
+            "main_print_std23.cxx hello world form c++23 #include <print>");
         return EXIT_SUCCESS;
     }
     catch (...)

@@ -11,7 +11,7 @@ int print(const char* message, int size)
 
 int main(int /*argc*/, char* /*argv*/[])
 {
-    return print("hello world\n", 12);
+    return print("hack_asm_main.cxx hello world\n", 12);
 }
 
 extern "C"
