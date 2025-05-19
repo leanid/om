@@ -82,6 +82,19 @@
       }
     },
     {
+      "name": "ninja-g++",
+      "inherits": "common",
+      "displayName": "Ninja Multi-Config with g++",
+      "description": "build using Ninja generator and g++ compiler",
+      "generator": "Ninja Multi-Config",
+      "binaryDir": "${sourceDir}/build/ninja-g++",
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "g++",
+        "CMAKE_C_COMPILER": "gcc",
+        "OM_BUILD_BOOST": "ON"
+      }
+    },
+    {
       "name": "ninja-multi",
       "inherits": "common",
       "displayName": "Ninja Multi-Config",
