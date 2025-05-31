@@ -281,7 +281,7 @@ om::game* reload_game(om::game*          old,
 
 // clang-format off
 #ifdef __cplusplus
-extern "C"
+// extern "C"
 #endif
 int main(int /*argc*/, char* /*argv*/[])
 // clang-format on
