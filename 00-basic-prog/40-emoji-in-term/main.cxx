@@ -33,7 +33,7 @@ int main(int argc, char** argv)
         for (char delim{ ' ' }; char ch : emoji)
         {
             std::cout << std::exchange(delim, ',') << "0x" << std::hex
-                      << std::setw(2) << static_cast<uint32_t>(ch);
+                      << std::setw(2) << std::setfill('0') << (0xff & ch);
         }
         std::cout << "}\n";
     }
