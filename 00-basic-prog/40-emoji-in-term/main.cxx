@@ -1,4 +1,5 @@
 #include <bitset>
+#include <cstdint>
 #include <iomanip>
 #include <iostream>
 
@@ -49,6 +50,69 @@ int main(int argc, char** argv)
         }
         std::cout << "}\n";
     }
+    std::cout << "how utf-8 combined into char32_t one char?\n";
+    auto bin = [](const char ch) { return std::bitset<8>(ch); };
+    std::cout << "[" << check << "] chars = {" << bin(check[0]) << ","
+              << bin(check[1]) << "," << bin(check[2]) << "}\n";
+    std::cout << "[" << check << "] chars = {" << "____xxxx" << ","
+              << "__yyyyyy" << "," << "__zzzzzz" << "}\n";
+
+    auto utf8_to_char32 = [](const std::string& source) -> char32_t
+    {
+        char     first_byte    = *source.data();
+        char32_t codepoint     = 0;
+        int      bytes_to_read = 0;
+
+        if ((first_byte & 0x80) == 0x00) // 0x80 == 0b1000
+        {
+            // Single-byte character
+            codepoint     = first_byte;
+            bytes_to_read = 1;
+        }
+        else if ((first_byte & 0xe0) == 0xc0) // 0xe0 == 0b11100000
+        {
+            // Two-byte character
+            codepoint     = (first_byte & 0x1f);
+            bytes_to_read = 2;
+        }
+        else if ((first_byte & 0xf0) == 0xe0)
+        {
+            // Three-byte character
+            codepoint     = (first_byte & 0x0f);
+            bytes_to_read = 3;
+        }
+        else if ((first_byte & 0xf8) == 0xf0)
+        { // Four-byte character
+            codepoint     = (first_byte & 0x07);
+            bytes_to_read = 4;
+        }
+        else
+        {
+            // Invalid UTF-8 sequence, return error code
+            return U'\ufffd';
+        }
+
+        for (int i = 1; i < bytes_to_read; ++i)
+        {
+            char nextByte = source[i];
+            if ((nextByte & 0xC0) != 0x80) // 0xC0 == 0b1100;
+            {
+                // Invalid UTF-8 sequence, return error code
+                return U'\ufffd'; // Replacement Character "�"
+            }
+            codepoint =
+                (codepoint << 6) | (nextByte & 0x3F); // 0x3f == 0b00111111
+        }
+        return static_cast<char32_t>(codepoint);
+    };
+
+    char32_t unicode_codepoint = utf8_to_char32(check);
+    std::cout << "[" << check << "] char32_t = 0x" << std::hex << std::setw(8)
+              << std::setfill('0') << (unicode_codepoint & 0xffffffff) << "\n";
+    std::cout << "[" << check << "] char32_t = 0b"
+              << std::bitset<32>(unicode_codepoint) << "\n";
+    std::cout << "[" << check << "] char32_t = 0b"
+              << "0000000000000000xxxxyyyyyyzzzzzz" << "\n";
 
     return EXIT_SUCCESS;
 }
