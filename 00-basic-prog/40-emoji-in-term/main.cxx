@@ -1,3 +1,4 @@
+#include <bitset>
 #include <iomanip>
 #include <iostream>
 
@@ -25,7 +26,7 @@ int main(int argc, char** argv)
                   << "] in utf-8 (ascii chars) length: " << emoji.length()
                   << "\n";
     }
-
+    std::cout << "utf-8 emoji in hex\n";
     for (auto emoji : list)
     {
         std::cout << "[" << emoji << "] chars = {";
@@ -34,6 +35,17 @@ int main(int argc, char** argv)
         {
             std::cout << std::exchange(delim, ',') << "0x" << std::hex
                       << std::setw(2) << std::setfill('0') << (0xff & ch);
+        }
+        std::cout << "}\n";
+    }
+    std::cout << "utf-8 emoji in binary\n";
+    for (auto emoji : list)
+    {
+        std::cout << "[" << emoji << "] chars = {";
+
+        for (char delim{ ' ' }; char ch : emoji)
+        {
+            std::cout << std::exchange(delim, ',') << std::bitset<8>(ch);
         }
         std::cout << "}\n";
     }
