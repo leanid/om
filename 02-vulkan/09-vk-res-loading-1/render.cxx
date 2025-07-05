@@ -1028,6 +1028,8 @@ void render::create_graphics_pipeline()
     std::array<vk::PipelineShaderStageCreateInfo, 2> stages{ stage_info_vert,
                                                              stage_info_frag };
     // vertex input
+    // Data for a single vertex
+    vk::VertexInputBindingDescription binding_description;
     // TODO currently I do not use vertex input. Add it later.
     vk::PipelineVertexInputStateCreateInfo vertex_input_state_info{};
     vertex_input_state_info.vertexBindingDescriptionCount = 0;

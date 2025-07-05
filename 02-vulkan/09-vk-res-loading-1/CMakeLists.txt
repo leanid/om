@@ -88,9 +88,13 @@ foreach(slang_file ${slang_files})
             -target spirv
             -entry main
             -o ${spirv_file}
-            -profile spirv_1_0
-            # -emit-spirv-directly # only for RenderDoc debuging
-            -emit-spirv-via-glsl -g2 # enable debug info in SPIR-V for RenderDoc
+            -profile spirv_1_3
+            # Vulkan 1.1 or later is required because the GPU
+            # instrumentation code uses SPIR-V 1.3 features.
+            # Vulkan 1,1 is required to ensure that SPIR-V 1.3 is available.
+            -emit-spirv-directly # only for RenderDoc debuging
+            #-emit-spirv-via-glsl # if profile spirv_1_0
+            -g2 # enable debug info in SPIR-V for RenderDoc
         VERBATIM
         DEPENDS ${slang_file})
     # cmake-format: on
