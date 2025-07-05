@@ -33,12 +33,12 @@ target_include_directories(09-vk-res-loading-1
                            PRIVATE ${CMAKE_SOURCE_DIR}/support/cxx_lib/)
 target_link_libraries(
     09-vk-res-loading-1
-    PRIVATE om::io::read_file
+    PRIVATE Boost::program_options
+            SDL3::SDL3-shared
             Vulkan::Headers
             Vulkan::Vulkan
-            SDL3::SDL3-shared
-            Boost::program_options
-            glm::glm)
+            glm::glm
+            om::io::read_file)
 
 # cmake-format: off
 target_link_libraries(
