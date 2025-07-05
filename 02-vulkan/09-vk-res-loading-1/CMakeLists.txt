@@ -80,16 +80,20 @@ foreach(slang_file ${slang_files})
     set(spirv_file "${CMAKE_CURRENT_SOURCE_DIR}/${slang_file}.spv")
 
     # Add custom command to compile shader file to SPIR-V
+    # cmake-format: off
     add_custom_command(
         OUTPUT ${spirv_file}
         COMMAND
-            slangc ${CMAKE_CURRENT_SOURCE_DIR}/${slang_file} -target spirv -o
-            ${spirv_file} -profile spirv_1_0
-            -emit-spirv-directly # only for RenderDoc debuging
-            -g2 # enable debug info in SPIR-V for RenderDoc
+            slangc ${CMAKE_CURRENT_SOURCE_DIR}/${slang_file}
+            -target spirv
+            -entry main
+            -o ${spirv_file}
+            -profile spirv_1_0
+            # -emit-spirv-directly # only for RenderDoc debuging
+            -emit-spirv-via-glsl -g2 # enable debug info in SPIR-V for RenderDoc
         VERBATIM
         DEPENDS ${slang_file})
-
+    # cmake-format: on
     list(APPEND spirv_files ${spirv_file})
 endforeach()
 

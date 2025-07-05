@@ -1,22 +1,10 @@
 // Slang shader language
 
-// triangle vertex positions directly in shader code
-static const float3 positions[3] = { { 0.0, -0.4, 0.0 },
-                                     { 0.4, 0.4, 0.0 },
-                                     { -0.4, 0.4, 0.0 } };
-
-// triangle vertex colors directly in shader code
-static const float3 colors[3] = { { 1.0, 0.0, 0.0 },
-                                  { 0.0, 1.0, 0.0 },
-                                  { 0.0, 0.0, 1.0 } };
-
 [[shader("vertex")]]
-void main(uint       vertex_id : SV_VertexID,
-          out float4 position : SV_Position,
-          out float3 color)
+void main(in float3 pos,
+          out float4 position : SV_Position)
 {
-    position = float4(positions[vertex_id], 1.0);
-    color    = colors[vertex_id];
+    position = float4(pos, 1.0);
 }
 // how I generate the spirv file:
 // @note I got warning that Slang's backend support

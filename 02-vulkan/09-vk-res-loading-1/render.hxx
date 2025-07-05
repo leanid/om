@@ -11,6 +11,7 @@
 
 #include <experimental/scope> // not found on macOS
 
+#include <glm/glm.hpp>
 #include <vulkan/vulkan.hpp>
 
 namespace om::vulkan
@@ -229,6 +230,11 @@ private:
         std::vector<vk::Semaphore> render_finished{}; // GPU to CPU sync
         std::vector<vk::Fence>     gpu_fence{};
     } synchronization;
+
+    struct vertex
+    {
+        glm::vec3 pos; // vertex positions x, y, z
+    };
 
     struct queue_family_indexes
     {
