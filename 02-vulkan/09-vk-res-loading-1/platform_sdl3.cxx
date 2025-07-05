@@ -64,7 +64,7 @@ platform_interface::buffer_size platform_sdl3::get_window_buffer_size()
     int w{};
     int h{};
 
-    if (0 != SDL_GetWindowSizeInPixels(window, &w, &h))
+    if (!SDL_GetWindowSizeInPixels(window, &w, &h))
     {
         throw std::runtime_error(SDL_GetError());
     }
