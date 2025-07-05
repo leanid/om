@@ -202,6 +202,15 @@ For simple one file debugging you can skip most params see example:
         :name "Python :: Run file (buffer) my"))
 ```
 next *dap-hydra* to show key to debug
+### How to debug using Dape in C++
+1. ```SPC+d+d```
+2. put all your params and args in minibufer like:
+```elisp
+Run adapter: lldb-dap
+:program "~/.build/ninja-g++/02-vulkan/09-vk-res/Debug/09-vk-res"
+:args ["-v" "-l"]
+:cwd "."
+```
 ### How to visualize vertical wrap line?
 Doom emacs: `SPC+t+c` Fill Column indicator
 ### How to format text block in ORG mode?
