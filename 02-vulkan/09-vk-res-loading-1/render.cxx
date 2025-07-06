@@ -162,13 +162,13 @@ render::render(platform_interface& platform, hints hints)
 
     // clang-format off
     std::vector<vertex> mesh_verticles = {
-        { { 0.4f, -0.4f, 0.0f } },
-        { { 0.4f, 0.4f, 0.0f } },
-        { { -0.4f, 0.4f, 0.0f } },
+        {.pos{ 0.4f, -0.4f, 0.0f }, .col{1.0f, 0.0f, 0.0f}},
+        {.pos{ 0.4f, 0.4f, 0.0f },  .col{0.0f, 1.0f, 0.0f}},
+        {.pos{ -0.4f, 0.4f, 0.0f }, .col{0.0f, 0.0f, 1.0f}},
 
-        { { -0.4f, -0.4f, 0.0f } },
-        { { 0.4f, -0.4f, 0.0f } },
-        { { -0.4f, 0.4f, 0.0f } },
+        {.pos{ -0.4f, -0.4f, 0.0f}, .col{1.0f, 1.0f, 0.0f}},
+        {.pos{ 0.4f, -0.4f, 0.0f }, .col{1.0f, 0.0f, 0.0f}},
+        {.pos{ -0.4f, 0.4f, 0.0f }, .col{0.0f, 0.0f, 1.0f}}
     };
     // clang-format on
 
@@ -1057,7 +1057,7 @@ void render::create_graphics_pipeline()
     binding_description.inputRate = vk::VertexInputRate::eVertex;
 
     // how the data for an attribute is defined within a vertex
-    std::array<vk::VertexInputAttributeDescription, 1> attribute_description;
+    std::array<vk::VertexInputAttributeDescription, 2> attribute_description;
     // position attribute
     // which binding the data is at (should be same as above)
     attribute_description[0].binding  = 0;
@@ -1068,6 +1068,11 @@ void render::create_graphics_pipeline()
     attribute_description[0].format = vk::Format::eR32G32B32Sfloat;
     // where this attribute is defined in the data for a single vertex
     attribute_description[0].offset = offsetof(om::vulkan::vertex, pos);
+
+    attribute_description[1].binding  = 0;
+    attribute_description[1].location = 1;
+    attribute_description[1].format   = vk::Format::eR32G32B32Sfloat;
+    attribute_description[1].offset   = offsetof(om::vulkan::vertex, col);
 
     vk::PipelineVertexInputStateCreateInfo vertex_input_state_info{};
     vertex_input_state_info.vertexBindingDescriptionCount = 1;

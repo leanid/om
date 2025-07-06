@@ -2,9 +2,12 @@
 
 [[shader("vertex")]]
 void main(in float3 pos,
-          out float4 position : SV_Position)
+          in float3 col,
+          out float4 position : SV_Position,
+          out float3 frag_col)
 {
     position = float4(pos, 1.0);
+    frag_col = col;
 }
 // how I generate the spirv file:
 // @note I got warning that Slang's backend support

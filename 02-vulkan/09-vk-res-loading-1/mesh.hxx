@@ -8,6 +8,7 @@ namespace om::vulkan
 struct vertex final
 {
     glm::vec3 pos; // vertex positions x, y, z
+    glm::vec3 col; // vertex color r, g, b
 };
 
 class mesh final
