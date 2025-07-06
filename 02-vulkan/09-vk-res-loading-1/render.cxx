@@ -160,11 +160,17 @@ render::render(platform_interface& platform, hints hints)
     validate_physical_device();
     create_logical_device();
 
+    // clang-format off
     std::vector<vertex> mesh_verticles = {
-        { { 0.0f, -0.8f, 0.0f } },
+        { { 0.4f, -0.4f, 0.0f } },
         { { 0.4f, 0.4f, 0.0f } },
         { { -0.4f, 0.4f, 0.0f } },
+
+        { { -0.4f, -0.4f, 0.0f } },
+        { { 0.4f, -0.4f, 0.0f } },
+        { { -0.4f, 0.4f, 0.0f } },
     };
+    // clang-format on
 
     first_mesh = mesh(devices.physical, devices.logical, mesh_verticles);
 
@@ -1321,9 +1327,15 @@ void render::record_commands()
                 vk::Buffer     buffers[] = { first_mesh.get_vertex_buffer() };
                 vk::DeviceSize offsets[] = { 0 };
 
-                buffer.bindVertexBuffers(0, buffers, offsets, dynamic_loader);
+                buffer.bindVertexBuffers(0, // first binding
+                                         buffers,
+                                         offsets,
+                                         dynamic_loader);
 
-                buffer.draw(3, 1, 0, 0); // 3 vertices, 1 instance, 0 offset
+                buffer.draw(first_mesh.get_vertex_count(),
+                            1,  // 1 instance
+                            0,  // first vertex
+                            0); // first instance
             }
             buffer.endRenderPass();
         }
