@@ -13,7 +13,7 @@ parser_args_vulkan::parser_args_vulkan(int argc, char** argv)
     options.add_options()("verbose,v", "enable verbose mode");
     options.add_options()(
         "vk_ver",
-        value<std::string>(&vulkan_version)->default_value("1.0"),
+        value<std::string>(&vulkan_version)->default_value("1.3"),
         "desired vulkan version in format 1.0 or 1.1 or 1.2 or 1.3 or 1.4");
     options.add_options()("vk_validation_layer,l",
                           "enable VK_LAYER_KHRONOS_validation");

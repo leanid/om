@@ -14,6 +14,8 @@
 #include <glm/glm.hpp>
 #include <vulkan/vulkan.hpp>
 
+#include "mesh.hxx"
+
 namespace om::vulkan
 {
 struct platform_interface
@@ -72,11 +74,6 @@ struct platform_interface
     virtual std::ostream& get_logger() noexcept = 0;
 
     virtual content get_file_content(std::string_view path) = 0;
-};
-
-struct vertex
-{
-    glm::vec3 pos; // vertex positions x, y, z
 };
 
 class render
@@ -190,6 +187,9 @@ private:
     std::ostream&       log;
     platform_interface& platform_;
     hints               hints_;
+
+    // scene component objects
+    mesh first_mesh;
 
     // vulkan main objects
     vk::Instance instance;

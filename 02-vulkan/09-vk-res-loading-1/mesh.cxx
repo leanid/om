@@ -1,5 +1,7 @@
 #include "mesh.hxx"
 
+#include <iostream>
+
 namespace om::vulkan
 {
 mesh::mesh(vk::PhysicalDevice   physical_device,
@@ -7,9 +9,11 @@ mesh::mesh(vk::PhysicalDevice   physical_device,
            std::vector<vertex>& vertexes)
     : physical_device(physical_device)
     , device(device)
-    , buffer(create_buffer(vertexes))
+    , buffer()
+    , vertex_buf_mem()
     , num_vertexes(vertexes.size())
 {
+    create_buffer(vertexes);
 }
 
 uint32_t mesh::get_vertex_count() const
@@ -21,7 +25,7 @@ vk::Buffer mesh::get_vertex_buffer()
 {
     return buffer;
 }
-vk::Buffer mesh::create_buffer(std::vector<vertex>& vertexes)
+void mesh::create_buffer(std::vector<vertex>& vertexes)
 {
     // information to create buffer (doesn't include assining memory)
     vk::BufferCreateInfo info;
@@ -31,7 +35,7 @@ vk::Buffer mesh::create_buffer(std::vector<vertex>& vertexes)
                                                     // images, can share vertex
                                                     // buffers
 
-    vk::Buffer buffer = device.createBuffer(info);
+    buffer = device.createBuffer(info);
 
     // get buffer memory requirements
     vk::MemoryRequirements mem_requirements =
@@ -40,8 +44,26 @@ vk::Buffer mesh::create_buffer(std::vector<vertex>& vertexes)
     // allocate memory to buffer
     vk::MemoryAllocateInfo mem_alloc_info;
     mem_alloc_info.allocationSize = mem_requirements.size;
+    mem_alloc_info.memoryTypeIndex =
+        find_mem_type_index(mem_requirements.memoryTypeBits,
+                            vk::MemoryPropertyFlagBits::eHostVisible |
+                                vk::MemoryPropertyFlagBits::eHostCoherent);
 
-    find_mem_type_index(mem_requirements.memoryTypeBits, )
+    // allocate memory to vk::device
+    vertex_buf_mem = device.allocateMemory(mem_alloc_info);
+    if (!vertex_buf_mem)
+    {
+        throw std::runtime_error("can't allocate vertex buf memory");
+    }
+
+    // bind buffer and memory
+    device.bindBufferMemory(buffer, vertex_buf_mem, 0);
+
+    // map memory to vertex buffer
+    void* mem = device.mapMemory(vertex_buf_mem, 0, info.size);
+    std::uninitialized_copy_n(
+        vertexes.begin(), vertexes.size(), static_cast<vertex*>(mem));
+    device.unmapMemory(vertex_buf_mem);
 }
 
 uint32_t mesh::find_mem_type_index(uint32_t                allowed_types,
@@ -66,8 +88,45 @@ uint32_t mesh::find_mem_type_index(uint32_t                allowed_types,
     throw std::runtime_error(
         "can't find memory of allowed_types and properties");
 }
-void mesh::cleanup() const noexcept
+void mesh::cleanup() noexcept
 {
-    device.destroyBuffer(buffer);
+    if (!num_vertexes)
+    {
+        return;
+    }
+    std::cout << "mesh::cleanup" << std::endl;
+    if (buffer)
+    {
+        std::cout << "destroy mesh buffer" << std::endl;
+        device.destroyBuffer(buffer);
+    }
+    if (vertex_buf_mem)
+    {
+        std::cout << "destroy mesh vertex_buf_mem" << std::endl;
+        device.freeMemory(vertex_buf_mem);
+    }
+    num_vertexes = 0;
+}
+mesh::mesh(mesh&& other)
+    : physical_device(other.physical_device)
+    , device(other.device)
+    , buffer(std::exchange(other.buffer, vk::Buffer()))
+    , vertex_buf_mem(std::exchange(other.vertex_buf_mem, vk::DeviceMemory()))
+    , num_vertexes(std::exchange(other.num_vertexes, 0))
+{
+}
+mesh& mesh::operator=(mesh&& other)
+{
+    physical_device = other.physical_device;
+    device          = other.device;
+    buffer          = std::exchange(other.buffer, vk::Buffer());
+    vertex_buf_mem  = std::exchange(other.vertex_buf_mem, vk::DeviceMemory());
+    num_vertexes    = std::exchange(other.num_vertexes, 0);
+    return *this;
+}
+
+mesh::~mesh()
+{
+    cleanup();
 }
 } // namespace om::vulkan

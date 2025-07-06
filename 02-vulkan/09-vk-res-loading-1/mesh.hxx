@@ -1,9 +1,15 @@
 #pragma once
 
-#include "render.hxx"
+#include <glm/glm.hpp>
+#include <vulkan/vulkan.hpp>
 
 namespace om::vulkan
 {
+struct vertex final
+{
+    glm::vec3 pos; // vertex positions x, y, z
+};
+
 class mesh final
 {
 public:
@@ -11,21 +17,26 @@ public:
     mesh(vk::PhysicalDevice   physical_device,
          vk::Device           device,
          std::vector<vertex>& vertexes);
+    mesh(const mesh& other)            = delete;
+    mesh& operator=(const mesh& other) = delete;
+    mesh(mesh&& other);
+    mesh& operator=(mesh&& other);
     ~mesh();
 
     [[nodiscard]] uint32_t get_vertex_count() const;
     vk::Buffer             get_vertex_buffer();
 
-    void cleanup() const noexcept;
+    void cleanup() noexcept;
 
 private:
-    vk::Buffer create_buffer(std::vector<vertex>& vertexes);
-    uint32_t   find_mem_type_index(uint32_t                allowed_types,
-                                   vk::MemoryPropertyFlags properties);
+    void     create_buffer(std::vector<vertex>& vertexes);
+    uint32_t find_mem_type_index(uint32_t                allowed_types,
+                                 vk::MemoryPropertyFlags properties);
 
     vk::PhysicalDevice physical_device;
     vk::Device         device;
     vk::Buffer         buffer;
+    vk::DeviceMemory   vertex_buf_mem;
     uint32_t           num_vertexes{};
 };
 } // namespace om::vulkan

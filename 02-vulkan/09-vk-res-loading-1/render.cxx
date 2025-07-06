@@ -159,6 +159,15 @@ render::render(platform_interface& platform, hints hints)
     get_physical_device();
     validate_physical_device();
     create_logical_device();
+
+    std::vector<vertex> mesh_verticles = {
+        { { 0.0f, -0.8f, 0.0f } },
+        { { 0.4f, 0.4f, 0.0f } },
+        { { -0.4f, 0.4f, 0.0f } },
+    };
+
+    first_mesh = mesh(devices.physical, devices.logical, mesh_verticles);
+
     create_swapchain();
     create_renderpass();
     create_graphics_pipeline();
@@ -179,6 +188,9 @@ render::~render()
                                                  "devices.logical.waitIdle()" };
             devices.logical.waitIdle();
         }
+
+        first_mesh.cleanup();
+
         destroy_synchronization_objects();
         log << "vulkan synchronization objects destroyed\n";
         devices.logical.freeCommandBuffers(graphics_command_pool,
@@ -1008,9 +1020,9 @@ void render::create_graphics_pipeline()
 {
     // Static Pipeline States
     auto vertex_shader_code = platform_.get_file_content(
-        "./02-vulkan/08-vk-framebuffer-cmd-2/shaders/shader.vert.slang.spv");
+        "./02-vulkan/09-vk-res-loading-1/shaders/shader.vert.slang.spv");
     auto fragment_shader_code = platform_.get_file_content(
-        "./02-vulkan/08-vk-framebuffer-cmd-2/shaders/shader.frag.slang.spv");
+        "./02-vulkan/09-vk-res-loading-1/shaders/shader.frag.slang.spv");
     // compile shaders from spir-v into gpu code
     vk::ShaderModule vertex = create_shader(vertex_shader_code.as_span());
     std::experimental::scope_exit vertex_cleanup([this, &vertex]()
@@ -1306,6 +1318,10 @@ void render::record_commands()
 
                 buffer.bindPipeline(vk::PipelineBindPoint::eGraphics,
                                     graphics_pipeline);
+                vk::Buffer     buffers[] = { first_mesh.get_vertex_buffer() };
+                vk::DeviceSize offsets[] = { 0 };
+
+                buffer.bindVertexBuffers(0, buffers, offsets, dynamic_loader);
 
                 buffer.draw(3, 1, 0, 0); // 3 vertices, 1 instance, 0 offset
             }
