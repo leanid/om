@@ -74,6 +74,11 @@ struct platform_interface
     virtual content get_file_content(std::string_view path) = 0;
 };
 
+struct vertex
+{
+    glm::vec3 pos; // vertex positions x, y, z
+};
+
 class render
 {
 public:
@@ -230,11 +235,6 @@ private:
         std::vector<vk::Semaphore> render_finished{}; // GPU to CPU sync
         std::vector<vk::Fence>     gpu_fence{};
     } synchronization;
-
-    struct vertex
-    {
-        glm::vec3 pos; // vertex positions x, y, z
-    };
 
     struct queue_family_indexes
     {

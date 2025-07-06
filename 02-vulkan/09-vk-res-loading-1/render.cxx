@@ -1030,14 +1030,36 @@ void render::create_graphics_pipeline()
     // vertex input
     // Data for a single vertex
     vk::VertexInputBindingDescription binding_description;
-    // TODO currently I do not use vertex input. Add it later.
+    binding_description.binding = 0; // can bind multiple streams of data,
+                                     // define which
+    binding_description.stride = sizeof(om::vulkan::vertex);
+    // how to move detween data after next vertex
+    // vk::VertexInputRate::eVertex   : move to next vertex
+    // vk::VertexInputRate::eInstance : move to vertex for next instance
+    binding_description.inputRate = vk::VertexInputRate::eVertex;
+
+    // how the data for an attribute is defined within a vertex
+    std::array<vk::VertexInputAttributeDescription, 1> attribute_description;
+    // position attribute
+    // which binding the data is at (should be same as above)
+    attribute_description[0].binding  = 0;
+    attribute_description[0].location = 0; // location in shader where data
+                                           // will be read from
+
+    // format the data will take (also helps define size of data)
+    attribute_description[0].format = vk::Format::eR32G32B32Sfloat;
+    // where this attribute is defined in the data for a single vertex
+    attribute_description[0].offset = offsetof(om::vulkan::vertex, pos);
+
     vk::PipelineVertexInputStateCreateInfo vertex_input_state_info{};
-    vertex_input_state_info.vertexBindingDescriptionCount = 0;
+    vertex_input_state_info.vertexBindingDescriptionCount = 1;
     vertex_input_state_info.pVertexBindingDescriptions =
-        nullptr; // spacing/striding vertex info
-    vertex_input_state_info.vertexAttributeDescriptionCount = 0;
+        &binding_description; // spacing/striding vertex info
+    vertex_input_state_info.vertexAttributeDescriptionCount =
+        static_cast<uint32_t>(attribute_description.size());
     vertex_input_state_info.pVertexAttributeDescriptions =
-        nullptr; // data format where/from shader attributes
+        attribute_description
+            .data(); // data format where/from shader attributes
 
     // input assembly
     vk::PipelineInputAssemblyStateCreateInfo input_assembly{};

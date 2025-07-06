@@ -22,6 +22,8 @@ om_clang_tidy_enable()
 add_executable(
     09-vk-res-loading-1
     main.cxx
+    mesh.cxx
+    mesh.hxx
     parser_args_vulkan.cxx
     parser_args_vulkan.hxx
     platform_sdl3.cxx
