@@ -1,5 +1,7 @@
 #pragma once
 
+#include <span>
+
 #include <glm/glm.hpp>
 #include <vulkan/vulkan.hpp>
 
@@ -15,9 +17,9 @@ class mesh final
 {
 public:
     mesh() = default;
-    mesh(vk::PhysicalDevice   physical_device,
-         vk::Device           device,
-         std::vector<vertex>& vertexes);
+    mesh(vk::PhysicalDevice physical_device,
+         vk::Device         device,
+         std::span<vertex>  vertexes);
     mesh(const mesh& other)            = delete;
     mesh& operator=(const mesh& other) = delete;
     mesh(mesh&& other);
@@ -30,7 +32,7 @@ public:
     void cleanup() noexcept;
 
 private:
-    void     create_buffer(std::vector<vertex>& vertexes);
+    void     create_buffer(std::span<vertex> vertexes);
     uint32_t find_mem_type_index(uint32_t                allowed_types,
                                  vk::MemoryPropertyFlags properties);
 

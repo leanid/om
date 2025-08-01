@@ -4,9 +4,9 @@
 
 namespace om::vulkan
 {
-mesh::mesh(vk::PhysicalDevice   physical_device,
-           vk::Device           device,
-           std::vector<vertex>& vertexes)
+mesh::mesh(vk::PhysicalDevice physical_device,
+           vk::Device         device,
+           std::span<vertex>  vertexes)
     : physical_device(physical_device)
     , device(device)
     , buffer()
@@ -25,7 +25,7 @@ vk::Buffer mesh::get_vertex_buffer()
 {
     return buffer;
 }
-void mesh::create_buffer(std::vector<vertex>& vertexes)
+void mesh::create_buffer(std::span<vertex> vertexes)
 {
     // information to create buffer (doesn't include assining memory)
     vk::BufferCreateInfo info;
@@ -57,7 +57,8 @@ void mesh::create_buffer(std::vector<vertex>& vertexes)
     }
 
     // bind buffer and memory
-    device.bindBufferMemory(buffer, vertex_buf_mem, 0);
+    device.bindBufferMemory(buffer, vertex_buf_mem, 0 //< memory offset
+    );
 
     // map memory to vertex buffer
     void* mem = device.mapMemory(vertex_buf_mem, 0, info.size);

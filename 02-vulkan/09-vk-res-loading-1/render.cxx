@@ -172,7 +172,8 @@ render::render(platform_interface& platform, hints hints)
     };
     // clang-format on
 
-    first_mesh = mesh(devices.physical, devices.logical, mesh_verticles);
+    first_mesh =
+        mesh(devices.physical, devices.logical, std::span{ mesh_verticles });
 
     create_swapchain();
     create_renderpass();
