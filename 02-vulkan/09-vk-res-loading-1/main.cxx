@@ -1,4 +1,4 @@
-#include "render.hxx"
+#include "vulkan/render.hxx"
 
 #include <cstdlib>
 #include <exception>
@@ -10,9 +10,9 @@
 #include <SDL3/SDL_hints.h>
 #include <SDL3/SDL_vulkan.h>
 
-#include "args_parser.hxx"
 #include "log.hxx"
-#include "platform_sdl3.hxx"
+#include "vulkan/args_parser.hxx"
+#include "vulkan/platform_sdl3.hxx"
 
 int main(int argc, char** argv)
 {

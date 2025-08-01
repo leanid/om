@@ -21,20 +21,21 @@ om_clang_tidy_enable()
 
 add_executable(
     09-vk-res-loading-1
-    args_parser.cxx
-    args_parser.hxx
     log.cxx
     log.hxx
     main.cxx
-    mesh.cxx
-    mesh.hxx
-    platform_sdl3.cxx
-    platform_sdl3.hxx
-    render.cxx
-    render.hxx)
+    vulkan/args_parser.cxx
+    vulkan/args_parser.hxx
+    vulkan/mesh.cxx
+    vulkan/mesh.hxx
+    vulkan/platform_sdl3.cxx
+    vulkan/platform_sdl3.hxx
+    vulkan/render.cxx
+    vulkan/render.hxx)
 target_compile_features(09-vk-res-loading-1 PRIVATE cxx_std_23)
-target_include_directories(09-vk-res-loading-1
-                           PRIVATE ${CMAKE_SOURCE_DIR}/support/cxx_lib/)
+target_include_directories(
+    09-vk-res-loading-1 PRIVATE ${CMAKE_SOURCE_DIR}/support/cxx_lib/
+                                ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(
     09-vk-res-loading-1
     PRIVATE Boost::program_options
