@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include "log.hxx"
+
 namespace om::vulkan
 {
 mesh::mesh(vk::PhysicalDevice physical_device,
@@ -91,19 +93,20 @@ uint32_t mesh::find_mem_type_index(uint32_t                allowed_types,
 }
 void mesh::cleanup() noexcept
 {
+    using om::cout;
     if (!num_vertexes)
     {
         return;
     }
-    std::cout << "mesh::cleanup" << std::endl;
+    cout << "mesh::cleanup" << std::endl;
     if (buffer)
     {
-        std::cout << "destroy mesh buffer" << std::endl;
+        cout << "destroy mesh buffer" << std::endl;
         device.destroyBuffer(buffer);
     }
     if (vertex_buf_mem)
     {
-        std::cout << "destroy mesh vertex_buf_mem" << std::endl;
+        cout << "destroy mesh vertex_buf_mem" << std::endl;
         device.freeMemory(vertex_buf_mem);
     }
     num_vertexes = 0;

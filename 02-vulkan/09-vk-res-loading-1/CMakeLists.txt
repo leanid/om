@@ -21,6 +21,8 @@ om_clang_tidy_enable()
 
 add_executable(
     09-vk-res-loading-1
+    log.cxx
+    log.hxx
     main.cxx
     mesh.cxx
     mesh.hxx

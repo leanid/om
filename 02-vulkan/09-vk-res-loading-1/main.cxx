@@ -10,24 +10,25 @@
 #include <SDL3/SDL_hints.h>
 #include <SDL3/SDL_vulkan.h>
 
+#include "log.hxx"
 #include "parser_args_vulkan.hxx"
 #include "platform_sdl3.hxx"
 
 int main(int argc, char** argv)
 {
-    using namespace std;
+    using namespace om;
 
-    ios_base::sync_with_stdio(false); // faster iostream work and we don't need
-                                      // to sync with cstdio
+    std::ios_base::sync_with_stdio(false); // faster iostream work and we don't
+                                           // need to sync with cstdio
 
-    cerr.exceptions(ios_base::failbit | ios_base::badbit);
+    std::cerr.exceptions(std::ios_base::failbit | std::ios_base::badbit);
 
-    om::tools::parser_args_vulkan args_parser(argc, argv);
+    tools::parser_args_vulkan args_parser(argc, argv);
 
     if (!args_parser.help.empty())
     {
 
-        cout << "usage: " << args_parser.help << '\n';
+        std::cout << "usage: " << args_parser.help << '\n';
         return EXIT_SUCCESS;
     }
 
@@ -35,17 +36,14 @@ int main(int argc, char** argv)
     bool vk_validation_layer   = args_parser.validation_layer;
     bool vk_debug_callback_ext = args_parser.debug_callback;
 
-    struct null_buffer final : std::streambuf
+    if (verbose)
     {
-        int overflow(int c) final { return c; }
-    } null;
-
-    std::ostream  null_stream(&null);
-    std::ostream& log = verbose ? std::clog : null_stream;
+        om::cout.rdbuf(std::clog.rdbuf());
+    }
 
     if (vk_validation_layer)
     {
-        log << "enable vulkan validation layers\n";
+        om::cout << "enable vulkan validation layers\n";
         if (!SDL_SetHint(SDL_HINT_RENDER_VULKAN_DEBUG, "1"))
         {
             std::cerr << SDL_GetError();
@@ -58,12 +56,12 @@ int main(int argc, char** argv)
         std::cerr << SDL_GetError();
         return EXIT_FAILURE;
     }
-    log << "create all subsystems\n";
+    om::cout << "create all subsystems\n";
     std::experimental::scope_exit quit(
-        [&log]()
+        []()
         {
             SDL_Quit();
-            log << "destroy all subsystems\n";
+            om::cout << "destroy all subsystems\n";
         });
 
     if (!SDL_Vulkan_LoadLibrary(nullptr))
@@ -71,33 +69,33 @@ int main(int argc, char** argv)
         std::cerr << SDL_GetError();
         return EXIT_FAILURE;
     }
-    log << "load vulkan library\n";
+    om::cout << "load vulkan library\n";
     std::experimental::scope_exit unload(
-        [&log]()
+        []()
         {
             SDL_Vulkan_UnloadLibrary();
-            log << "unload vulkan library\n";
+            om::cout << "unload vulkan library\n";
         });
 
     std::unique_ptr<SDL_Window, decltype(&SDL_DestroyWindow)> window(
         SDL_CreateWindow("09-vk-res-loading-1", 800, 600, SDL_WINDOW_VULKAN),
         SDL_DestroyWindow);
     std::experimental::scope_exit destroy_window(
-        [&log]() { log << "destroy sdl window\n"; });
+        []() { om::cout << "destroy sdl window\n"; });
 
     if (!window)
     {
-        log << "error: can't create sdl window: " << SDL_GetError()
-            << std::endl;
+        om::cout << "error: can't create sdl window: " << SDL_GetError()
+                 << std::endl;
         return EXIT_FAILURE;
     }
 
-    log << "sdl windows created\n";
+    om::cout << "sdl windows created\n";
 
     try
     {
         using namespace om::vulkan;
-        platform_sdl3 platform(window.get(), log);
+        platform_sdl3 platform(window.get(), om::cout);
         render::hints hints{
             .vulkan_version = { .major = args_parser.vulkan_version_major,
                                 .minor = args_parser.vulkan_version_minor },
