@@ -18,7 +18,7 @@ find_program(SLANGC slangc REQUIRED)
 
 om_clang_tidy_enable()
 
-add_library(09-vk-res-loading-1-log STATIC log.cxx log.hxx)
+add_library(09-vk-res-loading-1-log OBJECT log.cxx log.hxx)
 target_include_directories(09-vk-res-loading-1-log
                            PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -29,15 +29,7 @@ target_compile_features(09-vk-res-loading-1 PRIVATE cxx_std_23)
 target_include_directories(
     09-vk-res-loading-1 PRIVATE ${CMAKE_SOURCE_DIR}/support/cxx_lib/
                                 ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(
-    09-vk-res-loading-1
-    PRIVATE 09-vk-res-loading-1-vulkan
-            09-vk-res-loading-1-log
-            SDL3::SDL3-shared
-            Vulkan::Headers
-            Vulkan::Vulkan
-            glm::glm
-            om::io::read_file)
+target_link_libraries(09-vk-res-loading-1 PRIVATE 09-vk-res-loading-1-vulkan)
 
 # cmake-format: off
 target_link_libraries(
