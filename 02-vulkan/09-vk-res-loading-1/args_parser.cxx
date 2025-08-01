@@ -1,10 +1,10 @@
-#include "parser_args_vulkan.hxx"
+#include "args_parser.hxx"
 
 #include <boost/program_options.hpp>
 
-namespace om::tools
+namespace om::vulkan
 {
-parser_args_vulkan::parser_args_vulkan(int argc, char** argv)
+args_parser::args_parser(int argc, char** argv)
 {
     using namespace boost::program_options;
     std::string         vulkan_version;
@@ -48,4 +48,4 @@ parser_args_vulkan::parser_args_vulkan(int argc, char** argv)
     vulkan_version_major = std::stoi(vulkan_version.substr(0, index_of_point));
     vulkan_version_minor = std::stoi(vulkan_version.substr(index_of_point + 1));
 }
-} // namespace om::tools
+} // namespace om::vulkan

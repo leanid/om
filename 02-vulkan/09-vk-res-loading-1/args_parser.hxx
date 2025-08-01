@@ -3,11 +3,11 @@
 #include <cstdint>
 #include <string>
 
-namespace om::tools
+namespace om::vulkan
 {
-struct parser_args_vulkan
+struct args_parser
 {
-    parser_args_vulkan(int argc, char** argv);
+    args_parser(int argc, char** argv);
 
     std::string   help;
     std::uint32_t vulkan_version_major;
@@ -16,4 +16,4 @@ struct parser_args_vulkan
     bool          validation_layer;
     bool          debug_callback;
 };
-} // namespace om::tools
+} // namespace om::vulkan

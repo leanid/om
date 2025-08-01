@@ -10,8 +10,8 @@
 #include <SDL3/SDL_hints.h>
 #include <SDL3/SDL_vulkan.h>
 
+#include "args_parser.hxx"
 #include "log.hxx"
-#include "parser_args_vulkan.hxx"
 #include "platform_sdl3.hxx"
 
 int main(int argc, char** argv)
@@ -23,7 +23,7 @@ int main(int argc, char** argv)
 
     std::cerr.exceptions(std::ios_base::failbit | std::ios_base::badbit);
 
-    tools::parser_args_vulkan args_parser(argc, argv);
+    vulkan::args_parser args_parser(argc, argv);
 
     if (!args_parser.help.empty())
     {
