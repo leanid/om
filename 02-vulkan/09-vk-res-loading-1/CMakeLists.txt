@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.31)
 
 project(09-vk-res-loading-1 CXX)
-
 find_package(Vulkan REQUIRED COMPONENTS glslangValidator)
 find_package(SDL3 REQUIRED)
 find_package(
@@ -19,26 +18,21 @@ find_program(SLANGC slangc REQUIRED)
 
 om_clang_tidy_enable()
 
-add_executable(
-    09-vk-res-loading-1
-    log.cxx
-    log.hxx
-    main.cxx
-    vulkan/args_parser.cxx
-    vulkan/args_parser.hxx
-    vulkan/mesh.cxx
-    vulkan/mesh.hxx
-    vulkan/platform_sdl3.cxx
-    vulkan/platform_sdl3.hxx
-    vulkan/render.cxx
-    vulkan/render.hxx)
+add_library(09-vk-res-loading-1-log STATIC log.cxx log.hxx)
+target_include_directories(09-vk-res-loading-1-log
+                           PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+add_subdirectory(vulkan)
+
+add_executable(09-vk-res-loading-1 main.cxx)
 target_compile_features(09-vk-res-loading-1 PRIVATE cxx_std_23)
 target_include_directories(
     09-vk-res-loading-1 PRIVATE ${CMAKE_SOURCE_DIR}/support/cxx_lib/
                                 ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(
     09-vk-res-loading-1
-    PRIVATE Boost::program_options
+    PRIVATE 09-vk-res-loading-1-vulkan
+            09-vk-res-loading-1-log
             SDL3::SDL3-shared
             Vulkan::Headers
             Vulkan::Vulkan
