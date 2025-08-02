@@ -9,11 +9,11 @@ struct args_parser
 {
     args_parser(int argc, char** argv);
 
-    std::string   help;
-    std::uint32_t vulkan_version_major;
-    std::uint32_t vulkan_version_minor;
-    bool          verbose;
-    bool          validation_layer;
-    bool          debug_callback;
+    std::string   help                 = "";
+    std::uint32_t vulkan_version_major = 0;
+    std::uint32_t vulkan_version_minor = 0;
+    bool          verbose              = false;
+    bool          validation_layer     = false;
+    bool          debug_callback       = false;
 };
 } // namespace om::vulkan

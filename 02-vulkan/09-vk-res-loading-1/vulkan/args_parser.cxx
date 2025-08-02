@@ -45,7 +45,14 @@ args_parser::args_parser(int argc, char** argv)
         return;
     }
 
-    vulkan_version_major = std::stoi(vulkan_version.substr(0, index_of_point));
-    vulkan_version_minor = std::stoi(vulkan_version.substr(index_of_point + 1));
+    auto major  = vulkan_version.substr(0, index_of_point);
+    auto minor  = vulkan_version.substr(index_of_point + 1);
+    auto to_u32 = [](std::string s) -> std::uint32_t
+    {
+        unsigned long v = std::stoul(s);
+        return static_cast<uint32_t>(v);
+    };
+    vulkan_version_major = to_u32(major);
+    vulkan_version_minor = to_u32(minor);
 }
 } // namespace om::vulkan

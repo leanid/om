@@ -333,6 +333,11 @@ void render::create_instance(bool enable_validation_layers,
     vk::ApplicationInfo application_info;
     application_info.apiVersion = VK_MAKE_API_VERSION(
         0, hints_.vulkan_version.major, hints_.vulkan_version.minor, 0);
+    application_info.applicationVersion = VK_MAKE_API_VERSION(0, 0, 1, 0);
+    application_info.engineVersion      = VK_MAKE_API_VERSION(0, 0, 1, 0);
+    application_info.pApplicationName   = "om vulkan tutorial";
+    application_info.pEngineName        = "om";
+
     vk::InstanceCreateInfo instance_create_info;
     instance_create_info.pApplicationInfo = &application_info;
 
@@ -387,6 +392,18 @@ void render::create_instance(bool enable_validation_layers,
 
     instance = vk::createInstance(instance_create_info);
     log << "vulkan instance created\n";
+
+    log << "vk api version: " << hints_.vulkan_version.major << '.'
+        << hints_.vulkan_version.minor << " requested\n";
+
+    log << "vk api version: " << VK_VERSION_MAJOR(application_info.apiVersion)
+        << '.' << VK_VERSION_MINOR(application_info.apiVersion)
+        << " after instance created\n";
+
+    uint32_t maximum_supported = vk::enumerateInstanceVersion();
+    log << "vk api version: " << VK_VERSION_MAJOR(maximum_supported) << '.'
+        << VK_VERSION_MINOR(maximum_supported) << '.'
+        << VK_VERSION_PATCH(maximum_supported) << " maximum supported\n";
 
     dynamic_loader =
         vk::detail::DispatchLoaderDynamic{ instance, vkGetInstanceProcAddr };
