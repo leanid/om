@@ -14,7 +14,12 @@ find_package(
     # Optional Boost libraries by their canonical name)
     ) # e.g. "date_time" for "libboost_date_time"
 find_package(glm REQUIRED)
-find_program(SLANGC slangc REQUIRED)
+find_package(
+    slang
+    CONFIG
+    HINTS
+    "$ENV{VULKAN_SDK}/lib/cmake"
+    REQUIRED)
 
 om_clang_tidy_enable()
 
