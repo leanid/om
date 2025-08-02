@@ -322,7 +322,7 @@ void render::draw()
         vk::PresentInfoKHR present_info{};
         present_info.waitSemaphoreCount = 1;
         present_info.pWaitSemaphores =
-            &synchronization.render_finished.at(current_frame_index);
+            &synchronization.render_finished.at(index_from_swapchain);
         present_info.swapchainCount = 1;
         present_info.pSwapchains    = &swapchain;
         present_info.pImageIndices  = &index_from_swapchain;
