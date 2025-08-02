@@ -330,13 +330,14 @@ void render::draw()
 void render::create_instance(bool enable_validation_layers,
                              bool enable_debug_callback_ext)
 {
-    vk::ApplicationInfo application_info;
-    application_info.apiVersion = VK_MAKE_API_VERSION(
-        0, hints_.vulkan_version.major, hints_.vulkan_version.minor, 0);
-    application_info.applicationVersion = VK_MAKE_API_VERSION(0, 0, 1, 0);
-    application_info.engineVersion      = VK_MAKE_API_VERSION(0, 0, 1, 0);
-    application_info.pApplicationName   = "om vulkan tutorial";
-    application_info.pEngineName        = "om";
+    vk::ApplicationInfo application_info{
+        "om vulkan tutorial",
+        VK_MAKE_API_VERSION(0, 0, 1, 0),
+        "om",
+        VK_MAKE_API_VERSION(0, 0, 1, 0),
+        VK_MAKE_API_VERSION(
+            0, hints_.vulkan_version.major, hints_.vulkan_version.minor, 0)
+    };
 
     vk::InstanceCreateInfo instance_create_info;
     instance_create_info.pApplicationInfo = &application_info;
