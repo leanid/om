@@ -162,6 +162,11 @@ render::render(platform_interface& platform, hints hints)
     get_physical_device();
     validate_physical_device();
     create_logical_device();
+    // add debug names to vk objects
+    set_object_name(instance, "om_main_instance");
+    set_object_name(surface, "om_main_surface");
+    set_object_name(devices.physical, "om_physical_device");
+    set_object_name(devices.logical, "om_logical_device");
 
     // clang-format off
     std::vector<vertex> mesh_verticles = {
@@ -395,8 +400,8 @@ void render::create_instance(bool enable_validation_layers,
     }
 
     instance = vk::createInstance(instance_create_info);
-    log << "vulkan instance created\n";
 
+    log << "vulkan instance created\n";
     log << "vk api version: " << hints_.vulkan_version.major << '.'
         << hints_.vulkan_version.minor << " requested\n";
 
@@ -844,6 +849,42 @@ void render::create_logical_device()
     log << "got presentation queue\n";
 }
 
+inline std::ostream& operator<<(std::ostream&                     os,
+                                const vk::SurfaceCapabilitiesKHR& caps)
+{
+    os << "vk::SurfaceCapabilitiesKHR:\n";
+    os << "  minImageCount: " << caps.minImageCount << "\n";
+    os << "  maxImageCount: "
+       << (caps.maxImageCount == 0 ? "Unlimited"
+                                   : std::to_string(caps.maxImageCount))
+       << "\n";
+    os << "  currentExtent: {" << caps.currentExtent.width << ", "
+       << caps.currentExtent.height << "}\n";
+    os << "  minImageExtent: {" << caps.minImageExtent.width << ", "
+       << caps.minImageExtent.height << "}\n";
+    os << "  maxImageExtent: {" << caps.maxImageExtent.width << ", "
+       << caps.maxImageExtent.height << "}\n";
+    os << "  maxImageArrayLayers: " << caps.maxImageArrayLayers << "\n";
+
+    // Supported transforms
+    os << "  supportedTransforms: " << vk::to_string(caps.supportedTransforms)
+       << "\n";
+
+    // Current transform
+    os << "  currentTransform: " << vk::to_string(caps.currentTransform)
+       << "\n";
+
+    // Supported composite alpha
+    os << "  supportedCompositeAlpha: "
+       << vk::to_string(caps.supportedCompositeAlpha) << "\n";
+
+    // Supported usage flags
+    os << "  supportedUsageFlags: " << vk::to_string(caps.supportedUsageFlags)
+       << "\n";
+
+    return os;
+}
+
 void render::create_swapchain()
 {
     swapchain_details_t swapchain_details =
@@ -870,8 +911,9 @@ void render::create_swapchain()
         << selected_image_resolution.height << std::endl;
 
     const auto& surface_capabilities = swapchain_details.surface_capabilities;
+    log << surface_capabilities << '\n';
 
-    uint32_t image_count = surface_capabilities.minImageCount + 1u;
+    uint32_t image_count = surface_capabilities.minImageCount;
     // if 0 - then limitless
     if (surface_capabilities.maxImageCount > 0u &&
         surface_capabilities.maxImageCount < image_count)
@@ -879,9 +921,8 @@ void render::create_swapchain()
         image_count = surface_capabilities.maxImageCount;
     }
 
-    log << "image_count in swapchain minImageCount + 1 (triple buffering "
-           "expected) clamped by "
-           "maxImageCount = "
+    log << "image_count in swapchain minImageCount (triple buffering "
+           "expected): "
         << image_count << std::endl;
 
     vk::SwapchainCreateInfoKHR create_info;
@@ -925,6 +966,7 @@ void render::create_swapchain()
 
     swapchain = devices.logical.createSwapchainKHR(create_info);
     log << "vulkan swapchain created\n";
+    set_object_name(swapchain, "om_swapchain");
 
     // store for later usages
     swapchain_image_format = create_info.imageFormat;
@@ -944,7 +986,7 @@ void render::create_swapchain()
         std::back_inserter(swapchain_image_views),
         [this](vk::Image image) -> vk::ImageView
         {
-            set_object_name(image, "swapchain_image");
+            set_object_name(image, "om_swapchain_image");
 
             return create_image_view(
                 image, swapchain_image_format, vk::ImageAspectFlagBits::eColor);
@@ -1243,7 +1285,7 @@ void render::create_framebuffers()
 {
     swapchain_framebuffers.reserve(swapchain_images.size());
 
-    auto gen_framebuffer = [&](const vk::ImageView& view)
+    auto gen_framebuffer = [&, count = 0](const vk::ImageView& view) mutable
     {
         std::array<vk::ImageView, 1> attachments{ view };
 
@@ -1260,6 +1302,8 @@ void render::create_framebuffers()
         {
             throw std::runtime_error("can't create framebuffer");
         }
+        set_object_name(framebuffer,
+                        "om_framebuffer_" + std::to_string(count++));
         return framebuffer;
     };
 
@@ -1286,6 +1330,8 @@ void render::create_command_pool()
     {
         throw std::runtime_error("error: can't create graphics command pool");
     }
+
+    set_object_name(graphics_command_pool, "om_graphics_cmd_pool");
 }
 
 void render::create_command_buffers()
@@ -1313,10 +1359,13 @@ void render::create_command_buffers()
         throw std::runtime_error("error: can't allocate command buffers");
     }
 
-    std::ranges::for_each(
-        command_buffers,
-        [this](vk::CommandBuffer& buffer)
-        { set_object_name(buffer, "command_buffer_per_swapchain"); });
+    std::ranges::for_each(command_buffers,
+                          [this, count = 0](vk::CommandBuffer& buffer) mutable
+                          {
+                              set_object_name(buffer,
+                                              "command_buffer_per_swapchain_" +
+                                                  std::to_string(count++));
+                          });
 }
 
 void render::record_commands()
@@ -1342,17 +1391,20 @@ void render::record_commands()
     {
         auto& [buffer, fb] = cmd_and_fb;
         // start recording
-        buffer.begin(begin_info);
+        buffer.begin(begin_info, dynamic_loader);
         {
             render_pass_info.framebuffer = fb;
-            buffer.beginRenderPass(render_pass_info,
-                                   vk::SubpassContents::eInline);
+            buffer.beginRenderPass(
+                render_pass_info, vk::SubpassContents::eInline, dynamic_loader);
             {
 
                 buffer.bindPipeline(vk::PipelineBindPoint::eGraphics,
-                                    graphics_pipeline);
-                vk::Buffer     buffers[] = { first_mesh.get_vertex_buffer() };
-                vk::DeviceSize offsets[] = { 0 };
+                                    graphics_pipeline,
+                                    dynamic_loader);
+                std::array<vk::Buffer, 1> buffers{
+                    first_mesh.get_vertex_buffer()
+                };
+                std::array<vk::DeviceSize, 1> offsets{ 0 };
 
                 buffer.bindVertexBuffers(0, // first binding
                                          buffers,
@@ -1360,14 +1412,15 @@ void render::record_commands()
                                          dynamic_loader);
 
                 buffer.draw(first_mesh.get_vertex_count(),
-                            1,  // 1 instance
-                            0,  // first vertex
-                            0); // first instance
+                            1, // 1 instance
+                            0, // first vertex
+                            0, // first instance
+                            dynamic_loader);
             }
-            buffer.endRenderPass();
+            buffer.endRenderPass(dynamic_loader);
         }
         // finish recording
-        buffer.end();
+        buffer.end(dynamic_loader);
     };
 
     std::ranges::for_each(
