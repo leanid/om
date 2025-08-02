@@ -1,6 +1,9 @@
 #include "args_parser.hxx"
 
 #include <boost/program_options.hpp>
+#include <exception>
+#include <limits>
+#include <stdexcept>
 
 namespace om::vulkan
 {
@@ -47,10 +50,26 @@ args_parser::args_parser(int argc, char** argv)
 
     auto major  = vulkan_version.substr(0, index_of_point);
     auto minor  = vulkan_version.substr(index_of_point + 1);
-    auto to_u32 = [](std::string s) -> std::uint32_t
+    auto to_u32 = [&](std::string s) -> std::uint32_t
     {
-        unsigned long v = std::stoul(s);
-        return static_cast<uint32_t>(v);
+        try
+        {
+
+            int v = std::stoi(s);
+            if (v < 0)
+            {
+                throw std::invalid_argument(s);
+            }
+            return static_cast<uint32_t>(v);
+        }
+        catch (const std::exception& ex)
+        {
+            std::stringstream ss;
+            ss << "error: bad version number: [" << s << "]\n";
+            ss << options;
+            help = ss.str();
+        }
+        return std::numeric_limits<uint32_t>::max();
     };
     vulkan_version_major = to_u32(major);
     vulkan_version_minor = to_u32(minor);
