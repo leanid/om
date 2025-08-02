@@ -118,7 +118,10 @@ debug_callback(vk::DebugUtilsMessageSeverityFlagBitsEXT      severity,
                        vk::DebugUtilsObjectNameInfoEXT object_info = object;
                        ss << "type: " << vk::to_string(object_info.objectType)
                           << ' ';
-                       ss << "name: " << object_info.pObjectName << ' ';
+                       ss << "name: "
+                          << (object_info.pObjectName ? object_info.pObjectName
+                                                      : "null")
+                          << ' ';
                    });
         return ss.str();
     };
@@ -172,8 +175,8 @@ render::render(platform_interface& platform, hints hints)
     };
     // clang-format on
 
-    first_mesh =
-        mesh(devices.physical, devices.logical, std::span{ mesh_verticles });
+    first_mesh = mesh(
+        devices.physical, devices.logical, std::span{ mesh_verticles }, *this);
 
     create_swapchain();
     create_renderpass();

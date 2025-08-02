@@ -4,18 +4,21 @@
 
 #include "log.hxx"
 
+#include "vulkan/render.hxx"
+
 namespace om::vulkan
 {
 mesh::mesh(vk::PhysicalDevice physical_device,
            vk::Device         device,
-           std::span<vertex>  vertexes)
+           std::span<vertex>  vertexes,
+           render&            render)
     : physical_device(physical_device)
     , device(device)
     , buffer()
     , vertex_buf_mem()
     , num_vertexes(vertexes.size())
 {
-    create_buffer(vertexes);
+    create_buffer(vertexes, render);
 }
 
 uint32_t mesh::get_vertex_count() const
@@ -27,7 +30,7 @@ vk::Buffer mesh::get_vertex_buffer()
 {
     return buffer;
 }
-void mesh::create_buffer(std::span<vertex> vertexes)
+void mesh::create_buffer(std::span<vertex> vertexes, render& render)
 {
     // information to create buffer (doesn't include assining memory)
     vk::BufferCreateInfo info;
@@ -38,7 +41,7 @@ void mesh::create_buffer(std::span<vertex> vertexes)
                                                     // buffers
 
     buffer = device.createBuffer(info);
-
+    render.set_object_name(buffer, "first_vertex_buffer");
     // get buffer memory requirements
     vk::MemoryRequirements mem_requirements =
         device.getBufferMemoryRequirements(buffer);
@@ -57,6 +60,7 @@ void mesh::create_buffer(std::span<vertex> vertexes)
     {
         throw std::runtime_error("can't allocate vertex buf memory");
     }
+    render.set_object_name(vertex_buf_mem, "first_vertex_buff_memory");
 
     // bind buffer and memory
     device.bindBufferMemory(buffer, vertex_buf_mem, 0 //< memory offset

@@ -12,14 +12,15 @@ struct vertex final
     glm::vec3 pos; // vertex positions x, y, z
     glm::vec3 col; // vertex color r, g, b
 };
-
+class render;
 class mesh final
 {
 public:
     mesh() = default;
     mesh(vk::PhysicalDevice physical_device,
          vk::Device         device,
-         std::span<vertex>  vertexes);
+         std::span<vertex>  vertexes,
+         render&            render);
     mesh(const mesh& other)            = delete;
     mesh& operator=(const mesh& other) = delete;
     mesh(mesh&& other);
@@ -32,7 +33,7 @@ public:
     void cleanup() noexcept;
 
 private:
-    void     create_buffer(std::span<vertex> vertexes);
+    void     create_buffer(std::span<vertex> vertexes, render& render);
     uint32_t find_mem_type_index(uint32_t                allowed_types,
                                  vk::MemoryPropertyFlags properties);
 
