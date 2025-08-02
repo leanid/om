@@ -30,7 +30,7 @@ auto current()
 namespace om::vulkan
 {
 /// @breaf maximum number of frames to be processed simultaneously by the GPU
-static constexpr size_t max_frames_in_gpu = 2;
+// static constexpr size_t max_frames_in_gpu = 3;
 
 /// @concurency note
 /// A callback will always be executed in the same thread as the originating
@@ -52,7 +52,6 @@ static constexpr size_t max_frames_in_gpu = 2;
 ///    vk::DebugUtilsMessageTypeFlagsEXT messageTypes,
 ///    const vk::DebugUtilsMessengerCallbackDataEXT * pCallbackData,
 ///    void * pUserData );
-
 static VKAPI_ATTR vk::Bool32 VKAPI_CALL
 debug_callback(vk::DebugUtilsMessageSeverityFlagBitsEXT      severity,
                vk::DebugUtilsMessageTypeFlagsEXT             msg_type,
@@ -259,10 +258,11 @@ void render::draw()
     uint32_t index_from_swapchain = std::numeric_limits<uint32_t>::max();
     {
         auto fence_op_result = devices.logical.waitForFences(
-            1,
+            1, // fenceCount
             &synchronization.gpu_fence.at(current_frame_index),
-            vk::True,
-            std::numeric_limits<uint64_t>::max());
+            vk::True,                            // waitAll
+            std::numeric_limits<uint64_t>::max() // timeout
+        );
 
         if (fence_op_result != vk::Result::eSuccess)
         {
@@ -270,7 +270,8 @@ void render::draw()
         }
 
         fence_op_result = devices.logical.resetFences(
-            1, &synchronization.gpu_fence.at(current_frame_index));
+            1, // fenceCount
+            &synchronization.gpu_fence.at(current_frame_index));
 
         if (fence_op_result != vk::Result::eSuccess)
         {
@@ -279,9 +280,10 @@ void render::draw()
 
         auto image_index = devices.logical.acquireNextImageKHR(
             swapchain,
-            std::numeric_limits<uint64_t>::max(),
+            std::numeric_limits<uint64_t>::max(), // timeout
             synchronization.image_available.at(current_frame_index),
-            {});
+            {} // fence
+        );
 
         if (image_index.result != vk::Result::eSuccess)
         {
@@ -295,23 +297,24 @@ void render::draw()
         vk::PipelineStageFlags wait_stages =
             vk::PipelineStageFlagBits::eColorAttachmentOutput;
 
-        auto& cmd_buffer = command_buffers.at(index_from_swapchain);
+        auto& cmd_buffer = command_buffers.at(
+            index_from_swapchain); // index_from_swapchain current_frame_index
 
         vk::SubmitInfo submit_info{};
         submit_info.waitSemaphoreCount = 1;
         submit_info.pWaitSemaphores =
-            &synchronization.image_available.at(current_frame_index);
+            &synchronization.image_available.at(index_from_swapchain);
         submit_info.pWaitDstStageMask    = &wait_stages;
         submit_info.commandBufferCount   = 1;
         submit_info.pCommandBuffers      = &cmd_buffer;
         submit_info.signalSemaphoreCount = 1;
         submit_info.pSignalSemaphores =
-            &synchronization.render_finished.at(current_frame_index);
+            &synchronization.render_finished.at(index_from_swapchain);
 
         render_queue.submit(
             submit_info,
             // set fence to vk::True after queue finish execution
-            synchronization.gpu_fence.at(current_frame_index));
+            synchronization.gpu_fence.at(index_from_swapchain));
     }
 
     // Present image to screen
@@ -332,7 +335,9 @@ void render::draw()
         }
     }
 
-    current_frame_index = (current_frame_index + 1) % max_frames_in_gpu;
+    current_frame_index =
+        (current_frame_index + 1) %
+        synchronization.image_available.size(); // max_frames_in_gpu;
 }
 
 void render::create_instance(bool enable_validation_layers,
@@ -1430,9 +1435,9 @@ void render::record_commands()
 
 void render::create_synchronization_objects()
 {
-    synchronization.image_available.resize(max_frames_in_gpu);
-    synchronization.render_finished.resize(max_frames_in_gpu);
-    synchronization.gpu_fence.resize(max_frames_in_gpu);
+    synchronization.image_available.resize(swapchain_images.size());
+    synchronization.render_finished.resize(swapchain_images.size());
+    synchronization.gpu_fence.resize(swapchain_images.size());
 
     struct gen_sem
     {
