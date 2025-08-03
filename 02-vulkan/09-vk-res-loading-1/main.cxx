@@ -1,6 +1,5 @@
 #include "vulkan/render.hxx" // order impotant
 
-#include "vulkan/args_parser.hxx"
 #include "vulkan/platform_sdl3.hxx"
 
 #include <SDL3/SDL.h>
@@ -9,6 +8,7 @@
 
 import std;
 import log;
+import vulkan_args_parser;
 
 int main(int argc, char** argv)
 {
