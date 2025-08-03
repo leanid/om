@@ -1,5 +1,5 @@
 #pragma once
-#include <ostream>
+import std;
 
 namespace om
 {

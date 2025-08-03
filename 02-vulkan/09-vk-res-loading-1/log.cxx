@@ -1,3 +1,5 @@
+import std;
+
 #include "log.hxx"
 
 namespace om::detail

@@ -29,6 +29,9 @@ target_include_directories(09-vk-res-loading-1-log
 
 add_subdirectory(vulkan)
 
+add_executable(09-import-test main2.cxx)
+target_compile_features(09-import-test PRIVATE cxx_std_23)
+
 add_executable(09-vk-res-loading-1 main.cxx)
 target_compile_features(09-vk-res-loading-1 PRIVATE cxx_std_23)
 target_include_directories(
