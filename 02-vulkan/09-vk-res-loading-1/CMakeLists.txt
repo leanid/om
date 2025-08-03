@@ -47,6 +47,31 @@ target_sources(
            FILES
            "${Vulkan_INCLUDE_DIR}/vulkan/vulkan.cppm")
 
+# set up GLM C++ module
+add_library(glm_cppm)
+add_library(glm::cppm ALIAS glm_cppm)
+
+# cmake-format: off
+target_compile_definitions(
+    glm_cppm
+    PUBLIC GLM_GTC_INLINE_NAMESPACE
+           GLM_EXT_INLINE_NAMESPACE
+           GLM_GTX_INLINE_NAMESPACE)
+# cmake-format: on
+target_include_directories(glm_cppm PRIVATE "${glm_INCLUDE_DIR}")
+target_compile_features(glm_cppm PRIVATE cxx_std_23)
+
+target_sources(
+    glm_cppm
+    PUBLIC FILE_SET
+           cxx_modules
+           TYPE
+           CXX_MODULES
+           BASE_DIRS
+           "${CMAKE_CURRENT_SOURCE_DIR}"
+           FILES
+           "${CMAKE_CURRENT_SOURCE_DIR}/glm.cppm")
+
 om_clang_tidy_enable()
 
 add_library(09-vk-res-loading-1-log OBJECT log.cxx log.hxx)
@@ -57,7 +82,7 @@ add_subdirectory(vulkan)
 
 add_executable(09-import-test main2.cxx)
 target_compile_features(09-import-test PRIVATE cxx_std_23)
-target_link_libraries(09-import-test PUBLIC vulkan::cppm)
+target_link_libraries(09-import-test PUBLIC vulkan::cppm glm::cppm)
 
 add_executable(09-vk-res-loading-1 main.cxx)
 target_compile_features(09-vk-res-loading-1 PRIVATE cxx_std_23)
