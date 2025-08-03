@@ -21,6 +21,28 @@ find_package(
     "$ENV{VULKAN_SDK}/lib/cmake"
     REQUIRED)
 
+# set up Vulkan C++ module
+add_library(vulkan_cppm)
+add_library(vulkan::cppm ALIAS vulkan_cppm)
+
+target_compile_definitions(
+    vulkan_cppm PUBLIC VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1
+                       VULKAN_HPP_NO_STRUCT_CONSTRUCTORS=1)
+target_include_directories(vulkan_cppm PRIVATE "${Vulkan_INCLUDE_DIR}")
+target_link_libraries(vulkan_cppm PUBLIC Vulkan::Vulkan)
+target_compile_features(vulkan_cppm PUBLIC cxx_std_23)
+
+target_sources(
+    vulkan_cppm
+    PUBLIC FILE_SET
+           cxx_modules
+           TYPE
+           CXX_MODULES
+           BASE_DIRS
+           "${Vulkan_INCLUDE_DIR}"
+           FILES
+           "${Vulkan_INCLUDE_DIR}/vulkan/vulkan.cppm")
+
 om_clang_tidy_enable()
 
 add_library(09-vk-res-loading-1-log OBJECT log.cxx log.hxx)
@@ -31,6 +53,7 @@ add_subdirectory(vulkan)
 
 add_executable(09-import-test main2.cxx)
 target_compile_features(09-import-test PRIVATE cxx_std_23)
+target_link_libraries(09-import-test PRIVATE vulkan::cppm)
 
 add_executable(09-vk-res-loading-1 main.cxx)
 target_compile_features(09-vk-res-loading-1 PRIVATE cxx_std_23)
