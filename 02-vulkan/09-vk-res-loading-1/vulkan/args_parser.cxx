@@ -1,8 +1,8 @@
 #include <boost/program_options.hpp>
 
-import std;
-
 #include "args_parser.hxx"
+
+import std;
 
 namespace om::vulkan
 {

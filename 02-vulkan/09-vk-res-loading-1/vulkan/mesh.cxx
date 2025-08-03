@@ -1,10 +1,9 @@
-import log;
-
 #include "mesh.hxx"
 
-#include <iostream>
-
 #include "vulkan/render.hxx"
+
+import log;
+import std;
 
 namespace om::vulkan
 {
