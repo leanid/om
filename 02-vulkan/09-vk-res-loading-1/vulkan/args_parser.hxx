@@ -1,7 +1,5 @@
 #pragma once
-
-#include <cstdint>
-#include <string>
+import std;
 
 namespace om::vulkan
 {
