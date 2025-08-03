@@ -1,8 +1,8 @@
+import log;
+
 #include "mesh.hxx"
 
 #include <iostream>
-
-#include "log.hxx"
 
 #include "vulkan/render.hxx"
 

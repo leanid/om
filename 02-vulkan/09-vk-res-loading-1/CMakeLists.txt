@@ -74,7 +74,18 @@ target_sources(
 
 om_clang_tidy_enable()
 
-add_library(09-vk-res-loading-1-log OBJECT log.cxx log.hxx)
+add_library(09-vk-res-loading-1-log)
+target_sources(
+    09-vk-res-loading-1-log
+    PUBLIC FILE_SET
+           cxx_modules
+           TYPE
+           CXX_MODULES
+           BASE_DIRS
+           "${CMAKE_CURRENT_SOURCE_DIR}"
+           FILES
+           "${CMAKE_CURRENT_SOURCE_DIR}/log.cxxm")
+
 target_include_directories(09-vk-res-loading-1-log
                            PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
