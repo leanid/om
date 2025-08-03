@@ -1,10 +1,11 @@
 #include "platform_sdl3.hxx"
 
-#include <utility>
-
 #include <SDL3/SDL_vulkan.h>
 
 #include "read_file.hxx"
+
+import std;
+import log;
 
 namespace om::vulkan
 {
