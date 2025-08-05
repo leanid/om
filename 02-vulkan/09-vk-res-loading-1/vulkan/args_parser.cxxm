@@ -9,7 +9,7 @@ namespace om::vulkan
 {
 export struct args_parser
 {
-    args_parser(int argc, char** argv) noexcept;
+    args_parser(int argc, char** argv);
 
     std::string   help                 = "";
     std::uint32_t vulkan_version_major = 0;
@@ -19,11 +19,10 @@ export struct args_parser
     bool          debug_callback       = false;
 };
 
-args_parser::args_parser(int argc, char** argv) noexcept
+args_parser::args_parser(int argc, char** argv)
 {
     try
     {
-
         using namespace boost::program_options;
         std::string         vulkan_version;
         options_description options("options");
@@ -90,7 +89,7 @@ args_parser::args_parser(int argc, char** argv) noexcept
         vulkan_version_major = to_u32(major);
         vulkan_version_minor = to_u32(minor);
     }
-    catch (const std::exception& e)
+    catch (std::exception& e)
     {
         help = e.what();
     }
