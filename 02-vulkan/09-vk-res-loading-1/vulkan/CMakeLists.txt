@@ -16,8 +16,6 @@ add_library(
     09-vk-res-loading-1-vulkan STATIC
     mesh.cxx
     mesh.hxx
-    platform_sdl3.cxx
-    platform_sdl3.hxx
     render.cxx
     render.hxx)
 
@@ -27,7 +25,6 @@ target_link_libraries(
            Vulkan::Headers
            Vulkan::Vulkan
            glm::glm
-           om::io::read_file
            09-vk-res-loading-1-args
            09-vk-res-loading-1-log)
 target_include_directories(09-vk-res-loading-1-vulkan
