@@ -1,6 +1,4 @@
 module;
-#include <SDL3/SDL.h>
-#include <SDL3/SDL_vulkan.h>
 
 #include "read_file.hxx"
 export module vulkan_platform_sdl3;
@@ -9,12 +7,14 @@ import std;
 import log;
 import vulkan_render;
 import vulkan_hpp;
+import sdl.SDL;
+import sdl.vulkan;
 
 namespace om::vulkan
 {
 export struct platform_sdl3 final : platform_interface
 {
-    explicit platform_sdl3(SDL_Window* window, std::ostream& logger)
+    explicit platform_sdl3(sdl::SDL_Window* window, std::ostream& logger)
         : window{ window }
         , log{ logger }
     {
@@ -35,8 +35,8 @@ export struct platform_sdl3 final : platform_interface
     content get_file_content(std::string_view path) override;
 
 private:
-    SDL_Window*   window;
-    std::ostream& log;
+    sdl::SDL_Window* window;
+    std::ostream&    log;
 };
 } // namespace om::vulkan
 
@@ -48,11 +48,11 @@ platform_interface::extensions platform_sdl3::get_vulkan_extensions()
     platform_interface::extensions extensions{};
 
     uint32_t           count{};
-    const char* const* names = SDL_Vulkan_GetInstanceExtensions(&count);
+    const char* const* names = sdl::vulkan::Vulkan_GetInstanceExtensions(count);
 
     if (names == nullptr)
     {
-        throw std::runtime_error(SDL_GetError());
+        throw std::runtime_error(sdl::GetError());
     }
 
     extensions.names.reserve(count);
@@ -65,8 +65,9 @@ platform_interface::extensions platform_sdl3::get_vulkan_extensions()
 vk::SurfaceKHR platform_sdl3::create_vulkan_surface(
     vk::Instance instance, vk::AllocationCallbacks* alloc_callbacks)
 {
+    using namespace sdl::vulkan;
     VkSurfaceKHR surface{};
-    int          result = SDL_Vulkan_CreateSurface(
+    int          result = sdl::vulkan::Vulkan_CreateSurface(
         window,
         static_cast<VkInstance>(instance),
         reinterpret_cast<VkAllocationCallbacks*>(alloc_callbacks),
@@ -74,7 +75,7 @@ vk::SurfaceKHR platform_sdl3::create_vulkan_surface(
 
     if (!result)
     {
-        throw std::runtime_error(SDL_GetError());
+        throw std::runtime_error(sdl::GetError());
     }
 
     return surface;
@@ -85,7 +86,8 @@ void platform_sdl3::destroy_vulkan_surface(
     vk::SurfaceKHR           surface,
     vk::AllocationCallbacks* alloc_callbacks) noexcept
 {
-    SDL_Vulkan_DestroySurface(
+    using namespace sdl::vulkan;
+    sdl::vulkan::Vulkan_DestroySurface(
         static_cast<VkInstance>(instance),
         static_cast<VkSurfaceKHR>(surface),
         reinterpret_cast<VkAllocationCallbacks*>(alloc_callbacks));
@@ -98,9 +100,9 @@ platform_interface::buffer_size platform_sdl3::get_window_buffer_size()
     int w{};
     int h{};
 
-    if (!SDL_GetWindowSizeInPixels(window, &w, &h))
+    if (!sdl::GetWindowSizeInPixels(window, &w, &h))
     {
-        throw std::runtime_error(SDL_GetError());
+        throw std::runtime_error(sdl::GetError());
     }
 
     buffer_size.width  = static_cast<uint32_t>(w);

@@ -103,11 +103,14 @@ target_link_libraries(
     09-vk-res-loading-1-platform
     PRIVATE 09-vk-res-loading-1-log
             09-vk-res-loading-1-vulkan
+            09-vk-res-loading-1-sdl
+            09-vk-res-loading-1-sdl-vulkan
             SDL3::SDL3-shared
             om::io::read_file)
 target_include_directories(09-vk-res-loading-1-platform
                            PRIVATE ${CMAKE_SOURCE_DIR}/support/cxx_lib/)
 
+add_subdirectory(sdl)
 add_subdirectory(vulkan)
 
 add_executable(09-import-test main2.cxx)
@@ -119,8 +122,12 @@ target_compile_features(09-vk-res-loading-1 PRIVATE cxx_std_23)
 target_include_directories(
     09-vk-res-loading-1 PRIVATE ${CMAKE_SOURCE_DIR}/support/cxx_lib/
                                 ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(09-vk-res-loading-1 PRIVATE 09-vk-res-loading-1-vulkan
-                                                  09-vk-res-loading-1-platform)
+target_link_libraries(
+    09-vk-res-loading-1
+    PRIVATE 09-vk-res-loading-1-vulkan
+            09-vk-res-loading-1-platform
+            09-vk-res-loading-1-sdl
+            09-vk-res-loading-1-sdl-vulkan)
 
 # cmake-format: off
 target_link_libraries(
