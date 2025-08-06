@@ -36,9 +36,9 @@ int main(int argc, char** argv)
 
 std::string to_version(std::uint32_t v)
 {
-    auto major = (((std::uint32_t)(v) >> 22U) & 0x7FU);
-    auto minor = (((std::uint32_t)(v) >> 12U) & 0x3FFU);
-    auto patch = ((std::uint32_t)(v) & 0xFFFU);
+    auto major = vk::versionMajor(v);
+    auto minor = vk::versionMinor(v);
+    auto patch = vk::versionPatch(v);
     return std::to_string(major) + '.' + std::to_string(minor) + '.' +
            std::to_string(patch);
 }

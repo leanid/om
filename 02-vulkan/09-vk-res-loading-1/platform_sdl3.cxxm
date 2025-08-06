@@ -3,11 +3,12 @@ module;
 #include <SDL3/SDL_vulkan.h>
 
 #include "read_file.hxx"
-#include "vulkan/render.hxx"
 export module vulkan_platform_sdl3;
 
 import std;
 import log;
+import vulkan_render;
+import vulkan_hpp;
 
 namespace om::vulkan
 {

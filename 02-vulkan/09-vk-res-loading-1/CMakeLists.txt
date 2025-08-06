@@ -100,8 +100,11 @@ target_sources(
            FILES
            "${CMAKE_CURRENT_SOURCE_DIR}/platform_sdl3.cxxm")
 target_link_libraries(
-    09-vk-res-loading-1-platform PRIVATE 09-vk-res-loading-1-log
-                                         SDL3::SDL3-shared om::io::read_file)
+    09-vk-res-loading-1-platform
+    PRIVATE 09-vk-res-loading-1-log
+            09-vk-res-loading-1-vulkan
+            SDL3::SDL3-shared
+            om::io::read_file)
 target_include_directories(09-vk-res-loading-1-platform
                            PRIVATE ${CMAKE_SOURCE_DIR}/support/cxx_lib/)
 

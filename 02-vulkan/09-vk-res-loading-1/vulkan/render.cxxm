@@ -1,4 +1,4 @@
-#include "render.hxx"
+module;
 
 #if __has_include(<stacktrace>)
 #include <stacktrace>
@@ -13,9 +13,426 @@ auto current()
 #endif
 
 #include "experimental/report_duration.hxx"
+#include "experimental/scope"
 
-import std;
+export module vulkan_render;
+
 import log;
+import std;
+import glm;
+import vulkan_hpp;
+
+namespace om::vulkan
+{
+export struct vertex final
+{
+    glm::vec3 pos; // vertex positions x, y, z
+    glm::vec3 col; // vertex color r, g, b
+};
+export class render;
+export class mesh final
+{
+public:
+    mesh() = default;
+    mesh(vk::PhysicalDevice physical_device,
+         vk::Device         device,
+         std::span<vertex>  vertexes,
+         render&            render);
+    mesh(const mesh& other)            = delete;
+    mesh& operator=(const mesh& other) = delete;
+    mesh(mesh&& other);
+    mesh& operator=(mesh&& other);
+    ~mesh();
+
+    [[nodiscard]] uint32_t get_vertex_count() const;
+    vk::Buffer             get_vertex_buffer();
+
+    void cleanup() noexcept;
+
+private:
+    void     create_buffer(std::span<vertex> vertexes, render& render);
+    uint32_t find_mem_type_index(uint32_t                allowed_types,
+                                 vk::MemoryPropertyFlags properties);
+
+    vk::PhysicalDevice physical_device;
+    vk::Device         device;
+    vk::Buffer         buffer;
+    vk::DeviceMemory   vertex_buf_mem;
+    uint32_t           num_vertexes{};
+};
+} // namespace om::vulkan
+namespace om::vulkan
+{
+export struct platform_interface
+{
+    virtual ~platform_interface() = default;
+
+    struct extensions
+    {
+        std::vector<const char*> names;
+    };
+    struct buffer_size
+    {
+        std::uint32_t width  = 0u;
+        std::uint32_t height = 0u;
+    };
+    struct content
+    {
+        std::unique_ptr<std::byte[]> memory; // NOLINT
+        std::size_t                  size{};
+
+        content(const content& other)            = delete;
+        content& operator=(const content& other) = delete;
+
+        content() noexcept
+            : memory{}
+        {
+        }
+        content(content&& other) noexcept
+            : memory{ std::move(other.memory) }
+            , size{ std::exchange(other.size, 0) }
+        {
+        }
+
+        content& operator=(content&& other) noexcept
+        {
+            memory = std::move(other.memory);
+            size   = std::exchange(other.size, 0);
+            return *this;
+        }
+
+        [[nodiscard]] std::span<std::byte> as_span() const noexcept
+        {
+            return std::span{ memory.get(), size };
+        }
+    };
+
+    virtual extensions     get_vulkan_extensions() = 0;
+    virtual vk::SurfaceKHR create_vulkan_surface(
+        vk::Instance instance, vk::AllocationCallbacks* alloc_callbacks) = 0;
+    virtual void destroy_vulkan_surface(
+        vk::Instance             instance,
+        vk::SurfaceKHR           surface,
+        vk::AllocationCallbacks* alloc_callbacks) noexcept = 0;
+    virtual buffer_size get_window_buffer_size()           = 0;
+
+    virtual std::ostream& get_logger() noexcept = 0;
+
+    virtual content get_file_content(std::string_view path) = 0;
+};
+
+export class render
+{
+public:
+    struct hints
+    {
+        struct
+        {
+            std::uint32_t major = 1;
+            std::uint32_t minor = 0;
+        } vulkan_version;
+        bool verbose                   = false;
+        bool enable_validation_layers  = false;
+        bool enable_debug_callback_ext = false;
+    };
+
+    explicit render(platform_interface& platform, hints hints);
+
+    ~render();
+
+    /// @brief Render the frame
+    void draw();
+
+    // debug functions
+    void set_object_name(auto object, const std::string& name)
+    {
+        if (!hints_.enable_debug_callback_ext)
+        {
+            return;
+        }
+
+        vk::DebugUtilsObjectNameInfoEXT name_info;
+        name_info.objectType   = object.objectType;
+        name_info.objectHandle = reinterpret_cast<uint64_t>(
+            static_cast<decltype(object)::NativeType>(object));
+        name_info.pObjectName = name.c_str();
+        devices.logical.setDebugUtilsObjectNameEXT(name_info, dynamic_loader);
+    }
+
+private:
+    // create functions
+    void create_instance(bool enable_validation_layers,
+                         bool enable_debug_callback_ext);
+    void create_debug_callback(bool enable_debug_callback);
+    void create_logical_device();
+    void create_surface();
+    void create_swapchain();
+    void create_renderpass();
+    void create_graphics_pipeline();
+    void create_framebuffers();
+    void create_command_pool();
+    void create_command_buffers();
+    void create_synchronization_objects();
+
+    [[nodiscard]] vk::ImageView create_image_view(
+        vk::Image            image,
+        vk::Format           format,
+        vk::ImageAspectFlags aspect_flags) const;
+
+    vk::ShaderModule create_shader(std::span<std::byte> spir_v);
+
+    // record functions
+    void record_commands();
+
+    // destroy functions
+    void destroy_synchronization_objects() noexcept;
+    void destroy_debug_callback() noexcept;
+    void destroy_surface() noexcept;
+    void destroy(vk::ShaderModule& shader) noexcept;
+
+    // validation functions
+    void validate_expected_extensions_exists(
+        const vk::InstanceCreateInfo& create_info);
+    void validate_instance_layer_present(std::string_view instance_layer);
+    void validate_physical_device();
+
+    bool        check_device_suitable(vk::PhysicalDevice& physical);
+    static bool check_device_extension_supported(
+        vk::PhysicalDevice& device, std::string_view extension_name);
+
+    // get functions
+    void get_physical_device();
+
+    struct swapchain_details_t
+    {
+        vk::SurfaceCapabilitiesKHR        surface_capabilities;
+        std::vector<vk::SurfaceFormatKHR> surface_formats;
+        std::vector<vk::PresentModeKHR>   presentation_modes;
+    };
+
+    swapchain_details_t get_swapchain_details(vk::PhysicalDevice& device);
+
+    static uint32_t get_render_queue_family_index(
+        const vk::PhysicalDevice& physical_device);
+    static uint32_t get_presentation_queue_family_index(
+        const vk::PhysicalDevice& physical_device,
+        const vk::SurfaceKHR&     surface_to_check);
+
+    // choose functions
+    vk::Extent2D choose_best_swapchain_image_resolution(
+        const vk::SurfaceCapabilitiesKHR& capabilities);
+    static vk::SurfaceFormatKHR choose_best_surface_format(
+        std::span<vk::SurfaceFormatKHR> formats);
+    static vk::PresentModeKHR choose_best_present_mode(
+        std::span<vk::PresentModeKHR> present_modes);
+
+    friend std::ostream& operator<<(std::ostream&              os,
+                                    const swapchain_details_t& details);
+
+    // render external interface objects
+    std::ostream&       log;
+    platform_interface& platform_;
+    hints               hints_;
+
+    // scene component objects
+    mesh first_mesh;
+
+    // vulkan main objects
+    vk::Instance instance;
+    // dynamic loader is used to load vulkan functions for extensions
+    vk::detail::DispatchLoaderDynamic dynamic_loader;
+    // debug extension is not available on macOS
+    vk::DebugUtilsMessengerEXT debug_extension;
+
+    // mod(max_frames_in_gpu) used to avoid blocking the CPU
+    uint32_t current_frame_index = 0;
+
+    struct
+    {
+        vk::PhysicalDevice physical;
+        vk::Device         logical;
+    } devices;
+
+    [[maybe_unused]] vk::Queue     render_queue;
+    [[maybe_unused]] vk::Queue     presentation_queue;
+    vk::SurfaceKHR                 surface; // KHR - extension
+    vk::SwapchainKHR               swapchain;
+    std::vector<vk::Image>         swapchain_images;
+    std::vector<vk::ImageView>     swapchain_image_views;
+    std::vector<vk::Framebuffer>   swapchain_framebuffers;
+    std::vector<vk::CommandBuffer> command_buffers;
+
+    // vulkan pipeline
+    vk::Pipeline       graphics_pipeline{};
+    vk::PipelineLayout pipeline_layout{};
+    vk::RenderPass     render_path{};
+
+    // pools
+    vk::CommandPool graphics_command_pool{};
+
+    // vulkan utilities
+    vk::Format   swapchain_image_format{};
+    vk::Extent2D swapchain_image_extent{};
+
+    // sinhronization
+    struct
+    {
+        std::vector<vk::Semaphore> image_available{}; // GPU to GPU only sync
+        std::vector<vk::Semaphore> render_finished{}; // GPU to CPU sync
+        std::vector<vk::Fence>     gpu_fence{};
+    } synchronization;
+
+    struct queue_family_indexes
+    {
+        uint32_t graphics_family     = std::numeric_limits<uint32_t>::max();
+        uint32_t presentation_family = std::numeric_limits<uint32_t>::max();
+
+        [[nodiscard]] bool is_valid() const
+        {
+            return graphics_family != std::numeric_limits<uint32_t>::max() &&
+                   presentation_family != std::numeric_limits<uint32_t>::max();
+        }
+    } queue_indexes;
+
+    const std::vector<const char*> device_extensions{
+        vk::KHRSwapchainExtensionName
+        // VK_KHR_SWAPCHAIN_EXTENSION_NAME
+    };
+};
+} // namespace om::vulkan
+
+namespace om::vulkan
+{
+mesh::mesh(vk::PhysicalDevice physical_device,
+           vk::Device         device,
+           std::span<vertex>  vertexes,
+           render&            render)
+    : physical_device(physical_device)
+    , device(device)
+    , buffer()
+    , vertex_buf_mem()
+    , num_vertexes(vertexes.size())
+{
+    create_buffer(vertexes, render);
+}
+
+uint32_t mesh::get_vertex_count() const
+{
+    return num_vertexes;
+}
+
+vk::Buffer mesh::get_vertex_buffer()
+{
+    return buffer;
+}
+void mesh::create_buffer(std::span<vertex> vertexes, render& render)
+{
+    // information to create buffer (doesn't include assining memory)
+    vk::BufferCreateInfo info;
+    info.size        = sizeof(vertex) * vertexes.size();
+    info.usage       = vk::BufferUsageFlagBits::eVertexBuffer;
+    info.sharingMode = vk::SharingMode::eExclusive; // similar to swapchain
+                                                    // images, can share vertex
+                                                    // buffers
+
+    buffer = device.createBuffer(info);
+    render.set_object_name(buffer, "first_vertex_buffer");
+    // get buffer memory requirements
+    vk::MemoryRequirements mem_requirements =
+        device.getBufferMemoryRequirements(buffer);
+
+    // allocate memory to buffer
+    vk::MemoryAllocateInfo mem_alloc_info;
+    mem_alloc_info.allocationSize = mem_requirements.size;
+    mem_alloc_info.memoryTypeIndex =
+        find_mem_type_index(mem_requirements.memoryTypeBits,
+                            vk::MemoryPropertyFlagBits::eHostVisible |
+                                vk::MemoryPropertyFlagBits::eHostCoherent);
+
+    // allocate memory to vk::device
+    vertex_buf_mem = device.allocateMemory(mem_alloc_info);
+    if (!vertex_buf_mem)
+    {
+        throw std::runtime_error("can't allocate vertex buf memory");
+    }
+    render.set_object_name(vertex_buf_mem, "first_vertex_buff_memory");
+
+    // bind buffer and memory
+    device.bindBufferMemory(buffer, vertex_buf_mem, 0 //< memory offset
+    );
+
+    // map memory to vertex buffer
+    void* mem = device.mapMemory(vertex_buf_mem, 0, info.size);
+    std::uninitialized_copy_n(
+        vertexes.begin(), vertexes.size(), static_cast<vertex*>(mem));
+    device.unmapMemory(vertex_buf_mem);
+}
+
+uint32_t mesh::find_mem_type_index(uint32_t                allowed_types,
+                                   vk::MemoryPropertyFlags properties)
+{
+    // get properties of physical device memory
+    vk::PhysicalDeviceMemoryProperties physical_mem_prop =
+        physical_device.getMemoryProperties();
+
+    for (uint32_t i = 0; i < physical_mem_prop.memoryTypeCount; ++i)
+    {
+        if (!(allowed_types & (1 << i)))
+        {
+            continue;
+        }
+        auto phys_mem_flags = physical_mem_prop.memoryTypes[i].propertyFlags;
+        if ((phys_mem_flags & properties) == properties)
+        {
+            return i;
+        }
+    }
+    throw std::runtime_error(
+        "can't find memory of allowed_types and properties");
+}
+void mesh::cleanup() noexcept
+{
+    using om::cout;
+    if (!num_vertexes)
+    {
+        return;
+    }
+    cout << "mesh::cleanup" << std::endl;
+    if (buffer)
+    {
+        cout << "destroy mesh buffer" << std::endl;
+        device.destroyBuffer(buffer);
+    }
+    if (vertex_buf_mem)
+    {
+        cout << "destroy mesh vertex_buf_mem" << std::endl;
+        device.freeMemory(vertex_buf_mem);
+    }
+    num_vertexes = 0;
+}
+mesh::mesh(mesh&& other)
+    : physical_device(other.physical_device)
+    , device(other.device)
+    , buffer(std::exchange(other.buffer, vk::Buffer()))
+    , vertex_buf_mem(std::exchange(other.vertex_buf_mem, vk::DeviceMemory()))
+    , num_vertexes(std::exchange(other.num_vertexes, 0))
+{
+}
+mesh& mesh::operator=(mesh&& other)
+{
+    physical_device = other.physical_device;
+    device          = other.device;
+    buffer          = std::exchange(other.buffer, vk::Buffer());
+    vertex_buf_mem  = std::exchange(other.vertex_buf_mem, vk::DeviceMemory());
+    num_vertexes    = std::exchange(other.num_vertexes, 0);
+    return *this;
+}
+
+mesh::~mesh()
+{
+    cleanup();
+}
+} // namespace om::vulkan
 
 namespace om::vulkan
 {
@@ -42,7 +459,7 @@ namespace om::vulkan
 ///    vk::DebugUtilsMessageTypeFlagsEXT messageTypes,
 ///    const vk::DebugUtilsMessengerCallbackDataEXT * pCallbackData,
 ///    void * pUserData );
-static VKAPI_ATTR vk::Bool32 VKAPI_CALL
+static /* VKAPI_ATTR */ std::uint32_t /* VKAPI_CALL */
 debug_callback(vk::DebugUtilsMessageSeverityFlagBitsEXT      severity,
                vk::DebugUtilsMessageTypeFlagsEXT             msg_type,
                const vk::DebugUtilsMessengerCallbackDataEXT* data,
@@ -127,15 +544,15 @@ debug_callback(vk::DebugUtilsMessageSeverityFlagBitsEXT      severity,
         std::terminate();
     }
 
-    return VK_FALSE;
+    return vk::False; // VK_FALSE;
 }
 
 static std::string api_version_to_string(uint32_t apiVersion)
 {
     std::stringstream version;
-    version << VK_VERSION_MAJOR(apiVersion) << '.'
-            << VK_VERSION_MINOR(apiVersion) << '.'
-            << VK_VERSION_PATCH(apiVersion);
+    version << vk::versionMajor(apiVersion) << '.'
+            << vk::versionMinor(apiVersion) << '.'
+            << vk::versionPatch(apiVersion);
     return version.str();
 }
 
@@ -334,12 +751,12 @@ void render::create_instance(bool enable_validation_layers,
                              bool enable_debug_callback_ext)
 {
     vk::ApplicationInfo application_info{
-        "om vulkan tutorial",
-        VK_MAKE_API_VERSION(0, 0, 1, 0),
-        "om",
-        VK_MAKE_API_VERSION(0, 0, 1, 0),
-        VK_MAKE_API_VERSION(
-            0, hints_.vulkan_version.major, hints_.vulkan_version.minor, 0)
+        .pApplicationName   = "om vulkan tutorial",
+        .applicationVersion = vk::makeApiVersion(0u, 0u, 1u, 0u),
+        .pEngineName        = "om",
+        .engineVersion      = vk::makeApiVersion(0, 0, 1, 0),
+        .apiVersion         = vk::makeApiVersion(
+            0u, hints_.vulkan_version.major, hints_.vulkan_version.minor, 0u)
     };
 
     vk::InstanceCreateInfo instance_create_info;
@@ -363,7 +780,7 @@ void render::create_instance(bool enable_validation_layers,
 
     if (enable_debug_callback_ext)
     {
-        extensions.names.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+        extensions.names.push_back(vk::EXTDebugUtilsExtensionName);
         log << "    - " << extensions.names.back() << '\n';
     }
 
@@ -400,17 +817,20 @@ void render::create_instance(bool enable_validation_layers,
     log << "vk api version: " << hints_.vulkan_version.major << '.'
         << hints_.vulkan_version.minor << " requested\n";
 
-    log << "vk api version: " << VK_VERSION_MAJOR(application_info.apiVersion)
-        << '.' << VK_VERSION_MINOR(application_info.apiVersion)
+    log << "vk api version: " << vk::versionMajor(application_info.apiVersion)
+        << '.' << vk::versionMinor(application_info.apiVersion)
         << " after instance created\n";
 
     uint32_t maximum_supported = vk::enumerateInstanceVersion();
-    log << "vk api version: " << VK_VERSION_MAJOR(maximum_supported) << '.'
-        << VK_VERSION_MINOR(maximum_supported) << '.'
-        << VK_VERSION_PATCH(maximum_supported) << " maximum supported\n";
+    log << "vk api version: " << vk::versionMajor(maximum_supported) << '.'
+        << vk::versionMinor(maximum_supported) << '.'
+        << vk::versionPatch(maximum_supported) << " maximum supported\n";
 
-    dynamic_loader =
-        vk::detail::DispatchLoaderDynamic{ instance, vkGetInstanceProcAddr };
+    // vk::DispatchLoaderDynamic dispatch;
+    vk::detail::DynamicLoader dl;
+    auto                      ptr =
+        dl.getProcAddress<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr");
+    dynamic_loader = vk::detail::DispatchLoaderDynamic{ instance, ptr };
     log << "vulkan dynamic loader created\n";
 }
 
@@ -723,9 +1143,9 @@ uint32_t render::get_presentation_queue_family_index(
 
 void render::create_surface()
 {
-    VkSurfaceKHR surfaceKHR =
+    vk::SurfaceKHR surfaceKHR =
         platform_.create_vulkan_surface(instance, nullptr);
-    if (surfaceKHR == nullptr)
+    if (!surfaceKHR)
     {
         throw std::runtime_error(
             "error: can't create VkSurfaceKHR from user provided callback");
@@ -1097,10 +1517,16 @@ void render::create_graphics_pipeline()
     std::experimental::scope_exit fragment_cleanup([this, &fragment]()
                                                    { destroy(fragment); });
 
-    vk::PipelineShaderStageCreateInfo stage_info_vert(
-        {}, vk::ShaderStageFlagBits::eVertex, vertex, "main");
-    vk::PipelineShaderStageCreateInfo stage_info_frag(
-        {}, vk::ShaderStageFlagBits::eFragment, fragment, "main");
+    vk::PipelineShaderStageCreateInfo stage_info_vert{
+        .stage  = vk::ShaderStageFlagBits::eVertex,
+        .module = vertex,
+        .pName  = "main"
+    };
+    vk::PipelineShaderStageCreateInfo stage_info_frag{
+        .stage  = vk::ShaderStageFlagBits::eFragment,
+        .module = fragment,
+        .pName  = "main"
+    };
 
     std::array<vk::PipelineShaderStageCreateInfo, 2> stages{ stage_info_vert,
                                                              stage_info_frag };
@@ -1159,12 +1585,15 @@ void render::create_graphics_pipeline()
     viewport.maxDepth = 1.f; // max framebuffer depth
 
     vk::Rect2D scissor{};
-    scissor.offset = { { 0, 0 } };           // offset to use region from
+    scissor.offset = { .x = 0, .y = 0 };     // offset to use region from
     scissor.extent = swapchain_image_extent; // region extent
 
-    vk::PipelineViewportStateCreateInfo viewport_state_info{ {},
-                                                             viewport,
-                                                             scissor };
+    vk::PipelineViewportStateCreateInfo viewport_state_info{ .viewportCount = 1,
+                                                             .pViewports =
+                                                                 &viewport,
+                                                             .scissorCount = 1,
+                                                             .pScissors =
+                                                                 &scissor };
     // // Dynamic Pipeline States - we need some parts not to be backed in
     // pipeline
     // // enable dynamic states
@@ -1594,8 +2023,10 @@ vk::ImageView render::create_image_view(vk::Image            image,
 vk::ShaderModule render::create_shader(std::span<std::byte> spir_v)
 {
     log << "create shader module\n";
-    vk::ShaderModuleCreateInfo create_info(
-        {}, spir_v.size(), reinterpret_cast<const uint32_t*>(spir_v.data()));
+    vk::ShaderModuleCreateInfo create_info{
+        .codeSize = spir_v.size(),
+        .pCode    = reinterpret_cast<const uint32_t*>(spir_v.data())
+    };
 
     return devices.logical.createShaderModule(create_info);
 }

@@ -12,19 +12,23 @@ target_sources(
 
 target_link_libraries(09-vk-res-loading-1-args PRIVATE Boost::program_options)
 
-add_library(
-    09-vk-res-loading-1-vulkan STATIC
-    mesh.cxx
-    mesh.hxx
-    render.cxx
-    render.hxx)
+add_library(09-vk-res-loading-1-vulkan STATIC)
+target_sources(
+    09-vk-res-loading-1-vulkan
+    PUBLIC FILE_SET
+           cxx_modules
+           TYPE
+           CXX_MODULES
+           BASE_DIRS
+           "${CMAKE_CURRENT_SOURCE_DIR}"
+           FILES
+           "${CMAKE_CURRENT_SOURCE_DIR}/render.cxxm")
 
 target_link_libraries(
     09-vk-res-loading-1-vulkan
     PUBLIC SDL3::SDL3-shared
-           Vulkan::Headers
-           Vulkan::Vulkan
-           glm::glm
+           vulkan::cppm
+           glm::cppm
            09-vk-res-loading-1-args
            09-vk-res-loading-1-log)
 target_include_directories(09-vk-res-loading-1-vulkan

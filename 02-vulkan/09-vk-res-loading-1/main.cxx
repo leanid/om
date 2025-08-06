@@ -1,13 +1,15 @@
-#include "vulkan/render.hxx" // order impotant
-
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_hints.h>
 #include <SDL3/SDL_vulkan.h>
+
+#include "experimental/scope"
 
 import std;
 import log;
 import vulkan_args_parser;
 import vulkan_platform_sdl3;
+import vulkan_render;
+import vulkan_hpp;
 
 int main(int argc, char** argv)
 {
@@ -24,7 +26,7 @@ int main(int argc, char** argv)
     {
 
         std::cout << "usage: " << args_parser.help << '\n';
-        return EXIT_SUCCESS;
+        return 0;
     }
 
     bool verbose               = args_parser.verbose;
@@ -42,14 +44,14 @@ int main(int argc, char** argv)
         if (!SDL_SetHint(SDL_HINT_RENDER_VULKAN_DEBUG, "1"))
         {
             std::cerr << SDL_GetError();
-            return EXIT_FAILURE;
+            return 1;
         }
     }
 
     if (!SDL_Init(SDL_INIT_VIDEO))
     {
         std::cerr << SDL_GetError();
-        return EXIT_FAILURE;
+        return 1;
     }
     om::cout << "create all subsystems\n";
     std::experimental::scope_exit quit(
@@ -62,7 +64,7 @@ int main(int argc, char** argv)
     if (!SDL_Vulkan_LoadLibrary(nullptr))
     {
         std::cerr << SDL_GetError();
-        return EXIT_FAILURE;
+        return 1;
     }
     om::cout << "load vulkan library\n";
     std::experimental::scope_exit unload(
@@ -82,7 +84,7 @@ int main(int argc, char** argv)
     {
         om::cout << "error: can't create sdl window: " << SDL_GetError()
                  << std::endl;
-        return EXIT_FAILURE;
+        return 1;
     }
 
     om::cout << "sdl windows created\n";
@@ -135,5 +137,5 @@ int main(int argc, char** argv)
         std::cerr << "error: got exception [" << ex.what() << ']' << std::endl;
     }
 
-    return std::cerr.fail() || std::cout.fail() ? EXIT_FAILURE : EXIT_SUCCESS;
+    return std::cerr.fail() || std::cout.fail() ? 1 : 0;
 }
