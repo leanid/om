@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.31)
+cmake_minimum_required(VERSION 4.0)
 
 project(09-vk-res-loading-1 CXX)
 find_package(Vulkan REQUIRED COMPONENTS glslangValidator)
@@ -70,7 +70,7 @@ target_sources(
            BASE_DIRS
            "${CMAKE_CURRENT_SOURCE_DIR}"
            FILES
-           "${CMAKE_CURRENT_SOURCE_DIR}/glm.cppm")
+           "${CMAKE_CURRENT_SOURCE_DIR}/glm.cxx")
 
 om_clang_tidy_enable()
 
@@ -84,7 +84,7 @@ target_sources(
            BASE_DIRS
            "${CMAKE_CURRENT_SOURCE_DIR}"
            FILES
-           "${CMAKE_CURRENT_SOURCE_DIR}/log.cxxm")
+           "${CMAKE_CURRENT_SOURCE_DIR}/log.cxx")
 
 target_include_directories(09-vk-res-loading-1-log
                            PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
@@ -98,7 +98,7 @@ target_sources(
            BASE_DIRS
            "${CMAKE_CURRENT_SOURCE_DIR}"
            FILES
-           "${CMAKE_CURRENT_SOURCE_DIR}/platform_sdl3.cxxm")
+           "${CMAKE_CURRENT_SOURCE_DIR}/platform_sdl3.cxx")
 target_link_libraries(
     09-vk-res-loading-1-platform
     PRIVATE 09-vk-res-loading-1-log

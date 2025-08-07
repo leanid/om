@@ -11340,11 +11340,6 @@ enum class TrayEntryFlags : Uint32
 };
 BITFLAG_ENUM(TrayEntryFlags);
 
-bool IsTraySupported(void)
-{
-    return SDL_IsTraySupported();
-}
-
 SDL_Tray* CreateTray(SDL_Surface* icon, const char* tooltip)
 {
     return SDL_CreateTray(icon, tooltip);

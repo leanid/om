@@ -8,7 +8,7 @@ target_sources(
            BASE_DIRS
            "${CMAKE_CURRENT_SOURCE_DIR}"
            FILES
-           "${CMAKE_CURRENT_SOURCE_DIR}/args_parser.cxxm")
+           "${CMAKE_CURRENT_SOURCE_DIR}/args_parser.cxx")
 
 target_link_libraries(09-vk-res-loading-1-args PRIVATE Boost::program_options)
 
@@ -22,7 +22,7 @@ target_sources(
            BASE_DIRS
            "${CMAKE_CURRENT_SOURCE_DIR}"
            FILES
-           "${CMAKE_CURRENT_SOURCE_DIR}/render.cxxm")
+           "${CMAKE_CURRENT_SOURCE_DIR}/render.cxx")
 
 target_link_libraries(
     09-vk-res-loading-1-vulkan
