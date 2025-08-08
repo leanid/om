@@ -60,9 +60,7 @@ private:
     vk::DeviceMemory   vertex_buf_mem;
     uint32_t           num_vertexes{};
 };
-} // namespace om::vulkan
-namespace om::vulkan
-{
+
 export struct platform_interface
 {
     virtual ~platform_interface() = default;
@@ -105,7 +103,7 @@ export struct platform_interface
         {
             return std::span{ memory.get(), size };
         }
-    };
+    }; // struct content
 
     virtual extensions     get_vulkan_extensions() = 0;
     virtual vk::SurfaceKHR create_vulkan_surface(
@@ -193,12 +191,13 @@ private:
     // validation functions
     void validate_expected_extensions_exists(
         const vk::InstanceCreateInfo& create_info);
-    void validate_instance_layer_present(std::string_view instance_layer);
+    void validate_instance_layers_present(
+        std::vector<std::string_view> required_layers);
     void validate_physical_device();
 
-    bool        check_device_suitable(vk::PhysicalDevice& physical);
+    bool        check_device_suitable(const vk::PhysicalDevice& physical);
     static bool check_device_extension_supported(
-        vk::PhysicalDevice& device, std::string_view extension_name);
+        const vk::PhysicalDevice& device, std::string_view extension_name);
 
     // get functions
     void get_physical_device();
@@ -228,6 +227,10 @@ private:
 
     friend std::ostream& operator<<(std::ostream&              os,
                                     const swapchain_details_t& details);
+    // main vulkan objects
+    vk::raii::Context                context;
+    vk::raii::Instance               instance        = nullptr;
+    vk::raii::DebugUtilsMessengerEXT debug_messenger = nullptr;
 
     // render external interface objects
     std::ostream&       log;
@@ -238,11 +241,11 @@ private:
     mesh first_mesh;
 
     // vulkan main objects
-    vk::Instance instance;
+    // vk::Instance instance;
     // dynamic loader is used to load vulkan functions for extensions
     vk::detail::DispatchLoaderDynamic dynamic_loader;
     // debug extension is not available on macOS
-    vk::DebugUtilsMessengerEXT debug_extension;
+    // vk::DebugUtilsMessengerEXT debug_extension;
 
     // mod(max_frames_in_gpu) used to avoid blocking the CPU
     uint32_t current_frame_index = 0;
@@ -569,7 +572,7 @@ render::render(platform_interface& platform, hints hints)
     validate_physical_device();
     create_logical_device();
     // add debug names to vk objects
-    set_object_name(instance, "om_main_instance");
+    set_object_name(*instance, "om_main_instance");
     set_object_name(surface, "om_main_surface");
     set_object_name(devices.physical, "om_physical_device");
     set_object_name(devices.logical, "om_logical_device");
@@ -643,7 +646,7 @@ render::~render()
 
         destroy_debug_callback();
         log << "vulkan debug callback destroyed\n";
-        instance.destroy();
+        instance.clear();
         log << "vulkan instance destroyed\n";
     }
     catch (std::exception& e)
@@ -795,7 +798,7 @@ void render::create_instance(bool enable_validation_layers,
         const char* layer = "VK_LAYER_KHRONOS_validation";
         try
         {
-            validate_instance_layer_present(layer);
+            validate_instance_layers_present({ layer });
 
             instance_create_info.enabledLayerCount   = 1;
             instance_create_info.ppEnabledLayerNames = &layer;
@@ -811,7 +814,7 @@ void render::create_instance(bool enable_validation_layers,
         log << "vulkan validation layer disabled\n";
     }
 
-    instance = vk::createInstance(instance_create_info);
+    instance = vk::raii::Instance(context, instance_create_info);
 
     log << "vulkan instance created\n";
     log << "vk api version: " << hints_.vulkan_version.major << '.'
@@ -830,7 +833,7 @@ void render::create_instance(bool enable_validation_layers,
     vk::detail::DynamicLoader dl;
     auto                      ptr =
         dl.getProcAddress<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr");
-    dynamic_loader = vk::detail::DispatchLoaderDynamic{ instance, ptr };
+    dynamic_loader = vk::detail::DispatchLoaderDynamic{ *instance, ptr };
     log << "vulkan dynamic loader created\n";
 }
 
@@ -856,51 +859,25 @@ void render::create_debug_callback(bool enable_debug_callback)
     debug_info.pfnUserCallback = debug_callback;
     debug_info.pUserData       = nullptr;
 
-    debug_extension = instance.createDebugUtilsMessengerEXT(
-        debug_info, nullptr, dynamic_loader);
+    debug_messenger = instance.createDebugUtilsMessengerEXT(debug_info);
 
     log << "vulkan debug callback created\n";
 }
 
 void render::destroy_debug_callback() noexcept
 {
-    if (debug_extension)
-    {
-        instance.destroyDebugUtilsMessengerEXT(
-            debug_extension, nullptr, dynamic_loader);
-        log << "vulkan debug callback destroyed\n";
-    }
+    debug_messenger.clear();
+    log << "vulkan debug callback destroyed\n";
 }
 
 void render::validate_expected_extensions_exists(
     const vk::InstanceCreateInfo& create_info)
 {
-    uint32_t   num_extensions{};
-    vk::Result result = vk::enumerateInstanceExtensionProperties(
-        nullptr, &num_extensions, nullptr);
+    std::vector<vk::ExtensionProperties> extension_properties =
+        context.enumerateInstanceExtensionProperties();
 
-    if (result != vk::Result::eSuccess)
-    {
-        throw std::runtime_error(
-            "error: enumerateInstanceExtensionProperties returned: " +
-            vk::to_string(result));
-    }
-
-    log << "vulkan instance extension on this machine: [" << num_extensions
-        << "]\n";
-
-    std::vector<vk::ExtensionProperties> extension_properties(num_extensions);
-
-    result = vk::enumerateInstanceExtensionProperties(
-        nullptr, &num_extensions, extension_properties.data());
-
-    if (result != vk::Result::eSuccess)
-    {
-        throw std::runtime_error(
-            "error: second enumerateInstanceExtensionProperties "
-            "returned: " +
-            vk::to_string(result));
-    }
+    log << "vulkan instance extension on this machine: ["
+        << extension_properties.size() << "]\n";
 
     log << "all vulkan instance extensions: \n";
     std::ranges::for_each(extension_properties,
@@ -931,26 +908,15 @@ void render::validate_expected_extensions_exists(
         });
 }
 
-void render::validate_instance_layer_present(std::string_view instance_layer)
+void render::validate_instance_layers_present(
+    std::vector<std::string_view> required_layers)
 {
-    uint32_t   layer_count{};
-    vk::Result r = vk::enumerateInstanceLayerProperties(&layer_count, nullptr);
-    if (r != vk::Result::eSuccess)
-    {
-        throw std::runtime_error("error: can't get instance layers count");
-    }
-    std::vector<vk::LayerProperties> available_layers(layer_count);
-    r = vk::enumerateInstanceLayerProperties(&layer_count,
-                                             available_layers.data());
-    if (r != vk::Result::eSuccess)
-    {
-        throw std::runtime_error("error: can't get any instance layers");
-    }
+    std::vector<vk::LayerProperties> available_layers =
+        context.enumerateInstanceLayerProperties();
 
-    log << "all vulkan layers count [" << layer_count << "]\n";
+    log << "all vulkan layers count [" << available_layers.size() << "]\n";
     log << "spec-version | impl-version | name and description\n";
     std::ranges::for_each(available_layers,
-
                           [this](const vk::LayerProperties& layer)
                           {
                               log << api_version_to_string(layer.specVersion)
@@ -958,18 +924,18 @@ void render::validate_instance_layer_present(std::string_view instance_layer)
                                   << layer.layerName << " " << layer.description
                                   << '\n';
                           });
-    auto it = std::ranges::find_if(
-        available_layers,
-
-        [&instance_layer](const vk::LayerProperties& layer)
-        { return layer.layerName.data() == instance_layer; });
-
-    if (it == available_layers.end())
+    for (auto const& required_layer : required_layers)
     {
-        log << "see: support/vulkan/install.md how to install validation "
-               "layer\n";
-        throw std::runtime_error("error: can't find requested layer: " +
-                                 std::string(instance_layer));
+        if (std::ranges::none_of(
+                available_layers,
+                [required_layer](auto const& layer_property)
+                { return layer_property.layerName.data() == required_layer; }))
+        {
+            log << "see: support/vulkan/install.md how to install validation "
+                   "layer\n";
+            throw std::runtime_error("required layer not supported: " +
+                                     std::string(required_layer));
+        }
     }
 }
 
@@ -1000,7 +966,7 @@ static auto find_render_queue(
         });
 }
 
-bool render::check_device_suitable(vk::PhysicalDevice& physical)
+bool render::check_device_suitable(const vk::PhysicalDevice& physical)
 {
     std::vector<vk::QueueFamilyProperties> queue_properties =
         physical.getQueueFamilyProperties();
@@ -1015,7 +981,7 @@ bool render::check_device_suitable(vk::PhysicalDevice& physical)
     return render_queue_found && all_extensions_found;
 }
 
-bool render::check_device_extension_supported(vk::PhysicalDevice& device,
+bool render::check_device_extension_supported(const vk::PhysicalDevice& device,
                                               std::string_view extension_name)
 {
     auto extensions = device.enumerateDeviceExtensionProperties();
@@ -1029,7 +995,7 @@ bool render::check_device_extension_supported(vk::PhysicalDevice& device,
 void render::get_physical_device()
 {
     using namespace std::ranges;
-    std::vector<vk::PhysicalDevice> physical_devices =
+    std::vector<vk::raii::PhysicalDevice> physical_devices =
         instance.enumeratePhysicalDevices();
 
     if (physical_devices.empty())
@@ -1055,7 +1021,7 @@ void render::get_physical_device()
              });
     // find first suitable device
     auto it = find_if(physical_devices,
-                      [this](vk::PhysicalDevice& physical)
+                      [this](const vk::PhysicalDevice& physical)
                       { return check_device_suitable(physical); });
     if (it == physical_devices.end())
     {
