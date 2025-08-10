@@ -154,7 +154,7 @@ public:
         name_info.objectHandle = reinterpret_cast<uint64_t>(
             static_cast<decltype(object)::NativeType>(object));
         name_info.pObjectName = name.c_str();
-        devices.logical.setDebugUtilsObjectNameEXT(name_info, dynamic_loader);
+        devices.logical.setDebugUtilsObjectNameEXT(name_info);
     }
 
 private:
@@ -209,7 +209,7 @@ private:
         std::vector<vk::PresentModeKHR>   presentation_modes;
     };
 
-    swapchain_details_t get_swapchain_details(vk::PhysicalDevice& device);
+    swapchain_details_t get_swapchain_details(const vk::PhysicalDevice& device);
 
     static uint32_t get_render_queue_family_index(
         const vk::PhysicalDevice& physical_device);
@@ -252,14 +252,14 @@ private:
 
     struct
     {
-        vk::PhysicalDevice physical;
-        vk::Device         logical;
+        vk::raii::PhysicalDevice physical = nullptr;
+        vk::raii::Device         logical  = nullptr;
     } devices;
 
     [[maybe_unused]] vk::Queue     render_queue;
     [[maybe_unused]] vk::Queue     presentation_queue;
     vk::SurfaceKHR                 surface; // KHR - extension
-    vk::SwapchainKHR               swapchain;
+    vk::raii::SwapchainKHR         swapchain = nullptr;
     std::vector<vk::Image>         swapchain_images;
     std::vector<vk::ImageView>     swapchain_image_views;
     std::vector<vk::Framebuffer>   swapchain_framebuffers;
@@ -297,15 +297,14 @@ private:
         }
     } queue_indexes;
 
-    const std::vector<const char*> device_extensions{
-        vk::KHRSwapchainExtensionName
-        // VK_KHR_SWAPCHAIN_EXTENSION_NAME
+    const std::vector<const char*> required_device_extensions{
+        vk::KHRSwapchainExtensionName,
+        vk::KHRSpirv14ExtensionName,
+        vk::KHRSynchronization2ExtensionName,
+        vk::KHRCreateRenderpass2ExtensionName
     };
 };
-} // namespace om::vulkan
 
-namespace om::vulkan
-{
 mesh::mesh(vk::PhysicalDevice physical_device,
            vk::Device         device,
            std::span<vertex>  vertexes,
@@ -574,8 +573,8 @@ render::render(platform_interface& platform, hints hints)
     // add debug names to vk objects
     set_object_name(*instance, "om_main_instance");
     set_object_name(surface, "om_main_surface");
-    set_object_name(devices.physical, "om_physical_device");
-    set_object_name(devices.logical, "om_logical_device");
+    set_object_name(*devices.physical, "om_physical_device");
+    set_object_name(*devices.logical, "om_logical_device");
 
     // clang-format off
     std::vector<vertex> mesh_verticles = {
@@ -617,30 +616,30 @@ render::~render()
 
         destroy_synchronization_objects();
         log << "vulkan synchronization objects destroyed\n";
-        devices.logical.freeCommandBuffers(graphics_command_pool,
-                                           command_buffers);
+        (*devices.logical)
+            .freeCommandBuffers(graphics_command_pool, command_buffers);
         log << "vulkan command buffers freed\n";
-        devices.logical.destroyCommandPool(graphics_command_pool);
+        (*devices.logical).destroyCommandPool(graphics_command_pool);
         log << "vulkan destroy command pool\n";
         std::ranges::for_each(
             swapchain_framebuffers,
             [this](vk::Framebuffer& framebuffer)
-            { devices.logical.destroyFramebuffer(framebuffer); });
+            { (*devices.logical).destroyFramebuffer(framebuffer); });
         log << "vulkan framebuffers destroyed\n";
-        devices.logical.destroy(graphics_pipeline);
+        (*devices.logical).destroy(graphics_pipeline);
         log << "vulkan graphics_pipeline destroyed\n";
-        devices.logical.destroy(pipeline_layout);
+        (*devices.logical).destroy(pipeline_layout);
         log << "vulkan pipeline_leyout destroyed\n";
-        devices.logical.destroy(render_path);
+        (*devices.logical).destroy(render_path);
         log << "vulkan render_path destroyed\n";
         std::ranges::for_each(
             swapchain_image_views,
             [this](vk::ImageView image_view)
-            { devices.logical.destroyImageView(image_view); });
+            { (*devices.logical).destroyImageView(image_view); });
         log << "vulkan swapchain image views destroyed\n";
-        devices.logical.destroy(swapchain);
+        (*devices.logical).destroy(swapchain);
         log << "vulkan swapchain destroyed\n";
-        devices.logical.destroy();
+        (*devices.logical).destroy();
         log << "vulkan logical device destroyed\n";
         destroy_surface();
 
@@ -667,33 +666,38 @@ void render::draw()
     // Get Image from swapchain
     uint32_t index_from_swapchain = std::numeric_limits<uint32_t>::max();
     {
-        auto fence_op_result = devices.logical.waitForFences(
-            1, // fenceCount
-            &synchronization.gpu_fence.at(current_frame_index),
-            vk::True,                            // waitAll
-            std::numeric_limits<uint64_t>::max() // timeout
-        );
+        auto fence_op_result =
+            (*devices.logical)
+                .waitForFences(
+                    1, // fenceCount
+                    &synchronization.gpu_fence.at(current_frame_index),
+                    vk::True,                            // waitAll
+                    std::numeric_limits<uint64_t>::max() // timeout
+                );
 
         if (fence_op_result != vk::Result::eSuccess)
         {
             throw std::runtime_error("error: can't wait for fence");
         }
 
-        fence_op_result = devices.logical.resetFences(
-            1, // fenceCount
-            &synchronization.gpu_fence.at(current_frame_index));
+        fence_op_result = (*devices.logical)
+                              .resetFences(1, // fenceCount
+                                           &synchronization.gpu_fence.at(
+                                               current_frame_index));
 
         if (fence_op_result != vk::Result::eSuccess)
         {
             throw std::runtime_error("error: can't reset fence");
         }
 
-        auto image_index = devices.logical.acquireNextImageKHR(
-            swapchain,
-            std::numeric_limits<uint64_t>::max(), // timeout
-            synchronization.image_available.at(current_frame_index),
-            {} // fence
-        );
+        auto image_index =
+            (*devices.logical)
+                .acquireNextImageKHR(
+                    swapchain,
+                    std::numeric_limits<uint64_t>::max(), // timeout
+                    synchronization.image_available.at(current_frame_index),
+                    {} // fence
+                );
 
         if (image_index.result != vk::Result::eSuccess)
         {
@@ -734,7 +738,7 @@ void render::draw()
         present_info.pWaitSemaphores =
             &synchronization.render_finished.at(index_from_swapchain);
         present_info.swapchainCount = 1;
-        present_info.pSwapchains    = &swapchain;
+        present_info.pSwapchains    = &(*swapchain);
         present_info.pImageIndices  = &index_from_swapchain;
 
         auto result = presentation_queue.presentKHR(present_info);
@@ -941,8 +945,7 @@ void render::validate_instance_layers_present(
 
 static bool check_render_queue(const vk::QueueFamilyProperties& property)
 {
-    return property.queueFlags & vk::QueueFlagBits::eGraphics &&
-           property.queueCount >= 1;
+    return !!(property.queueFlags & vk::QueueFlagBits::eGraphics);
 }
 
 static auto find_render_queue(
@@ -971,14 +974,47 @@ bool render::check_device_suitable(const vk::PhysicalDevice& physical)
     std::vector<vk::QueueFamilyProperties> queue_properties =
         physical.getQueueFamilyProperties();
 
-    auto it = find_render_queue(queue_properties);
+    bool supports_graphics =
+        find_render_queue(queue_properties) != queue_properties.end();
 
-    bool render_queue_found   = it != queue_properties.end();
-    bool all_extensions_found = std::ranges::all_of(
-        device_extensions,
-        [&physical](const char* extension_name)
-        { return check_device_extension_supported(physical, extension_name); });
-    return render_queue_found && all_extensions_found;
+    auto available_extensions = physical.enumerateDeviceExtensionProperties();
+    bool supports_all_required_extensions = std::ranges::all_of(
+        required_device_extensions,
+        [&](std::string_view required_extension)
+        {
+            return std::ranges::any_of(
+                available_extensions,
+                [&](const auto& available_extension)
+                {
+                    return available_extension.extensionName.data() ==
+                           required_extension;
+                });
+        });
+    bool supports_vulkan_1_3 =
+        physical.getProperties().apiVersion >= vk::ApiVersion13;
+
+    auto features = physical.template getFeatures2<
+        vk::PhysicalDeviceFeatures2,
+        vk::PhysicalDeviceVulkan13Features,
+        vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>();
+    bool supports_required_features =
+        features.template get<vk::PhysicalDeviceVulkan13Features>()
+            .dynamicRendering &&
+        features
+            .template get<vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>()
+            .extendedDynamicState;
+
+    log << "physical_device [" << physical.getProperties().deviceName
+        << "] suitable:\n"
+        << "    supports_graphics: " << supports_graphics << '\n'
+        << "    supports_all_required_extensions: "
+        << supports_all_required_extensions << '\n'
+        << "    supports_vulkan_1_3: " << supports_vulkan_1_3 << '\n'
+        << "    supports_required_features: " << supports_required_features
+        << '\n';
+
+    return supports_graphics && supports_all_required_extensions &&
+           supports_vulkan_1_3 && supports_required_features;
 }
 
 bool render::check_device_extension_supported(const vk::PhysicalDevice& device,
@@ -990,6 +1026,302 @@ bool render::check_device_extension_supported(const vk::PhysicalDevice& device,
         [&extension_name](const auto& extension)
         { return extension.extensionName.data() == extension_name; });
     return it != extensions.end();
+}
+
+inline std::ostream& operator<<(std::ostream&                       os,
+                                const vk::PhysicalDeviceProperties& props)
+{
+    const auto& limits = props.limits;
+
+    os << "apiVersion: " << vk::versionMajor(props.apiVersion) << "."
+       << vk::versionMinor(props.apiVersion) << "."
+       << vk::versionPatch(props.apiVersion) << "\n";
+    os << "driverVersion: " << props.driverVersion << "\n";
+    os << "vendorID: " << props.vendorID << "\n";
+    os << "deviceID: " << props.deviceID << "\n";
+    os << "deviceType: " << vk::to_string(props.deviceType) << "\n";
+    os << "deviceName: \"" << props.deviceName << "\"\n";
+    os << "pipelineCacheUUID: " << std::hex;
+    for (auto byte : props.pipelineCacheUUID)
+    {
+        os << std::setw(2) << std::setfill('0') << static_cast<int>(byte);
+    }
+    os << std::dec << "\n";
+
+    os << "limits:\n";
+    os << "  maxImageDimension1D: " << limits.maxImageDimension1D << "\n";
+    os << "  maxImageDimension2D: " << limits.maxImageDimension2D << "\n";
+    os << "  maxImageDimension3D: " << limits.maxImageDimension3D << "\n";
+    os << "  maxImageDimensionCube: " << limits.maxImageDimensionCube << "\n";
+    os << "  maxImageArrayLayers: " << limits.maxImageArrayLayers << "\n";
+    os << "  maxTexelBufferElements: " << limits.maxTexelBufferElements << "\n";
+    os << "  maxUniformBufferRange: " << limits.maxUniformBufferRange << "\n";
+    os << "  maxStorageBufferRange: " << limits.maxStorageBufferRange << "\n";
+    os << "  maxPushConstantsSize: " << limits.maxPushConstantsSize << "\n";
+    os << "  maxMemoryAllocationCount: " << limits.maxMemoryAllocationCount
+       << "\n";
+    os << "  maxSamplerAllocationCount: " << limits.maxSamplerAllocationCount
+       << "\n";
+    os << "  bufferImageGranularity: " << limits.bufferImageGranularity << "\n";
+    os << "  sparseAddressSpaceSize: " << limits.sparseAddressSpaceSize << "\n";
+    os << "  maxBoundDescriptorSets: " << limits.maxBoundDescriptorSets << "\n";
+    os << "  maxPerStageDescriptorSamplers: "
+       << limits.maxPerStageDescriptorSamplers << "\n";
+    os << "  maxPerStageDescriptorUniformBuffers: "
+       << limits.maxPerStageDescriptorUniformBuffers << "\n";
+    os << "  maxPerStageDescriptorStorageBuffers: "
+       << limits.maxPerStageDescriptorStorageBuffers << "\n";
+    os << "  maxPerStageDescriptorSampledImages: "
+       << limits.maxPerStageDescriptorSampledImages << "\n";
+    os << "  maxPerStageDescriptorStorageImages: "
+       << limits.maxPerStageDescriptorStorageImages << "\n";
+    os << "  maxPerStageDescriptorInputAttachments: "
+       << limits.maxPerStageDescriptorInputAttachments << "\n";
+    os << "  maxPerStageResources: " << limits.maxPerStageResources << "\n";
+    os << "  maxDescriptorSetSamplers: " << limits.maxDescriptorSetSamplers
+       << "\n";
+    os << "  maxDescriptorSetUniformBuffers: "
+       << limits.maxDescriptorSetUniformBuffers << "\n";
+    os << "  maxDescriptorSetUniformBuffersDynamic: "
+       << limits.maxDescriptorSetUniformBuffersDynamic << "\n";
+    os << "  maxDescriptorSetStorageBuffers: "
+       << limits.maxDescriptorSetStorageBuffers << "\n";
+    os << "  maxDescriptorSetStorageBuffersDynamic: "
+       << limits.maxDescriptorSetStorageBuffersDynamic << "\n";
+    os << "  maxDescriptorSetSampledImages: "
+       << limits.maxDescriptorSetSampledImages << "\n";
+    os << "  maxDescriptorSetStorageImages: "
+       << limits.maxDescriptorSetStorageImages << "\n";
+    os << "  maxDescriptorSetInputAttachments: "
+       << limits.maxDescriptorSetInputAttachments << "\n";
+    os << "  maxVertexInputAttributes: " << limits.maxVertexInputAttributes
+       << "\n";
+    os << "  maxVertexInputBindings: " << limits.maxVertexInputBindings << "\n";
+    os << "  maxVertexInputAttributeOffset: "
+       << limits.maxVertexInputAttributeOffset << "\n";
+    os << "  maxVertexInputBindingStride: "
+       << limits.maxVertexInputBindingStride << "\n";
+    os << "  maxVertexOutputComponents: " << limits.maxVertexOutputComponents
+       << "\n";
+    os << "  maxTessellationGenerationLevel: "
+       << limits.maxTessellationGenerationLevel << "\n";
+    os << "  maxTessellationPatchSize: " << limits.maxTessellationPatchSize
+       << "\n";
+    os << "  maxTessellationControlPerVertexInputComponents: "
+       << limits.maxTessellationControlPerVertexInputComponents << "\n";
+    os << "  maxTessellationControlPerVertexOutputComponents: "
+       << limits.maxTessellationControlPerVertexOutputComponents << "\n";
+    os << "  maxTessellationControlPerPatchOutputComponents: "
+       << limits.maxTessellationControlPerPatchOutputComponents << "\n";
+    os << "  maxTessellationControlTotalOutputComponents: "
+       << limits.maxTessellationControlTotalOutputComponents << "\n";
+    os << "  maxTessellationEvaluationInputComponents: "
+       << limits.maxTessellationEvaluationInputComponents << "\n";
+    os << "  maxTessellationEvaluationOutputComponents: "
+       << limits.maxTessellationEvaluationOutputComponents << "\n";
+    os << "  maxGeometryShaderInvocations: "
+       << limits.maxGeometryShaderInvocations << "\n";
+    os << "  maxGeometryInputComponents: " << limits.maxGeometryInputComponents
+       << "\n";
+    os << "  maxGeometryOutputComponents: "
+       << limits.maxGeometryOutputComponents << "\n";
+    os << "  maxGeometryOutputVertices: " << limits.maxGeometryOutputVertices
+       << "\n";
+    os << "  maxGeometryTotalOutputComponents: "
+       << limits.maxGeometryTotalOutputComponents << "\n";
+    os << "  maxFragmentInputComponents: " << limits.maxFragmentInputComponents
+       << "\n";
+    os << "  maxFragmentOutputAttachments: "
+       << limits.maxFragmentOutputAttachments << "\n";
+    os << "  maxFragmentDualSrcAttachments: "
+       << limits.maxFragmentDualSrcAttachments << "\n";
+    os << "  maxFragmentCombinedOutputResources: "
+       << limits.maxFragmentCombinedOutputResources << "\n";
+    os << "  maxComputeSharedMemorySize: " << limits.maxComputeSharedMemorySize
+       << "\n";
+    os << "  maxComputeWorkGroupCount: [" << limits.maxComputeWorkGroupCount[0]
+       << ", " << limits.maxComputeWorkGroupCount[1] << ", "
+       << limits.maxComputeWorkGroupCount[2] << "]\n";
+    os << "  maxComputeWorkGroupInvocations: "
+       << limits.maxComputeWorkGroupInvocations << "\n";
+    os << "  maxComputeWorkGroupSize: [" << limits.maxComputeWorkGroupSize[0]
+       << ", " << limits.maxComputeWorkGroupSize[1] << ", "
+       << limits.maxComputeWorkGroupSize[2] << "]\n";
+    os << "  subPixelPrecisionBits: " << limits.subPixelPrecisionBits << "\n";
+    os << "  subTexelPrecisionBits: " << limits.subTexelPrecisionBits << "\n";
+    os << "  mipmapPrecisionBits: " << limits.mipmapPrecisionBits << "\n";
+    os << "  maxDrawIndexedIndexValue: " << limits.maxDrawIndexedIndexValue
+       << "\n";
+    os << "  maxDrawIndirectCount: " << limits.maxDrawIndirectCount << "\n";
+    os << "  maxSamplerLodBias: " << limits.maxSamplerLodBias << "\n";
+    os << "  maxSamplerAnisotropy: " << limits.maxSamplerAnisotropy << "\n";
+    os << "  maxViewports: " << limits.maxViewports << "\n";
+    os << "  maxViewportDimensions: [" << limits.maxViewportDimensions[0]
+       << ", " << limits.maxViewportDimensions[1] << "]\n";
+    os << "  viewportBoundsRange: [" << limits.viewportBoundsRange[0] << ", "
+       << limits.viewportBoundsRange[1] << "]\n";
+    os << "  viewportSubPixelBits: " << limits.viewportSubPixelBits << "\n";
+    os << "  minMemoryMapAlignment: " << limits.minMemoryMapAlignment << "\n";
+    os << "  minTexelBufferOffsetAlignment: "
+       << limits.minTexelBufferOffsetAlignment << "\n";
+    os << "  minUniformBufferOffsetAlignment: "
+       << limits.minUniformBufferOffsetAlignment << "\n";
+    os << "  minStorageBufferOffsetAlignment: "
+       << limits.minStorageBufferOffsetAlignment << "\n";
+    os << "  minTexelOffset: " << limits.minTexelOffset << "\n";
+    os << "  maxTexelOffset: " << limits.maxTexelOffset << "\n";
+    os << "  minTexelGatherOffset: " << limits.minTexelGatherOffset << "\n";
+    os << "  maxTexelGatherOffset: " << limits.maxTexelGatherOffset << "\n";
+    os << "  minInterpolationOffset: " << limits.minInterpolationOffset << "\n";
+    os << "  maxInterpolationOffset: " << limits.maxInterpolationOffset << "\n";
+    os << "  subPixelInterpolationOffsetBits: "
+       << limits.subPixelInterpolationOffsetBits << "\n";
+    os << "  maxFramebufferWidth: " << limits.maxFramebufferWidth << "\n";
+    os << "  maxFramebufferHeight: " << limits.maxFramebufferHeight << "\n";
+    os << "  maxFramebufferLayers: " << limits.maxFramebufferLayers << "\n";
+    os << "  framebufferColorSampleCounts: "
+       << vk::to_string(limits.framebufferColorSampleCounts) << "\n";
+    os << "  framebufferDepthSampleCounts: "
+       << vk::to_string(limits.framebufferDepthSampleCounts) << "\n";
+    os << "  framebufferStencilSampleCounts: "
+       << vk::to_string(limits.framebufferStencilSampleCounts) << "\n";
+    os << "  framebufferNoAttachmentsSampleCounts: "
+       << vk::to_string(limits.framebufferNoAttachmentsSampleCounts) << "\n";
+    os << "  maxColorAttachments: " << limits.maxColorAttachments << "\n";
+    os << "  sampledImageColorSampleCounts: "
+       << vk::to_string(limits.sampledImageColorSampleCounts) << "\n";
+    os << "  sampledImageIntegerSampleCounts: "
+       << vk::to_string(limits.sampledImageIntegerSampleCounts) << "\n";
+    os << "  sampledImageDepthSampleCounts: "
+       << vk::to_string(limits.sampledImageDepthSampleCounts) << "\n";
+    os << "  sampledImageStencilSampleCounts: "
+       << vk::to_string(limits.sampledImageStencilSampleCounts) << "\n";
+    os << "  storageImageSampleCounts: "
+       << vk::to_string(limits.storageImageSampleCounts) << "\n";
+    os << "  maxSampleMaskWords: " << limits.maxSampleMaskWords << "\n";
+    os << "  timestampComputeAndGraphics: " << std::boolalpha
+       << limits.timestampComputeAndGraphics << "\n";
+    os << "  timestampPeriod: " << limits.timestampPeriod << "\n";
+    os << "  maxClipDistances: " << limits.maxClipDistances << "\n";
+    os << "  maxCullDistances: " << limits.maxCullDistances << "\n";
+    os << "  maxCombinedClipAndCullDistances: "
+       << limits.maxCombinedClipAndCullDistances << "\n";
+    os << "  discreteQueuePriorities: " << limits.discreteQueuePriorities
+       << "\n";
+    os << "  pointSizeRange: [" << limits.pointSizeRange[0] << ", "
+       << limits.pointSizeRange[1] << "]\n";
+    os << "  lineWidthRange: [" << limits.lineWidthRange[0] << ", "
+       << limits.lineWidthRange[1] << "]\n";
+    os << "  pointSizeGranularity: " << limits.pointSizeGranularity << "\n";
+    os << "  lineWidthGranularity: " << limits.lineWidthGranularity << "\n";
+    os << "  strictLines: " << std::boolalpha << limits.strictLines << "\n";
+    os << "  standardSampleLocations: " << std::boolalpha
+       << limits.standardSampleLocations << "\n";
+    os << "  optimalBufferCopyOffsetAlignment: "
+       << limits.optimalBufferCopyOffsetAlignment << "\n";
+    os << "  optimalBufferCopyRowPitchAlignment: "
+       << limits.optimalBufferCopyRowPitchAlignment << "\n";
+    os << "  nonCoherentAtomSize: " << limits.nonCoherentAtomSize << "\n";
+
+    os << "sparseProperties:\n";
+    os << "  residencyStandard2DBlockShape: " << std::boolalpha
+       << props.sparseProperties.residencyStandard2DBlockShape << "\n";
+    os << "  residencyStandard2DMultisampleBlockShape: " << std::boolalpha
+       << props.sparseProperties.residencyStandard2DMultisampleBlockShape
+       << "\n";
+    os << "  residencyStandard3DBlockShape: " << std::boolalpha
+       << props.sparseProperties.residencyStandard3DBlockShape << "\n";
+    os << "  residencyAlignedMipSize: " << std::boolalpha
+       << props.sparseProperties.residencyAlignedMipSize << "\n";
+    os << "  residencyNonResidentStrict: " << std::boolalpha
+       << props.sparseProperties.residencyNonResidentStrict << "\n";
+
+    return os;
+}
+
+inline std::ostream& operator<<(std::ostream&                     os,
+                                const vk::PhysicalDeviceFeatures& features)
+{
+    os << std::boolalpha; // Print booleans as true/false
+
+    os << "robustBufferAccess: " << features.robustBufferAccess << "\n";
+    os << "fullDrawIndexUint32: " << features.fullDrawIndexUint32 << "\n";
+    os << "imageCubeArray: " << features.imageCubeArray << "\n";
+    os << "independentBlend: " << features.independentBlend << "\n";
+    os << "geometryShader: " << features.geometryShader << "\n";
+    os << "tessellationShader: " << features.tessellationShader << "\n";
+    os << "sampleRateShading: " << features.sampleRateShading << "\n";
+    os << "dualSrcBlend: " << features.dualSrcBlend << "\n";
+    os << "logicOp: " << features.logicOp << "\n";
+    os << "multiDrawIndirect: " << features.multiDrawIndirect << "\n";
+    os << "drawIndirectFirstInstance: " << features.drawIndirectFirstInstance
+       << "\n";
+    os << "depthClamp: " << features.depthClamp << "\n";
+    os << "depthBiasClamp: " << features.depthBiasClamp << "\n";
+    os << "fillModeNonSolid: " << features.fillModeNonSolid << "\n";
+    os << "depthBounds: " << features.depthBounds << "\n";
+    os << "wideLines: " << features.wideLines << "\n";
+    os << "largePoints: " << features.largePoints << "\n";
+    os << "alphaToOne: " << features.alphaToOne << "\n";
+    os << "multiViewport: " << features.multiViewport << "\n";
+    os << "samplerAnisotropy: " << features.samplerAnisotropy << "\n";
+    os << "textureCompressionETC2: " << features.textureCompressionETC2 << "\n";
+    os << "textureCompressionASTC_LDR: " << features.textureCompressionASTC_LDR
+       << "\n";
+    os << "textureCompressionBC: " << features.textureCompressionBC << "\n";
+    os << "occlusionQueryPrecise: " << features.occlusionQueryPrecise << "\n";
+    os << "pipelineStatisticsQuery: " << features.pipelineStatisticsQuery
+       << "\n";
+    os << "vertexPipelineStoresAndAtomics: "
+       << features.vertexPipelineStoresAndAtomics << "\n";
+    os << "fragmentStoresAndAtomics: " << features.fragmentStoresAndAtomics
+       << "\n";
+    os << "shaderTessellationAndGeometryPointSize: "
+       << features.shaderTessellationAndGeometryPointSize << "\n";
+    os << "shaderImageGatherExtended: " << features.shaderImageGatherExtended
+       << "\n";
+    os << "shaderStorageImageExtendedFormats: "
+       << features.shaderStorageImageExtendedFormats << "\n";
+    os << "shaderStorageImageMultisample: "
+       << features.shaderStorageImageMultisample << "\n";
+    os << "shaderStorageImageReadWithoutFormat: "
+       << features.shaderStorageImageReadWithoutFormat << "\n";
+    os << "shaderStorageImageWriteWithoutFormat: "
+       << features.shaderStorageImageWriteWithoutFormat << "\n";
+    os << "shaderUniformBufferArrayDynamicIndexing: "
+       << features.shaderUniformBufferArrayDynamicIndexing << "\n";
+    os << "shaderSampledImageArrayDynamicIndexing: "
+       << features.shaderSampledImageArrayDynamicIndexing << "\n";
+    os << "shaderStorageBufferArrayDynamicIndexing: "
+       << features.shaderStorageBufferArrayDynamicIndexing << "\n";
+    os << "shaderStorageImageArrayDynamicIndexing: "
+       << features.shaderStorageImageArrayDynamicIndexing << "\n";
+    os << "shaderClipDistance: " << features.shaderClipDistance << "\n";
+    os << "shaderCullDistance: " << features.shaderCullDistance << "\n";
+    os << "shaderFloat64: " << features.shaderFloat64 << "\n";
+    os << "shaderInt64: " << features.shaderInt64 << "\n";
+    os << "shaderInt16: " << features.shaderInt16 << "\n";
+    os << "shaderResourceResidency: " << features.shaderResourceResidency
+       << "\n";
+    os << "shaderResourceMinLod: " << features.shaderResourceMinLod << "\n";
+    os << "sparseBinding: " << features.sparseBinding << "\n";
+    os << "sparseResidencyBuffer: " << features.sparseResidencyBuffer << "\n";
+    os << "sparseResidencyImage2D: " << features.sparseResidencyImage2D << "\n";
+    os << "sparseResidencyImage3D: " << features.sparseResidencyImage3D << "\n";
+    os << "sparseResidency2Samples: " << features.sparseResidency2Samples
+       << "\n";
+    os << "sparseResidency4Samples: " << features.sparseResidency4Samples
+       << "\n";
+    os << "sparseResidency8Samples: " << features.sparseResidency8Samples
+       << "\n";
+    os << "sparseResidency16Samples: " << features.sparseResidency16Samples
+       << "\n";
+    os << "sparseResidencyAliased: " << features.sparseResidencyAliased << "\n";
+    os << "variableMultisampleRate: " << features.variableMultisampleRate
+       << "\n";
+    os << "inheritedQueries: " << features.inheritedQueries << "\n";
+
+    return os;
 }
 
 void render::get_physical_device()
@@ -1006,18 +1338,12 @@ void render::get_physical_device()
 
     log << "vulkan physical devises in the system:\n";
     for_each(physical_devices,
-             [this](const vk::PhysicalDevice& device)
+             [this](const vk::raii::PhysicalDevice& device)
              {
                  const auto& properties = device.getProperties();
-
-                 auto api_version =
-                     api_version_to_string(properties.apiVersion);
-
-                 log << "id: " << properties.deviceID << '\n'
-                     << "device_name: " << properties.deviceName << '\n'
-                     << "device_type: " << vk::to_string(properties.deviceType)
-                     << '\n'
-                     << "api_version: " << api_version << '\n';
+                 log << properties << '\n';
+                 const auto& features = device.getFeatures();
+                 log << features << '\n';
              });
     // find first suitable device
     auto it = find_if(physical_devices,
@@ -1029,7 +1355,7 @@ void render::get_physical_device()
             "error: no physical devices found with render queue");
     }
 
-    devices.physical = *it;
+    devices.physical = std::move(*it);
 
     log << "selected device: " << devices.physical.getProperties().deviceName
         << '\n';
@@ -1171,7 +1497,7 @@ void render::validate_physical_device()
     }
 
     swapchain_details_t swap_chain_details =
-        get_swapchain_details(devices.physical);
+        get_swapchain_details(*devices.physical);
 
     log << swap_chain_details;
 
@@ -1188,14 +1514,14 @@ void render::validate_physical_device()
 
 void render::create_logical_device()
 {
-    std::set<uint32_t> queue_family_indexes = {
+    std::set<std::uint32_t> uniqe_queue_family_indexes = {
         queue_indexes.graphics_family, queue_indexes.presentation_family
     };
 
     std::vector<vk::DeviceQueueCreateInfo> queue_infos;
 
     float priorities = 1.f;
-    for (uint32_t queue_index : queue_family_indexes)
+    for (uint32_t queue_index : uniqe_queue_family_indexes)
     {
         vk::DeviceQueueCreateInfo device_queue_create_info;
         device_queue_create_info.queueFamilyIndex = queue_index;
@@ -1206,15 +1532,16 @@ void render::create_logical_device()
         queue_infos.push_back(device_queue_create_info);
     }
 
-    vk::PhysicalDeviceFeatures device_features;
+    vk::PhysicalDeviceFeatures device_features{};
 
-    vk::DeviceCreateInfo device_create_info;
+    vk::DeviceCreateInfo device_create_info{};
     device_create_info.queueCreateInfoCount =
         static_cast<uint32_t>(queue_infos.size());
     device_create_info.pQueueCreateInfos = queue_infos.data();
     device_create_info.enabledExtensionCount =
-        static_cast<uint32_t>(device_extensions.size());
-    device_create_info.ppEnabledExtensionNames = device_extensions.data();
+        static_cast<uint32_t>(required_device_extensions.size());
+    device_create_info.ppEnabledExtensionNames =
+        required_device_extensions.data();
     device_create_info.enabledLayerCount = 0; // in vk_1_1 this in instance
     device_create_info.pEnabledFeatures  = &device_features;
 
@@ -1347,7 +1674,7 @@ void render::create_swapchain()
 
     swapchain = devices.logical.createSwapchainKHR(create_info);
     log << "vulkan swapchain created\n";
-    set_object_name(swapchain, "om_swapchain");
+    set_object_name(*swapchain, "om_swapchain");
 
     // store for later usages
     swapchain_image_format = create_info.imageFormat;
@@ -1357,7 +1684,7 @@ void render::create_swapchain()
         << "swapchain_image_extent: " << swapchain_image_extent.width << 'x'
         << swapchain_image_extent.height << std::endl;
 
-    swapchain_images = devices.logical.getSwapchainImagesKHR(swapchain);
+    swapchain_images = (*devices.logical).getSwapchainImagesKHR(swapchain);
     log << "get swapchain images count: " << swapchain_images.size()
         << std::endl;
 
@@ -1660,7 +1987,7 @@ void render::create_graphics_pipeline()
             // at once)
 
     auto result =
-        devices.logical.createGraphicsPipeline(nullptr, graphics_info);
+        (*devices.logical).createGraphicsPipeline(nullptr, graphics_info);
     if (result.result != vk::Result::eSuccess)
     {
         throw std::runtime_error("error: failed to create vk::Pipeline");
@@ -1742,7 +2069,7 @@ void render::create_command_buffers()
     info.commandBufferCount =
         static_cast<std::uint32_t>(swapchain_framebuffers.size());
 
-    command_buffers = devices.logical.allocateCommandBuffers(info);
+    command_buffers = (*devices.logical).allocateCommandBuffers(info);
 
     if (command_buffers.empty())
     {
@@ -1832,7 +2159,7 @@ void render::create_synchronization_objects()
 
         vk::Semaphore operator()()
         {
-            auto semaphore = self.devices.logical.createSemaphore({});
+            auto semaphore = (*self.devices.logical).createSemaphore({});
             self.set_object_name(semaphore, name + std::to_string(index++));
             return semaphore;
         }
@@ -1851,7 +2178,7 @@ void render::create_synchronization_objects()
                           {
                               vk::FenceCreateInfo info{};
                               info.flags = vk::FenceCreateFlagBits::eSignaled;
-                              auto fence = devices.logical.createFence(info);
+                              auto fence = (*devices.logical).createFence(info);
                               set_object_name(fence,
                                               "fence_" + std::to_string(i++));
                               return fence;
@@ -1861,14 +2188,14 @@ void render::create_synchronization_objects()
 void render::destroy_synchronization_objects() noexcept
 {
     auto destroy_sem = [this](vk::Semaphore& semaphore)
-    { devices.logical.destroy(semaphore); };
+    { (*devices.logical).destroy(semaphore); };
 
     std::ranges::for_each(synchronization.image_available, destroy_sem);
     std::ranges::for_each(synchronization.render_finished, destroy_sem);
 
     std::ranges::for_each(synchronization.gpu_fence,
                           [this](vk::Fence& fence)
-                          { devices.logical.destroy(fence); });
+                          { (*devices.logical).destroy(fence); });
 }
 
 vk::Extent2D render::choose_best_swapchain_image_resolution(
@@ -1952,7 +2279,7 @@ vk::PresentModeKHR render::choose_best_present_mode(
 }
 
 render::swapchain_details_t render::get_swapchain_details(
-    vk::PhysicalDevice& device)
+    const vk::PhysicalDevice& device)
 {
     swapchain_details_t details{};
     details.surface_capabilities = device.getSurfaceCapabilitiesKHR(surface);
@@ -2006,6 +2333,6 @@ void render::destroy_surface() noexcept
 void render::destroy(vk::ShaderModule& shader) noexcept
 {
     log << "destroy shader module\n";
-    devices.logical.destroy(shader);
+    (*devices.logical).destroy(shader);
 }
 } // namespace om::vulkan
