@@ -227,15 +227,39 @@ private:
 
     friend std::ostream& operator<<(std::ostream&              os,
                                     const swapchain_details_t& details);
-    // main vulkan objects
-    vk::raii::Context                context;
-    vk::raii::Instance               instance        = nullptr;
-    vk::raii::DebugUtilsMessengerEXT debug_messenger = nullptr;
 
     // render external interface objects
     std::ostream&       log;
     platform_interface& platform_;
     hints               hints_;
+
+    // main vulkan objects
+    vk::raii::Context                context;
+    vk::raii::Instance               instance        = nullptr;
+    vk::raii::DebugUtilsMessengerEXT debug_messenger = nullptr;
+
+    struct
+    {
+        vk::raii::PhysicalDevice physical = nullptr;
+        vk::raii::Device         logical  = nullptr;
+    } devices;
+
+    struct queue_family_indexes
+    {
+        uint32_t graphics_family = std::numeric_limits<uint32_t>::max();
+        uint32_t presentation_family =
+            std::numeric_limits<uint32_t>::max(); // do I need it with vk 1.3?
+
+        [[nodiscard]] bool is_valid() const
+        {
+            return graphics_family != std::numeric_limits<uint32_t>::max() &&
+                   presentation_family != std::numeric_limits<uint32_t>::max();
+        }
+    } queue_indexes;
+
+    [[maybe_unused]] vk::raii::Queue render_queue = nullptr;
+    [[maybe_unused]] vk::raii::Queue presentation_queue =
+        nullptr; // do I need it with vk 1.3?
 
     // scene component objects
     mesh first_mesh;
@@ -250,20 +274,12 @@ private:
     // mod(max_frames_in_gpu) used to avoid blocking the CPU
     uint32_t current_frame_index = 0;
 
-    struct
-    {
-        vk::raii::PhysicalDevice physical = nullptr;
-        vk::raii::Device         logical  = nullptr;
-    } devices;
-
-    [[maybe_unused]] vk::raii::Queue render_queue       = nullptr;
-    [[maybe_unused]] vk::raii::Queue presentation_queue = nullptr;
-    vk::SurfaceKHR                   surface; // KHR - extension
-    vk::raii::SwapchainKHR           swapchain = nullptr;
-    std::vector<vk::Image>           swapchain_images;
-    std::vector<vk::ImageView>       swapchain_image_views;
-    std::vector<vk::Framebuffer>     swapchain_framebuffers;
-    std::vector<vk::CommandBuffer>   command_buffers;
+    vk::SurfaceKHR                 surface; // KHR - extension
+    vk::raii::SwapchainKHR         swapchain = nullptr;
+    std::vector<vk::Image>         swapchain_images;
+    std::vector<vk::ImageView>     swapchain_image_views;
+    std::vector<vk::Framebuffer>   swapchain_framebuffers;
+    std::vector<vk::CommandBuffer> command_buffers;
 
     // vulkan pipeline
     vk::raii::Pipeline       graphics_pipeline = nullptr;
@@ -284,19 +300,6 @@ private:
         std::vector<vk::Semaphore> render_finished{}; // GPU to CPU sync
         std::vector<vk::Fence>     gpu_fence{};
     } synchronization;
-
-    struct queue_family_indexes
-    {
-        uint32_t graphics_family = std::numeric_limits<uint32_t>::max();
-        uint32_t presentation_family =
-            std::numeric_limits<uint32_t>::max(); // do I need it with vk 1.3?
-
-        [[nodiscard]] bool is_valid() const
-        {
-            return graphics_family != std::numeric_limits<uint32_t>::max() &&
-                   presentation_family != std::numeric_limits<uint32_t>::max();
-        }
-    } queue_indexes;
 
     const std::vector<const char*> required_device_extensions{
         vk::KHRSwapchainExtensionName,
