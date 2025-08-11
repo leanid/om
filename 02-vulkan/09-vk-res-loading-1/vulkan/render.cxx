@@ -287,8 +287,9 @@ private:
 
     struct queue_family_indexes
     {
-        uint32_t graphics_family     = std::numeric_limits<uint32_t>::max();
-        uint32_t presentation_family = std::numeric_limits<uint32_t>::max();
+        uint32_t graphics_family = std::numeric_limits<uint32_t>::max();
+        uint32_t presentation_family =
+            std::numeric_limits<uint32_t>::max(); // do I need it with vk 1.3?
 
         [[nodiscard]] bool is_valid() const
         {
@@ -1514,26 +1515,12 @@ void render::validate_physical_device()
 
 void render::create_logical_device()
 {
-    std::set<std::uint32_t> uniqe_queue_family_indexes = {
-        queue_indexes.graphics_family, queue_indexes.presentation_family
-    };
-
-    std::vector<vk::DeviceQueueCreateInfo> queue_infos;
-    queue_infos.reserve(uniqe_queue_family_indexes.size());
-
     float priorities = 0.f; // should be in [0..1] 1 - hi, 0 - lowest
-    for (uint32_t queue_index : uniqe_queue_family_indexes)
-    {
-        vk::DeviceQueueCreateInfo device_queue_create_info = {
-            .queueFamilyIndex = queue_index,
-            .queueCount       = 1u,
-            .pQueuePriorities = &priorities
-        };
-
-        queue_infos.push_back(device_queue_create_info);
-    }
-
-    vk::PhysicalDeviceFeatures device_features{};
+    vk::DeviceQueueCreateInfo device_queue_create_info = {
+        .queueFamilyIndex = queue_indexes.graphics_family,
+        .queueCount       = 1u,
+        .pQueuePriorities = &priorities
+    };
 
     // Create a chain of feature structures
     vk::StructureChain<vk::PhysicalDeviceFeatures2,
@@ -1549,9 +1536,9 @@ void render::create_logical_device()
 
     vk::DeviceCreateInfo device_create_info{
         .pNext = &feature_chain.get<vk::PhysicalDeviceFeatures2>(),
-        .queueCreateInfoCount = static_cast<uint32_t>(queue_infos.size()),
-        .pQueueCreateInfos    = queue_infos.data(),
-        .enabledLayerCount    = 0, // in vk_1_1 this in instance
+        .queueCreateInfoCount = 1,
+        .pQueueCreateInfos    = &device_queue_create_info,
+        .enabledLayerCount    = 0, // in vk_1_1+ this takes from vk::instance
         .enabledExtensionCount =
             static_cast<uint32_t>(required_device_extensions.size()),
         .ppEnabledExtensionNames = required_device_extensions.data(),
@@ -1565,9 +1552,6 @@ void render::create_logical_device()
     render_queue = vk::raii::Queue(
         devices.logical, queue_indexes.graphics_family, queue_index);
     log << "got render queue\n";
-    presentation_queue = vk::raii::Queue(
-        devices.logical, queue_indexes.presentation_family, queue_index);
-    log << "got presentation queue\n";
 }
 
 inline std::ostream& operator<<(std::ostream&                     os,
