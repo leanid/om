@@ -256,14 +256,14 @@ private:
         vk::raii::Device         logical  = nullptr;
     } devices;
 
-    [[maybe_unused]] vk::Queue     render_queue;
-    [[maybe_unused]] vk::Queue     presentation_queue;
-    vk::SurfaceKHR                 surface; // KHR - extension
-    vk::raii::SwapchainKHR         swapchain = nullptr;
-    std::vector<vk::Image>         swapchain_images;
-    std::vector<vk::ImageView>     swapchain_image_views;
-    std::vector<vk::Framebuffer>   swapchain_framebuffers;
-    std::vector<vk::CommandBuffer> command_buffers;
+    [[maybe_unused]] vk::raii::Queue render_queue       = nullptr;
+    [[maybe_unused]] vk::raii::Queue presentation_queue = nullptr;
+    vk::SurfaceKHR                   surface; // KHR - extension
+    vk::raii::SwapchainKHR           swapchain = nullptr;
+    std::vector<vk::Image>           swapchain_images;
+    std::vector<vk::ImageView>       swapchain_image_views;
+    std::vector<vk::Framebuffer>     swapchain_framebuffers;
+    std::vector<vk::CommandBuffer>   command_buffers;
 
     // vulkan pipeline
     vk::raii::Pipeline       graphics_pipeline = nullptr;
@@ -1560,12 +1560,13 @@ void render::create_logical_device()
     devices.logical = vk::raii::Device(devices.physical, device_create_info);
     log << "logical device created\n";
 
-    uint32_t queue_index = 0;
-    render_queue =
-        devices.logical.getQueue(queue_indexes.graphics_family, queue_index);
+    uint32_t queue_index = 0; // Because we’re only creating a single queue from
+                              // this family, we’ll simply use index 0
+    render_queue = vk::raii::Queue(
+        devices.logical, queue_indexes.graphics_family, queue_index);
     log << "got render queue\n";
-    presentation_queue = devices.logical.getQueue(
-        queue_indexes.presentation_family, queue_index);
+    presentation_queue = vk::raii::Queue(
+        devices.logical, queue_indexes.presentation_family, queue_index);
     log << "got presentation queue\n";
 }
 
