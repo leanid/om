@@ -1555,10 +1555,9 @@ void render::create_logical_device()
         .enabledExtensionCount =
             static_cast<uint32_t>(required_device_extensions.size()),
         .ppEnabledExtensionNames = required_device_extensions.data(),
-        // .pEnabledFeatures        = &device_features,
     };
 
-    devices.logical = devices.physical.createDevice(device_create_info);
+    devices.logical = vk::raii::Device(devices.physical, device_create_info);
     log << "logical device created\n";
 
     uint32_t queue_index = 0;
