@@ -266,9 +266,9 @@ private:
     std::vector<vk::CommandBuffer> command_buffers;
 
     // vulkan pipeline
-    vk::Pipeline       graphics_pipeline{};
-    vk::PipelineLayout pipeline_layout{};
-    vk::RenderPass     render_path{};
+    vk::raii::Pipeline       graphics_pipeline = nullptr;
+    vk::raii::PipelineLayout pipeline_layout   = nullptr;
+    vk::raii::RenderPass     render_path       = nullptr;
 
     // pools
     vk::CommandPool graphics_command_pool{};
@@ -1519,31 +1519,44 @@ void render::create_logical_device()
     };
 
     std::vector<vk::DeviceQueueCreateInfo> queue_infos;
+    queue_infos.reserve(uniqe_queue_family_indexes.size());
 
-    float priorities = 1.f;
+    float priorities = 0.f; // should be in [0..1] 1 - hi, 0 - lowest
     for (uint32_t queue_index : uniqe_queue_family_indexes)
     {
-        vk::DeviceQueueCreateInfo device_queue_create_info;
-        device_queue_create_info.queueFamilyIndex = queue_index;
-        device_queue_create_info.queueCount       = 1;
-        // 1 - hi, 0 - lowest
-        device_queue_create_info.pQueuePriorities = &priorities;
+        vk::DeviceQueueCreateInfo device_queue_create_info = {
+            .queueFamilyIndex = queue_index,
+            .queueCount       = 1u,
+            .pQueuePriorities = &priorities
+        };
 
         queue_infos.push_back(device_queue_create_info);
     }
 
     vk::PhysicalDeviceFeatures device_features{};
 
-    vk::DeviceCreateInfo device_create_info{};
-    device_create_info.queueCreateInfoCount =
-        static_cast<uint32_t>(queue_infos.size());
-    device_create_info.pQueueCreateInfos = queue_infos.data();
-    device_create_info.enabledExtensionCount =
-        static_cast<uint32_t>(required_device_extensions.size());
-    device_create_info.ppEnabledExtensionNames =
-        required_device_extensions.data();
-    device_create_info.enabledLayerCount = 0; // in vk_1_1 this in instance
-    device_create_info.pEnabledFeatures  = &device_features;
+    // Create a chain of feature structures
+    vk::StructureChain<vk::PhysicalDeviceFeatures2,
+                       vk::PhysicalDeviceVulkan13Features,
+                       vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>
+        feature_chain = {
+            {}, // vk::PhysicalDeviceFeatures2 (empty for now)
+            { .dynamicRendering =
+                  true }, // Enable dynamic rendering from Vulkan 1.3
+            { .extendedDynamicState =
+                  true } // Enable extended dynamic state from the extension
+        };
+
+    vk::DeviceCreateInfo device_create_info{
+        .pNext = &feature_chain.get<vk::PhysicalDeviceFeatures2>(),
+        .queueCreateInfoCount = static_cast<uint32_t>(queue_infos.size()),
+        .pQueueCreateInfos    = queue_infos.data(),
+        .enabledLayerCount    = 0, // in vk_1_1 this in instance
+        .enabledExtensionCount =
+            static_cast<uint32_t>(required_device_extensions.size()),
+        .ppEnabledExtensionNames = required_device_extensions.data(),
+        // .pEnabledFeatures        = &device_features,
+    };
 
     devices.logical = devices.physical.createDevice(device_create_info);
     log << "logical device created\n";
@@ -1791,7 +1804,7 @@ void render::create_renderpass()
     render_path = devices.logical.createRenderPass(renderpath_info);
     log << "create vulkan render path\n";
 
-    set_object_name(render_path, "only_render_path");
+    set_object_name(*render_path, "only_render_path");
 }
 
 void render::create_graphics_pipeline()
@@ -1986,16 +1999,10 @@ void render::create_graphics_pipeline()
         -1; // or index of pipeline to derive from(in case of creating multiple
             // at once)
 
-    auto result =
-        (*devices.logical).createGraphicsPipeline(nullptr, graphics_info);
-    if (result.result != vk::Result::eSuccess)
-    {
-        throw std::runtime_error("error: failed to create vk::Pipeline");
-    }
+    graphics_pipeline =
+        devices.logical.createGraphicsPipeline(nullptr, graphics_info);
 
-    graphics_pipeline = std::move(result.value);
-
-    set_object_name(graphics_pipeline, "only_graphics_pipeline");
+    set_object_name(*graphics_pipeline, "only_graphics_pipeline");
 }
 
 void render::create_framebuffers()
