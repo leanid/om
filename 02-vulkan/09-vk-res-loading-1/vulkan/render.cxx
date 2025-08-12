@@ -237,6 +237,7 @@ private:
     vk::raii::Context                context;
     vk::raii::Instance               instance        = nullptr;
     vk::raii::DebugUtilsMessengerEXT debug_messenger = nullptr;
+    vk::raii::SurfaceKHR             surface = nullptr; // KHR - extension
 
     struct
     {
@@ -274,7 +275,6 @@ private:
     // mod(max_frames_in_gpu) used to avoid blocking the CPU
     uint32_t current_frame_index = 0;
 
-    vk::SurfaceKHR                 surface; // KHR - extension
     vk::raii::SwapchainKHR         swapchain = nullptr;
     std::vector<vk::Image>         swapchain_images;
     std::vector<vk::ImageView>     swapchain_image_views;
@@ -576,7 +576,7 @@ render::render(platform_interface& platform, hints hints)
     create_logical_device();
     // add debug names to vk objects
     set_object_name(*instance, "om_main_instance");
-    set_object_name(surface, "om_main_surface");
+    set_object_name(*surface, "om_main_surface");
     set_object_name(*devices.physical, "om_physical_device");
     set_object_name(*devices.logical, "om_logical_device");
 
@@ -1448,7 +1448,7 @@ void render::create_surface()
     }
 
     log << "vk surface KHR created\n";
-    surface = surfaceKHR;
+    surface = vk::raii::SurfaceKHR(instance, surfaceKHR);
 }
 
 std::ostream& operator<<(std::ostream&                      os,
