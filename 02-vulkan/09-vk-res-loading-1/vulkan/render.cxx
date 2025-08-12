@@ -245,22 +245,8 @@ private:
         vk::raii::Device         logical  = nullptr;
     } devices;
 
-    struct queue_family_indexes
-    {
-        uint32_t graphics_family = std::numeric_limits<uint32_t>::max();
-        uint32_t presentation_family =
-            std::numeric_limits<uint32_t>::max(); // do I need it with vk 1.3?
-
-        [[nodiscard]] bool is_valid() const
-        {
-            return graphics_family != std::numeric_limits<uint32_t>::max() &&
-                   presentation_family != std::numeric_limits<uint32_t>::max();
-        }
-    } queue_indexes;
-
-    [[maybe_unused]] vk::raii::Queue render_queue = nullptr;
-    [[maybe_unused]] vk::raii::Queue presentation_queue =
-        nullptr; // do I need it with vk 1.3?
+    vk::raii::Queue render_and_present_queue = nullptr;
+    // vk::raii::Queue presentation_queue = nullptr;
 
     // scene component objects
     mesh first_mesh;
@@ -729,7 +715,7 @@ void render::draw()
         submit_info.pSignalSemaphores =
             &synchronization.render_finished.at(index_from_swapchain);
 
-        render_queue.submit(
+        render_and_present_queue.submit(
             submit_info,
             // set fence to vk::True after queue finish execution
             synchronization.gpu_fence.at(index_from_swapchain));
@@ -745,7 +731,7 @@ void render::draw()
         present_info.pSwapchains    = &(*swapchain);
         present_info.pImageIndices  = &index_from_swapchain;
 
-        auto result = presentation_queue.presentKHR(present_info);
+        auto result = render_and_present_queue.presentKHR(present_info);
 
         if (result != vk::Result::eSuccess)
         {
@@ -1363,41 +1349,6 @@ void render::get_physical_device()
 
     log << "selected device: " << devices.physical.getProperties().deviceName
         << '\n';
-
-    queue_indexes.graphics_family =
-        get_render_queue_family_index(devices.physical);
-
-    vk::Bool32 is_supported = devices.physical.getSurfaceSupportKHR(
-        queue_indexes.graphics_family, surface);
-
-    if (!is_supported)
-    {
-        log << "error: physical device ["
-            << devices.physical.getProperties().deviceName
-            << "] with render queue index [" << queue_indexes.graphics_family
-            << "] do not support SurfaceSupportKHR\n"
-            << "try to find another queue index with VkSurfaceKHR\n";
-        queue_indexes.presentation_family =
-            get_presentation_queue_family_index(devices.physical, surface);
-    }
-    else
-    {
-        log << "render queue family with index ["
-            << queue_indexes.graphics_family << "] support surfaceKHR\n";
-
-        queue_indexes.presentation_family = queue_indexes.graphics_family;
-    }
-
-    auto queue_properties = devices.physical.getQueueFamilyProperties();
-
-    const vk::QueueFamilyProperties& render_queue_properties =
-        queue_properties.at(queue_indexes.graphics_family);
-
-    log << "render queue found with index is: " << queue_indexes.graphics_family
-        << '\n'
-        << "render queue count: " << render_queue_properties.queueCount << '\n'
-        << "presentation queue index is: " << queue_indexes.presentation_family
-        << '\n';
 }
 
 uint32_t render::get_render_queue_family_index(
@@ -1494,12 +1445,6 @@ void render::validate_physical_device()
     // devices.physical.getProperties();
     // check features
     // devices.physical.getFeatures().geometryShader
-    if (!queue_indexes.is_valid())
-    {
-        throw std::runtime_error("error: vulkan queue with render graphics "
-                                 "capability not found");
-    }
-
     swapchain_details_t swap_chain_details =
         get_swapchain_details(*devices.physical);
 
@@ -1518,9 +1463,33 @@ void render::validate_physical_device()
 
 void render::create_logical_device()
 {
+    std::vector<vk::QueueFamilyProperties> queueFamilyProperties =
+        devices.physical.getQueueFamilyProperties();
+    // get the first index into queueFamilyProperties which supports both
+    // graphics and present
+    uint32_t graphics_and_present_index = ~0;
+    for (uint32_t qfp_index = 0; qfp_index < queueFamilyProperties.size();
+         qfp_index++)
+    {
+        vk::QueueFamilyProperties& queue_family =
+            queueFamilyProperties.at(qfp_index);
+        if ((queue_family.queueFlags & vk::QueueFlagBits::eGraphics) &&
+            devices.physical.getSurfaceSupportKHR(qfp_index, *surface))
+        {
+            // found a queue family that supports both graphics and present
+            graphics_and_present_index = qfp_index;
+            break;
+        }
+    }
+    if (graphics_and_present_index == ~0)
+    {
+        throw std::runtime_error("error: could not find a queue for graphics "
+                                 "and present -> terminating");
+    }
+
     float priorities = 0.f; // should be in [0..1] 1 - hi, 0 - lowest
     vk::DeviceQueueCreateInfo device_queue_create_info = {
-        .queueFamilyIndex = queue_indexes.graphics_family,
+        .queueFamilyIndex = graphics_and_present_index,
         .queueCount       = 1u,
         .pQueuePriorities = &priorities
     };
@@ -1552,8 +1521,8 @@ void render::create_logical_device()
 
     uint32_t queue_index = 0; // Because we’re only creating a single queue from
                               // this family, we’ll simply use index 0
-    render_queue = vk::raii::Queue(
-        devices.logical, queue_indexes.graphics_family, queue_index);
+    render_and_present_queue = vk::raii::Queue(
+        devices.logical, graphics_and_present_index, queue_index);
     log << "got render queue\n";
 }
 
@@ -1649,16 +1618,17 @@ void render::create_swapchain()
 
     // if Graphics and Presentation families are different, then swapchain
     // must let images be shared between families
-    if (queue_indexes.graphics_family != queue_indexes.presentation_family)
+    if (false /* queue_indexes.graphics_family != queue_indexes.presentation_family */)
     {
-        log << "graphics_family != presentation_family use sharing_mode: "
-            << vk::to_string(vk::SharingMode::eConcurrent) << std::endl;
-        create_info.imageSharingMode    = vk::SharingMode::eConcurrent;
-        std::array<uint32_t, 2> indexes = { queue_indexes.graphics_family,
-                                            queue_indexes.presentation_family };
-        create_info.pQueueFamilyIndices = indexes.data();
-        create_info.queueFamilyIndexCount =
-            static_cast<uint32_t>(indexes.size());
+        // log << "graphics_family != presentation_family use sharing_mode: "
+        //     << vk::to_string(vk::SharingMode::eConcurrent) << std::endl;
+        // create_info.imageSharingMode    = vk::SharingMode::eConcurrent;
+        // std::array<uint32_t, 2> indexes = { queue_indexes.graphics_family,
+        //                                     queue_indexes.presentation_family
+        //                                     };
+        // create_info.pQueueFamilyIndices = indexes.data();
+        // create_info.queueFamilyIndexCount =
+        //     static_cast<uint32_t>(indexes.size());
     }
     else
     {
@@ -2025,15 +1995,10 @@ void render::create_framebuffers()
 
 void render::create_command_pool()
 {
-    if (!queue_indexes.is_valid())
-    {
-        throw std::runtime_error("error: queue indexes not valid");
-    }
-
     log << "create command pool\n";
 
     vk::CommandPoolCreateInfo info{};
-    info.queueFamilyIndex = queue_indexes.graphics_family;
+    info.queueFamilyIndex = 0; /* queue_indexes.graphics_family; */
     info.flags            = vk::CommandPoolCreateFlagBits::eResetCommandBuffer;
     graphics_command_pool = devices.logical.createCommandPool(info);
 
