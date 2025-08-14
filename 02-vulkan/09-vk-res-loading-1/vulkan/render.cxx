@@ -245,11 +245,25 @@ private:
         vk::raii::Device         logical  = nullptr;
     } devices;
 
-    vk::raii::Queue render_and_present_queue = nullptr;
-    // vk::raii::Queue presentation_queue = nullptr;
+    vk::raii::Queue graphics_queue     = nullptr; // can be presentation too
+    vk::raii::Queue presentation_queue = nullptr; // only if needed
 
-    // scene component objects
-    mesh first_mesh;
+    struct
+    {
+        union
+        {
+            struct
+            {
+                std::uint32_t graphics     = ~0u;
+                std::uint32_t presentation = ~0u;
+            } index;
+            std::array<std::uint32_t, 2> array;
+        };
+    } queue_family;
+
+    static_assert(sizeof(decltype(queue_family.array)) ==
+                  sizeof(queue_family.index));
+
 
     // vulkan main objects
     // vk::Instance instance;
@@ -279,7 +293,7 @@ private:
     vk::Format   swapchain_image_format{};
     vk::Extent2D swapchain_image_extent{};
 
-    // sinhronization
+    // sinchronization
     struct
     {
         std::vector<vk::Semaphore> image_available{}; // GPU to GPU only sync
@@ -293,6 +307,9 @@ private:
         vk::KHRSynchronization2ExtensionName,
         vk::KHRCreateRenderpass2ExtensionName
     };
+
+    // scene component objects
+    mesh first_mesh;
 };
 
 mesh::mesh(vk::PhysicalDevice physical_device,
@@ -552,6 +569,7 @@ render::render(platform_interface& platform, hints hints)
     : log{ platform.get_logger() }
     , platform{ platform }
     , hints_{ hints }
+    , queue_family{}
 {
     create_instance(hints.enable_validation_layers,
                     hints.enable_debug_callback_ext);
@@ -715,7 +733,7 @@ void render::draw()
         submit_info.pSignalSemaphores =
             &synchronization.render_finished.at(index_from_swapchain);
 
-        render_and_present_queue.submit(
+        graphics_queue.submit(
             submit_info,
             // set fence to vk::True after queue finish execution
             synchronization.gpu_fence.at(index_from_swapchain));
@@ -731,7 +749,7 @@ void render::draw()
         present_info.pSwapchains    = &(*swapchain);
         present_info.pImageIndices  = &index_from_swapchain;
 
-        auto result = render_and_present_queue.presentKHR(present_info);
+        auto result = graphics_queue.presentKHR(present_info);
 
         if (result != vk::Result::eSuccess)
         {
@@ -1468,21 +1486,22 @@ void render::create_logical_device()
         devices.physical.getQueueFamilyProperties();
     // get the first index into queueFamilyProperties which supports both
     // graphics and present
-    uint32_t graphics_and_present_index = ~0;
+    queue_family.index.graphics = ~0;
     for (uint32_t qfp_index = 0; qfp_index < queueFamilyProperties.size();
          qfp_index++)
     {
-        vk::QueueFamilyProperties& queue_family =
+        vk::QueueFamilyProperties& properties =
             queueFamilyProperties.at(qfp_index);
-        if ((queue_family.queueFlags & vk::QueueFlagBits::eGraphics) &&
+        if ((properties.queueFlags & vk::QueueFlagBits::eGraphics) &&
             devices.physical.getSurfaceSupportKHR(qfp_index, *surface))
         {
             // found a queue family that supports both graphics and present
-            graphics_and_present_index = qfp_index;
+            queue_family.index.graphics     = qfp_index;
+            queue_family.index.presentation = qfp_index;
             break;
         }
     }
-    if (graphics_and_present_index == ~0)
+    if (queue_family.index.graphics == ~0)
     {
         throw std::runtime_error("error: could not find a queue for graphics "
                                  "and present -> terminating");
@@ -1490,7 +1509,7 @@ void render::create_logical_device()
 
     float priorities = 0.f; // should be in [0..1] 1 - hi, 0 - lowest
     vk::DeviceQueueCreateInfo device_queue_create_info = {
-        .queueFamilyIndex = graphics_and_present_index,
+        .queueFamilyIndex = queue_family.index.graphics,
         .queueCount       = 1u,
         .pQueuePriorities = &priorities
     };
@@ -1522,9 +1541,16 @@ void render::create_logical_device()
 
     uint32_t queue_index = 0; // Because we’re only creating a single queue from
                               // this family, we’ll simply use index 0
-    render_and_present_queue = vk::raii::Queue(
-        devices.logical, graphics_and_present_index, queue_index);
+    graphics_queue = vk::raii::Queue(
+        devices.logical, queue_family.index.graphics, queue_index);
     log << "got render queue\n";
+
+    if (queue_family.index.graphics != queue_family.index.presentation)
+    {
+        presentation_queue = vk::raii::Queue(
+            devices.logical, queue_family.index.presentation, queue_index);
+        log << "got presentation queue\n";
+    }
 }
 
 inline std::ostream& operator<<(std::ostream&                     os,
@@ -1625,23 +1651,19 @@ void render::create_swapchain()
 
     // if Graphics and Presentation families are different, then swapchain
     // must let images be shared between families
-    if (false /* queue_indexes.graphics_family != queue_indexes.presentation_family */)
+    if (queue_family.index.graphics != queue_family.index.presentation)
     {
-        // log << "graphics_family != presentation_family use sharing_mode: "
-        //     << vk::to_string(vk::SharingMode::eConcurrent) << std::endl;
-        // create_info.imageSharingMode    = vk::SharingMode::eConcurrent;
-        // std::array<uint32_t, 2> indexes = { queue_indexes.graphics_family,
-        //                                     queue_indexes.presentation_family
-        //                                     };
-        // create_info.pQueueFamilyIndices = indexes.data();
-        // create_info.queueFamilyIndexCount =
-        //     static_cast<uint32_t>(indexes.size());
+        log << "graphics_family != presentation_family use sharing_mode: "
+            << vk::to_string(vk::SharingMode::eConcurrent) << std::endl;
+        create_info.imageSharingMode      = vk::SharingMode::eConcurrent;
+        create_info.pQueueFamilyIndices   = queue_family.array.data();
+        create_info.queueFamilyIndexCount = queue_family.array.size();
     }
     else
     {
         create_info.imageSharingMode      = vk::SharingMode::eExclusive;
-        create_info.pQueueFamilyIndices   = nullptr;
-        create_info.queueFamilyIndexCount = 0;
+        create_info.pQueueFamilyIndices   = nullptr; // optional
+        create_info.queueFamilyIndexCount = 0;       // optional
     }
 
     // if old swapchain been destroyed and this one replaces it, then link
