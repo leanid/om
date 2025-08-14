@@ -1589,12 +1589,12 @@ void render::create_swapchain()
         << selected_image_resolution.height << std::endl;
 
     const auto& surface_capabilities = swapchain_details.surface_capabilities;
-    log << surface_capabilities << '\n';
+    log << swapchain_details.surface_capabilities << '\n';
 
-    uint32_t image_count = surface_capabilities.minImageCount;
+    uint32_t image_count = std::max(3u, surface_capabilities.minImageCount);
     // if 0 - then limitless
     if (surface_capabilities.maxImageCount > 0u &&
-        surface_capabilities.maxImageCount < image_count)
+        image_count > surface_capabilities.maxImageCount)
     {
         image_count = surface_capabilities.maxImageCount;
     }
@@ -1603,19 +1603,25 @@ void render::create_swapchain()
            "expected): "
         << image_count << std::endl;
 
-    vk::SwapchainCreateInfoKHR create_info;
-    create_info.imageFormat     = selected_format.format;
-    create_info.imageColorSpace = selected_format.colorSpace;
-    create_info.presentMode     = selected_presentation_mode;
-    create_info.imageExtent     = selected_image_resolution;
-    create_info.minImageCount   = image_count;
-    // number of layers for each image in chain
-    create_info.imageArrayLayers = 1u;
-    create_info.imageUsage       = vk::ImageUsageFlagBits::eColorAttachment;
-    create_info.preTransform     = surface_capabilities.currentTransform;
-    // how two windows will be composite together
-    create_info.compositeAlpha = vk::CompositeAlphaFlagBitsKHR::eOpaque;
-    create_info.clipped        = vk::True;
+    // The .imageArrayLayers specifies the number of layers each image consists
+    // of. This is always 1 unless you are developing a stereoscopic 3D
+    // application.
+    vk::SwapchainCreateInfoKHR create_info{
+        .flags            = vk::SwapchainCreateFlagsKHR(),
+        .surface          = surface,
+        .minImageCount    = image_count,
+        .imageFormat      = selected_format.format,
+        .imageColorSpace  = selected_format.colorSpace,
+        .imageExtent      = selected_image_resolution,
+        .imageArrayLayers = 1u, // number of layers for each image in chain
+        .imageUsage       = vk::ImageUsageFlagBits::eColorAttachment,
+        .imageSharingMode = vk::SharingMode::eExclusive,
+        .preTransform     = surface_capabilities.currentTransform,
+        .compositeAlpha   = vk::CompositeAlphaFlagBitsKHR::eOpaque,
+        .presentMode      = selected_presentation_mode,
+        .clipped          = true,
+        .oldSwapchain     = nullptr
+    };
 
     // if Graphics and Presentation families are different, then swapchain
     // must let images be shared between families
