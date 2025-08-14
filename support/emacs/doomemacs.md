@@ -224,3 +224,19 @@ if you need to set 80 characters `C-x f 80 RET`
 3. on Fedora it is: `emacs-gettext-0.22.5-6.fc41.noarch`
 4. now you restart emacs `SPC+q+R` or exit emacs `doom sync`
 5. open emacs and `M+:` and then `po-mode` - should be found
+### How to use online translation in emacs buffer
+1. add package gt (go-translate) to doom/packages
+```elisp
+    (package! gt) ;; go-translate
+```
+2. add config to doom/config like:
+```elisp
+    (after! gt
+      (setq gt-langs '(en ru))
+      (setq gt-default-translator (gt-translator :engines (gt-google-engine)
+                                                 :render (gt-buffer-render)
+                                                 ))
+    )
+```
+3. doom sync
+4. select word then `M+: gt-translate`
