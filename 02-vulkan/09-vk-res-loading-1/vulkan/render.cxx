@@ -566,6 +566,15 @@ render::render(platform_interface& platform, hints hints)
     set_object_name(*devices.physical, "om_physical_device");
     set_object_name(*devices.logical, "om_logical_device");
 
+    create_swapchain();
+    create_renderpass();
+    create_graphics_pipeline();
+    create_framebuffers();
+    create_command_pool();
+    create_command_buffers();
+    record_commands();
+    create_synchronization_objects();
+
     // clang-format off
     std::vector<vertex> mesh_verticles = {
         {.pos{ 0.4f, -0.4f, 0.0f }, .col{1.0f, 0.0f, 0.0f}},
@@ -580,15 +589,6 @@ render::render(platform_interface& platform, hints hints)
 
     first_mesh = mesh(
         devices.physical, devices.logical, std::span{ mesh_verticles }, *this);
-
-    create_swapchain();
-    create_renderpass();
-    create_graphics_pipeline();
-    create_framebuffers();
-    create_command_pool();
-    create_command_buffers();
-    record_commands();
-    create_synchronization_objects();
 }
 
 render::~render()
