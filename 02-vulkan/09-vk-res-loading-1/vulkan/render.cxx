@@ -1671,9 +1671,13 @@ void render::create_swapchain()
     create_info.oldSwapchain = nullptr;
     create_info.surface      = surface;
 
-    swapchain = devices.logical.createSwapchainKHR(create_info);
+    swapchain = vk::raii::SwapchainKHR(devices.logical, create_info);
     log << "vulkan swapchain created\n";
     set_object_name(*swapchain, "om_swapchain");
+
+    swapchain_images = swapchain.getImages();
+    log << "get swapchain images count: " << swapchain_images.size()
+        << std::endl;
 
     // store for later usages
     swapchain_image_format = create_info.imageFormat;
@@ -1683,9 +1687,6 @@ void render::create_swapchain()
         << "swapchain_image_extent: " << swapchain_image_extent.width << 'x'
         << swapchain_image_extent.height << std::endl;
 
-    swapchain_images = (*devices.logical).getSwapchainImagesKHR(swapchain);
-    log << "get swapchain images count: " << swapchain_images.size()
-        << std::endl;
 
     swapchain_image_views.clear();
     std::ranges::transform(
