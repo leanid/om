@@ -2196,25 +2196,25 @@ vk::Extent2D render::choose_best_swapchain_image_resolution(
 vk::SurfaceFormatKHR render::choose_best_surface_format(
     std::span<vk::SurfaceFormatKHR> formats)
 {
-    vk::SurfaceFormatKHR default_format(vk::Format::eR8G8B8A8Unorm,
-                                        vk::ColorSpaceKHR::eSrgbNonlinear);
-
     if (formats.empty())
     {
         throw std::runtime_error("empty surface formats");
     }
 
+    vk::SurfaceFormatKHR rgba32_srgb(vk::Format::eR8G8B8A8Srgb,
+                                     vk::ColorSpaceKHR::eSrgbNonlinear);
+    vk::SurfaceFormatKHR bgra32_srgb(vk::Format::eB8G8R8A8Srgb,
+                                     vk::ColorSpaceKHR::eSrgbNonlinear);
+
     if (formats.size() == 1 && formats.front().format == vk::Format::eUndefined)
     {
         // this means all formats are supported!
         // so let's use our defaults
-        return default_format;
+        return rgba32_srgb;
     }
     // not all supported search for RGB or BGR
-    std::array<vk::SurfaceFormatKHR, 2> suitable_formats = {
-        default_format,
-        { vk::Format::eB8G8R8A8Unorm, vk::ColorSpaceKHR::eSrgbNonlinear }
-    };
+    std::array<vk::SurfaceFormatKHR, 2> suitable_formats = { bgra32_srgb,
+                                                             rgba32_srgb };
     auto it = std::ranges::find_first_of(formats, std::span(suitable_formats));
 
     if (it != formats.end())
@@ -2231,9 +2231,22 @@ vk::PresentModeKHR render::choose_best_present_mode(
 {
     if (std::ranges::contains(present_modes, vk::PresentModeKHR::eMailbox))
     {
+        // This is another variation of the vk::PresentModeKHR::eFifo mode.
+        // Instead of blocking the application when the queue is full, the
+        // images that are already queued are simply replaced with the newer
+        // ones. This mode can be used to render frames as fast as possible
+        // while still avoiding tearing, resulting in fewer latency issues than
+        // standard vertical sync. This is commonly known as "triple buffering,"
+        // although the existence of three buffers alone does not necessarily
+        // mean that the framerate is unlocked.
         return vk::PresentModeKHR::eMailbox;
     }
-    // guaranteed to be in any vulkan implementation
+    // The swap chain is a queue where the display takes an image from the front
+    // of the queue when the display is refreshed, and the program inserts
+    // rendered images at the back of the queue. If the queue is full, then the
+    // program has to wait. This is most similar to vertical sync as found in
+    // modern games. The moment that the display is refreshed is known as
+    // "vertical blank" guaranteed to be in any vulkan implementation
     return vk::PresentModeKHR::eFifo;
 }
 
