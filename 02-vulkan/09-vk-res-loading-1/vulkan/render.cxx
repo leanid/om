@@ -230,7 +230,7 @@ private:
 
     // render external interface objects
     std::ostream&       log;
-    platform_interface& platform_;
+    platform_interface& platform;
     hints               hints_;
 
     // main vulkan objects
@@ -550,7 +550,7 @@ static std::string api_version_to_string(uint32_t apiVersion)
 
 render::render(platform_interface& platform, hints hints)
     : log{ platform.get_logger() }
-    , platform_{ platform }
+    , platform{ platform }
     , hints_{ hints }
 {
     create_instance(hints.enable_validation_layers,
@@ -760,7 +760,7 @@ void render::create_instance(bool enable_validation_layers,
     instance_create_info.pApplicationInfo = &application_info;
 
     platform_interface::extensions extensions =
-        platform_.get_vulkan_extensions();
+        platform.get_vulkan_extensions();
 
     if (extensions.names.empty())
     {
@@ -1391,7 +1391,7 @@ uint32_t render::get_presentation_queue_family_index(
 void render::create_surface()
 {
     vk::SurfaceKHR surfaceKHR =
-        platform_.create_vulkan_surface(instance, nullptr);
+        platform.create_vulkan_surface(instance, nullptr);
     if (!surfaceKHR)
     {
         throw std::runtime_error(
@@ -1408,30 +1408,31 @@ std::ostream& operator<<(std::ostream&                      os,
     os << "swap_chain_details:\n";
     auto& caps = details.surface_capabilities;
     os << "surface_capabilities:\n"
-       << "\tMin image count: " << caps.minImageCount << "\n"
-       << "\tMax image count: " << caps.maxImageCount << "\n"
-       << "\tCurrent extent: " << caps.currentExtent.width << "x"
+       << "    Min image count: " << caps.minImageCount << "\n"
+       << "    Max image count: " << caps.maxImageCount << "\n"
+       << "    Current extent: " << caps.currentExtent.width << "x"
        << caps.currentExtent.height << "\n"
-       << "\tMin image extent: " << caps.minImageExtent.width << "x"
+       << "    Min image extent: " << caps.minImageExtent.width << "x"
        << caps.minImageExtent.height << "\n"
-       << "\tMax image extent: " << caps.maxImageExtent.width << "x"
+       << "    Max image extent: " << caps.maxImageExtent.width << "x"
        << caps.maxImageExtent.height << "\n"
-       << "\tMax image array layers: " << caps.maxImageArrayLayers << "\n"
-       << "\tSupported transformation: " << vk::to_string(caps.currentTransform)
-       << "\n"
-       << "\tComposite alpha flags: "
+       << "    Max image array layers: " << caps.maxImageArrayLayers << "\n"
+       << "    Supported transformation: "
+       << vk::to_string(caps.currentTransform) << "\n"
+       << "    Composite alpha flags: "
        << vk::to_string(caps.supportedCompositeAlpha) << "\n"
-       << "\tSupported usage flags: " << vk::to_string(caps.supportedUsageFlags)
-       << "\n";
+       << "    Supported usage flags: "
+       << vk::to_string(caps.supportedUsageFlags) << "\n";
 
     os << "surface formats:\n";
-    std::ranges::for_each(
-        details.surface_formats,
-        [&os](vk::SurfaceFormatKHR format)
-        {
-            os << "\tImage format: " << vk::to_string(format.format) << "\n"
-               << "\tColor space: " << vk::to_string(format.colorSpace) << "\n";
-        });
+    std::ranges::for_each(details.surface_formats,
+                          [&os](vk::SurfaceFormatKHR format)
+                          {
+                              os << "    Image format: "
+                                 << vk::to_string(format.format) << "\n"
+                                 << "    Color space: "
+                                 << vk::to_string(format.colorSpace) << "\n";
+                          });
     os << "presentation modes:\n";
     std::ranges::for_each(details.presentation_modes,
                           [&os](vk::PresentModeKHR mode)
@@ -1767,9 +1768,9 @@ void render::create_renderpass()
 void render::create_graphics_pipeline()
 {
     // Static Pipeline States
-    auto vertex_shader_code = platform_.get_file_content(
+    auto vertex_shader_code = platform.get_file_content(
         "./02-vulkan/09-vk-res-loading-1/shaders/shader.vert.slang.spv");
-    auto fragment_shader_code = platform_.get_file_content(
+    auto fragment_shader_code = platform.get_file_content(
         "./02-vulkan/09-vk-res-loading-1/shaders/shader.frag.slang.spv");
     // compile shaders from spir-v into gpu code
     vk::ShaderModule vertex = create_shader(vertex_shader_code.as_span());
@@ -2161,36 +2162,28 @@ vk::Extent2D render::choose_best_swapchain_image_resolution(
     const vk::SurfaceCapabilitiesKHR& capabilities)
 {
     auto extent = capabilities.currentExtent;
-    if (extent.width != std::numeric_limits<uint32_t>::max() &&
-        extent.height != std::numeric_limits<uint32_t>::max())
+    if (extent.width != std::numeric_limits<uint32_t>::max())
     {
-        log << "use extent2d from surface\n";
+        log << "use Extent2D from surface\n";
         // no need to clamp
         return extent;
     }
 
     platform_interface::buffer_size buffer_size =
-        platform_.get_window_buffer_size();
+        platform.get_window_buffer_size();
 
     extent.width  = buffer_size.width;
     extent.height = buffer_size.height;
 
-    log << "use extent2d from callback_get_window_buffer_size: "
+    log << "use Extent2D from callback_get_window_buffer_size: "
         << buffer_size.width << 'x' << buffer_size.height << std::endl;
 
-    auto clamp_extent = [](vk::Extent2D&       extent,
-                           const vk::Extent2D& min_extent,
-                           const vk::Extent2D& max_extent)
-    {
-        extent.width =
-            std::clamp(extent.width, min_extent.width, max_extent.width);
-        extent.height =
-            std::clamp(extent.height, min_extent.height, max_extent.height);
-    };
-
-    clamp_extent(
-        extent, capabilities.minImageExtent, capabilities.maxImageExtent);
-    return extent;
+    return { std::clamp(extent.width,
+                        capabilities.minImageExtent.width,
+                        capabilities.maxImageExtent.width),
+             std::clamp(extent.height,
+                        capabilities.minImageExtent.height,
+                        capabilities.maxImageExtent.height) };
 }
 
 vk::SurfaceFormatKHR render::choose_best_surface_format(
@@ -2239,6 +2232,8 @@ vk::PresentModeKHR render::choose_best_present_mode(
         // standard vertical sync. This is commonly known as "triple buffering,"
         // although the existence of three buffers alone does not necessarily
         // mean that the framerate is unlocked.
+        // On mobile devices, where energy usage is more important, you will
+        // probably want to use vk::PresentModeKHR::eFifo instead
         return vk::PresentModeKHR::eMailbox;
     }
     // The swap chain is a queue where the display takes an image from the front
@@ -2246,7 +2241,7 @@ vk::PresentModeKHR render::choose_best_present_mode(
     // rendered images at the back of the queue. If the queue is full, then the
     // program has to wait. This is most similar to vertical sync as found in
     // modern games. The moment that the display is refreshed is known as
-    // "vertical blank" guaranteed to be in any vulkan implementation
+    // "vertical blank". Guaranteed to be in any vulkan implementation
     return vk::PresentModeKHR::eFifo;
 }
 
@@ -2298,7 +2293,7 @@ vk::ShaderModule render::create_shader(std::span<std::byte> spir_v)
 
 void render::destroy_surface() noexcept
 {
-    platform_.destroy_vulkan_surface(instance, surface, nullptr);
+    platform.destroy_vulkan_surface(instance, surface, nullptr);
     log << "vulkan surface destroyed\n";
 }
 

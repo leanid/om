@@ -95,8 +95,6 @@ void platform_sdl3::destroy_vulkan_surface(
 
 platform_interface::buffer_size platform_sdl3::get_window_buffer_size()
 {
-    platform_interface::buffer_size buffer_size{};
-
     int w{};
     int h{};
 
@@ -105,10 +103,8 @@ platform_interface::buffer_size platform_sdl3::get_window_buffer_size()
         throw std::runtime_error(sdl::GetError());
     }
 
-    buffer_size.width  = static_cast<uint32_t>(w);
-    buffer_size.height = static_cast<uint32_t>(h);
-
-    return buffer_size;
+    return { .width  = static_cast<uint32_t>(w),
+             .height = static_cast<uint32_t>(h) };
 }
 
 std::ostream& platform_sdl3::get_logger() noexcept
