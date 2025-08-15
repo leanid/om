@@ -855,11 +855,11 @@ void render::create_debug_callback(bool enable_debug_callback)
         vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo |
         vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning |
         vk::DebugUtilsMessageSeverityFlagBitsEXT::eError;
-    debug_info.messageType =
-        vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral |
-        vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation |
-        vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance |
-        vk::DebugUtilsMessageTypeFlagBitsEXT::eDeviceAddressBinding;
+    debug_info.messageType = vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral |
+                             vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation |
+                             vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance;
+    //  vk::DebugUtilsMessageTypeFlagBitsEXT::eDeviceAddressBinding;
+    //  need one more extension: VK_EXT_device_address_binding_report
     debug_info.pfnUserCallback = debug_callback;
     debug_info.pUserData       = nullptr;
 
@@ -2301,7 +2301,7 @@ vk::raii::ImageView render::create_image_view(
                               .layerCount     = 1 }
     };
 
-    return {devices.logical, info};
+    return { devices.logical, info };
 }
 
 vk::ShaderModule render::create_shader(std::span<std::byte> spir_v)
