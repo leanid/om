@@ -575,14 +575,7 @@ render::render(platform_interface& platform, hints hints)
     create_debug_callback(hints.enable_debug_callback_ext);
     create_surface();
     get_physical_device();
-    validate_physical_device();
     create_logical_device();
-    // add debug names to vk objects
-    set_object_name(*instance, "om_main_instance");
-    set_object_name(*surface, "om_main_surface");
-    set_object_name(*devices.physical, "om_physical_device");
-    set_object_name(*devices.logical, "om_logical_device");
-
     create_swapchain();
     create_renderpass();
     create_graphics_pipeline();
@@ -1364,6 +1357,8 @@ void render::get_physical_device()
 
     devices.physical = std::move(*it);
 
+    validate_physical_device();
+
     log << "selected device: " << devices.physical.getProperties().deviceName
         << '\n';
 }
@@ -1550,6 +1545,12 @@ void render::create_logical_device()
             devices.logical, queue_family.index.presentation, queue_index);
         log << "got presentation queue\n";
     }
+
+    // now we can add names to main vulkan objects
+    set_object_name(*instance, "om_main_instance");
+    set_object_name(*surface, "om_main_surface");
+    set_object_name(*devices.physical, "om_physical_device");
+    set_object_name(*devices.logical, "om_logical_device");
 }
 
 inline std::ostream& operator<<(std::ostream&                     os,
