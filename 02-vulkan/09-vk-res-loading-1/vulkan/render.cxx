@@ -172,7 +172,7 @@ private:
     void create_command_buffers();
     void create_synchronization_objects();
 
-    [[nodiscard]] vk::ImageView create_image_view(
+    [[nodiscard]] vk::raii::ImageView create_image_view(
         vk::Image            image,
         vk::Format           format,
         vk::ImageAspectFlags aspect_flags) const;
@@ -264,7 +264,6 @@ private:
     static_assert(sizeof(decltype(queue_family.array)) ==
                   sizeof(queue_family.index));
 
-
     // vulkan main objects
     // vk::Instance instance;
     // dynamic loader is used to load vulkan functions for extensions
@@ -275,11 +274,11 @@ private:
     // mod(max_frames_in_gpu) used to avoid blocking the CPU
     uint32_t current_frame_index = 0;
 
-    vk::raii::SwapchainKHR         swapchain = nullptr;
-    std::vector<vk::Image>         swapchain_images;
-    std::vector<vk::ImageView>     swapchain_image_views;
-    std::vector<vk::Framebuffer>   swapchain_framebuffers;
-    std::vector<vk::CommandBuffer> command_buffers;
+    vk::raii::SwapchainKHR           swapchain = nullptr;
+    std::vector<vk::Image>           swapchain_images;
+    std::vector<vk::raii::ImageView> swapchain_image_views;
+    std::vector<vk::Framebuffer>     swapchain_framebuffers;
+    std::vector<vk::CommandBuffer>   command_buffers;
 
     // vulkan pipeline
     vk::raii::Pipeline       graphics_pipeline = nullptr;
@@ -290,7 +289,7 @@ private:
     vk::CommandPool graphics_command_pool{};
 
     // vulkan utilities
-    vk::Format   swapchain_image_format{};
+    vk::Format   swapchain_image_format{ vk::Format::eUndefined };
     vk::Extent2D swapchain_image_extent{};
 
     // sinchronization
@@ -1687,12 +1686,11 @@ void render::create_swapchain()
         << "swapchain_image_extent: " << swapchain_image_extent.width << 'x'
         << swapchain_image_extent.height << std::endl;
 
-
     swapchain_image_views.clear();
     std::ranges::transform(
         swapchain_images,
         std::back_inserter(swapchain_image_views),
-        [this](vk::Image image) -> vk::ImageView
+        [this](vk::Image image) -> vk::raii::ImageView
         {
             set_object_name(image, "om_swapchain_image");
 
@@ -2284,29 +2282,25 @@ render::swapchain_details_t render::get_swapchain_details(
     return details;
 }
 
-vk::ImageView render::create_image_view(vk::Image            image,
-                                        vk::Format           format,
-                                        vk::ImageAspectFlags aspect_flags) const
+vk::raii::ImageView render::create_image_view(
+    vk::Image image, vk::Format format, vk::ImageAspectFlags aspect_flags) const
 {
-    vk::ImageViewCreateInfo info;
-    info.image        = image;
-    info.format       = format;
-    info.viewType     = vk::ImageViewType::e2D;
-    info.components.r = vk::ComponentSwizzle::eIdentity;
-    info.components.g = vk::ComponentSwizzle::eIdentity;
-    info.components.b = vk::ComponentSwizzle::eIdentity;
-    info.components.a = vk::ComponentSwizzle::eIdentity;
-    // subresources allow the view to view only a part of image
-    auto& range          = info.subresourceRange;
-    range.aspectMask     = aspect_flags; // ColorBit etc.
-    range.baseMipLevel   = 0;            // start mip level to view from
-    range.levelCount     = 1;            // count of mip levels
-    range.baseArrayLayer = 0;            // start array level to view from
-    range.layerCount     = 1;
+    vk::ImageViewCreateInfo info{
+        .image            = image,
+        .viewType         = vk::ImageViewType::e2D,
+        .format           = format,
+        .components       = { .r = vk::ComponentSwizzle::eIdentity,
+                              .g = vk::ComponentSwizzle::eIdentity,
+                              .b = vk::ComponentSwizzle::eIdentity,
+                              .a = vk::ComponentSwizzle::eIdentity },
+        .subresourceRange = { .aspectMask     = aspect_flags,
+                              .baseMipLevel   = 0,
+                              .levelCount     = 1,
+                              .baseArrayLayer = 0,
+                              .layerCount     = 1 }
+    };
 
-    auto image_view = devices.logical.createImageView(info);
-
-    return image_view;
+    return {devices.logical, info};
 }
 
 vk::ShaderModule render::create_shader(std::span<std::byte> spir_v)
