@@ -99,9 +99,14 @@ export struct platform_interface
             return *this;
         }
 
-        [[nodiscard]] std::span<std::byte> as_span() const noexcept
+        [[nodiscard]] std::span<std::byte> as_span() noexcept
         {
-            return std::span{ memory.get(), size };
+            return { memory.get(), size };
+        }
+
+        [[nodiscard]] std::span<const std::byte> as_span() const noexcept
+        {
+            return { memory.get(), size };
         }
     }; // struct content
 
@@ -177,7 +182,7 @@ private:
         vk::Format           format,
         vk::ImageAspectFlags aspect_flags) const;
 
-    vk::raii::ShaderModule create_shader(std::span<std::byte> spir_v);
+    vk::raii::ShaderModule create_shader(std::span<const std::byte> spir_v);
 
     // record functions
     void record_commands();
@@ -2297,7 +2302,7 @@ vk::raii::ImageView render::create_image_view(
     return { devices.logical, info };
 }
 
-vk::raii::ShaderModule render::create_shader(std::span<std::byte> spir_v)
+vk::raii::ShaderModule render::create_shader(std::span<const std::byte> spir_v)
 {
     log << "create shader module\n";
     vk::ShaderModuleCreateInfo create_info{
@@ -2305,7 +2310,7 @@ vk::raii::ShaderModule render::create_shader(std::span<std::byte> spir_v)
         .pCode    = reinterpret_cast<const uint32_t*>(spir_v.data())
     };
 
-    return vk::raii::ShaderModule(devices.logical, create_info);
+    return { devices.logical, create_info };
 }
 
 void render::destroy_surface() noexcept
