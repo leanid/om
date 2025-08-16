@@ -31,7 +31,7 @@ float4 main_frag(vertex_output v): SV_Target
 // how I generate the spirv file:
 // @note I got warning that Slang's backend support
 // minimum SPIR-V 1.3, but as it still works, I ignore it
-//slangc shader.vert.slang -target spirv -o shader.vert.slang.spv -profile spirv_1_0
+// slangc shader.vert.slang -target spirv -o shader.vert.slang.spv -profile spirv_1_0
 // If I need to debug shader I should add:
 // 1. -emit-spirv-directly
 // 2. -g2
