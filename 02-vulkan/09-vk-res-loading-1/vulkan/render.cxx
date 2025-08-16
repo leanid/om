@@ -1704,6 +1704,14 @@ void render::create_swapchain()
 
 void render::create_renderpass()
 {
+    // this only needed <= Vulkan 1.2 starting from Vulkan 1.3 - use dynamic
+    // rendering EXT
+    if (hints_.vulkan_version.major == 1 && hints_.vulkan_version.minor >= 3)
+    {
+        log << "skip creating renderpass as we have >= Vulkan 1.3 and use "
+               "dynamic rendering\n";
+        return;
+    }
     // color attachment of render pass
     vk::AttachmentDescription color_attachment{};
     color_attachment.format = swapchain_image_format;
@@ -1826,8 +1834,9 @@ void render::create_graphics_pipeline()
         .pName  = "main_frag"
     };
 
-    std::array<vk::PipelineShaderStageCreateInfo, 2> stages{ stage_info_vert,
-                                                             stage_info_frag };
+    std::array<vk::PipelineShaderStageCreateInfo, 2> shader_stages{
+        stage_info_vert, stage_info_frag
+    };
     // vertex input
     // Data for a single vertex
     vk::VertexInputBindingDescription binding_description{
@@ -1989,8 +1998,8 @@ void render::create_graphics_pipeline()
 
     // Graphics Pipeline creation
     vk::GraphicsPipelineCreateInfo graphics_info{
-        .stageCount          = stages.size(),
-        .pStages             = stages.data(), // shader stages
+        .stageCount          = shader_stages.size(),
+        .pStages             = shader_stages.data(), // shader stages
         .pVertexInputState   = &vertex_input_state_info,
         .pInputAssemblyState = &input_assembly,
         .pViewportState      = &viewport_state_info,
@@ -2000,7 +2009,7 @@ void render::create_graphics_pipeline()
         .pColorBlendState    = &blending_state_info,
         .pDynamicState       = &dynamic_state_info,
         .layout              = pipeline_layout,
-        .renderPass          = render_path,
+        .renderPass          = render_path, // nullptr if >= Vulkan 1.3
         .subpass             = 0,
         // Pipeline Derivatives
         // to use vulkan less memory we can create lists of pipelines
@@ -2110,8 +2119,9 @@ void render::record_commands()
     // begin_info.flags = vk::CommandBufferUsageFlagBits::eSimultaneousUse;
 
     vk::RenderPassBeginInfo render_pass_info{};
-    render_pass_info.renderPass        = render_path;
-    render_pass_info.renderArea.offset = vk::Offset2D{ 0, 0 }; // in pixels
+    render_pass_info.renderPass = render_path;
+    render_pass_info.renderArea.offset =
+        vk::Offset2D{ .x = 0, .y = 0 }; // in pixels
     render_pass_info.renderArea.extent = swapchain_image_extent;
 
     vk::ClearValue clear_color = vk::ClearColorValue(
