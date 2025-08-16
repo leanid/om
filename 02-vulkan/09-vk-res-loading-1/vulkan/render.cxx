@@ -2011,6 +2011,7 @@ void render::create_graphics_pipeline()
     // Graphics Pipeline creation
     vk::GraphicsPipelineCreateInfo graphics_info{
         .pNext      = ptr_pipeline_rendering_create_info, // if >= vulkan 1.3
+        .flags      = { /* vk::PipelineCreateFlagBits::eDerivative */ },
         .stageCount = shader_stages.size(),
         .pStages    = shader_stages.data(), // shader stages
         .pVertexInputState   = &vertex_input_state_info,
@@ -2029,7 +2030,8 @@ void render::create_graphics_pipeline()
         // Pipeline Derivatives
         // to use vulkan less memory we can create lists of pipelines
         // so we can create first as we do and all other only with changes
-        // here we do not need it
+        // here we do not need it. Also add flags bits to graphics_info
+        // vk::PipelineCreateFlagBits::eDerivative
         .basePipelineHandle = nullptr, // existing pipeline to derive from
         .basePipelineIndex  = -1, // or index of pipeline to derive from(in case
                                   // of creating multiple at once)
