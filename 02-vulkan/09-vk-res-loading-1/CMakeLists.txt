@@ -175,7 +175,7 @@ foreach(slang_file ${slang_files})
         COMMAND
             slangc ${CMAKE_CURRENT_SOURCE_DIR}/${slang_file}
             -target spirv
-            -entry main
+            #-entry main
             -o ${spirv_file}
             -profile spirv_1_3
             # Vulkan 1.1 or later is required because the GPU

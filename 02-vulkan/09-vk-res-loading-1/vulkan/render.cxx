@@ -177,7 +177,7 @@ private:
         vk::Format           format,
         vk::ImageAspectFlags aspect_flags) const;
 
-    vk::ShaderModule create_shader(std::span<std::byte> spir_v);
+    vk::raii::ShaderModule create_shader(std::span<std::byte> spir_v);
 
     // record functions
     void record_commands();
@@ -281,6 +281,7 @@ private:
     std::vector<vk::CommandBuffer>   command_buffers;
 
     // vulkan pipeline
+    vk::raii::ShaderModule   shader_module     = nullptr;
     vk::raii::Pipeline       graphics_pipeline = nullptr;
     vk::raii::PipelineLayout pipeline_layout   = nullptr;
     vk::raii::RenderPass     render_path       = nullptr;
@@ -1796,28 +1797,20 @@ void render::create_renderpass()
 void render::create_graphics_pipeline()
 {
     // Static Pipeline States
-    auto vertex_shader_code = platform.get_file_content(
-        "./02-vulkan/09-vk-res-loading-1/shaders/shader.vert.slang.spv");
-    auto fragment_shader_code = platform.get_file_content(
-        "./02-vulkan/09-vk-res-loading-1/shaders/shader.frag.slang.spv");
+    auto vertex_and_fragment_shader_code = platform.get_file_content(
+        "./02-vulkan/09-vk-res-loading-1/shaders/shader.vert.frag.slang.spv");
     // compile shaders from spir-v into gpu code
-    vk::ShaderModule vertex = create_shader(vertex_shader_code.as_span());
-    std::experimental::scope_exit vertex_cleanup([this, &vertex]()
-                                                 { destroy(vertex); });
-
-    vk::ShaderModule fragment = create_shader(fragment_shader_code.as_span());
-    std::experimental::scope_exit fragment_cleanup([this, &fragment]()
-                                                   { destroy(fragment); });
+    shader_module = create_shader(vertex_and_fragment_shader_code.as_span());
 
     vk::PipelineShaderStageCreateInfo stage_info_vert{
         .stage  = vk::ShaderStageFlagBits::eVertex,
-        .module = vertex,
-        .pName  = "main"
+        .module = shader_module,
+        .pName  = "main_vert"
     };
     vk::PipelineShaderStageCreateInfo stage_info_frag{
         .stage  = vk::ShaderStageFlagBits::eFragment,
-        .module = fragment,
-        .pName  = "main"
+        .module = shader_module,
+        .pName  = "main_frag"
     };
 
     std::array<vk::PipelineShaderStageCreateInfo, 2> stages{ stage_info_vert,
@@ -1986,8 +1979,8 @@ void render::create_graphics_pipeline()
             // at once)
 
     graphics_pipeline =
-        devices.logical.createGraphicsPipeline(nullptr, graphics_info);
-
+        vk::raii::Pipeline(devices.logical, nullptr, graphics_info);
+    log << "create graphics pipeline\n";
     set_object_name(*graphics_pipeline, "only_graphics_pipeline");
 }
 
@@ -2304,7 +2297,7 @@ vk::raii::ImageView render::create_image_view(
     return { devices.logical, info };
 }
 
-vk::ShaderModule render::create_shader(std::span<std::byte> spir_v)
+vk::raii::ShaderModule render::create_shader(std::span<std::byte> spir_v)
 {
     log << "create shader module\n";
     vk::ShaderModuleCreateInfo create_info{
@@ -2312,7 +2305,7 @@ vk::ShaderModule render::create_shader(std::span<std::byte> spir_v)
         .pCode    = reinterpret_cast<const uint32_t*>(spir_v.data())
     };
 
-    return devices.logical.createShaderModule(create_info);
+    return vk::raii::ShaderModule(devices.logical, create_info);
 }
 
 void render::destroy_surface() noexcept
