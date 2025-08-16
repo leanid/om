@@ -1996,10 +1996,23 @@ void render::create_graphics_pipeline()
 
     // TODO: add Depth and Stensil testing
 
+    vk::PipelineRenderingCreateInfo pipeline_rendering_create_info{
+        .colorAttachmentCount    = 1,
+        .pColorAttachmentFormats = &swapchain_image_format
+    };
+
+    void* ptr_pipeline_rendering_create_info = nullptr;
+
+    if (hints_.vulkan_version.major == 1 and hints_.vulkan_version.minor >= 3)
+    {
+        ptr_pipeline_rendering_create_info = &pipeline_rendering_create_info;
+    }
+
     // Graphics Pipeline creation
     vk::GraphicsPipelineCreateInfo graphics_info{
-        .stageCount          = shader_stages.size(),
-        .pStages             = shader_stages.data(), // shader stages
+        .pNext      = ptr_pipeline_rendering_create_info, // if >= vulkan 1.3
+        .stageCount = shader_stages.size(),
+        .pStages    = shader_stages.data(), // shader stages
         .pVertexInputState   = &vertex_input_state_info,
         .pInputAssemblyState = &input_assembly,
         .pViewportState      = &viewport_state_info,
@@ -2009,7 +2022,9 @@ void render::create_graphics_pipeline()
         .pColorBlendState    = &blending_state_info,
         .pDynamicState       = &dynamic_state_info,
         .layout              = pipeline_layout,
-        .renderPass          = render_path, // nullptr if >= Vulkan 1.3
+        .renderPass          = ptr_pipeline_rendering_create_info
+                                   ? *render_path
+                                   : nullptr, // nullptr if >= Vulkan 1.3
         .subpass             = 0,
         // Pipeline Derivatives
         // to use vulkan less memory we can create lists of pipelines
