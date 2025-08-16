@@ -281,8 +281,8 @@ private:
     std::vector<vk::CommandBuffer>   command_buffers;
 
     // vulkan pipeline
-    vk::raii::Pipeline       graphics_pipeline = nullptr;
     vk::raii::PipelineLayout pipeline_layout   = nullptr;
+    vk::raii::Pipeline       graphics_pipeline = nullptr;
     vk::raii::RenderPass     render_path       = nullptr;
 
     // pools
@@ -1840,32 +1840,34 @@ void render::create_graphics_pipeline()
     };
 
     // how the data for an attribute is defined within a vertex
-    std::array<vk::VertexInputAttributeDescription, 2> attribute_description;
-    // position attribute
-    // which binding the data is at (should be same as above)
-    attribute_description[0].binding  = 0;
-    attribute_description[0].location = 0; // location in shader where data
-                                           // will be read from
+    std::array<vk::VertexInputAttributeDescription, 2> attribute_description{
+        vk::VertexInputAttributeDescription{
+            // location in shader where data will be read from
+            .location = 0,
+            // position attribute which binding the data is at (should be same
+            // as above in binding_description)
+            .binding = 0,
+            // format the data will take (also helps define size of data)
+            .format = vk::Format::eR32G32B32Sfloat,
+            // where this attribute is defined in the data for a single vertex
+            .offset = offsetof(om::vulkan::vertex, pos),
+        },
+        vk::VertexInputAttributeDescription{
+            .location = 1,
+            .binding  = 0,
+            .format   = vk::Format::eR32G32B32Sfloat,
+            .offset   = offsetof(om::vulkan::vertex, col),
+        }
+    };
 
-    // format the data will take (also helps define size of data)
-    attribute_description[0].format = vk::Format::eR32G32B32Sfloat;
-    // where this attribute is defined in the data for a single vertex
-    attribute_description[0].offset = offsetof(om::vulkan::vertex, pos);
-
-    attribute_description[1].binding  = 0;
-    attribute_description[1].location = 1;
-    attribute_description[1].format   = vk::Format::eR32G32B32Sfloat;
-    attribute_description[1].offset   = offsetof(om::vulkan::vertex, col);
-
-    vk::PipelineVertexInputStateCreateInfo vertex_input_state_info{};
-    vertex_input_state_info.vertexBindingDescriptionCount = 1;
-    vertex_input_state_info.pVertexBindingDescriptions =
-        &binding_description; // spacing/striding vertex info
-    vertex_input_state_info.vertexAttributeDescriptionCount =
-        static_cast<uint32_t>(attribute_description.size());
-    vertex_input_state_info.pVertexAttributeDescriptions =
-        attribute_description
-            .data(); // data format where/from shader attributes
+    vk::PipelineVertexInputStateCreateInfo vertex_input_state_info{
+        .vertexBindingDescriptionCount = 1,
+        // spacing/striding vertex info
+        .pVertexBindingDescriptions      = &binding_description,
+        .vertexAttributeDescriptionCount = attribute_description.size(),
+        // data format where/from shader attributes
+        .pVertexAttributeDescriptions = attribute_description.data(),
+    };
 
     // input assembly
     vk::PipelineInputAssemblyStateCreateInfo input_assembly{
@@ -1913,98 +1915,109 @@ void render::create_graphics_pipeline()
     };
 
     // Rasterizer State
-    vk::PipelineRasterizationStateCreateInfo rasterization_state_info{};
-
-    // to enable -> first enable DepthClamp in
-    // LogicalDeviceFreatures
-    rasterization_state_info.depthClampEnable = vk::False;
-    // whether to discard data and skip rasterazer
-    // never creates fragments
-    // only sutable for pipeline without framebuffer output
-    rasterization_state_info.rasterizerDiscardEnable = vk::False;
-    // how to fill points between verticles
-    rasterization_state_info.polygonMode = vk::PolygonMode::eFill;
-    // how thick line should be drawn (value > 1.0 should enable device
-    // extension)
-    rasterization_state_info.lineWidth = 1.f;
-    // which face of triangle to cull
-    rasterization_state_info.cullMode = vk::CullModeFlagBits::eBack;
-    // which triangle face is front face
-    rasterization_state_info.frontFace = vk::FrontFace::eClockwise;
-    // where to add depth bias to fragments (good for stopping "shadow acne" in
-    // shadow mapping)
-    rasterization_state_info.depthBiasEnable = vk::False;
+    vk::PipelineRasterizationStateCreateInfo rasterization_state_info{
+        // to enable -> first enable DepthClamp in
+        // LogicalDeviceFreatures
+        .depthClampEnable = vk::False,
+        // whether to discard data and skip rasterazer
+        // never creates fragments
+        // only sutable for pipeline without framebuffer output
+        .rasterizerDiscardEnable = vk::False,
+        // how to fill points between verticles
+        .polygonMode = vk::PolygonMode::eFill,
+        // which face of triangle to cull
+        .cullMode = vk::CullModeFlagBits::eBack,
+        // which triangle face is front face
+        .frontFace = vk::FrontFace::eClockwise,
+        // where to add depth bias to fragments (good for stopping "shadow acne"
+        // in shadow mapping)
+        .depthBiasEnable      = vk::False,
+        .depthBiasSlopeFactor = 1.0f,
+        // how thick line should be drawn (value > 1.0 should enable device
+        // extension)
+        .lineWidth = 1.f,
+    };
 
     // Multisampling
-    vk::PipelineMultisampleStateCreateInfo multisample_state_info{};
-    multisample_state_info.sampleShadingEnable = vk::False;
-    // number of samples to use per fragment
-    multisample_state_info.rasterizationSamples = vk::SampleCountFlagBits::e1;
+    // Because it doesn’t need to run the fragment shader multiple times if only
+    // one polygon maps to a pixel, it is significantly less expensive than
+    // simply rendering to a higher resolution and then downscaling. Enabling it
+    // requires enabling a GPU feature.
+    vk::PipelineMultisampleStateCreateInfo multisample_state_info{
+        // number of samples to use per fragment
+        .rasterizationSamples = vk::SampleCountFlagBits::e1,
+        .sampleShadingEnable  = vk::False, // disabled for now
+    };
 
-    // Blending (two fragments one - current and other - framebuffer)
-    //
-    // blend_attachment - how blending is handled
-    vk::PipelineColorBlendAttachmentState blend_attachment{};
-    blend_attachment.blendEnable = vk::True;
-    blend_attachment.colorWriteMask =
-        vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
-        vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
-    // blending use equation:
-    // (srcBlendFactor * new color) BlendOp (dstBlendFactor * old color)
-    blend_attachment.srcColorBlendFactor = vk::BlendFactor::eSrcAlpha;
-    blend_attachment.dstColorBlendFactor = vk::BlendFactor::eOneMinusSrcAlpha;
-    blend_attachment.colorBlendOp        = vk::BlendOp::eAdd;
+    // Blending
+    // (two fragments one - current and other - framebuffer)
+    // first method: blend_attachment - how blending is handled
+    vk::PipelineColorBlendAttachmentState blend_attachment{
+        .blendEnable = true, // first method true, false - second
+        // blending use equation:
+        // (srcBlendFactor * new color) BlendOp (dstBlendFactor * old color)
+        .srcColorBlendFactor = vk::BlendFactor::eSrcAlpha,
+        .dstColorBlendFactor = vk::BlendFactor::eOneMinusSrcAlpha,
+        .colorBlendOp        = vk::BlendOp::eAdd,
+        .srcAlphaBlendFactor = vk::BlendFactor::eOne,
+        .dstAlphaBlendFactor = vk::BlendFactor::eZero,
+        .alphaBlendOp        = vk::BlendOp::eAdd,
+        .colorWriteMask =
+            vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
+            vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA,
 
-    blend_attachment.srcAlphaBlendFactor = vk::BlendFactor::eOne;
-    blend_attachment.dstAlphaBlendFactor = vk::BlendFactor::eZero;
-    blend_attachment.alphaBlendOp        = vk::BlendOp::eAdd;
-
-    vk::PipelineColorBlendStateCreateInfo blending_state_info{};
-    blending_state_info.logicOpEnable   = vk::False;
-    blending_state_info.attachmentCount = 1;
-    blending_state_info.pAttachments    = &blend_attachment;
+    };
+    // second method: to blend color just copy (disabled)
+    vk::PipelineColorBlendStateCreateInfo blending_state_info{
+        .logicOpEnable   = vk::False,
+        .logicOp         = vk::LogicOp::eCopy,
+        .attachmentCount = 1,
+        .pAttachments    = &blend_attachment
+    };
+    // third method: it is also possible to disable both modes, as we’ve done
+    // here, in which case the fragment colors will be written to the
+    // framebuffer unmodified.
 
     // Pipeline layout (TODO: apply future descriptor sets)
-    vk::PipelineLayoutCreateInfo layout_info{};
+    vk::PipelineLayoutCreateInfo layout_info{ .setLayoutCount = 0,
+                                              .pushConstantRangeCount =
+                                                  0 }; // we will fill it later
 
-    // compile shaders from spir-v into gpu code happens here
-    pipeline_layout = devices.logical.createPipelineLayout(layout_info);
+    pipeline_layout = vk::raii::PipelineLayout(devices.logical, layout_info);
 
-    // TODO add Depth and Stensil testing
+    // TODO: add Depth and Stensil testing
 
     // Graphics Pipeline creation
-    vk::GraphicsPipelineCreateInfo graphics_info{};
-    graphics_info.stageCount        = static_cast<std::uint32_t>(stages.size());
-    graphics_info.pStages           = stages.data(); // shader stages
-    graphics_info.pVertexInputState = &vertex_input_state_info;
-    graphics_info.pInputAssemblyState = &input_assembly;
-    graphics_info.pViewportState      = &viewport_state_info;
-    graphics_info.pDynamicState       = &dynamic_state_info;
-    graphics_info.pRasterizationState = &rasterization_state_info;
-    graphics_info.pMultisampleState   = &multisample_state_info;
-    graphics_info.pColorBlendState    = &blending_state_info;
-    graphics_info.pDepthStencilState  = nullptr;
-    graphics_info.layout              = pipeline_layout;
-    graphics_info.renderPass          = render_path;
-    graphics_info.subpass             = 0;
-
-    // Pipeline Derivatives
-    // to use vulkan less memory we can create lists of pipelines
-    // so we can create first as we do and all other only with changes
-    // here we do not need it
-    graphics_info.basePipelineHandle =
-        nullptr; // existing pipeline to derive from
-    graphics_info.basePipelineIndex =
-        -1; // or index of pipeline to derive from(in case of creating multiple
-            // at once)
+    vk::GraphicsPipelineCreateInfo graphics_info{
+        .stageCount          = stages.size(),
+        .pStages             = stages.data(), // shader stages
+        .pVertexInputState   = &vertex_input_state_info,
+        .pInputAssemblyState = &input_assembly,
+        .pViewportState      = &viewport_state_info,
+        .pRasterizationState = &rasterization_state_info,
+        .pMultisampleState   = &multisample_state_info,
+        .pDepthStencilState  = nullptr,
+        .pColorBlendState    = &blending_state_info,
+        .pDynamicState       = &dynamic_state_info,
+        .layout              = pipeline_layout,
+        .renderPass          = render_path,
+        .subpass             = 0,
+        // Pipeline Derivatives
+        // to use vulkan less memory we can create lists of pipelines
+        // so we can create first as we do and all other only with changes
+        // here we do not need it
+        .basePipelineHandle = nullptr, // existing pipeline to derive from
+        .basePipelineIndex  = -1, // or index of pipeline to derive from(in case
+                                  // of creating multiple at once)
+    };
 
     // The compilation and linking of the SPIR-V bytecode to machine code for
     // execution by the GPU doesn’t happen until the graphics pipeline is
-    // created
+    // created. Compile shaders from spir-v into gpu code happens here
     graphics_pipeline =
         vk::raii::Pipeline(devices.logical, nullptr, graphics_info);
     log << "create graphics pipeline\n";
-    set_object_name(*graphics_pipeline, "only_graphics_pipeline");
+    set_object_name(*graphics_pipeline, "om_graphics_pipeline");
 }
 
 void render::create_framebuffers()
