@@ -2040,8 +2040,17 @@ void render::create_graphics_pipeline()
     // The compilation and linking of the SPIR-V bytecode to machine code for
     // execution by the GPU doesn’t happen until the graphics pipeline is
     // created. Compile shaders from spir-v into gpu code happens here
-    graphics_pipeline =
-        vk::raii::Pipeline(devices.logical, nullptr, graphics_info);
+    graphics_pipeline = vk::raii::Pipeline(
+        devices.logical,
+        nullptr, // The second parameter, for which we’ve passed the
+                 // nullptr argument, references an optional
+                 // vk::PipelineCache object. A pipeline cache can be used to
+                 // store and reuse data relevant to pipeline creation across
+                 // multiple calls to vkCreateGraphicsPipelines and even across
+                 // program executions if the cache is stored to a file. This
+                 // makes it possible to significantly speed up pipeline
+                 // creation at a later time.
+        graphics_info);
     log << "create graphics pipeline\n";
     set_object_name(*graphics_pipeline, "om_graphics_pipeline");
 }
