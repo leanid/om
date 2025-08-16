@@ -1802,10 +1802,23 @@ void render::create_graphics_pipeline()
     vk::raii::ShaderModule shader_module =
         create_shader(vertex_and_fragment_shader_code.as_span());
 
+    log << "create shader module\n";
+
     vk::PipelineShaderStageCreateInfo stage_info_vert{
         .stage  = vk::ShaderStageFlagBits::eVertex,
         .module = shader_module,
-        .pName  = "main_vert"
+        .pName  = "main_vert",
+        .pSpecializationInfo =
+            nullptr // It allows you to specify values for shader constants. You
+                    // can use a single shader module where its behavior can be
+                    // configured in pipeline creation by specifying different
+                    // values for the constants used in it. This is more
+                    // efficient than configuring the shader using variables at
+                    // render time, because the compiler can do optimizations
+                    // like eliminating if statements that depend on these
+                    // values. If you don’t have any constants like that, then
+                    // you can set the member to nullptr
+
     };
     vk::PipelineShaderStageCreateInfo stage_info_frag{
         .stage  = vk::ShaderStageFlagBits::eFragment,
@@ -1817,14 +1830,14 @@ void render::create_graphics_pipeline()
                                                              stage_info_frag };
     // vertex input
     // Data for a single vertex
-    vk::VertexInputBindingDescription binding_description;
-    binding_description.binding = 0; // can bind multiple streams of data,
-                                     // define which
-    binding_description.stride = sizeof(om::vulkan::vertex);
-    // how to move detween data after next vertex
-    // vk::VertexInputRate::eVertex   : move to next vertex
-    // vk::VertexInputRate::eInstance : move to vertex for next instance
-    binding_description.inputRate = vk::VertexInputRate::eVertex;
+    vk::VertexInputBindingDescription binding_description{
+        .binding = 0, // can bind multiple streams of data, define which
+        .stride  = sizeof(om::vulkan::vertex),
+        // how to move detween data after next vertex
+        // vk::VertexInputRate::eVertex : move to next vertex
+        // vk::VertexInputRate::eInstance : move to vertex for next instance
+        .inputRate = vk::VertexInputRate::eVertex
+    };
 
     // how the data for an attribute is defined within a vertex
     std::array<vk::VertexInputAttributeDescription, 2> attribute_description;
@@ -1855,43 +1868,49 @@ void render::create_graphics_pipeline()
             .data(); // data format where/from shader attributes
 
     // input assembly
-    vk::PipelineInputAssemblyStateCreateInfo input_assembly{};
-    input_assembly.topology = vk::PrimitiveTopology::eTriangleList;
-    input_assembly.primitiveRestartEnable =
-        vk::False; // allow override "strip" topology to start new privitives
+    vk::PipelineInputAssemblyStateCreateInfo input_assembly{
+        .topology = vk::PrimitiveTopology::eTriangleList,
+        // Normally, the vertices are loaded from the vertex buffer by index in
+        // sequential order, but with an element buffer you can specify the
+        // indices to use yourself. This allows you to perform optimizations
+        // like reusing vertices. If you set the primitiveRestartEnable member
+        // to VK_TRUE, then it’s possible to break up lines and triangles in the
+        // _STRIP topology modes by using a special index of 0xFFFF or
+        // 0xFFFFFFFF.
+        .primitiveRestartEnable = false,
+    };
 
     // viewport and scissor
-    vk::Viewport viewport{};
-    viewport.x        = 0.f;
-    viewport.y        = 0.f;
-    viewport.width    = static_cast<float>(swapchain_image_extent.width);
-    viewport.height   = static_cast<float>(swapchain_image_extent.height);
-    viewport.minDepth = 0.f; // min framebuffer depth
-    viewport.maxDepth = 1.f; // max framebuffer depth
+    vk::Viewport viewport{
+        .x        = 0.f,
+        .y        = 0.f,
+        .width    = static_cast<float>(swapchain_image_extent.width),
+        .height   = static_cast<float>(swapchain_image_extent.height),
+        .minDepth = 0.f, // min framebuffer depth
+        .maxDepth = 1.f  // max framebuffer depth
+    };
 
-    vk::Rect2D scissor{};
-    scissor.offset = { .x = 0, .y = 0 };     // offset to use region from
-    scissor.extent = swapchain_image_extent; // region extent
+    vk::Rect2D scissor{ .offset = vk::Offset2D{ .x = 0, .y = 0 },
+                        .extent = swapchain_image_extent };
 
-    vk::PipelineViewportStateCreateInfo viewport_state_info{ .viewportCount = 1,
-                                                             .pViewports =
-                                                                 &viewport,
-                                                             .scissorCount = 1,
-                                                             .pScissors =
-                                                                 &scissor };
-    // // Dynamic Pipeline States - we need some parts not to be backed in
-    // pipeline
-    // // enable dynamic states
-    // // we need on every resize of Window change our pipeline viewport and
-    // // scissor
-    // // NOTE: remember to always to recreate swapchain images if you resize
-    // // window
-    // std::array<vk::DynamicState, 2> dynamic_states{
-    //     vk::DynamicState::eViewport, vk::DynamicState::eScissor
-    // };
+    vk::PipelineViewportStateCreateInfo viewport_state_info{
+        .viewportCount = 1,
+        .scissorCount  = 1,
+    }; // The actual viewport(s) and scissor rectangle(s) will then later be set
+       // up at drawing time.
 
-    // vk::PipelineDynamicStateCreateInfo dynamic_state_info{ {}, dynamic_states
-    // };
+    // Dynamic Pipeline States - we need some parts not to be backed in
+    // pipeline This is widespread and all implementations can handle this
+    // dynamic state without a performance penalty NOTE: remember always to
+    // recreate swapchain images if you resize window
+    std::array<vk::DynamicState, 2> dynamic_states{
+        vk::DynamicState::eViewport, vk::DynamicState::eScissor
+    };
+
+    vk::PipelineDynamicStateCreateInfo dynamic_state_info{
+        .dynamicStateCount = dynamic_states.size(),
+        .pDynamicStates    = dynamic_states.data()
+    };
 
     // Rasterizer State
     vk::PipelineRasterizationStateCreateInfo rasterization_state_info{};
@@ -1960,7 +1979,7 @@ void render::create_graphics_pipeline()
     graphics_info.pVertexInputState = &vertex_input_state_info;
     graphics_info.pInputAssemblyState = &input_assembly;
     graphics_info.pViewportState      = &viewport_state_info;
-    graphics_info.pDynamicState       = nullptr;
+    graphics_info.pDynamicState       = &dynamic_state_info;
     graphics_info.pRasterizationState = &rasterization_state_info;
     graphics_info.pMultisampleState   = &multisample_state_info;
     graphics_info.pColorBlendState    = &blending_state_info;
@@ -2303,7 +2322,6 @@ vk::raii::ImageView render::create_image_view(
 
 vk::raii::ShaderModule render::create_shader(std::span<const std::byte> spir_v)
 {
-    log << "create shader module\n";
     vk::ShaderModuleCreateInfo create_info{
         .codeSize = spir_v.size(),
         .pCode    = reinterpret_cast<const uint32_t*>(spir_v.data())
