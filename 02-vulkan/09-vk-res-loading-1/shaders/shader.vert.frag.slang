@@ -11,7 +11,7 @@ struct vertex_output
     float3 frag_col;
 };
 
-[[shader("vertex")]]
+[shader("vertex")]
 vertex_output main_vert(vertex_in v)
 {
     vertex_output output;
@@ -20,8 +20,8 @@ vertex_output main_vert(vertex_in v)
     return output;
 }
 
-[[shader("fragment")]]
-float4 main_frag(vertex_output v): SV_Target0
+[shader("fragment")]
+float4 main_frag(vertex_output v): SV_Target
 {
     // we need to add alpha value to result color
     return float4(v.frag_col, 1.0);
