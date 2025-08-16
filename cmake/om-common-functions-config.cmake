@@ -98,5 +98,5 @@ function(om_add_slang_shader_target TARGET)
         list(APPEND spirv_files ${spirv_file})
     endforeach()
 
-    add_custom_target(${TARGET} ALL DEPENDS ${spirv_files})
+    add_custom_target(${TARGET} DEPENDS ${spirv_files})
 endfunction()
