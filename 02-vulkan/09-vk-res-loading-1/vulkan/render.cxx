@@ -103,11 +103,6 @@ export struct platform_interface
         {
             return { memory.get(), size };
         }
-
-        [[nodiscard]] std::span<const std::byte> as_span() const noexcept
-        {
-            return { memory.get(), size };
-        }
     }; // struct content
 
     virtual extensions     get_vulkan_extensions() = 0;
@@ -286,7 +281,6 @@ private:
     std::vector<vk::CommandBuffer>   command_buffers;
 
     // vulkan pipeline
-    vk::raii::ShaderModule   shader_module     = nullptr;
     vk::raii::Pipeline       graphics_pipeline = nullptr;
     vk::raii::PipelineLayout pipeline_layout   = nullptr;
     vk::raii::RenderPass     render_path       = nullptr;
@@ -1804,8 +1798,9 @@ void render::create_graphics_pipeline()
     // Static Pipeline States
     auto vertex_and_fragment_shader_code = platform.get_file_content(
         "./02-vulkan/09-vk-res-loading-1/shaders/shader.vert.frag.slang.spv");
-    // compile shaders from spir-v into gpu code
-    shader_module = create_shader(vertex_and_fragment_shader_code.as_span());
+
+    vk::raii::ShaderModule shader_module =
+        create_shader(vertex_and_fragment_shader_code.as_span());
 
     vk::PipelineShaderStageCreateInfo stage_info_vert{
         .stage  = vk::ShaderStageFlagBits::eVertex,
@@ -1953,6 +1948,7 @@ void render::create_graphics_pipeline()
     // Pipeline layout (TODO: apply future descriptor sets)
     vk::PipelineLayoutCreateInfo layout_info{};
 
+    // compile shaders from spir-v into gpu code happens here
     pipeline_layout = devices.logical.createPipelineLayout(layout_info);
 
     // TODO add Depth and Stensil testing
@@ -1983,6 +1979,9 @@ void render::create_graphics_pipeline()
         -1; // or index of pipeline to derive from(in case of creating multiple
             // at once)
 
+    // The compilation and linking of the SPIR-V bytecode to machine code for
+    // execution by the GPU doesn’t happen until the graphics pipeline is
+    // created
     graphics_pipeline =
         vk::raii::Pipeline(devices.logical, nullptr, graphics_info);
     log << "create graphics pipeline\n";
@@ -2309,7 +2308,7 @@ vk::raii::ShaderModule render::create_shader(std::span<const std::byte> spir_v)
         .codeSize = spir_v.size(),
         .pCode    = reinterpret_cast<const uint32_t*>(spir_v.data())
     };
-
+    // no shader compilation happens here!
     return { devices.logical, create_info };
 }
 
