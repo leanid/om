@@ -66,14 +66,14 @@ function(om_add_slang_shader_target TARGET)
     # cmake-format: off
     cmake_parse_arguments(
         PARSE_ARGV 1 # skip TARGET name
-        "SHADER" # prefix
+        "shader" # prefix
         "" # options
         "" # one_value_keywords
         "SOURCES" # multi_value_keywords
         )
     # cmake-format: on
 
-    foreach(slang_file ${SHADER_SOURCES})
+    foreach(slang_file ${shader_SOURCES})
         set(spirv_file "${CMAKE_CURRENT_SOURCE_DIR}/${slang_file}.spv")
 
         # Add custom command to compile shader file to SPIR-V
