@@ -169,7 +169,7 @@ private:
     void create_graphics_pipeline();
     void create_framebuffers();
     void create_command_pool();
-    void create_command_buffers();
+    void create_command_buffer();
     void create_synchronization_objects();
 
     [[nodiscard]] vk::raii::ImageView create_image_view(
@@ -180,8 +180,14 @@ private:
     vk::raii::ShaderModule create_shader(std::span<const std::byte> spir_v);
 
     // record functions
-    void record_commands();
-
+    void record_commands(std::uint32_t image_index);
+    void transition_image_layout(uint32_t                image_index,
+                                 vk::ImageLayout         old_layout,
+                                 vk::AccessFlags2        src_access_mask,
+                                 vk::PipelineStageFlags2 src_stage_mask,
+                                 vk::ImageLayout         new_layout,
+                                 vk::AccessFlags2        dst_access_mask,
+                                 vk::PipelineStageFlags2 dst_stage_mask);
     // destroy functions
     void destroy_synchronization_objects() noexcept;
     void destroy_debug_callback() noexcept;
@@ -277,16 +283,18 @@ private:
     vk::raii::SwapchainKHR           swapchain = nullptr;
     std::vector<vk::Image>           swapchain_images;
     std::vector<vk::raii::ImageView> swapchain_image_views;
-    std::vector<vk::Framebuffer>     swapchain_framebuffers;
-    std::vector<vk::CommandBuffer>   command_buffers;
+
+    std::vector<vk::Framebuffer> swapchain_framebuffers; // not used vulkan 1.3+
 
     // vulkan pipeline
     vk::raii::PipelineLayout pipeline_layout   = nullptr;
     vk::raii::Pipeline       graphics_pipeline = nullptr;
-    vk::raii::RenderPass     render_path       = nullptr;
+    vk::raii::RenderPass     render_path = nullptr; // not used vulkan 1.3+
 
     // pools
-    vk::CommandPool graphics_command_pool{};
+    vk::raii::CommandPool graphics_command_pool = nullptr;
+
+    vk::raii::CommandBuffer command_buffer = nullptr;
 
     // vulkan utilities
     vk::Format   swapchain_image_format{ vk::Format::eUndefined };
@@ -577,13 +585,11 @@ render::render(platform_interface& platform, hints hints)
     get_physical_device();
     create_logical_device();
     create_swapchain();
-    create_renderpass();
+    create_renderpass(); // only < vulkan 1.3
     create_graphics_pipeline();
-    create_framebuffers();
+    create_framebuffers(); // only < vulkan 1.3
     create_command_pool();
-    create_command_buffers();
-    record_commands();
-    create_synchronization_objects();
+    create_command_buffer();
 
     // clang-format off
     std::vector<vertex> mesh_verticles = {
@@ -599,6 +605,9 @@ render::render(platform_interface& platform, hints hints)
 
     first_mesh = mesh(
         devices.physical, devices.logical, std::span{ mesh_verticles }, *this);
+
+    record_commands(0u);
+    create_synchronization_objects();
 }
 
 render::~render()
@@ -616,8 +625,7 @@ render::~render()
 
         destroy_synchronization_objects();
         log << "vulkan synchronization objects destroyed\n";
-        (*devices.logical)
-            .freeCommandBuffers(graphics_command_pool, command_buffers);
+        command_buffer.clear();
         log << "vulkan command buffers freed\n";
         (*devices.logical).destroyCommandPool(graphics_command_pool);
         log << "vulkan destroy command pool\n";
@@ -711,8 +719,8 @@ void render::draw()
         vk::PipelineStageFlags wait_stages =
             vk::PipelineStageFlagBits::eColorAttachmentOutput;
 
-        auto& cmd_buffer = command_buffers.at(
-            index_from_swapchain); // index_from_swapchain current_frame_index
+        auto& cmd_buffer =
+            command_buffer; // index_from_swapchain current_frame_index
 
         vk::SubmitInfo submit_info{};
         submit_info.waitSemaphoreCount = 1;
@@ -720,7 +728,7 @@ void render::draw()
             &synchronization.image_available.at(index_from_swapchain);
         submit_info.pWaitDstStageMask    = &wait_stages;
         submit_info.commandBufferCount   = 1;
-        submit_info.pCommandBuffers      = &cmd_buffer;
+        submit_info.pCommandBuffers      = &*cmd_buffer;
         submit_info.signalSemaphoreCount = 1;
         submit_info.pSignalSemaphores =
             &synchronization.render_finished.at(index_from_swapchain);
@@ -1514,8 +1522,10 @@ void render::create_logical_device()
                        vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>
         feature_chain = {
             {}, // vk::PhysicalDeviceFeatures2 (empty for now)
-            { .dynamicRendering =
-                  true }, // Enable dynamic rendering from Vulkan 1.3
+            {
+                .synchronization2 = true,
+                .dynamicRendering = true,
+            }, // Enable dynamic rendering from Vulkan 1.3
             { .extendedDynamicState =
                   true } // Enable extended dynamic state from the extension
         };
@@ -2057,6 +2067,12 @@ void render::create_graphics_pipeline()
 
 void render::create_framebuffers()
 {
+    if (hints_.vulkan_version.major == 1 && hints_.vulkan_version.minor >= 3)
+    {
+        log << "skip creating framebuffers object - use vulkan 1.3+ dynamic "
+               "rendering\n";
+        return;
+    }
     swapchain_framebuffers.reserve(swapchain_images.size());
 
     auto gen_framebuffer = [&, count = 0](const vk::ImageView& view) mutable
@@ -2076,6 +2092,7 @@ void render::create_framebuffers()
         {
             throw std::runtime_error("can't create framebuffer");
         }
+        log << "create framebuffer_" << count << '\n';
         set_object_name(framebuffer,
                         "om_framebuffer_" + std::to_string(count++));
         return framebuffer;
@@ -2088,114 +2105,151 @@ void render::create_framebuffers()
 
 void render::create_command_pool()
 {
+    vk::CommandPoolCreateInfo info{
+        .flags = vk::CommandPoolCreateFlagBits::
+            eResetCommandBuffer, // Allow command buffers to be rerecorded
+                                 // individually, without this flag they all
+                                 // have to be reset together
+        .queueFamilyIndex = queue_family.index.graphics,
+    };
+
+    graphics_command_pool = vk::raii::CommandPool(devices.logical, info);
+
     log << "create command pool\n";
 
-    vk::CommandPoolCreateInfo info{};
-    info.queueFamilyIndex = 0; /* queue_indexes.graphics_family; */
-    info.flags            = vk::CommandPoolCreateFlagBits::eResetCommandBuffer;
-    graphics_command_pool = devices.logical.createCommandPool(info);
-
-    if (!graphics_command_pool)
-    {
-        throw std::runtime_error("error: can't create graphics command pool");
-    }
-
-    set_object_name(graphics_command_pool, "om_graphics_cmd_pool");
+    set_object_name(*graphics_command_pool, "om_graphics_cmd_pool");
 }
 
-void render::create_command_buffers()
+void render::create_command_buffer()
 {
     log << "create command buffers count: " << swapchain_framebuffers.size()
         << "\n";
 
-    vk::CommandBufferAllocateInfo info{};
-    info.commandPool = graphics_command_pool;
-    info.level       = vk::CommandBufferLevel::ePrimary;
-    // vk::CommandBufferLevel::ePrimary; // can't be called from other buffers
-    //                                   // only will be executed by the queue
-    // vk::CommandBufferLevel::eSecondary; // Buffer can't be called directly.
-    //                                     // Can be called from other command
-    //                                     // using vkCmdExecuteCommands when
-    //                                     // recording commands in primary
-    //                                     // buffer
-    info.commandBufferCount =
-        static_cast<std::uint32_t>(swapchain_framebuffers.size());
-
-    command_buffers = (*devices.logical).allocateCommandBuffers(info);
-
-    if (command_buffers.empty())
-    {
-        throw std::runtime_error("error: can't allocate command buffers");
-    }
-
-    std::ranges::for_each(command_buffers,
-                          [this, count = 0](vk::CommandBuffer& buffer) mutable
-                          {
-                              set_object_name(buffer,
-                                              "command_buffer_per_swapchain_" +
-                                                  std::to_string(count++));
-                          });
-}
-
-void render::record_commands()
-{
-    vk::CommandBufferBeginInfo begin_info{};
-    // can be submitted multiple times without waiting for previous submission
-    // we do not need to use simutaneous use cause we have start using fence
-    // begin_info.flags = vk::CommandBufferUsageFlagBits::eSimultaneousUse;
-
-    vk::RenderPassBeginInfo render_pass_info{};
-    render_pass_info.renderPass = render_path;
-    render_pass_info.renderArea.offset =
-        vk::Offset2D{ .x = 0, .y = 0 }; // in pixels
-    render_pass_info.renderArea.extent = swapchain_image_extent;
-
-    vk::ClearValue clear_color = vk::ClearColorValue(
-        std::array<float, 4>{ 0.6f, 0.65f, 0.4f, 1.f }); // RGBA
-
-    render_pass_info.pClearValues = &clear_color; // TODO depth attachment later
-    render_pass_info.clearValueCount = 1;
-
-    auto record_commands =
-        [&](std::tuple<vk::CommandBuffer&, vk::Framebuffer&> cmd_and_fb)
-    {
-        auto& [buffer, fb] = cmd_and_fb;
-        // start recording
-        buffer.begin(begin_info, dynamic_loader);
-        {
-            render_pass_info.framebuffer = fb;
-            buffer.beginRenderPass(
-                render_pass_info, vk::SubpassContents::eInline, dynamic_loader);
-            {
-
-                buffer.bindPipeline(vk::PipelineBindPoint::eGraphics,
-                                    graphics_pipeline,
-                                    dynamic_loader);
-                std::array<vk::Buffer, 1> buffers{
-                    first_mesh.get_vertex_buffer()
-                };
-                std::array<vk::DeviceSize, 1> offsets{ 0 };
-
-                buffer.bindVertexBuffers(0, // first binding
-                                         buffers,
-                                         offsets,
-                                         dynamic_loader);
-
-                buffer.draw(first_mesh.get_vertex_count(),
-                            1, // 1 instance
-                            0, // first vertex
-                            0, // first instance
-                            dynamic_loader);
-            }
-            buffer.endRenderPass(dynamic_loader);
-        }
-        // finish recording
-        buffer.end(dynamic_loader);
+    vk::CommandBufferAllocateInfo info{
+        .commandPool = graphics_command_pool,
+        .level       = vk::CommandBufferLevel::ePrimary,
+        // vk::CommandBufferLevel::ePrimary; Can be submitted to a queue for
+        // execution, but cannot be called from other command buffers.
+        // vk::CommandBufferLevel::eSecondary; Cannot be submitted directly, but
+        // can be called from primary command buffers. it’s helpful to reuse
+        // common operations from primary command buffers
+        .commandBufferCount = 1u,
     };
 
-    std::ranges::for_each(
-        std::views::zip(command_buffers, swapchain_framebuffers),
-        record_commands);
+    command_buffer =
+        std::move(vk::raii::CommandBuffers(devices.logical, info).front());
+    set_object_name(*command_buffer, "command_buffer_0");
+}
+
+void render::record_commands(std::uint32_t image_index)
+{
+    command_buffer.begin({});
+
+    // Before starting rendering, transition the swapchain image to
+    // COLOR_ATTACHMENT_OPTIMAL
+    transition_image_layout(
+        image_index,
+        vk::ImageLayout::eUndefined, // old_layout
+        {}, // srcAccessMask (no need to wait for previous operations)
+        vk::PipelineStageFlagBits2::eTopOfPipe,            // srcStage
+        vk::ImageLayout::eColorAttachmentOptimal,          // new_layout
+        vk::AccessFlagBits2::eColorAttachmentWrite,        // dstAccessMask
+        vk::PipelineStageFlagBits2::eColorAttachmentOutput // dstStage
+    );
+
+    vk::ClearValue clear_color =
+        vk::ClearColorValue(0.0f, 0.0f, 0.0f, 1.0f); // BGRA?
+    vk::RenderingAttachmentInfo attachment_info = {
+        .imageView   = swapchain_image_views[image_index],
+        .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
+        // The loadOp parameter specifies what to do with the image before
+        // rendering
+        .loadOp = vk::AttachmentLoadOp::eClear,
+        // storeOp parameter specifies what to do with the image after rendering
+        .storeOp    = vk::AttachmentStoreOp::eStore,
+        .clearValue = clear_color
+    };
+
+    vk::RenderingInfo rendering_info = {
+        .renderArea           = { .offset = { .x = 0, .y = 0 },
+                                  .extent = swapchain_image_extent },
+        .layerCount           = 1,
+        .colorAttachmentCount = 1,
+        .pColorAttachments    = &attachment_info
+    };
+
+    command_buffer.beginRendering(rendering_info);
+
+    command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics,
+                                graphics_pipeline);
+    command_buffer.setViewport(
+        0, // first_viewport
+        vk::Viewport(
+            0.0f,                                              // x
+            0.0f,                                              // y
+            static_cast<float>(swapchain_image_extent.width),  // width
+            static_cast<float>(swapchain_image_extent.height), // height
+            0.0f,                                              // minDepth
+            1.0f));                                            // maxDepth
+    command_buffer.setScissor(
+        0, // first_scissor
+        vk::Rect2D(vk::Offset2D(0, 0), swapchain_image_extent));
+
+    std::array<vk::Buffer, 1>     buffers{ first_mesh.get_vertex_buffer() };
+    std::array<vk::DeviceSize, 1> offsets{ 0 };
+
+    command_buffer.bindVertexBuffers(0, // first binding
+                                     buffers,
+                                     offsets);
+
+    command_buffer.draw(3, // vertex count
+                        1, // instance count
+                        0, // first vertex used as offset
+                        0  // first instance used as offset
+    );
+    command_buffer.endRendering();
+    // After rendering, transition the swapchain image to ePresentSrcKHR
+    transition_image_layout(
+        image_index,
+        vk::ImageLayout::eColorAttachmentOptimal,           // old layout
+        vk::AccessFlagBits2::eColorAttachmentWrite,         // srcAccessMask
+        vk::PipelineStageFlagBits2::eColorAttachmentOutput, // srcStage
+        vk::ImageLayout::ePresentSrcKHR,                    // new layout
+        {},                                                 // dstAccessMask
+        vk::PipelineStageFlagBits2::eBottomOfPipe           // dstStage
+    );
+
+    command_buffer.end();
+}
+
+void render::transition_image_layout(uint32_t                image_index,
+                                     vk::ImageLayout         old_layout,
+                                     vk::AccessFlags2        src_access_mask,
+                                     vk::PipelineStageFlags2 src_stage_mask,
+                                     vk::ImageLayout         new_layout,
+                                     vk::AccessFlags2        dst_access_mask,
+                                     vk::PipelineStageFlags2 dst_stage_mask)
+{
+    vk::ImageMemoryBarrier2 barrier = {
+        .srcStageMask        = src_stage_mask,
+        .srcAccessMask       = src_access_mask,
+        .dstStageMask        = dst_stage_mask,
+        .dstAccessMask       = dst_access_mask,
+        .oldLayout           = old_layout,
+        .newLayout           = new_layout,
+        .srcQueueFamilyIndex = vk::QueueFamilyIgnored,
+        .dstQueueFamilyIndex = vk::QueueFamilyIgnored,
+        .image               = swapchain_images[image_index],
+        .subresourceRange    = { .aspectMask     = vk::ImageAspectFlagBits::eColor,
+                                 .baseMipLevel   = 0,
+                                 .levelCount     = 1,
+                                 .baseArrayLayer = 0,
+                                 .layerCount     = 1 }
+    };
+    vk::DependencyInfo dependencyInfo = { .dependencyFlags         = {},
+                                          .imageMemoryBarrierCount = 1,
+                                          .pImageMemoryBarriers    = &barrier };
+    command_buffer.pipelineBarrier2(dependencyInfo);
 }
 
 void render::create_synchronization_objects()
