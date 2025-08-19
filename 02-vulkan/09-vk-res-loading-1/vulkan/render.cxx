@@ -303,9 +303,20 @@ private:
     // sinchronization
     struct
     {
-        std::vector<vk::Semaphore> image_available{}; // GPU to GPU only sync
-        std::vector<vk::Semaphore> render_finished{}; // GPU to CPU sync
-        std::vector<vk::Fence>     gpu_fence{};
+        struct
+        {
+            // image has been acquired from the swapchain and is ready for
+            // rendering (GPU - GPU)
+            vk::raii::Semaphore present_complete = nullptr;
+            // signal that rendering has finished and presentation can happen
+            vk::raii::Semaphore render_finished = nullptr; // (GPU - GPU)
+        } semaphore;
+        // only one frame at a time can be rendered (GPU - CPU)
+        vk::raii::Fence draw_fence = nullptr;
+
+        // std::vector<vk::Semaphore> image_available{}; // GPU to GPU only sync
+        // std::vector<vk::Semaphore> render_finished{}; // GPU to CPU sync
+        // std::vector<vk::Fence>     gpu_fence{};
     } synchronization;
 
     const std::vector<const char*> required_device_extensions{
@@ -590,6 +601,7 @@ render::render(platform_interface& platform, hints hints)
     create_framebuffers(); // only < vulkan 1.3
     create_command_pool();
     create_command_buffer();
+    create_synchronization_objects();
 
     // clang-format off
     std::vector<vertex> mesh_verticles = {
@@ -605,9 +617,6 @@ render::render(platform_interface& platform, hints hints)
 
     first_mesh = mesh(
         devices.physical, devices.logical, std::span{ mesh_verticles }, *this);
-
-    record_commands(0u);
-    create_synchronization_objects();
 }
 
 render::~render()
@@ -672,94 +681,54 @@ void render::draw()
     // 3. Present image to screen when it has signaled finished drawing
 
     // Get Image from swapchain
-    uint32_t index_from_swapchain = std::numeric_limits<uint32_t>::max();
+    auto [result, image_index] = swapchain.acquireNextImage(
+        std::numeric_limits<uint64_t>::max(), // timeout
+        *synchronization.semaphore.present_complete,
+        nullptr);
+
+    if (result != vk::Result::eSuccess)
     {
-        auto fence_op_result =
-            (*devices.logical)
-                .waitForFences(
-                    1, // fenceCount
-                    &synchronization.gpu_fence.at(current_frame_index),
-                    vk::True,                            // waitAll
-                    std::numeric_limits<uint64_t>::max() // timeout
-                );
-
-        if (fence_op_result != vk::Result::eSuccess)
-        {
-            throw std::runtime_error("error: can't wait for fence");
-        }
-
-        fence_op_result = (*devices.logical)
-                              .resetFences(1, // fenceCount
-                                           &synchronization.gpu_fence.at(
-                                               current_frame_index));
-
-        if (fence_op_result != vk::Result::eSuccess)
-        {
-            throw std::runtime_error("error: can't reset fence");
-        }
-
-        auto image_index =
-            (*devices.logical)
-                .acquireNextImageKHR(
-                    swapchain,
-                    std::numeric_limits<uint64_t>::max(), // timeout
-                    synchronization.image_available.at(current_frame_index),
-                    {} // fence
-                );
-
-        if (image_index.result != vk::Result::eSuccess)
-        {
-            throw std::runtime_error("error: can't acquire next image");
-        }
-        index_from_swapchain = image_index.value;
+        throw std::runtime_error("error: can't acquire next image");
     }
 
-    // Submit command buffer to queue
+    record_commands(image_index);
+    // We need to make sure that the fence is reset if the previous frame has
+    // already happened, so we know to wait on it later.
+    devices.logical.resetFences(*synchronization.draw_fence);
+
+    vk::PipelineStageFlags wait_dst_stage_mask(
+        vk::PipelineStageFlagBits::eColorAttachmentOutput);
+
+    const auto submitInfo =
+        vk::SubmitInfo{}
+            .setWaitSemaphores(*synchronization.semaphore.present_complete)
+            .setWaitDstStageMask(wait_dst_stage_mask)
+            .setCommandBuffers(*command_buffer)
+            .setSignalSemaphores(*synchronization.semaphore.render_finished);
+
+    graphics_queue.submit(submitInfo, *synchronization.draw_fence);
+
+    // Now we want the CPU to wait while the GPU finishes rendering that frame
+    // we just submitted
+    while (vk::Result::eTimeout ==
+           devices.logical.waitForFences(
+               *synchronization.draw_fence,
+               vk::True,
+               std::numeric_limits<std::uint64_t>::max()))
+        ;
+
+    const auto present_info =
+        vk::PresentInfoKHR{}
+            .setWaitSemaphores(*synchronization.semaphore.render_finished)
+            .setSwapchains(*swapchain)
+            .setImageIndices(image_index);
+
+    result = graphics_queue.presentKHR(present_info);
+
+    if (result != vk::Result::eSuccess)
     {
-        vk::PipelineStageFlags wait_stages =
-            vk::PipelineStageFlagBits::eColorAttachmentOutput;
-
-        auto& cmd_buffer =
-            command_buffer; // index_from_swapchain current_frame_index
-
-        vk::SubmitInfo submit_info{};
-        submit_info.waitSemaphoreCount = 1;
-        submit_info.pWaitSemaphores =
-            &synchronization.image_available.at(index_from_swapchain);
-        submit_info.pWaitDstStageMask    = &wait_stages;
-        submit_info.commandBufferCount   = 1;
-        submit_info.pCommandBuffers      = &*cmd_buffer;
-        submit_info.signalSemaphoreCount = 1;
-        submit_info.pSignalSemaphores =
-            &synchronization.render_finished.at(index_from_swapchain);
-
-        graphics_queue.submit(
-            submit_info,
-            // set fence to vk::True after queue finish execution
-            synchronization.gpu_fence.at(index_from_swapchain));
+        throw std::runtime_error("error: present failed");
     }
-
-    // Present image to screen
-    {
-        vk::PresentInfoKHR present_info{};
-        present_info.waitSemaphoreCount = 1;
-        present_info.pWaitSemaphores =
-            &synchronization.render_finished.at(index_from_swapchain);
-        present_info.swapchainCount = 1;
-        present_info.pSwapchains    = &(*swapchain);
-        present_info.pImageIndices  = &index_from_swapchain;
-
-        auto result = graphics_queue.presentKHR(present_info);
-
-        if (result != vk::Result::eSuccess)
-        {
-            throw std::runtime_error("error: can't present image to screen");
-        }
-    }
-
-    current_frame_index =
-        (current_frame_index + 1) %
-        synchronization.image_available.size(); // max_frames_in_gpu;
 }
 
 void render::create_instance(bool enable_validation_layers,
@@ -2254,56 +2223,22 @@ void render::transition_image_layout(uint32_t                image_index,
 
 void render::create_synchronization_objects()
 {
-    synchronization.image_available.resize(swapchain_images.size());
-    synchronization.render_finished.resize(swapchain_images.size());
-    synchronization.gpu_fence.resize(swapchain_images.size());
+    synchronization.semaphore.render_finished =
+        vk::raii::Semaphore(devices.logical, vk::SemaphoreCreateInfo{});
+    set_object_name(*synchronization.semaphore.render_finished,
+                    "render_finished_sem");
 
-    struct gen_sem
-    {
-        render&     self;
-        std::string name;
-        int         index;
+    synchronization.semaphore.present_complete =
+        vk::raii::Semaphore(devices.logical, vk::SemaphoreCreateInfo{});
+    set_object_name(*synchronization.semaphore.present_complete,
+                    "present_complete_sem");
 
-        vk::Semaphore operator()()
-        {
-            auto semaphore = (*self.devices.logical).createSemaphore({});
-            self.set_object_name(semaphore, name + std::to_string(index++));
-            return semaphore;
-        }
-    };
-
-    std::ranges::generate(
-        synchronization.image_available,
-        gen_sem{ .self = *this, .name = "image_available_", .index = 0 });
-
-    std::ranges::generate(
-        synchronization.render_finished,
-        gen_sem{ .self = *this, .name = "render_finished_", .index = 0 });
-
-    std::ranges::generate(synchronization.gpu_fence,
-                          [this, i = 0]() mutable
-                          {
-                              vk::FenceCreateInfo info{};
-                              info.flags = vk::FenceCreateFlagBits::eSignaled;
-                              auto fence = (*devices.logical).createFence(info);
-                              set_object_name(fence,
-                                              "fence_" + std::to_string(i++));
-                              return fence;
-                          });
+    synchronization.draw_fence = vk::raii::Fence(
+        devices.logical, { .flags = vk::FenceCreateFlagBits::eSignaled });
+    set_object_name(*synchronization.draw_fence, "draw_fence");
 }
 
-void render::destroy_synchronization_objects() noexcept
-{
-    auto destroy_sem = [this](vk::Semaphore& semaphore)
-    { (*devices.logical).destroy(semaphore); };
-
-    std::ranges::for_each(synchronization.image_available, destroy_sem);
-    std::ranges::for_each(synchronization.render_finished, destroy_sem);
-
-    std::ranges::for_each(synchronization.gpu_fence,
-                          [this](vk::Fence& fence)
-                          { (*devices.logical).destroy(fence); });
-}
+void render::destroy_synchronization_objects() noexcept {}
 
 vk::Extent2D render::choose_best_swapchain_image_resolution(
     const vk::SurfaceCapabilitiesKHR& capabilities)
