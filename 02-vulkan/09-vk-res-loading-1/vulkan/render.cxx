@@ -277,19 +277,16 @@ private:
     // debug extension is not available on macOS
     // vk::DebugUtilsMessengerEXT debug_extension;
 
-    // mod(max_frames_in_gpu) used to avoid blocking the CPU
-    uint32_t current_frame_index = 0;
-
     vk::raii::SwapchainKHR           swapchain = nullptr;
     std::vector<vk::Image>           swapchain_images;
     std::vector<vk::raii::ImageView> swapchain_image_views;
 
-    std::vector<vk::Framebuffer> swapchain_framebuffers; // not used vulkan 1.3+
+    //    std::vector<vk::Framebuffer> swapchain_framebuffers; // not used
+    //    vulkan 1.3+
 
     // vulkan pipeline
     vk::raii::PipelineLayout pipeline_layout   = nullptr;
     vk::raii::Pipeline       graphics_pipeline = nullptr;
-    vk::raii::RenderPass     render_path = nullptr; // not used vulkan 1.3+
 
     // pools
     vk::raii::CommandPool graphics_command_pool = nullptr;
@@ -592,9 +589,7 @@ render::render(platform_interface& platform, hints hints)
     get_physical_device();
     create_logical_device();
     create_swapchain();
-    create_renderpass(); // only < vulkan 1.3
     create_graphics_pipeline();
-    create_framebuffers(); // only < vulkan 1.3
     create_command_pool();
     create_command_buffer();
     create_synchronization_objects();
@@ -624,41 +619,6 @@ try
                                              "devices.logical.waitIdle()" };
         devices.logical.waitIdle();
     }
-
-    // first_mesh.cleanup();
-
-    // destroy_synchronization_objects();
-    // log << "vulkan synchronization objects destroyed\n";
-    // command_buffer.clear();
-    // log << "vulkan command buffers freed\n";
-    // (*devices.logical).destroyCommandPool(graphics_command_pool);
-    // log << "vulkan destroy command pool\n";
-    // std::ranges::for_each(
-    //     swapchain_framebuffers,
-    //     [this](vk::Framebuffer& framebuffer)
-    //     { (*devices.logical).destroyFramebuffer(framebuffer); });
-    // log << "vulkan framebuffers destroyed\n";
-    // (*devices.logical).destroy(graphics_pipeline);
-    // log << "vulkan graphics_pipeline destroyed\n";
-    // (*devices.logical).destroy(pipeline_layout);
-    // log << "vulkan pipeline_leyout destroyed\n";
-    // (*devices.logical).destroy(render_path);
-    // log << "vulkan render_path destroyed\n";
-    // std::ranges::for_each(
-    //     swapchain_image_views,
-    //     [this](vk::ImageView image_view)
-    //     { (*devices.logical).destroyImageView(image_view); });
-    // log << "vulkan swapchain image views destroyed\n";
-    // (*devices.logical).destroy(swapchain);
-    // log << "vulkan swapchain destroyed\n";
-    // (*devices.logical).destroy();
-    // log << "vulkan logical device destroyed\n";
-    // destroy_surface();
-
-    // destroy_debug_callback();
-    // log << "vulkan debug callback destroyed\n";
-    // instance.clear();
-    // log << "vulkan instance destroyed\n";
 }
 catch (std::exception& e)
 {
@@ -719,7 +679,7 @@ void render::draw()
             .setSwapchains(*swapchain)
             .setImageIndices(image_index);
 
-    result = graphics_queue.presentKHR(present_info);
+    result = presentation_queue.presentKHR(present_info);
 
     if (result != vk::Result::eSuccess)
     {
@@ -1520,6 +1480,11 @@ void render::create_logical_device()
             devices.logical, queue_family.index.presentation, queue_index);
         log << "got presentation queue\n";
     }
+    else
+    {
+        presentation_queue = vk::raii::Queue(
+            devices.logical, queue_family.index.graphics, queue_index);
+    }
 
     // now we can add names to main vulkan objects
     set_object_name(*instance, "om_main_instance");
@@ -1675,105 +1640,6 @@ void render::create_swapchain()
         });
     log << "create swapchain_image_views count: "
         << swapchain_image_views.size() << std::endl;
-}
-
-void render::create_renderpass()
-{
-    // this only needed <= Vulkan 1.2 starting from Vulkan 1.3 - use dynamic
-    // rendering EXT
-    if (hints_.vulkan_version.major == 1 && hints_.vulkan_version.minor >= 3)
-    {
-        log << "skip creating renderpass as we have >= Vulkan 1.3 and use "
-               "dynamic rendering\n";
-        return;
-    }
-    // color attachment of render pass
-    vk::AttachmentDescription color_attachment{};
-    color_attachment.format = swapchain_image_format;
-    // number of samples to write for multisampling
-    color_attachment.samples = vk::SampleCountFlagBits::e1;
-    // like in OpenGL glClear() clear buffer
-    // describes what to do with attachment before rendering
-    color_attachment.loadOp = vk::AttachmentLoadOp::eClear;
-    // describes what to do with attachment after rendering
-    color_attachment.storeOp        = vk::AttachmentStoreOp::eStore;
-    color_attachment.stencilLoadOp  = vk::AttachmentLoadOp::eDontCare;
-    color_attachment.stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
-    // Framebuffer data will be stored as an image
-    // but images can be given different data layouts
-    // to give optimal use for certain operations.
-    // Image data layout before renderpass starts
-    color_attachment.initialLayout = vk::ImageLayout::eUndefined;
-    // Image data layout after renderpass (to change to)
-    color_attachment.finalLayout = vk::ImageLayout::ePresentSrcKHR;
-
-    // Attachment reference uses an attachment index that refers to index
-    // in the attachment list passed to renderpath_info
-    vk::AttachmentReference attachment_ref{};
-    attachment_ref.attachment = 0; // index of color_attachment in renderpath
-    attachment_ref.layout     = vk::ImageLayout::eColorAttachmentOptimal;
-    // ^^^ this mean that:
-    // 1. starting from color_attachment.initialLayout(eUndefined)
-    // 2. first conversion for subpath into (eColorAttachmentOptimal)
-    // 3. final conversion after subpath to (ePresentSrcKHR)
-
-    // Information about particular subpath the Render path is using
-    vk::SubpassDescription subpass_description{};
-    subpass_description.pipelineBindPoint    = vk::PipelineBindPoint::eGraphics;
-    subpass_description.colorAttachmentCount = 1;
-    subpass_description.pColorAttachments    = &attachment_ref;
-
-    // Need to determine when layout transitions occur using subpass
-    // dependencies
-    std::array<vk::SubpassDependency, 2> subpath_dependencies{};
-    // convert from eUndefined to eColorAttachmentOptimal
-    auto& first_conversion = subpath_dependencies[0];
-    // transition must happen after...
-    // subpath index vk::SubpassExternal = special value mean outside of
-    // renderpath
-    first_conversion.srcSubpass = vk::SubpassExternal;
-    // Pipeline stage
-    first_conversion.srcStageMask = vk::PipelineStageFlagBits::eBottomOfPipe;
-    // Stage access mask (memory access)
-    first_conversion.srcAccessMask = vk::AccessFlagBits::eMemoryRead;
-
-    // transition must happen before...
-    first_conversion.dstSubpass = 0; // index of first subpath
-    first_conversion.dstStageMask =
-        vk::PipelineStageFlagBits::eColorAttachmentOutput;
-    first_conversion.dstAccessMask = vk::AccessFlagBits::eColorAttachmentRead |
-                                     vk::AccessFlagBits::eColorAttachmentWrite;
-    first_conversion.dependencyFlags = {};
-
-    // convert from eColorAttachmentOptimal to ePresentSrcKHR
-    auto& second_conversion = subpath_dependencies[1];
-    // transition must happen after...
-    second_conversion.srcSubpass = 0; // index of first subpath
-    // Pipeline stage
-    second_conversion.srcStageMask =
-        vk::PipelineStageFlagBits::eColorAttachmentOutput;
-    // same from previous convertion
-    second_conversion.srcAccessMask = vk::AccessFlagBits::eColorAttachmentRead |
-                                      vk::AccessFlagBits::eColorAttachmentWrite;
-    // transition must happen before...
-    second_conversion.dstSubpass    = vk::SubpassExternal;
-    second_conversion.dstStageMask  = vk::PipelineStageFlagBits::eBottomOfPipe;
-    second_conversion.dstAccessMask = vk::AccessFlagBits::eMemoryRead;
-    second_conversion.dependencyFlags = {};
-
-    vk::RenderPassCreateInfo renderpath_info{};
-    renderpath_info.attachmentCount = 1;
-    renderpath_info.pAttachments    = &color_attachment;
-    renderpath_info.subpassCount    = 1;
-    renderpath_info.pSubpasses      = &subpass_description;
-    renderpath_info.dependencyCount =
-        static_cast<std::uint32_t>(subpath_dependencies.size());
-    renderpath_info.pDependencies = subpath_dependencies.data();
-
-    render_path = devices.logical.createRenderPass(renderpath_info);
-    log << "create vulkan render path\n";
-
-    set_object_name(*render_path, "only_render_path");
 }
 
 void render::create_graphics_pipeline()
@@ -1976,16 +1842,9 @@ void render::create_graphics_pipeline()
         .pColorAttachmentFormats = &swapchain_image_format
     };
 
-    void* ptr_pipeline_rendering_create_info = nullptr;
-
-    if (hints_.vulkan_version.major == 1 and hints_.vulkan_version.minor >= 3)
-    {
-        ptr_pipeline_rendering_create_info = &pipeline_rendering_create_info;
-    }
-
     // Graphics Pipeline creation
     vk::GraphicsPipelineCreateInfo graphics_info{
-        .pNext      = ptr_pipeline_rendering_create_info, // if >= vulkan 1.3
+        .pNext      = &pipeline_rendering_create_info, // if >= vulkan 1.3
         .flags      = { /* vk::PipelineCreateFlagBits::eDerivative */ },
         .stageCount = shader_stages.size(),
         .pStages    = shader_stages.data(), // shader stages
@@ -1998,9 +1857,7 @@ void render::create_graphics_pipeline()
         .pColorBlendState    = &blending_state_info,
         .pDynamicState       = &dynamic_state_info,
         .layout              = pipeline_layout,
-        .renderPass          = ptr_pipeline_rendering_create_info
-                                   ? *render_path
-                                   : nullptr, // nullptr if >= Vulkan 1.3
+        .renderPass          = nullptr, // if vulkan 1.3+
         .subpass             = 0,
         // Pipeline Derivatives
         // to use vulkan less memory we can create lists of pipelines
@@ -2030,44 +1887,6 @@ void render::create_graphics_pipeline()
     set_object_name(*graphics_pipeline, "om_graphics_pipeline");
 }
 
-void render::create_framebuffers()
-{
-    if (hints_.vulkan_version.major == 1 && hints_.vulkan_version.minor >= 3)
-    {
-        log << "skip creating framebuffers object - use vulkan 1.3+ dynamic "
-               "rendering\n";
-        return;
-    }
-    swapchain_framebuffers.reserve(swapchain_images.size());
-
-    auto gen_framebuffer = [&, count = 0](const vk::ImageView& view) mutable
-    {
-        std::array<vk::ImageView, 1> attachments{ view };
-
-        vk::FramebufferCreateInfo info{};
-        info.renderPass      = render_path; // render path layout to be used
-        info.attachmentCount = static_cast<std::uint32_t>(attachments.size());
-        info.pAttachments    = attachments.data(); // 1:1 with renderpath
-        info.width           = swapchain_image_extent.width;
-        info.height          = swapchain_image_extent.height;
-        info.layers          = 1;
-
-        vk::Framebuffer framebuffer = devices.logical.createFramebuffer(info);
-        if (!framebuffer)
-        {
-            throw std::runtime_error("can't create framebuffer");
-        }
-        log << "create framebuffer_" << count << '\n';
-        set_object_name(framebuffer,
-                        "om_framebuffer_" + std::to_string(count++));
-        return framebuffer;
-    };
-
-    std::ranges::transform(swapchain_image_views,
-                           std::back_inserter(swapchain_framebuffers),
-                           gen_framebuffer);
-}
-
 void render::create_command_pool()
 {
     vk::CommandPoolCreateInfo info{
@@ -2087,8 +1906,7 @@ void render::create_command_pool()
 
 void render::create_command_buffer()
 {
-    log << "create command buffers count: " << swapchain_framebuffers.size()
-        << "\n";
+    log << "create command buffer\n";
 
     vk::CommandBufferAllocateInfo info{
         .commandPool = graphics_command_pool,
@@ -2234,13 +2052,6 @@ void render::create_synchronization_objects()
     set_object_name(*synchronization.draw_fence, "draw_fence");
 }
 
-void render::destroy_synchronization_objects() noexcept
-{
-    synchronization.semaphore.present_complete.clear();
-    synchronization.semaphore.render_finished.clear();
-    synchronization.draw_fence.clear();
-}
-
 vk::Extent2D render::choose_best_swapchain_image_resolution(
     const vk::SurfaceCapabilitiesKHR& capabilities)
 {
@@ -2369,15 +2180,4 @@ vk::raii::ShaderModule render::create_shader(std::span<const std::byte> spir_v)
     return { devices.logical, create_info };
 }
 
-void render::destroy_surface() noexcept
-{
-    platform.destroy_vulkan_surface(instance, surface, nullptr);
-    log << "vulkan surface destroyed\n";
-}
-
-void render::destroy(vk::ShaderModule& shader) noexcept
-{
-    log << "destroy shader module\n";
-    (*devices.logical).destroy(shader);
-}
 } // namespace om::vulkan
