@@ -274,6 +274,11 @@ std::string engine_impl::initialize(std::string_view)
         return serr.str();
     }
 
+    if (!SDL_SetWindowSurfaceVSync(window, SDL_WINDOW_SURFACE_VSYNC_DISABLED))
+    {
+        std::cerr << "error: disable VSYNC failed: " << SDL_GetError() << "\n";
+    }
+
     int gl_major_ver       = 3;
     int gl_minor_ver       = 2;
     int gl_context_profile = SDL_GL_CONTEXT_PROFILE_ES;
@@ -316,6 +321,11 @@ std::string engine_impl::initialize(std::string_view)
         msg += SDL_GetError();
         serr << msg << endl;
         return serr.str();
+    }
+    if (!SDL_GL_SetSwapInterval(0))
+    {
+        std::cerr << "error: failed to set swap interval 0-immediate updates: "
+                  << SDL_GetError() << "\n";
     }
 
     bool result =
