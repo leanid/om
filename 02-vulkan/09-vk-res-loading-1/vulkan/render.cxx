@@ -616,55 +616,53 @@ render::render(platform_interface& platform, hints hints)
 }
 
 render::~render()
+try
 {
-    try
+    om::tools::report_duration duration{ log, "render::~render()" };
     {
-        om::tools::report_duration duration{ log, "render::~render()" };
-        {
-            om::tools::report_duration duration{ log,
-                                                 "devices.logical.waitIdle()" };
-            devices.logical.waitIdle();
-        }
-
-        first_mesh.cleanup();
-
-        destroy_synchronization_objects();
-        log << "vulkan synchronization objects destroyed\n";
-        command_buffer.clear();
-        log << "vulkan command buffers freed\n";
-        (*devices.logical).destroyCommandPool(graphics_command_pool);
-        log << "vulkan destroy command pool\n";
-        std::ranges::for_each(
-            swapchain_framebuffers,
-            [this](vk::Framebuffer& framebuffer)
-            { (*devices.logical).destroyFramebuffer(framebuffer); });
-        log << "vulkan framebuffers destroyed\n";
-        (*devices.logical).destroy(graphics_pipeline);
-        log << "vulkan graphics_pipeline destroyed\n";
-        (*devices.logical).destroy(pipeline_layout);
-        log << "vulkan pipeline_leyout destroyed\n";
-        (*devices.logical).destroy(render_path);
-        log << "vulkan render_path destroyed\n";
-        std::ranges::for_each(
-            swapchain_image_views,
-            [this](vk::ImageView image_view)
-            { (*devices.logical).destroyImageView(image_view); });
-        log << "vulkan swapchain image views destroyed\n";
-        (*devices.logical).destroy(swapchain);
-        log << "vulkan swapchain destroyed\n";
-        (*devices.logical).destroy();
-        log << "vulkan logical device destroyed\n";
-        destroy_surface();
-
-        destroy_debug_callback();
-        log << "vulkan debug callback destroyed\n";
-        instance.clear();
-        log << "vulkan instance destroyed\n";
+        om::tools::report_duration duration{ log,
+                                             "devices.logical.waitIdle()" };
+        devices.logical.waitIdle();
     }
-    catch (std::exception& e)
-    {
-        log << "error: during render::~render() " << e.what() << std::endl;
-    }
+
+    // first_mesh.cleanup();
+
+    // destroy_synchronization_objects();
+    // log << "vulkan synchronization objects destroyed\n";
+    // command_buffer.clear();
+    // log << "vulkan command buffers freed\n";
+    // (*devices.logical).destroyCommandPool(graphics_command_pool);
+    // log << "vulkan destroy command pool\n";
+    // std::ranges::for_each(
+    //     swapchain_framebuffers,
+    //     [this](vk::Framebuffer& framebuffer)
+    //     { (*devices.logical).destroyFramebuffer(framebuffer); });
+    // log << "vulkan framebuffers destroyed\n";
+    // (*devices.logical).destroy(graphics_pipeline);
+    // log << "vulkan graphics_pipeline destroyed\n";
+    // (*devices.logical).destroy(pipeline_layout);
+    // log << "vulkan pipeline_leyout destroyed\n";
+    // (*devices.logical).destroy(render_path);
+    // log << "vulkan render_path destroyed\n";
+    // std::ranges::for_each(
+    //     swapchain_image_views,
+    //     [this](vk::ImageView image_view)
+    //     { (*devices.logical).destroyImageView(image_view); });
+    // log << "vulkan swapchain image views destroyed\n";
+    // (*devices.logical).destroy(swapchain);
+    // log << "vulkan swapchain destroyed\n";
+    // (*devices.logical).destroy();
+    // log << "vulkan logical device destroyed\n";
+    // destroy_surface();
+
+    // destroy_debug_callback();
+    // log << "vulkan debug callback destroyed\n";
+    // instance.clear();
+    // log << "vulkan instance destroyed\n";
+}
+catch (std::exception& e)
+{
+    std::cerr << "error: during render::~render() " << e.what() << std::endl;
 }
 
 void render::draw()
@@ -2236,7 +2234,8 @@ void render::create_synchronization_objects()
     set_object_name(*synchronization.draw_fence, "draw_fence");
 }
 
-void render::destroy_synchronization_objects() noexcept {
+void render::destroy_synchronization_objects() noexcept
+{
     synchronization.semaphore.present_complete.clear();
     synchronization.semaphore.render_finished.clear();
     synchronization.draw_fence.clear();
