@@ -270,19 +270,9 @@ private:
     static_assert(sizeof(decltype(queue_family.array)) ==
                   sizeof(queue_family.index));
 
-    // vulkan main objects
-    // vk::Instance instance;
-    // dynamic loader is used to load vulkan functions for extensions
-    vk::detail::DispatchLoaderDynamic dynamic_loader;
-    // debug extension is not available on macOS
-    // vk::DebugUtilsMessengerEXT debug_extension;
-
     vk::raii::SwapchainKHR           swapchain = nullptr;
     std::vector<vk::Image>           swapchain_images;
     std::vector<vk::raii::ImageView> swapchain_image_views;
-
-    //    std::vector<vk::Framebuffer> swapchain_framebuffers; // not used
-    //    vulkan 1.3+
 
     // vulkan pipeline
     vk::raii::PipelineLayout pipeline_layout   = nullptr;
@@ -310,7 +300,7 @@ private:
         } semaphore;
         // only one frame at a time can be rendered (GPU - CPU)
         vk::raii::Fence draw_fence = nullptr;
-    } synchronization;
+    } sync;
 
     const std::vector<const char*> required_device_extensions{
         vk::KHRSwapchainExtensionName,
@@ -639,7 +629,7 @@ void render::draw()
     // Get Image from swapchain
     auto [result, image_index] = swapchain.acquireNextImage(
         std::numeric_limits<uint64_t>::max(), // timeout
-        *synchronization.semaphore.present_complete,
+        *sync.semaphore.present_complete,
         nullptr);
 
     if (result != vk::Result::eSuccess)
@@ -650,32 +640,32 @@ void render::draw()
     record_commands(image_index);
     // We need to make sure that the fence is reset if the previous frame has
     // already happened, so we know to wait on it later.
-    devices.logical.resetFences(*synchronization.draw_fence);
+    devices.logical.resetFences(*sync.draw_fence);
 
     vk::PipelineStageFlags wait_dst_stage_mask(
         vk::PipelineStageFlagBits::eColorAttachmentOutput);
 
     const auto submitInfo =
         vk::SubmitInfo{}
-            .setWaitSemaphores(*synchronization.semaphore.present_complete)
+            .setWaitSemaphores(*sync.semaphore.present_complete)
             .setWaitDstStageMask(wait_dst_stage_mask)
             .setCommandBuffers(*command_buffer)
-            .setSignalSemaphores(*synchronization.semaphore.render_finished);
+            .setSignalSemaphores(*sync.semaphore.render_finished);
 
-    graphics_queue.submit(submitInfo, *synchronization.draw_fence);
+    graphics_queue.submit(submitInfo, *sync.draw_fence);
 
     // Now we want the CPU to wait while the GPU finishes rendering that frame
     // we just submitted
     while (vk::Result::eTimeout ==
            devices.logical.waitForFences(
-               *synchronization.draw_fence,
+               *sync.draw_fence,
                vk::True,
                std::numeric_limits<std::uint64_t>::max()))
         ;
 
     const auto present_info =
         vk::PresentInfoKHR{}
-            .setWaitSemaphores(*synchronization.semaphore.render_finished)
+            .setWaitSemaphores(*sync.semaphore.render_finished)
             .setSwapchains(*swapchain)
             .setImageIndices(image_index);
 
@@ -765,13 +755,6 @@ void render::create_instance(bool enable_validation_layers,
     log << "vk api version: " << vk::versionMajor(maximum_supported) << '.'
         << vk::versionMinor(maximum_supported) << '.'
         << vk::versionPatch(maximum_supported) << " maximum supported\n";
-
-    // vk::DispatchLoaderDynamic dispatch;
-    vk::detail::DynamicLoader dl;
-    auto                      ptr =
-        dl.getProcAddress<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr");
-    dynamic_loader = vk::detail::DispatchLoaderDynamic{ *instance, ptr };
-    log << "vulkan dynamic loader created\n";
 }
 
 void render::create_debug_callback(bool enable_debug_callback)
@@ -2037,19 +2020,17 @@ void render::transition_image_layout(uint32_t                image_index,
 
 void render::create_synchronization_objects()
 {
-    synchronization.semaphore.render_finished =
+    sync.semaphore.render_finished =
         vk::raii::Semaphore(devices.logical, vk::SemaphoreCreateInfo{});
-    set_object_name(*synchronization.semaphore.render_finished,
-                    "render_finished_sem");
+    set_object_name(*sync.semaphore.render_finished, "render_finished_sem");
 
-    synchronization.semaphore.present_complete =
+    sync.semaphore.present_complete =
         vk::raii::Semaphore(devices.logical, vk::SemaphoreCreateInfo{});
-    set_object_name(*synchronization.semaphore.present_complete,
-                    "present_complete_sem");
+    set_object_name(*sync.semaphore.present_complete, "present_complete_sem");
 
-    synchronization.draw_fence = vk::raii::Fence(
+    sync.draw_fence = vk::raii::Fence(
         devices.logical, { .flags = vk::FenceCreateFlagBits::eSignaled });
-    set_object_name(*synchronization.draw_fence, "draw_fence");
+    set_object_name(*sync.draw_fence, "draw_fence");
 }
 
 vk::Extent2D render::choose_best_swapchain_image_resolution(
