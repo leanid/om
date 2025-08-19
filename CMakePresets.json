@@ -124,7 +124,7 @@
       "inherits": "ninja",
       "displayName": "Ninja-llvm",
       "description": "build using Ninja generator",
-      "generator": "Ninja",
+      "generator": "Ninja Multi-Config",
       "binaryDir": "${sourceDir}/build/ninja-llvm",
       "cacheVariables": {
         "CMAKE_CXX_COMPILER": {
