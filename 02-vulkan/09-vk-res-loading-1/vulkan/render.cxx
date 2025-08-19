@@ -313,10 +313,6 @@ private:
         } semaphore;
         // only one frame at a time can be rendered (GPU - CPU)
         vk::raii::Fence draw_fence = nullptr;
-
-        // std::vector<vk::Semaphore> image_available{}; // GPU to GPU only sync
-        // std::vector<vk::Semaphore> render_finished{}; // GPU to CPU sync
-        // std::vector<vk::Fence>     gpu_fence{};
     } synchronization;
 
     const std::vector<const char*> required_device_extensions{
@@ -679,6 +675,8 @@ void render::draw()
     //    for the image to be available before drawing and signals when it has
     //    finished drawing
     // 3. Present image to screen when it has signaled finished drawing
+
+    graphics_queue.waitIdle();
 
     // Get Image from swapchain
     auto [result, image_index] = swapchain.acquireNextImage(
@@ -2238,7 +2236,11 @@ void render::create_synchronization_objects()
     set_object_name(*synchronization.draw_fence, "draw_fence");
 }
 
-void render::destroy_synchronization_objects() noexcept {}
+void render::destroy_synchronization_objects() noexcept {
+    synchronization.semaphore.present_complete.clear();
+    synchronization.semaphore.render_finished.clear();
+    synchronization.draw_fence.clear();
+}
 
 vk::Extent2D render::choose_best_swapchain_image_resolution(
     const vk::SurfaceCapabilitiesKHR& capabilities)
