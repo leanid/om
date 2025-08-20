@@ -628,8 +628,6 @@ catch (std::exception& e)
 void render::draw()
 {
     auto& draw_fence = *sync.draw_fence[current_frame];
-    auto& present_complete =
-        *sync.semaphore.present_complete[current_semaphore];
 
     // wait current frame fence signaled GPU -> CPU
     while (vk::Result::eTimeout ==
@@ -638,7 +636,10 @@ void render::draw()
                                          std::numeric_limits<uint64_t>::max()))
         ;
 
-    // Get Image from swapchain
+    auto& present_complete =
+        *sync.semaphore.present_complete[current_semaphore];
+
+    // Get Image from swapchain, and set present_complete semaphore
     auto [result, image_index] = swapchain.acquireNextImage(
         std::numeric_limits<uint64_t>::max(), // timeout
         present_complete                      // a semaphore to signal
