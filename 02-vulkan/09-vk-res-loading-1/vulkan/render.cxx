@@ -13,7 +13,6 @@ auto current()
 #endif
 
 #include "experimental/report_duration.hxx"
-#include "experimental/scope"
 
 export module vulkan_render;
 
@@ -169,7 +168,7 @@ private:
     void create_graphics_pipeline();
     void create_framebuffers();
     void create_command_pool();
-    void create_command_buffer();
+    void create_command_buffers();
     void create_synchronization_objects();
 
     [[nodiscard]] vk::raii::ImageView create_image_view(
@@ -180,14 +179,16 @@ private:
     vk::raii::ShaderModule create_shader(std::span<const std::byte> spir_v);
 
     // record functions
-    void record_commands(std::uint32_t image_index);
-    void transition_image_layout(uint32_t                image_index,
-                                 vk::ImageLayout         old_layout,
-                                 vk::AccessFlags2        src_access_mask,
-                                 vk::PipelineStageFlags2 src_stage_mask,
-                                 vk::ImageLayout         new_layout,
-                                 vk::AccessFlags2        dst_access_mask,
-                                 vk::PipelineStageFlags2 dst_stage_mask);
+    void record_commands(vk::raii::CommandBuffer& cmd_buf,
+                         std::uint32_t            image_index);
+    void transition_image_layout(vk::raii::CommandBuffer& cmd_buf,
+                                 uint32_t                 image_index,
+                                 vk::ImageLayout          old_layout,
+                                 vk::AccessFlags2         src_access_mask,
+                                 vk::PipelineStageFlags2  src_stage_mask,
+                                 vk::ImageLayout          new_layout,
+                                 vk::AccessFlags2         dst_access_mask,
+                                 vk::PipelineStageFlags2  dst_stage_mask);
     // destroy functions
     void destroy_synchronization_objects() noexcept;
     void destroy_debug_callback() noexcept;
@@ -281,7 +282,10 @@ private:
     // pools
     vk::raii::CommandPool graphics_command_pool = nullptr;
 
-    vk::raii::CommandBuffer command_buffer = nullptr;
+    static constexpr std::uint32_t max_frames_in_flight =
+        4; // <= shapchain_images.size()
+
+    vk::raii::CommandBuffers command_buffers = nullptr;
 
     // vulkan utilities
     vk::Format   swapchain_image_format{ vk::Format::eUndefined };
@@ -294,13 +298,19 @@ private:
         {
             // image has been acquired from the swapchain and is ready for
             // rendering (GPU - GPU)
-            vk::raii::Semaphore present_complete = nullptr;
+            std::vector<vk::raii::Semaphore> present_complete;
             // signal that rendering has finished and presentation can happen
-            vk::raii::Semaphore render_finished = nullptr; // (GPU - GPU)
+            std::vector<vk::raii::Semaphore> render_finished; // (GPU - GPU)
         } semaphore;
-        // only one frame at a time can be rendered (GPU - CPU)
-        vk::raii::Fence draw_fence = nullptr;
+        // only `max_frames_in_flight` frame at a time can be rendered (GPU -
+        // CPU)
+        std::vector<vk::raii::Fence> draw_fence;
     } sync;
+
+    std::uint32_t current_semaphore =
+        0; // [0-swapchain_images] -> sync.semaphores
+    std::uint32_t current_frame =
+        0; // [0-max_frames_in_flight] -> sync.draw_fence
 
     const std::vector<const char*> required_device_extensions{
         vk::KHRSwapchainExtensionName,
@@ -581,7 +591,7 @@ render::render(platform_interface& platform, hints hints)
     create_swapchain();
     create_graphics_pipeline();
     create_command_pool();
-    create_command_buffer();
+    create_command_buffers();
     create_synchronization_objects();
 
     // clang-format off
@@ -617,57 +627,52 @@ catch (std::exception& e)
 
 void render::draw()
 {
-    // breafly:
-    // 1. Acquire available image to draw and fire semaphore when it's ready
-    // 2. Submit command buffer to queue for execution. Making sure that waits
-    //    for the image to be available before drawing and signals when it has
-    //    finished drawing
-    // 3. Present image to screen when it has signaled finished drawing
+    auto& draw_fence = *sync.draw_fence[current_frame];
+    auto& present_complete =
+        *sync.semaphore.present_complete[current_semaphore];
 
-    graphics_queue.waitIdle();
+    // wait current frame fence signaled GPU -> CPU
+    while (vk::Result::eTimeout ==
+           devices.logical.waitForFences(draw_fence,
+                                         true, // waitAll (false - worse fps)
+                                         std::numeric_limits<uint64_t>::max()))
+        ;
 
     // Get Image from swapchain
     auto [result, image_index] = swapchain.acquireNextImage(
         std::numeric_limits<uint64_t>::max(), // timeout
-        *sync.semaphore.present_complete,
-        nullptr);
+        present_complete                      // a semaphore to signal
+    );
 
     if (result != vk::Result::eSuccess)
     {
         throw std::runtime_error("error: can't acquire next image");
     }
+    // We need to make sure that the fence is reset if the previous frame
+    // has already happened, so we know to wait on it later.
+    devices.logical.resetFences(draw_fence);
 
-    record_commands(image_index);
-    // We need to make sure that the fence is reset if the previous frame has
-    // already happened, so we know to wait on it later.
-    devices.logical.resetFences(*sync.draw_fence);
+    auto& cmd_buf = command_buffers[current_frame];
+    cmd_buf.reset();
+    record_commands(cmd_buf, image_index);
 
     vk::PipelineStageFlags wait_dst_stage_mask(
         vk::PipelineStageFlagBits::eColorAttachmentOutput);
 
-    const auto submitInfo =
-        vk::SubmitInfo{}
-            .setWaitSemaphores(*sync.semaphore.present_complete)
-            .setWaitDstStageMask(wait_dst_stage_mask)
-            .setCommandBuffers(*command_buffer)
-            .setSignalSemaphores(*sync.semaphore.render_finished);
+    auto& render_finished = *sync.semaphore.render_finished[image_index];
 
-    graphics_queue.submit(submitInfo, *sync.draw_fence);
+    const auto submitInfo = vk::SubmitInfo{}
+                                .setWaitSemaphores(present_complete)
+                                .setWaitDstStageMask(wait_dst_stage_mask)
+                                .setCommandBuffers(*cmd_buf)
+                                .setSignalSemaphores(render_finished);
 
-    // Now we want the CPU to wait while the GPU finishes rendering that frame
-    // we just submitted
-    while (vk::Result::eTimeout ==
-           devices.logical.waitForFences(
-               *sync.draw_fence,
-               vk::True,
-               std::numeric_limits<std::uint64_t>::max()))
-        ;
+    graphics_queue.submit(submitInfo, draw_fence);
 
-    const auto present_info =
-        vk::PresentInfoKHR{}
-            .setWaitSemaphores(*sync.semaphore.render_finished)
-            .setSwapchains(*swapchain)
-            .setImageIndices(image_index);
+    const auto present_info = vk::PresentInfoKHR{}
+                                  .setWaitSemaphores(render_finished)
+                                  .setSwapchains(*swapchain)
+                                  .setImageIndices(image_index);
 
     result = presentation_queue.presentKHR(present_info);
 
@@ -675,6 +680,9 @@ void render::draw()
     {
         throw std::runtime_error("error: present failed");
     }
+
+    current_semaphore = (current_semaphore + 1) % swapchain_images.size();
+    current_frame     = (current_frame + 1) % max_frames_in_flight;
 }
 
 void render::create_instance(bool enable_validation_layers,
@@ -1887,7 +1895,7 @@ void render::create_command_pool()
     set_object_name(*graphics_command_pool, "om_graphics_cmd_pool");
 }
 
-void render::create_command_buffer()
+void render::create_command_buffers()
 {
     log << "create command buffer\n";
 
@@ -1899,21 +1907,27 @@ void render::create_command_buffer()
         // vk::CommandBufferLevel::eSecondary; Cannot be submitted directly, but
         // can be called from primary command buffers. it’s helpful to reuse
         // common operations from primary command buffers
-        .commandBufferCount = 1u,
+        .commandBufferCount = max_frames_in_flight,
     };
 
-    command_buffer =
-        std::move(vk::raii::CommandBuffers(devices.logical, info).front());
-    set_object_name(*command_buffer, "command_buffer_0");
+    command_buffers.clear();
+    command_buffers = vk::raii::CommandBuffers(devices.logical, info);
+
+    for (uint32_t i = 0; auto& cmd_buf : command_buffers)
+    {
+        set_object_name(*cmd_buf, "command_buffer_" + std::to_string(i++));
+    }
 }
 
-void render::record_commands(std::uint32_t image_index)
+void render::record_commands(vk::raii::CommandBuffer& cmd_buf,
+                             std::uint32_t            image_index)
 {
-    command_buffer.begin({});
+    cmd_buf.begin({});
 
     // Before starting rendering, transition the swapchain image to
     // COLOR_ATTACHMENT_OPTIMAL
     transition_image_layout(
+        cmd_buf,
         image_index,
         vk::ImageLayout::eUndefined, // old_layout
         {}, // srcAccessMask (no need to wait for previous operations)
@@ -1944,11 +1958,10 @@ void render::record_commands(std::uint32_t image_index)
         .pColorAttachments    = &attachment_info
     };
 
-    command_buffer.beginRendering(rendering_info);
+    cmd_buf.beginRendering(rendering_info);
 
-    command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics,
-                                graphics_pipeline);
-    command_buffer.setViewport(
+    cmd_buf.bindPipeline(vk::PipelineBindPoint::eGraphics, graphics_pipeline);
+    cmd_buf.setViewport(
         0, // first_viewport
         vk::Viewport(
             0.0f,                                              // x
@@ -1957,25 +1970,25 @@ void render::record_commands(std::uint32_t image_index)
             static_cast<float>(swapchain_image_extent.height), // height
             0.0f,                                              // minDepth
             1.0f));                                            // maxDepth
-    command_buffer.setScissor(
-        0, // first_scissor
-        vk::Rect2D(vk::Offset2D(0, 0), swapchain_image_extent));
+    cmd_buf.setScissor(0,                                      // first_scissor
+                       vk::Rect2D(vk::Offset2D(0, 0), swapchain_image_extent));
 
     std::array<vk::Buffer, 1>     buffers{ first_mesh.get_vertex_buffer() };
     std::array<vk::DeviceSize, 1> offsets{ 0 };
 
-    command_buffer.bindVertexBuffers(0, // first binding
-                                     buffers,
-                                     offsets);
+    cmd_buf.bindVertexBuffers(0, // first binding
+                              buffers,
+                              offsets);
 
-    command_buffer.draw(3, // vertex count
-                        1, // instance count
-                        0, // first vertex used as offset
-                        0  // first instance used as offset
+    cmd_buf.draw(3, // vertex count
+                 1, // instance count
+                 0, // first vertex used as offset
+                 0  // first instance used as offset
     );
-    command_buffer.endRendering();
+    cmd_buf.endRendering();
     // After rendering, transition the swapchain image to ePresentSrcKHR
     transition_image_layout(
+        cmd_buf,
         image_index,
         vk::ImageLayout::eColorAttachmentOptimal,           // old layout
         vk::AccessFlagBits2::eColorAttachmentWrite,         // srcAccessMask
@@ -1985,16 +1998,17 @@ void render::record_commands(std::uint32_t image_index)
         vk::PipelineStageFlagBits2::eBottomOfPipe           // dstStage
     );
 
-    command_buffer.end();
+    cmd_buf.end();
 }
 
-void render::transition_image_layout(uint32_t                image_index,
-                                     vk::ImageLayout         old_layout,
-                                     vk::AccessFlags2        src_access_mask,
-                                     vk::PipelineStageFlags2 src_stage_mask,
-                                     vk::ImageLayout         new_layout,
-                                     vk::AccessFlags2        dst_access_mask,
-                                     vk::PipelineStageFlags2 dst_stage_mask)
+void render::transition_image_layout(vk::raii::CommandBuffer& cmd_buf,
+                                     uint32_t                 image_index,
+                                     vk::ImageLayout          old_layout,
+                                     vk::AccessFlags2         src_access_mask,
+                                     vk::PipelineStageFlags2  src_stage_mask,
+                                     vk::ImageLayout          new_layout,
+                                     vk::AccessFlags2         dst_access_mask,
+                                     vk::PipelineStageFlags2  dst_stage_mask)
 {
     vk::ImageMemoryBarrier2 barrier = {
         .srcStageMask        = src_stage_mask,
@@ -2015,22 +2029,39 @@ void render::transition_image_layout(uint32_t                image_index,
     vk::DependencyInfo dependencyInfo = { .dependencyFlags         = {},
                                           .imageMemoryBarrierCount = 1,
                                           .pImageMemoryBarriers    = &barrier };
-    command_buffer.pipelineBarrier2(dependencyInfo);
+    cmd_buf.pipelineBarrier2(dependencyInfo);
 }
 
 void render::create_synchronization_objects()
 {
-    sync.semaphore.render_finished =
-        vk::raii::Semaphore(devices.logical, vk::SemaphoreCreateInfo{});
-    set_object_name(*sync.semaphore.render_finished, "render_finished_sem");
+    sync.semaphore.render_finished.clear();
+    sync.semaphore.present_complete.clear();
+    sync.draw_fence.clear();
 
-    sync.semaphore.present_complete =
-        vk::raii::Semaphore(devices.logical, vk::SemaphoreCreateInfo{});
-    set_object_name(*sync.semaphore.present_complete, "present_complete_sem");
+    for (uint32_t i = 0; i < swapchain_images.size(); ++i)
+    {
+        auto str_i = std::to_string(i);
 
-    sync.draw_fence = vk::raii::Fence(
-        devices.logical, { .flags = vk::FenceCreateFlagBits::eSignaled });
-    set_object_name(*sync.draw_fence, "draw_fence");
+        sync.semaphore.render_finished.emplace_back(devices.logical,
+                                                    vk::SemaphoreCreateInfo{});
+        set_object_name(*sync.semaphore.render_finished.back(),
+                        "render_finished_sem_" + str_i);
+
+        sync.semaphore.present_complete.emplace_back(devices.logical,
+                                                     vk::SemaphoreCreateInfo{});
+        set_object_name(*sync.semaphore.present_complete.back(),
+                        "present_complete_sem_" + str_i);
+    }
+
+    for (uint32_t i = 0; i < max_frames_in_flight; i++)
+    {
+        auto str_i = std::to_string(i);
+
+        sync.draw_fence.emplace_back(
+            devices.logical,
+            vk::FenceCreateInfo{ .flags = vk::FenceCreateFlagBits::eSignaled });
+        set_object_name(*sync.draw_fence.back(), "draw_fence_" + str_i);
+    }
 }
 
 vk::Extent2D render::choose_best_swapchain_image_resolution(
@@ -2053,12 +2084,12 @@ vk::Extent2D render::choose_best_swapchain_image_resolution(
     log << "use Extent2D from callback_get_window_buffer_size: "
         << buffer_size.width << 'x' << buffer_size.height << std::endl;
 
-    return { std::clamp(extent.width,
-                        capabilities.minImageExtent.width,
-                        capabilities.maxImageExtent.width),
-             std::clamp(extent.height,
-                        capabilities.minImageExtent.height,
-                        capabilities.maxImageExtent.height) };
+    return { .width  = std::clamp(extent.width,
+                                 capabilities.minImageExtent.width,
+                                 capabilities.maxImageExtent.width),
+             .height = std::clamp(extent.height,
+                                  capabilities.minImageExtent.height,
+                                  capabilities.maxImageExtent.height) };
 }
 
 vk::SurfaceFormatKHR render::choose_best_surface_format(
