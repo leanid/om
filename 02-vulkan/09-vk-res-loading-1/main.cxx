@@ -75,7 +75,8 @@ int main(int argc, char** argv)
                           800,
                           600,
                           sdl::WindowFlags::VULKAN |
-                              sdl::WindowFlags::RESIZABLE),
+                              sdl::WindowFlags::RESIZABLE |
+                              sdl::WindowFlags::HIGH_PIXEL_DENSITY),
         sdl::DestroyWindow);
     std::experimental::scope_exit destroy_window(
         []() { om::cout << "destroy sdl window\n"; });
