@@ -155,6 +155,8 @@ public:
         name_info.pObjectName = name.c_str();
         devices.logical.setDebugUtilsObjectNameEXT(name_info);
     }
+    /// call if windows resized
+    void recreate_swapchain();
 
 private:
     // create functions
@@ -170,6 +172,8 @@ private:
     void create_command_pool();
     void create_command_buffers();
     void create_synchronization_objects();
+
+    void cleanup_swapchain();
 
     [[nodiscard]] vk::raii::ImageView create_image_view(
         vk::Image            image,
@@ -645,10 +649,17 @@ void render::draw()
         present_complete                      // a semaphore to signal
     );
 
-    if (result != vk::Result::eSuccess)
+    switch (result)
     {
-        throw std::runtime_error("error: can't acquire next image");
+        case vk::Result::eSuccess:
+            break;
+        case vk::Result::eErrorOutOfDateKHR:
+            recreate_swapchain();
+            return;
+        default:
+            throw std::runtime_error("error: can't acquire next image");
     }
+
     // We need to make sure that the fence is reset if the previous frame
     // has already happened, so we know to wait on it later.
     devices.logical.resetFences(draw_fence);
@@ -1632,6 +1643,30 @@ void render::create_swapchain()
         });
     log << "create swapchain_image_views count: "
         << swapchain_image_views.size() << std::endl;
+}
+
+void render::cleanup_swapchain()
+{
+    swapchain_image_views.clear();
+    swapchain = nullptr;
+}
+
+void render::recreate_swapchain()
+{
+    // on Fedora therease no minimize button so window has width and height > 0
+    om::vulkan::platform_interface::buffer_size window_size{};
+    window_size = platform.get_window_buffer_size();
+    if (window_size.width == 0u || window_size.height == 0u)
+    {
+        log << "skip recreating swapchain - windows size is 0\n";
+        return;
+    }
+
+    devices.logical.waitIdle();
+
+    cleanup_swapchain();
+
+    create_swapchain();
 }
 
 void render::create_graphics_pipeline()

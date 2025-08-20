@@ -71,8 +71,11 @@ int main(int argc, char** argv)
         });
 
     std::unique_ptr<sdl::SDL_Window, decltype(&sdl::DestroyWindow)> window(
-        sdl::CreateWindow(
-            "09-vk-res-loading-1", 800, 600, sdl::WindowFlags::VULKAN),
+        sdl::CreateWindow("09-vk-res-loading-1",
+                          800,
+                          600,
+                          sdl::WindowFlags::VULKAN |
+                              sdl::WindowFlags::RESIZABLE),
         sdl::DestroyWindow);
     std::experimental::scope_exit destroy_window(
         []() { om::cout << "destroy sdl window\n"; });
@@ -115,6 +118,8 @@ int main(int argc, char** argv)
                             sdl::Keycode::ESCAPE)
                             running = false;
                         break;
+                    case sdl::EventType::WINDOW_RESIZED:
+                        render.recreate_swapchain();
                     default:
                         break;
                 }
