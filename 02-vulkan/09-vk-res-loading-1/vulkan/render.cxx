@@ -1952,10 +1952,10 @@ void render::record_commands(vk::raii::CommandBuffer& cmd_buf,
                               buffers,
                               offsets);
 
-    cmd_buf.draw(3, // vertex count
-                 1, // instance count
-                 0, // first vertex used as offset
-                 0  // first instance used as offset
+    cmd_buf.draw(first_mesh.get_vertex_count(), // vertex count
+                 1,                             // instance count
+                 0,                             // first vertex used as offset
+                 0                              // first instance used as offset
     );
     cmd_buf.endRendering();
     // After rendering, transition the swapchain image to ePresentSrcKHR
