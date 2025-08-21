@@ -80,9 +80,9 @@ public:
     [[nodiscard]] uint32_t get_vertex_count() const;
     vk::Buffer             get_vertex_buffer();
 
+private:
     void cleanup() noexcept;
 
-private:
     friend class om::vulkan::render;
 
     void     create_buffer(std::span<vertex> vertexes,
