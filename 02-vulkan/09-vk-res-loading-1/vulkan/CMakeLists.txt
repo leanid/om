@@ -26,7 +26,8 @@ target_sources(
 
 target_link_libraries(
     09-vk-res-loading-1-vulkan
-    PUBLIC SDL3::SDL3-shared
+    PUBLIC Boost::stacktrace
+           SDL3::SDL3-shared
            vulkan::cppm
            glm::cppm
            09-vk-res-loading-1-args

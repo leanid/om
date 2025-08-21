@@ -1,13 +1,13 @@
 module;
-
 #if __has_include(<stacktrace>)
 #include <stacktrace>
 #else
+#include <boost/stacktrace.hpp>
 namespace std::stacktrace
 {
 auto current()
 {
-    return "no stacktrace";
+    return boost::stacktrace::stacktrace();
 }
 } // namespace std::stacktrace
 #endif
@@ -27,6 +27,43 @@ export struct vertex final
 {
     glm::vec3 pos; // vertex positions x, y, z
     glm::vec3 col; // vertex color r, g, b
+
+    static vk::VertexInputBindingDescription get_binding_description()
+    {
+        return {
+            .binding = 0, // can bind multiple streams of data, define which
+            .stride  = sizeof(vertex),
+            // how to move detween data after next vertex
+            // vk::VertexInputRate::eVertex : move to next vertex
+            // vk::VertexInputRate::eInstance : move to vertex for next instance
+            .inputRate = vk::VertexInputRate::eVertex
+        };
+    }
+
+    static std::array<vk::VertexInputAttributeDescription, 2>
+    get_attribute_description()
+    {
+        return {
+            vk::VertexInputAttributeDescription{
+                // location in shader where data will be read from
+                .location = 0,
+                // position attribute which binding the data is at (should be
+                // same as above in binding_description)
+                .binding = 0,
+                // format the data will take (also helps define size of data)
+                .format = vk::Format::eR32G32B32Sfloat,
+                // where this attribute is defined in the data for a single
+                // vertex
+                .offset = offsetof(vertex, pos),
+            },
+            vk::VertexInputAttributeDescription{
+                .location = 1,
+                .binding  = 0,
+                .format   = vk::Format::eR32G32B32Sfloat,
+                .offset   = offsetof(vertex, col),
+            }
+        };
+    }
 };
 export class render;
 export class mesh final
@@ -1707,35 +1744,12 @@ void render::create_graphics_pipeline()
     };
     // vertex input
     // Data for a single vertex
-    vk::VertexInputBindingDescription binding_description{
-        .binding = 0, // can bind multiple streams of data, define which
-        .stride  = sizeof(om::vulkan::vertex),
-        // how to move detween data after next vertex
-        // vk::VertexInputRate::eVertex : move to next vertex
-        // vk::VertexInputRate::eInstance : move to vertex for next instance
-        .inputRate = vk::VertexInputRate::eVertex
-    };
+    vk::VertexInputBindingDescription binding_description =
+        vertex::get_binding_description();
 
     // how the data for an attribute is defined within a vertex
-    std::array<vk::VertexInputAttributeDescription, 2> attribute_description{
-        vk::VertexInputAttributeDescription{
-            // location in shader where data will be read from
-            .location = 0,
-            // position attribute which binding the data is at (should be same
-            // as above in binding_description)
-            .binding = 0,
-            // format the data will take (also helps define size of data)
-            .format = vk::Format::eR32G32B32Sfloat,
-            // where this attribute is defined in the data for a single vertex
-            .offset = offsetof(om::vulkan::vertex, pos),
-        },
-        vk::VertexInputAttributeDescription{
-            .location = 1,
-            .binding  = 0,
-            .format   = vk::Format::eR32G32B32Sfloat,
-            .offset   = offsetof(om::vulkan::vertex, col),
-        }
-    };
+    std::array<vk::VertexInputAttributeDescription, 2> attribute_description =
+        vertex::get_attribute_description();
 
     vk::PipelineVertexInputStateCreateInfo vertex_input_state_info{
         .vertexBindingDescriptionCount = 1,
