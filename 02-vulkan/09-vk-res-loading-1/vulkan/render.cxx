@@ -1751,14 +1751,12 @@ void render::create_graphics_pipeline()
     std::array<vk::VertexInputAttributeDescription, 2> attribute_description =
         vertex::get_attribute_description();
 
-    vk::PipelineVertexInputStateCreateInfo vertex_input_state_info{
-        .vertexBindingDescriptionCount = 1,
-        // spacing/striding vertex info
-        .pVertexBindingDescriptions      = &binding_description,
-        .vertexAttributeDescriptionCount = attribute_description.size(),
-        // data format where/from shader attributes
-        .pVertexAttributeDescriptions = attribute_description.data(),
-    };
+    auto vertex_input_state_info =
+        vk::PipelineVertexInputStateCreateInfo{}
+            // spacing/striding vertex info
+            .setVertexBindingDescriptions(binding_description)
+            // data format where/from shader attributes
+            .setVertexAttributeDescriptions(attribute_description);
 
     // input assembly
     vk::PipelineInputAssemblyStateCreateInfo input_assembly{
