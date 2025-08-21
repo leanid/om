@@ -573,7 +573,7 @@ render::render(platform_interface& platform, hints hints)
     };
     // clang-format on
 
-    first_mesh = mesh(std::span{ mesh_verticles }, *this, "triangle");
+    first_mesh = mesh(std::span{ mesh_verticles }, *this, "rect");
 }
 
 render::~render()
