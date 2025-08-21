@@ -70,10 +70,7 @@ export class mesh final
 {
 public:
     mesh() = default;
-    mesh(vk::PhysicalDevice physical_device,
-         vk::Device         device,
-         std::span<vertex>  vertexes,
-         render&            render);
+    mesh(std::span<vertex> vertexes, render& render, std::string debug_name);
     mesh(const mesh& other)            = delete;
     mesh& operator=(const mesh& other) = delete;
     mesh(mesh&& other);
@@ -86,15 +83,21 @@ public:
     void cleanup() noexcept;
 
 private:
-    void     create_buffer(std::span<vertex> vertexes, render& render);
-    uint32_t find_mem_type_index(uint32_t                allowed_types,
-                                 vk::MemoryPropertyFlags properties);
+    friend class om::vulkan::render;
 
-    vk::PhysicalDevice physical_device;
-    vk::Device         device;
-    vk::Buffer         buffer;
-    vk::DeviceMemory   vertex_buf_mem;
-    uint32_t           num_vertexes{};
+    void     create_buffer(std::span<vertex> vertexes,
+                           render&           render,
+                           std::string       debug_name);
+    uint32_t find_mem_type_index(
+        uint32_t                           allowed_types,
+        vk::MemoryPropertyFlags            properties,
+        vk::PhysicalDeviceMemoryProperties physical_mem_prop);
+
+    // vk::raii::PhysicalDevice& physical_device;
+    // vk::raii::Device&         device;
+    vk::raii::Buffer       buffer         = nullptr;
+    vk::raii::DeviceMemory vertex_buf_mem = nullptr;
+    uint32_t               num_vertexes{};
 };
 
 export struct platform_interface
@@ -196,6 +199,7 @@ public:
     void recreate_swapchain();
 
 private:
+    friend class mesh;
     // create functions
     void create_instance(bool enable_validation_layers,
                          bool enable_debug_callback_ext);
@@ -364,17 +368,12 @@ private:
     mesh first_mesh;
 };
 
-mesh::mesh(vk::PhysicalDevice physical_device,
-           vk::Device         device,
-           std::span<vertex>  vertexes,
-           render&            render)
-    : physical_device(physical_device)
-    , device(device)
-    , buffer()
-    , vertex_buf_mem()
+mesh::mesh(std::span<vertex> vertexes, render& render, std::string debug_name)
+    : buffer(nullptr)
+    , vertex_buf_mem(nullptr)
     , num_vertexes(vertexes.size())
 {
-    create_buffer(vertexes, render);
+    create_buffer(vertexes, render, debug_name);
 }
 
 uint32_t mesh::get_vertex_count() const
@@ -386,71 +385,7 @@ vk::Buffer mesh::get_vertex_buffer()
 {
     return buffer;
 }
-void mesh::create_buffer(std::span<vertex> vertexes, render& render)
-{
-    // information to create buffer (doesn't include assining memory)
-    vk::BufferCreateInfo info;
-    info.size        = sizeof(vertex) * vertexes.size();
-    info.usage       = vk::BufferUsageFlagBits::eVertexBuffer;
-    info.sharingMode = vk::SharingMode::eExclusive; // similar to swapchain
-                                                    // images, can share vertex
-                                                    // buffers
 
-    buffer = device.createBuffer(info);
-    render.set_object_name(buffer, "first_vertex_buffer");
-    // get buffer memory requirements
-    vk::MemoryRequirements mem_requirements =
-        device.getBufferMemoryRequirements(buffer);
-
-    // allocate memory to buffer
-    vk::MemoryAllocateInfo mem_alloc_info;
-    mem_alloc_info.allocationSize = mem_requirements.size;
-    mem_alloc_info.memoryTypeIndex =
-        find_mem_type_index(mem_requirements.memoryTypeBits,
-                            vk::MemoryPropertyFlagBits::eHostVisible |
-                                vk::MemoryPropertyFlagBits::eHostCoherent);
-
-    // allocate memory to vk::device
-    vertex_buf_mem = device.allocateMemory(mem_alloc_info);
-    if (!vertex_buf_mem)
-    {
-        throw std::runtime_error("can't allocate vertex buf memory");
-    }
-    render.set_object_name(vertex_buf_mem, "first_vertex_buff_memory");
-
-    // bind buffer and memory
-    device.bindBufferMemory(buffer, vertex_buf_mem, 0 //< memory offset
-    );
-
-    // map memory to vertex buffer
-    void* mem = device.mapMemory(vertex_buf_mem, 0, info.size);
-    std::uninitialized_copy_n(
-        vertexes.begin(), vertexes.size(), static_cast<vertex*>(mem));
-    device.unmapMemory(vertex_buf_mem);
-}
-
-uint32_t mesh::find_mem_type_index(uint32_t                allowed_types,
-                                   vk::MemoryPropertyFlags properties)
-{
-    // get properties of physical device memory
-    vk::PhysicalDeviceMemoryProperties physical_mem_prop =
-        physical_device.getMemoryProperties();
-
-    for (uint32_t i = 0; i < physical_mem_prop.memoryTypeCount; ++i)
-    {
-        if (!(allowed_types & (1 << i)))
-        {
-            continue;
-        }
-        auto phys_mem_flags = physical_mem_prop.memoryTypes[i].propertyFlags;
-        if ((phys_mem_flags & properties) == properties)
-        {
-            return i;
-        }
-    }
-    throw std::runtime_error(
-        "can't find memory of allowed_types and properties");
-}
 void mesh::cleanup() noexcept
 {
     using om::cout;
@@ -459,33 +394,24 @@ void mesh::cleanup() noexcept
         return;
     }
     cout << "mesh::cleanup" << std::endl;
-    if (buffer)
-    {
-        cout << "destroy mesh buffer" << std::endl;
-        device.destroyBuffer(buffer);
-    }
-    if (vertex_buf_mem)
-    {
-        cout << "destroy mesh vertex_buf_mem" << std::endl;
-        device.freeMemory(vertex_buf_mem);
-    }
+    buffer.clear();
+    cout << "destroy mesh buffer" << std::endl;
+    vertex_buf_mem.clear();
+    cout << "destroy mesh vertex_buf_mem" << std::endl;
     num_vertexes = 0;
 }
+
 mesh::mesh(mesh&& other)
-    : physical_device(other.physical_device)
-    , device(other.device)
-    , buffer(std::exchange(other.buffer, vk::Buffer()))
-    , vertex_buf_mem(std::exchange(other.vertex_buf_mem, vk::DeviceMemory()))
+    : buffer(std::move(other.buffer))
+    , vertex_buf_mem(std::move(other.vertex_buf_mem))
     , num_vertexes(std::exchange(other.num_vertexes, 0))
 {
 }
 mesh& mesh::operator=(mesh&& other)
 {
-    physical_device = other.physical_device;
-    device          = other.device;
-    buffer          = std::exchange(other.buffer, vk::Buffer());
-    vertex_buf_mem  = std::exchange(other.vertex_buf_mem, vk::DeviceMemory());
-    num_vertexes    = std::exchange(other.num_vertexes, 0);
+    buffer         = std::move(other.buffer);
+    vertex_buf_mem = std::move(other.vertex_buf_mem);
+    num_vertexes   = std::exchange(other.num_vertexes, 0);
     return *this;
 }
 
@@ -647,8 +573,7 @@ render::render(platform_interface& platform, hints hints)
     };
     // clang-format on
 
-    first_mesh = mesh(
-        devices.physical, devices.logical, std::span{ mesh_verticles }, *this);
+    first_mesh = mesh(std::span{ mesh_verticles }, *this, "triangle");
 }
 
 render::~render()
@@ -1752,8 +1677,7 @@ void render::create_graphics_pipeline()
         vertex::get_attribute_description();
 
     auto vertex_input_state_info =
-        vk::PipelineVertexInputStateCreateInfo{}
-            // spacing/striding vertex info
+        vk::PipelineVertexInputStateCreateInfo{} // spacing/striding vertex info
             .setVertexBindingDescriptions(binding_description)
             // data format where/from shader attributes
             .setVertexAttributeDescriptions(attribute_description);
@@ -2238,6 +2162,68 @@ vk::raii::ShaderModule render::create_shader(std::span<const std::byte> spir_v)
     };
     // no shader compilation happens here!
     return { devices.logical, create_info };
+}
+
+void mesh::create_buffer(std::span<vertex> vertexes,
+                         render&           render,
+                         std::string       debug_name)
+{
+    // information to create buffer (doesn't include assining memory)
+    vk::BufferCreateInfo info{
+        .size  = sizeof(vertex) * vertexes.size(),
+        .usage = vk::BufferUsageFlagBits::eVertexBuffer,
+        // similar to swapchain images, can share vertex buffers
+        .sharingMode = vk::SharingMode::eExclusive,
+    };
+
+    buffer = vk::raii::Buffer(render.devices.logical, info);
+    render.set_object_name(*buffer, debug_name + "_vertex_buffer");
+    // get buffer memory requirements
+    vk::MemoryRequirements mem_requirements = buffer.getMemoryRequirements();
+
+    // allocate memory to buffer
+    vk::MemoryAllocateInfo mem_alloc_info;
+    mem_alloc_info.allocationSize = mem_requirements.size;
+    mem_alloc_info.memoryTypeIndex =
+        find_mem_type_index(mem_requirements.memoryTypeBits,
+                            vk::MemoryPropertyFlagBits::eHostVisible |
+                                vk::MemoryPropertyFlagBits::eHostCoherent,
+                            render.devices.physical.getMemoryProperties());
+
+    // allocate memory to vk::device
+    vertex_buf_mem =
+        vk::raii::DeviceMemory(render.devices.logical, mem_alloc_info);
+    render.set_object_name(*vertex_buf_mem, debug_name + "_vertex_buff_memory");
+
+    // bind buffer and memory
+    buffer.bindMemory(vertex_buf_mem, 0 /*memory offset*/);
+
+    // map memory to vertex buffer
+    void* mem = vertex_buf_mem.mapMemory(0, info.size);
+    std::uninitialized_copy_n(
+        vertexes.begin(), vertexes.size(), static_cast<vertex*>(mem));
+    vertex_buf_mem.unmapMemory();
+}
+
+uint32_t mesh::find_mem_type_index(
+    uint32_t                           allowed_types,
+    vk::MemoryPropertyFlags            properties,
+    vk::PhysicalDeviceMemoryProperties physical_mem_prop)
+{
+    for (uint32_t i = 0; i < physical_mem_prop.memoryTypeCount; ++i)
+    {
+        if (!(allowed_types & (1 << i)))
+        {
+            continue;
+        }
+        auto phys_mem_flags = physical_mem_prop.memoryTypes[i].propertyFlags;
+        if ((phys_mem_flags & properties) == properties)
+        {
+            return i;
+        }
+    }
+    throw std::runtime_error(
+        "can't find memory of allowed_types and properties");
 }
 
 } // namespace om::vulkan
