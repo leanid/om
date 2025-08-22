@@ -11,7 +11,7 @@
 namespace om::vulkan
 {
 
-static std::string api_version_to_string(uint32_t apiVersion)
+static std::string version_to_string(uint32_t apiVersion)
 {
     std::stringstream version;
     version << VK_VERSION_MAJOR(apiVersion) << '.'
@@ -183,8 +183,8 @@ void render::validate_instance_layer_present(std::string_view instance_layer)
 
                           [this](const vk::LayerProperties& layer)
                           {
-                              log << api_version_to_string(layer.specVersion)
-                                  << ' ' << layer.implementationVersion << ' '
+                              log << version_to_string(layer.specVersion) << ' '
+                                  << layer.implementationVersion << ' '
                                   << layer.layerName << " " << layer.description
                                   << '\n';
                           });
@@ -274,8 +274,7 @@ void render::get_physical_device()
              {
                  const auto& properties = device.getProperties();
 
-                 auto api_version =
-                     api_version_to_string(properties.apiVersion);
+                 auto api_version = version_to_string(properties.apiVersion);
 
                  log << "id: " << properties.deviceID << '\n'
                      << "device_name: " << properties.deviceName << '\n'

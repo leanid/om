@@ -534,7 +534,7 @@ debug_callback(vk::DebugUtilsMessageSeverityFlagBitsEXT      severity,
     return vk::False; // VK_FALSE;
 }
 
-static std::string api_version_to_string(uint32_t apiVersion)
+static std::string version_to_string(uint32_t apiVersion)
 {
     std::stringstream version;
     version << vk::versionMajor(apiVersion) << '.'
@@ -821,8 +821,8 @@ void render::validate_instance_layers_present(
     std::ranges::for_each(available_layers,
                           [this](const vk::LayerProperties& layer)
                           {
-                              log << api_version_to_string(layer.specVersion)
-                                  << ' ' << layer.implementationVersion << ' '
+                              log << version_to_string(layer.specVersion) << ' '
+                                  << layer.implementationVersion << ' '
                                   << layer.layerName << " " << layer.description
                                   << '\n';
                           });
@@ -931,10 +931,8 @@ inline std::ostream& operator<<(std::ostream&                       os,
 {
     const auto& limits = props.limits;
 
-    os << "apiVersion: " << vk::versionMajor(props.apiVersion) << "."
-       << vk::versionMinor(props.apiVersion) << "."
-       << vk::versionPatch(props.apiVersion) << "\n";
-    os << "driverVersion: " << props.driverVersion << "\n";
+    os << "apiVersion: " << version_to_string(props.apiVersion) << "\n";
+    os << "driverVersion: " << version_to_string(props.driverVersion) << "\n";
     os << "vendorID: " << props.vendorID << "\n";
     os << "deviceID: " << props.deviceID << "\n";
     os << "deviceType: " << vk::to_string(props.deviceType) << "\n";
