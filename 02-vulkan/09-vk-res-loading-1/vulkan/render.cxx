@@ -929,8 +929,6 @@ bool render::check_device_extension_supported(const vk::PhysicalDevice& device,
 inline std::ostream& operator<<(std::ostream&                       os,
                                 const vk::PhysicalDeviceProperties& props)
 {
-    const auto& limits = props.limits;
-
     os << "apiVersion: " << version_to_string(props.apiVersion) << "\n";
     os << "driverVersion: " << version_to_string(props.driverVersion) << "\n";
     os << "vendorID: " << props.vendorID << "\n";
@@ -943,6 +941,8 @@ inline std::ostream& operator<<(std::ostream&                       os,
         os << std::setw(2) << std::setfill('0') << static_cast<int>(byte);
     }
     os << std::dec << "\n";
+
+    const auto& limits = props.limits;
 
     os << "limits:\n";
     os << "  maxImageDimension1D: " << limits.maxImageDimension1D << "\n";
@@ -1119,18 +1119,18 @@ inline std::ostream& operator<<(std::ostream&                       os,
        << limits.optimalBufferCopyRowPitchAlignment << "\n";
     os << "  nonCoherentAtomSize: " << limits.nonCoherentAtomSize << "\n";
 
+    auto& sparse_prop = props.sparseProperties;
     os << "sparseProperties:\n";
     os << "  residencyStandard2DBlockShape: " << std::boolalpha
-       << props.sparseProperties.residencyStandard2DBlockShape << "\n";
+       << sparse_prop.residencyStandard2DBlockShape << "\n";
     os << "  residencyStandard2DMultisampleBlockShape: " << std::boolalpha
-       << props.sparseProperties.residencyStandard2DMultisampleBlockShape
-       << "\n";
+       << sparse_prop.residencyStandard2DMultisampleBlockShape << "\n";
     os << "  residencyStandard3DBlockShape: " << std::boolalpha
-       << props.sparseProperties.residencyStandard3DBlockShape << "\n";
+       << sparse_prop.residencyStandard3DBlockShape << "\n";
     os << "  residencyAlignedMipSize: " << std::boolalpha
-       << props.sparseProperties.residencyAlignedMipSize << "\n";
+       << sparse_prop.residencyAlignedMipSize << "\n";
     os << "  residencyNonResidentStrict: " << std::boolalpha
-       << props.sparseProperties.residencyNonResidentStrict << "\n";
+       << sparse_prop.residencyNonResidentStrict << "\n";
 
     return os;
 }
