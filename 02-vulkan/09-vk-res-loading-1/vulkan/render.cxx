@@ -220,6 +220,10 @@ private:
                        vk::raii::Buffer&       buffer,
                        vk::raii::DeviceMemory& bufferMemory);
 
+    void copy_buffer(vk::raii::Buffer& src_buffer,
+                     vk::DeviceSize    size,
+                     vk::raii::Buffer& dst_buffer);
+
     void cleanup_swapchain();
 
     [[nodiscard]] vk::raii::ImageView create_image_view(
@@ -2245,22 +2249,35 @@ void mesh::create_buffer(std::span<vertex> vertexes,
                          render&           render,
                          std::string       debug_name)
 {
-    uint32_t size = sizeof(vertex) * vertexes.size();
+    vk::DeviceSize size = sizeof(vertex) * vertexes.size();
+
+    vk::raii::Buffer       staging_buffer = nullptr;
+    vk::raii::DeviceMemory staging_mem    = nullptr;
+
     render.create_buffer(size,
-                         vk::BufferUsageFlagBits::eVertexBuffer,
-                         vk::MemoryPropertyFlagBits::eHostVisible |
-                             vk::MemoryPropertyFlagBits::eHostCoherent,
+                         vk::BufferUsageFlagBits::eTransferSrc,
+                         { vk::MemoryPropertyFlagBits::eHostVisible |
+                           vk::MemoryPropertyFlagBits::eHostCoherent },
+                         staging_buffer,
+                         staging_mem);
+
+    // map memory to vertex buffer
+    void* mem = staging_mem.mapMemory(0, size);
+    std::uninitialized_copy_n(
+        begin(vertexes), vertexes.size(), static_cast<vertex*>(mem));
+    staging_mem.unmapMemory();
+
+    render.create_buffer(size,
+                         vk::BufferUsageFlagBits::eVertexBuffer |
+                             vk::BufferUsageFlagBits::eTransferDst,
+                         vk::MemoryPropertyFlagBits::eDeviceLocal,
                          buffer,
                          vertex_buf_mem);
 
-    // map memory to vertex buffer
-    void* mem = vertex_buf_mem.mapMemory(0, size);
-    std::uninitialized_copy_n(
-        vertexes.begin(), vertexes.size(), static_cast<vertex*>(mem));
-    vertex_buf_mem.unmapMemory();
-
     render.set_object_name(*buffer, debug_name + "_vertex_buffer");
     render.set_object_name(*vertex_buf_mem, debug_name + "_vertex_buff_memory");
+
+    render.copy_buffer(staging_buffer, size, buffer);
 }
 
 uint32_t render::find_mem_type_index(
@@ -2307,6 +2324,30 @@ void render::create_buffer(vk::DeviceSize          size,
     };
     bufferMemory = vk::raii::DeviceMemory(devices.logical, allocInfo);
     buffer.bindMemory(*bufferMemory, 0);
+}
+
+void render::copy_buffer(vk::raii::Buffer& src_buffer,
+                         vk::DeviceSize    size,
+                         vk::raii::Buffer& dst_buffer)
+{
+    vk::CommandBufferAllocateInfo allocInfo{
+        .commandPool        = transfer_command_pool,
+        .level              = vk::CommandBufferLevel::ePrimary,
+        .commandBufferCount = 1
+    };
+
+    vk::raii::CommandBuffer cmd_copy =
+        std::move(devices.logical.allocateCommandBuffers(allocInfo).front());
+
+    cmd_copy.begin(vk::CommandBufferBeginInfo{
+        .flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit });
+    cmd_copy.copyBuffer(src_buffer, dst_buffer, vk::BufferCopy(0, 0, size));
+    cmd_copy.end();
+
+    transfer_queue.submit(vk::SubmitInfo{ .commandBufferCount = 1,
+                                          .pCommandBuffers    = &*cmd_copy },
+                          nullptr);
+    transfer_queue.waitIdle();
 }
 
 } // namespace om::vulkan
