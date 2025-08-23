@@ -180,21 +180,6 @@ public:
     /// @brief Render the frame
     void draw();
 
-    // debug functions
-    void set_object_name(auto object, const std::string& name)
-    {
-        if (!hints_.enable_debug_callback_ext)
-        {
-            return;
-        }
-
-        vk::DebugUtilsObjectNameInfoEXT name_info;
-        name_info.objectType   = object.objectType;
-        name_info.objectHandle = reinterpret_cast<uint64_t>(
-            static_cast<decltype(object)::NativeType>(object));
-        name_info.pObjectName = name.c_str();
-        devices.logical.setDebugUtilsObjectNameEXT(name_info);
-    }
     /// call if windows resized
     void recreate_swapchain();
 
@@ -293,6 +278,22 @@ private:
         std::span<vk::SurfaceFormatKHR> formats);
     static vk::PresentModeKHR choose_best_present_mode(
         std::span<vk::PresentModeKHR> present_modes);
+
+    // debug functions
+    void set_object_name(auto object, const std::string& name)
+    {
+        if (!hints_.enable_debug_callback_ext)
+        {
+            return;
+        }
+
+        vk::DebugUtilsObjectNameInfoEXT name_info;
+        name_info.objectType   = object.objectType;
+        name_info.objectHandle = reinterpret_cast<uint64_t>(
+            static_cast<decltype(object)::NativeType>(object));
+        name_info.pObjectName = name.c_str();
+        devices.logical.setDebugUtilsObjectNameEXT(name_info);
+    }
 
     friend std::ostream& operator<<(std::ostream&              os,
                                     const swapchain_details_t& details);
