@@ -85,10 +85,10 @@ private:
 
     friend class om::vulkan::render;
 
-    void     create_buffer(std::span<vertex> vertexes,
-                           render&           render,
-                           std::string       debug_name);
-    uint32_t find_mem_type_index(
+    void            create_buffer(std::span<vertex> vertexes,
+                                  render&           render,
+                                  std::string       debug_name);
+    static uint32_t find_mem_type_index(
         uint32_t                           allowed_types,
         vk::MemoryPropertyFlags            properties,
         vk::PhysicalDeviceMemoryProperties physical_mem_prop);
@@ -214,6 +214,12 @@ private:
     void create_command_buffers();
     void create_synchronization_objects();
 
+    void create_buffer(vk::DeviceSize          size,
+                       vk::BufferUsageFlags    usage,
+                       vk::MemoryPropertyFlags properties,
+                       vk::raii::Buffer&       buffer,
+                       vk::raii::DeviceMemory& bufferMemory);
+
     void cleanup_swapchain();
 
     [[nodiscard]] vk::raii::ImageView create_image_view(
@@ -262,6 +268,11 @@ private:
     };
 
     swapchain_details_t get_swapchain_details(const vk::PhysicalDevice& device);
+
+    static uint32_t find_mem_type_index(
+        uint32_t                           allowed_types,
+        vk::MemoryPropertyFlags            properties,
+        vk::PhysicalDeviceMemoryProperties physical_mem_prop);
 
     static uint32_t get_graphics_queue_family_index(
         const vk::PhysicalDevice& physical_device);
@@ -1913,7 +1924,8 @@ void render::create_command_pool()
         .queueFamilyIndex = queue_family.index.graphics,
     };
 
-    graphics_command_pool = vk::raii::CommandPool(devices.logical, info_graphics);
+    graphics_command_pool =
+        vk::raii::CommandPool(devices.logical, info_graphics);
 
     log << "create graphics command pool\n";
 
@@ -2233,44 +2245,25 @@ void mesh::create_buffer(std::span<vertex> vertexes,
                          render&           render,
                          std::string       debug_name)
 {
-    // information to create buffer (doesn't include assining memory)
-    vk::BufferCreateInfo info{
-        .size  = sizeof(vertex) * vertexes.size(),
-        .usage = vk::BufferUsageFlagBits::eVertexBuffer,
-        // similar to swapchain images, can share vertex buffers
-        .sharingMode = vk::SharingMode::eExclusive,
-    };
-
-    buffer = vk::raii::Buffer(render.devices.logical, info);
-    render.set_object_name(*buffer, debug_name + "_vertex_buffer");
-    // get buffer memory requirements
-    vk::MemoryRequirements mem_requirements = buffer.getMemoryRequirements();
-
-    // allocate memory to buffer
-    vk::MemoryAllocateInfo mem_alloc_info;
-    mem_alloc_info.allocationSize = mem_requirements.size;
-    mem_alloc_info.memoryTypeIndex =
-        find_mem_type_index(mem_requirements.memoryTypeBits,
-                            vk::MemoryPropertyFlagBits::eHostVisible |
-                                vk::MemoryPropertyFlagBits::eHostCoherent,
-                            render.devices.physical.getMemoryProperties());
-
-    // allocate memory to vk::device
-    vertex_buf_mem =
-        vk::raii::DeviceMemory(render.devices.logical, mem_alloc_info);
-    render.set_object_name(*vertex_buf_mem, debug_name + "_vertex_buff_memory");
-
-    // bind buffer and memory
-    buffer.bindMemory(vertex_buf_mem, 0 /*memory offset*/);
+    uint32_t size = sizeof(vertex) * vertexes.size();
+    render.create_buffer(size,
+                         vk::BufferUsageFlagBits::eVertexBuffer,
+                         vk::MemoryPropertyFlagBits::eHostVisible |
+                             vk::MemoryPropertyFlagBits::eHostCoherent,
+                         buffer,
+                         vertex_buf_mem);
 
     // map memory to vertex buffer
-    void* mem = vertex_buf_mem.mapMemory(0, info.size);
+    void* mem = vertex_buf_mem.mapMemory(0, size);
     std::uninitialized_copy_n(
         vertexes.begin(), vertexes.size(), static_cast<vertex*>(mem));
     vertex_buf_mem.unmapMemory();
+
+    render.set_object_name(*buffer, debug_name + "_vertex_buffer");
+    render.set_object_name(*vertex_buf_mem, debug_name + "_vertex_buff_memory");
 }
 
-uint32_t mesh::find_mem_type_index(
+uint32_t render::find_mem_type_index(
     uint32_t                           allowed_types,
     vk::MemoryPropertyFlags            properties,
     vk::PhysicalDeviceMemoryProperties physical_mem_prop)
@@ -2289,6 +2282,31 @@ uint32_t mesh::find_mem_type_index(
     }
     throw std::runtime_error(
         "can't find memory of allowed_types and properties");
+}
+
+void render::create_buffer(vk::DeviceSize          size,
+                           vk::BufferUsageFlags    usage,
+                           vk::MemoryPropertyFlags properties,
+                           vk::raii::Buffer&       buffer,
+                           vk::raii::DeviceMemory& bufferMemory)
+{
+    vk::BufferCreateInfo bufferInfo{
+        .size = size, .usage = usage, .sharingMode = vk::SharingMode::eExclusive
+    };
+
+    buffer = vk::raii::Buffer(devices.logical, bufferInfo);
+
+    vk::MemoryRequirements memRequirements = buffer.getMemoryRequirements();
+
+    vk::MemoryAllocateInfo allocInfo{
+        .allocationSize = memRequirements.size,
+        .memoryTypeIndex =
+            render::find_mem_type_index(memRequirements.memoryTypeBits,
+                                        properties,
+                                        devices.physical.getMemoryProperties()),
+    };
+    bufferMemory = vk::raii::DeviceMemory(devices.logical, allocInfo);
+    buffer.bindMemory(*bufferMemory, 0);
 }
 
 } // namespace om::vulkan
