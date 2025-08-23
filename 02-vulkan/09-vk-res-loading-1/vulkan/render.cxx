@@ -263,11 +263,13 @@ private:
 
     swapchain_details_t get_swapchain_details(const vk::PhysicalDevice& device);
 
-    static uint32_t get_render_queue_family_index(
+    static uint32_t get_graphics_queue_family_index(
         const vk::PhysicalDevice& physical_device);
     static uint32_t get_presentation_queue_family_index(
         const vk::PhysicalDevice& physical_device,
         const vk::SurfaceKHR&     surface_to_check);
+    uint32_t get_transfer_queue_family_index(
+        const vk::PhysicalDevice& physical_device);
 
     // choose functions
     vk::Extent2D choose_best_swapchain_image_resolution(
@@ -299,6 +301,7 @@ private:
 
     vk::raii::Queue graphics_queue     = nullptr; // can be presentation too
     vk::raii::Queue presentation_queue = nullptr; // only if needed
+    vk::raii::Queue transfer_queue = nullptr; // if exist or point to graphics
 
     struct
     {
@@ -308,8 +311,9 @@ private:
             {
                 std::uint32_t graphics     = ~0u;
                 std::uint32_t presentation = ~0u;
+                std::uint32_t transfer     = ~0u;
             } index;
-            std::array<std::uint32_t, 2> array;
+            std::array<std::uint32_t, 3> array;
         };
     } queue_family;
 
@@ -1259,7 +1263,7 @@ void render::get_physical_device()
         << '\n';
 }
 
-uint32_t render::get_render_queue_family_index(
+uint32_t render::get_graphics_queue_family_index(
     const vk::PhysicalDevice& physical_device)
 {
     auto queue_properties = physical_device.getQueueFamilyProperties();
@@ -1294,6 +1298,28 @@ uint32_t render::get_presentation_queue_family_index(
     size_t graphics_queue_index =
         std::distance(queue_properties.cbegin(), it_render_queue);
     return static_cast<uint32_t>(graphics_queue_index);
+}
+
+uint32_t render::get_transfer_queue_family_index(
+    const vk::PhysicalDevice& physical_device)
+{
+    auto queue_properties = physical_device.getQueueFamilyProperties();
+    auto it               = std::ranges::find_if(
+        queue_properties,
+        [&queue_properties](const vk::QueueFamilyProperties& property) -> bool
+        {
+            return (property.queueFlags & vk::QueueFlagBits::eTransfer &&
+                    !(property.queueFlags & vk::QueueFlagBits::eGraphics));
+        });
+
+    if (it == queue_properties.end())
+    {
+        log << "there is no dedicated transfer queue so just use graphics "
+               "queue\n";
+        return queue_family.index.graphics;
+    }
+
+    return std::distance(queue_properties.begin(), it);
 }
 
 void render::create_surface()
@@ -1374,35 +1400,46 @@ void render::create_logical_device()
 {
     std::vector<vk::QueueFamilyProperties> queueFamilyProperties =
         devices.physical.getQueueFamilyProperties();
-    // get the first index into queueFamilyProperties which supports both
-    // graphics and present
-    queue_family.index.graphics = ~0;
-    for (uint32_t qfp_index = 0; qfp_index < queueFamilyProperties.size();
-         qfp_index++)
-    {
-        vk::QueueFamilyProperties& properties =
-            queueFamilyProperties.at(qfp_index);
-        if ((properties.queueFlags & vk::QueueFlagBits::eGraphics) &&
-            devices.physical.getSurfaceSupportKHR(qfp_index, *surface))
-        {
-            // found a queue family that supports both graphics and present
-            queue_family.index.graphics     = qfp_index;
-            queue_family.index.presentation = qfp_index;
-            break;
-        }
-    }
+
+    queue_family.index.graphics =
+        get_graphics_queue_family_index(devices.physical);
+    queue_family.index.presentation =
+        get_presentation_queue_family_index(devices.physical, *surface);
+    queue_family.index.transfer =
+        get_transfer_queue_family_index(devices.physical);
+
     if (queue_family.index.graphics == ~0)
+
     {
         throw std::runtime_error("error: could not find a queue for graphics "
                                  "and present -> terminating");
     }
 
     float priorities = 0.f; // should be in [0..1] 1 - hi, 0 - lowest
-    vk::DeviceQueueCreateInfo device_queue_create_info = {
-        .queueFamilyIndex = queue_family.index.graphics,
-        .queueCount       = 1u,
-        .pQueuePriorities = &priorities
-    };
+    std::vector<vk::DeviceQueueCreateInfo> queue_infos;
+    queue_infos.push_back({ .queueFamilyIndex = queue_family.index.graphics,
+                            .queueCount       = 1u,
+                            .pQueuePriorities = &priorities });
+    if (queue_family.index.presentation != queue_family.index.graphics)
+    {
+        queue_infos.push_back(
+            { .queueFamilyIndex = queue_family.index.presentation,
+              .queueCount       = 1u,
+              .pQueuePriorities = &priorities });
+    }
+    if (queue_family.index.transfer != queue_family.index.graphics)
+    {
+        queue_infos.push_back({ .queueFamilyIndex = queue_family.index.transfer,
+                                .queueCount       = 1u,
+                                .pQueuePriorities = &priorities });
+    }
+
+    log << "queue_family.index.graphics: " << queue_family.index.graphics
+        << '\n';
+    log << "queue_family.index.presentation: "
+        << queue_family.index.presentation << '\n';
+    log << "queue_family.index.transfer: " << queue_family.index.transfer
+        << '\n';
 
     // Create a chain of feature structures
     vk::StructureChain<vk::PhysicalDeviceFeatures2,
@@ -1420,8 +1457,8 @@ void render::create_logical_device()
 
     vk::DeviceCreateInfo device_create_info{
         .pNext = &feature_chain.get<vk::PhysicalDeviceFeatures2>(),
-        .queueCreateInfoCount = 1,
-        .pQueueCreateInfos    = &device_queue_create_info,
+        .queueCreateInfoCount = static_cast<uint32_t>(queue_infos.size()),
+        .pQueueCreateInfos    = queue_infos.data(),
         .enabledLayerCount    = 0, // in vk_1_1+ this takes from vk::instance
         .enabledExtensionCount =
             static_cast<uint32_t>(required_device_extensions.size()),
@@ -1435,18 +1472,35 @@ void render::create_logical_device()
                               // this family, we’ll simply use index 0
     graphics_queue = vk::raii::Queue(
         devices.logical, queue_family.index.graphics, queue_index);
-    log << "got render queue\n";
+    log << "got graphics queue\n";
+    set_object_name(*graphics_queue, "graphics_queue");
 
     if (queue_family.index.graphics != queue_family.index.presentation)
     {
         presentation_queue = vk::raii::Queue(
             devices.logical, queue_family.index.presentation, queue_index);
-        log << "got presentation queue\n";
+        log << "got dedicated presentation queue\n";
+        set_object_name(*presentation_queue, "present_queue");
     }
     else
     {
         presentation_queue = vk::raii::Queue(
             devices.logical, queue_family.index.graphics, queue_index);
+        log << "presentation and graphics queue are the same\n";
+    }
+
+    if (queue_family.index.transfer != queue_family.index.graphics)
+    {
+        transfer_queue = vk::raii::Queue(
+            devices.logical, queue_family.index.transfer, queue_index);
+        log << "transfer qeueue is dedicated\n";
+        set_object_name(*transfer_queue, "transfer_queue");
+    }
+    else
+    {
+        transfer_queue = vk::raii::Queue(
+            devices.logical, queue_family.index.transfer, queue_index);
+        log << "transfer qeueue is the same with graphics\n";
     }
 
     // now we can add names to main vulkan objects
