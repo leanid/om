@@ -330,6 +330,7 @@ private:
 
     // pools
     vk::raii::CommandPool graphics_command_pool = nullptr;
+    vk::raii::CommandPool transfer_command_pool = nullptr;
 
     static constexpr std::uint32_t max_frames_in_flight =
         4; // <= shapchain_images.size()
@@ -1904,7 +1905,7 @@ void render::create_graphics_pipeline()
 
 void render::create_command_pool()
 {
-    vk::CommandPoolCreateInfo info{
+    vk::CommandPoolCreateInfo info_graphics{
         .flags = vk::CommandPoolCreateFlagBits::
             eResetCommandBuffer, // Allow command buffers to be rerecorded
                                  // individually, without this flag they all
@@ -1912,11 +1913,23 @@ void render::create_command_pool()
         .queueFamilyIndex = queue_family.index.graphics,
     };
 
-    graphics_command_pool = vk::raii::CommandPool(devices.logical, info);
+    graphics_command_pool = vk::raii::CommandPool(devices.logical, info_graphics);
 
-    log << "create command pool\n";
+    log << "create graphics command pool\n";
 
     set_object_name(*graphics_command_pool, "om_graphics_cmd_pool");
+
+    vk::CommandPoolCreateInfo info_transfer{
+        .flags            = vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
+        .queueFamilyIndex = queue_family.index.transfer,
+    };
+
+    transfer_command_pool =
+        vk::raii::CommandPool(devices.logical, info_transfer);
+
+    log << "create transfer command pool\n";
+
+    set_object_name(*graphics_command_pool, "om_transfer_cmd_pool");
 }
 
 void render::create_command_buffers()
