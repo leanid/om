@@ -9,13 +9,44 @@ import vulkan_hpp;
 import sdl.SDL;
 import sdl.vulkan;
 
+int main_cant_throw(int argc, char** argv);
+
 int main(int argc, char** argv)
+{
+    try
+    {
+        return main_cant_throw(argc, argv);
+    }
+    catch (std::exception& ex)
+    {
+        std::cerr << ex.what() << std::endl;
+        std::terminate();
+    }
+    return 1;
+}
+
+int main_cant_throw(int argc, char** argv)
 {
     using namespace om;
 
     std::ios_base::sync_with_stdio(false); // faster iostream work and we don't
                                            // need to sync with cstdio
 
+    const char*   env_log_file = std::getenv("OM_LOG");
+    std::ofstream log_file;
+    if (env_log_file)
+    {
+        log_file.open(env_log_file, std::ios::binary);
+        if (!log_file.is_open())
+        {
+            std::cerr << "error: can't open log file from ${ENV}OM_LOG="
+                      << env_log_file << std::endl;
+        }
+        else
+        {
+            std::clog.rdbuf(log_file.rdbuf());
+        }
+    }
     vulkan::args_parser args_parser(argc, argv);
 
     if (!args_parser.help.empty())
@@ -34,32 +65,35 @@ int main(int argc, char** argv)
         om::cout.rdbuf(std::clog.rdbuf());
     }
 
+    om::cout << args_parser << '\n';
+
     if (vk_validation_layer)
     {
         om::cout << "enable vulkan validation layers\n";
         if (!sdl::SetHint("SDL_RENDER_VULKAN_DEBUG", "1"))
         {
-            std::cerr << sdl::GetError();
+            om::cout << sdl::GetError();
             return 1;
         }
     }
 
     if (!sdl::Init(sdl::InitFlags::VIDEO))
     {
-        std::cerr << sdl::GetError();
+        om::cout << sdl::GetError();
         return 1;
     }
-    om::cout << "create all subsystems\n";
+    om::cout << "sdl init Video\n";
     std::experimental::scope_exit quit(
         []()
         {
             sdl::Quit();
-            om::cout << "destroy all subsystems\n";
+            om::cout << "sdl destroy Video\n";
         });
 
     if (!sdl::vulkan::Vulkan_LoadLibrary(nullptr))
     {
-        std::cerr << sdl::GetError();
+        om::cout << "error: failed to load Vulkan library: " << sdl::GetError()
+                 << '\n';
         return 1;
     }
     om::cout << "load vulkan library\n";
@@ -155,14 +189,14 @@ int main(int argc, char** argv)
     }
     catch (const vk::SystemError& ex)
     {
-        std::cerr << "error: vk::SystemError what: [" << ex.what() << ']'
-                  << "\n    code: [" << ex.code().message() << "]" << std::endl;
+        om::cout << "error: vk::SystemError what: [" << ex.what() << ']'
+                 << "\n    code: [" << ex.code().message() << "]" << std::endl;
         std::terminate();
     }
     catch (const std::exception& ex)
     {
-        std::cerr << "error: got exception [" << ex.what() << ']' << std::endl;
+        om::cout << "error: got exception [" << ex.what() << ']' << std::endl;
     }
 
-    return std::cerr.fail() || std::cout.fail() ? 1 : 0;
+    return om::cout.fail() || om::cout.fail() ? 1 : 0;
 }

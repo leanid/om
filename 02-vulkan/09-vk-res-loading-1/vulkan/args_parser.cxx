@@ -1,6 +1,5 @@
 module;
 #include <boost/program_options.hpp>
-#include <exception>
 
 export module vulkan_args_parser;
 import std;
@@ -19,6 +18,28 @@ export struct args_parser
     bool          debug_callback       = false;
     bool          high_pixel_density   = false;
 };
+
+export std::ostream& operator<<(std::ostream& out, const args_parser& arg)
+{
+    out << "┌───────────────────────┬─────────────────────────────┐\n";
+    out << "│ Parameter             │ Value                       │\n";
+    out << "├───────────────────────┼─────────────────────────────┤\n";
+    out << "│ Help                  │ " << std::setw(28) << std::left
+        << (arg.help.empty() ? "(empty)" : arg.help.substr(0, 25) + (arg.help.length() > 25 ? "..." : "")) << "│\n";
+    out << "│ Vulkan version        │ " << std::setw(28) << std::left
+        << (std::to_string(arg.vulkan_version_major) + "." + std::to_string(arg.vulkan_version_minor)) << "│\n";
+    out << "│ Verbose               │ " << std::setw(28) << std::left
+        << (arg.verbose ? "enabled" : "disabled") << "│\n";
+    out << "│ Validation layer      │ " << std::setw(28) << std::left
+        << (arg.validation_layer ? "enabled" : "disabled") << "│\n";
+    out << "│ Debug callback        │ " << std::setw(28) << std::left
+        << (arg.debug_callback ? "enabled" : "disabled") << "│\n";
+    out << "│ High pixel density    │ " << std::setw(28) << std::left
+        << (arg.high_pixel_density ? "enabled" : "disabled") << "│\n";
+    out << "└───────────────────────┴─────────────────────────────┘";
+
+    return out;
+}
 
 args_parser::args_parser(int argc, char** argv)
 {
