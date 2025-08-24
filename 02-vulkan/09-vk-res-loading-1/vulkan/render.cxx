@@ -78,7 +78,7 @@ public:
     ~mesh();
 
     [[nodiscard]] uint32_t get_vertex_count() const;
-    vk::Buffer             get_vertex_buffer();
+    vk::Buffer             get_vertex_buffer() const;
 
 private:
     void cleanup() noexcept;
@@ -177,11 +177,14 @@ public:
 
     ~render();
 
-    /// @brief Render the frame
-    void draw();
+    /// @brief Render the mesh
+    void draw(const mesh& mesh);
 
     /// call if windows resized
     void recreate_swapchain();
+
+    /// wait gpu finish work
+    void wait_idle();
 
 private:
     friend class mesh;
@@ -220,7 +223,8 @@ private:
 
     // record functions
     void record_commands(vk::raii::CommandBuffer& cmd_buf,
-                         std::uint32_t            image_index);
+                         std::uint32_t            image_index,
+                         const mesh&              mesh);
     void transition_image_layout(vk::raii::CommandBuffer& cmd_buf,
                                  uint32_t                 image_index,
                                  vk::ImageLayout          old_layout,
@@ -384,9 +388,6 @@ private:
         vk::KHRSynchronization2ExtensionName,
         vk::KHRCreateRenderpass2ExtensionName
     };
-
-    // scene component objects
-    mesh first_mesh;
 };
 
 mesh::mesh(std::span<vertex> vertexes, render& render, std::string debug_name)
@@ -402,7 +403,7 @@ uint32_t mesh::get_vertex_count() const
     return num_vertexes;
 }
 
-vk::Buffer mesh::get_vertex_buffer()
+vk::Buffer mesh::get_vertex_buffer() const
 {
     return buffer;
 }
@@ -581,20 +582,6 @@ render::render(platform_interface& platform, hints hints)
     create_command_pool();
     create_command_buffers();
     create_synchronization_objects();
-
-    // clang-format off
-    std::vector<vertex> mesh_verticles = {
-        {.pos{ 0.4f, -0.4f, 0.0f }, .col{1.0f, 0.0f, 0.0f}},
-        {.pos{ 0.4f, 0.4f, 0.0f },  .col{0.0f, 1.0f, 0.0f}},
-        {.pos{ -0.4f, 0.4f, 0.0f }, .col{0.0f, 0.0f, 1.0f}},
-
-        {.pos{ -0.4f, -0.4f, 0.0f}, .col{1.0f, 1.0f, 0.0f}},
-        {.pos{ 0.4f, -0.4f, 0.0f }, .col{1.0f, 0.0f, 0.0f}},
-        {.pos{ -0.4f, 0.4f, 0.0f }, .col{0.0f, 0.0f, 1.0f}}
-    };
-    // clang-format on
-
-    first_mesh = mesh(std::span{ mesh_verticles }, *this, "rect");
 }
 
 render::~render()
@@ -612,7 +599,7 @@ catch (std::exception& e)
     std::cerr << "error: during render::~render() " << e.what() << std::endl;
 }
 
-void render::draw()
+void render::draw(const mesh& mesh)
 {
     auto& draw_fence = *sync.draw_fence[current_frame];
 
@@ -649,7 +636,7 @@ void render::draw()
 
     auto& cmd_buf = command_buffers[current_frame];
     cmd_buf.reset();
-    record_commands(cmd_buf, image_index);
+    record_commands(cmd_buf, image_index, mesh);
 
     vk::PipelineStageFlags wait_dst_stage_mask(
         vk::PipelineStageFlagBits::eColorAttachmentOutput);
@@ -1700,6 +1687,11 @@ void render::recreate_swapchain()
     create_swapchain();
 }
 
+void render::wait_idle()
+{
+    devices.logical.waitIdle();
+}
+
 void render::create_graphics_pipeline()
 {
     // Static Pipeline States
@@ -1974,7 +1966,8 @@ void render::create_command_buffers()
 }
 
 void render::record_commands(vk::raii::CommandBuffer& cmd_buf,
-                             std::uint32_t            image_index)
+                             std::uint32_t            image_index,
+                             const mesh&              mesh)
 {
     cmd_buf.begin({});
 
@@ -2027,17 +2020,17 @@ void render::record_commands(vk::raii::CommandBuffer& cmd_buf,
     cmd_buf.setScissor(0,                                      // first_scissor
                        vk::Rect2D(vk::Offset2D(0, 0), swapchain_image_extent));
 
-    std::array<vk::Buffer, 1>     buffers{ first_mesh.get_vertex_buffer() };
+    std::array<vk::Buffer, 1>     buffers{ mesh.get_vertex_buffer() };
     std::array<vk::DeviceSize, 1> offsets{ 0 };
 
     cmd_buf.bindVertexBuffers(0, // first binding
                               buffers,
                               offsets);
 
-    cmd_buf.draw(first_mesh.get_vertex_count(), // vertex count
-                 1,                             // instance count
-                 0,                             // first vertex used as offset
-                 0                              // first instance used as offset
+    cmd_buf.draw(mesh.get_vertex_count(), // vertex count
+                 1,                       // instance count
+                 0,                       // first vertex used as offset
+                 0                        // first instance used as offset
     );
     cmd_buf.endRendering();
     // After rendering, transition the swapchain image to ePresentSrcKHR

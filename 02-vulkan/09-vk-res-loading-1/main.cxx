@@ -78,10 +78,7 @@ int main(int argc, char** argv)
     }
 
     std::unique_ptr<sdl::SDL_Window, decltype(&sdl::DestroyWindow)> window(
-        sdl::CreateWindow("09-vk-res-loading-1",
-                          800,
-                          600,
-                          window_flags),
+        sdl::CreateWindow("09-vk-res-loading-1", 800, 600, window_flags),
         sdl::DestroyWindow);
     std::experimental::scope_exit destroy_window(
         []() { om::cout << "destroy sdl window\n"; });
@@ -108,6 +105,20 @@ int main(int argc, char** argv)
         };
         render render(platform, hints);
 
+        // clang-format off
+        std::vector<vertex> mesh_verticles = {
+            {.pos{ 0.4f, -0.4f, 0.0f }, .col{1.0f, 0.0f, 0.0f}},
+            {.pos{ 0.4f, 0.4f, 0.0f },  .col{0.0f, 1.0f, 0.0f}},
+            {.pos{ -0.4f, 0.4f, 0.0f }, .col{0.0f, 0.0f, 1.0f}},
+
+            {.pos{ -0.4f, -0.4f, 0.0f}, .col{1.0f, 1.0f, 0.0f}},
+            {.pos{ 0.4f, -0.4f, 0.0f }, .col{1.0f, 0.0f, 0.0f}},
+            {.pos{ -0.4f, 0.4f, 0.0f }, .col{0.0f, 0.0f, 1.0f}}
+        };
+        // clang-format on
+
+        om::vulkan::mesh mesh(std::span{ mesh_verticles }, render, "rect");
+
         bool running = true;
         while (running)
         {
@@ -131,11 +142,13 @@ int main(int argc, char** argv)
                 }
             }
 
-            render.draw();
+            render.draw(mesh);
 
             // running = false;
             // std::this_thread::sleep_for(std::chrono::seconds(2));
         }
+
+        render.wait_idle();
     }
     catch (const vk::SystemError& ex)
     {
