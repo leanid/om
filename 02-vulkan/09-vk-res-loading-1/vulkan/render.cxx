@@ -70,33 +70,41 @@ export class mesh final
 {
 public:
     mesh() = default;
-    mesh(std::span<vertex> vertexes, render& render, std::string debug_name);
+    mesh(std::span<vertex>        vertexes,
+         std::span<std::uint16_t> indexes,
+         render&                  render,
+         std::string              debug_name);
     mesh(const mesh& other)            = delete;
     mesh& operator=(const mesh& other) = delete;
     mesh(mesh&& other);
     mesh& operator=(mesh&& other);
     ~mesh();
 
-    [[nodiscard]] uint32_t get_vertex_count() const;
-    vk::Buffer             get_vertex_buffer() const;
-
 private:
+    [[nodiscard]] uint32_t   get_vertex_count() const;
+    [[nodiscard]] vk::Buffer get_vertex_buffer() const;
+
     void cleanup() noexcept;
 
     friend class om::vulkan::render;
 
-    void            create_buffer(std::span<vertex> vertexes,
-                                  render&           render,
-                                  std::string       debug_name);
+    void create_buffer(std::span<vertex> vertexes,
+                       render&           render,
+                       std::string       debug_name = "_dbg");
+
+    void create_buffer(std::span<std::uint16_t> indexes,
+                       render&                  render,
+                       std::string              debug_name = "_dbg");
+
     static uint32_t find_mem_type_index(
         uint32_t                           allowed_types,
         vk::MemoryPropertyFlags            properties,
         vk::PhysicalDeviceMemoryProperties physical_mem_prop);
 
-    // vk::raii::PhysicalDevice& physical_device;
-    // vk::raii::Device&         device;
-    vk::raii::Buffer       buffer         = nullptr;
-    vk::raii::DeviceMemory vertex_buf_mem = nullptr;
+    vk::raii::Buffer       buffer_vert        = nullptr;
+    vk::raii::Buffer       buffer_indx        = nullptr;
+    vk::raii::DeviceMemory memory_buffer_vert = nullptr;
+    vk::raii::DeviceMemory memory_buffer_indx = nullptr;
     uint32_t               num_vertexes{};
 };
 
@@ -390,12 +398,18 @@ private:
     };
 };
 
-mesh::mesh(std::span<vertex> vertexes, render& render, std::string debug_name)
-    : buffer(nullptr)
-    , vertex_buf_mem(nullptr)
+mesh::mesh(std::span<vertex>        vertexes,
+           std::span<std::uint16_t> indexes,
+           render&                  render,
+           std::string              debug_name)
+    : buffer_vert(nullptr)
+    , buffer_indx(nullptr)
+    , memory_buffer_vert(nullptr)
+    , memory_buffer_indx(nullptr)
     , num_vertexes(vertexes.size())
 {
     create_buffer(vertexes, render, debug_name);
+    create_buffer(indexes, render, debug_name);
 }
 
 uint32_t mesh::get_vertex_count() const
@@ -405,7 +419,7 @@ uint32_t mesh::get_vertex_count() const
 
 vk::Buffer mesh::get_vertex_buffer() const
 {
-    return buffer;
+    return buffer_vert;
 }
 
 void mesh::cleanup() noexcept
@@ -416,24 +430,24 @@ void mesh::cleanup() noexcept
         return;
     }
     cout << "mesh::cleanup" << std::endl;
-    buffer.clear();
+    buffer_vert.clear();
     cout << "destroy mesh buffer" << std::endl;
-    vertex_buf_mem.clear();
+    memory_buffer_vert.clear();
     cout << "destroy mesh vertex_buf_mem" << std::endl;
     num_vertexes = 0;
 }
 
 mesh::mesh(mesh&& other)
-    : buffer(std::move(other.buffer))
-    , vertex_buf_mem(std::move(other.vertex_buf_mem))
+    : buffer_vert(std::move(other.buffer_vert))
+    , memory_buffer_vert(std::move(other.memory_buffer_vert))
     , num_vertexes(std::exchange(other.num_vertexes, 0))
 {
 }
 mesh& mesh::operator=(mesh&& other)
 {
-    buffer         = std::move(other.buffer);
-    vertex_buf_mem = std::move(other.vertex_buf_mem);
-    num_vertexes   = std::exchange(other.num_vertexes, 0);
+    buffer_vert        = std::move(other.buffer_vert);
+    memory_buffer_vert = std::move(other.memory_buffer_vert);
+    num_vertexes       = std::exchange(other.num_vertexes, 0);
     return *this;
 }
 
@@ -2265,13 +2279,50 @@ void mesh::create_buffer(std::span<vertex> vertexes,
                          vk::BufferUsageFlagBits::eVertexBuffer |
                              vk::BufferUsageFlagBits::eTransferDst,
                          vk::MemoryPropertyFlagBits::eDeviceLocal,
-                         buffer,
-                         vertex_buf_mem);
+                         buffer_vert,
+                         memory_buffer_vert);
 
-    render.set_object_name(*buffer, debug_name + "_vertex_buffer");
-    render.set_object_name(*vertex_buf_mem, debug_name + "_vertex_buff_memory");
+    render.set_object_name(*buffer_vert, debug_name + "_vertex_buffer");
+    render.set_object_name(*memory_buffer_vert,
+                           debug_name + "_vertex_buff_memory");
 
-    render.copy_buffer(staging_buffer, size, buffer);
+    render.copy_buffer(staging_buffer, size, buffer_vert);
+}
+
+void mesh::create_buffer(std::span<std::uint16_t> indexes,
+                         render&                  render,
+                         std::string              debug_name)
+{
+    vk::DeviceSize size = sizeof(std::uint16_t) * indexes.size();
+
+    vk::raii::Buffer       staging_buffer = nullptr;
+    vk::raii::DeviceMemory staging_mem    = nullptr;
+
+    render.create_buffer(size,
+                         vk::BufferUsageFlagBits::eTransferSrc,
+                         { vk::MemoryPropertyFlagBits::eHostVisible |
+                           vk::MemoryPropertyFlagBits::eHostCoherent },
+                         staging_buffer,
+                         staging_mem);
+
+    // map memory to vertex buffer
+    void* mem = staging_mem.mapMemory(0, size);
+    std::uninitialized_copy_n(
+        begin(indexes), indexes.size(), static_cast<std::uint16_t*>(mem));
+    staging_mem.unmapMemory();
+
+    render.create_buffer(size,
+                         vk::BufferUsageFlagBits::eIndexBuffer |
+                             vk::BufferUsageFlagBits::eTransferDst,
+                         vk::MemoryPropertyFlagBits::eDeviceLocal,
+                         buffer_indx,
+                         memory_buffer_indx);
+
+    render.set_object_name(*buffer_vert, debug_name + "_indx_buffer");
+    render.set_object_name(*memory_buffer_vert,
+                           debug_name + "_indx_buff_memory");
+
+    render.copy_buffer(staging_buffer, size, buffer_vert);
 }
 
 uint32_t render::find_mem_type_index(

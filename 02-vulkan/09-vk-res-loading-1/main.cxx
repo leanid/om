@@ -115,9 +115,15 @@ int main(int argc, char** argv)
             {.pos{ 0.4f, -0.4f, 0.0f }, .col{1.0f, 0.0f, 0.0f}},
             {.pos{ -0.4f, 0.4f, 0.0f }, .col{0.0f, 0.0f, 1.0f}}
         };
+        std::vector<std::uint16_t> mesh_indexes = {
+            0, 1, 2, 2, 3, 0
+        };
         // clang-format on
 
-        om::vulkan::mesh mesh(std::span{ mesh_verticles }, render, "rect");
+        om::vulkan::mesh mesh(std::span{ mesh_verticles },
+                              std::span{ mesh_indexes },
+                              render,
+                              "rect");
 
         bool running = true;
         while (running)
