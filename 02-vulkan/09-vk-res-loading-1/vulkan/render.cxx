@@ -82,7 +82,9 @@ public:
 
 private:
     [[nodiscard]] uint32_t   get_vertex_count() const;
+    [[nodiscard]] uint32_t   get_index_count() const;
     [[nodiscard]] vk::Buffer get_vertex_buffer() const;
+    [[nodiscard]] vk::Buffer get_index_buffer() const;
 
     void cleanup() noexcept;
 
@@ -106,6 +108,7 @@ private:
     vk::raii::DeviceMemory memory_buffer_vert = nullptr;
     vk::raii::DeviceMemory memory_buffer_indx = nullptr;
     uint32_t               num_vertexes{};
+    uint32_t               num_indexes{};
 };
 
 export struct platform_interface
@@ -407,6 +410,7 @@ mesh::mesh(std::span<vertex>        vertexes,
     , memory_buffer_vert(nullptr)
     , memory_buffer_indx(nullptr)
     , num_vertexes(vertexes.size())
+    , num_indexes(indexes.size())
 {
     create_buffer(vertexes, render, debug_name);
     create_buffer(indexes, render, debug_name);
@@ -416,10 +420,19 @@ uint32_t mesh::get_vertex_count() const
 {
     return num_vertexes;
 }
+uint32_t mesh::get_index_count() const
+{
+    return num_indexes;
+}
 
 vk::Buffer mesh::get_vertex_buffer() const
 {
     return buffer_vert;
+}
+
+vk::Buffer mesh::get_index_buffer() const
+{
+    return buffer_indx;
 }
 
 void mesh::cleanup() noexcept
@@ -2041,10 +2054,15 @@ void render::record_commands(vk::raii::CommandBuffer& cmd_buf,
                               buffers,
                               offsets);
 
-    cmd_buf.draw(mesh.get_vertex_count(), // vertex count
-                 1,                       // instance count
-                 0,                       // first vertex used as offset
-                 0                        // first instance used as offset
+    vk::Buffer indexes{ mesh.get_index_buffer() };
+
+    cmd_buf.bindIndexBuffer(indexes, 0u, vk::IndexType::eUint16);
+
+    cmd_buf.drawIndexed(mesh.get_index_count(), // index count
+                        1,                      // instance count
+                        0,                      // first index used as offset
+                        0,                      // vertex offset
+                        0                       // first instance used as offset
     );
     cmd_buf.endRendering();
     // After rendering, transition the swapchain image to ePresentSrcKHR
@@ -2322,7 +2340,7 @@ void mesh::create_buffer(std::span<std::uint16_t> indexes,
     render.set_object_name(*memory_buffer_vert,
                            debug_name + "_indx_buff_memory");
 
-    render.copy_buffer(staging_buffer, size, buffer_vert);
+    render.copy_buffer(staging_buffer, size, buffer_indx);
 }
 
 uint32_t render::find_mem_type_index(
