@@ -17,6 +17,7 @@ export struct args_parser
     bool          verbose              = false;
     bool          validation_layer     = false;
     bool          debug_callback       = false;
+    bool          high_pixel_density   = false;
 };
 
 args_parser::args_parser(int argc, char** argv)
@@ -36,6 +37,7 @@ args_parser::args_parser(int argc, char** argv)
                               "enable VK_LAYER_KHRONOS_validation");
         options.add_options()("vk_debug_callback,d",
                               "enable VK_EXT_debug_utils");
+        options.add_options()("hdpi", "enable high_pixel_density");
 
         variables_map vm;
         store(parse_command_line(argc, argv, options), vm);
@@ -49,9 +51,10 @@ args_parser::args_parser(int argc, char** argv)
             return;
         }
 
-        verbose          = vm.count("verbose");
-        validation_layer = vm.count("vk_validation_layer");
-        debug_callback   = vm.count("vk_debug_callback");
+        verbose            = vm.count("verbose");
+        validation_layer   = vm.count("vk_validation_layer");
+        debug_callback     = vm.count("vk_debug_callback");
+        high_pixel_density = vm.count("hdpi");
 
         // expected format is "1.0" or "1.1" or "1.2" or "1.3" or "1.4"
         auto index_of_point = vulkan_version.find('.');

@@ -70,13 +70,18 @@ int main(int argc, char** argv)
             om::cout << "unload vulkan library\n";
         });
 
+    sdl::WindowFlags window_flags =
+        sdl::WindowFlags::VULKAN | sdl::WindowFlags::RESIZABLE;
+    if (args_parser.high_pixel_density)
+    {
+        window_flags |= sdl::WindowFlags::HIGH_PIXEL_DENSITY;
+    }
+
     std::unique_ptr<sdl::SDL_Window, decltype(&sdl::DestroyWindow)> window(
         sdl::CreateWindow("09-vk-res-loading-1",
                           800,
                           600,
-                          sdl::WindowFlags::VULKAN |
-                              sdl::WindowFlags::RESIZABLE |
-                              sdl::WindowFlags::HIGH_PIXEL_DENSITY),
+                          window_flags),
         sdl::DestroyWindow);
     std::experimental::scope_exit destroy_window(
         []() { om::cout << "destroy sdl window\n"; });
