@@ -189,7 +189,8 @@ public:
     ~render();
 
     /// @brief Render the mesh
-    void draw(const mesh& mesh);
+    /// if !span.empty() copy ubo data to buffer
+    void draw(const mesh& mesh, std::span<std::byte> ubo = {});
 
     /// call if windows resized
     void recreate_swapchain();
@@ -206,12 +207,14 @@ private:
     void create_logical_device();
     void create_surface();
     void create_swapchain();
+    void create_descriptor_set_layout();
     void create_renderpass();
     void create_graphics_pipeline();
     void create_framebuffers();
     void create_command_pool();
     void create_command_buffers();
     void create_synchronization_objects();
+    void create_uniform_buffers();
 
     void create_buffer(vk::DeviceSize          size,
                        vk::BufferUsageFlags    usage,
@@ -356,8 +359,9 @@ private:
     std::vector<vk::raii::ImageView> swapchain_image_views;
 
     // vulkan pipeline
-    vk::raii::PipelineLayout pipeline_layout   = nullptr;
-    vk::raii::Pipeline       graphics_pipeline = nullptr;
+    vk::raii::DescriptorSetLayout descriptor_set_layout = nullptr;
+    vk::raii::PipelineLayout      pipeline_layout       = nullptr;
+    vk::raii::Pipeline            graphics_pipeline     = nullptr;
 
     // pools
     vk::raii::CommandPool graphics_command_pool = nullptr;
@@ -367,6 +371,11 @@ private:
         4; // <= shapchain_images.size()
 
     vk::raii::CommandBuffers command_buffers = nullptr;
+
+    // UBO should match max_frames_in_flight count
+    std::vector<vk::raii::Buffer>       uniform_buffers;
+    std::vector<vk::raii::DeviceMemory> uniform_buffers_memory;
+    std::vector<void*>                  uniform_buffers_mapped;
 
     // vulkan utilities
     vk::Format   swapchain_image_format{ vk::Format::eUndefined };
@@ -605,6 +614,7 @@ render::render(platform_interface& platform, hints hints)
     get_physical_device();
     create_logical_device();
     create_swapchain();
+    create_descriptor_set_layout();
     create_graphics_pipeline();
     create_command_pool();
     create_command_buffers();
@@ -626,7 +636,7 @@ catch (std::exception& e)
     std::cerr << "error: during render::~render() " << e.what() << std::endl;
 }
 
-void render::draw(const mesh& mesh)
+void render::draw(const mesh& mesh, std::span<std::byte> ubo)
 {
     auto& draw_fence = *sync.draw_fence[current_frame];
 
@@ -667,6 +677,13 @@ void render::draw(const mesh& mesh)
 
     vk::PipelineStageFlags wait_dst_stage_mask(
         vk::PipelineStageFlagBits::eColorAttachmentOutput);
+
+    if (!ubo.empty())
+    {
+        void* output = uniform_buffers_mapped[current_frame];
+        std::uninitialized_copy_n(
+            ubo.data(), ubo.size(), static_cast<std::byte*>(output));
+    }
 
     auto& render_finished = *sync.semaphore.render_finished[image_index];
 
@@ -1719,6 +1736,22 @@ void render::wait_idle()
     devices.logical.waitIdle();
 }
 
+void render::create_descriptor_set_layout()
+{
+    vk::DescriptorSetLayoutBinding ubo_layout_binding(
+        0,                                  // binding index
+        vk::DescriptorType::eUniformBuffer, // descriptorType
+        1,                                  // descriptorCount
+        vk::ShaderStageFlagBits::eVertex,   // stageFlags
+        nullptr);                           // immutableSamplers
+
+    vk::DescriptorSetLayoutCreateInfo layoutInfo{
+        .flags = {}, .bindingCount = 1, .pBindings = &ubo_layout_binding
+    };
+    descriptor_set_layout =
+        vk::raii::DescriptorSetLayout(devices.logical, layoutInfo);
+}
+
 void render::create_graphics_pipeline()
 {
     // Static Pipeline States
@@ -1879,8 +1912,10 @@ void render::create_graphics_pipeline()
     // here, in which case the fragment colors will be written to the
     // framebuffer unmodified.
 
-    // Pipeline layout (TODO: apply future descriptor sets)
-    vk::PipelineLayoutCreateInfo layout_info{ .setLayoutCount = 0,
+    // Pipeline layout apply descriptor sets
+    vk::PipelineLayoutCreateInfo layout_info{ .setLayoutCount = 1,
+                                              .pSetLayouts =
+                                                  &*descriptor_set_layout,
                                               .pushConstantRangeCount =
                                                   0 }; // we will fill it later
 
@@ -2143,6 +2178,32 @@ void render::create_synchronization_objects()
     }
 }
 
+void render::create_uniform_buffers()
+{
+    uniform_buffers.clear();
+    uniform_buffers_memory.clear();
+    uniform_buffers_mapped.clear();
+
+    for (size_t i = 0; i < max_frames_in_flight; i++)
+    {
+        vk::DeviceSize         size = sizeof(glm::mat4) * 3; // model,view,proj
+        vk::raii::Buffer       buffer({});
+        vk::raii::DeviceMemory buffer_mem({});
+        create_buffer(size,
+                      vk::BufferUsageFlagBits::eUniformBuffer,
+                      vk::MemoryPropertyFlagBits::eHostVisible |
+                          vk::MemoryPropertyFlagBits::eHostCoherent,
+                      buffer,
+                      buffer_mem);
+        uniform_buffers.emplace_back(std::move(buffer));
+        uniform_buffers_memory.emplace_back(std::move(buffer_mem));
+        // This technique is called "persistent mapping" and works on all Vulkan
+        // implementations. Not having to map the buffer every time we need to
+        // update it increases performances, as mapping is not free.
+        uniform_buffers_mapped.emplace_back(
+            uniform_buffers_memory[i].mapMemory(0, size));
+    }
+}
 vk::Extent2D render::choose_best_swapchain_image_resolution(
     const vk::SurfaceCapabilitiesKHR& capabilities)
 {

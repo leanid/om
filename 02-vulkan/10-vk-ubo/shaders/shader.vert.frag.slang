@@ -1,4 +1,12 @@
 // Slang shader language
+
+struct uniform_buffer {
+    float4x4 model;
+    float4x4 view;
+    float4x4 proj;
+};
+ConstantBuffer<uniform_buffer> ubo;
+
 struct vertex_in
 {
     float3 pos;
@@ -15,7 +23,8 @@ struct vertex_output
 vertex_output main_vert(vertex_in v)
 {
     vertex_output output;
-    output.position = float4(v.pos, 1.0);
+    output.position =
+        mul(ubo.proj, mul(ubo.view, mul(ubo.model, float4(v.pos, 1.0))));
     output.frag_col = v.col;
     return output;
 }

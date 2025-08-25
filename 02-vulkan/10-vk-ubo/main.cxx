@@ -8,8 +8,16 @@ import vulkan_render;
 import vulkan_hpp;
 import sdl.SDL;
 import sdl.vulkan;
+import glm;
 
 int main_cant_throw(int argc, char** argv);
+
+struct uniform_buffer_object
+{
+    glm::mat4 model;
+    glm::mat4 view;
+    glm::mat4 proj;
+};
 
 int main(int argc, char** argv)
 {
@@ -150,11 +158,19 @@ int main_cant_throw(int argc, char** argv)
             0, 1, 2, 2, 3, 0
         };
         // clang-format on
+        uniform_buffer_object ubo{};
 
         om::vulkan::mesh mesh(std::span{ mesh_verticles },
                               std::span{ mesh_indexes },
                               render,
                               "rect");
+
+        auto startTime = std::chrono::high_resolution_clock::now();
+
+        auto  currentTime = std::chrono::high_resolution_clock::now();
+        float time = std::chrono::duration<float, std::chrono::seconds::period>(
+                         currentTime - startTime)
+                         .count();
 
         bool running = true;
         while (running)
@@ -179,7 +195,25 @@ int main_cant_throw(int argc, char** argv)
                 }
             }
 
-            render.draw(mesh);
+            ubo.model = glm::rotate(glm::mat4(1.0f),              // matrix
+                                    time * glm::radians(90.0f),   // angle
+                                    glm::vec3(0.0f, 0.0f, 1.0f)); // axis
+
+            ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f),  // eye
+                                   glm::vec3(0.0f, 0.0f, 0.0f),  // center
+                                   glm::vec3(0.0f, 0.0f, 1.0f)); // up
+
+            ubo.proj = glm::perspective(glm::radians(45.0f),
+                                        static_cast<float>(800) /
+                                            static_cast<float>(600),
+                                        0.1f,
+                                        10.0f);
+
+            ubo.proj[1][1] *= -1; // in Vulkan y-asix point down
+
+            render.draw(mesh,
+                        std::span<std::byte>(reinterpret_cast<std::byte*>(&ubo),
+                                             sizeof(ubo)));
 
             // running = false;
             // std::this_thread::sleep_for(std::chrono::seconds(2));
