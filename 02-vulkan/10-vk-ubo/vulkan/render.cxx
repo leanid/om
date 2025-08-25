@@ -215,6 +215,8 @@ private:
     void create_command_buffers();
     void create_synchronization_objects();
     void create_uniform_buffers();
+    void create_descriptor_pool();
+    void create_descriptor_sets();
 
     void create_buffer(vk::DeviceSize          size,
                        vk::BufferUsageFlags    usage,
@@ -237,6 +239,7 @@ private:
 
     // record functions
     void record_commands(vk::raii::CommandBuffer& cmd_buf,
+                         vk::raii::DescriptorSet& descriptor_set,
                          std::uint32_t            image_index,
                          const mesh&              mesh);
     void transition_image_layout(vk::raii::CommandBuffer& cmd_buf,
@@ -364,8 +367,9 @@ private:
     vk::raii::Pipeline            graphics_pipeline     = nullptr;
 
     // pools
-    vk::raii::CommandPool graphics_command_pool = nullptr;
-    vk::raii::CommandPool transfer_command_pool = nullptr;
+    vk::raii::CommandPool    graphics_command_pool = nullptr;
+    vk::raii::CommandPool    transfer_command_pool = nullptr;
+    vk::raii::DescriptorPool descriptor_pool       = nullptr;
 
     static constexpr std::uint32_t max_frames_in_flight =
         4; // <= shapchain_images.size()
@@ -373,9 +377,10 @@ private:
     vk::raii::CommandBuffers command_buffers = nullptr;
 
     // UBO should match max_frames_in_flight count
-    std::vector<vk::raii::Buffer>       uniform_buffers;
-    std::vector<vk::raii::DeviceMemory> uniform_buffers_memory;
-    std::vector<void*>                  uniform_buffers_mapped;
+    std::vector<vk::raii::Buffer>        uniform_buffers;
+    std::vector<vk::raii::DeviceMemory>  uniform_buffers_memory;
+    std::vector<void*>                   uniform_buffers_mapped;
+    std::vector<vk::raii::DescriptorSet> descriptor_sets;
 
     // vulkan utilities
     vk::Format   swapchain_image_format{ vk::Format::eUndefined };
@@ -619,6 +624,8 @@ render::render(platform_interface& platform, hints hints)
     create_command_pool();
     create_command_buffers();
     create_uniform_buffers();
+    create_descriptor_pool();
+    create_descriptor_sets();
     create_synchronization_objects();
 }
 
@@ -674,7 +681,9 @@ void render::draw(const mesh& mesh, std::span<std::byte> ubo)
 
     auto& cmd_buf = command_buffers[current_frame];
     cmd_buf.reset();
-    record_commands(cmd_buf, image_index, mesh);
+    auto& descr_set = descriptor_sets[current_frame];
+
+    record_commands(cmd_buf, descr_set, image_index, mesh);
 
     vk::PipelineStageFlags wait_dst_stage_mask(
         vk::PipelineStageFlagBits::eColorAttachmentOutput);
@@ -2029,6 +2038,7 @@ void render::create_command_buffers()
 }
 
 void render::record_commands(vk::raii::CommandBuffer& cmd_buf,
+                             vk::raii::DescriptorSet& descriptor_set,
                              std::uint32_t            image_index,
                              const mesh&              mesh)
 {
@@ -2093,7 +2103,11 @@ void render::record_commands(vk::raii::CommandBuffer& cmd_buf,
     vk::Buffer indexes{ mesh.get_index_buffer() };
 
     cmd_buf.bindIndexBuffer(indexes, 0u, vk::IndexType::eUint16);
-
+    cmd_buf.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
+                               pipeline_layout,
+                               0, // first set index in array
+                               *descriptor_set,
+                               nullptr);
     cmd_buf.drawIndexed(mesh.get_index_count(), // index count
                         1,                      // instance count
                         0,                      // first index used as offset
@@ -2205,6 +2219,53 @@ void render::create_uniform_buffers()
             uniform_buffers_memory[i].mapMemory(0, size));
     }
 }
+
+void render::create_descriptor_pool()
+{
+    vk::DescriptorPoolSize       pool_size{ .type =
+                                          vk::DescriptorType::eUniformBuffer,
+                                            .descriptorCount = max_frames_in_flight };
+    vk::DescriptorPoolCreateInfo pool_info{
+        .flags   = { vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet },
+        .maxSets = max_frames_in_flight,
+        .poolSizeCount = 1,
+        .pPoolSizes    = &pool_size
+    };
+
+    descriptor_pool = vk::raii::DescriptorPool(devices.logical, pool_info);
+}
+
+void render::create_descriptor_sets()
+{
+    std::vector<vk::DescriptorSetLayout> layouts(max_frames_in_flight,
+                                                 *descriptor_set_layout);
+    vk::DescriptorSetAllocateInfo        alloc_info{
+               .descriptorPool     = descriptor_pool,
+               .descriptorSetCount = static_cast<uint32_t>(layouts.size()),
+               .pSetLayouts        = layouts.data()
+    };
+
+    descriptor_sets.clear();
+    descriptor_sets = devices.logical.allocateDescriptorSets(alloc_info);
+
+    for (size_t i = 0; i < max_frames_in_flight; i++)
+    {
+        vk::DescriptorBufferInfo buffer_info{ .buffer = uniform_buffers.at(i),
+                                              .offset = 0,
+                                              .range  = sizeof(glm::mat4) * 3 };
+        vk::WriteDescriptorSet   descriptorWrite{
+              .dstSet          = descriptor_sets.at(i),
+              .dstBinding      = 0, // index binding
+              .dstArrayElement = 0, // index if array of descriptors
+              .descriptorCount = 1,
+              .descriptorType  = vk::DescriptorType::eUniformBuffer,
+              .pBufferInfo     = &buffer_info
+        };
+
+        devices.logical.updateDescriptorSets(descriptorWrite, {});
+    }
+}
+
 vk::Extent2D render::choose_best_swapchain_image_resolution(
     const vk::SurfaceCapabilitiesKHR& capabilities)
 {
