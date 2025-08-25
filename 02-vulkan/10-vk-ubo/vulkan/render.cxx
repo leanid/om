@@ -198,6 +198,9 @@ public:
     /// wait gpu finish work
     void wait_idle();
 
+    /// updated on window resize
+    vk::Extent2D get_swapchain_image_extent() { return swapchain_image_extent; }
+
 private:
     friend class mesh;
     // create functions
@@ -1872,7 +1875,7 @@ void render::create_graphics_pipeline()
         // which face of triangle to cull
         .cullMode = vk::CullModeFlagBits::eBack,
         // which triangle face is front face
-        .frontFace = vk::FrontFace::eClockwise,
+        .frontFace = vk::FrontFace::eCounterClockwise, // Y-axis flip in main
         // where to add depth bias to fragments (good for stopping "shadow acne"
         // in shadow mapping)
         .depthBiasEnable      = vk::False,

@@ -12,11 +12,14 @@ import glm;
 
 int main_cant_throw(int argc, char** argv);
 
+/// always use alignas to be shure C++ and Slang
+/// structs has same alignment spec:
+/// https://docs.vulkan.org/spec/latest/chapters/interfaces.html#interfaces-resources-layout
 struct uniform_buffer_object
 {
-    glm::mat4 model;
-    glm::mat4 view;
-    glm::mat4 proj;
+    alignas(16) glm::mat4 model;
+    alignas(16) glm::mat4 view;
+    alignas(16) glm::mat4 proj;
 };
 
 int main(int argc, char** argv)
@@ -167,11 +170,6 @@ int main_cant_throw(int argc, char** argv)
 
         auto startTime = std::chrono::high_resolution_clock::now();
 
-        auto  currentTime = std::chrono::high_resolution_clock::now();
-        float time = std::chrono::duration<float, std::chrono::seconds::period>(
-                         currentTime - startTime)
-                         .count();
-
         bool running = true;
         while (running)
         {
@@ -195,6 +193,14 @@ int main_cant_throw(int argc, char** argv)
                 }
             }
 
+            auto  currentTime = std::chrono::high_resolution_clock::now();
+            float time =
+                std::chrono::duration<float, std::chrono::seconds::period>(
+                    currentTime - startTime)
+                    .count();
+
+            auto window_size = render.get_swapchain_image_extent();
+
             ubo.model = glm::rotate(glm::mat4(1.0f),              // matrix
                                     time * glm::radians(90.0f),   // angle
                                     glm::vec3(0.0f, 0.0f, 1.0f)); // axis
@@ -203,11 +209,12 @@ int main_cant_throw(int argc, char** argv)
                                    glm::vec3(0.0f, 0.0f, 0.0f),  // center
                                    glm::vec3(0.0f, 0.0f, 1.0f)); // up
 
-            ubo.proj = glm::perspective(glm::radians(45.0f),
-                                        static_cast<float>(800) /
-                                            static_cast<float>(600),
-                                        0.1f,
-                                        10.0f);
+            ubo.proj =
+                glm::perspective(glm::radians(45.0f),
+                                 static_cast<float>(window_size.width) /
+                                     static_cast<float>(window_size.height),
+                                 0.1f,
+                                 10.0f);
 
             ubo.proj[1][1] *= -1; // in Vulkan y-asix point down
 
