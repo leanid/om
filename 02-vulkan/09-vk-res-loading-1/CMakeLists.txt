@@ -7,7 +7,8 @@ find_package(
     Boost 1.88.0 # should match version in root CMakeLists.txt
     EXACT # Minimum or EXACT version e.g. 1.67.0
     # REQUIRED # Fail with error if Boost is not found
-    COMPONENTS program_options stacktrace # Boost libraries by their canonical name
+    COMPONENTS program_options
+               stacktrace # Boost libraries by their canonical name
     # REQUIRED
     # e.g. "date_time" for "libboost_date_time"
     #[OPTIONAL_COMPONENTS <libs>...]
