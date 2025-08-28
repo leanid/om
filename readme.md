@@ -1,6 +1,4 @@
-# OM Project
-
-[![Om](https://bitbucket.org/account/user/b_y/projects/OM/avatar/32)](https://bitbucket.org/account/user/b_y/projects/OM)
+# OM Project (🕉)
 
 | Build Platform | Status (tests only)                                                              |
 |----------------|----------------------------------------------------------------------------------|
