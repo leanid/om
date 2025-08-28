@@ -1,30 +1,23 @@
 cmake_minimum_required(VERSION 4.0)
-
-list(APPEND CMAKE_PREFIX_PATH ${CMAKE_SOURCE_DIR}/cmake)
-find_package(om-common-functions REQUIRED)
 # Enables the Standard module support. This needs to be done
 # before selecting the languages.
 # https://github.com/Kitware/CMake/blob/master/Help/dev/experimental.rst
-set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "a9e1cf81-9932-4810-974b-6eccaf14e457")
-
-project("gamedev_study" LANGUAGES CXX)
-om_add_custom_build_types()
-
-# Tell CMake that we explicitly want `import std`. This will initialize the
-# property on all targets declared after this to 1
-set(CMAKE_CXX_MODULE_STD 1)
-
-if(MSVC OR APPLE)
-    set(CMAKE_CXX_STANDARD 23) # to get c++latest flag
-else()
-    set(CMAKE_CXX_STANDARD 23)
-endif()
-
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "d0edc3af-4c50-42ea-a356-e2862fe7a444")
 # Currently CMake requires extensions enabled when using import std.
 # https://gitlab.kitware.com/cmake/cmake/-/issues/25916
 # https://gitlab.kitware.com/cmake/cmake/-/issues/25539
 set(CMAKE_CXX_EXTENSIONS ON)
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+# Tell CMake that we explicitly want `import std`. This will initialize the
+# property on all targets declared after this to 1
+set(CMAKE_CXX_MODULE_STD 1)
+
+list(APPEND CMAKE_PREFIX_PATH ${CMAKE_SOURCE_DIR}/cmake)
+find_package(om-common-functions REQUIRED)
+
+project("gamedev_study" LANGUAGES CXX)
+om_add_custom_build_types()
 
 option(OM_BUILD_DEPS [=[download and build dependencies [SDL3, GLM, Catch2]
     as part of current build]=] ON)

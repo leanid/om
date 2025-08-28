@@ -39,8 +39,10 @@ Install the dependencies to build engine on Linux.
 ```sh
 # for llvm with libc++
 sudo epm install libcxx-devel
+sudo epm install libcxx-devel libcxx-static
 # for SDL3 (deps)
 sudo epm install libwayland-client-devel libwayland-server-devel libEGL-devel
+sudo epm install libGL-devel
 sudo epm install libalsa-devel libjack-devel
 sudo epm install libpulseaudio-devel
 sudo epm install libsndio7-devel
@@ -51,6 +53,18 @@ sudo epm install libwayland-cursor-devel
 sudo epm install libxkbcommon-devel
 sudo epm install libunwind-devel
 sudo epm install libusb-devel
+sudo epm install libudev-devel
+sudo epm install libdecor-devel
+# for boost (deps)
+sudo epm install libffi-devel
+sudo epm install libssl-devel
+# for Vulkan
+sudo epm install libvulkan-devel
+sudo epm install glslang
+sudo epm install glslang-devel
+sudo epm install glslc
+# to install slangc - build it with VULKAN_SDK [./vulkansdk slangc -j 8]
+# and add to .zshrc - source path_to_vk_sdk/setup-env.sh
 ```
 
 #### On Ubuntu 
