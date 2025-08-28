@@ -7,35 +7,37 @@
 | MSVC 2017 x64  | ![MSVC 2017 Build](https://ci.appveyor.com/api/projects/status/bitbucket/b_y/om) |
 | Linux x64      | ![Linux x64](https://img.shields.io/bitbucket/pipelines/b_y/om.svg)              |
 
-Om is a nice 2d game engine for multiplatform studying.
+Om is a collection of several mini tutorial about:
 
-- Environmental friendliness (take less do more with c++)
-- Modern IT technology (**c++23**, **cmake-3.30**, **gradle**)
-- Creativity (create funny tools with **imgui** library)
+- c++, gamedev, linux, crossplatform
+- Modern c++ IT technology (**c++23**, **cmake-4.0+**, **gradle**)
 - Fun 🤣
 
 ## Planed Features
 
+- basic shell (bash, zsh) example
+- basic c++ (terminal, strings, memory, error handling)
+- basic gamedev (input, render2d - vulkan/gles, sound)
 - multiplatform (Linux, windows, Mac OS, Android, iOS)
 - 2d on top of OpenGL 2.0 ES (3.0 ES)
-- last c++20(c++23) standard
-- STL enabled, no custom monkey coding
+- 2d on top of Vulkan 1.3
 - easy building with modern cmake
 
 ### Tech
 
 Om project uses a number of open source projects to work properly:
 
-- [SDL3] - best cross-platform low level game library
-- Om Project is open source with a public repository
-- [om](https://bitbucket.org/b_y/om) on BitBucket.
+- [SDL3](https://github.com/libsdl-org/SDL) - best cross-platform low level game library
+- [Boost](https://www.boost.org/) - best c++ system level libraries
+- [GLM](https://github.com/g-truc/glm) - best c++ math library for gamedev
 
 ### Installation
 
-Om requires [SDL3](http://libsdl.org/) v3.0.0+ to run.
+Om requires [Cmake](https://cmake.org/) v4.0+ to build.
 
-Install the dependencies to build engine on Linux.
-#### On Alt Linux
+Install the dependencies to build tutorials.
+
+#### On Alt Linux (Regular over p11)
 ```sh
 # for llvm with libc++
 sudo epm install libcxx-devel
@@ -69,25 +71,25 @@ sudo epm install glslc
 # and add to .zshrc - source path_to_vk_sdk/setup-env.sh
 ```
 
-#### On Ubuntu 
-
-```sh
-git clone git@bitbucket.org:b_y/om.git
-sudo apt install libsdl2-dev
-cmake -G"Makefiles"
-make -j 4
-bin/engine --test
-```
-
 #### On Fedora
 
 ```sh
-git clone git@bitbucket.org:b_y/om.git
 sudo dnf install SDL3
 sudo dnf install SDL3-static
-cmake -G"Makefiles"
-make -j 4
-bin/engine --test
+```
+##### hints on Alt
+1. To search package
+
+```sh
+#search by package name
+epm search sdl3
+# search by file name ending example: (++exp.a) in package
+epm filesearch \\+\\+exp\\.a 
+```
+2. To list package content
+
+```sh
+epm filelist <package>
 ```
 
 ##### hints on Fedora
@@ -120,51 +122,15 @@ bin/engine --test
 
 ### On Mac OS (with gcc)
 
-#### using g++ from Homebrew (need c++17 support)
+#### using g++ from Homebrew (need c++23 support)
 
-On Mac OS X for c++17 compiler you have to install latest gcc from
+On Mac OS X for c++23 compiler you have to install latest llvm from
 Homebrew and then use it
-
-```sh
-/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-brew install gcc
-brew install SDL3
-brew install cmake
-```
 
 ### On Windows
 
-#### for Visual Studio (2022 with c++23 support)
-
-1. install **vcpkg** from [vcpkg](https://github.com/Microsoft/vcpkg)
-2. install **SDL3** in **vcpkg**: `vcpkg install sdl3`
-3. make directory build in **om/tests**. move into it and there:
-   `cmake .. -DCMAKE_TOOLCHAIN_FILE={YOUR_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake`
-4. build all using:
-
-   ```cmd
-   "C:\Program Files (x86)\Microsoft Visual Studio\ \
-   2017\Community\MSBuild\15.0\Bin\MSBuild.exe" all-tests-build.sln
-   ```
-
-### Building
-
-#### On Windows using [MSYS2](https://www.msys2.org)
-
-1. from **msys2** bash shell:
-    `pacman -S base-devel mingw-w64-x86_64-toolchain mingw-w64-x86_64-SDL3`
-2. (optional) full build development environment on windows using msys2:
-    `pacman -S base-devel mingw-w64-x86_64-toolchain \
-    git mingw-w64-x86_64-cmake mingw-w64-x86_64-qt-creator ninja`
-3. from **cmd.exe** Windows terminal program (g++ in PATH from msys2)
-
-    ```
-    cd ~/om
-    mkdir build
-    cd build
-    cmake ../tests
-    cmake --build .
-    ```
+1. install Vusial Studio Community
+2. or install Mingw64w
 
 ### Generate Docker image (for BitBucket pipelines)
 
@@ -186,62 +152,23 @@ clang wine git SDL3-devel SDL3-static mingw64-SDL3 mingw64-SDL3-static \
 libstdc++-static glibc-static ninja-build
 ```
 
+### Building
+
+On every platform you should do same things like:
+```sh
+cmake . --preset ninja-llvm
+cmake --build --preset ninja-llvm --config Debug
+```
+
 ### Tools
 
-#### Simple configuration for **doomemacs** per-project c++ cmake
+#### Doomemacs
 
-1. create in project root file: **.dir-locals.el**
-2. place next code into it.
-3. edit it if you need add some cmake flags or change test-command
-
-    ```elisp
-    ;;; Directory Local Variables
-    ;;; For more information see (info "(emacs) Directory Variables")
-
-    ((nil . ((projectile--cmake-manual-command-alist . ((:configure-command . "cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -S . -B build")
-                                                        (:compile-command . "cmake --build build")
-                                                        (:test-command . "./build/30-1-point-shadow"))))))
-    ```
-
-4. also you may want to disable warning about every opened file in project.
-   Place next into: **~/.doom.d/config.el** or **~/.config/doom/config.el**
-
-    ```elisp
-    (put 'projectile--cmake-manual-command-alist 'safe-local-variable (lambda (_) t))
-    ```
-
-5. one more hint. Place **.projectile** file in root of your
-   project to force doomemacs use this directory as root
-
-#### Want latest and fastest Emacs?
-
-1. on fedora install build dependencies to build Emacs from source:
-
-    ```sh
-    sudo dnf install gtk+-devel libXaw-devel libjpeg-devel libpng-devel \
-    giflib-devel libtiff-devel gnutls-devel ncurses-devel Xaw3d-devel \
-    libgccjit-devel harfbuzz-devel jansson-devel cairo-devel \
-    ripgrep fd-find libtool
-    ```
-
-2. build Emacs with native-compilation enabled
-
-    ```sh
-    # configure emacs for native-compilation like next:
-    ../emacs-28.1/configure --with-native-compilation --with-mailutils
-    ```
-
-3. after installing just fresh Emacs call sync
-   to regenerate-compile elisp packages for doomemacs
-
-    ```sh
-    ~/.doom.d/bin/doom sync
-    ```
+All current development is done in Doomemacs.
+How to install Doomemacs [install](https://github.com/doomemacs/doomemacs)
+How to configure and use [usage](~/support/emacs/doomemacs.md)
 
 ### License
 
 **ZIP**
-
-[//]: # (These are reference links used in the body of this note and get stripped out when the markdown processor does its job. There is no need to format nicely because it shouldn't be seen. Thanks SO - http://stackoverflow.com/questions/4823468/store-comments-in-markdown-syntax)
-[SDL3]: <http://libsdl.org/>
 
