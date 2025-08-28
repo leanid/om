@@ -2,4 +2,4 @@
 *.hxx text eol=lf
 *.md text eol=lf
 CMakeLists.txt text eol=lf
-* text eol=lf
+* text=auto eol=lf
