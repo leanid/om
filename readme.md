@@ -40,6 +40,8 @@ Install the dependencies to build engine on Linux.
 # for llvm with libc++
 sudo epm install libcxx-devel
 sudo epm install libcxx-devel libcxx-static
+# needed for libstdc++exp.a
+sudo epm install libstdc++14-devel-static
 # for SDL3 (deps)
 sudo epm install libwayland-client-devel libwayland-server-devel libEGL-devel
 sudo epm install libGL-devel

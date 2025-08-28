@@ -10753,12 +10753,12 @@ bool GetDefaultTextureScaleMode(SDL_Renderer* renderer, ScaleMode* scale_mode)
                                           (SDL_ScaleMode*)(scale_mode));
 }
 
-using GPURenderStateDesc = SDL_GPURenderStateDesc;
+using GPURenderStateCreateInfo = SDL_GPURenderStateCreateInfo;
 
 using SDL_GPURenderState = SDL_GPURenderState;
 
 SDL_GPURenderState* CreateGPURenderState(SDL_Renderer*           renderer,
-                                         SDL_GPURenderStateDesc* desc)
+                                         SDL_GPURenderStateCreateInfo* desc)
 {
     return SDL_CreateGPURenderState(renderer, desc);
 }

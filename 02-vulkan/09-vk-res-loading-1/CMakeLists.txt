@@ -61,6 +61,7 @@ target_compile_definitions(
 # cmake-format: on
 target_include_directories(glm_cppm PRIVATE "${glm_INCLUDE_DIR}")
 target_compile_features(glm_cppm PRIVATE cxx_std_23)
+target_link_libraries(glm_cppm PRIVATE glm::glm)
 
 target_sources(
     glm_cppm
