@@ -35,6 +35,23 @@ Om project uses a number of open source projects to work properly:
 Om requires [SDL3](http://libsdl.org/) v3.0.0+ to run.
 
 Install the dependencies to build engine on Linux.
+#### On Alt Linux
+```sh
+# for llvm with libc++
+sudo epm install libcxx-devel
+# for SDL3 (deps)
+sudo epm install libwayland-client-devel libwayland-server-devel libEGL-devel
+sudo epm install libalsa-devel libjack-devel
+sudo epm install libpulseaudio-devel
+sudo epm install libsndio7-devel
+sudo epm install libdrm-devel
+sudo epm install libgbm-devel
+sudo epm install libwayland-egl-devel
+sudo epm install libwayland-cursor-devel
+sudo epm install libxkbcommon-devel
+sudo epm install libunwind-devel
+sudo epm install libusb-devel
+```
 
 #### On Ubuntu 
 
