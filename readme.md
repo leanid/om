@@ -164,7 +164,7 @@ cmake --build --preset ninja-llvm --config Debug
 
 All current development is done in Doomemacs.
 How to install Doomemacs [install](https://github.com/doomemacs/doomemacs)
-How to configure and use [usage](~/support/emacs/doomemacs.md)
+How to configure and use [usage](support/emacs/doomemacs.md)
 
 ### License
 
