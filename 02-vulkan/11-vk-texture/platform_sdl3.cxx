@@ -1,0 +1,126 @@
+module;
+
+#include "read_file.hxx"
+export module vulkan_platform_sdl3;
+
+import std;
+import log;
+import vulkan_render;
+import vulkan_hpp;
+import sdl.SDL;
+import sdl.vulkan;
+
+namespace om::vulkan
+{
+export struct platform_sdl3 final : platform_interface
+{
+    explicit platform_sdl3(sdl::SDL_Window* window, std::ostream& logger)
+        : window{ window }
+        , log{ logger }
+    {
+    }
+
+    extensions     get_vulkan_extensions() override;
+    vk::SurfaceKHR create_vulkan_surface(
+        vk::Instance             instance,
+        vk::AllocationCallbacks* alloc_callbacks) override;
+    void destroy_vulkan_surface(
+        vk::Instance             instance,
+        vk::SurfaceKHR           surface,
+        vk::AllocationCallbacks* alloc_callbacks) noexcept override;
+    buffer_size get_window_buffer_size() override;
+
+    std::ostream& get_logger() noexcept override;
+
+    content get_file_content(std::string_view path) override;
+
+private:
+    sdl::SDL_Window* window;
+    std::ostream&    log;
+};
+} // namespace om::vulkan
+
+namespace om::vulkan
+{
+
+platform_interface::extensions platform_sdl3::get_vulkan_extensions()
+{
+    platform_interface::extensions extensions{};
+
+    uint32_t           count{};
+    const char* const* names = sdl::vulkan::Vulkan_GetInstanceExtensions(count);
+
+    if (names == nullptr)
+    {
+        throw std::runtime_error(sdl::GetError());
+    }
+
+    extensions.names.reserve(count);
+
+    std::copy_n(names, count, std::back_inserter(extensions.names));
+
+    return extensions;
+}
+
+vk::SurfaceKHR platform_sdl3::create_vulkan_surface(
+    vk::Instance instance, vk::AllocationCallbacks* alloc_callbacks)
+{
+    using namespace sdl::vulkan;
+    VkSurfaceKHR surface{};
+    int          result = sdl::vulkan::Vulkan_CreateSurface(
+        window,
+        static_cast<VkInstance>(instance),
+        reinterpret_cast<VkAllocationCallbacks*>(alloc_callbacks),
+        &surface);
+
+    if (!result)
+    {
+        throw std::runtime_error(sdl::GetError());
+    }
+
+    return surface;
+}
+
+void platform_sdl3::destroy_vulkan_surface(
+    vk::Instance             instance,
+    vk::SurfaceKHR           surface,
+    vk::AllocationCallbacks* alloc_callbacks) noexcept
+{
+    using namespace sdl::vulkan;
+    sdl::vulkan::Vulkan_DestroySurface(
+        static_cast<VkInstance>(instance),
+        static_cast<VkSurfaceKHR>(surface),
+        reinterpret_cast<VkAllocationCallbacks*>(alloc_callbacks));
+}
+
+platform_interface::buffer_size platform_sdl3::get_window_buffer_size()
+{
+    int w{};
+    int h{};
+
+    if (!sdl::GetWindowSizeInPixels(window, &w, &h))
+    {
+        throw std::runtime_error(sdl::GetError());
+    }
+
+    return { .width  = static_cast<uint32_t>(w),
+             .height = static_cast<uint32_t>(h) };
+}
+
+std::ostream& platform_sdl3::get_logger() noexcept
+{
+    return log;
+}
+
+platform_interface::content platform_sdl3::get_file_content(
+    std::string_view path)
+{
+    content     result{};
+    io::content content = io::read_file(path);
+
+    result.memory = std::move(content.memory);
+    result.size   = std::exchange(content.size, 0);
+
+    return result;
+}
+} // namespace om::vulkan
