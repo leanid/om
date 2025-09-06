@@ -40,12 +40,12 @@ if(OM_BUILD_DEPS)
         GIT_TAG origin/main
         GIT_SHALLOW TRUE
         GIT_PROGRESS TRUE
-        OVERRIDE_FIND_PACKAGE TRUE)
+        OVERRIDE_FIND_PACKAGE TRUE # need
+        EXCLUDE_FROM_ALL)
     option(SDL_STATIC "" ON)
     option(SDL_SHARED "" ON)
     set(CMAKE_UNITY_BUILD_MODE "GROUP")
     fetchcontent_makeavailable(SDL3)
-    #fetchcontent_populate(SDL3)
     find_package(SDL3 REQUIRED)
 
     message(STATUS "download and build GLM sources")
@@ -55,7 +55,8 @@ if(OM_BUILD_DEPS)
         GIT_TAG origin/master
         GIT_SHALLOW TRUE
         GIT_PROGRESS TRUE
-        OVERRIDE_FIND_PACKAGE TRUE)
+        OVERRIDE_FIND_PACKAGE TRUE # need
+        EXCLUDE_FROM_ALL)
     fetchcontent_makeavailable(glm)
     find_package(glm REQUIRED)
 
@@ -85,7 +86,7 @@ if(OM_BUILD_BOOST)
     fetchcontent_declare(
         Boost
         GIT_REPOSITORY "https://github.com/boostorg/boost.git"
-        GIT_TAG "boost-1.88.0"
+        GIT_TAG "boost-1.89.0"
         GIT_PROGRESS ON
         GIT_SHALLOW ON
         OVERRIDE_FIND_PACKAGE TRUE # needed to find correct Boost
