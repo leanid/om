@@ -219,18 +219,27 @@ private:
     friend class mesh;
     friend class image;
 
-    class one_time_submit
+    class one_time_submit : public vk::raii::CommandBuffer
     {
     public:
-        one_time_submit(render& r)
-            : command_buffer{ nullptr }
-            , r{ r }
-        {
-            vk::CommandPool               pool = *r.graphics_command_pool;
-            vk::CommandBufferAllocateInfo alloc_info{ .commandPool = pool };
+        using vk::raii::CommandBuffer::CommandBuffer;
+        using vk::raii::CommandBuffer::operator*;
+        using vk::raii::CommandBuffer::operator=;
 
-            command_buffer = std::move(
-                r.devices.logical.allocateCommandBuffers(alloc_info).front());
+        one_time_submit(vk::raii::Device& logical,
+                        vk::CommandPool   pool,
+                        vk::raii::Queue&  queue)
+            : vk::raii::CommandBuffer{ nullptr }
+            , q{ queue }
+        {
+            vk::CommandBufferAllocateInfo alloc_info{
+                .commandPool        = pool,
+                .level              = vk::CommandBufferLevel::ePrimary,
+                .commandBufferCount = 1
+            };
+
+            *this =
+                std::move(logical.allocateCommandBuffers(alloc_info).front());
 
             vk::CommandBufferBeginInfo begin_info{
                 .pNext = {},
@@ -238,36 +247,26 @@ private:
                 .pInheritanceInfo = {}
             };
 
-            command_buffer.begin(begin_info);
+            begin(begin_info);
         }
-        ~one_time_submit()
+        ~one_time_submit() noexcept(false)
         {
-            try
-            {
-                command_buffer.end();
+            end();
 
-                vk::SubmitInfo submit_info{ .pNext              = {},
-                                            .waitSemaphoreCount = {},
-                                            .pWaitSemaphores    = {},
-                                            .pWaitDstStageMask  = {},
-                                            .commandBufferCount = 1,
-                                            .pCommandBuffers = &*command_buffer,
-                                            .signalSemaphoreCount = {},
-                                            .pSignalSemaphores    = {}
-
-                };
-                r.graphics_queue.submit(submit_info, nullptr);
-                r.graphics_queue.waitIdle();
-            }
-            catch (std::exception& ex)
-            {
-                om::cout << ex.what() << std::endl;
-            }
+            vk::SubmitInfo submit_info{ .pNext                = {},
+                                        .waitSemaphoreCount   = {},
+                                        .pWaitSemaphores      = {},
+                                        .pWaitDstStageMask    = {},
+                                        .commandBufferCount   = 1,
+                                        .pCommandBuffers      = &*(*this),
+                                        .signalSemaphoreCount = {},
+                                        .pSignalSemaphores    = {} };
+            q.submit(submit_info, nullptr);
+            q.waitIdle();
         }
 
     private:
-        vk::raii::CommandBuffer command_buffer;
-        render&                 r;
+        vk::raii::Queue& q;
     };
     // create functions
     void create_instance(bool enable_validation_layers,
@@ -2688,24 +2687,28 @@ void render::copy_buffer(vk::raii::Buffer& src_buffer,
                          vk::DeviceSize    size,
                          vk::raii::Buffer& dst_buffer)
 {
-    vk::CommandBufferAllocateInfo allocInfo{
-        .commandPool        = transfer_command_pool,
-        .level              = vk::CommandBufferLevel::ePrimary,
-        .commandBufferCount = 1
-    };
+    one_time_submit command(
+        devices.logical, transfer_command_pool, transfer_queue);
+    command.copyBuffer(src_buffer, dst_buffer, vk::BufferCopy(0, 0, size));
 
-    vk::raii::CommandBuffer cmd_copy =
-        std::move(devices.logical.allocateCommandBuffers(allocInfo).front());
+    // vk::CommandBufferAllocateInfo allocInfo{
+    //     .commandPool        = transfer_command_pool,
+    //     .level              = vk::CommandBufferLevel::ePrimary,
+    //     .commandBufferCount = 1
+    // };
 
-    cmd_copy.begin(vk::CommandBufferBeginInfo{
-        .flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit });
-    cmd_copy.copyBuffer(src_buffer, dst_buffer, vk::BufferCopy(0, 0, size));
-    cmd_copy.end();
+    // vk::raii::CommandBuffer cmd_copy =
+    //     std::move(devices.logical.allocateCommandBuffers(allocInfo).front());
 
-    transfer_queue.submit(vk::SubmitInfo{ .commandBufferCount = 1,
-                                          .pCommandBuffers    = &*cmd_copy },
-                          nullptr);
-    transfer_queue.waitIdle();
+    // cmd_copy.begin(vk::CommandBufferBeginInfo{
+    //     .flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit });
+    // cmd_copy.copyBuffer(src_buffer, dst_buffer, vk::BufferCopy(0, 0, size));
+    // cmd_copy.end();
+
+    // transfer_queue.submit(vk::SubmitInfo{ .commandBufferCount = 1,
+    //                                       .pCommandBuffers    = &*cmd_copy },
+    //                       nullptr);
+    // transfer_queue.waitIdle();
 }
 
 } // namespace om::vulkan
