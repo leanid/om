@@ -14,6 +14,9 @@ auto current()
 
 #include "experimental/report_duration.hxx"
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
 export module vulkan_render;
 
 import log;
@@ -109,6 +112,16 @@ private:
     vk::raii::DeviceMemory memory_buffer_indx = nullptr;
     uint32_t               num_vertexes{};
     uint32_t               num_indexes{};
+};
+
+export class image
+{
+public:
+    image(render& r, std::filesystem::path path, std::string dbg_name);
+
+private:
+    friend class render;
+    vk::raii::Image img = nullptr;
 };
 
 export struct platform_interface
@@ -2468,6 +2481,8 @@ void mesh::create_buffer(std::span<std::uint16_t> indexes,
 
     render.copy_buffer(staging_buffer, size, buffer_indx);
 }
+
+image::image(render& r, std::filesystem::path path, std::string dbg_name) {}
 
 uint32_t render::find_mem_type_index(
     uint32_t                           allowed_types,
