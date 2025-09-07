@@ -218,6 +218,57 @@ public:
 private:
     friend class mesh;
     friend class image;
+
+    class one_time_submit
+    {
+    public:
+        one_time_submit(render& r)
+            : command_buffer{ nullptr }
+            , r{ r }
+        {
+            vk::CommandPool               pool = *r.graphics_command_pool;
+            vk::CommandBufferAllocateInfo alloc_info{ .commandPool = pool };
+
+            command_buffer = std::move(
+                r.devices.logical.allocateCommandBuffers(alloc_info).front());
+
+            vk::CommandBufferBeginInfo begin_info{
+                .pNext = {},
+                .flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit,
+                .pInheritanceInfo = {}
+            };
+
+            command_buffer.begin(begin_info);
+        }
+        ~one_time_submit()
+        {
+            try
+            {
+                command_buffer.end();
+
+                vk::SubmitInfo submit_info{ .pNext              = {},
+                                            .waitSemaphoreCount = {},
+                                            .pWaitSemaphores    = {},
+                                            .pWaitDstStageMask  = {},
+                                            .commandBufferCount = 1,
+                                            .pCommandBuffers = &*command_buffer,
+                                            .signalSemaphoreCount = {},
+                                            .pSignalSemaphores    = {}
+
+                };
+                r.graphics_queue.submit(submit_info, nullptr);
+                r.graphics_queue.waitIdle();
+            }
+            catch (std::exception& ex)
+            {
+                om::cout << ex.what() << std::endl;
+            }
+        }
+
+    private:
+        vk::raii::CommandBuffer command_buffer;
+        render&                 r;
+    };
     // create functions
     void create_instance(bool enable_validation_layers,
                          bool enable_debug_callback_ext);
