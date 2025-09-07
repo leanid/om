@@ -114,14 +114,15 @@ private:
     uint32_t               num_indexes{};
 };
 
-export class image
+export class image final
 {
 public:
     image(render& r, std::filesystem::path path, std::string dbg_name);
 
 private:
     friend class render;
-    vk::raii::Image img = nullptr;
+    vk::raii::Image        img        = nullptr;
+    vk::raii::DeviceMemory img_memory = nullptr;
 };
 
 export struct platform_interface
@@ -216,6 +217,7 @@ public:
 
 private:
     friend class mesh;
+    friend class image;
     // create functions
     void create_instance(bool enable_validation_layers,
                          bool enable_debug_callback_ext);
@@ -239,6 +241,15 @@ private:
                        vk::MemoryPropertyFlags properties,
                        vk::raii::Buffer&       buffer,
                        vk::raii::DeviceMemory& bufferMemory);
+
+    void create_image(uint32_t                width,
+                      uint32_t                height,
+                      vk::Format              format,
+                      vk::ImageTiling         tiling,
+                      vk::ImageUsageFlags     usage,
+                      vk::MemoryPropertyFlags properties,
+                      vk::raii::Image&        image,
+                      vk::raii::DeviceMemory& image_memory);
 
     void copy_buffer(vk::raii::Buffer& src_buffer,
                      vk::DeviceSize    size,
@@ -2482,7 +2493,58 @@ void mesh::create_buffer(std::span<std::uint16_t> indexes,
     render.copy_buffer(staging_buffer, size, buffer_indx);
 }
 
-image::image(render& r, std::filesystem::path path, std::string dbg_name) {}
+image::image(render& r, std::filesystem::path path, std::string dbg_name)
+{
+    std::string path_str = path.generic_string();
+    int         width    = 0;
+    int         height   = 0;
+    int         channels = 0;
+
+    stbi_uc* pixels =
+        stbi_load(path_str.c_str(), &width, &height, &channels, STBI_rgb_alpha);
+
+    if (!pixels)
+    {
+        throw std::runtime_error("failed to load texture image! [" + path_str +
+                                 "]");
+    }
+
+    om::cout << "image loaded: " << path << " w: " << width << " h: " << height
+             << " ch: " << channels << '\n';
+
+    int  size          = width * height * 4;
+    auto size_in_bytes = static_cast<vk::DeviceSize>(size);
+
+    vk::raii::Buffer       staging_buffer        = nullptr;
+    vk::raii::DeviceMemory staging_buffer_memory = nullptr;
+
+    r.create_buffer(size_in_bytes,
+                    vk::BufferUsageFlagBits::eTransferSrc,
+                    vk::MemoryPropertyFlagBits::eHostVisible |
+                        vk::MemoryPropertyFlagBits::eHostCoherent,
+                    staging_buffer,
+                    staging_buffer_memory);
+
+    void* data = staging_buffer_memory.mapMemory(0, size_in_bytes);
+    std::uninitialized_copy_n(
+        pixels, size_in_bytes, static_cast<unsigned char*>(data));
+    staging_buffer_memory.unmapMemory();
+
+    stbi_image_free(pixels);
+
+    vk::Extent3D extent{ .width  = static_cast<uint32_t>(width),
+                         .height = static_cast<uint32_t>(height),
+                         .depth  = 1u };
+
+    r.create_image(extent.width,
+                   extent.height,
+                   vk::Format::eR8G8B8A8Srgb,
+                   vk::ImageTiling::eOptimal,
+                   vk::ImageUsageFlagBits::eSampled,
+                   vk::MemoryPropertyFlagBits::eDeviceLocal,
+                   img,
+                   img_memory);
+}
 
 uint32_t render::find_mem_type_index(
     uint32_t                           allowed_types,
@@ -2528,6 +2590,47 @@ void render::create_buffer(vk::DeviceSize          size,
     };
     bufferMemory = vk::raii::DeviceMemory(devices.logical, allocInfo);
     buffer.bindMemory(*bufferMemory, 0);
+}
+
+void render::create_image(uint32_t                width,
+                          uint32_t                height,
+                          vk::Format              format,
+                          vk::ImageTiling         tiling,
+                          vk::ImageUsageFlags     usage,
+                          vk::MemoryPropertyFlags properties,
+                          vk::raii::Image&        image,
+                          vk::raii::DeviceMemory& image_memory)
+{
+    vk::ImageCreateInfo img_info{
+        .pNext       = nullptr,
+        .flags       = {},
+        .imageType   = vk::ImageType::e2D,
+        .format      = format,
+        .extent      = { .width = width, .height = height, .depth = 1 },
+        .mipLevels   = 1,
+        .arrayLayers = 1,
+        .samples     = vk::SampleCountFlagBits::e1,
+        .tiling      = tiling,
+        .usage       = usage,
+        .sharingMode = vk::SharingMode::eExclusive,
+        .queueFamilyIndexCount = 1,
+        .pQueueFamilyIndices   = nullptr,
+        .initialLayout         = vk::ImageLayout::eUndefined
+    };
+
+    image = vk::raii::Image(devices.logical, img_info);
+
+    vk::MemoryRequirements img_mem_requirements = image.getMemoryRequirements();
+    vk::MemoryAllocateInfo alloc_info{
+        .pNext          = nullptr,
+        .allocationSize = img_mem_requirements.size,
+        .memoryTypeIndex =
+            find_mem_type_index(img_mem_requirements.memoryTypeBits,
+                                properties,
+                                devices.physical.getMemoryProperties())
+    };
+    image_memory = vk::raii::DeviceMemory(devices.logical, alloc_info);
+    image.bindMemory(*image_memory, 0);
 }
 
 void render::copy_buffer(vk::raii::Buffer& src_buffer,
