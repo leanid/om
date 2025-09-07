@@ -2687,28 +2687,8 @@ void render::copy_buffer(vk::raii::Buffer& src_buffer,
                          vk::DeviceSize    size,
                          vk::raii::Buffer& dst_buffer)
 {
-    one_time_submit command(
-        devices.logical, transfer_command_pool, transfer_queue);
-    command.copyBuffer(src_buffer, dst_buffer, vk::BufferCopy(0, 0, size));
-
-    // vk::CommandBufferAllocateInfo allocInfo{
-    //     .commandPool        = transfer_command_pool,
-    //     .level              = vk::CommandBufferLevel::ePrimary,
-    //     .commandBufferCount = 1
-    // };
-
-    // vk::raii::CommandBuffer cmd_copy =
-    //     std::move(devices.logical.allocateCommandBuffers(allocInfo).front());
-
-    // cmd_copy.begin(vk::CommandBufferBeginInfo{
-    //     .flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit });
-    // cmd_copy.copyBuffer(src_buffer, dst_buffer, vk::BufferCopy(0, 0, size));
-    // cmd_copy.end();
-
-    // transfer_queue.submit(vk::SubmitInfo{ .commandBufferCount = 1,
-    //                                       .pCommandBuffers    = &*cmd_copy },
-    //                       nullptr);
-    // transfer_queue.waitIdle();
+    one_time_submit cmd(devices.logical, transfer_command_pool, transfer_queue);
+    cmd.copyBuffer(src_buffer, dst_buffer, vk::BufferCopy(0, 0, size));
 }
 
 } // namespace om::vulkan
