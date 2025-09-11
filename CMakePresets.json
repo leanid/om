@@ -18,7 +18,7 @@
         },
         "CMAKE_UNITY_BUILD": {
           "type": "BOOL",
-          "value": "ON"
+          "value": "OFF"
         },
         "CMAKE_UNITY_BUILD_BATCH_SIZE": {
           "type": "STRING",
