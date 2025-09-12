@@ -86,7 +86,7 @@ if(OM_BUILD_BOOST)
     fetchcontent_declare(
         Boost
         GIT_REPOSITORY "https://github.com/boostorg/boost.git"
-        GIT_TAG "boost-1.89.0"
+        GIT_TAG "boost-1.88.0"
         GIT_PROGRESS ON
         GIT_SHALLOW ON
         OVERRIDE_FIND_PACKAGE TRUE # needed to find correct Boost

@@ -5,7 +5,7 @@ project(08-vk-framebuffer-cmd-2 CXX)
 find_package(Vulkan REQUIRED COMPONENTS glslangValidator)
 find_package(SDL3 REQUIRED)
 find_package(
-    Boost 1.89.0 # should match version in root CMakeLists.txt
+    Boost 1.88.0 # should match version in root CMakeLists.txt
     EXACT # Minimum or EXACT version e.g. 1.67.0
     # REQUIRED # Fail with error if Boost is not found
     COMPONENTS program_options # Boost libraries by their canonical name

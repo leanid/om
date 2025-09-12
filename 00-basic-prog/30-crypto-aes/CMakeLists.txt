@@ -10,7 +10,7 @@ if(NOT OpenSSL_FOUND)
 endif()
 
 find_package(
-    Boost 1.89.0 # same version with same compiler settings
+    Boost 1.88.0 # same version with same compiler settings
     EXACT # Minimum or EXACT version e.g. 1.67.0
     # REQUIRED # Fail with error if Boost is not found
     COMPONENTS program_options # Boost libraries by their canonical name
