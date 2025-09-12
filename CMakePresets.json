@@ -31,27 +31,6 @@
       },
       "environment": {
         "MY_ENVIRONMENT_VARIABLE": "just_example"
-      },
-      "vendor": {
-        "$comment": [
-          "This is just example of custom settings",
-          "for any vendor IDE or else",
-          "Preset files specifying version 10 or above",
-          "may include comments using the key $comment",
-          "at any level within the JSON object to provide documentation"
-        ],
-        "example.com/ExampleIDE/1.0": {
-          "autoFormat": true
-        },
-        "qt.io/QtCreator/1.0": {
-          "debugger": {
-            "DisplayName": "GNU gdb 11.2.0 for MinGW 11.2.0 64-bit",
-            "Abis": ["x86-windows-msys-pe-64bit"],
-            "Binary": "C:/Qt/Tools/mingw1120_64/bin/gdb.exe",
-            "EngineType": 1,
-            "Version": "11.2.0"
-          }
-        }
       }
     },
     {
@@ -82,6 +61,21 @@
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
         "$comment": "We have to build boost to match version 1.88.0",
         "OM_BUILD_BOOST": "ON"
+      }
+    },
+    {
+      "name": "vcpkg-llvm",
+      "inherits": "common",
+      "displayName": "vcpkg-llvm",
+      "generator": "Ninja Multi-Config",
+      "binaryDir": "${sourceDir}/build/vcpkg-llvm",
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_C_COMPILER": "clang",
+        "$comment": "We have to build boost to match version 1.88.0",
+        "OM_BUILD_BOOST": "OFF"
       }
     },
     {
