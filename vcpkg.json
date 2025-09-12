@@ -8,6 +8,7 @@
       ]
     },
     "boost-program-options",
+    "boost-stacktrace",
     "openssl",
     "icu"
   ],
@@ -22,6 +23,10 @@
     },
     {
       "name": "boost-algorithm",
+      "version": "1.88.0"
+    },
+    {
+      "name": "boost-stacktrace",
       "version": "1.88.0"
     }
   ]

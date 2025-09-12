@@ -9,7 +9,7 @@ find_package(
     # REQUIRED # Fail with error if Boost is not found
     COMPONENTS program_options
                stacktrace # Boost libraries by their canonical name
-    # REQUIRED
+    REQUIRED
     # e.g. "date_time" for "libboost_date_time"
     #[OPTIONAL_COMPONENTS <libs>...]
     # Optional Boost libraries by their canonical name)

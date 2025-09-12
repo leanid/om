@@ -98,7 +98,8 @@ if(OM_BUILD_BOOST)
         1.88.0
         EXACT # Minimum or EXACT version e.g. 1.67.0
         REQUIRED # Fail with error if Boost is not found
-        COMPONENTS filesystem # Boost libraries by their canonical name
+        COMPONENTS filesystem stacktrace
+                   program_options # Boost libraries by their canonical name
         # e.g. "date_time" for "libboost_date_time"
         #[OPTIONAL_COMPONENTS <libs>...]
         # Optional Boost libraries by their canonical name)
