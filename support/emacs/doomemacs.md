@@ -28,7 +28,7 @@ To maximize or fullscreen Emacs at startup, add one of the following to ~/.doom.
 (add-hook 'window-setup-hook #'toggle-frame-fullscreen)
 ```
 Each method has slightly different effects that vary from OS to OS. You’ll have to decide for yourself which you prefer.
-## Font on my install 
+## Font on my install
 ```elisp
 (setq doom-font (font-spec :family "JetBrains Mono" :size 15 :weight 'semi-light)
       doom-variable-pitch-font (font-spec :family "JetBrains Mono" :size 15))
@@ -48,10 +48,10 @@ works in treemacs and in any text buffer
 ```
 SPC+/
 example: opengl -- -tcmake
-         ^^^^^^^^^^^^^^^^^ search "opengl" only in 
+         ^^^^^^^^^^^^^^^^^ search "opengl" only in
          files with "type" cmake (*.cmake, CMakeLists.txt)
 ```
-        
+
 ### Search Project using case sensitive
 ```
 SPC+/
@@ -78,7 +78,7 @@ example (search only in file names): rg --files | rg "\w*.gradle$"
 example (filter lines with names): locate sed.mo | rg -v flat | rg ru
                                                        ^ - invert (filter) regexp
 ```
-RipGrep manual here: 
+RipGrep manual here:
 [RipGrep User Guide](https://github.com/BurntSushi/ripgrep/blob/master/GUIDE.md)
 Emacs regexp manual here:
 [Emacs regexp](https://www.gnu.org/software/emacs/manual/html_node/emacs/Regexps.html)
@@ -95,7 +95,7 @@ for Vertico module users (I use it most of the time)
 ```
 SPC s p foo C-; E C-c C-p :%s/foo/bar/g RET Z Z
 ```
-Entering those keys will replace “foo” with “bar” in your whole project. 
+Entering those keys will replace “foo” with “bar” in your whole project.
 
 ### How to disable format-on-save temporally in current buffer?
 double use mode for reformating (will disable it)
@@ -144,7 +144,7 @@ show backtrace with command
 ```emacs
 gdb>bt
 ```
-stop on any exception throw 
+stop on any exception throw
 ```emacs
 gdb>catch throw
 ```
@@ -202,6 +202,28 @@ For simple one file debugging you can skip most params see example:
         :name "Python :: Run file (buffer) my"))
 ```
 next *dap-hydra* to show key to debug
+### How to use lates clang++ on Alt Linux?
+1. download & unpack llvm
+2. you may need to add several static libs and ld scripts from your distro
+   if clang++ can't find it
+3. if you see error like no gcc gcc_s libunwind etc
+4. create soft links like :
+```bash
+# inside $LLVM_ROOT/lib/x86_64-unknown-linux-gnu/
+crtbeginS.o    -> /usr/lib64/gcc/x86_64-alt-linux/14/crtbeginS.o
+crtendS.o      -> /usr/lib64/gcc/x86_64-alt-linux/14/crtendS.o
+libgcc.a       -> /usr/lib64/gcc/x86_64-alt-linux/14/libgcc.a
+libgcc_s.so    -> /usr/lib64/gcc/x86_64-alt-linux/14/libgcc_s.so
+libstdc++exp.a -> /usr/lib64/gcc/x86_64-alt-linux/14/libstdc++exp.a
+```
+5. Add to `LD_PRELOAD_PATH` like:
+```zsh
+# insize ~/.zshrc
+# ...
+export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:\
+/home/leo/LLVM-21.1.1-Linux-X64/lib/x86_64-unknown-linux-gnu"
+```
+6. now both g++ and clang++ works on same machine
 ### How to debug using Dape in C++
 1. ```SPC+d+d```
 2. put all your params and args in minibufer like:
