@@ -119,31 +119,20 @@
     {
       "name": "ninja-llvm",
       "inherits": "ninja",
-      "displayName": "Ninja-llvm",
-      "description": "build using Ninja generator",
+      "displayName": "ninja-llvm",
+      "description": "build using Ninja Multi-Config generator and llvm toolchain",
       "generator": "Ninja Multi-Config",
       "binaryDir": "${sourceDir}/build/ninja-llvm",
       "cacheVariables": {
-        "CMAKE_CXX_COMPILER": {
-          "type": "INTERNAL",
-          "value": "clang++"
-        },
-        "CMAKE_CXX_FLAGS": {
-          "type": "STRING",
-          "value": "-stdlib=libc++"
-        },
-        "CMAKE_C_COMPILER": {
-          "type": "INTERNAL",
-          "value": "clang"
-        },
-        "CMAKE_CXX_SCAN_FOR_MODULES": {
-          "type": "INTERNAL",
-          "value": "ON"
-        },
-        "CMAKE_CXX_MODULE_STD": {
-          "type": "INTERNAL",
-          "value": "ON"
-        },
+        "CMAKE_CXX_STANDARD": "23",
+        "CMAKE_CXX_STANDARD_REQUIRED": "ON",
+        "CMAKE_CXX_EXTENSIONS": "ON",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_CXX_FLAGS": "-stdlib=libc++",
+        "CMAKE_CXX_SCAN_FOR_MODULES": "ON",
+        "CMAKE_CXX_MODULE_STD": "ON",
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_C_FLAGS": "",
         "OM_CLANG_TIDY": "OFF",
         "$comment": "We have to build boost with clang++ cause of libc++",
         "OM_BUILD_BOOST": "ON"

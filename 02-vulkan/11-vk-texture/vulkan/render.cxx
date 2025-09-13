@@ -598,9 +598,9 @@ debug_callback(vk::DebugUtilsMessageSeverityFlagBitsEXT      severity,
     const char* msg           = data->pMessage;
     string      msg_extended;
 
-    switch (static_cast<decltype(msg_type)::MaskType>(msg_type))
+    switch (static_cast<vk::DebugUtilsMessageTypeFlagBitsEXT>(msg_type))
     {
-        case VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT:
+        case vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral:
             msg_type_name = "general";
             break;
         case VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT:
