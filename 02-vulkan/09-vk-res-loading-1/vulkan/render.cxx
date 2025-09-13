@@ -507,18 +507,19 @@ debug_callback(vk::DebugUtilsMessageSeverityFlagBitsEXT      severity,
     const char* msg           = data->pMessage;
     string      msg_extended;
 
-    switch (static_cast<decltype(msg_type)::MaskType>(msg_type))
+    switch (static_cast<vk::DebugUtilsMessageTypeFlagBitsEXT>(
+        static_cast<vk::DebugUtilsMessageTypeFlagsEXT::MaskType>(msg_type)))
     {
-        case VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT:
+        case vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral:
             msg_type_name = "general";
             break;
-        case VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT:
+        case vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation:
             msg_type_name = "validation";
             break;
-        case VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT:
+        case vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance:
             msg_type_name = "performance";
             break;
-        case VK_DEBUG_UTILS_MESSAGE_TYPE_DEVICE_ADDRESS_BINDING_BIT_EXT:
+        case vk::DebugUtilsMessageTypeFlagBitsEXT::eDeviceAddressBinding:
             msg_type_name = "device_address_binding";
             msg           = "";
             break;
