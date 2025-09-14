@@ -161,6 +161,10 @@ int main_cant_throw(int argc, char** argv)
             0, 1, 2, 2, 3, 0
         };
         // clang-format on
+        om::vulkan::image image(
+            render,
+            "02-vulkan/11-vk-texture/textures/statue-1275469.jpg",
+            "img_texture");
         uniform_buffer_object ubo{};
 
         om::vulkan::mesh mesh(std::span{ mesh_verticles },
@@ -224,7 +228,7 @@ int main_cant_throw(int argc, char** argv)
 
             // running = false;
             // std::this_thread::sleep_for(std::chrono::seconds(2));
-        }
+        } // end while(running)
 
         render.wait_idle();
     }

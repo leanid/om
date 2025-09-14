@@ -301,6 +301,14 @@ private:
                       vk::raii::Image&        image,
                       vk::raii::DeviceMemory& image_memory);
 
+    void transition_image_layout(vk::ImageLayout        layout_old,
+                                 const vk::raii::Image& img,
+                                 vk::ImageLayout        layout_new);
+
+    void copy_buffer_to_image(const vk::raii::Buffer& buffer,
+                              vk::raii::Image&        image,
+                              vk::Extent2D            size);
+
     void copy_buffer(vk::raii::Buffer& src_buffer,
                      vk::DeviceSize    size,
                      vk::raii::Buffer& dst_buffer);
@@ -2591,10 +2599,23 @@ image::image(render& r, std::filesystem::path path, std::string dbg_name)
                    extent.height,
                    vk::Format::eR8G8B8A8Srgb,
                    vk::ImageTiling::eOptimal,
-                   vk::ImageUsageFlagBits::eSampled,
+                   vk::ImageUsageFlagBits::eTransferDst |
+                       vk::ImageUsageFlagBits::eSampled,
                    vk::MemoryPropertyFlagBits::eDeviceLocal,
                    img,
                    img_memory);
+
+    r.transition_image_layout(
+        vk::ImageLayout::eUndefined, img, vk::ImageLayout::eTransferDstOptimal);
+
+    r.copy_buffer_to_image(
+        staging_buffer,
+        img,
+        vk::Extent2D{ .width = extent.width, .height = extent.height });
+
+    r.transition_image_layout(vk::ImageLayout::eTransferDstOptimal,
+                              img,
+                              vk::ImageLayout::eShaderReadOnlyOptimal);
 }
 
 uint32_t render::find_mem_type_index(
@@ -2682,6 +2703,86 @@ void render::create_image(uint32_t                width,
     };
     image_memory = vk::raii::DeviceMemory(devices.logical, alloc_info);
     image.bindMemory(*image_memory, 0);
+}
+
+void render::transition_image_layout(vk::ImageLayout        layout_old,
+                                     const vk::raii::Image& img,
+                                     vk::ImageLayout        layout_new)
+{
+    one_time_submit transition(
+        devices.logical, graphics_command_pool, graphics_queue);
+
+    vk::ImageMemoryBarrier barrier{
+        .pNext               = nullptr,
+        .srcAccessMask       = {},
+        .dstAccessMask       = {},
+        .oldLayout           = layout_old,
+        .newLayout           = layout_new,
+        .srcQueueFamilyIndex = {},
+        .dstQueueFamilyIndex = {},
+        .image               = { *img },
+        .subresourceRange    = { .aspectMask     = vk::ImageAspectFlagBits::eColor,
+                                 .baseMipLevel   = 0,
+                                 .levelCount     = 1,
+                                 .baseArrayLayer = 0,
+                                 .layerCount     = 1 }
+
+    };
+
+    vk::PipelineStageFlags source_stage;
+    vk::PipelineStageFlags destination_stage;
+
+    if (layout_old == vk::ImageLayout::eUndefined &&
+        layout_new == vk::ImageLayout::eTransferDstOptimal)
+    {
+        barrier.srcAccessMask = {};
+        barrier.dstAccessMask = vk::AccessFlagBits::eTransferWrite;
+
+        source_stage      = vk::PipelineStageFlagBits::eTopOfPipe;
+        destination_stage = vk::PipelineStageFlagBits::eTransfer;
+    }
+    else if (layout_old == vk::ImageLayout::eTransferDstOptimal &&
+             layout_new == vk::ImageLayout::eShaderReadOnlyOptimal)
+    {
+        barrier.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
+        barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
+
+        source_stage      = vk::PipelineStageFlagBits::eTransfer;
+        destination_stage = vk::PipelineStageFlagBits::eFragmentShader;
+    }
+    else
+    {
+        throw std::invalid_argument("unsupported layout transition!");
+    }
+
+    transition.pipelineBarrier(
+        source_stage, destination_stage, {}, {}, {}, barrier);
+}
+
+void render::copy_buffer_to_image(const vk::raii::Buffer& buffer,
+                                  vk::raii::Image&        image,
+                                  vk::Extent2D            size)
+{
+    one_time_submit operation(
+        devices.logical, transfer_command_pool, transfer_queue);
+
+    vk::BufferImageCopy region{
+        .bufferOffset      = 0,
+        .bufferRowLength   = 0,
+        .bufferImageHeight = 0,
+        .imageSubresource  = { .aspectMask     = vk::ImageAspectFlagBits::eColor,
+                               .mipLevel       = 0,
+                               .baseArrayLayer = 0,
+                               .layerCount     = 1 },
+        .imageOffset       = { .x = 0, .y = 0, .z = 0 },
+        .imageExtent       = { .width  = size.width,
+                               .height = size.height,
+                               .depth  = 1 }
+
+    };
+
+    operation.copyBufferToImage(
+        buffer, image, vk::ImageLayout::eTransferDstOptimal, { region });
 }
 
 void render::copy_buffer(vk::raii::Buffer& src_buffer,
