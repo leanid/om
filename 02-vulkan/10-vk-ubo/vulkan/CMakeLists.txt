@@ -26,11 +26,12 @@ target_sources(
 
 target_link_libraries(
     10-vk-ubo-vulkan
-    PUBLIC Boost::stacktrace
-           SDL3::SDL3-shared
-           vulkan::cppm
-           glm::cppm
-           10-vk-ubo-args
-           10-vk-ubo-log)
+    PUBLIC
+        $<IF:$<CXX_COMPILER_ID:MSVC>,Boost::stacktrace_basic,Boost::stacktrace>
+        SDL3::SDL3-shared
+        vulkan::cppm
+        glm::cppm
+        10-vk-ubo-args
+        10-vk-ubo-log)
 target_include_directories(10-vk-ubo-vulkan
                            PRIVATE ${CMAKE_SOURCE_DIR}/support/cxx_lib/)

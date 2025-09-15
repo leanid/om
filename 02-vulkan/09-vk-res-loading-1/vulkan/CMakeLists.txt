@@ -26,11 +26,12 @@ target_sources(
 
 target_link_libraries(
     09-vk-res-loading-1-vulkan
-    PUBLIC Boost::stacktrace
-           SDL3::SDL3-shared
-           vulkan::cppm
-           glm::cppm
-           09-vk-res-loading-1-args
-           09-vk-res-loading-1-log)
+    PUBLIC
+        $<IF:$<CXX_COMPILER_ID:MSVC>,Boost::stacktrace_basic,Boost::stacktrace>
+        SDL3::SDL3-shared
+        vulkan::cppm
+        glm::cppm
+        09-vk-res-loading-1-args
+        09-vk-res-loading-1-log)
 target_include_directories(09-vk-res-loading-1-vulkan
                            PRIVATE ${CMAKE_SOURCE_DIR}/support/cxx_lib/)
