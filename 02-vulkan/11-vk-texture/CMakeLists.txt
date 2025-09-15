@@ -61,7 +61,7 @@ add_executable(11-vk-texture-loading-1 main.cxx)
 target_compile_features(11-vk-texture-loading-1 PRIVATE cxx_std_23)
 target_include_directories(
     11-vk-texture-loading-1 PRIVATE ${CMAKE_SOURCE_DIR}/support/cxx_lib/
-                                ${CMAKE_CURRENT_SOURCE_DIR})
+                                    ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(
     11-vk-texture-loading-1
     PRIVATE 11-vk-texture-vulkan
@@ -100,7 +100,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
             ${CMAKE_COMMAND} -E copy_if_different
             $<TARGET_FILE:SDL3::SDL3-shared>
             $<TARGET_FILE_DIR:11-vk-texture-loading-1>
-        COMMENT [=[Copying SDL3 library to target directory (Windows only)\n
-                vulkan-1.dll also is copied every time - cmake do it for us]=]
+        COMMENT
+            "Copying SDL3 library to target directory (Windows only) vulkan-1.dll also is copied every time - cmake do it for us"
         VERBATIM)
 endif()
