@@ -457,7 +457,7 @@ private:
     vk::raii::DescriptorPool descriptor_pool       = nullptr;
 
     static constexpr std::uint32_t max_frames_in_flight =
-        4; // <= shapchain_images.size()
+        3; // <= shapchain_images.size()
 
     vk::raii::CommandBuffers command_buffers = nullptr;
 
@@ -1780,6 +1780,14 @@ void render::create_swapchain()
     log << "get swapchain images count: " << swapchain_images.size()
         << std::endl;
 
+    if (max_frames_in_flight > swapchain_images.size())
+    {
+        std::stringstream s;
+        s << "max_frames_in_flight[" << max_frames_in_flight
+          << "] > swapchain_images.size() [" << swapchain_images.size() << "]"
+          << std::endl;
+        throw std::runtime_error(s.str());
+    }
     // store for later usages
     swapchain_image_format = create_info.imageFormat;
     swapchain_image_extent = create_info.imageExtent;
