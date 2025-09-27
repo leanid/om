@@ -123,6 +123,7 @@ private:
     friend class render;
     vk::raii::Image        img        = nullptr;
     vk::raii::DeviceMemory img_memory = nullptr;
+    vk::raii::ImageView    img_view   = nullptr;
 };
 
 export struct platform_interface
@@ -2624,6 +2625,9 @@ image::image(render& r, std::filesystem::path path, std::string dbg_name)
     r.transition_image_layout(vk::ImageLayout::eTransferDstOptimal,
                               img,
                               vk::ImageLayout::eShaderReadOnlyOptimal);
+
+    img_view = r.create_image_view(
+        img, vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor);
 }
 
 uint32_t render::find_mem_type_index(
