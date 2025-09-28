@@ -121,9 +121,10 @@ public:
 
 private:
     friend class render;
-    vk::raii::Image        img        = nullptr;
-    vk::raii::DeviceMemory img_memory = nullptr;
-    vk::raii::ImageView    img_view   = nullptr;
+    vk::raii::Image        img         = nullptr;
+    vk::raii::DeviceMemory img_memory  = nullptr;
+    vk::raii::ImageView    img_view    = nullptr;
+    vk::raii::Sampler      img_sampler = nullptr;
 };
 
 export struct platform_interface
@@ -1045,6 +1046,8 @@ bool render::check_device_suitable(const vk::PhysicalDevice& physical)
         vk::PhysicalDeviceVulkan13Features,
         vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>();
     bool supports_required_features =
+        features.template get<vk::PhysicalDeviceFeatures2>()
+            .features.samplerAnisotropy &&
         features.template get<vk::PhysicalDeviceVulkan13Features>()
             .dynamicRendering &&
         features
@@ -1590,15 +1593,14 @@ void render::create_logical_device()
     vk::StructureChain<vk::PhysicalDeviceFeatures2,
                        vk::PhysicalDeviceVulkan13Features,
                        vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>
-        feature_chain = {
-            {}, // vk::PhysicalDeviceFeatures2 (empty for now)
-            {
-                .synchronization2 = true,
-                .dynamicRendering = true,
-            }, // Enable dynamic rendering from Vulkan 1.3
-            { .extendedDynamicState =
-                  true } // Enable extended dynamic state from the extension
-        };
+        feature_chain = { { .features = { .samplerAnisotropy = true } },
+                          // Enable dynamic rendering from Vulkan 1.3
+                          {
+                              .synchronization2 = true,
+                              .dynamicRendering = true,
+                          },
+                          // Enable extended dynamic state from the extension
+                          { .extendedDynamicState = true } };
 
     vk::DeviceCreateInfo device_create_info{
         .pNext = &feature_chain.get<vk::PhysicalDeviceFeatures2>(),
@@ -2628,6 +2630,25 @@ image::image(render& r, std::filesystem::path path, std::string dbg_name)
 
     img_view = r.create_image_view(
         img, vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor);
+
+    vk::PhysicalDeviceProperties properties =
+        r.devices.physical.getProperties();
+
+    vk::SamplerCreateInfo sampler_info{
+        .magFilter        = vk::Filter::eLinear,
+        .minFilter        = vk::Filter::eLinear,
+        .mipmapMode       = vk::SamplerMipmapMode::eLinear,
+        .addressModeU     = vk::SamplerAddressMode::eRepeat,
+        .addressModeV     = vk::SamplerAddressMode::eRepeat,
+        .addressModeW     = vk::SamplerAddressMode::eRepeat,
+        .mipLodBias       = 0.0f,
+        .anisotropyEnable = vk::True,
+        .maxAnisotropy    = properties.limits.maxSamplerAnisotropy,
+        .compareEnable    = vk::False,
+        .compareOp        = vk::CompareOp::eAlways
+    };
+
+    img_sampler = vk::raii::Sampler(r.devices.logical, sampler_info);
 }
 
 uint32_t render::find_mem_type_index(
