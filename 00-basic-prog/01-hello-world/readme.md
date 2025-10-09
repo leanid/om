@@ -50,3 +50,21 @@ If you redirect default output to /dev/video0 - python and rust - show error c++
 ```java Main```
 15. (optional) install Java JDK if needed 
 ```sudo dnf install java-openjdk-devel```
+
+## Android build install debug NDK binary
+How to build simple hello world example from NDK
+find out your C++ compiler in NDK
+
+``` bash
+# 1. we use $ANDROID_NDK - you should create it to point to NDK location
+# 2. select Android target - android35
+# 3. select architecture - aarch64 
+fd clang\+\+.cmd $ANDROID_NDK | rg android35 | rg aarch64
+```
+
+Output expected like:
+
+``` bash
+C:\Users\leo\AppData\Local\Android\Sdk\ndk\28.1.13356709\toolchains\llvm\prebuilt\windows-x86_64\bin\aarch64-linux-android35-clang++.cmd
+```
+

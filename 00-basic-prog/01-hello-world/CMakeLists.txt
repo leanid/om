@@ -1,4 +1,17 @@
 cmake_minimum_required(VERSION 3.31)
+# Enables the Standard module support. This needs to be done
+# before selecting the languages.
+# https://github.com/Kitware/CMake/blob/master/Help/dev/experimental.rst
+set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "d0edc3af-4c50-42ea-a356-e2862fe7a444")
+# Currently CMake requires extensions enabled when using import std.
+# https://gitlab.kitware.com/cmake/cmake/-/issues/25916
+# https://gitlab.kitware.com/cmake/cmake/-/issues/25539
+set(CMAKE_CXX_EXTENSIONS ON)
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+# Tell CMake that we explicitly want `import std`. This will initialize the
+# property on all targets declared after this to 1
+set(CMAKE_CXX_MODULE_STD 1)
 
 project(01-hello-world LANGUAGES CXX)
 # Tell CMake that we explicitly want `import std`. This will initialize the
@@ -8,11 +21,11 @@ set(CMAKE_CXX_MODULE_STD 1)
 include(CheckCXXCompilerFlag)
 
 set(CMAKE_CXX_EXTENSIONS ON) # needed for cxx modules
-om_clang_tidy_disable()
+# om_clang_tidy_disable()
 if(NOT APPLE)
     add_executable(main_std23 main_std23.cxx)
 endif()
-om_clang_tidy_enable()
+# om_clang_tidy_enable()
 
 add_executable(cout_main cout_main.cxx)
 target_compile_features(cout_main PRIVATE cxx_std_20)

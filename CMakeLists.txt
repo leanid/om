@@ -38,9 +38,9 @@ if(OM_BUILD_DEPS)
         SDL3
         GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
         GIT_TAG origin/main
-        GIT_SHALLOW TRUE
-        GIT_PROGRESS TRUE
-        OVERRIDE_FIND_PACKAGE TRUE # need
+        GIT_SHALLOW ON
+        GIT_PROGRESS ON
+        OVERRIDE_FIND_PACKAGE ON # need
         EXCLUDE_FROM_ALL)
     option(SDL_STATIC "" ON)
     option(SDL_SHARED "" ON)
@@ -53,9 +53,9 @@ if(OM_BUILD_DEPS)
         glm
         GIT_REPOSITORY https://github.com/g-truc/glm.git
         GIT_TAG origin/master
-        GIT_SHALLOW TRUE
-        GIT_PROGRESS TRUE
-        OVERRIDE_FIND_PACKAGE TRUE # need
+        GIT_SHALLOW ON
+        GIT_PROGRESS ON
+        OVERRIDE_FIND_PACKAGE ON # need
         EXCLUDE_FROM_ALL)
     fetchcontent_makeavailable(glm)
     find_package(glm REQUIRED)
@@ -65,13 +65,12 @@ if(OM_BUILD_DEPS)
         Catch2
         GIT_REPOSITORY https://github.com/catchorg/Catch2.git
         GIT_TAG v3.8.1 # or a later release
-        GIT_SHALLOW TRUE
-        GIT_PROGRESS TRUE
-        OVERRIDE_FIND_PACKAGE TRUE # to find correct version
+        GIT_SHALLOW ON
+        GIT_PROGRESS ON
+        OVERRIDE_FIND_PACKAGE ON # to find correct version
         EXCLUDE_FROM_ALL)
     fetchcontent_makeavailable(Catch2)
     find_package(Catch2 REQUIRED)
-
 endif(OM_BUILD_DEPS)
 
 if(OM_BUILD_BOOST)
