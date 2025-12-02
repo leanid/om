@@ -167,13 +167,17 @@ gdb>catch throw
 Just see: https://emacs.stackexchange.com/questions/21378/spell-check-with-multiple-dictionaries
 or copy code and paste into doom/config.el (C+f+P+config)
 ```elisp
-(with-eval-after-load "ispell"
-  (setq ispell-program-name "hunspell")
+;; Использовать два словаря одновременно
+(after! ispell
+  ;; Multi-dictionary через hunspell backend
   (setq ispell-dictionary "en_US,ru_RU")
-  ;; ispell-set-spellchecker-params has to be called
-  ;; before ispell-hunspell-add-multi-dic will work
+
   (ispell-set-spellchecker-params)
   (ispell-hunspell-add-multi-dic "en_US,ru_RU"))
+```
+C+f+P+init.el
+```elisp
+  (spell +hunspell +flyspell +everywhere) ;
 ```
 ### How to debug Python code
 Install *debugpy*
