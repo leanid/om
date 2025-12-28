@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.30)
 project(00-basic-cxx CXX)
 
 add_subdirectory(01-hello-world)
+add_subdirectory(01-hello-world-modern)
 add_subdirectory(02-destr-except)
 add_subdirectory(03-bool-type)
 add_subdirectory(03-int-type)

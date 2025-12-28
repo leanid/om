@@ -9786,8 +9786,7 @@ SDL_Renderer* CreateGPURenderer(SDL_Window*     window,
                                 GPUShaderFormat format_flags,
                                 SDL_GPUDevice** device)
 {
-    return SDL_CreateGPURenderer(
-        window, (SDL_GPUShaderFormat)(format_flags), device);
+    return SDL_CreateGPURenderer(*device, window);
 }
 
 SDL_Renderer* CreateSoftwareRenderer(SDL_Surface* surface)
@@ -10757,7 +10756,7 @@ using GPURenderStateCreateInfo = SDL_GPURenderStateCreateInfo;
 
 using SDL_GPURenderState = SDL_GPURenderState;
 
-SDL_GPURenderState* CreateGPURenderState(SDL_Renderer*           renderer,
+SDL_GPURenderState* CreateGPURenderState(SDL_Renderer*                 renderer,
                                          SDL_GPURenderStateCreateInfo* desc)
 {
     return SDL_CreateGPURenderState(renderer, desc);
@@ -10770,11 +10769,6 @@ bool SetGPURenderStateFragmentUniforms(SDL_GPURenderState* state,
 {
     return SDL_SetGPURenderStateFragmentUniforms(
         state, slot_index, data, length);
-}
-
-bool SetRenderGPUState(SDL_Renderer* renderer, SDL_GPURenderState* state)
-{
-    return SDL_SetRenderGPUState(renderer, state);
 }
 
 void DestroyGPURenderState(SDL_GPURenderState* state)

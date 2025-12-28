@@ -6,7 +6,7 @@ set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "d0edc3af-4c50-42ea-a356-e2862fe7a444")
 # Currently CMake requires extensions enabled when using import std.
 # https://gitlab.kitware.com/cmake/cmake/-/issues/25916
 # https://gitlab.kitware.com/cmake/cmake/-/issues/25539
-set(CMAKE_CXX_EXTENSIONS ON)
+set(CMAKE_CXX_EXTENSIONS OFF) # no -std=gnu-23
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Tell CMake that we explicitly want `import std`. This will initialize the
