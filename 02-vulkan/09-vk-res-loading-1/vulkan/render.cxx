@@ -21,6 +21,11 @@ import std;
 import glm;
 import vulkan;
 
+// namespace vk::detail
+// {
+// DispatchLoaderDynamic defaultDispatchLoaderDynamic;
+// }
+
 namespace om::vulkan
 {
 export struct vertex final

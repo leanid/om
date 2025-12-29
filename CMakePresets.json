@@ -134,6 +134,7 @@
         "CMAKE_CXX_MODULE_STD": "ON",
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_C_FLAGS": "",
+        "CMAKE_LINKER_TYPE": "LLD",
         "OM_CLANG_TIDY": "OFF",
         "$comment": "We have to build boost with clang++ cause of libc++",
         "OM_BUILD_BOOST": "ON"

@@ -26,7 +26,8 @@ add_library(vulkan::cppm ALIAS vulkan_cppm)
 # cmake-format: off
 target_compile_definitions(
     vulkan_cppm
-    PUBLIC VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1 # with 1 not linking
+    PUBLIC #VULKAN_HPP_DEFAULT_DISPATCHER=0
+           #VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=0 # with 1 not linking
            VULKAN_HPP_CXX_MODULE_EXPERIMENTAL_WARNING=1
            VULKAN_HPP_NO_STRUCT_CONSTRUCTORS=1
            VULKAN_HPP_ENABLE_STD_MODULE=1)
@@ -136,7 +137,7 @@ target_link_libraries(
 target_link_libraries(
 09-vk-res-loading-1
 PRIVATE
-    $<$<CXX_COMPILER_ID:GNU,Clang>:
+    $<$<CXX_COMPILER_ID:GNU>:
     $<IF:$<VERSION_GREATER_EQUAL:$<CXX_COMPILER_VERSION>,14.0.0>,
         stdc++exp,
         $<$<VERSION_GREATER_EQUAL:$<CXX_COMPILER_VERSION>,12.1.1>:
