@@ -24,9 +24,10 @@ add_library(vulkan::cppm ALIAS vulkan_cppm)
 # cmake-format: off
 target_compile_definitions(
     vulkan_cppm
-    PUBLIC VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=0 # with 1 not linking
+    PUBLIC VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1 # with 1 not linking
+           VULKAN_HPP_CXX_MODULE_EXPERIMENTAL_WARNING=1
            VULKAN_HPP_NO_STRUCT_CONSTRUCTORS=1
-           VULKAN_HPP_ENABLE_STD_MODULE=0)
+           VULKAN_HPP_ENABLE_STD_MODULE=1)
 # cmake-format: on
 target_include_directories(vulkan_cppm PRIVATE "${Vulkan_INCLUDE_DIR}")
 target_link_libraries(vulkan_cppm PRIVATE Vulkan::Vulkan)

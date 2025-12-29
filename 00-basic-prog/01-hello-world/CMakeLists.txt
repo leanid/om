@@ -20,7 +20,7 @@ set(CMAKE_CXX_MODULE_STD 1)
 
 include(CheckCXXCompilerFlag)
 
-set(CMAKE_CXX_EXTENSIONS ON) # needed for cxx modules
+set(CMAKE_CXX_EXTENSIONS OFF) # no -std=gnu-23
 # om_clang_tidy_disable()
 if(NOT APPLE)
     add_executable(main_std23 main_std23.cxx)
