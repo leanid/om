@@ -1,7 +1,10 @@
-cmake_minimum_required(VERSION 4.0)
+cmake_minimum_required(VERSION 4.2)
 
 project(09-vk-res-loading-1 CXX)
 find_package(Vulkan REQUIRED COMPONENTS glslangValidator)
+find_package(slang CONFIG REQUIRED HINTS "$ENV{VULKAN_SDK}/lib/cmake")
+message(STATUS "SLANGC_EXECUTABLE: ${SLANGC_EXECUTABLE}")
+
 find_package(SDL3 REQUIRED)
 find_package(
     Boost 1.88.0 # should match version in root CMakeLists.txt
@@ -15,7 +18,6 @@ find_package(
     # Optional Boost libraries by their canonical name)
     ) # e.g. "date_time" for "libboost_date_time"
 find_package(glm REQUIRED)
-find_program(SLANGC_EXECUTABLE slangc HINTS "$ENV{VULKAN_SDK}/bin" REQUIRED)
 
 # set up Vulkan C++ module
 add_library(vulkan_cppm)
@@ -29,6 +31,7 @@ target_compile_definitions(
            VULKAN_HPP_NO_STRUCT_CONSTRUCTORS=1
            VULKAN_HPP_ENABLE_STD_MODULE=1)
 # cmake-format: on
+message(STATUS "Vulkan_INCLUDE_DIR: ${Vulkan_INCLUDE_DIR}")
 target_include_directories(vulkan_cppm PRIVATE "${Vulkan_INCLUDE_DIR}")
 target_link_libraries(vulkan_cppm PRIVATE Vulkan::Vulkan)
 target_compile_features(vulkan_cppm PRIVATE cxx_std_23)
@@ -122,10 +125,12 @@ target_include_directories(
                                 ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(
     09-vk-res-loading-1
-    PRIVATE 09-vk-res-loading-1-vulkan
+    PRIVATE vulkan::cppm
+            09-vk-res-loading-1-vulkan
             09-vk-res-loading-1-platform
             09-vk-res-loading-1-sdl
-            09-vk-res-loading-1-sdl-vulkan)
+            09-vk-res-loading-1-sdl-vulkan
+            )
 
 # cmake-format: off
 target_link_libraries(

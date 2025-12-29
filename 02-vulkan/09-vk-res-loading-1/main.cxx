@@ -5,7 +5,7 @@ import log;
 import vulkan_args_parser;
 import vulkan_platform_sdl3;
 import vulkan_render;
-import vulkan_hpp;
+import vulkan;
 import sdl.SDL;
 import sdl.vulkan;
 

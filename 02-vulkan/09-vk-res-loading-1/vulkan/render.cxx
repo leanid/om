@@ -19,7 +19,7 @@ export module vulkan_render;
 import log;
 import std;
 import glm;
-import vulkan_hpp;
+import vulkan;
 
 namespace om::vulkan
 {

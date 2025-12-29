@@ -6,7 +6,7 @@ export module vulkan_platform_sdl3;
 import std;
 import log;
 import vulkan_render;
-import vulkan_hpp;
+import vulkan;
 import sdl.SDL;
 import sdl.vulkan;
 
