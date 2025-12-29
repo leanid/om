@@ -1,5 +1,5 @@
 import std;
-import vulkan_hpp;
+import vulkan;
 import glm;
 
 std::string to_version(std::uint32_t v);

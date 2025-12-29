@@ -73,7 +73,7 @@ target_link_libraries(
 target_link_libraries(
 11-vk-texture-loading-1
 PRIVATE
-    $<$<CXX_COMPILER_ID:GNU,Clang>:
+    $<$<CXX_COMPILER_ID:GNU>:
     $<IF:$<VERSION_GREATER_EQUAL:$<CXX_COMPILER_VERSION>,14.0.0>,
         stdc++exp,
         $<$<VERSION_GREATER_EQUAL:$<CXX_COMPILER_VERSION>,12.1.1>:
