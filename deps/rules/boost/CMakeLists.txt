@@ -63,3 +63,14 @@ ExternalProject_Add(
         -DCMAKE_BUILD_TYPE=RelWithDebInfo
         -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
 )
+ExternalProject_Add(
+    Boost
+    GIT_REPOSITORY "https://github.com/boostorg/boost.git"
+    GIT_TAG "boost-1.90.0"
+    GIT_PROGRESS ON
+    GIT_SHALLOW ON
+    CMAKE_ARGS
+        -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+        -DCMAKE_BUILD_TYPE=RelWithDebInfo
+        -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
+)
