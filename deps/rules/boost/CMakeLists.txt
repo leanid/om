@@ -38,3 +38,28 @@ ExternalProject_Add(Catch2
         -DCATCH_DEVELOPMENT_BUILD=OFF
         -DCATCH_ENABLE_REPRODUCIBLE_BUILD=OFF
 )
+ExternalProject_Add(
+    SDL3
+    GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
+    GIT_TAG origin/main
+    GIT_SHALLOW ON
+    GIT_PROGRESS ON
+    CMAKE_ARGS
+        -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+        -DCMAKE_BUILD_TYPE=RelWithDebInfo
+        -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
+        -DSDL_STATIC=ON
+        -DSDL_SHARED=OFF
+        -DSDL_X11_XTEST=OFF
+)
+ExternalProject_Add(
+    glm
+    GIT_REPOSITORY https://github.com/g-truc/glm.git
+    GIT_TAG origin/master
+    GIT_SHALLOW ON
+    GIT_PROGRESS ON
+    CMAKE_ARGS
+        -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+        -DCMAKE_BUILD_TYPE=RelWithDebInfo
+        -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
+)
