@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 4.2)
 
-project(prebuild_boost_installer CXX)
+project(prebuilt_dependencies CXX)
 
 string(TOLOWER "${CMAKE_CXX_COMPILER_ID}" compiler_name)
 # Извлекаем мажорную версию (первое число до точки)
@@ -16,7 +16,7 @@ set(triplet_name "${CMAKE_SYSTEM_NAME}-${compiler_full_id}-${CMAKE_SYSTEM_PROCES
 string(TOLOWER "${triplet_name}" triplet_name)
 message(STATUS "triplet OS-compiler-architecture: ${triplet_name}")
 
-get_filename_component(prebuilt_dir "${CMAKE_SOURCE_DIR}/../../prebuilt" ABSOLUTE)
+get_filename_component(prebuilt_dir "${CMAKE_SOURCE_DIR}/../prebuilt" ABSOLUTE)
 message(STATUS "${prebuilt_dir}")
 
 set(CMAKE_INSTALL_PREFIX "${prebuilt_dir}/${triplet_name}")
