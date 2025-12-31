@@ -1256,24 +1256,6 @@ bool PutAudioStreamData(SDL_AudioStream* stream, const void* buf, int len)
     return SDL_PutAudioStreamData(stream, buf, len);
 }
 
-bool PutAudioStreamDataNoCopy(SDL_AudioStream*                    stream,
-                              const void*                         buf,
-                              int                                 len,
-                              SDL_AudioStreamDataCompleteCallback callback,
-                              void*                               userdata)
-{
-    return SDL_PutAudioStreamDataNoCopy(stream, buf, len, callback, userdata);
-}
-
-bool PutAudioStreamPlanarData(SDL_AudioStream* stream,
-                              const void**     channel_buffers,
-                              int              num_channels,
-                              int              num_samples)
-{
-    return SDL_PutAudioStreamPlanarData(
-        stream, channel_buffers, num_channels, num_samples);
-}
-
 int GetAudioStreamData(SDL_AudioStream* stream, void* buf, int len)
 {
     return SDL_GetAudioStreamData(stream, buf, len);
@@ -1900,10 +1882,9 @@ BITFLAG_ENUM(SurfaceFlags);
 
 enum class ScaleMode
 {
-    INVALID  = SDL_SCALEMODE_INVALID,
-    NEAREST  = SDL_SCALEMODE_NEAREST,
-    LINEAR   = SDL_SCALEMODE_LINEAR,
-    PIXELART = SDL_SCALEMODE_PIXELART,
+    INVALID = SDL_SCALEMODE_INVALID,
+    NEAREST = SDL_SCALEMODE_NEAREST,
+    LINEAR  = SDL_SCALEMODE_LINEAR,
 };
 REGULAR_ENUM(ScaleMode);
 
@@ -2671,17 +2652,6 @@ enum class FlashOperation
     UNTIL_FOCUSED = SDL_FLASH_UNTIL_FOCUSED,
 };
 REGULAR_ENUM(FlashOperation);
-
-enum class ProgressState
-{
-    STATE_INVALID       = SDL_PROGRESS_STATE_INVALID,
-    STATE_NONE          = SDL_PROGRESS_STATE_NONE,
-    STATE_INDETERMINATE = SDL_PROGRESS_STATE_INDETERMINATE,
-    STATE_NORMAL        = SDL_PROGRESS_STATE_NORMAL,
-    STATE_PAUSED        = SDL_PROGRESS_STATE_PAUSED,
-    STATE_ERROR         = SDL_PROGRESS_STATE_ERROR,
-};
-REGULAR_ENUM(ProgressState);
 
 using SDL_GLContext = SDL_GLContext;
 
@@ -3605,26 +3575,6 @@ bool FlashWindow(SDL_Window* window, FlashOperation operation)
     return SDL_FlashWindow(window, (SDL_FlashOperation)(operation));
 }
 
-bool SetWindowProgressState(SDL_Window* window, ProgressState state)
-{
-    return SDL_SetWindowProgressState(window, (SDL_ProgressState)(state));
-}
-
-SDL_ProgressState GetWindowProgressState(SDL_Window* window)
-{
-    return SDL_GetWindowProgressState(window);
-}
-
-bool SetWindowProgressValue(SDL_Window* window, float value)
-{
-    return SDL_SetWindowProgressValue(window, value);
-}
-
-float GetWindowProgressValue(SDL_Window* window)
-{
-    return SDL_GetWindowProgressValue(window);
-}
-
 void DestroyWindow(SDL_Window* window)
 {
     SDL_DestroyWindow(window);
@@ -4411,8 +4361,7 @@ enum class GamepadType
         SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_RIGHT,
     TYPE_NINTENDO_SWITCH_JOYCON_PAIR =
         SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_PAIR,
-    TYPE_GAMECUBE = SDL_GAMEPAD_TYPE_GAMECUBE,
-    TYPE_COUNT    = SDL_GAMEPAD_TYPE_COUNT,
+    TYPE_COUNT = SDL_GAMEPAD_TYPE_COUNT,
 };
 REGULAR_ENUM(GamepadType);
 
@@ -5706,12 +5655,6 @@ bool WarpMouseGlobal(float x, float y)
     return SDL_WarpMouseGlobal(x, y);
 }
 
-bool SetRelativeMouseTransform(SDL_MouseMotionTransformCallback callback,
-                               void*                            userdata)
-{
-    return SDL_SetRelativeMouseTransform(callback, userdata);
-}
-
 bool SetWindowRelativeMouseMode(SDL_Window* window, bool enabled)
 {
     return SDL_SetWindowRelativeMouseMode(window, enabled);
@@ -6160,11 +6103,6 @@ Uint32 RegisterEvents(int numevents)
 SDL_Window* GetWindowFromEvent(const SDL_Event* event)
 {
     return SDL_GetWindowFromEvent(event);
-}
-
-int GetEventDescription(const SDL_Event* event, char* buf, int buflen)
-{
-    return SDL_GetEventDescription(event, buf, buflen);
 }
 
 const char* GetBasePath(void)
@@ -6904,11 +6842,6 @@ const char* GetGPUDeviceDriver(SDL_GPUDevice* device)
 SDL_GPUShaderFormat GetGPUShaderFormats(SDL_GPUDevice* device)
 {
     return SDL_GetGPUShaderFormats(device);
-}
-
-SDL_PropertiesID GetGPUDeviceProperties(SDL_GPUDevice* device)
-{
-    return SDL_GetGPUDeviceProperties(device);
 }
 
 constexpr auto PROP_GPU_DEVICE_NAME_STRING()
@@ -7847,41 +7780,6 @@ int GetNumHapticAxes(SDL_Haptic* haptic)
 bool HapticEffectSupported(SDL_Haptic* haptic, const SDL_HapticEffect* effect)
 {
     return SDL_HapticEffectSupported(haptic, effect);
-}
-
-SDL_HapticEffectID CreateHapticEffect(SDL_Haptic*             haptic,
-                                      const SDL_HapticEffect* effect)
-{
-    return SDL_CreateHapticEffect(haptic, effect);
-}
-
-bool UpdateHapticEffect(SDL_Haptic*             haptic,
-                        SDL_HapticEffectID      effect,
-                        const SDL_HapticEffect* data)
-{
-    return SDL_UpdateHapticEffect(haptic, effect, data);
-}
-
-bool RunHapticEffect(SDL_Haptic*        haptic,
-                     SDL_HapticEffectID effect,
-                     Uint32             iterations)
-{
-    return SDL_RunHapticEffect(haptic, effect, iterations);
-}
-
-bool StopHapticEffect(SDL_Haptic* haptic, SDL_HapticEffectID effect)
-{
-    return SDL_StopHapticEffect(haptic, effect);
-}
-
-void DestroyHapticEffect(SDL_Haptic* haptic, SDL_HapticEffectID effect)
-{
-    SDL_DestroyHapticEffect(haptic, effect);
-}
-
-bool GetHapticEffectStatus(SDL_Haptic* haptic, SDL_HapticEffectID effect)
-{
-    return SDL_GetHapticEffectStatus(haptic, effect);
 }
 
 bool SetHapticGain(SDL_Haptic* haptic, int gain)
@@ -9654,15 +9552,6 @@ enum class TextureAccess
 };
 REGULAR_ENUM(TextureAccess);
 
-enum class TextureAddressMode
-{
-    ADDRESS_INVALID = SDL_TEXTURE_ADDRESS_INVALID,
-    ADDRESS_AUTO    = SDL_TEXTURE_ADDRESS_AUTO,
-    ADDRESS_CLAMP   = SDL_TEXTURE_ADDRESS_CLAMP,
-    ADDRESS_WRAP    = SDL_TEXTURE_ADDRESS_WRAP,
-};
-REGULAR_ENUM(TextureAddressMode);
-
 enum class RendererLogicalPresentation
 {
     LOGICAL_PRESENTATION_DISABLED      = SDL_LOGICAL_PRESENTATION_DISABLED,
@@ -9780,13 +9669,6 @@ constexpr auto PROP_RENDERER_CREATE_VULKAN_GRAPHICS_QUEUE_FAMILY_INDEX_NUMBER()
 constexpr auto PROP_RENDERER_CREATE_VULKAN_PRESENT_QUEUE_FAMILY_INDEX_NUMBER()
 {
     return "SDL.renderer.create.vulkan.present_queue_family_index";
-}
-
-SDL_Renderer* CreateGPURenderer(SDL_Window*     window,
-                                GPUShaderFormat format_flags,
-                                SDL_GPUDevice** device)
-{
-    return SDL_CreateGPURenderer(*device, window);
 }
 
 SDL_Renderer* CreateSoftwareRenderer(SDL_Surface* surface)
@@ -10587,29 +10469,6 @@ bool RenderTexture9Grid(SDL_Renderer*    renderer,
                                   dstrect);
 }
 
-bool RenderTexture9GridTiled(SDL_Renderer*    renderer,
-                             SDL_Texture*     texture,
-                             const SDL_FRect* srcrect,
-                             float            left_width,
-                             float            right_width,
-                             float            top_height,
-                             float            bottom_height,
-                             float            scale,
-                             const SDL_FRect* dstrect,
-                             float            tileScale)
-{
-    return SDL_RenderTexture9GridTiled(renderer,
-                                       texture,
-                                       srcrect,
-                                       left_width,
-                                       right_width,
-                                       top_height,
-                                       bottom_height,
-                                       scale,
-                                       dstrect,
-                                       tileScale);
-}
-
 bool RenderGeometry(SDL_Renderer*     renderer,
                     SDL_Texture*      texture,
                     const SDL_Vertex* vertices,
@@ -10646,24 +10505,6 @@ bool RenderGeometryRaw(SDL_Renderer*     renderer,
                                  indices,
                                  num_indices,
                                  size_indices);
-}
-
-bool SetRenderTextureAddressMode(SDL_Renderer*      renderer,
-                                 TextureAddressMode u_mode,
-                                 TextureAddressMode v_mode)
-{
-    return SDL_SetRenderTextureAddressMode(renderer,
-                                           (SDL_TextureAddressMode)(u_mode),
-                                           (SDL_TextureAddressMode)(v_mode));
-}
-
-bool GetRenderTextureAddressMode(SDL_Renderer*       renderer,
-                                 TextureAddressMode* u_mode,
-                                 TextureAddressMode* v_mode)
-{
-    return SDL_GetRenderTextureAddressMode(renderer,
-                                           (SDL_TextureAddressMode*)(u_mode),
-                                           (SDL_TextureAddressMode*)(v_mode));
 }
 
 SDL_Surface* RenderReadPixels(SDL_Renderer* renderer, const SDL_Rect* rect)
@@ -10738,42 +10579,6 @@ constexpr auto DEBUG_TEXT_FONT_CHARACTER_SIZE()
 bool RenderDebugText(SDL_Renderer* renderer, float x, float y, const char* str)
 {
     return SDL_RenderDebugText(renderer, x, y, str);
-}
-
-bool SetDefaultTextureScaleMode(SDL_Renderer* renderer, ScaleMode scale_mode)
-{
-    return SDL_SetDefaultTextureScaleMode(renderer,
-                                          (SDL_ScaleMode)(scale_mode));
-}
-
-bool GetDefaultTextureScaleMode(SDL_Renderer* renderer, ScaleMode* scale_mode)
-{
-    return SDL_GetDefaultTextureScaleMode(renderer,
-                                          (SDL_ScaleMode*)(scale_mode));
-}
-
-using GPURenderStateCreateInfo = SDL_GPURenderStateCreateInfo;
-
-using SDL_GPURenderState = SDL_GPURenderState;
-
-SDL_GPURenderState* CreateGPURenderState(SDL_Renderer*                 renderer,
-                                         SDL_GPURenderStateCreateInfo* desc)
-{
-    return SDL_CreateGPURenderState(renderer, desc);
-}
-
-bool SetGPURenderStateFragmentUniforms(SDL_GPURenderState* state,
-                                       Uint32              slot_index,
-                                       const void*         data,
-                                       Uint32              length)
-{
-    return SDL_SetGPURenderStateFragmentUniforms(
-        state, slot_index, data, length);
-}
-
-void DestroyGPURenderState(SDL_GPURenderState* state)
-{
-    SDL_DestroyGPURenderState(state);
 }
 
 using StorageInterface = SDL_StorageInterface;
