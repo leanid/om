@@ -32,6 +32,9 @@ option(OM_BUILD_WEB "turn ON if need to build 08-web" ON)
 option(OM_CLANG_TIDY "turn ON if need to run clang-tidy" OFF)
 
 find_package(Catch2 REQUIRED)
+find_package(GTest REQUIRED)
+find_package(doctest REQUIRED)
+find_package(trompeloeil REQUIRED)
 find_package(SDL3 REQUIRED)
 find_package(glm REQUIRED)
 find_package(
@@ -45,7 +48,6 @@ find_package(
     #[OPTIONAL_COMPONENTS <libs>...]
     # Optional Boost libraries by their canonical name)
     ) # e.g. "date_time" for "libboost_date_time"
-find_package(GTest REQUIRED)
 
 if(OM_BUILD_DEPS_SKIP)
     message(STATUS "download and build SDL3 sources")
