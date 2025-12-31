@@ -33,11 +33,16 @@ ExternalProject_Add(Catch2
         -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
         -DCMAKE_BUILD_TYPE=RelWithDebInfo
         -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
+        -DCMAKE_CXX_STANDARD=23
+        -DCMAKE_CXX_STANDARD_REQUIRED=ON
+        -DCMAKE_CXX_EXTENSIONS=OFF
         -DCATCH_INSTALL_DOCS=OFF
         -DCATCH_INSTALL_EXTRAS=OFF
         -DCATCH_DEVELOPMENT_BUILD=OFF
         -DCATCH_ENABLE_REPRODUCIBLE_BUILD=OFF
 )
+# install SDL3 dependencies from:
+# https://wiki.libsdl.org/SDL3/README-linux#build-dependencies
 ExternalProject_Add(
     SDL3
     GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
@@ -48,9 +53,12 @@ ExternalProject_Add(
         -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
         -DCMAKE_BUILD_TYPE=RelWithDebInfo
         -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
+        -DSDL_LIBC=ON # Building with -DSDL_LIBC=OFF will make it impossible to use the sanitizer
         -DSDL_STATIC=ON
         -DSDL_SHARED=OFF
-        -DSDL_X11_XTEST=OFF
+        -DSDL_TESTS=OFF
+        -DSDL_TEST_LIBRARY=OFF
+        -DSDL_INSTALL_DOCS=OFF
 )
 ExternalProject_Add(
     glm
@@ -62,6 +70,14 @@ ExternalProject_Add(
         -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
         -DCMAKE_BUILD_TYPE=RelWithDebInfo
         -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
+        -DCMAKE_CXX_STANDARD=23
+        -DCMAKE_CXX_STANDARD_REQUIRED=ON
+        -DCMAKE_CXX_EXTENSIONS=OFF
+        -DGLM_BUILD_TESTS=OFF
+        -DGLM_ENABLE_FAST_MATH=ON
+        -DGLM_ENABLE_CXX_20=ON
+        -DGLM_ENABLE_LANG_EXTENSIONS=OFF
+        -DGLM_BUILD_LIBRARY=ON # static/dynamic
 )
 ExternalProject_Add(
     Boost
@@ -73,4 +89,7 @@ ExternalProject_Add(
         -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
         -DCMAKE_BUILD_TYPE=RelWithDebInfo
         -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
+        -DCMAKE_CXX_STANDARD=23
+        -DCMAKE_CXX_STANDARD_REQUIRED=ON
+        -DCMAKE_CXX_EXTENSIONS=OFF
 )
