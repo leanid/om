@@ -45,6 +45,7 @@ find_package(
     #[OPTIONAL_COMPONENTS <libs>...]
     # Optional Boost libraries by their canonical name)
     ) # e.g. "date_time" for "libboost_date_time"
+find_package(GTest REQUIRED)
 
 if(OM_BUILD_DEPS_SKIP)
     message(STATUS "download and build SDL3 sources")
@@ -61,7 +62,7 @@ if(OM_BUILD_DEPS_SKIP)
     option(SDL_SHARED "" ON)
     option(SDL_X11_XTEST "" OFF)
     set(CMAKE_UNITY_BUILD_MODE "GROUP")
-    fetchcontent_makeavailable(SDL3)
+    #fetchcontent_makeavailable(SDL3)
     find_package(SDL3 REQUIRED)
 
     message(STATUS "download and build GLM sources")
