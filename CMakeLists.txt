@@ -31,6 +31,21 @@ option(OM_BUILD_GAME_EXAMPLE "turn ON if need to build 05-game" OFF)
 option(OM_BUILD_WEB "turn ON if need to build 08-web" ON)
 option(OM_CLANG_TIDY "turn ON if need to run clang-tidy" OFF)
 
+find_package(Catch2 REQUIRED)
+find_package(SDL3 REQUIRED)
+find_package(glm REQUIRED)
+find_package(
+    Boost
+    1.90.0
+    EXACT # Minimum or EXACT version e.g. 1.67.0
+    REQUIRED # Fail with error if Boost is not found
+    COMPONENTS filesystem stacktrace
+                program_options # Boost libraries by their canonical name
+    # e.g. "date_time" for "libboost_date_time"
+    #[OPTIONAL_COMPONENTS <libs>...]
+    # Optional Boost libraries by their canonical name)
+    ) # e.g. "date_time" for "libboost_date_time"
+
 if(OM_BUILD_DEPS_SKIP)
     message(STATUS "download and build SDL3 sources")
     include(FetchContent)
