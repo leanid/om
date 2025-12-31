@@ -13,7 +13,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # property on all targets declared after this to 1
 set(CMAKE_CXX_MODULE_STD 1)
 
-list(APPEND CMAKE_PREFIX_PATH ${CMAKE_SOURCE_DIR}/cmake)
+list(APPEND CMAKE_PREFIX_PATH ${CMAKE_SOURCE_DIR}/cmake ${CMAKE_SOURCE_DIR}/deps/prebuilt/linux-clang21-x86_64)
 find_package(om-common-functions REQUIRED)
 
 project("gamedev_study" LANGUAGES CXX)
@@ -31,7 +31,7 @@ option(OM_BUILD_GAME_EXAMPLE "turn ON if need to build 05-game" OFF)
 option(OM_BUILD_WEB "turn ON if need to build 08-web" ON)
 option(OM_CLANG_TIDY "turn ON if need to run clang-tidy" OFF)
 
-if(OM_BUILD_DEPS)
+if(OM_BUILD_DEPS_SKIP)
     message(STATUS "download and build SDL3 sources")
     include(FetchContent)
     fetchcontent_declare(
@@ -74,7 +74,7 @@ if(OM_BUILD_DEPS)
     find_package(Catch2 REQUIRED)
 endif(OM_BUILD_DEPS)
 
-if(OM_BUILD_BOOST)
+if(OM_BUILD_BOOST_SKIP)
     # The logging output during population can be quite verbose,
     # making the configure stage quite noisy. This cache option
     # (ON by default) hides all population output unless an error is encountered.
@@ -86,7 +86,7 @@ if(OM_BUILD_BOOST)
     fetchcontent_declare(
         Boost
         GIT_REPOSITORY "https://github.com/boostorg/boost.git"
-        GIT_TAG "boost-1.88.0"
+        GIT_TAG "boost-1.90.0"
         GIT_PROGRESS ON
         GIT_SHALLOW ON
         OVERRIDE_FIND_PACKAGE TRUE # needed to find correct Boost
@@ -95,7 +95,7 @@ if(OM_BUILD_BOOST)
     fetchcontent_makeavailable(Boost)
     find_package(
         Boost
-        1.88.0
+        1.90.0
         EXACT # Minimum or EXACT version e.g. 1.67.0
         REQUIRED # Fail with error if Boost is not found
         COMPONENTS filesystem stacktrace

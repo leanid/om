@@ -15,19 +15,19 @@
   "overrides": [
     {
       "name": "boost-locale",
-      "version": "1.88.0"
+      "version": "1.90.0"
     },
     {
       "name": "boost-program-options",
-      "version": "1.88.0"
+      "version": "1.90.0"
     },
     {
       "name": "boost-algorithm",
-      "version": "1.88.0"
+      "version": "1.90.0"
     },
     {
       "name": "boost-stacktrace",
-      "version": "1.88.0"
+      "version": "1.90.0"
     }
   ]
 }
