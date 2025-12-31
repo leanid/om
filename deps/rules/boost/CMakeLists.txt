@@ -36,6 +36,7 @@ ExternalProject_Add(Catch2
         -DCMAKE_CXX_STANDARD=23
         -DCMAKE_CXX_STANDARD_REQUIRED=ON
         -DCMAKE_CXX_EXTENSIONS=OFF
+        -DCMAKE_POSITION_INDEPENDENT_CODE=ON
         -DCATCH_INSTALL_DOCS=OFF
         -DCATCH_INSTALL_EXTRAS=OFF
         -DCATCH_DEVELOPMENT_BUILD=OFF
@@ -46,16 +47,17 @@ ExternalProject_Add(Catch2
 ExternalProject_Add(
     SDL3
     GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
-    GIT_TAG origin/main
+    GIT_TAG release-3.2.28
     GIT_SHALLOW ON
     GIT_PROGRESS ON
     CMAKE_ARGS
         -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
         -DCMAKE_BUILD_TYPE=RelWithDebInfo
         -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
+        -DCMAKE_POSITION_INDEPENDENT_CODE=ON
         -DSDL_LIBC=ON # Building with -DSDL_LIBC=OFF will make it impossible to use the sanitizer
         -DSDL_STATIC=ON
-        -DSDL_SHARED=OFF
+        -DSDL_SHARED=ON
         -DSDL_TESTS=OFF
         -DSDL_TEST_LIBRARY=OFF
         -DSDL_INSTALL_DOCS=OFF
@@ -63,7 +65,7 @@ ExternalProject_Add(
 ExternalProject_Add(
     glm
     GIT_REPOSITORY https://github.com/g-truc/glm.git
-    GIT_TAG origin/master
+    GIT_TAG 1.0.3
     GIT_SHALLOW ON
     GIT_PROGRESS ON
     CMAKE_ARGS
@@ -73,6 +75,7 @@ ExternalProject_Add(
         -DCMAKE_CXX_STANDARD=23
         -DCMAKE_CXX_STANDARD_REQUIRED=ON
         -DCMAKE_CXX_EXTENSIONS=OFF
+        -DCMAKE_POSITION_INDEPENDENT_CODE=ON
         -DGLM_BUILD_TESTS=OFF
         -DGLM_ENABLE_FAST_MATH=ON
         -DGLM_ENABLE_CXX_20=ON
@@ -82,7 +85,7 @@ ExternalProject_Add(
 ExternalProject_Add(
     Boost
     GIT_REPOSITORY "https://github.com/boostorg/boost.git"
-    GIT_TAG "boost-1.90.0"
+    GIT_TAG boost-1.90.0
     GIT_PROGRESS ON
     GIT_SHALLOW ON
     CMAKE_ARGS
@@ -92,4 +95,5 @@ ExternalProject_Add(
         -DCMAKE_CXX_STANDARD=23
         -DCMAKE_CXX_STANDARD_REQUIRED=ON
         -DCMAKE_CXX_EXTENSIONS=OFF
+        -DCMAKE_POSITION_INDEPENDENT_CODE=ON
 )
