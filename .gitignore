@@ -13,3 +13,4 @@ build-*/
 build/
 imgui.ini
 local.properties
+/deps/prebuilt/
