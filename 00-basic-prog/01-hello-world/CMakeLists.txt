@@ -59,7 +59,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
             "CXX_SUPPORTS_STATIC_LINKING: ${CXX_SUPPORTS_STATIC_LINKING}\n"
             " LINKER_SUPPORTS_STATIC_LINKING: ${LINKER_SUPPORTS_STATIC_LINKING}"
         )
-    if(CXX_SUPPORTS_STATIC_LINKING AND LINKER_SUPPORTS_STATIC_LINKING)
+    if(CXX_SUPPORTS_STATIC_LINKING AND LINKER_SUPPORTS_STATIC_LINKING AND FALSE)
         add_executable(cout_main_static cout_main.cxx)
         target_link_options(cout_main_static PRIVATE -static)
         target_compile_features(cout_main_static PRIVATE cxx_std_20)

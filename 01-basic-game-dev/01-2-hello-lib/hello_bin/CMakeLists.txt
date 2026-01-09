@@ -7,13 +7,14 @@ include(CheckLinkerFlag)
 if(NOT MINGW AND NOT MSVC AND NOT APPLE)
     check_cxx_compiler_flag("-static" CXX_SUPPORTS_STATIC_LINKING)
     check_linker_flag(CXX "-static" LINKER_SUPPORTS_STATIC_LINKING)
-    message(STATUS "try to fix MinGW64 static linking error for F31 MinGW 6.0")
+    message(STATUS "status [-static] flag: CXX_SUPPORTS_STATIC_LINKING: ${CXX_SUPPORTS_STATIC_LINKING} LINKER_SUPPORTS_STATIC_LINKING: ${LINKER_SUPPORTS_STATIC_LINKING}")
 
-    if(CXX_SUPPORTS_STATIC_LINKING AND LINKER_SUPPORTS_STATIC_LINKING)
+    if(CXX_SUPPORTS_STATIC_LINKING AND LINKER_SUPPORTS_STATIC_LINKING AND FALSE)
         add_executable(hello-bin-static src/main.cxx)
         target_compile_features(hello-bin-static PRIVATE cxx_std_20)
         target_link_libraries(hello-bin-static PUBLIC hello-lib-static)
         # Fedora `sudo dnf isntall libcxx-devel libcxx-static` for clang++
+        # Ubuntu `libc++-dev libc++abi-dev`
         target_link_options(hello-bin-static PRIVATE -static)
     else()
         message(
