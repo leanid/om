@@ -1,0 +1,7 @@
+[tools]
+ninja = "latest"
+cmake = "latest"
+# mise plugin install llvm https://github.com/higebu/asdf-llvm.git
+# error with installation no known fix
+# llvm = "21.1.8"
+
