@@ -1,6 +1,9 @@
 [tools]
 ninja = "1.13.2"
 cmake = "4.2.1"
+python = "3.14.2"
+ripgrep = "15.1.0"
+fd = "10.3.0"
 # mise plugin install llvm https://github.com/higebu/asdf-llvm.git
 # error with installation no known fix
 # llvm = "21.1.8"
