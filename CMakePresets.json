@@ -2,8 +2,8 @@
   "$schema": "https://cmake.org/cmake/help/latest/_downloads/3e2d73bff478d88a7de0de736ba5e361/schema.json",
   "version": 10,
   "cmakeMinimumRequired": {
-    "major": 3,
-    "minor": 31,
+    "major": 4,
+    "minor": 2,
     "patch": 0
   },
   "configurePresets": [
@@ -124,6 +124,7 @@
       "description": "build using Ninja Multi-Config generator and llvm toolchain",
       "generator": "Ninja Multi-Config",
       "binaryDir": "${sourceDir}/build/ninja-llvm",
+      "toolchainFile": "${sourceDir}/cmake/toolchain/linux.cmake",
       "cacheVariables": {
         "CMAKE_CXX_STANDARD": "23",
         "CMAKE_CXX_STANDARD_REQUIRED": "ON",
@@ -137,7 +138,7 @@
         "CMAKE_LINKER_TYPE": "LLD",
         "OM_CLANG_TIDY": "OFF",
         "$comment": "We have to build boost with clang++ cause of libc++",
-        "OM_BUILD_BOOST": "ON"
+        "OM_BUILD_BOOST": "OFF"
       }
     },
     {
