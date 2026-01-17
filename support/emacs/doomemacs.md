@@ -207,6 +207,13 @@ For simple one file debugging you can skip most params see example:
 ```
 next *dap-hydra* to show key to debug
 ### How to use lates clang++ on Alt Linux?
+0. simplest way is to use -L and -B options to say clang++ where to search
+   libraries and object files from current system
+   ```bash
+   cmake . --preset ninja-llvm \
+   -DCMAKE_CXX_FLAGS="-B/usr/lib64/gcc/x86_64-alt-linux/13/ -L/usr/lib64/gcc/x86_64-alt-linux/13/" --fresh
+   ```
+   if you need install llvm - use **mise tool** with **mise.toml** file in root dir
 1. download & unpack llvm
 2. you may need to add several static libs and ld scripts from your distro
    if clang++ can't find it

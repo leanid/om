@@ -1,10 +1,10 @@
 [tools]
 ninja = "1.13.2"
 cmake = "4.2.1"
-python = "3.14.2"
+python = ["3.10", "3.14.2"]
 ripgrep = "15.1.0"
 fd = "10.3.0"
-# mise plugin install llvm https://github.com/higebu/asdf-llvm.git
-# error with installation no known fix
-# llvm = "21.1.8"
-
+"github:llvm/llvm-project" = "llvmorg-21.1.8"
+# be advisedhttps://mise.jdx.dev/dev-tools/backends/github.html:
+# lldb: error while loading shared libraries: libpython3.10.so.1.0: cannot open shared object file: No such file or directory
+# so I just copy this so from python3.10 installation into llvm installation inside mise
