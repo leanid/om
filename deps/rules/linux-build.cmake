@@ -1,4 +1,4 @@
-# 1. how to use:> CXX=clang++ cmake -P boost-linux-build.cmake
+# 1. how to use:> CXX=clang++ cmake -P linux-build.cmake
 cmake_minimum_required(VERSION 4.2)
 
 execute_process(COMMAND ${CMAKE_COMMAND} -B ${CMAKE_CURRENT_LIST_DIR}/build -S ${CMAKE_CURRENT_LIST_DIR}
