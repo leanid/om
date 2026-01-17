@@ -16,11 +16,11 @@ set(CMAKE_CXX_MODULE_STD 1)
 list(APPEND CMAKE_PREFIX_PATH ${CMAKE_SOURCE_DIR}/cmake ${CMAKE_SOURCE_DIR}/deps/prebuilt/linux-clang21-x86_64)
 find_package(om-common-functions REQUIRED)
 
-project("gamedev_study" LANGUAGES CXX)
+project(rgd LANGUAGES CXX)
 om_add_custom_build_types()
 
 option(OM_BUILD_DEPS [=[download and build dependencies [SDL3, GLM, Catch2]
-    as part of current build]=] ON)
+    as part of current build]=] OFF)
 option(OM_BUILD_BOOST "download and build Boost from source" OFF)
 option(OM_BUILD_COURSE_BASIC_PROG "turn ON if need to build 00-basic-prog" ON)
 option(OM_BUILD_COURSE_BASIC_GAME_DEV
@@ -49,7 +49,7 @@ find_package(
     # Optional Boost libraries by their canonical name)
     ) # e.g. "date_time" for "libboost_date_time"
 
-if(OM_BUILD_DEPS_SKIP)
+if(OM_BUILD_DEPS)
     message(STATUS "download and build SDL3 sources")
     include(FetchContent)
     fetchcontent_declare(
@@ -92,7 +92,7 @@ if(OM_BUILD_DEPS_SKIP)
     find_package(Catch2 REQUIRED)
 endif(OM_BUILD_DEPS)
 
-if(OM_BUILD_BOOST_SKIP)
+if(OM_BUILD_BOOST)
     # The logging output during population can be quite verbose,
     # making the configure stage quite noisy. This cache option
     # (ON by default) hides all population output unless an error is encountered.
@@ -123,8 +123,6 @@ if(OM_BUILD_BOOST_SKIP)
         # Optional Boost libraries by their canonical name)
         ) # e.g. "date_time" for "libboost_date_time"
 endif(OM_BUILD_BOOST)
-
-set(CMAKE_UNITY_BUILD_MODE "BATCH")
 
 enable_testing()
 
