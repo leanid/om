@@ -13,7 +13,7 @@ get_filename_component(gcc_libs_and_obj_dir "${libgcc_path}" DIRECTORY)
 
 # 3. Apply the flags using the discovered path
 if(NOT gcc_libs_and_obj_dir)
-    message(FATAL "Could not determine GCC internal library path.")
+    message(FATAL_ERROR "Could not determine GCC internal library path.")
 endif()
 
 # Set linker flags for executables, so etc
