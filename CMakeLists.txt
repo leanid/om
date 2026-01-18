@@ -13,10 +13,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # property on all targets declared after this to 1
 set(CMAKE_CXX_MODULE_STD 1)
 
-list(APPEND CMAKE_PREFIX_PATH ${CMAKE_SOURCE_DIR}/cmake ${CMAKE_SOURCE_DIR}/deps/prebuilt/linux-clang21-x86_64)
-find_package(om-common-functions REQUIRED)
-
 project(rgd LANGUAGES CXX)
+
+list(APPEND CMAKE_PREFIX_PATH ${CMAKE_SOURCE_DIR}/cmake)
+find_package(om-triplet-name REQUIRED)
+find_package(om-common-functions REQUIRED)
+list(APPEND CMAKE_PREFIX_PATH ${CMAKE_SOURCE_DIR}/deps/prebuilt/${OM_TRIPLET_NAME})
+
 om_add_custom_build_types()
 
 option(OM_BUILD_DEPS [=[download and build dependencies [SDL3, GLM, Catch2]
