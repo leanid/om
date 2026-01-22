@@ -3,6 +3,7 @@ module;
 #include <stacktrace>
 #else
 #include <boost/stacktrace.hpp>
+#include <utility>
 namespace std::stacktrace
 {
 auto current()
@@ -1470,7 +1471,7 @@ void render::create_logical_device()
     queue_family.index.transfer =
         get_transfer_queue_family_index(devices.physical);
 
-    if (queue_family.index.graphics == ~0)
+    if (std::cmp_equal(queue_family.index.graphics , ~0))
 
     {
         throw std::runtime_error("error: could not find a queue for graphics "

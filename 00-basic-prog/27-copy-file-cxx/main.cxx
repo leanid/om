@@ -3,6 +3,7 @@
 #include <iosfwd>
 #include <iostream>
 #include <memory>
+#include <utility>
 // NOLINTNEXTLINE
 int main(int argc, char** argv)
 {
@@ -49,7 +50,7 @@ int main(int argc, char** argv)
         streamsize         size    = file_size;                      // NOLINT
         streamsize copied = in.sgetn(content.get(), file_size);      // NOLINT
 
-        if (copied != file_size)
+        if (std::cmp_not_equal(copied , file_size))
         {
             cout << "error: can't read full file" << endl;
             return 1;

@@ -16,6 +16,7 @@
 #include <stdexcept>
 #include <string_view>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 #include <SDL3/SDL.h>
@@ -1459,7 +1460,7 @@ texture_gl_es20::~texture_gl_es20()
             uint32_t rest         = snd->length - snd->current_index;
             uint8_t* current_buff = &snd->buffer[snd->current_index];
 
-            if (rest <= static_cast<uint32_t>(stream_size))
+            if (std::cmp_less_equal(rest, stream_size))
             {
                 // copy rest to buffer
                 SDL_MixAudio(

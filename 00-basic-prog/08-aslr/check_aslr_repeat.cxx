@@ -38,7 +38,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 
 static bool safe_insert(const std::string& result)
 {
-    std::lock_guard<std::mutex> lock(result_guard);
+    std::scoped_lock lock(result_guard);
     auto [it, is_succeded] = previous_results.insert(result);
     return is_succeded;
 }

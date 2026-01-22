@@ -21,6 +21,7 @@
 #include <string_view>
 #include <thread>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 #include <SDL3/SDL.h>
@@ -1356,7 +1357,7 @@ void audio_callback(void*, uint8_t* stream, int stream_size)
             uint32_t rest         = snd->length - snd->current_index;
             uint8_t* current_buff = &snd->buffer[snd->current_index];
 
-            if (rest <= static_cast<uint32_t>(stream_size))
+            if (std::cmp_less_equal(rest, stream_size))
             {
                 // copy rest to buffer
                 SDL_MixAudio(

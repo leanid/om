@@ -15,6 +15,7 @@
 #include <stdexcept>
 #include <string_view>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 #include <mutex>
@@ -1350,7 +1351,7 @@ public:
 
     void play(const properties prop) final
     {
-        std::lock_guard<std::mutex> lock(engine_impl::audio_mutex);
+        std::scoped_lock lock(engine_impl::audio_mutex);
         // here we can change properties
         // of sound and dont collade with multithreaded playing
         current_index = 0;
@@ -1451,7 +1452,7 @@ sound_buffer* engine_impl::create_sound_buffer(std::string_view path)
     auto* s = new sound_buffer_impl(path, audio_device, audio_device_spec);
     {
         // push_backsound_buffer_impl
-        std::lock_guard<std::mutex> lock(audio_mutex);
+        std::scoped_lock lock(audio_mutex);
         sounds.push_back(s);
     }
     return s;
@@ -1463,7 +1464,7 @@ void engine_impl::audio_callback(void*    engine_ptr,
                                  uint8_t* stream,
                                  int      stream_size)
 {
-    std::lock_guard<std::mutex> lock(audio_mutex);
+    std::scoped_lock lock(audio_mutex);
     // no sound default
     std::fill_n(stream, stream_size, '\0');
 
@@ -1476,7 +1477,7 @@ void engine_impl::audio_callback(void*    engine_ptr,
             uint32_t rest         = snd->length - snd->current_index;
             uint8_t* current_buff = &snd->buffer[snd->current_index];
 
-            if (rest <= static_cast<uint32_t>(stream_size))
+            if (std::cmp_less_equal(rest, stream_size))
             {
                 // copy rest to buffer
                 SDL_MixAudio(stream,
