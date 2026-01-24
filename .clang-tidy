@@ -17,6 +17,7 @@ CheckOptions:
   - key: readability-identifier-naming.FunctionCase
     value: lower_case
 
+WarningsAsErrors: '*,-bugprone-exception-escape'
 # Set the style for automatic fixes (e.g., sort includes)
 FormatStyle: 'file'
 ...
