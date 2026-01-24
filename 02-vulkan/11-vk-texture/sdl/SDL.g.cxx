@@ -87,7 +87,7 @@ void SetAssertionHandler(SDL_AssertionHandler handler, void* userdata)
     SDL_SetAssertionHandler(handler, userdata);
 }
 
-SDL_AssertionHandler GetDefaultAssertionHandler(void)
+SDL_AssertionHandler GetDefaultAssertionHandler()
 {
     return SDL_GetDefaultAssertionHandler();
 }
@@ -97,12 +97,12 @@ SDL_AssertionHandler GetAssertionHandler(void** puserdata)
     return SDL_GetAssertionHandler(puserdata);
 }
 
-const SDL_AssertData* GetAssertionReport(void)
+const SDL_AssertData* GetAssertionReport()
 {
     return SDL_GetAssertionReport();
 }
 
-void ResetAssertionReport(void)
+void ResetAssertionReport()
 {
     SDL_ResetAssertionReport();
 }
@@ -167,7 +167,7 @@ bool CloseAsyncIO(SDL_AsyncIO*      asyncio,
     return SDL_CloseAsyncIO(asyncio, flush, queue, userdata);
 }
 
-SDL_AsyncIOQueue* CreateAsyncIOQueue(void)
+SDL_AsyncIOQueue* CreateAsyncIOQueue()
 {
     return SDL_CreateAsyncIOQueue();
 }
@@ -216,22 +216,22 @@ void UnlockSpinlock(SDL_SpinLock* lock)
     SDL_UnlockSpinlock(lock);
 }
 
-void CompilerBarrier(void)
+void CompilerBarrier()
 {
     SDL_CompilerBarrier();
 }
 
-void MemoryBarrierReleaseFunction(void)
+void MemoryBarrierReleaseFunction()
 {
     SDL_MemoryBarrierReleaseFunction();
 }
 
-void MemoryBarrierAcquireFunction(void)
+void MemoryBarrierAcquireFunction()
 {
     SDL_MemoryBarrierAcquireFunction();
 }
 
-void CPUPauseInstruction(void)
+void CPUPauseInstruction()
 {
     SDL_CPUPauseInstruction();
 }
@@ -320,17 +320,17 @@ constexpr auto BROKEN_BSWAP()
     return 0;
 }
 
-bool OutOfMemory(void)
+bool OutOfMemory()
 {
     return SDL_OutOfMemory();
 }
 
-const char* GetError(void)
+const char* GetError()
 {
     return SDL_GetError();
 }
 
-bool ClearError(void)
+bool ClearError()
 {
     return SDL_ClearError();
 }
@@ -348,12 +348,12 @@ enum class PropertyType
 };
 REGULAR_ENUM(PropertyType);
 
-SDL_PropertiesID GetGlobalProperties(void)
+SDL_PropertiesID GetGlobalProperties()
 {
     return SDL_GetGlobalProperties();
 }
 
-SDL_PropertiesID CreateProperties(void)
+SDL_PropertiesID CreateProperties()
 {
     return SDL_CreateProperties();
 }
@@ -540,7 +540,7 @@ const char* GetThreadName(SDL_Thread* thread)
     return SDL_GetThreadName(thread);
 }
 
-SDL_ThreadID GetCurrentThreadID(void)
+SDL_ThreadID GetCurrentThreadID()
 {
     return SDL_GetCurrentThreadID();
 }
@@ -582,14 +582,14 @@ bool SetTLS(SDL_TLSID*                id,
     return SDL_SetTLS(id, value, destructor);
 }
 
-void CleanupTLS(void)
+void CleanupTLS()
 {
     SDL_CleanupTLS();
 }
 
 using SDL_Mutex = SDL_Mutex;
 
-SDL_Mutex* CreateMutex(void)
+SDL_Mutex* CreateMutex()
 {
     return SDL_CreateMutex();
 }
@@ -601,7 +601,7 @@ void DestroyMutex(SDL_Mutex* mutex)
 
 using SDL_RWLock = SDL_RWLock;
 
-SDL_RWLock* CreateRWLock(void)
+SDL_RWLock* CreateRWLock()
 {
     return SDL_CreateRWLock();
 }
@@ -650,7 +650,7 @@ Uint32 GetSemaphoreValue(SDL_Semaphore* sem)
 
 using SDL_Condition = SDL_Condition;
 
-SDL_Condition* CreateCondition(void)
+SDL_Condition* CreateCondition()
 {
     return SDL_CreateCondition();
 }
@@ -781,7 +781,7 @@ SDL_IOStream* IOFromConstMem(const void* mem, size_t size)
     return SDL_IOFromConstMem(mem, size);
 }
 
-SDL_IOStream* IOFromDynamicMem(void)
+SDL_IOStream* IOFromDynamicMem()
 {
     return SDL_IOFromDynamicMem();
 }
@@ -1062,7 +1062,7 @@ using AudioSpec = SDL_AudioSpec;
 
 using SDL_AudioStream = SDL_AudioStream;
 
-int GetNumAudioDrivers(void)
+int GetNumAudioDrivers()
 {
     return SDL_GetNumAudioDrivers();
 }
@@ -1072,7 +1072,7 @@ const char* GetAudioDriver(int index)
     return SDL_GetAudioDriver(index);
 }
 
-const char* GetCurrentAudioDriver(void)
+const char* GetCurrentAudioDriver()
 {
     return SDL_GetCurrentAudioDriver();
 }
@@ -2342,7 +2342,7 @@ enum class CameraPosition
 };
 REGULAR_ENUM(CameraPosition);
 
-int GetNumCameraDrivers(void)
+int GetNumCameraDrivers()
 {
     return SDL_GetNumCameraDrivers();
 }
@@ -2352,7 +2352,7 @@ const char* GetCameraDriver(int index)
     return SDL_GetCameraDriver(index);
 }
 
-const char* GetCurrentCameraDriver(void)
+const char* GetCurrentCameraDriver()
 {
     return SDL_GetCurrentCameraDriver();
 }
@@ -2417,12 +2417,12 @@ bool SetClipboardText(const char* text)
     return SDL_SetClipboardText(text);
 }
 
-char* GetClipboardText(void)
+char* GetClipboardText()
 {
     return SDL_GetClipboardText();
 }
 
-bool HasClipboardText(void)
+bool HasClipboardText()
 {
     return SDL_HasClipboardText();
 }
@@ -2432,12 +2432,12 @@ bool SetPrimarySelectionText(const char* text)
     return SDL_SetPrimarySelectionText(text);
 }
 
-char* GetPrimarySelectionText(void)
+char* GetPrimarySelectionText()
 {
     return SDL_GetPrimarySelectionText();
 }
 
-bool HasPrimarySelectionText(void)
+bool HasPrimarySelectionText()
 {
     return SDL_HasPrimarySelectionText();
 }
@@ -2452,7 +2452,7 @@ bool SetClipboardData(SDL_ClipboardDataCallback    callback,
         callback, cleanup, userdata, mime_types, num_mime_types);
 }
 
-bool ClearClipboardData(void)
+bool ClearClipboardData()
 {
     return SDL_ClearClipboardData();
 }
@@ -2472,92 +2472,92 @@ constexpr auto CACHELINE_SIZE()
     return 128;
 }
 
-int GetNumLogicalCPUCores(void)
+int GetNumLogicalCPUCores()
 {
     return SDL_GetNumLogicalCPUCores();
 }
 
-int GetCPUCacheLineSize(void)
+int GetCPUCacheLineSize()
 {
     return SDL_GetCPUCacheLineSize();
 }
 
-bool HasAltiVec(void)
+bool HasAltiVec()
 {
     return SDL_HasAltiVec();
 }
 
-bool HasMMX(void)
+bool HasMMX()
 {
     return SDL_HasMMX();
 }
 
-bool HasSSE(void)
+bool HasSSE()
 {
     return SDL_HasSSE();
 }
 
-bool HasSSE2(void)
+bool HasSSE2()
 {
     return SDL_HasSSE2();
 }
 
-bool HasSSE3(void)
+bool HasSSE3()
 {
     return SDL_HasSSE3();
 }
 
-bool HasSSE41(void)
+bool HasSSE41()
 {
     return SDL_HasSSE41();
 }
 
-bool HasSSE42(void)
+bool HasSSE42()
 {
     return SDL_HasSSE42();
 }
 
-bool HasAVX(void)
+bool HasAVX()
 {
     return SDL_HasAVX();
 }
 
-bool HasAVX2(void)
+bool HasAVX2()
 {
     return SDL_HasAVX2();
 }
 
-bool HasAVX512F(void)
+bool HasAVX512F()
 {
     return SDL_HasAVX512F();
 }
 
-bool HasARMSIMD(void)
+bool HasARMSIMD()
 {
     return SDL_HasARMSIMD();
 }
 
-bool HasNEON(void)
+bool HasNEON()
 {
     return SDL_HasNEON();
 }
 
-bool HasLSX(void)
+bool HasLSX()
 {
     return SDL_HasLSX();
 }
 
-bool HasLASX(void)
+bool HasLASX()
 {
     return SDL_HasLASX();
 }
 
-int GetSystemRAM(void)
+int GetSystemRAM()
 {
     return SDL_GetSystemRAM();
 }
 
-size_t GetSIMDAlignment(void)
+size_t GetSIMDAlignment()
 {
     return SDL_GetSIMDAlignment();
 }
@@ -2729,7 +2729,7 @@ enum class GLContextResetNotification : Uint32
 };
 BITFLAG_ENUM(GLContextResetNotification);
 
-int GetNumVideoDrivers(void)
+int GetNumVideoDrivers()
 {
     return SDL_GetNumVideoDrivers();
 }
@@ -2739,12 +2739,12 @@ const char* GetVideoDriver(int index)
     return SDL_GetVideoDriver(index);
 }
 
-const char* GetCurrentVideoDriver(void)
+const char* GetCurrentVideoDriver()
 {
     return SDL_GetCurrentVideoDriver();
 }
 
-SDL_SystemTheme GetSystemTheme(void)
+SDL_SystemTheme GetSystemTheme()
 {
     return SDL_GetSystemTheme();
 }
@@ -2754,7 +2754,7 @@ SDL_DisplayID* GetDisplays(int* count)
     return SDL_GetDisplays(count);
 }
 
-SDL_DisplayID GetPrimaryDisplay(void)
+SDL_DisplayID GetPrimaryDisplay()
 {
     return SDL_GetPrimaryDisplay();
 }
@@ -3498,7 +3498,7 @@ bool GetWindowMouseGrab(SDL_Window* window)
     return SDL_GetWindowMouseGrab(window);
 }
 
-SDL_Window* GetGrabbedWindow(void)
+SDL_Window* GetGrabbedWindow()
 {
     return SDL_GetGrabbedWindow();
 }
@@ -3580,17 +3580,17 @@ void DestroyWindow(SDL_Window* window)
     SDL_DestroyWindow(window);
 }
 
-bool ScreenSaverEnabled(void)
+bool ScreenSaverEnabled()
 {
     return SDL_ScreenSaverEnabled();
 }
 
-bool EnableScreenSaver(void)
+bool EnableScreenSaver()
 {
     return SDL_EnableScreenSaver();
 }
 
-bool DisableScreenSaver(void)
+bool DisableScreenSaver()
 {
     return SDL_DisableScreenSaver();
 }
@@ -3610,7 +3610,7 @@ SDL_FunctionPointer EGL_GetProcAddress(const char* proc)
     return SDL_EGL_GetProcAddress(proc);
 }
 
-void GL_UnloadLibrary(void)
+void GL_UnloadLibrary()
 {
     SDL_GL_UnloadLibrary();
 }
@@ -3620,7 +3620,7 @@ bool GL_ExtensionSupported(const char* extension)
     return SDL_GL_ExtensionSupported(extension);
 }
 
-void GL_ResetAttributes(void)
+void GL_ResetAttributes()
 {
     SDL_GL_ResetAttributes();
 }
@@ -3645,22 +3645,22 @@ bool GL_MakeCurrent(SDL_Window* window, SDL_GLContext context)
     return SDL_GL_MakeCurrent(window, context);
 }
 
-SDL_Window* GL_GetCurrentWindow(void)
+SDL_Window* GL_GetCurrentWindow()
 {
     return SDL_GL_GetCurrentWindow();
 }
 
-SDL_GLContext GL_GetCurrentContext(void)
+SDL_GLContext GL_GetCurrentContext()
 {
     return SDL_GL_GetCurrentContext();
 }
 
-SDL_EGLDisplay EGL_GetCurrentDisplay(void)
+SDL_EGLDisplay EGL_GetCurrentDisplay()
 {
     return SDL_EGL_GetCurrentDisplay();
 }
 
-SDL_EGLConfig EGL_GetCurrentConfig(void)
+SDL_EGLConfig EGL_GetCurrentConfig()
 {
     return SDL_EGL_GetCurrentConfig();
 }
@@ -3914,7 +3914,7 @@ void CloseSensor(SDL_Sensor* sensor)
     SDL_CloseSensor(sensor);
 }
 
-void UpdateSensors(void)
+void UpdateSensors()
 {
     SDL_UpdateSensors();
 }
@@ -3958,7 +3958,7 @@ constexpr auto JOYSTICK_AXIS_MIN()
     return -32768;
 }
 
-bool HasJoystick(void)
+bool HasJoystick()
 {
     return SDL_HasJoystick();
 }
@@ -4218,12 +4218,12 @@ void SetJoystickEventsEnabled(bool enabled)
     SDL_SetJoystickEventsEnabled(enabled);
 }
 
-bool JoystickEventsEnabled(void)
+bool JoystickEventsEnabled()
 {
     return SDL_JoystickEventsEnabled();
 }
 
-void UpdateJoysticks(void)
+void UpdateJoysticks()
 {
     SDL_UpdateJoysticks();
 }
@@ -4451,7 +4451,7 @@ int AddGamepadMappingsFromFile(const char* file)
     return SDL_AddGamepadMappingsFromFile(file);
 }
 
-bool ReloadGamepadMappings(void)
+bool ReloadGamepadMappings()
 {
     return SDL_ReloadGamepadMappings();
 }
@@ -4471,7 +4471,7 @@ bool SetGamepadMapping(SDL_JoystickID instance_id, const char* mapping)
     return SDL_SetGamepadMapping(instance_id, mapping);
 }
 
-bool HasGamepad(void)
+bool HasGamepad()
 {
     return SDL_HasGamepad();
 }
@@ -4671,12 +4671,12 @@ void SetGamepadEventsEnabled(bool enabled)
     SDL_SetGamepadEventsEnabled(enabled);
 }
 
-bool GamepadEventsEnabled(void)
+bool GamepadEventsEnabled()
 {
     return SDL_GamepadEventsEnabled();
 }
 
-void UpdateGamepads(void)
+void UpdateGamepads()
 {
     SDL_UpdateGamepads();
 }
@@ -5387,7 +5387,7 @@ BITFLAG_ENUM(Keymod);
 
 using KeyboardID = Uint32;
 
-bool HasKeyboard(void)
+bool HasKeyboard()
 {
     return SDL_HasKeyboard();
 }
@@ -5402,7 +5402,7 @@ const char* GetKeyboardNameForID(SDL_KeyboardID instance_id)
     return SDL_GetKeyboardNameForID(instance_id);
 }
 
-SDL_Window* GetKeyboardFocus(void)
+SDL_Window* GetKeyboardFocus()
 {
     return SDL_GetKeyboardFocus();
 }
@@ -5412,12 +5412,12 @@ const bool* GetKeyboardState(int* numkeys)
     return SDL_GetKeyboardState(numkeys);
 }
 
-void ResetKeyboard(void)
+void ResetKeyboard()
 {
     SDL_ResetKeyboard();
 }
 
-SDL_Keymod GetModState(void)
+SDL_Keymod GetModState()
 {
     return SDL_GetModState();
 }
@@ -5548,7 +5548,7 @@ bool GetTextInputArea(SDL_Window* window, SDL_Rect* rect, int* cursor)
     return SDL_GetTextInputArea(window, rect, cursor);
 }
 
-bool HasScreenKeyboardSupport(void)
+bool HasScreenKeyboardSupport()
 {
     return SDL_HasScreenKeyboardSupport();
 }
@@ -5610,7 +5610,7 @@ enum class MouseButtonFlags : Uint32
 };
 BITFLAG_ENUM(MouseButtonFlags);
 
-bool HasMouse(void)
+bool HasMouse()
 {
     return SDL_HasMouse();
 }
@@ -5625,7 +5625,7 @@ const char* GetMouseNameForID(SDL_MouseID instance_id)
     return SDL_GetMouseNameForID(instance_id);
 }
 
-SDL_Window* GetMouseFocus(void)
+SDL_Window* GetMouseFocus()
 {
     return SDL_GetMouseFocus();
 }
@@ -5691,12 +5691,12 @@ bool SetCursor(SDL_Cursor* cursor)
     return SDL_SetCursor(cursor);
 }
 
-SDL_Cursor* GetCursor(void)
+SDL_Cursor* GetCursor()
 {
     return SDL_GetCursor();
 }
 
-SDL_Cursor* GetDefaultCursor(void)
+SDL_Cursor* GetDefaultCursor()
 {
     return SDL_GetDefaultCursor();
 }
@@ -5706,17 +5706,17 @@ void DestroyCursor(SDL_Cursor* cursor)
     SDL_DestroyCursor(cursor);
 }
 
-bool ShowCursor(void)
+bool ShowCursor()
 {
     return SDL_ShowCursor();
 }
 
-bool HideCursor(void)
+bool HideCursor()
 {
     return SDL_HideCursor();
 }
 
-bool CursorVisible(void)
+bool CursorVisible()
 {
     return SDL_CursorVisible();
 }
@@ -5997,7 +5997,7 @@ using UserEvent = SDL_UserEvent;
 
 using Event = SDL_Event;
 
-void PumpEvents(void)
+void PumpEvents()
 {
     SDL_PumpEvents();
 }
@@ -6105,7 +6105,7 @@ SDL_Window* GetWindowFromEvent(const SDL_Event* event)
     return SDL_GetWindowFromEvent(event);
 }
 
-const char* GetBasePath(void)
+const char* GetBasePath()
 {
     return SDL_GetBasePath();
 }
@@ -6194,7 +6194,7 @@ bool GetPathInfo(const char* path, SDL_PathInfo* info)
     return SDL_GetPathInfo(path, info);
 }
 
-char* GetCurrentDirectory(void)
+char* GetCurrentDirectory()
 {
     return SDL_GetCurrentDirectory();
 }
@@ -6824,7 +6824,7 @@ void DestroyGPUDevice(SDL_GPUDevice* device)
     SDL_DestroyGPUDevice(device);
 }
 
-int GetNumGPUDrivers(void)
+int GetNumGPUDrivers()
 {
     return SDL_GetNumGPUDrivers();
 }
@@ -7732,12 +7732,12 @@ const char* GetHapticName(SDL_Haptic* haptic)
     return SDL_GetHapticName(haptic);
 }
 
-bool IsMouseHaptic(void)
+bool IsMouseHaptic()
 {
     return SDL_IsMouseHaptic();
 }
 
-SDL_Haptic* OpenHapticFromMouse(void)
+SDL_Haptic* OpenHapticFromMouse()
 {
     return SDL_OpenHapticFromMouse();
 }
@@ -9082,7 +9082,7 @@ bool ResetHint(const char* name)
     return SDL_ResetHint(name);
 }
 
-void ResetHints(void)
+void ResetHints()
 {
     SDL_ResetHints();
 }
@@ -9152,12 +9152,12 @@ SDL_InitFlags WasInit(InitFlags flags)
     return SDL_WasInit((SDL_InitFlags)(flags));
 }
 
-void Quit(void)
+void Quit()
 {
     SDL_Quit();
 }
 
-bool IsMainThread(void)
+bool IsMainThread()
 {
     return SDL_IsMainThread();
 }
@@ -9294,7 +9294,7 @@ SDL_LogPriority GetLogPriority(int category)
     return SDL_GetLogPriority(category);
 }
 
-void ResetLogPriorities(void)
+void ResetLogPriorities()
 {
     SDL_ResetLogPriorities();
 }
@@ -9304,7 +9304,7 @@ bool SetLogPriorityPrefix(LogPriority priority, const char* prefix)
     return SDL_SetLogPriorityPrefix((SDL_LogPriority)(priority), prefix);
 }
 
-SDL_LogOutputFunction GetDefaultLogOutputFunction(void)
+SDL_LogOutputFunction GetDefaultLogOutputFunction()
 {
     return SDL_GetDefaultLogOutputFunction();
 }
@@ -9391,7 +9391,7 @@ bool OpenURL(const char* url)
     return SDL_OpenURL(url);
 }
 
-const char* GetPlatform(void)
+const char* GetPlatform()
 {
     return SDL_GetPlatform();
 }
@@ -9566,7 +9566,7 @@ using SDL_Renderer = SDL_Renderer;
 
 using SDL_Texture = SDL_Texture;
 
-int GetNumRenderDrivers(void)
+int GetNumRenderDrivers()
 {
     return SDL_GetNumRenderDrivers();
 }
@@ -10888,12 +10888,12 @@ bool SendAndroidMessage(Uint32 command, int param)
 }
 #endif
 
-bool IsTablet(void)
+bool IsTablet()
 {
     return SDL_IsTablet();
 }
 
-bool IsTV(void)
+bool IsTV()
 {
     return SDL_IsTV();
 }
@@ -10908,37 +10908,37 @@ enum class Sandbox
 };
 REGULAR_ENUM(Sandbox);
 
-SDL_Sandbox GetSandbox(void)
+SDL_Sandbox GetSandbox()
 {
     return SDL_GetSandbox();
 }
 
-void OnApplicationWillTerminate(void)
+void OnApplicationWillTerminate()
 {
     SDL_OnApplicationWillTerminate();
 }
 
-void OnApplicationDidReceiveMemoryWarning(void)
+void OnApplicationDidReceiveMemoryWarning()
 {
     SDL_OnApplicationDidReceiveMemoryWarning();
 }
 
-void OnApplicationWillEnterBackground(void)
+void OnApplicationWillEnterBackground()
 {
     SDL_OnApplicationWillEnterBackground();
 }
 
-void OnApplicationDidEnterBackground(void)
+void OnApplicationDidEnterBackground()
 {
     SDL_OnApplicationDidEnterBackground();
 }
 
-void OnApplicationWillEnterForeground(void)
+void OnApplicationWillEnterForeground()
 {
     SDL_OnApplicationWillEnterForeground();
 }
 
-void OnApplicationDidEnterForeground(void)
+void OnApplicationDidEnterForeground()
 {
     SDL_OnApplicationDidEnterForeground();
 }
@@ -11067,22 +11067,22 @@ constexpr auto NS_PER_US()
     return 1000;
 }
 
-Uint64 GetTicks(void)
+Uint64 GetTicks()
 {
     return SDL_GetTicks();
 }
 
-Uint64 GetTicksNS(void)
+Uint64 GetTicksNS()
 {
     return SDL_GetTicksNS();
 }
 
-Uint64 GetPerformanceCounter(void)
+Uint64 GetPerformanceCounter()
 {
     return SDL_GetPerformanceCounter();
 }
 
-Uint64 GetPerformanceFrequency(void)
+Uint64 GetPerformanceFrequency()
 {
     return SDL_GetPerformanceFrequency();
 }
@@ -11249,7 +11249,7 @@ SDL_Tray* GetTrayMenuParentTray(SDL_TrayMenu* menu)
     return SDL_GetTrayMenuParentTray(menu);
 }
 
-void UpdateTrays(void)
+void UpdateTrays()
 {
     SDL_UpdateTrays();
 }

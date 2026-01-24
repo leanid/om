@@ -59,12 +59,12 @@ bool Vulkan_LoadLibrary(const char* path)
     return SDL_Vulkan_LoadLibrary(path);
 }
 
-SDL_FunctionPointer Vulkan_GetVkGetInstanceProcAddr(void)
+SDL_FunctionPointer Vulkan_GetVkGetInstanceProcAddr()
 {
     return SDL_Vulkan_GetVkGetInstanceProcAddr();
 }
 
-void Vulkan_UnloadLibrary(void)
+void Vulkan_UnloadLibrary()
 {
     SDL_Vulkan_UnloadLibrary();
 }

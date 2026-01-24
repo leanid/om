@@ -111,7 +111,21 @@ void thread_stack_check(size_t index)
     cout << ss.str(); // try to do it atomically
 }
 
+int main_safe(int argc, const char** argv);
+
 int main(int argc, const char** argv)
+{
+    try
+    {
+        main_safe(argc, argv);
+    }
+    catch (std::exception& ex)
+    {
+        std::cerr << ex.what();
+    }
+}
+
+int main_safe(int argc, const char** argv)
 {
     using namespace std;
 

@@ -1,4 +1,22 @@
-Checks: '-*,bugprone-*,-bugprone-macro-parentheses,modernize-*,-modernize-use-trailing-return-type'
+---
+Checks: >
+  -*,
+  bugprone-*,
+  -bugprone-macro-parentheses,
+  modernize-*,
+  -modernize-use-trailing-return-type
+
 CheckOptions:
-    - key: bugprone-exception-escape.FunctionsThatShouldNotThrow
-      value: WinMain,SDL_main
+  - key: bugprone-exception-escape.FunctionsThatShouldNotThrow
+    value: WinMain,SDL_main
+  - key: bugprone-exception-escape.CheckMain
+    value: false
+  # Example: Define a naming convention (readability-identifier-naming)
+  - key: readability-identifier-naming.ClassCase
+    value: lower_case
+  - key: readability-identifier-naming.FunctionCase
+    value: lower_case
+
+# Set the style for automatic fixes (e.g., sort includes)
+FormatStyle: 'file'
+...
