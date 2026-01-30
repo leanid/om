@@ -23,9 +23,6 @@ list(APPEND CMAKE_PREFIX_PATH
 
 om_add_custom_build_types()
 
-option(OM_BUILD_DEPS [=[download and build dependencies [SDL3, GLM, Catch2]
-    as part of current build]=] OFF)
-option(OM_BUILD_BOOST "download and build Boost from source" OFF)
 option(OM_BUILD_COURSE_BASIC_PROG "turn ON if need to build 00-basic-prog" ON)
 option(OM_BUILD_COURSE_BASIC_GAME_DEV
        "turn ON if need to build 01-basic-game-dev" ON)

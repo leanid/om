@@ -58,9 +58,7 @@
       "binaryDir": "${sourceDir}/build/vcpkg-msvc",
       "cacheVariables": {
         "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-        "$comment": "We have to build boost to match version 1.90.0",
-        "OM_BUILD_BOOST": "ON"
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
       }
     },
     {
@@ -74,9 +72,7 @@
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
         "CMAKE_CXX_FLAGS": "-stdlib=libc++",
         "CMAKE_CXX_COMPILER": "clang++",
-        "CMAKE_C_COMPILER": "clang",
-        "$comment": "We have to build boost to match version 1.90.0",
-        "OM_BUILD_BOOST": "ON"
+        "CMAKE_C_COMPILER": "clang"
       }
     },
     {
@@ -88,8 +84,7 @@
       "binaryDir": "${sourceDir}/build/ninja-g++",
       "cacheVariables": {
         "CMAKE_CXX_COMPILER": "g++",
-        "CMAKE_C_COMPILER": "gcc",
-        "OM_BUILD_BOOST": "ON"
+        "CMAKE_C_COMPILER": "gcc"
       }
     },
     {
@@ -109,12 +104,6 @@
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/ninja",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": {
-          "type": "STRING",
-          "value": "Debug"
-        },
-        "$comment": "We have to build boost to match version 1.87",
-        "OM_BUILD_BOOST": "ON"
       }
     },
     {
@@ -136,9 +125,7 @@
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_C_FLAGS": "",
         "CMAKE_LINKER_TYPE": "LLD",
-        "OM_CLANG_TIDY": "ON",
-        "$comment": "We have to build boost with clang++ cause of libc++",
-        "OM_BUILD_BOOST": "OFF"
+        "OM_CLANG_TIDY": "ON"
       }
     },
     {
@@ -157,9 +144,7 @@
           "type": "INTERNAL",
           "value": "clang"
         },
-        "OM_CLANG_TIDY": "OFF",
-        "$comment": "We have to build boost with clang++ to match version 1.87",
-        "OM_BUILD_BOOST": "ON"
+        "OM_CLANG_TIDY": "OFF"
       }
     },
     {
@@ -189,10 +174,6 @@
         "CMAKE_MSVC_RUNTIME_LIBRARY": {
           "type": "INTERNAL",
           "value": "MultiThreaded$<$<CONFIG:Debug>:Debug>"
-        },
-        "OM_BUILD_BOOST": {
-          "type": "INTERNAL",
-          "value": "ON"
         }
       },
       "condition": {
