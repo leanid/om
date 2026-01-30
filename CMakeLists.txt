@@ -13,11 +13,24 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # property on all targets declared after this to 1
 set(CMAKE_CXX_MODULE_STD 1)
 
-project(rgd LANGUAGES CXX)
+project(
+    rgd
+    VERSION 0.1.0
+    # SPDX_LICENSE "Zlib"
+    DESCRIPTION
+        [[RGD - real game dev study project.
+      This is a collection of tutorial about basic programming in game dev with modern C++.
+      simple bash tutorials, C++ terminal progamming, Input, Graphics, OpenGL, Vulkan, Audio
+      programming. Cross-platform linux/windows/macos/ios/android developing.
+      All with modern C++.]]
+    HOMEPAGE_URL "https://github.com/leanid/om"
+    LANGUAGES CXX)
 
 list(APPEND CMAKE_PREFIX_PATH ${CMAKE_SOURCE_DIR}/cmake)
+
 find_package(om-triplet-name REQUIRED)
 find_package(om-common-functions REQUIRED)
+
 list(APPEND CMAKE_PREFIX_PATH
      ${CMAKE_SOURCE_DIR}/deps/prebuilt/${OM_TRIPLET_NAME})
 
@@ -38,17 +51,7 @@ find_package(doctest REQUIRED)
 find_package(trompeloeil REQUIRED)
 find_package(SDL3 REQUIRED)
 find_package(glm REQUIRED)
-find_package(
-    Boost
-    1.90.0
-    EXACT # Minimum or EXACT version e.g. 1.67.0
-    REQUIRED # Fail with error if Boost is not found
-    COMPONENTS filesystem stacktrace
-               program_options # Boost libraries by their canonical name
-    # e.g. "date_time" for "libboost_date_time"
-    #[OPTIONAL_COMPONENTS <libs>...]
-    # Optional Boost libraries by their canonical name)
-    ) # e.g. "date_time" for "libboost_date_time"
+find_package(Boost REQUIRED)
 
 enable_testing()
 
