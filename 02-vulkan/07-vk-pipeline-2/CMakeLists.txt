@@ -2,9 +2,6 @@ cmake_minimum_required(VERSION 3.27...3.29)
 
 project(07-vk-pipeline-2 CXX)
 
-find_package(Vulkan REQUIRED COMPONENTS glslangValidator)
-find_package(SDL3 REQUIRED)
-
 add_executable(
     07-vk-pipeline-2
     main.cxx
@@ -59,6 +56,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
         COMMAND
             ${CMAKE_COMMAND} -E copy_if_different
             $<TARGET_FILE:SDL3::SDL3-shared> $<TARGET_FILE_DIR:07-vk-pipeline-2>
-        COMMENT [=["Copying SDL3 library to target directory (Windows only) vulkan-1.dll also is copied every time - cmake do it for us"]=]
+        COMMENT
+            [=["Copying SDL3 library to target directory (Windows only) vulkan-1.dll also is copied every time - cmake do it for us"]=]
         VERBATIM)
 endif()

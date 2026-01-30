@@ -2,18 +2,6 @@ cmake_minimum_required(VERSION 3.31)
 
 project(08-vk-framebuffer-cmd-2 CXX)
 
-find_package(Vulkan REQUIRED COMPONENTS glslangValidator)
-find_package(SDL3 REQUIRED)
-find_package(
-    Boost 1.90.0 # should match version in root CMakeLists.txt
-    EXACT # Minimum or EXACT version e.g. 1.67.0
-    # REQUIRED # Fail with error if Boost is not found
-    COMPONENTS program_options # Boost libraries by their canonical name
-    # REQUIRED
-    # e.g. "date_time" for "libboost_date_time"
-    #[OPTIONAL_COMPONENTS <libs>...]
-    # Optional Boost libraries by their canonical name)
-    ) # e.g. "date_time" for "libboost_date_time"
 find_program(SLANGC_EXECUTABLE slangc HINTS "$ENV{VULKAN_SDK}/bin" REQUIRED)
 
 om_clang_tidy_enable()
@@ -105,6 +93,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
             ${CMAKE_COMMAND} -E copy_if_different
             $<TARGET_FILE:SDL3::SDL3-shared>
             $<TARGET_FILE_DIR:08-vk-framebuffer-cmd-2>
-        COMMENT [=[Copying SDL3 library to target directory (Windows only) vulkan-1.dll also is copied every time - cmake do it for us]=]
+        COMMENT
+            [=[Copying SDL3 library to target directory (Windows only) vulkan-1.dll also is copied every time - cmake do it for us]=]
         VERBATIM)
 endif()

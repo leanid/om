@@ -1,21 +1,12 @@
 cmake_minimum_required(VERSION 4.0)
 
 project(10-vk-res-loading-1 CXX)
-find_package(Vulkan REQUIRED COMPONENTS glslangValidator)
-find_package(slang CONFIG REQUIRED HINTS "$ENV{VULKAN_SDK}/lib/cmake")
-find_package(SDL3 REQUIRED)
 find_package(
-    Boost 1.90.0 # should match version in root CMakeLists.txt
-    EXACT # Minimum or EXACT version e.g. 1.67.0
-    # REQUIRED # Fail with error if Boost is not found
-    COMPONENTS program_options
-               stacktrace # Boost libraries by their canonical name
-    # REQUIRED
-    # e.g. "date_time" for "libboost_date_time"
-    #[OPTIONAL_COMPONENTS <libs>...]
-    # Optional Boost libraries by their canonical name)
-    ) # e.g. "date_time" for "libboost_date_time"
-find_package(glm REQUIRED)
+    slang
+    CONFIG
+    REQUIRED
+    HINTS
+    "$ENV{VULKAN_SDK}/lib/cmake")
 
 om_clang_tidy_enable()
 

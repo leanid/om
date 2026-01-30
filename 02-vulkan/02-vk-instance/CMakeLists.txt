@@ -6,9 +6,6 @@ if(APPLE)
 endif()
 project(02-vk-instance CXX)
 
-find_package(Vulkan REQUIRED)
-find_package(SDL3 REQUIRED)
-
 add_executable(02-vk-instance main.cxx)
 
 target_compile_definitions(02-vk-instance PRIVATE VK_NULL_HANDLE=nullptr)

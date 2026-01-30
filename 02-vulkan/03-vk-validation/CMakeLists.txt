@@ -6,9 +6,6 @@ if(APPLE)
 endif()
 project(03-vk-validation CXX)
 
-find_package(Vulkan REQUIRED)
-find_package(SDL3 REQUIRED)
-
 # To check validation is working replace 1 with 0  in (main.cxx) line:
 #
 #        device_create_info.queueCreateInfoCount    = 1;

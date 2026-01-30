@@ -1,23 +1,13 @@
 cmake_minimum_required(VERSION 4.2)
 
 project(09-vk-res-loading-1 CXX)
-find_package(Vulkan REQUIRED COMPONENTS glslangValidator)
-find_package(slang CONFIG REQUIRED HINTS "$ENV{VULKAN_SDK}/lib/cmake")
-message(STATUS "SLANGC_EXECUTABLE: ${SLANGC_EXECUTABLE}")
-
-find_package(SDL3 REQUIRED)
 find_package(
-    Boost 1.90.0 # should match version in root CMakeLists.txt
-    EXACT # Minimum or EXACT version e.g. 1.67.0
-    # REQUIRED # Fail with error if Boost is not found
-    COMPONENTS program_options
-               stacktrace # Boost libraries by their canonical name
+    slang
+    CONFIG
     REQUIRED
-    # e.g. "date_time" for "libboost_date_time"
-    #[OPTIONAL_COMPONENTS <libs>...]
-    # Optional Boost libraries by their canonical name)
-    ) # e.g. "date_time" for "libboost_date_time"
-find_package(glm REQUIRED)
+    HINTS
+    "$ENV{VULKAN_SDK}/lib/cmake")
+message(STATUS "SLANGC_EXECUTABLE: ${SLANGC_EXECUTABLE}")
 
 # set up Vulkan C++ module
 add_library(vulkan_cppm)
@@ -130,8 +120,7 @@ target_link_libraries(
             09-vk-res-loading-1-vulkan
             09-vk-res-loading-1-platform
             09-vk-res-loading-1-sdl
-            09-vk-res-loading-1-sdl-vulkan
-            )
+            09-vk-res-loading-1-sdl-vulkan)
 
 # cmake-format: off
 target_link_libraries(

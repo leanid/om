@@ -2,9 +2,6 @@ cmake_minimum_required(VERSION 3.27)
 
 project(04-vk-swapchain-1 CXX)
 
-find_package(Vulkan REQUIRED)
-find_package(SDL3 REQUIRED)
-
 add_executable(04-vk-swapchain-1 main.cxx)
 
 target_compile_features(04-vk-swapchain-1 PRIVATE cxx_std_20)
@@ -16,7 +13,7 @@ target_include_directories(
 target_link_libraries(04-vk-swapchain-1 PRIVATE Vulkan::Headers Vulkan::Vulkan
                                                 SDL3::SDL3-shared)
 
-if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     add_custom_command(
         TARGET 04-vk-swapchain-1
         POST_BUILD
@@ -24,6 +21,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
             ${CMAKE_COMMAND} -E copy_if_different
             $<TARGET_FILE:SDL3::SDL3-shared>
             $<TARGET_FILE_DIR:04-vk-swapchain-1>
-        COMMENT [=["Copying SDL3 library to target directory (Windows only) vulkan-1.dll also is copied every time - cmake to it for us"]=]
+        COMMENT
+            [=["Copying SDL3 library to target directory (Windows only) vulkan-1.dll also is copied every time - cmake to it for us"]=]
         VERBATIM)
 endif()
