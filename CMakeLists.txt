@@ -18,7 +18,8 @@ project(rgd LANGUAGES CXX)
 list(APPEND CMAKE_PREFIX_PATH ${CMAKE_SOURCE_DIR}/cmake)
 find_package(om-triplet-name REQUIRED)
 find_package(om-common-functions REQUIRED)
-list(APPEND CMAKE_PREFIX_PATH ${CMAKE_SOURCE_DIR}/deps/prebuilt/${OM_TRIPLET_NAME})
+list(APPEND CMAKE_PREFIX_PATH
+     ${CMAKE_SOURCE_DIR}/deps/prebuilt/${OM_TRIPLET_NAME})
 
 om_add_custom_build_types()
 
@@ -46,86 +47,11 @@ find_package(
     EXACT # Minimum or EXACT version e.g. 1.67.0
     REQUIRED # Fail with error if Boost is not found
     COMPONENTS filesystem stacktrace
-                program_options # Boost libraries by their canonical name
+               program_options # Boost libraries by their canonical name
     # e.g. "date_time" for "libboost_date_time"
     #[OPTIONAL_COMPONENTS <libs>...]
     # Optional Boost libraries by their canonical name)
     ) # e.g. "date_time" for "libboost_date_time"
-
-if(OM_BUILD_DEPS)
-    message(STATUS "download and build SDL3 sources")
-    include(FetchContent)
-    fetchcontent_declare(
-        SDL3
-        GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
-        GIT_TAG origin/main
-        GIT_SHALLOW ON
-        GIT_PROGRESS ON
-        OVERRIDE_FIND_PACKAGE ON # need
-        EXCLUDE_FROM_ALL)
-    option(SDL_STATIC "" ON)
-    option(SDL_SHARED "" ON)
-    option(SDL_X11_XTEST "" OFF)
-    set(CMAKE_UNITY_BUILD_MODE "GROUP")
-    #fetchcontent_makeavailable(SDL3)
-    find_package(SDL3 REQUIRED)
-
-    message(STATUS "download and build GLM sources")
-    fetchcontent_declare(
-        glm
-        GIT_REPOSITORY https://github.com/g-truc/glm.git
-        GIT_TAG origin/master
-        GIT_SHALLOW ON
-        GIT_PROGRESS ON
-        OVERRIDE_FIND_PACKAGE ON # need
-        EXCLUDE_FROM_ALL)
-    fetchcontent_makeavailable(glm)
-    find_package(glm REQUIRED)
-
-    # use Catch2::Catch2 or Catch2::Catch2WithMain
-    fetchcontent_declare(
-        Catch2
-        GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-        GIT_TAG v3.8.1 # or a later release
-        GIT_SHALLOW ON
-        GIT_PROGRESS ON
-        OVERRIDE_FIND_PACKAGE ON # to find correct version
-        EXCLUDE_FROM_ALL)
-    fetchcontent_makeavailable(Catch2)
-    find_package(Catch2 REQUIRED)
-endif(OM_BUILD_DEPS)
-
-if(OM_BUILD_BOOST)
-    # The logging output during population can be quite verbose,
-    # making the configure stage quite noisy. This cache option
-    # (ON by default) hides all population output unless an error is encountered.
-    # If experiencing problems with hung downloads, temporarily
-    # switching this option off may help diagnose which content population
-    # is causing the issue.
-    set(FETCHCONTENT_QUIET OFF)
-
-    fetchcontent_declare(
-        Boost
-        GIT_REPOSITORY "https://github.com/boostorg/boost.git"
-        GIT_TAG "boost-1.90.0"
-        GIT_PROGRESS ON
-        GIT_SHALLOW ON
-        OVERRIDE_FIND_PACKAGE TRUE # needed to find correct Boost
-        EXCLUDE_FROM_ALL)
-
-    fetchcontent_makeavailable(Boost)
-    find_package(
-        Boost
-        1.90.0
-        EXACT # Minimum or EXACT version e.g. 1.67.0
-        REQUIRED # Fail with error if Boost is not found
-        COMPONENTS filesystem stacktrace
-                   program_options # Boost libraries by their canonical name
-        # e.g. "date_time" for "libboost_date_time"
-        #[OPTIONAL_COMPONENTS <libs>...]
-        # Optional Boost libraries by their canonical name)
-        ) # e.g. "date_time" for "libboost_date_time"
-endif(OM_BUILD_BOOST)
 
 enable_testing()
 

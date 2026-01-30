@@ -1,13 +1,15 @@
 [tools]
 ninja = "1.13.2"
 cmake = "4.2.1"
-python = ["3.10", "3.14.2"]
+python = ["3.10", "3.14.2", "latest"]
 black = "26.1.0"
 pipenv = "2026.0.3"
 ripgrep = "15.1.0"
 fd = "10.3.0"
 "github:llvm/llvm-project" = "llvmorg-21.1.8"
 "github:neocmakelsp/neocmakelsp" = "v0.9.1"
+pipx = "1.8.0"
+"pipx:cmakelang" = "0.6.13"
 # NOTE: your gpg --version -> 2.+ expected by 'mise'
 node = "24.13.0"
 npm = "11.8.0"
