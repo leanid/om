@@ -54,3 +54,14 @@ function retval = avg (v)
 endfunction
 
 printf("function avg returns: %f\n", avg([1, 2, 3, 4, 5]));
+
+function [y, ia, ib] = my_func(a_arg, b_arg, c_arg)
+    disp(inputname(1)); # s
+    disp(inputname(2)); # <NONE>
+    y = 1;
+    ia = 2;
+    ib = 4;
+endfunction
+
+[a, b, c] = my_func(s, 2, 3);
+nargin("my_func") # ans -3
