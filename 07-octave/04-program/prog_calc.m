@@ -65,3 +65,19 @@ endfunction
 
 [a, b, c] = my_func(s, 2, 3);
 nargin("my_func") # ans -3
+
+# integration example
+function y = f (x)
+  y = x .* sin (1./x) .* sqrt (abs (1 - x));
+endfunction
+
+# intergrate function "f" on interval 0...3
+[q, ier, nfun, err] = quad ("f", 0, 3)
+
+# display function "f"
+x = 0:0.0001:3;
+y = f(x);
+plot(x, y)
+title ('y = f(x)');
+xlabel ('x 0...3');
+ylabel ('y');
