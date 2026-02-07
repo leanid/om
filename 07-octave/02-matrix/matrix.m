@@ -1,5 +1,6 @@
 % see: https://wiki.octave.org/Using_Octave
 % variable scale = 2
+# Octave is 1-indexed. Matrix elements are accessed as matrix(rowNum, columnNum)
 scale = 2; % print nothing cause ends with ;
 scale*scale+scale % print 6
 
@@ -12,6 +13,7 @@ y = sin(x)
 scale_mat = [scale 0;
              0 scale];
 disp(scale_mat);
+disp(scale_mat[1,1]);
 
 p = [1;
      1];
