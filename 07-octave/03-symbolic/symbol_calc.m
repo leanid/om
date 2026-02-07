@@ -4,6 +4,7 @@
 % > pkg install -forge symbolic
 % > pkg load symbolic
 % > pip install --user sympy (check pip --version same as default python)
+% > on Alt Linux: sudo epm install octave octave-symbolic python3-module-sympy sympy
 pkg load symbolic
 
 syms a b c x y;
