@@ -1,7 +1,3 @@
-cmake_minimum_required(VERSION 3.31)
-
-project(08-vk-framebuffer-cmd-2 CXX)
-
 find_program(SLANGC_EXECUTABLE slangc HINTS "$ENV{VULKAN_SDK}/bin" REQUIRED)
 
 om_clang_tidy_enable()

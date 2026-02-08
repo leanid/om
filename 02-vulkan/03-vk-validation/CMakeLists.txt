@@ -1,11 +1,3 @@
-cmake_minimum_required(VERSION 3.27)
-if(APPLE)
-    message(STATUS "#include <experimental/scope> not supported\n"
-                   " on clang++17.0.6 on mac so skip 03-vk-validation")
-    return()
-endif()
-project(03-vk-validation CXX)
-
 # To check validation is working replace 1 with 0  in (main.cxx) line:
 #
 #        device_create_info.queueCreateInfoCount    = 1;
@@ -32,7 +24,7 @@ target_include_directories(
 target_link_libraries(03-vk-validation PRIVATE Vulkan::Headers Vulkan::Vulkan
                                                SDL3::SDL3-shared)
 
-if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     add_custom_command(
         TARGET 03-vk-validation
         POST_BUILD

@@ -1,7 +1,3 @@
-cmake_minimum_required(VERSION 3.27)
-
-project(06-vk-swapchain-3 CXX)
-
 add_executable(06-vk-swapchain-3 gfx.cxx gfx.hxx main.cxx)
 
 target_compile_definitions(06-vk-swapchain-3 PRIVATE VK_NULL_HANDLE=nullptr)
@@ -14,7 +10,7 @@ target_include_directories(
 target_link_libraries(06-vk-swapchain-3 PRIVATE Vulkan::Headers Vulkan::Vulkan
                                                 SDL3::SDL3-shared)
 
-if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     add_custom_command(
         TARGET 06-vk-swapchain-3
         POST_BUILD

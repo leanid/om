@@ -1,7 +1,3 @@
-cmake_minimum_required(VERSION 3.27...3.29)
-
-project(07-vk-pipeline-2 CXX)
-
 add_executable(
     07-vk-pipeline-2
     main.cxx

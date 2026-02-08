@@ -1,7 +1,3 @@
-cmake_minimum_required(VERSION 3.27)
-
-project(05-vk-swapchain-2 CXX)
-
 add_executable(05-vk-swapchain-2 main.cxx)
 
 target_compile_features(05-vk-swapchain-2 PRIVATE cxx_std_23)

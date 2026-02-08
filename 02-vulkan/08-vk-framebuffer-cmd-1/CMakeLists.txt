@@ -1,7 +1,3 @@
-cmake_minimum_required(VERSION 3.30)
-
-project(08-vk-framebuffer-cmd-1 CXX)
-
 om_clang_tidy_enable()
 
 add_executable(

@@ -1,7 +1,3 @@
-cmake_minimum_required(VERSION 3.27...3.29)
-
-project(07-vk-pipeline-1 CXX)
-
 add_subdirectory(io)
 
 add_executable(
