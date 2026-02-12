@@ -39,14 +39,16 @@ texture::texture(const type tex_type, size_t width, size_t height)
     throw_exception_if_not_diffuse_or_specular();
     gen_texture_set_filters_and_wrap();
 
-    GLint mipmap_level = 0;
-    GLint border       = 0;
+    const GLsizei gl_width  = static_cast<GLsizei>(width);
+    const GLsizei gl_height = static_cast<GLsizei>(height);
+    GLint        mipmap_level = 0;
+    GLint        border       = 0;
     // allocate memory for texture
     glTexImage2D(GL_TEXTURE_2D,
                  mipmap_level,
                  GL_RGB,
-                 width,
-                 height,
+                 gl_width,
+                 gl_height,
                  border,
                  GL_RGB,
                  GL_UNSIGNED_BYTE,
@@ -61,13 +63,15 @@ texture::texture(size_t width, size_t height, size_t num_of_samples)
     glGenTextures(1, &texture_id);
 
     glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, texture_id);
+    const GLsizei gl_width  = static_cast<GLsizei>(width);
+    const GLsizei gl_height = static_cast<GLsizei>(height);
     // glTexStorage2DMultisample // OpenGL ES 3.2 OpenGL 4.0
     // glTexImage2DMultisample   // OpenGL 3.2
     glTexStorage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE,
                               static_cast<GLint>(num_of_samples),
                               GL_RGB8, // with GL_RGB - error
-                              width,
-                              height,
+                              gl_width,
+                              gl_height,
                               GL_TRUE);
 }
 
@@ -289,16 +293,18 @@ texture::texture(const type tex_type,
     max_filter(filter::nearest);
     min_filter(filter::nearest);
 
-    GLint  mipmap_level = 0;
-    GLint  border       = 0;
-    GLenum pixel_type   = to_gl_type(pixel_data_type);
+    const GLsizei gl_width  = static_cast<GLsizei>(width);
+    const GLsizei gl_height = static_cast<GLsizei>(height);
+    GLint        mipmap_level = 0;
+    GLint        border       = 0;
+    GLenum       pixel_type   = to_gl_type(pixel_data_type);
 
     // allocate memory for texture
     glTexImage2D(GL_TEXTURE_2D,
                  mipmap_level,
                  GL_DEPTH_COMPONENT,
-                 width,
-                 height,
+                 gl_width,
+                 gl_height,
                  border,
                  GL_DEPTH_COMPONENT,
                  pixel_type,

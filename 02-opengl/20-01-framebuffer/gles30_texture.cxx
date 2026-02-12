@@ -17,14 +17,16 @@ texture::texture(const type tex_type, size_t width, size_t height)
 {
     gen_texture_set_filters_and_wrap();
 
-    GLint mipmap_level = 0;
-    GLint border       = 0;
+    const GLsizei gl_width  = static_cast<GLsizei>(width);
+    const GLsizei gl_height = static_cast<GLsizei>(height);
+    GLint        mipmap_level = 0;
+    GLint        border       = 0;
     // allocate memory for texture
     glTexImage2D(GL_TEXTURE_2D,
                  mipmap_level,
                  GL_RGB,
-                 width,
-                 height,
+                 gl_width,
+                 gl_height,
                  border,
                  GL_RGB,
                  GL_UNSIGNED_BYTE,
