@@ -21,16 +21,16 @@ void shader::create(std::string_view vertex_shader_src,
     uint32_t vertex_shader = glCreateShader(GL_VERTEX_SHADER);
 
     // load vertex shader source code into vertex_shader
-    const GLchar* array_of_pointers_to_strings_with_src[1];
+    std::array<const GLchar*, 1> array_of_pointers_to_strings_with_src{};
     array_of_pointers_to_strings_with_src[0] = vertex_shader_src.data();
 
-    GLint array_of_string_lengths[1];
+    std::array<GLint, 1> array_of_string_lengths{};
     array_of_string_lengths[0] = static_cast<GLint>(vertex_shader_src.size());
 
     glShaderSource(vertex_shader,
                    1,
-                   array_of_pointers_to_strings_with_src,
-                   array_of_string_lengths);
+                   array_of_pointers_to_strings_with_src.data(),
+                   array_of_string_lengths.data());
 
     // compile vertex shader
     glCompileShader(vertex_shader);
@@ -57,8 +57,8 @@ void shader::create(std::string_view vertex_shader_src,
     array_of_string_lengths[0] = static_cast<GLint>(fragment_shader_src.size());
     glShaderSource(fragment_shader,
                    1,
-                   array_of_pointers_to_strings_with_src,
-                   array_of_string_lengths);
+                   array_of_pointers_to_strings_with_src.data(),
+                   array_of_string_lengths.data());
 
     glCompileShader(fragment_shader);
 
