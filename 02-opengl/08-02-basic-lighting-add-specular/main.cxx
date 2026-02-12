@@ -46,7 +46,7 @@ void print_view_port()
          << " w=" << view_port[2] << " h=" << view_port[3] << endl;
 }
 
-extern float vertices[36 * 6];
+extern std::array<float, 36 * 6> vertices;
 
 void update_vertex_attributes()
 {
@@ -212,7 +212,7 @@ int main(int /*argc*/, char* /*argv*/[])
     uint32_t cube_indexes[36];
     std::iota(begin(cube_indexes), end(cube_indexes), 0);
 
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
     gl_check();
 
     uint32_t EBO; // ElementBufferObject - indices buffer
@@ -413,7 +413,7 @@ int main(int /*argc*/, char* /*argv*/[])
 }
 
 // clang-format off
-float vertices[36 * 6] = {
+std::array<float, 36 * 6> vertices = {{
     // position         // normal
     -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
      0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
@@ -456,5 +456,5 @@ float vertices[36 * 6] = {
      0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
     -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
     -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
-};
+}};
 // clang-format on

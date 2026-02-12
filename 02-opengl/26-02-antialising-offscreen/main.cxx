@@ -23,7 +23,7 @@
 
 static fps_camera camera;
 
-extern const float quad_virtices[6 * 8];
+extern const std::array<float, 6 * 8> quad_virtices;
 extern const std::array<float, 36 * 8> cube_vertices;
 
 enum class render_options
@@ -459,7 +459,7 @@ scene::scene()
     , cube_shader("res/textured.vsh", "res/textured.fsh")
     , cube{ create_mesh(cube_vertices.data(), cube_vertices.size() / 8, {}) }
     , quad_shader("res/quad.vsh", "res/quad.fsh")
-    , quad{ create_mesh(quad_virtices, sizeof(quad_virtices) / 4 / 8, {}) }
+    , quad{ create_mesh(quad_virtices.data(), quad_virtices.size() / 8, {}) }
     , msaa_framebuffer(properties.get_float("screen_width"),
                        properties.get_float("screen_height"),
                        gles30::generate_render_object::yes,
@@ -564,7 +564,7 @@ int main(int /*argc*/, char* /*argv*/[])
 }
 
 // clang-format off
-extern const float quad_virtices[6 * 8] = {
+const std::array<float, 6 * 8> quad_virtices = {{
  // positions         // normals          // texture coords
 -1.0f,  1.0f, 0.0f,   0.0f, 0.0f, 0.0f,   0.0f, 1.0f,
 -1.0f, -1.0f, 0.0f,   0.0f, 0.0f, 0.0f,   0.0f, 0.0f,
@@ -573,7 +573,7 @@ extern const float quad_virtices[6 * 8] = {
 -1.0f,  1.0f, 0.0f,   0.0f, 0.0f, 0.0f,   0.0f, 1.0f,
  1.0f, -1.0f, 0.0f,   0.0f, 0.0f, 0.0f,   1.0f, 0.0f,
  1.0f,  1.0f, 0.0f,   0.0f, 0.0f, 0.0f,   1.0f, 1.0f
-};
+}};
 
 const std::array<float, 36 * 8> cube_vertices = {{
      // positions         // normals           // texture coords

@@ -24,9 +24,9 @@
 
 static fps_camera camera;
 
-extern const float quad_virtices[6 * 8];
+extern const std::array<float, 6 * 8> quad_virtices;
 extern const std::array<float, 36 * 8> cube_vertices;
-extern const float plane_vertices[6 * 8];
+extern const std::array<float, 6 * 8> plane_vertices;
 
 enum class render_options
 {
@@ -465,7 +465,7 @@ scene::scene()
     , depth_shader{ "res/depth.vert", "res/depth.frag" }
     , shader_shadow{ "res/shadow.vert", "res/shadow.frag" }
     , mesh_floor{ create_mesh(
-          plane_vertices, sizeof(plane_vertices) / 4 / 8, { &wood_texture }) }
+          plane_vertices.data(), plane_vertices.size() / 8, { &wood_texture }) }
     , mesh_cube{ create_mesh(
           cube_vertices.data(), cube_vertices.size() / 8, { &wood_texture }) }
     , depth_texture{ gles30::texture::type::depth_component,
@@ -611,7 +611,7 @@ int main(int /*argc*/, char* /*argv*/[])
 }
 
 // clang-format off
-extern const float quad_virtices[6 * 8] = {
+const std::array<float, 6 * 8> quad_virtices = {{
  // positions         // normals          // texture coords
 -1.0f,  1.0f, 0.0f,   0.0f, 0.0f, 0.0f,   0.0f, 1.0f,
 -1.0f, -1.0f, 0.0f,   0.0f, 0.0f, 0.0f,   0.0f, 0.0f,
@@ -620,7 +620,7 @@ extern const float quad_virtices[6 * 8] = {
 -1.0f,  1.0f, 0.0f,   0.0f, 0.0f, 0.0f,   0.0f, 1.0f,
  1.0f, -1.0f, 0.0f,   0.0f, 0.0f, 0.0f,   1.0f, 0.0f,
  1.0f,  1.0f, 0.0f,   0.0f, 0.0f, 0.0f,   1.0f, 1.0f
-};
+}};
 
 const std::array<float, 36 * 8> cube_vertices = {{
     // positions         // normals           // texture coords
@@ -668,7 +668,7 @@ const std::array<float, 36 * 8> cube_vertices = {{
     -1.0f,  1.0f,  1.0f,  0.0f,  1.0f,  0.0f, 0.0f, 0.0f  // bottom-left 
 }};
 
-const float plane_vertices[6 * 8] = {
+const std::array<float, 6 * 8> plane_vertices = {{
     // positions            // normals         // texcoords
      10.0f, -0.5f,  10.0f,  0.0f, 1.0f, 0.0f,  10.0f,  0.0f,
     -10.0f, -0.5f,  10.0f,  0.0f, 1.0f, 0.0f,   0.0f,  0.0f,
@@ -677,5 +677,5 @@ const float plane_vertices[6 * 8] = {
      10.0f, -0.5f,  10.0f,  0.0f, 1.0f, 0.0f,  10.0f,  0.0f,
     -10.0f, -0.5f, -10.0f,  0.0f, 1.0f, 0.0f,   0.0f, 10.0f,
      10.0f, -0.5f, -10.0f,  0.0f, 1.0f, 0.0f,  10.0f, 10.0f
-};
+}};
 // clang-format on

@@ -108,7 +108,7 @@ void print_view_port()
 }
 
 extern const std::array<float, 36 * 8> cube_vertices;
-extern const float plane_vertices[6 * 8];
+extern const std::array<float, 6 * 8> plane_vertices;
 
 void render_mesh(gles30::shader&          shader,
                  const fps_camera&        camera,
@@ -439,7 +439,7 @@ int main(int /*argc*/, char* /*argv*/[])
         create_mesh(cube_vertices.data(), cube_vertices.size() / 8, {});
 
     mesh plane_metal = create_mesh(
-        plane_vertices, sizeof(plane_vertices) / 4 / 8, { &tex_metal });
+        plane_vertices.data(), plane_vertices.size() / 8, { &tex_metal });
 
     [[maybe_unused]] GLenum primitive_render_mode = GL_TRIANGLES;
 
@@ -607,7 +607,7 @@ const std::array<float, 36 * 8> cube_vertices = {{
     -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f
 }};
 
-const float plane_vertices[6 * 8] = {
+const std::array<float, 6 * 8> plane_vertices = {{
     // positions                            // texture Coords (note we set these higher than 1 (together with GL_REPEAT as texture wrapping mode). this will cause the floor texture to repeat)
      5.0f, -0.5f,  5.0f, 0.0f, 0.0f, 0.0f,  2.0f, 0.0f,
     -5.0f, -0.5f,  5.0f, 0.0f, 0.0f, 0.0f,  0.0f, 0.0f,
@@ -616,5 +616,5 @@ const float plane_vertices[6 * 8] = {
      5.0f, -0.5f,  5.0f, 0.0f, 0.0f, 0.0f,  2.0f, 0.0f,
     -5.0f, -0.5f, -5.0f, 0.0f, 0.0f, 0.0f,  0.0f, 2.0f,
      5.0f, -0.5f, -5.0f, 0.0f, 0.0f, 0.0f,  2.0f, 2.0f
-};
+}};
 // clang-format on

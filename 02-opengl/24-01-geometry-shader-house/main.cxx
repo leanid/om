@@ -118,10 +118,10 @@ void print_view_port()
 }
 
 extern const std::array<float, 36 * 8> cube_vertices;
-extern const float plane_vertices[6 * 8];
-extern const float transparent_vert[6 * 8];
-extern const float fullscreen_vertices[6 * 8];
-extern const float points[5 * 4];
+extern const std::array<float, 6 * 8> plane_vertices;
+extern const std::array<float, 6 * 8> transparent_vert;
+extern const std::array<float, 6 * 8> fullscreen_vertices;
+extern const std::array<float, 5 * 4> points;
 
 enum class render_options
 {
@@ -641,7 +641,7 @@ scene::scene()
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
-    glBufferData(GL_ARRAY_BUFFER, sizeof(points), &points[0], GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, points.size() * sizeof(float), points.data(), GL_STATIC_DRAW);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 
@@ -726,12 +726,12 @@ int main(int /*argc*/, char* /*argv*/[])
     return 0;
 }
 
-const float points[] = {
+const std::array<float, 5 * 4> points = {{
     -0.5f, 0.5f,  1.0f, 0.0f, 0.0f, // top-left
     0.5f,  0.5f,  0.0f, 1.0f, 0.0f, // top-right
     0.5f,  -0.5f, 0.0f, 0.0f, 1.0f, // bottom-right
     -0.5f, -0.5f, 1.0f, 1.0f, 0.0f  // bottom-left
-};
+}};
 
 // clang-format off
 const std::array<float, 36 * 8> cube_vertices = {{
@@ -779,8 +779,7 @@ const std::array<float, 36 * 8> cube_vertices = {{
     -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f
 }};
 
-const float plane_vertices[6 * 8] =
-{
+const std::array<float, 6 * 8> plane_vertices = {{
     // positions                            // texture Coords (note we set these higher than 1 (together with GL_REPEAT as texture wrapping mode). this will cause the floor texture to repeat)
     5.0f, -0.5f,  5.0f, 0.0f, 0.0f, 0.0f,  2.0f, 0.0f,
     -5.0f, -0.5f,  5.0f, 0.0f, 0.0f, 0.0f,  0.0f, 0.0f,
@@ -789,10 +788,9 @@ const float plane_vertices[6 * 8] =
     5.0f, -0.5f,  5.0f, 0.0f, 0.0f, 0.0f,  2.0f, 0.0f,
     -5.0f, -0.5f, -5.0f, 0.0f, 0.0f, 0.0f,  0.0f, 2.0f,
     5.0f, -0.5f, -5.0f, 0.0f, 0.0f, 0.0f,  2.0f, 2.0f
-};
+}};
 
-const float transparent_vert[6 * 8] =
-{
+const std::array<float, 6 * 8> transparent_vert = {{
     // positions        // normal          // texture Coords (swapped y coordinates because texture is flipped upside down)
     0.0f,  0.5f,  0.0f, 0.0f, 0.0f, 0.0f,  0.0f,  0.0f,
     0.0f, -0.5f,  0.0f, 0.0f, 0.0f, 0.0f,  0.0f,  1.0f,
@@ -801,8 +799,8 @@ const float transparent_vert[6 * 8] =
     0.0f,  0.5f,  0.0f, 0.0f, 0.0f, 0.0f,  0.0f,  0.0f,
     1.0f, -0.5f,  0.0f, 0.0f, 0.0f, 0.0f,  1.0f,  1.0f,
     1.0f,  0.5f,  0.0f, 0.0f, 0.0f, 0.0f,  1.0f,  0.0f
-};
-const float fullscreen_vertices[6 * 8] {
+}};
+const std::array<float, 6 * 8> fullscreen_vertices {{
     // positions       // normal       // texCoords
     -1.0f,  1.0f, 0.f, 0.f, 0.f, 0.f,  0.0f, 1.0f,
     -1.0f, -1.0f, 0.f, 0.f, 0.f, 0.f,  0.0f, 0.0f,
@@ -811,5 +809,5 @@ const float fullscreen_vertices[6 * 8] {
     -1.0f,  1.0f, 0.f, 0.f, 0.f, 0.f,  0.0f, 1.0f,
     1.0f, -1.0f, 0.f, 0.f, 0.f, 0.f,  1.0f, 0.0f,
     1.0f,  1.0f, 0.f, 0.f, 0.f, 0.f,  1.0f, 1.0f
-};
+}};
 // clang-format on

@@ -23,7 +23,7 @@
 
 static fps_camera camera;
 
-extern float quadVertices[6 * 8];
+extern std::array<float, 6 * 8> quadVertices;
 
 enum class render_options
 {
@@ -421,7 +421,7 @@ scene::scene()
     , window{ create_window(properties) }
     , context{ create_opengl_context(window.get()) }
     , instanced_shader("res/instanced.vsh", "res/instanced.fsh")
-    , quad{ create_mesh(quadVertices, sizeof(quadVertices) / 4 / 8, {}) }
+    , quad{ create_mesh(quadVertices.data(), quadVertices.size() / 8, {}) }
 {
     create_camera(properties);
 
@@ -493,7 +493,7 @@ int main(int /*argc*/, char* /*argv*/[])
 }
 
 // clang-format off
-float quadVertices[6*8] = {
+std::array<float, 6 * 8> quadVertices = {{
     // positions           //normals         // uv
     -0.05f,  0.05f, 0.0f,  0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
      0.05f, -0.05f, 0.0f,  0.0f, 0.0f, 0.0f, 0.0f, 1.0f,
@@ -502,5 +502,5 @@ float quadVertices[6*8] = {
     -0.05f,  0.05f, 0.0f,  0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
      0.05f, -0.05f, 0.0f,  0.0f, 0.0f, 0.0f, 0.0f, 1.0f,
      0.05f,  0.05f, 0.0f,  0.0f, 0.0f, 0.0f, 1.0f, 0.0f
-};
+}};
 // clang-format on

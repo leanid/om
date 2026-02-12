@@ -23,7 +23,7 @@
 
 static fps_camera camera;
 
-extern float quadVertices[6 * 8];
+extern std::array<float, 6 * 8> quadVertices;
 
 enum class render_options
 {
@@ -483,7 +483,7 @@ scene::scene()
     , context{ create_opengl_context(window.get()) }
     , instanced_shader("res/instanced.vsh", "res/instanced.fsh")
     , planet_shader("res/textured.vsh", "res/textured.fsh")
-    , quad{ create_mesh(quadVertices, sizeof(quadVertices) / 4 / 8, {}) }
+    , quad{ create_mesh(quadVertices.data(), quadVertices.size() / 8, {}) }
     , instance_vbo{}
     , planet_mars("res/planet.obj")
     , rock("res/rock.obj")
@@ -604,7 +604,7 @@ int main(int /*argc*/, char* /*argv*/[])
 }
 
 // clang-format off
-float quadVertices[6*8] = {
+std::array<float, 6 * 8> quadVertices = {{
     // positions           //normals         // uv
     -0.01f,  0.01f, 0.0f,  0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
      0.01f, -0.01f, 0.0f,  0.0f, 0.0f, 0.0f, 0.0f, 1.0f,
@@ -613,5 +613,5 @@ float quadVertices[6*8] = {
     -0.01f,  0.01f, 0.0f,  0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
      0.01f, -0.01f, 0.0f,  0.0f, 0.0f, 0.0f, 0.0f, 1.0f,
      0.01f,  0.01f, 0.0f,  0.0f, 0.0f, 0.0f, 1.0f, 0.0f
-};
+}};
 // clang-format on
