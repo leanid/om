@@ -7,29 +7,8 @@ if(SDL3_SRC_DIR)  # Android build directly from source
                       ${SDL3_BUILD_DIR}_${ANDROID_ABI} )
 endif()
 
-include(ExternalProject)
-
-# super fast way to go on linux with assimp:
-# sudo dnf install assimp-devel
-# or
-# build it yourself for android for example:
-
-set(ASSIMP_BUILD_DIR ${CMAKE_CURRENT_LIST_DIR}/build/assimp_root)
-
-ExternalProject_Add(assimp_proj_13_1
-  PREFIX            ${ASSIMP_BUILD_DIR}
-  GIT_REPOSITORY    https://github.com/assimp/assimp.git
-  GIT_TAG           v4.1.0
-  GIT_PROGRESS      TRUE
-  CMAKE_CACHE_ARGS  -DBUILD_SHARED_LIBS:STRING=OFF
-                    -DASSIMP_NO_EXPORT:STRING=ON
-                    -DASSIMP_BUILD_ASSIMP_TOOLS:STRING=OFF
-                    -DASSIMP_BUILD_TESTS:STRING=OFF
-                    -DINJECT_DEBUG_POSTFIX:STRING=OFF
-                    -DCMAKE_INSTALL_PREFIX:PATH=${ASSIMP_BUILD_DIR}_install/
-)
-
 project(13-01-add-assimp-lib CXX)
+find_package(assimp REQUIRED)
 
 if (SDL3_SRC_DIR) # Android
     add_library(${PROJECT_NAME} SHARED)
@@ -83,11 +62,7 @@ target_sources(${PROJECT_NAME} PRIVATE main.cxx
 
 target_link_libraries(13-01-add-assimp-lib PRIVATE stb::stb)
 
-add_dependencies(${PROJECT_NAME} assimp_proj_13_1)
-
-target_link_directories(${PROJECT_NAME} PRIVATE ${ASSIMP_BUILD_DIR}_install/lib)
-target_link_libraries(${PROJECT_NAME} PRIVATE assimp)
-target_include_directories(${PROJECT_NAME} PRIVATE ${ASSIMP_BUILD_DIR}_install/include)
+target_link_libraries(13-01-add-assimp-lib PRIVATE assimp::assimp)
 
 if(MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4  /utf-8 ") # /WX

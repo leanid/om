@@ -9,27 +9,7 @@ endif()
 
 include(ExternalProject)
 
-# super fast way to go on linux with assimp:
-# sudo dnf install assimp-devel
-# or
-# build it yourself for android for example:
-
 set(ASSIMP_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/build/assimp_root)
-
-ExternalProject_Add(assimp_proj_15_1
-  PREFIX            ${ASSIMP_BUILD_DIR}
-  GIT_REPOSITORY    https://github.com/assimp/assimp.git
-  GIT_TAG           v4.1.0 #v.5.0.0.rc1
-  GIT_PROGRESS      TRUE
-  CMAKE_CACHE_ARGS  -DBUILD_SHARED_LIBS:STRING=OFF
-                    -DASSIMP_NO_EXPORT:STRING=ON
-                    -DASSIMP_BUILD_ASSIMP_TOOLS:STRING=OFF
-                    -DASSIMP_BUILD_TESTS:STRING=OFF
-                    -DASSIMP_INSTALL_PDB:STRING=OFF
-                    -DINJECT_DEBUG_POSTFIX:STRING=OFF
-                    -DCMAKE_INSTALL_PREFIX:PATH=${ASSIMP_BUILD_DIR}_install/
-                    -DCMAKE_CXX_FLAGS:STRING=-fpermissive
-)
 
 ExternalProject_Add(glm_proj_15_1
   PREFIX            ${ASSIMP_BUILD_DIR}
@@ -43,6 +23,7 @@ ExternalProject_Add(glm_proj_15_1
 )
 
 project(15-01-model CXX)
+find_package(assimp REQUIRED)
 
 if (SDL3_SRC_DIR) # Android
     add_library(15-01-model SHARED)
@@ -75,7 +56,6 @@ elseif(MSVC)
                                                   IrrXMLd.lib
                                                   zlibstaticd.lib
                                                   )
-    set(ASSIMP_POSTFIX "-vc140-mtd.lib")
 endif()
 
 target_compile_features(15-01-model PUBLIC cxx_std_20)
@@ -115,10 +95,7 @@ target_sources(15-01-model PRIVATE main.cxx
 
 target_link_libraries(15-01-model PRIVATE stb::stb)
 
-add_dependencies(15-01-model assimp_proj_15_1)
 add_dependencies(15-01-model glm_proj_15_1)
 
-target_link_directories(15-01-model PRIVATE ${ASSIMP_BUILD_DIR}_install/lib)
-target_link_libraries(15-01-model PRIVATE assimp${ASSIMP_POSTFIX} IrrXML)
-target_include_directories(15-01-model SYSTEM PRIVATE ${ASSIMP_BUILD_DIR}_install/include)
+target_link_libraries(15-01-model PRIVATE assimp::assimp)
 target_link_libraries(15-01-model INTERFACE glm)

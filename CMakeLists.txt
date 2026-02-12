@@ -53,6 +53,7 @@ find_package(doctest REQUIRED)
 find_package(glm REQUIRED)
 find_package(trompeloeil REQUIRED)
 find_package(stb REQUIRED)
+find_package(assimp REQUIRED)
 
 enable_testing()
 
