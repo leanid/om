@@ -115,10 +115,10 @@ void print_view_port()
          << " w=" << view_port[2] << " h=" << view_port[3] << endl;
 }
 
-extern const std::array<float, 36 * 8> cube_vertices;
-extern const std::array<float, 6 * 8> plane_vertices;
-extern const std::array<float, 6 * 8> transparent_vert;
-extern const std::array<float, 6 * 8> fullscreen_vertices;
+extern const std::array<float, std::size_t{36} * std::size_t{8}> cube_vertices;
+extern const std::array<float, std::size_t{6} * std::size_t{8}> plane_vertices;
+extern const std::array<float, std::size_t{6} * std::size_t{8}> transparent_vert;
+extern const std::array<float, std::size_t{6} * std::size_t{8}> fullscreen_vertices;
 
 enum class render_options
 {
@@ -664,7 +664,7 @@ int main(int /*argc*/, char* /*argv*/[])
 }
 
 // clang-format off
-const std::array<float, 36 * 8> cube_vertices = {{
+const std::array<float, std::size_t{36} * std::size_t{8}> cube_vertices = {{
      // positions         // normals           // texture coords
     -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
      0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.0f,
@@ -709,7 +709,7 @@ const std::array<float, 36 * 8> cube_vertices = {{
     -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f
 }};
 
-const std::array<float, 6 * 8> plane_vertices = {{
+const std::array<float, std::size_t{6} * std::size_t{8}> plane_vertices = {{
     // positions                            // texture Coords (note we set these higher than 1 (together with GL_REPEAT as texture wrapping mode). this will cause the floor texture to repeat)
      5.0f, -0.5f,  5.0f, 0.0f, 0.0f, 0.0f,  2.0f, 0.0f,
     -5.0f, -0.5f,  5.0f, 0.0f, 0.0f, 0.0f,  0.0f, 0.0f,
@@ -720,7 +720,7 @@ const std::array<float, 6 * 8> plane_vertices = {{
      5.0f, -0.5f, -5.0f, 0.0f, 0.0f, 0.0f,  2.0f, 2.0f
 }};
 
-const std::array<float, 6 * 8> transparent_vert = {{
+const std::array<float, std::size_t{6} * std::size_t{8}> transparent_vert = {{
         // positions        // normal          // texture Coords (swapped y coordinates because texture is flipped upside down)
         0.0f,  0.5f,  0.0f, 0.0f, 0.0f, 0.0f,  0.0f,  0.0f,
         0.0f, -0.5f,  0.0f, 0.0f, 0.0f, 0.0f,  0.0f,  1.0f,
@@ -730,7 +730,7 @@ const std::array<float, 6 * 8> transparent_vert = {{
         1.0f, -0.5f,  0.0f, 0.0f, 0.0f, 0.0f,  1.0f,  1.0f,
         1.0f,  0.5f,  0.0f, 0.0f, 0.0f, 0.0f,  1.0f,  0.0f
 }};
-const std::array<float, 6 * 8> fullscreen_vertices{{
+const std::array<float, std::size_t{6} * std::size_t{8}> fullscreen_vertices{{
         // positions       // normal       // texCoords
         -1.0f,  1.0f, 0.f, 0.f, 0.f, 0.f,  0.0f, 1.0f,
         -1.0f, -1.0f, 0.f, 0.f, 0.f, 0.f,  0.0f, 0.0f,

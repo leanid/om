@@ -46,7 +46,7 @@ void print_view_port()
          << " w=" << view_port[2] << " h=" << view_port[3] << endl;
 }
 
-extern std::array<float, 36 * 8> vertices;
+extern std::array<float, std::size_t{36} * std::size_t{8}> vertices;
 
 void update_vertex_attributes()
 {
@@ -437,7 +437,7 @@ int main(int /*argc*/, char* /*argv*/[])
 }
 
 // clang-format off
-std::array<float, 36 * 8> vertices = {{
+std::array<float, std::size_t{36} * std::size_t{8}> vertices = {{
    // positions          // normals           // texture coords
     -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
      0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.0f,

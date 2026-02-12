@@ -59,7 +59,7 @@ void print_view_port()
          << " w=" << view_port[2] << " h=" << view_port[3] << endl;
 }
 
-extern const std::array<float, 36 * 8> cube_vertices;
+extern const std::array<float, std::size_t{36} * std::size_t{8}> cube_vertices;
 extern const glm::vec3 light_positions[4];
 
 void render_light_cubes(gles30::shader&     light_cube_shader,
@@ -482,7 +482,7 @@ const glm::vec3 light_positions[4] = { glm::vec3(0.7f, 1.2f, 2.0f),
                                        glm::vec3(0.0f, 8.0f, -3.0f) };
 
 
-const std::array<float, 36 * 8> cube_vertices = {{
+const std::array<float, std::size_t{36} * std::size_t{8}> cube_vertices = {{
      // positions         // normals           // texture coords
     -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
      0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.0f,

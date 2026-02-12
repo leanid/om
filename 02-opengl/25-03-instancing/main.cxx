@@ -23,7 +23,7 @@
 
 static fps_camera camera;
 
-extern std::array<float, 6 * 8> quadVertices;
+extern std::array<float, std::size_t{6} * std::size_t{8}> quadVertices;
 
 enum class render_options
 {
@@ -604,7 +604,7 @@ int main(int /*argc*/, char* /*argv*/[])
 }
 
 // clang-format off
-std::array<float, 6 * 8> quadVertices = {{
+std::array<float, std::size_t{6} * std::size_t{8}> quadVertices = {{
     // positions           //normals         // uv
     -0.01f,  0.01f, 0.0f,  0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
      0.01f, -0.01f, 0.0f,  0.0f, 0.0f, 0.0f, 0.0f, 1.0f,
