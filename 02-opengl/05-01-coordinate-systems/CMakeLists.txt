@@ -55,9 +55,9 @@ target_sources(${PROJECT_NAME} PRIVATE main.cxx
                                        opengles30.hxx
                                        gles30_shader.hxx
                                        gles30_texture.hxx
-                                       properties_reader.hxx
-                                       stb_image.h)
+                                       properties_reader.hxx)
 
+target_link_libraries(05-01-coordinate-systems PRIVATE stb::stb)
 
 if(MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4  /utf-8 ") # /WX

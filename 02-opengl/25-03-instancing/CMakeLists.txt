@@ -91,8 +91,6 @@ target_sources(25-03-instancing PRIVATE main.cxx
                                    opengles30.hxx
                                    opengles30.cxx
 
-                                   stb_image.h
-
                                    res/instanced.vsh
                                    res/instanced.fsh
                                    res/textured.vsh
@@ -103,6 +101,8 @@ target_sources(25-03-instancing PRIVATE main.cxx
 
                                    res/runtime.properties.hxx
                                    )
+
+target_link_libraries(25-03-instancing PRIVATE stb::stb)
 
 add_subdirectory(glad)
 target_link_libraries(25-03-instancing PRIVATE glad_24_3)

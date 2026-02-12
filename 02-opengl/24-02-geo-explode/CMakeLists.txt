@@ -91,14 +91,14 @@ target_sources(24-02-geo-explode PRIVATE main.cxx
                                    opengles30.hxx
                                    opengles30.cxx
 
-                                   stb_image.h
-
                                    res/explode.vsh
                                    res/explode.gsh
                                    res/explode.fsh
 
                                    res/runtime.properties.hxx
                                    )
+
+target_link_libraries(24-02-geo-explode PRIVATE stb::stb)
 
 add_subdirectory(glad)
 target_link_libraries(24-02-geo-explode PRIVATE glad_24_2)

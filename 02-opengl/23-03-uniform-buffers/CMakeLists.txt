@@ -105,8 +105,6 @@ target_sources(23-03-uniform-buffers PRIVATE main.cxx
                                    opengles30.hxx
                                    opengles30.cxx
 
-                                   stb_image.h
-
                                    res/cube.vsh
                                    res/cube.fsh
                                    res/outline.fsh
@@ -135,5 +133,5 @@ target_sources(23-03-uniform-buffers PRIVATE main.cxx
                                    )
 
 add_subdirectory(glad)
-target_link_libraries(23-03-uniform-buffers PRIVATE glad_23_3)
+target_link_libraries(23-03-uniform-buffers PRIVATE glad_23_3 stb::stb)
 

@@ -54,9 +54,9 @@ target_sources(${PROJECT_NAME} PRIVATE main.cxx
                                        gles30_texture.cxx
                                        opengles30.hxx
                                        gles30_shader.hxx
-                                       gles30_texture.hxx
-                                       stb_image.h)
+                                       gles30_texture.hxx)
 
+target_link_libraries(03-01-texture-loading PRIVATE stb::stb)
 
 if(MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /WX /utf-8")

@@ -20,7 +20,6 @@ target_sources(
     engine-09-3
     PRIVATE om/engine.cxx
             om/engine.hxx
-            om/stb_image.h
             om/math.hxx)
 set_target_properties(engine-09-3 PROPERTIES ENABLE_EXPORTS TRUE)
 target_compile_features(engine-09-3 PRIVATE cxx_std_20)
@@ -43,12 +42,13 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Android")
     target_link_libraries(
         engine-09-3
         PRIVATE SDL3::SDL3-shared
+                stb::stb
                 android
                 log
                 EGL
                 GLESv2)
 else()
-    target_link_libraries(engine-09-3 PRIVATE SDL3::SDL3-shared OpenGL::GL)
+    target_link_libraries(engine-09-3 PRIVATE SDL3::SDL3-shared OpenGL::GL stb::stb)
 endif()
 
 add_library(

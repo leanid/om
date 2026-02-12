@@ -85,8 +85,6 @@ target_sources(20-01-framebuffer PRIVATE main.cxx
                                    opengles30.hxx
                                    opengles30.cxx
 
-                                   stb_image.h
-
                                    res/cube.vsh
                                    res/cube.fsh
                                    res/outline.fsh
@@ -101,6 +99,8 @@ target_sources(20-01-framebuffer PRIVATE main.cxx
                                    res/grass.png
                                    res/blending_transparent_window.png
                                    )
+
+target_link_libraries(20-01-framebuffer PRIVATE stb::stb)
 
 add_subdirectory(glad)
 target_link_libraries(20-01-framebuffer PRIVATE glad_20)

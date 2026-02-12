@@ -97,8 +97,6 @@ target_sources(29-04-shadow-map PRIVATE main.cxx
                                    opengles30.hxx
                                    opengles30.cxx
 
-                                   stb_image.h
-
                                    res/instanced.vert
                                    res/instanced.frag
                                    res/textured.vert
@@ -115,6 +113,8 @@ target_sources(29-04-shadow-map PRIVATE main.cxx
 
                                    res/runtime.properties.hxx
                                    )
+
+target_link_libraries(29-04-shadow-map PRIVATE stb::stb)
 
 add_subdirectory(glad)
 target_link_libraries(29-04-shadow-map PRIVATE glad_29_4)

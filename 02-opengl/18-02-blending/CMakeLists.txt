@@ -80,7 +80,6 @@ target_sources(18-02-blending PRIVATE main.cxx
                                    gles30_mesh.cxx
                                    gles30_model.hxx
                                    gles30_model.cxx
-                                   stb_image.h
 
                                    res/cube.vsh
                                    res/cube.fsh
@@ -94,4 +93,6 @@ target_sources(18-02-blending PRIVATE main.cxx
                                    res/grass.png
                                    res/blending_transparent_window.png
                                    )
+
+target_link_libraries(18-02-blending PRIVATE stb::stb)
 

@@ -136,7 +136,6 @@ target_sources(
             fps_camera.cxx
             opengles30.hxx
             opengles30.cxx
-            stb_image.h
             res/instanced.vert
             res/instanced.frag
             res/textured.vert
@@ -157,4 +156,5 @@ add_subdirectory(glad)
 target_link_libraries(
     30-1-point-shadow
     PRIVATE glad_30_1
+    stb::stb
 )

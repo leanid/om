@@ -91,8 +91,6 @@ target_sources(24-03-normals PRIVATE main.cxx
                                    opengles30.hxx
                                    opengles30.cxx
 
-                                   stb_image.h
-
                                    res/textured.vsh
                                    res/textured.fsh				   
                                    res/normal.gsh
@@ -101,6 +99,8 @@ target_sources(24-03-normals PRIVATE main.cxx
 
                                    res/runtime.properties.hxx
                                    )
+
+target_link_libraries(24-03-normals PRIVATE stb::stb)
 
 add_subdirectory(glad)
 target_link_libraries(24-03-normals PRIVATE glad_24_3)

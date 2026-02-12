@@ -91,8 +91,6 @@ target_sources(24-01-geometry-shader-house PRIVATE main.cxx
                                    opengles30.hxx
                                    opengles30.cxx
 
-                                   stb_image.h
-
                                    res/house.vsh
                                    res/house.gsh
                                    res/house.fsh
@@ -122,6 +120,8 @@ target_sources(24-01-geometry-shader-house PRIVATE main.cxx
                                    res/skybox/back.jpg
 
                                    )
+
+target_link_libraries(24-01-geometry-shader-house PRIVATE stb::stb)
 
 add_subdirectory(glad)
 target_link_libraries(24-01-geometry-shader-house PRIVATE glad_24_1)

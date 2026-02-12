@@ -85,8 +85,6 @@ target_sources(23-01-gl_point_size PRIVATE main.cxx
                                    opengles30.hxx
                                    opengles30.cxx
 
-                                   stb_image.h
-
                                    res/cube.vsh
                                    res/cube.fsh
                                    res/outline.fsh
@@ -113,6 +111,8 @@ target_sources(23-01-gl_point_size PRIVATE main.cxx
                                    res/skybox/back.jpg
 
                                    )
+
+target_link_libraries(23-01-gl_point_size PRIVATE stb::stb)
 
 add_subdirectory(glad)
 target_link_libraries(23-01-gl_point_size PRIVATE glad_23_1)

@@ -87,10 +87,11 @@ target_sources(
             gles30_mesh.cxx
             gles30_model.hxx
             gles30_model.cxx
-            stb_image.h
             res/cube.vsh
             res/cube.fsh
             res/runtime.properties.hxx
             res/marble.jpg
             res/metal.png
             ${MODEL_PNG_FILES})
+
+target_link_libraries(16-01-z-buffer PRIVATE stb::stb)

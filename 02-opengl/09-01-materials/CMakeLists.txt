@@ -58,7 +58,6 @@ target_sources(${PROJECT_NAME} PRIVATE main.cxx
                                        gles30_texture.hxx
                                        properties_reader.hxx
                                        fps_camera.hxx
-                                       stb_image.h
 
                                        res/basic.fsh
                                        res/basic.vsh
@@ -68,6 +67,7 @@ target_sources(${PROJECT_NAME} PRIVATE main.cxx
                                        res/runtime.properties.hxx
                                        )
 
+target_link_libraries(09-01-materials PRIVATE stb::stb)
 
 if(MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4  /utf-8 ") # /WX

@@ -45,7 +45,7 @@
 // turn off the specific warning. Can also use "-Wall"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
-#include "stb_image.h"
+#include <stb/stb_image.h>
 
 #pragma GCC diagnostic pop
 

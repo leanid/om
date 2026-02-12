@@ -86,8 +86,6 @@ target_sources(21-02-cubemap-optimized PRIVATE main.cxx
                                    opengles30.hxx
                                    opengles30.cxx
 
-                                   stb_image.h
-
                                    res/cube.vsh
                                    res/cube.fsh
                                    res/outline.fsh
@@ -112,6 +110,8 @@ target_sources(21-02-cubemap-optimized PRIVATE main.cxx
                                    res/skybox/back.jpg
 
                                    )
+
+target_link_libraries(21-02-cubemap-optimized PRIVATE stb::stb)
 
 add_subdirectory(glad)
 target_link_libraries(21-02-cubemap-optimized PRIVATE glad_20_2)

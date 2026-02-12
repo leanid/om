@@ -107,7 +107,6 @@ target_sources(15-01-model PRIVATE main.cxx
                                    gles30_mesh.cxx
                                    gles30_model.hxx
                                    gles30_model.cxx
-                                   stb_image.h
 
                                    res/nanosuit.fsh
                                    res/nanosuit.vsh
@@ -121,6 +120,8 @@ target_sources(15-01-model PRIVATE main.cxx
 
                                    ${MODEL_PNG_FILES}
                                    )
+
+target_link_libraries(15-01-model PRIVATE stb::stb)
 
 add_dependencies(15-01-model assimp_proj_15_1)
 add_dependencies(15-01-model glm_proj_15_1)

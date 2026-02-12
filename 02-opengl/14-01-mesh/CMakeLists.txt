@@ -85,7 +85,6 @@ target_sources(${PROJECT_NAME} PRIVATE main.cxx
                                        fps_camera.cxx
                                        gles30_mesh.hxx
                                        gles30_mesh.cxx
-                                       stb_image.h
 
                                        res/basic.fsh
                                        res/basic.vsh
@@ -94,6 +93,8 @@ target_sources(${PROJECT_NAME} PRIVATE main.cxx
 
                                        res/runtime.properties.hxx
                                        )
+
+target_link_libraries(14-01-mesh PRIVATE stb::stb)
 
 add_dependencies(${PROJECT_NAME} assimp_proj)
 
