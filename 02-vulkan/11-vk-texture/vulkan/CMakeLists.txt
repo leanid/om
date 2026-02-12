@@ -24,11 +24,6 @@ target_sources(
            FILES
            "${CMAKE_CURRENT_SOURCE_DIR}/render.cxx")
 
-add_library(11-vk-texture-img INTERFACE)
-target_sources(11-vk-texture-img PUBLIC "stb_image.h")
-target_include_directories(11-vk-texture-img
-                           INTERFACE "${CMAKE_CURRENT_LIST_DIR}")
-
 target_link_libraries(
     11-vk-texture-vulkan
     PUBLIC
@@ -36,8 +31,8 @@ target_link_libraries(
         SDL3::SDL3-shared
         vulkan::cppm
         glm::cppm
+        stb::stb
         11-vk-texture-args
-        11-vk-texture-log
-        11-vk-texture-img)
+        11-vk-texture-log)
 target_include_directories(11-vk-texture-vulkan
                            PRIVATE ${CMAKE_SOURCE_DIR}/support/cxx_lib/)

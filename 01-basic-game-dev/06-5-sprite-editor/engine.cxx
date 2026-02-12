@@ -30,7 +30,7 @@
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif
 #include "imgui.h"
-#include "stb_image.h"
+#include <stb/stb_image.h>
 #ifdef __GNUG__
 #pragma GCC diagnostic pop
 #endif

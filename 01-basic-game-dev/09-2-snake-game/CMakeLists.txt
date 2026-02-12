@@ -5,8 +5,7 @@ add_executable(
     engine-09-2
     om/engine.cxx
     om/engine.hxx
-    om/math.hxx
-    om/stb_image.h)
+    om/math.hxx)
 set_target_properties(engine-09-2 PROPERTIES ENABLE_EXPORTS TRUE)
 target_compile_features(engine-09-2 PRIVATE cxx_std_20)
 
@@ -19,7 +18,7 @@ target_compile_definitions(
 find_package(SDL3 REQUIRED)
 find_package(OpenGL REQUIRED)
 
-target_link_libraries(engine-09-2 PRIVATE SDL3::SDL3-shared OpenGL::GL)
+target_link_libraries(engine-09-2 PRIVATE SDL3::SDL3-shared OpenGL::GL stb::stb)
 
 # cmake-format: off
 add_library(

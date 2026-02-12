@@ -32,7 +32,7 @@
 // #include "picopng.hxx"
 
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+#include <stb/stb_image.h>
 
 // extern std::unique_ptr<om::lila> om_tat_sat();
 

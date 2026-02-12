@@ -6,8 +6,7 @@ add_library(
     catch.hpp
     engine.cxx
     engine.hxx
-    picopng.hxx
-    stb_image.h)
+    picopng.hxx)
 target_compile_features(engine-06-5 PUBLIC cxx_std_20)
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/imgui-src)
@@ -22,6 +21,7 @@ find_package(SDL3 REQUIRED)
 find_package(OpenGL REQUIRED)
 
 target_link_libraries(engine-06-5 PRIVATE SDL3::SDL3-shared OpenGL::GL)
+target_link_libraries(engine-06-5 PRIVATE stb::stb)
 
 add_executable(
     06-5-sprite-editor
