@@ -8,6 +8,7 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <string>
 #include <utility>
 
 #include "gles30_texture.hxx"
@@ -220,8 +221,8 @@ void shader::use()
 
 GLint get_uniform_index(std::string_view name, uint32_t program_id)
 {
-    assert(*(name.data() + name.size()) == '\0'); // null terminated string
-    GLint uniform_index = glGetUniformLocation(program_id, name.data());
+    const std::string uniform_name(name);
+    GLint uniform_index = glGetUniformLocation(program_id, uniform_name.c_str());
 
     if (uniform_index == -1)
     {
