@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION 3.16.0)
 
-if(SDL2_SRC_DIR) # Android build directly from source
+if(SDL3_SRC_DIR) # Android build directly from source
     add_subdirectory(
         # Specifies the directory of the CMakeLists.txt file.
-        ${SDL2_SRC_DIR}
+        ${SDL3_SRC_DIR}
         # Specifies the directory for the build outputs.
-        ${SDL2_BUILD_DIR}_${ANDROID_ABI})
+        ${SDL3_BUILD_DIR}_${ANDROID_ABI})
 endif()
 
 # super fast way to go on linux with assimp:
@@ -16,50 +16,42 @@ endif()
 
 project(16-01-z-buffer CXX)
 
-if(SDL2_SRC_DIR) # Android
+if(SDL3_SRC_DIR) # Android
     add_library(16-01-z-buffer SHARED)
-    find_library(SDL2_LIB NAMES SDL2)
-    target_include_directories(16-01-z-buffer PRIVATE ${SDL2_SRC_DIR}/include)
-    target_link_libraries(16-01-z-buffer PRIVATE SDL2 SDL2main)
+    target_include_directories(16-01-z-buffer PRIVATE ${SDL3_SRC_DIR}/include)
+    target_link_libraries(16-01-z-buffer PRIVATE SDL3::SDL3-shared )
 elseif(MINGW)
     add_executable(16-01-z-buffer)
-    find_package(SDL2 CONFIG REQUIRED)
+    find_package(SDL3 CONFIG REQUIRED)
     target_link_libraries(
         16-01-z-buffer
-        PRIVATE mingw32
-                SDL2main
-                SDL2
+        PRIVATE SDL3::SDL3-shared mingw32
                 opengl32
                 -mwindows)
 elseif(APPLE)
     add_executable(16-01-z-buffer)
-    find_package(SDL2 CONFIG REQUIRED)
-    target_link_libraries(15-01-model PRIVATE SDL2::SDL2main SDL2::SDL2-static
-                                              "-framework OpenGL")
+    find_package(SDL3 CONFIG REQUIRED)
+    target_link_libraries(16-01-z-buffer PRIVATE SDL3::SDL3-shared "-framework OpenGL")
 elseif(UNIX)
     add_executable(16-01-z-buffer)
-    find_package(SDL2 REQUIRED)
+    find_package(SDL3 REQUIRED)
     find_package(assimp REQUIRED) # sudo dnf install assimp-devel
     find_package(glm REQUIRED)
     target_link_libraries(
         16-01-z-buffer
-        PRIVATE SDL2::SDL2
-                SDL2::SDL2main
-                ${ASSIMP_LIBRARIES}
+        PRIVATE SDL3::SDL3-shared ${ASSIMP_LIBRARIES}
                 GL
                 stdc++fs
                 -lz)
 elseif(MSVC)
     add_executable(16-01-z-buffer)
-    find_package(SDL2 CONFIG REQUIRED)
+    find_package(SDL3 CONFIG REQUIRED)
     find_package(glm CONFIG REQUIRED)
     find_package(assimp CONFIG REQUIRED)
     target_link_libraries(
         16-01-z-buffer
-        PRIVATE glm
+        PRIVATE SDL3::SDL3-shared glm
                 ${ASSIMP_LIBRARIES}
-                SDL2::SDL2main
-                SDL2::SDL2
                 opengl32
                 IrrXMLd.lib
                 zlibstaticd.lib)

@@ -9,11 +9,7 @@
 #include <string>
 #include <vector>
 
-#if __has_include(<SDL.h>)
-#include <SDL.h>
-#else
-#include <SDL2/SDL.h>
-#endif
+#include <SDL3/SDL.h>
 
 #include "fps_camera.hxx"
 #include "gles30_framebuffer.hxx"
@@ -268,12 +264,7 @@ std::unique_ptr<SDL_Window, void (*)(SDL_Window*)> create_window(
     SDL_SetHint(SDL_HINT_VIDEO_HIGHDPI_DISABLED, "0");
 
     unique_ptr<SDL_Window, void (*)(SDL_Window*)> window(
-        SDL_CreateWindow(title.c_str(),
-                         SDL_WINDOWPOS_CENTERED,
-                         SDL_WINDOWPOS_CENTERED,
-                         static_cast<int>(screen_width),
-                         static_cast<int>(screen_height),
-                         SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE /*|
+        SDL_CreateWindow(title.c_str(), static_cast<int>(screen_width), static_cast<int>(screen_height), SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE /*|
                              SDL_WINDOW_ALLOW_HIGHDPI*/ /*|
                              SDL_WINDOW_FULLSCREEN_DESKTOP*/),
         destroy_window);
@@ -376,7 +367,7 @@ void scene::pull_system_events(bool& continue_loop)
     SDL_Event event;
     while (SDL_PollEvent(&event))
     {
-        if (SDL_FINGERDOWN == event.type)
+        if (SDL_EVENT_FINGER_DOWN == event.type)
         {
             continue_loop = false;
             break;

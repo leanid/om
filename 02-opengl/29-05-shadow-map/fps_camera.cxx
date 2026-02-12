@@ -1,6 +1,6 @@
 #include "fps_camera.hxx"
 
-#include <SDL2/SDL_keyboard.h>
+#include <SDL3/SDL.h>
 
 bool fps_camera::move_using_keyboard_wasd(const float delta_time)
 {

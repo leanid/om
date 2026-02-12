@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION 3.20...3.22)
 
-if(SDL2_SRC_DIR) # Android build directly from source
+if(SDL3_SRC_DIR) # Android build directly from source
     add_subdirectory(
         # Specifies the directory of the CMakeLists.txt file.
-        ${SDL2_SRC_DIR}
+        ${SDL3_SRC_DIR}
         # Specifies the directory for the build outputs.
-        ${SDL2_BUILD_DIR}_${ANDROID_ABI}
+        ${SDL3_BUILD_DIR}_${ANDROID_ABI}
     )
 endif()
 
@@ -14,40 +14,31 @@ endif()
 
 project(29-05-shadow-map CXX)
 
-if(SDL2_SRC_DIR) # Android
+if(SDL3_SRC_DIR) # Android
     add_library(29-05-shadow-map shared)
-    find_library(
-        SDL2_LIB
-        NAMES SDL2
-    )
     target_include_directories(
         29-05-shadow-map
-        PRIVATE ${SDL2_SRC_DIR}/include
+        PRIVATE ${SDL3_SRC_DIR}/include
     )
     target_link_libraries(
         29-05-shadow-map
-        PRIVATE SDL2 SDL2main
-    )
+        PRIVATE SDL3::SDL3-shared )
 elseif(MINGW)
     add_executable(29-05-shadow-map)
-    find_package(SDL2 REQUIRED)
+    find_package(SDL3 REQUIRED)
     find_package(assimp REQUIRED)
     find_package(glm REQUIRED)
     target_link_libraries(
         29-05-shadow-map
-        PRIVATE mingw32
+        PRIVATE SDL3::SDL3-shared mingw32
                 glm
                 assimp
-                SDL2::SDL2main
-                SDL2::SDL2
                 opengl32
                 -mwindows
     )
 elseif(APPLE)
     add_executable(29-05-shadow-map)
-    find_package(
-        SDL2
-        CONFIG
+    find_package(SDL3 CONFIG
         REQUIRED
     )
     find_package(assimp REQUIRED)
@@ -58,32 +49,27 @@ elseif(APPLE)
     )
     target_link_libraries(
         29-05-shadow-map
-        PRIVATE SDL2::SDL2main
-                SDL2::SDL2-static
-                glm::glm
+        PRIVATE SDL3::SDL3-shared glm::glm
                 assimp::assimp
                 "-framework OpenGL"
     )
 elseif(UNIX)
     add_executable(29-05-shadow-map)
-    find_package(SDL2 REQUIRED)
+    find_package(SDL3 REQUIRED)
     find_package(assimp REQUIRED)
     find_package(glm REQUIRED)
     target_link_libraries(
         29-05-shadow-map
-        PRIVATE SDL2
-                ${ASSIMP_LIBRARIES}
+        PRIVATE SDL3::SDL3-shared ${ASSIMP_LIBRARIES}
                 GL # stdc++fs -lz
     )
     target_include_directories(
         29-05-shadow-map
-        PRIVATE ${SDL2_INCLUDE_DIRS}
+        PRIVATE ${SDL3_INCLUDE_DIRS}
     )
 elseif(MSVC)
     add_executable(29-05-shadow-map)
-    find_package(
-        SDL2
-        CONFIG
+    find_package(SDL3 CONFIG
         REQUIRED
     )
     find_package(
@@ -94,10 +80,8 @@ elseif(MSVC)
     find_package(assimp REQUIRED)
     target_link_libraries(
         29-05-shadow-map
-        PRIVATE glm
+        PRIVATE SDL3::SDL3-shared glm
                 ${ASSIMP_LIBRARIES}
-                SDL2::SDL2main
-                SDL2::SDL2
                 opengl32
                 IrrXMLd.lib
                 zlibstaticd.lib

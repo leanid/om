@@ -3,12 +3,7 @@
 #include <csignal>
 #include <sstream>
 
-#if __has_include(<SDL.h>)
-#include <SDL.h>
-#else
-#include <SDL2/SDL.h>
-#endif
-
+#include <SDL3/SDL.h>
 #ifdef __ANDROID__
 #include <android/log.h>
 

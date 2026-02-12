@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 
 #include "fps_camera.hxx"
 #include "gles30_framebuffer.hxx"
@@ -267,7 +267,7 @@ void pull_system_events(bool& continue_loop, int& current_effect)
     SDL_Event event;
     while (SDL_PollEvent(&event))
     {
-        if (SDL_FINGERDOWN == event.type)
+        if (SDL_EVENT_FINGER_DOWN == event.type)
         {
             continue_loop = false;
             break;
@@ -391,12 +391,7 @@ std::unique_ptr<SDL_Window, void (*)(SDL_Window*)> create_window(
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
     unique_ptr<SDL_Window, void (*)(SDL_Window*)> window(
-        SDL_CreateWindow(title.c_str(),
-                         SDL_WINDOWPOS_CENTERED,
-                         SDL_WINDOWPOS_CENTERED,
-                         static_cast<int>(screen_width),
-                         static_cast<int>(screen_height),
-                         ::SDL_WINDOW_OPENGL | ::SDL_WINDOW_RESIZABLE),
+        SDL_CreateWindow(title.c_str(), static_cast<int>(screen_width), static_cast<int>(screen_height), ::SDL_WINDOW_OPENGL | ::SDL_WINDOW_RESIZABLE),
         SDL_DestroyWindow);
 
     if (window.get() == nullptr)

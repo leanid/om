@@ -4,10 +4,9 @@ project(00-5-prepare-msvc-gles30)
 add_executable(${PROJECT_NAME} main.cxx)
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
 
-find_package(SDL2 CONFIG REQUIRED)
+find_package(SDL3 CONFIG REQUIRED)
 
-target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2main
-                                              SDL2::SDL2
+target_link_libraries(${PROJECT_NAME} PRIVATE SDL3::SDL3-shared
                                               opengl32
                                               )
 

@@ -3,7 +3,7 @@
 #include <csignal>
 #include <sstream>
 
-#include <SDL2/SDL_assert.h>
+#include <SDL3/SDL_assert.h>
 
 #ifdef __ANDROID__
 #include <android/log.h>

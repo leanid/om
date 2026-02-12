@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION 3.6)
 
-if(SDL2_SRC_DIR)  # Android build directly from source
+if(SDL3_SRC_DIR)  # Android build directly from source
     set(SDL_DISABLE_IMMINTRIN_H 1)
     add_subdirectory( # Specifies the directory of the CMakeLists.txt file.
-                      ${SDL2_SRC_DIR}
+                      ${SDL3_SRC_DIR}
                       # Specifies the directory for the build outputs.
-                      ${SDL2_BUILD_DIR} )  
+                      ${SDL3_BUILD_DIR} )
 endif()
 
 
@@ -14,11 +14,9 @@ project(00-4-prepare-android-gles30 CXX)
 add_library(${PROJECT_NAME} SHARED main.cxx)
 #target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
 
-find_library(SDL2_LIB NAMES SDL2)
-
-if (SDL2_SRC_DIR)
-    target_include_directories(${PROJECT_NAME} PRIVATE ${SDL2_SRC_DIR}/include )
-    target_link_libraries(${PROJECT_NAME} SDL2 SDL2main )
+if (SDL3_SRC_DIR)
+    target_include_directories(${PROJECT_NAME} PRIVATE ${SDL3_SRC_DIR}/include )
+    target_link_libraries(${PROJECT_NAME} SDL3::SDL3-shared )
 endif()
 
 if(MSVC)

@@ -119,12 +119,7 @@ int main(int /*argc*/, char* /*argv*/[])
     const std::string title = properties.get_string("title");
 
     unique_ptr<SDL_Window, void (*)(SDL_Window*)> window(
-        SDL_CreateWindow(title.c_str(),
-                         SDL_WINDOWPOS_CENTERED,
-                         SDL_WINDOWPOS_CENTERED,
-                         640,
-                         480,
-                         ::SDL_WINDOW_OPENGL | ::SDL_WINDOW_RESIZABLE),
+        SDL_CreateWindow(title.c_str(), 640, 480, ::SDL_WINDOW_OPENGL | ::SDL_WINDOW_RESIZABLE),
         SDL_DestroyWindow);
 
     if (window == nullptr)
@@ -299,7 +294,7 @@ int main(int /*argc*/, char* /*argv*/[])
         SDL_Event event;
         while (SDL_PollEvent(&event))
         {
-            if (SDL_FINGERDOWN == event.type)
+            if (SDL_EVENT_FINGER_DOWN == event.type)
             {
                 continue_loop = false;
                 break;

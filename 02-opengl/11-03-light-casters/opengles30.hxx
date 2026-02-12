@@ -3,12 +3,12 @@
 #include <iostream>
 
 #ifdef __ANDROID__
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #define GL_GLEXT_PROTOTYPES 1
-#include <SDL_opengles2.h>
+#include <SDL3/SDL_opengles2.h>
 #else
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_opengles2.h>
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_opengles2.h>
 
 #define GL_GLEXT_PROTOTYPES 1
 #include <GLES3/gl3.h> // TODO need for glGenVertexArrays

@@ -19,12 +19,7 @@ void windows_make_process_dpi_aware() noexcept(false)
 void windows_make_process_dpi_aware() noexcept(false) {}
 #endif
 
-#if __has_include(<SDL.h>)
-#include <SDL.h>
-#else
-#include <SDL2/SDL.h>
-#endif
-
+#include <SDL3/SDL.h>
 #ifdef __ANDROID__
 #include <android/log.h>
 

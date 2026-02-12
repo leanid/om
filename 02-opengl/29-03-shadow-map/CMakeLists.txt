@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.20...3.22)
 
-if(SDL2_SRC_DIR)  # Android build directly from source
+if(SDL3_SRC_DIR)  # Android build directly from source
     add_subdirectory( # Specifies the directory of the CMakeLists.txt file.
-                      ${SDL2_SRC_DIR}
+                      ${SDL3_SRC_DIR}
                       # Specifies the directory for the build outputs.
-                      ${SDL2_BUILD_DIR}_${ANDROID_ABI} )
+                      ${SDL3_BUILD_DIR}_${ANDROID_ABI} )
 endif()
 
 # super fast way to go on linux with assimp:
@@ -15,58 +15,50 @@ endif()
 
 project(29-03-shadow-map CXX)
 
-if (SDL2_SRC_DIR) # Android
+if (SDL3_SRC_DIR) # Android
     add_library(29-03-shadow-map SHARED)
-    find_library(SDL2_LIB NAMES SDL2)
-    target_include_directories(29-03-shadow-map PRIVATE ${SDL2_SRC_DIR}/include )
-    target_link_libraries(29-03-shadow-map PRIVATE SDL2 SDL2main )
+    target_include_directories(29-03-shadow-map PRIVATE ${SDL3_SRC_DIR}/include )
+    target_link_libraries(29-03-shadow-map PRIVATE SDL3::SDL3-shared )
 elseif(MINGW)
     add_executable(29-03-shadow-map)
-    find_package(SDL2 REQUIRED)
+    find_package(SDL3 REQUIRED)
     find_package(assimp REQUIRED)
     find_package(glm REQUIRED)
-    target_link_libraries(29-03-shadow-map PRIVATE mingw32
+    target_link_libraries(29-03-shadow-map PRIVATE SDL3::SDL3-shared mingw32
                                                       glm
                                                       assimp
-                                                      SDL2::SDL2main
-                                                      SDL2::SDL2
                                                       opengl32
                                                       -mwindows
                                                       )
 elseif(APPLE)
     add_executable(29-03-shadow-map)
-    find_package(SDL2 CONFIG REQUIRED)
+    find_package(SDL3 CONFIG REQUIRED)
     find_package(assimp REQUIRED)
     find_package(glm REQUIRED)
     # HACK enable debug
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0" )
-    target_link_libraries(29-03-shadow-map PRIVATE SDL2::SDL2main
-                                                         SDL2::SDL2-static
-                                                         glm::glm
+    target_link_libraries(29-03-shadow-map PRIVATE SDL3::SDL3-shared glm::glm
                                                          assimp::assimp
                                                          "-framework OpenGL"
                                                          )
 elseif(UNIX)
     add_executable(29-03-shadow-map)
-    find_package(SDL2 REQUIRED)
+    find_package(SDL3 REQUIRED)
     find_package(assimp REQUIRED)
     find_package(glm REQUIRED)
-    target_link_libraries(29-03-shadow-map PRIVATE SDL2
-                                                  ${ASSIMP_LIBRARIES}
+    target_link_libraries(29-03-shadow-map PRIVATE SDL3::SDL3-shared ${ASSIMP_LIBRARIES}
                                                   GL
                                                   #stdc++fs
                                                   #-lz
                                                   )
-    target_include_directories(29-03-shadow-map PRIVATE ${SDL2_INCLUDE_DIRS})
+    target_include_directories(29-03-shadow-map PRIVATE ${SDL3_INCLUDE_DIRS})
 elseif(MSVC)
     add_executable(29-03-shadow-map)
-    find_package(SDL2 CONFIG REQUIRED)
+    find_package(SDL3 CONFIG REQUIRED)
     find_package(glm CONFIG REQUIRED)
     find_package(assimp REQUIRED)
-    target_link_libraries(29-03-shadow-map PRIVATE glm
+    target_link_libraries(29-03-shadow-map PRIVATE SDL3::SDL3-shared glm
                                                   ${ASSIMP_LIBRARIES}
-                                                  SDL2::SDL2main
-                                                  SDL2::SDL2
                                                   opengl32
                                                   IrrXMLd.lib
                                                   zlibstaticd.lib

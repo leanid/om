@@ -4,11 +4,10 @@ project(00-3-prepare-mingw-gles30)
 add_executable(${PROJECT_NAME} main.cxx)
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
 
-find_package(SDL2 CONFIG REQUIRED)
+find_package(SDL3 CONFIG REQUIRED)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE mingw32
-                                              SDL2main
-                                              SDL2
+                                              SDL3::SDL3-shared
                                               opengl32
                                               -mwindows
                                               )

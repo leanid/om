@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.16.0)
 
-if(SDL2_SRC_DIR)  # Android build directly from source
+if(SDL3_SRC_DIR)  # Android build directly from source
     add_subdirectory( # Specifies the directory of the CMakeLists.txt file.
-                      ${SDL2_SRC_DIR}
+                      ${SDL3_SRC_DIR}
                       # Specifies the directory for the build outputs.
-                      ${SDL2_BUILD_DIR}_${ANDROID_ABI} )
+                      ${SDL3_BUILD_DIR}_${ANDROID_ABI} )
 endif()
 
 include(ExternalProject)
@@ -44,41 +44,33 @@ ExternalProject_Add(glm_proj_15_1
 
 project(15-01-model CXX)
 
-if (SDL2_SRC_DIR) # Android
+if (SDL3_SRC_DIR) # Android
     add_library(15-01-model SHARED)
-    find_library(SDL2_LIB NAMES SDL2)
-    target_include_directories(15-01-model PRIVATE ${SDL2_SRC_DIR}/include )
-    target_link_libraries(15-01-model PRIVATE SDL2 SDL2main )
+    target_include_directories(15-01-model PRIVATE ${SDL3_SRC_DIR}/include )
+    target_link_libraries(15-01-model PRIVATE SDL3::SDL3-shared )
 elseif(MINGW)
     add_executable(15-01-model)
-    find_package(SDL2 CONFIG REQUIRED)
+    find_package(SDL3 CONFIG REQUIRED)
     find_package(OpenGL REQUIRED)
-    target_link_libraries(15-01-model PRIVATE SDL2::SDL2main
-                                              SDL2::SDL2
-                                              OpenGL::GL
+    target_link_libraries(15-01-model PRIVATE SDL3::SDL3-shared OpenGL::GL
                                               )
 elseif(APPLE)
     add_executable(15-01-model)
-    find_package(SDL2 CONFIG REQUIRED)
-    target_link_libraries(15-01-model PRIVATE SDL2::SDL2main
-                                              SDL2::SDL2-static
-                                              "-framework OpenGL"
+    find_package(SDL3 CONFIG REQUIRED)
+    target_link_libraries(15-01-model PRIVATE SDL3::SDL3-shared "-framework OpenGL"
                                               )
 elseif(UNIX)
     add_executable(15-01-model)
-    find_package(SDL2 REQUIRED)
-    target_link_libraries(15-01-model PRIVATE SDL2::SDL2 SDL2::SDL2main
-                                                  GL
+    find_package(SDL3 REQUIRED)
+    target_link_libraries(15-01-model PRIVATE SDL3::SDL3-shared GL
                                                   stdc++fs
                                                   -lz
                                                   )
 elseif(MSVC)
     add_executable(15-01-model)
-    find_package(SDL2 CONFIG REQUIRED)
+    find_package(SDL3 CONFIG REQUIRED)
     find_package(glm CONFIG REQUIRED)
-    target_link_libraries(15-01-model PRIVATE glm
-                                                  SDL2::SDL2main
-                                                  SDL2::SDL2
+    target_link_libraries(15-01-model PRIVATE SDL3::SDL3-shared glm
                                                   opengl32
                                                   IrrXMLd.lib
                                                   zlibstaticd.lib

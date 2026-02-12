@@ -3,9 +3,9 @@
 #ifdef __ANDROID__
 #include <android/log.h>
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #define GL_GLEXT_PROTOTYPES 1
-#include <SDL_opengles2.h>
+#include <SDL3/SDL_opengles2.h>
 
 class android_redirected_buf : public std::streambuf
 {
@@ -62,8 +62,8 @@ struct global_redirect_handler
     }
 } global_var;
 #else
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_opengles2.h>
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_opengles2.h>
 
 #include <GLES3/gl3.h> // TODO need for glGenVertexArrays
 #endif

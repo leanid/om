@@ -161,7 +161,7 @@ void pull_system_events(bool& continue_loop, GLenum& primitive_render_mode)
     SDL_Event event;
     while (SDL_PollEvent(&event))
     {
-        if (SDL_FINGERDOWN == event.type)
+        if (SDL_EVENT_FINGER_DOWN == event.type)
         {
             continue_loop = false;
             break;
@@ -277,12 +277,7 @@ std::unique_ptr<SDL_Window, void (*)(SDL_Window*)> create_window(
     screen_height = properties.get_float("screen_height");
 
     unique_ptr<SDL_Window, void (*)(SDL_Window*)> window(
-        SDL_CreateWindow(title.c_str(),
-                         SDL_WINDOWPOS_CENTERED,
-                         SDL_WINDOWPOS_CENTERED,
-                         screen_width,
-                         screen_height,
-                         ::SDL_WINDOW_OPENGL | ::SDL_WINDOW_RESIZABLE),
+        SDL_CreateWindow(title.c_str(), screen_width, screen_height, ::SDL_WINDOW_OPENGL | ::SDL_WINDOW_RESIZABLE),
         SDL_DestroyWindow);
 
     if (window.get() == nullptr)

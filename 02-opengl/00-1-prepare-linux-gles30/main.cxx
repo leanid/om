@@ -2,9 +2,9 @@
 #include <iostream>
 #include <memory>
 
-#include <SDL2/SDL.h>
+#include <SDL3/SDL.h>
 #define GL_GLEXT_PROTOTYPES 1
-#include <SDL2/SDL_opengles2.h>
+#include <SDL3/SDL_opengles2.h>
 
 int main(int /*argc*/, char* /*argv*/[])
 {
@@ -24,12 +24,7 @@ int main(int /*argc*/, char* /*argv*/[])
     }
 
     unique_ptr<SDL_Window, void (*)(SDL_Window*)> window(
-        SDL_CreateWindow("title",
-                         SDL_WINDOWPOS_CENTERED,
-                         SDL_WINDOWPOS_CENTERED,
-                         640,
-                         480,
-                         ::SDL_WINDOW_OPENGL),
+        SDL_CreateWindow("title", 640, 480, ::SDL_WINDOW_OPENGL),
         SDL_DestroyWindow);
 
     if (window == nullptr)
