@@ -7,7 +7,7 @@ target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
 find_package(SDL3 REQUIRED)
 find_package(OpenGL REQUIRED)
 
-target_link_libraries(${PROJECT_NAME} SDL3::SDL3-shared OpenGL::GL)
+target_link_libraries(${PROJECT_NAME} PRIVATE SDL3::SDL3-shared OpenGL::GL)
 
 if(MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /WX /utf-8")

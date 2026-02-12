@@ -34,7 +34,7 @@ project(13-01-add-assimp-lib CXX)
 if (SDL3_SRC_DIR) # Android
     add_library(${PROJECT_NAME} SHARED)
     target_include_directories(${PROJECT_NAME} PRIVATE ${SDL3_SRC_DIR}/include )
-    target_link_libraries(${PROJECT_NAME} SDL3::SDL3-shared )
+    target_link_libraries(${PROJECT_NAME} PRIVATE SDL3::SDL3-shared )
 elseif(MINGW)
     add_executable(${PROJECT_NAME})
     find_package(SDL3 CONFIG REQUIRED)

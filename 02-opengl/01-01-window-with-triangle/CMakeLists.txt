@@ -12,7 +12,7 @@ project(01-01-window-with-triangle CXX)
 if (SDL3_SRC_DIR) # Android
     add_library(${PROJECT_NAME} SHARED main.cxx)
     target_include_directories(${PROJECT_NAME} PRIVATE ${SDL3_SRC_DIR}/include )
-    target_link_libraries(${PROJECT_NAME} SDL3::SDL3-shared )
+    target_link_libraries(${PROJECT_NAME} PRIVATE SDL3::SDL3-shared )
 elseif(MINGW)
     add_executable(${PROJECT_NAME} main.cxx)
     target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
@@ -32,7 +32,7 @@ elseif(UNIX)
     add_executable(${PROJECT_NAME} main.cxx)
     find_package(SDL3 REQUIRED)
     find_package(OpenGL REQUIRED)
-    target_link_libraries(${PROJECT_NAME} SDL3::SDL3-shared
+    target_link_libraries(${PROJECT_NAME} PRIVATE SDL3::SDL3-shared
         OpenGL::GL)
 elseif(MSVC)
     add_executable(${PROJECT_NAME} main.cxx)
