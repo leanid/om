@@ -172,6 +172,7 @@ externalproject_add(
     GIT_TAG v5.4.3
     GIT_PROGRESS ON
     GIT_SHALLOW ON
+    DEPENDS zlib
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
                -DCMAKE_BUILD_TYPE=RelWithDebInfo
                -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
