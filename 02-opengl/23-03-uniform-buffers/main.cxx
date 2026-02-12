@@ -113,8 +113,8 @@ void print_view_port()
 {
     using namespace std;
 
-    GLint view_port[4];
-    glGetIntegerv(GL_VIEWPORT, view_port);
+    std::array<GLint, 4> view_port{};
+    glGetIntegerv(GL_VIEWPORT, view_port.data());
 
     clog << "view port is: x=" << view_port[0] << " y=" << view_port[1]
          << " w=" << view_port[2] << " h=" << view_port[3] << endl;

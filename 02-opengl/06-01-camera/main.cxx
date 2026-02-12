@@ -1,3 +1,4 @@
+#include <array>
 #include <chrono>
 #include <cmath>
 #include <cstdlib>
@@ -36,8 +37,8 @@ void print_view_port()
 {
     using namespace std;
 
-    GLint view_port[4];
-    glGetIntegerv(GL_VIEWPORT, view_port);
+    std::array<GLint, 4> view_port{};
+    glGetIntegerv(GL_VIEWPORT, view_port.data());
     gl_check();
     clog << "view port is: x=" << view_port[0] << " y=" << view_port[1]
          << " w=" << view_port[2] << " h=" << view_port[3] << endl;
@@ -218,7 +219,7 @@ int main(int /*argc*/, char* /*argv*/[])
     gles30::texture texture0(fs::path("./res/1.jpg"));
     gles30::texture texture1(fs::path("./res/2.jpg"));
 
-    float vertices[] = {
+    const std::array<float, 32> vertices = {
         // pos              // color       // tex coord
         0.5f,  0.5f,  0.0f, 1.f, 1.f, 1.f, 1.f, 1.f, // top right
         0.5f,  -0.5f, 0.0f, 1.f, 1.f, 1.f, 1.f, 0.f, // bottom right
@@ -226,7 +227,7 @@ int main(int /*argc*/, char* /*argv*/[])
         -0.5f, 0.5f,  0.0f, 1.f, 1.f, 1.f, 0.f, 1.f  // top left
     };
 
-    uint32_t indices[] = {
+    const std::array<uint32_t, 6> indices = {
         0, 1, 3, // first triangle
         1, 2, 3  // second triangle
     };
@@ -257,7 +258,7 @@ int main(int /*argc*/, char* /*argv*/[])
     //    very rarely.
     // GL_DYNAMIC_DRAW: the data is likely to change a lot.
     // GL_STREAM_DRAW: the data will change every time it is drawn.
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices.data(), GL_DYNAMIC_DRAW);
     gl_check();
 
     uint32_t EBO; // ElementBufferObject - indices buffer
@@ -268,7 +269,7 @@ int main(int /*argc*/, char* /*argv*/[])
     gl_check();
 
     glBufferData(
-        GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_DYNAMIC_DRAW);
+        GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices.data(), GL_DYNAMIC_DRAW);
     gl_check();
 
     update_vertex_attributes();
@@ -400,12 +401,12 @@ int main(int /*argc*/, char* /*argv*/[])
         else
         {
             glBufferData(
-                GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
+                GL_ARRAY_BUFFER, sizeof(vertices), vertices.data(), GL_DYNAMIC_DRAW);
             gl_check();
 
             glBufferData(GL_ELEMENT_ARRAY_BUFFER,
                          sizeof(indices),
-                         indices,
+                         indices.data(),
                          GL_DYNAMIC_DRAW);
             gl_check();
         }

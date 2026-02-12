@@ -1,4 +1,5 @@
 #include "gles30_shader.hxx"
+#include <array>
 
 #include <algorithm>
 #include <cassert>
@@ -36,15 +37,15 @@ void shader::create(std::string_view vertex_shader_src,
 
     // check compilation status of our shader
     int  success;
-    char info_log[1024] = { 0 };
+    std::array<char, 1024> info_log{};
     glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &success);
 
     if (0 == success)
     {
-        glGetShaderInfoLog(vertex_shader, sizeof(info_log), nullptr, info_log);
+        glGetShaderInfoLog(vertex_shader, sizeof(info_log), nullptr, info_log.data());
 
         std::stringstream ss;
-        ss << "error: in vertex shader: " << info_log << std::endl;
+        ss << "error: in vertex shader: " << info_log.data() << std::endl;
         throw std::runtime_error(ss.str());
     }
 
@@ -67,10 +68,10 @@ void shader::create(std::string_view vertex_shader_src,
     if (0 == success)
     {
         glGetShaderInfoLog(
-            fragment_shader, sizeof(info_log), nullptr, info_log);
+            fragment_shader, sizeof(info_log), nullptr, info_log.data());
 
         std::stringstream ss;
-        ss << "error: in fragment shader: " << info_log << std::endl;
+        ss << "error: in fragment shader: " << info_log.data() << std::endl;
         throw std::runtime_error(ss.str());
     }
 
@@ -89,10 +90,10 @@ void shader::create(std::string_view vertex_shader_src,
 
     if (0 == success)
     {
-        glGetProgramInfoLog(program_id, sizeof(info_log), nullptr, info_log);
+        glGetProgramInfoLog(program_id, sizeof(info_log), nullptr, info_log.data());
 
         std::stringstream ss;
-        ss << "error: linking: " << info_log << std::endl;
+        ss << "error: linking: " << info_log.data() << std::endl;
         throw std::runtime_error(ss.str());
     }
 
@@ -246,12 +247,12 @@ std::string shader::validate() noexcept(false)
 
     if (1 == success)
     {
-        char info_log[4096] = { 0 };
-        glGetProgramInfoLog(program_id, sizeof(info_log), nullptr, info_log);
+        std::array<char, 4096> info_log{};
+        glGetProgramInfoLog(program_id, sizeof(info_log), nullptr, info_log.data());
 
-        if (strlen(info_log) > 0)
+        if (strlen(info_log.data()) > 0)
         {
-            return { info_log };
+            return { info_log.data() };
         }
     }
     else

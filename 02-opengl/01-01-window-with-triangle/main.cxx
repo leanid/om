@@ -1,3 +1,4 @@
+#include <array>
 #include <cstdlib>
 #include <iostream>
 #include <memory>
@@ -25,8 +26,8 @@ void print_view_port()
 {
     using namespace std;
 
-    GLint view_port[4];
-    glGetIntegerv(GL_VIEWPORT, view_port);
+    std::array<GLint, 4> view_port{};
+    glGetIntegerv(GL_VIEWPORT, view_port.data());
     gl_check();
     clog << "view port is: x=" << view_port[0] << " y=" << view_port[1]
          << " w=" << view_port[2] << " h=" << view_port[3] << endl;
@@ -139,16 +140,16 @@ int main(int /*argc*/, char* /*argv*/[])
 
     // check compilation status of our shader
     int  success;
-    char info_log[1024] = { 0 };
+    std::array<char, 1024> info_log{};
     glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &success);
     gl_check();
 
     if (0 == success)
     {
-        glGetShaderInfoLog(vertex_shader, sizeof(info_log), nullptr, info_log);
+        glGetShaderInfoLog(vertex_shader, sizeof(info_log), nullptr, info_log.data());
         gl_check();
 
-        clog << "error: in vertex shader: " << info_log << endl;
+        clog << "error: in vertex shader: " << info_log.data() << endl;
         exit(-1);
     }
 
@@ -179,10 +180,10 @@ int main(int /*argc*/, char* /*argv*/[])
     if (0 == success)
     {
         glGetShaderInfoLog(
-            fragment_shader, sizeof(info_log), nullptr, info_log);
+            fragment_shader, sizeof(info_log), nullptr, info_log.data());
         gl_check();
 
-        clog << "error: in fragment shader: " << info_log << endl;
+        clog << "error: in fragment shader: " << info_log.data() << endl;
         exit(-1);
     }
 
@@ -208,10 +209,10 @@ int main(int /*argc*/, char* /*argv*/[])
     if (0 == success)
     {
         glGetProgramInfoLog(
-            shader_program, sizeof(info_log), nullptr, info_log);
+            shader_program, sizeof(info_log), nullptr, info_log.data());
         gl_check();
 
-        clog << "error: linking: " << info_log << endl;
+        clog << "error: linking: " << info_log.data() << endl;
         exit(-1);
     }
 
@@ -222,7 +223,7 @@ int main(int /*argc*/, char* /*argv*/[])
     glDeleteShader(fragment_shader);
     gl_check();
 
-    float vertices[] = {
+    const std::array<float, 9> vertices = {
         -0.5f, -0.5f, 0.0f, // left
         0.5f,  -0.5f, 0.0f, // fight
         0.0f,  0.5f,  0.0f  // top
@@ -255,7 +256,7 @@ int main(int /*argc*/, char* /*argv*/[])
     // GL_DYNAMIC_DRAW: the data is likely to change a lot.
     // GL_STREAM_DRAW: the data will change every time it is drawn.
 
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices.data(), GL_STATIC_DRAW);
     gl_check();
 
     // now tell OpenGL how to interpret data from VBO

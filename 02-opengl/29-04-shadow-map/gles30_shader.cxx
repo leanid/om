@@ -1,4 +1,5 @@
 #include "gles30_shader.hxx"
+#include <array>
 
 #include <algorithm>
 #include <cassert>
@@ -87,12 +88,12 @@ static uint32_t compile_shader(std::string_view src,
 
     if (0 == success)
     {
-        char info_log[1024] = { 0 };
-        glGetShaderInfoLog(shader, sizeof(info_log), nullptr, info_log);
+        std::array<char, 1024> info_log{};
+        glGetShaderInfoLog(shader, sizeof(info_log), nullptr, info_log.data());
 
         std::stringstream ss;
         ss << "error: in shader:\n"
-           << list_code_with_line_numbers{ src, info_log } << '\n';
+           << list_code_with_line_numbers{ src, info_log.data() } << '\n';
         throw std::runtime_error(ss.str());
     }
     return shader;
@@ -135,11 +136,11 @@ void shader::create(std::string_view vertex_shader_src,
 
     if (0 == success)
     {
-        char info_log[1024] = { 0 };
-        glGetProgramInfoLog(program_id, sizeof(info_log), nullptr, info_log);
+        std::array<char, 1024> info_log{};
+        glGetProgramInfoLog(program_id, sizeof(info_log), nullptr, info_log.data());
 
         std::stringstream ss;
-        ss << "error: linking: " << info_log << std::endl;
+        ss << "error: linking: " << info_log.data() << std::endl;
         throw std::runtime_error(ss.str());
     }
 
@@ -296,12 +297,12 @@ std::string shader::validate() noexcept(false)
 
     if (1 == success)
     {
-        char info_log[4096] = { 0 };
-        glGetProgramInfoLog(program_id, sizeof(info_log), nullptr, info_log);
+        std::array<char, 4096> info_log{};
+        glGetProgramInfoLog(program_id, sizeof(info_log), nullptr, info_log.data());
 
-        if (strlen(info_log) > 0)
+        if (strlen(info_log.data()) > 0)
         {
-            return { info_log };
+            return { info_log.data() };
         }
     }
     else

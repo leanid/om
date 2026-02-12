@@ -1,5 +1,6 @@
 #include "gles30_texture.hxx"
 
+#include <array>
 #include <algorithm>
 #include <numeric>
 
@@ -369,8 +370,8 @@ void texture::wrap_t(const wrap value)
 
 void texture::set_border_color(float r, float g, float b, float a)
 {
-    float border_color[] = { r, g, b, a };
-    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, border_color);
+    const std::array<float, 4> border_color{ r, g, b, a };
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, border_color.data());
 }
 
 texture::~texture()
