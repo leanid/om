@@ -465,12 +465,13 @@ scene::scene()
                        gles30::generate_render_object::yes,
                        gles30::multisampling::enable,
                        4)
-    , msaa_texture(properties.get_uint("screen_width"),
-                   properties.get_uint("screen_height"),
+    , msaa_texture(gles30::texture::extent{ properties.get_uint("screen_width"),
+                                            properties.get_uint("screen_height") },
                    4)
     , intermediate_screen_texture(gles30::texture::type::diffuse,
-                                  properties.get_uint("screen_width"),
-                                  properties.get_uint("screen_height"))
+                                   gles30::texture::extent{
+                                       properties.get_uint("screen_width"),
+                                       properties.get_uint("screen_height") })
     , intermediate_framebuffer(properties.get_uint("screen_width"),
                                properties.get_uint("screen_height"),
                                gles30::generate_render_object::no)

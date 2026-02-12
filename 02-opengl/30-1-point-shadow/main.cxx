@@ -469,8 +469,7 @@ scene::scene()
     , mesh_cube{ create_mesh(
           cube_vertices.data(), cube_vertices.size() / 8, { &wood_texture }) }
     , depth_texture{ gles30::texture::type::depth_component,
-                     fbo_width,
-                     fbo_height,
+                     gles30::texture::extent{ fbo_width, fbo_height },
                      gles30::texture::pixel_type::gl_float }
     , mesh_quad{ create_mesh(
           quad_virtices, sizeof(quad_virtices) / 4 / 8, { &depth_texture }) }

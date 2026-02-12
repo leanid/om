@@ -23,6 +23,12 @@ enum class wrap
 class texture
 {
 public:
+    struct extent
+    {
+        size_t width;
+        size_t height;
+    };
+
     enum class type
     {
         diffuse,
@@ -45,11 +51,9 @@ public:
     };
 
     /// type in {diffuse, specular}
-    texture(const type, size_t width, size_t height);
+    texture(const type, const extent size);
     /// type in {multisample2d}
-    texture(const size_t width,
-            const size_t height,
-            const size_t num_of_samples);
+    texture(const extent size, const size_t num_of_samples);
     /// type in {diffuse, specular}
     texture(const std::filesystem::path& path,
             const type,
@@ -58,10 +62,7 @@ public:
     texture(const std::array<std::filesystem::path, 6>& faces,
             const opt = opt::no_flip);
     /// type in {depth_component}
-    texture(const type,
-            size_t     width,
-            size_t     height,
-            pixel_type pixel_data_type);
+    texture(const type, const extent size, pixel_type pixel_data_type);
 
     void bind();
 

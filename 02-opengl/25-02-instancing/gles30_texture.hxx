@@ -25,6 +25,12 @@ enum class wrap
 class texture
 {
 public:
+    struct extent
+    {
+        size_t width;
+        size_t height;
+    };
+
     enum class type
     {
         diffuse,
@@ -38,7 +44,7 @@ public:
         flip_y
     };
 
-    texture(const type, size_t width, size_t height);
+    texture(const type, const extent size);
     texture(const std::filesystem::path& path,
             const type,
             const opt = opt::no_flip);

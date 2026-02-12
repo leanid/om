@@ -10,15 +10,15 @@
 
 namespace gles30
 {
-texture::texture(const type tex_type, size_t width, size_t height)
+texture::texture(const type tex_type, const extent size)
     : file_name{ "from memory" }
     , texture_id{ 0 }
     , texture_type{ tex_type }
 {
     gen_texture_set_filters_and_wrap();
 
-    const GLsizei gl_width  = static_cast<GLsizei>(width);
-    const GLsizei gl_height = static_cast<GLsizei>(height);
+    const GLsizei gl_width  = static_cast<GLsizei>(size.width);
+    const GLsizei gl_height = static_cast<GLsizei>(size.height);
     GLint        mipmap_level = 0;
     GLint        border       = 0;
     // allocate memory for texture

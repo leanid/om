@@ -22,7 +22,7 @@ void gles30::texture::throw_exception_if_not_diffuse_or_specular()
     }
 }
 
-texture::texture(const type tex_type, size_t width, size_t height)
+texture::texture(const type tex_type, const extent size)
     : file_name{ "from memory" }
     , texture_id{ 0 }
     , texture_type{ tex_type }
@@ -30,8 +30,8 @@ texture::texture(const type tex_type, size_t width, size_t height)
     throw_exception_if_not_diffuse_or_specular();
     gen_texture_set_filters_and_wrap();
 
-    const GLsizei gl_width  = static_cast<GLsizei>(width);
-    const GLsizei gl_height = static_cast<GLsizei>(height);
+    const GLsizei gl_width  = static_cast<GLsizei>(size.width);
+    const GLsizei gl_height = static_cast<GLsizei>(size.height);
     GLint        mipmap_level = 0;
     GLint        border       = 0;
     // allocate memory for texture
@@ -46,7 +46,7 @@ texture::texture(const type tex_type, size_t width, size_t height)
                  nullptr);
 }
 
-texture::texture(size_t width, size_t height, size_t num_of_samples)
+texture::texture(const extent size, size_t num_of_samples)
     : file_name{ "from memory" }
     , texture_id{ 0 }
     , texture_type{ type::multisample2d }
@@ -54,8 +54,8 @@ texture::texture(size_t width, size_t height, size_t num_of_samples)
     glGenTextures(1, &texture_id);
 
     glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, texture_id);
-    const GLsizei gl_width  = static_cast<GLsizei>(width);
-    const GLsizei gl_height = static_cast<GLsizei>(height);
+    const GLsizei gl_width  = static_cast<GLsizei>(size.width);
+    const GLsizei gl_height = static_cast<GLsizei>(size.height);
     // glTexStorage2DMultisample // OpenGL ES 3.2 OpenGL 4.0
     // glTexImage2DMultisample   // OpenGL 3.2
     glTexStorage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE,

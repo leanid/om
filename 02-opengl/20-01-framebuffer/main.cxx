@@ -479,8 +479,9 @@ scene::scene()
                  gles30::texture::type::diffuse,
                  gles30::texture::opt::no_flip)
     , tex_color_buffer(gles30::texture::type::diffuse,
-                       properties.get_float("screen_width"),
-                       properties.get_float("screen_height"))
+                       gles30::texture::extent{
+                           static_cast<size_t>(properties.get_float("screen_width")),
+                           static_cast<size_t>(properties.get_float("screen_height")) })
     , cube_marble{ create_mesh(
           cube_vertices.data(), cube_vertices.size() / 8, { &tex_marble }) }
     , cube_metal{ create_mesh(
