@@ -7,23 +7,9 @@ if(SDL3_SRC_DIR)  # Android build directly from source
                       ${SDL3_BUILD_DIR}_${ANDROID_ABI} )
 endif()
 
-include(ExternalProject)
-
-set(ASSIMP_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/build/assimp_root)
-
-ExternalProject_Add(glm_proj_15_1
-  PREFIX            ${ASSIMP_BUILD_DIR}
-  GIT_REPOSITORY    https://github.com/g-truc/glm.git
-  GIT_TAG           0.9.9.5
-  GIT_PROGRESS      TRUE
-  CMAKE_CACHE_ARGS  -DBUILD_SHARED_LIBS:BOOL=OFF
-                    -DBUILD_STATIC_LIBS:BOOL=OFF
-                    -DGLM_TEST_ENABLE:BOOL=OFF
-                    -DCMAKE_INSTALL_PREFIX:PATH=${ASSIMP_BUILD_DIR}_install/
-)
-
 project(15-01-model CXX)
 find_package(assimp REQUIRED)
+find_package(glm REQUIRED)
 
 if (SDL3_SRC_DIR) # Android
     add_library(15-01-model SHARED)
@@ -50,8 +36,7 @@ elseif(UNIX)
 elseif(MSVC)
     add_executable(15-01-model)
     find_package(SDL3 CONFIG REQUIRED)
-    find_package(glm CONFIG REQUIRED)
-    target_link_libraries(15-01-model PRIVATE SDL3::SDL3-shared glm
+    target_link_libraries(15-01-model PRIVATE SDL3::SDL3-shared
                                                   opengl32
                                                   IrrXMLd.lib
                                                   zlibstaticd.lib
@@ -94,8 +79,5 @@ target_sources(15-01-model PRIVATE main.cxx
                                    )
 
 target_link_libraries(15-01-model PRIVATE stb::stb)
-
-add_dependencies(15-01-model glm_proj_15_1)
-
 target_link_libraries(15-01-model PRIVATE assimp::assimp)
-target_link_libraries(15-01-model INTERFACE glm)
+target_link_libraries(15-01-model PRIVATE glm::glm)
