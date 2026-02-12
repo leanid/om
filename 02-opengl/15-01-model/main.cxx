@@ -59,7 +59,7 @@ void print_view_port()
          << " w=" << view_port[2] << " h=" << view_port[3] << endl;
 }
 
-extern const float     cube_vertices[36 * 8];
+extern const std::array<float, 36 * 8> cube_vertices;
 extern const glm::vec3 light_positions[4];
 
 void render_light_cubes(gles30::shader&     light_cube_shader,
@@ -288,8 +288,8 @@ gles30::mesh create_cube_mesh()
 {
     using namespace std;
     vector<gles30::vertex> cube_vert;
-    cube_vert.reserve(sizeof(cube_vertices) / 4 / 8);
-    for (size_t i = 0; i < sizeof(cube_vertices) / 4; i += 8)
+    cube_vert.reserve(cube_vertices.size() / 8);
+    for (size_t i = 0; i < cube_vertices.size(); i += 8)
     {
         gles30::vertex v;
         v.position.x = cube_vertices[i + 0];
@@ -482,7 +482,7 @@ const glm::vec3 light_positions[4] = { glm::vec3(0.7f, 1.2f, 2.0f),
                                        glm::vec3(0.0f, 8.0f, -3.0f) };
 
 
-const float cube_vertices[36 * 8] = {
+const std::array<float, 36 * 8> cube_vertices = {{
      // positions         // normals           // texture coords
     -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
      0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.0f,
@@ -525,5 +525,5 @@ const float cube_vertices[36 * 8] = {
      0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f,
     -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 0.0f,
     -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f
-};
+}};
 // clang-format on

@@ -43,7 +43,7 @@ void print_view_port()
          << " w=" << view_port[2] << " h=" << view_port[3] << endl;
 }
 
-extern float cube_vertices[36 * 8];
+extern std::array<float, 36 * 8> cube_vertices;
 
 void update_vertex_attributes()
 {
@@ -324,8 +324,8 @@ int main(int /*argc*/, char* /*argv*/[])
             std::iota(begin(cube_indexes), end(cube_indexes), 0);
 
             glBufferData(GL_ARRAY_BUFFER,
-                         sizeof(cube_vertices),
-                         cube_vertices,
+                         cube_vertices.size() * sizeof(float),
+                         cube_vertices.data(),
                          GL_DYNAMIC_DRAW);
             gl_check();
 
@@ -448,7 +448,7 @@ int main(int /*argc*/, char* /*argv*/[])
 }
 
 // clang-format off
-float cube_vertices[36 * 8] = {
+std::array<float, 36 * 8> cube_vertices = {{
     // pos               // color          // tex coord
     -0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
     0.5f, -0.5f, -0.5f,  1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
@@ -491,5 +491,5 @@ float cube_vertices[36 * 8] = {
     0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 1.0f,  1.0f, 0.0f,
     -0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f,  0.0f, 0.0f,
     -0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 1.0f,  0.0f, 1.0f
-};
+}};
 // clang-format on

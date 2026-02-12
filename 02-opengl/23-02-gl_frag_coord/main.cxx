@@ -117,7 +117,7 @@ void print_view_port()
          << " w=" << view_port[2] << " h=" << view_port[3] << endl;
 }
 
-extern const float cube_vertices[36 * 8];
+extern const std::array<float, 36 * 8> cube_vertices;
 extern const float plane_vertices[6 * 8];
 extern const float transparent_vert[6 * 8];
 extern const float fullscreen_vertices[6 * 8];
@@ -614,7 +614,7 @@ scene::scene()
                        properties.get_float("screen_height"))
     , tex_cubemap(faces, gles30::texture::opt::no_flip)
     , cube_mesh{ create_mesh(
-          cube_vertices, sizeof(cube_vertices) / 4 / 8, { &tex_metal }) }
+          cube_vertices.data(), cube_vertices.size() / 8, { &tex_metal }) }
 {
     create_camera(properties);
     cube_mesh.set_primitive_type(gles30::primitive::triangles);
@@ -671,8 +671,7 @@ int main(int /*argc*/, char* /*argv*/[])
 }
 
 // clang-format off
-const float cube_vertices[36 * 8] =
-{
+const std::array<float, 36 * 8> cube_vertices = {{
     // positions         // normals           // texture coords
     -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
     0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.0f,
@@ -715,7 +714,7 @@ const float cube_vertices[36 * 8] =
     0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f,
     -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 0.0f,
     -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f
-};
+}};
 
 const float plane_vertices[6 * 8] =
 {

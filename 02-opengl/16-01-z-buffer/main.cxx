@@ -84,7 +84,7 @@ void print_view_port()
          << " w=" << view_port[2] << " h=" << view_port[3] << endl;
 }
 
-extern const float cube_vertices[36 * 8];
+extern const std::array<float, 36 * 8> cube_vertices;
 extern const float plane_vertices[6 * 8];
 
 void render_mesh(gles30::shader&          cube_shader,
@@ -393,9 +393,9 @@ int main(int /*argc*/, char* /*argv*/[])
     texture tex_metal("res/metal.png", texture::type::diffuse);
 
     mesh cube_marble =
-        create_mesh(cube_vertices, sizeof(cube_vertices) / 4 / 8, &tex_marble);
+        create_mesh(cube_vertices.data(), cube_vertices.size() / 8, &tex_marble);
     mesh cube_metal =
-        create_mesh(cube_vertices, sizeof(cube_vertices) / 4 / 8, &tex_metal);
+        create_mesh(cube_vertices.data(), cube_vertices.size() / 8, &tex_metal);
 
     mesh plane_metal =
         create_mesh(plane_vertices, sizeof(plane_vertices) / 4 / 8, &tex_metal);
@@ -450,7 +450,7 @@ int main(int /*argc*/, char* /*argv*/[])
 }
 
 // clang-format off
-const float cube_vertices[36 * 8] = {
+const std::array<float, 36 * 8> cube_vertices = {{
      // positions         // normals           // texture coords
     -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
      0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.0f,
@@ -493,7 +493,7 @@ const float cube_vertices[36 * 8] = {
      0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f,
     -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 0.0f,
     -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f
-};
+}};
 
 const float plane_vertices[6 * 8] = {
     // positions                            // texture Coords (note we set these higher than 1 (together with GL_REPEAT as texture wrapping mode). this will cause the floor texture to repeat)

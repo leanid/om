@@ -117,7 +117,7 @@ void print_view_port()
          << " w=" << view_port[2] << " h=" << view_port[3] << endl;
 }
 
-extern const float cube_vertices[36 * 8];
+extern const std::array<float, 36 * 8> cube_vertices;
 extern const float plane_vertices[6 * 8];
 extern const float transparent_vert[6 * 8];
 extern const float fullscreen_vertices[6 * 8];
@@ -734,8 +734,7 @@ const float points[] = {
 };
 
 // clang-format off
-const float cube_vertices[36 * 8] =
-{
+const std::array<float, 36 * 8> cube_vertices = {{
     // positions         // normals           // texture coords
     -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
     0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.0f,
@@ -778,7 +777,7 @@ const float cube_vertices[36 * 8] =
     0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f,
     -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 0.0f,
     -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f
-};
+}};
 
 const float plane_vertices[6 * 8] =
 {

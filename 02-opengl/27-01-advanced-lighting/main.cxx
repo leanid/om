@@ -24,7 +24,7 @@
 static fps_camera camera;
 
 extern const float quad_virtices[6 * 8];
-extern const float cube_vertices[36 * 8];
+extern const std::array<float, 36 * 8> cube_vertices;
 extern const float plane_vertices[6 * 8];
 
 enum class render_options
@@ -520,7 +520,7 @@ extern const float quad_virtices[6 * 8] = {
  1.0f,  1.0f, 0.0f,   0.0f, 0.0f, 0.0f,   1.0f, 1.0f
 };
 
-const float cube_vertices[36 * 8] = {
+const std::array<float, 36 * 8> cube_vertices = {{
      // positions         // normals           // texture coords
     -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
      0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.0f,
@@ -563,7 +563,7 @@ const float cube_vertices[36 * 8] = {
      0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f,
     -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 0.0f,
     -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f
-};
+}};
 
 const float plane_vertices[6 * 8] = {
     // positions            // normals         // texcoords
