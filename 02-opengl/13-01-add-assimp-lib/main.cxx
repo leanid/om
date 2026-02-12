@@ -306,7 +306,7 @@ int main(int /*argc*/, char* /*argv*/[])
                 continue_loop = false;
                 break;
             }
-            else if (SDL_MOUSEMOTION == event.type)
+            else if (SDL_EVENT_MOUSE_MOTION == event.type)
             {
                 const float sensivity   = 0.05f;
                 const float delta_yaw   = event.motion.xrel * sensivity;
@@ -321,52 +321,47 @@ int main(int /*argc*/, char* /*argv*/[])
             {
                 // OpenGL ES 3.0 did't have glPolygonMode
                 // so we try to emulate it with next render primitive types
-                if (event.key.keysym.sym == SDLK_1)
+                if (event.key.key == SDLK_1)
                 {
                     primitive_render_mode = GL_TRIANGLES;
                 }
-                else if (event.key.keysym.sym == SDLK_2)
+                else if (event.key.key == SDLK_2)
                 {
                     primitive_render_mode = GL_LINES;
                 }
-                else if (event.key.keysym.sym == SDLK_3)
+                else if (event.key.key == SDLK_3)
                 {
                     primitive_render_mode = GL_LINE_STRIP;
                 }
-                else if (event.key.keysym.sym == SDLK_4)
+                else if (event.key.key == SDLK_4)
                 {
                     primitive_render_mode = GL_LINE_LOOP;
                 }
-                else if (event.key.keysym.sym == SDLK_5)
+                else if (event.key.key == SDLK_5)
                 {
-                    if (0 != SDL_SetRelativeMouseMode(SDL_TRUE))
+                    if (0 != SDL_SetRelativeMouseMode(true))
                     {
                         throw std::runtime_error(SDL_GetError());
                     }
                 }
-                else if (event.key.keysym.sym == SDLK_6)
+                else if (event.key.key == SDLK_6)
                 {
-                    if (0 != SDL_SetRelativeMouseMode(SDL_FALSE))
+                    if (0 != SDL_SetRelativeMouseMode(false))
                     {
                         throw std::runtime_error(SDL_GetError());
                     }
                 }
             }
-            else if (SDL_WINDOWEVENT == event.type)
+            else if (SDL_EVENT_WINDOW_RESIZED == event.type)
             {
-                switch (event.window.event)
-                {
-                    case ::SDL_WindowEventID::SDL_WINDOWEVENT_RESIZED:
-                        clog << "windows resized: " << event.window.data1 << ' '
-                             << event.window.data2 << ' ';
-                        // play with it to understand OpenGL origin point
-                        // for window screen coordinate system
-                        glViewport(
-                            0, 0, event.window.data1, event.window.data2);
-                        gl_check();
-                        print_view_port();
-                        break;
-                }
+                clog << "windows resized: " << event.window.data1 << ' '
+                     << event.window.data2 << ' ';
+                // play with it to understand OpenGL origin point
+                // for window screen coordinate system
+                glViewport(
+                    0, 0, event.window.data1, event.window.data2);
+                gl_check();
+                print_view_port();
             }
         }
 

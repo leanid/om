@@ -293,20 +293,15 @@ int main(int /*argc*/, char* /*argv*/[])
                 continue_loop = false;
                 break;
             }
-            else if (SDL_WINDOWEVENT == event.type)
+            else if (SDL_EVENT_WINDOW_RESIZED == event.type)
             {
-                switch (event.window.event)
-                {
-                    case ::SDL_WindowEventID::SDL_WINDOWEVENT_RESIZED:
-                        clog << "windows resized: " << event.window.data1 << ' '
-                             << event.window.data2 << ' ';
-                        // play with it to understand OpenGL origin point
-                        glViewport(
-                            0, 0, event.window.data1, event.window.data2);
-                        gl_check();
-                        print_view_port();
-                        break;
-                }
+                clog << "windows resized: " << event.window.data1 << ' '
+                     << event.window.data2 << ' ';
+                // play with it to understand OpenGL origin point
+                glViewport(
+                    0, 0, event.window.data1, event.window.data2);
+                gl_check();
+                print_view_port();
             }
         }
 

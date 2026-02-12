@@ -397,7 +397,7 @@ void scene::pull_system_events(bool& continue_loop, int& current_effect)
             continue_loop = false;
             break;
         }
-        else if (SDL_MOUSEMOTION == event.type)
+        else if (SDL_EVENT_MOUSE_MOTION == event.type)
         {
             const float sensivity   = 0.05f;
             const float delta_yaw   = event.motion.xrel * sensivity;
@@ -410,11 +410,11 @@ void scene::pull_system_events(bool& continue_loop, int& current_effect)
         }
         else if (SDL_EVENT_KEY_UP == event.type)
         {
-            if (event.key.keysym.sym == SDLK_0)
+            if (event.key.key == SDLK_0)
             {
                 blinn = !blinn;
             }
-            else if (event.key.keysym.sym == SDLK_1)
+            else if (event.key.key == SDLK_1)
             {
                 // https://stackoverflow.com/questions/27024884/srgb-framebuffer-on-opengl-es-3-0
                 // OpenGL ES 3.0 - by default use RGB back_buffer and to change
@@ -438,50 +438,45 @@ void scene::pull_system_events(bool& continue_loop, int& current_effect)
                         << is_enabled << std::endl;
                 }
             }
-            else if (event.key.keysym.sym == SDLK_2)
+            else if (event.key.key == SDLK_2)
             {
                 enable_srgb_in_fsh = !enable_srgb_in_fsh;
             }
-            else if (event.key.keysym.sym == SDLK_3)
+            else if (event.key.key == SDLK_3)
             {
                 current_effect = 3;
             }
-            else if (event.key.keysym.sym == SDLK_4)
+            else if (event.key.key == SDLK_4)
             {
                 current_effect = 4;
             }
-            else if (event.key.keysym.sym == SDLK_5)
+            else if (event.key.key == SDLK_5)
             {
-                if (0 != SDL_SetRelativeMouseMode(SDL_TRUE))
+                if (0 != SDL_SetRelativeMouseMode(true))
                 {
                     throw std::runtime_error(SDL_GetError());
                 }
             }
-            else if (event.key.keysym.sym == SDLK_6)
+            else if (event.key.key == SDLK_6)
             {
-                if (0 != SDL_SetRelativeMouseMode(SDL_FALSE))
+                if (0 != SDL_SetRelativeMouseMode(false))
                 {
                     throw std::runtime_error(SDL_GetError());
                 }
             }
         }
-        else if (SDL_WINDOWEVENT == event.type)
+        else if (SDL_EVENT_WINDOW_RESIZED == event.type)
         {
-            switch (event.window.event)
-            {
-                case ::SDL_WindowEventID::SDL_WINDOWEVENT_RESIZED:
-                    clog << "windows resized: " << event.window.data1 << ' '
-                         << event.window.data2 << ' ';
-                    // play with it to understand OpenGL origin point
-                    // for window screen coordinate system
-                    screen_width  = event.window.data1;
-                    screen_height = event.window.data2;
-                    screen_aspect = screen_width / screen_height;
-                    camera.aspect(screen_aspect);
-                    glViewport(0, 0, event.window.data1, event.window.data2);
-                    gles30::print_view_port();
-                    break;
-            }
+            clog << "windows resized: " << event.window.data1 << ' '
+                 << event.window.data2 << ' ';
+            // play with it to understand OpenGL origin point
+            // for window screen coordinate system
+            screen_width  = event.window.data1;
+            screen_height = event.window.data2;
+            screen_aspect = screen_width / screen_height;
+            camera.aspect(screen_aspect);
+            glViewport(0, 0, event.window.data1, event.window.data2);
+            gles30::print_view_port();
         }
     }
 }
