@@ -2,13 +2,14 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <type_traits>
 
 #ifdef __ANDROID__
 #include <android/log.h>
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #define GL_GLEXT_PROTOTYPES 1
-#include <SDL_opengles2.h>
+#include <SDL3/SDL_opengles2.h>
 
 class android_redirected_buf : public std::streambuf
 {
@@ -65,8 +66,8 @@ struct global_redirect_handler
     }
 } global_var;
 #else
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_opengles2.h>
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_opengles2.h>
 #endif
 
 struct context_parameters
@@ -87,8 +88,8 @@ std::ostream& operator<<(std::ostream& out, const context_parameters& params)
 int main(int /*argc*/, char* /*argv*/[])
 {
     using namespace std;
-    const int init_result = SDL_Init(SDL_INIT_VIDEO);
-    if (init_result != 0)
+    const bool init_result = SDL_Init(SDL_INIT_VIDEO);
+    if (!init_result)
 
     {
         const char* err_message = SDL_GetError();
@@ -97,12 +98,7 @@ int main(int /*argc*/, char* /*argv*/[])
     }
 
     unique_ptr<SDL_Window, void (*)(SDL_Window*)> window(
-        SDL_CreateWindow("title",
-                         SDL_WINDOWPOS_CENTERED,
-                         SDL_WINDOWPOS_CENTERED,
-                         640,
-                         480,
-                         ::SDL_WINDOW_OPENGL),
+        SDL_CreateWindow("title", 640, 480, SDL_WINDOW_OPENGL),
         SDL_DestroyWindow);
 
     if (window == nullptr)
@@ -138,16 +134,18 @@ int main(int /*argc*/, char* /*argv*/[])
 
     r = SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
                             ask_context.profile_type);
-    SDL_assert_always(r == 0);
+    SDL_assert_always(r);
     r = SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION,
                             ask_context.major_version);
-    SDL_assert_always(r == 0);
+    SDL_assert_always(r);
     r = SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION,
                             ask_context.minor_version);
-    SDL_assert_always(r == 0);
+    SDL_assert_always(r);
 
-    unique_ptr<void, void (*)(void*)> gl_context(
-        SDL_GL_CreateContext(window.get()), SDL_GL_DestroyContext);
+    using gl_context_t = std::unique_ptr<std::remove_pointer_t<SDL_GLContext>,
+                                         decltype(&SDL_GL_DestroyContext)>;
+    gl_context_t gl_context(SDL_GL_CreateContext(window.get()),
+                            SDL_GL_DestroyContext);
     if (nullptr == gl_context)
     {
         clog << "Failed to create: " << ask_context
@@ -160,10 +158,10 @@ int main(int /*argc*/, char* /*argv*/[])
 
     int result = SDL_GL_GetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION,
                                      &got_context.major_version);
-    SDL_assert_always(result == 0);
+    SDL_assert_always(result);
     result = SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION,
                                  &got_context.minor_version);
-    SDL_assert_always(result == 0);
+    SDL_assert_always(result);
 
     clog << "Ask for " << ask_context << endl;
     clog << "Receive " << got_context << endl;
@@ -174,12 +172,8 @@ int main(int /*argc*/, char* /*argv*/[])
         SDL_Event event;
         while (SDL_PollEvent(&event))
         {
-            if (SDL_FINGERDOWN == event.type)
-            {
-                continue_loop = false;
-                break;
-            }
-            else if (SDL_EVENT_QUIT == event.type)
+            if (SDL_EVENT_FINGER_DOWN == event.type ||
+                SDL_EVENT_QUIT == event.type)
             {
                 continue_loop = false;
                 break;

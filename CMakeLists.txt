@@ -38,7 +38,7 @@ om_add_custom_build_types()
 
 option(OM_BUILD_COURSE_BASIC_GAME_DEV "turn ON to build 01-basic-game-dev" ON)
 option(OM_BUILD_COURSE_BASIC_PROG "turn ON if need to build 00-basic-prog" ON)
-option(OM_BUILD_COURSE_OPENGL "turn ON if need to build 02-opengl" OFF)
+option(OM_BUILD_COURSE_OPENGL "turn ON if need to build 02-opengl" ON)
 option(OM_BUILD_COURSE_VULKAN "turn ON if need to build 02-vulkan" ON)
 option(OM_BUILD_GAME_EXAMPLE "turn ON if need to build 05-game" OFF)
 option(OM_BUILD_WEB "turn ON if need to build 08-web" ON)
