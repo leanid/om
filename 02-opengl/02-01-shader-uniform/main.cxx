@@ -271,7 +271,8 @@ int main(int /*argc*/, char* /*argv*/[])
         milliseconds now{ duration_cast<milliseconds>(current_time -
                                                       start_time) };
 
-        float sin_value = (std::sin(now.count() * 0.001f) * 0.5f) + 0.5f;
+        const float now_seconds = static_cast<float>(now.count()) * 0.001f;
+        float       sin_value   = (std::sin(now_seconds) * 0.5f) + 0.5f;
         std::stringstream ss;
         ss << sin_value;
         std::string str = ss.str();

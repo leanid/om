@@ -295,13 +295,13 @@ int main(int /*argc*/, char* /*argv*/[])
 
         milliseconds now{ duration_cast<milliseconds>(current_time -
                                                       start_time) };
-        float        sin_value = std::sin(now.count() * 0.001f);
+        const float  now_seconds = static_cast<float>(now.count()) * 0.001f;
+        float        sin_value   = std::sin(now_seconds);
 
         glm::mat4 transform(1.f);
 
-        transform = glm::rotate(transform,
-                                glm::radians(10 * now.count() * 0.001f),
-                                glm::vec3(0, 0, 1.0f));
+        transform = glm::rotate(
+            transform, glm::radians(10.0f * now_seconds), glm::vec3(0, 0, 1.0f));
 
         transform = glm::scale(transform, glm::vec3(sin_value, sin_value, 1.0));
 
