@@ -167,6 +167,7 @@ set(stb_include_dir ${CMAKE_INSTALL_PREFIX}/include/stb)
 ExternalProject_Add(
     stb
     GIT_REPOSITORY https://github.com/nothings/stb.git
+    # only master branch exist no tags to specify
     GIT_PROGRESS ON
     GIT_SHALLOW ON
     CONFIGURE_COMMAND ""
