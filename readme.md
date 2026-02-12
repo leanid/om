@@ -152,11 +152,34 @@ libstdc++-static glibc-static ninja-build
 
 ### Building
 
-On every platform you should do same things like:
+Проект собирается в два этапа: сначала зависимости, затем основной код.
+
+#### Этап 1: Сборка зависимостей (deps)
+
+Зависимости (SDL3, Boost, GLM, Catch2, googletest, doctest, trompeloeil) собираются из исходников и устанавливаются в `deps/prebuilt/<triplet>`, где `<triplet>` — идентификатор платформы (например, `linux-clang13-x86_64`).
+
+**Linux:**
+```sh
+cd deps/rules
+CXX=clang++ cmake -P linux-build.cmake
+```
+
+> Важно: компилятор должен совпадать с тем, что используется в preset основного проекта (`ninja-llvm` — clang).
+
+После сборки в `deps/prebuilt` появится папка с triplet (например, `linux-clang13-x86_64`).
+
+#### Этап 2: Сборка основного проекта
+
+Когда зависимости собраны и есть папка `deps/prebuilt/<triplet>`, можно собирать проект:
+
 ```sh
 cmake . --preset ninja-llvm
 cmake --build --preset ninja-llvm --config Debug
 ```
+
+> Если `deps/prebuilt` пуст или отсутствует — сборка основного проекта завершится ошибкой: CMake не найдёт пакеты (SDL3, Boost и т.д.).
+
+**Альтернатива:** при использовании vcpkg (preset `vcpkg`) зависимости подтягиваются автоматически, двухэтапная сборка не требуется.
 
 ### Tools
 
