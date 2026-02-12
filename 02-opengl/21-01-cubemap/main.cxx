@@ -8,6 +8,7 @@
 #include <vector>
 
 #include <SDL3/SDL.h>
+#include <type_traits>
 
 #include "fps_camera.hxx"
 #include "gles30_framebuffer.hxx"
@@ -211,15 +212,17 @@ void render_mesh(gles30::shader&          shader,
     int r;
     r = SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
                             ask_context.profile_type);
-    SDL_assert_always(r == 0);
+    SDL_assert_always(r);
     r = SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION,
                             ask_context.major_version);
-    SDL_assert_always(r == 0);
+    SDL_assert_always(r);
     r = SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION,
                             ask_context.minor_version);
-    SDL_assert_always(r == 0);
+    SDL_assert_always(r);
 
-    unique_ptr<void, void (*)(void*)> gl_context(SDL_GL_CreateContext(window),
+    using gl_context_t = std::unique_ptr<std::remove_pointer_t<SDL_GLContext>,
+                                         decltype(&SDL_GL_DestroyContext)>;
+    gl_context_t gl_context(SDL_GL_CreateContext(window),
                                                  SDL_GL_DestroyContext);
     if (nullptr == gl_context)
     {
@@ -233,16 +236,16 @@ void render_mesh(gles30::shader&          shader,
 
     int result = SDL_GL_GetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION,
                                      &got_context.major_version);
-    assert(result == 0);
+    assert(result);
     result = SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION,
                                  &got_context.minor_version);
-    assert(result == 0);
+    assert(result);
     int got_depth_size = 0;
     result = SDL_GL_GetAttribute(SDL_GL_DEPTH_SIZE, &got_depth_size);
-    assert(result == 0);
+    assert(result);
     int stensil_size = 0;
     result           = SDL_GL_GetAttribute(SDL_GL_STENCIL_SIZE, &stensil_size);
-    assert(result == 0);
+    assert(result);
 
     clog << "current context have DEPTH_SIZE: " << got_depth_size << std::endl;
     clog << "current context have STENSIL_SIZE: " << stensil_size << std::endl;
@@ -369,8 +372,8 @@ std::unique_ptr<SDL_Window, void (*)(SDL_Window*)> create_window(
     const properties_reader& properties)
 {
     using namespace std;
-    const int init_result = SDL_Init(SDL_INIT_VIDEO);
-    if (init_result != 0)
+    const bool init_result = SDL_Init(SDL_INIT_VIDEO);
+    if (!init_result)
     {
         std::string err_message = SDL_GetError();
         clog << "error: failed call SDL_Init: " << err_message << endl;

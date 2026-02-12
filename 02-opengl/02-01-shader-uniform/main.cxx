@@ -3,6 +3,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <type_traits>
 
 #include "gles30_shader.hxx"
 #include "opengles30.hxx"
@@ -42,8 +43,8 @@ int main(int /*argc*/, char* /*argv*/[])
 
     auto start_time = high_resolution_clock::now();
 
-    const int init_result = SDL_Init(SDL_INIT_VIDEO);
-    if (init_result != 0)
+    const bool init_result = SDL_Init(SDL_INIT_VIDEO);
+    if (!init_result)
     {
         const char* err_message = SDL_GetError();
         clog << "error: failed call SDL_Init: " << err_message << endl;
@@ -90,15 +91,17 @@ int main(int /*argc*/, char* /*argv*/[])
 
     r = SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
                             ask_context.profile_type);
-    SDL_assert_always(r == 0);
+    SDL_assert_always(r);
     r = SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION,
                             ask_context.major_version);
-    SDL_assert_always(r == 0);
+    SDL_assert_always(r);
     r = SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION,
                             ask_context.minor_version);
-    SDL_assert_always(r == 0);
+    SDL_assert_always(r);
 
-    unique_ptr<void, void (*)(void*)> gl_context(
+    using gl_context_t = std::unique_ptr<std::remove_pointer_t<SDL_GLContext>,
+                                         decltype(&SDL_GL_DestroyContext)>;
+    gl_context_t gl_context(
         SDL_GL_CreateContext(window.get()), SDL_GL_DestroyContext);
     if (nullptr == gl_context)
     {
@@ -112,10 +115,10 @@ int main(int /*argc*/, char* /*argv*/[])
 
     int result = SDL_GL_GetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION,
                                      &got_context.major_version);
-    SDL_assert_always(result == 0);
+    SDL_assert_always(result);
     result = SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION,
                                  &got_context.minor_version);
-    SDL_assert_always(result == 0);
+    SDL_assert_always(result);
 
     clog << "Ask for " << ask_context << endl;
     clog << "Receive " << got_context << endl;

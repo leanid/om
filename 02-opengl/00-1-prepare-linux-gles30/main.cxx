@@ -5,13 +5,14 @@
 #include <SDL3/SDL.h>
 #define GL_GLEXT_PROTOTYPES 1
 #include <SDL3/SDL_opengles2.h>
+#include <type_traits>
 
 int main(int /*argc*/, char* /*argv*/[])
 {
     using namespace std;
 
-    const int init_result = SDL_Init(SDL_INIT_VIDEO);
-    if (init_result != 0)
+    const bool init_result = SDL_Init(SDL_INIT_VIDEO);
+    if (!init_result)
 
     {
         const char* err_message = SDL_GetError();
@@ -38,13 +39,15 @@ int main(int /*argc*/, char* /*argv*/[])
     // we want ONLY OpenGLES 3.0 context or more
     int r = SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
                                 SDL_GL_CONTEXT_PROFILE_ES);
-    SDL_assert_always(r == 0);
+    SDL_assert_always(r);
     r = SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-    SDL_assert_always(r == 0);
+    SDL_assert_always(r);
     r = SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
-    SDL_assert_always(r == 0);
+    SDL_assert_always(r);
 
-    unique_ptr<void, void (*)(void*)> gl_context(
+    using gl_context_t = std::unique_ptr<std::remove_pointer_t<SDL_GLContext>,
+                                         decltype(&SDL_GL_DestroyContext)>;
+    gl_context_t gl_context(
         SDL_GL_CreateContext(window.get()), SDL_GL_DestroyContext);
     if (nullptr == gl_context)
     {
@@ -55,10 +58,10 @@ int main(int /*argc*/, char* /*argv*/[])
     int gl_major_ver = 0;
     int result =
         SDL_GL_GetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, &gl_major_ver);
-    SDL_assert_always(result == 0);
+    SDL_assert_always(result);
     int gl_minor_ver = 0;
     result = SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, &gl_minor_ver);
-    SDL_assert_always(result == 0);
+    SDL_assert_always(result);
 
     clog << "Ask for OpenGL ES 3.0" << endl;
     clog << "Receive OpenGL ES " << gl_major_ver << '.' << gl_minor_ver << endl;
