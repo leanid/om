@@ -1,5 +1,6 @@
 #include "opengles30.hxx"
 
+#include <array>
 #include <csignal>
 #include <sstream>
 
@@ -101,17 +102,17 @@ void check_gl_error(const char* file, int line)
 
     std::string message = ss.str();
 
-    const SDL_MessageBoxButtonData buttons[] = {
+    const std::array<SDL_MessageBoxButtonData, 2> buttons = {{
         /// .flags, .buttonid, .text
         { 0, 0, "continue" },
         { SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, 1, "break" },
-    };
+    }};
 
     SDL_MessageBoxData msg_box_data;
     msg_box_data.flags       = 0;
-    msg_box_data.buttons     = buttons;
+    msg_box_data.buttons     = buttons.data();
     msg_box_data.colorScheme = nullptr;
-    msg_box_data.numbuttons  = 2;
+    msg_box_data.numbuttons  = static_cast<int>(buttons.size());
     msg_box_data.title       = "OpenGL ES 3.0 usage error";
     msg_box_data.message     = message.c_str();
 
