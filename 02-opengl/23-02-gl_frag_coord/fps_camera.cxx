@@ -4,7 +4,7 @@
 
 void fps_camera::move_using_keyboard_wasd(const float delta_time)
 {
-    const uint8_t* keys_state = SDL_GetKeyboardState(nullptr);
+    const bool* keys_state = SDL_GetKeyboardState(nullptr);
     if (keys_state[SDL_SCANCODE_W])
     {
         move(fps_camera::step::forward, delta_time);

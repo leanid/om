@@ -207,14 +207,14 @@ void pull_system_events(bool& continue_loop, GLenum& primitive_render_mode)
             }
             else if (event.key.key == SDLK_5)
             {
-                if (0 != SDL_SetRelativeMouseMode(true))
+                if (!SDL_SetWindowRelativeMouseMode(window.get(), true))
                 {
                     throw std::runtime_error(SDL_GetError());
                 }
             }
             else if (event.key.key == SDLK_6)
             {
-                if (0 != SDL_SetRelativeMouseMode(false))
+                if (!SDL_SetWindowRelativeMouseMode(window.get(), false))
                 {
                     throw std::runtime_error(SDL_GetError());
                 }
@@ -275,7 +275,7 @@ std::unique_ptr<SDL_Window, void (*)(SDL_Window*)> create_window(
     screen_height = properties.get_float("screen_height");
 
     unique_ptr<SDL_Window, void (*)(SDL_Window*)> window(
-        SDL_CreateWindow(title.c_str(), screen_width, screen_height, ::SDL_WINDOW_OPENGL | ::SDL_WINDOW_RESIZABLE),
+        SDL_CreateWindow(title.c_str(), screen_width, screen_height, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE),
         SDL_DestroyWindow);
 
     if (window.get() == nullptr)

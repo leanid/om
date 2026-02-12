@@ -4,7 +4,7 @@
 
 bool fps_camera::move_using_keyboard_wasd(const float delta_time)
 {
-    const uint8_t* keys_state = SDL_GetKeyboardState(nullptr);
+    const bool* keys_state = SDL_GetKeyboardState(nullptr);
     const bool     moved_w    = keys_state[SDL_SCANCODE_W];
     if (moved_w)
     {

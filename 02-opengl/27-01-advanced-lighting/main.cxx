@@ -429,14 +429,14 @@ void scene::pull_system_events(bool& continue_loop, int& current_effect)
             }
             else if (event.key.key == SDLK_5)
             {
-                if (0 != SDL_SetRelativeMouseMode(true))
+                if (!SDL_SetWindowRelativeMouseMode(window.get(), true))
                 {
                     throw std::runtime_error(SDL_GetError());
                 }
             }
             else if (event.key.key == SDLK_6)
             {
-                if (0 != SDL_SetRelativeMouseMode(false))
+                if (!SDL_SetWindowRelativeMouseMode(window.get(), false))
                 {
                     throw std::runtime_error(SDL_GetError());
                 }

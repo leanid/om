@@ -55,7 +55,7 @@ int main(int /*argc*/, char* /*argv*/[])
         SDL_CreateWindow("1-triangles, 2-lines, 3-line-strip, 4-line-loop",
                          640,
                          480,
-                         ::SDL_WINDOW_OPENGL | ::SDL_WINDOW_RESIZABLE),
+                         SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE),
         SDL_DestroyWindow);
 
     if (window == nullptr)

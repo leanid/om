@@ -120,7 +120,7 @@ int main(int /*argc*/, char* /*argv*/[])
     const std::string title = properties.get_string("title");
 
     unique_ptr<SDL_Window, void (*)(SDL_Window*)> window(
-        SDL_CreateWindow(title.c_str(), 640, 480, ::SDL_WINDOW_OPENGL | ::SDL_WINDOW_RESIZABLE),
+        SDL_CreateWindow(title.c_str(), 640, 480, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE),
         SDL_DestroyWindow);
 
     if (window == nullptr)
@@ -341,14 +341,14 @@ int main(int /*argc*/, char* /*argv*/[])
                 }
                 else if (event.key.key == SDLK_5)
                 {
-                    if (0 != SDL_SetRelativeMouseMode(true))
+                    if (!SDL_SetWindowRelativeMouseMode(window.get(), true))
                     {
                         throw std::runtime_error(SDL_GetError());
                     }
                 }
                 else if (event.key.key == SDLK_6)
                 {
-                    if (0 != SDL_SetRelativeMouseMode(false))
+                    if (!SDL_SetWindowRelativeMouseMode(window.get(), false))
                     {
                         throw std::runtime_error(SDL_GetError());
                     }

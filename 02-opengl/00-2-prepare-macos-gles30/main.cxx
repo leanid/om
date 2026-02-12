@@ -24,7 +24,7 @@ int main(int /*argc*/, char* /*argv*/[])
     }
 
     unique_ptr<SDL_Window, void (*)(SDL_Window*)> window(
-        SDL_CreateWindow("title", 640, 480, ::SDL_WINDOW_OPENGL),
+        SDL_CreateWindow("title", 640, 480, SDL_WINDOW_OPENGL),
         SDL_DestroyWindow);
 
     if (window == nullptr)
