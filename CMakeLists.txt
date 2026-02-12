@@ -52,6 +52,7 @@ find_package(Vulkan REQUIRED COMPONENTS glslangValidator)
 find_package(doctest REQUIRED)
 find_package(glm REQUIRED)
 find_package(trompeloeil REQUIRED)
+find_package(stb REQUIRED)
 
 enable_testing()
 

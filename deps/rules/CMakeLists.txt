@@ -159,3 +159,23 @@ ExternalProject_Add(
         -DTROMPELOEIL_BUILD_TESTS=OFF
         -DTROMPELOEIL_INSTALL_DOCS=OFF
 )
+
+# stb header-only libraries (installs headers into include/stb)
+# https://github.com/nothings/stb
+set(stb_src ${CMAKE_BINARY_DIR}/stb-prefix/src/stb)
+set(stb_include_dir ${CMAKE_INSTALL_PREFIX}/include/stb)
+ExternalProject_Add(
+    stb
+    GIT_REPOSITORY https://github.com/nothings/stb.git
+    GIT_PROGRESS ON
+    GIT_SHALLOW ON
+    CONFIGURE_COMMAND ""
+    BUILD_COMMAND ""
+    INSTALL_COMMAND
+        ${CMAKE_COMMAND} -E make_directory ${stb_include_dir}
+        COMMAND ${CMAKE_COMMAND} -E copy ${stb_src}/stb_image.h ${stb_include_dir}/
+        COMMAND ${CMAKE_COMMAND} -E copy ${stb_src}/stb_image_write.h ${stb_include_dir}/
+        COMMAND ${CMAKE_COMMAND} -E copy ${stb_src}/stb_rect_pack.h ${stb_include_dir}/
+        COMMAND ${CMAKE_COMMAND} -E copy ${stb_src}/stb_textedit.h ${stb_include_dir}/
+        COMMAND ${CMAKE_COMMAND} -E copy ${stb_src}/stb_truetype.h ${stb_include_dir}/
+)
