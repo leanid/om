@@ -160,6 +160,30 @@ ExternalProject_Add(
         -DTROMPELOEIL_INSTALL_DOCS=OFF
 )
 
+ExternalProject_Add(
+    assimp
+    GIT_REPOSITORY https://github.com/assimp/assimp.git
+    GIT_TAG v5.4.3
+    GIT_PROGRESS ON
+    GIT_SHALLOW ON
+    CMAKE_ARGS
+        -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+        -DCMAKE_BUILD_TYPE=RelWithDebInfo
+        -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
+        -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}
+        -DCMAKE_CXX_STANDARD=23
+        -DCMAKE_CXX_STANDARD_REQUIRED=ON
+        -DCMAKE_CXX_EXTENSIONS=OFF
+        -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+        -DCMAKE_LINKER_TYPE=${CMAKE_LINKER_TYPE}
+        -DCMAKE_EXE_LINKER_FLAGS=${CMAKE_EXE_LINKER_FLAGS}
+        -DCMAKE_SHARED_LINKER_FLAGS=${CMAKE_SHARED_LINKER_FLAGS}
+        -DASSIMP_BUILD_TESTS=OFF
+        -DASSIMP_INSTALL=ON
+        -DASSIMP_BUILD_ASSIMP_TOOLS=OFF
+        -DASSIMP_NO_EXPORT=ON
+)
+
 # stb header-only libraries (installs headers into include/stb)
 # https://github.com/nothings/stb
 set(stb_src ${CMAKE_BINARY_DIR}/stb-prefix/src/stb)
