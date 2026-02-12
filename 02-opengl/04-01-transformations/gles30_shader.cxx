@@ -152,8 +152,8 @@ shader::shader(
         std::clog << e.what() << std::endl;
 
         throw std::runtime_error(
-            "can't create shader from: " + vertex_shader_path.u8string() + " " +
-            fragment_shader_path.u8string() + " cause: " + e.what());
+            "can't create shader from: " + vertex_shader_path.string() + " " +
+            fragment_shader_path.string() + " cause: " + e.what());
     }
 }
 

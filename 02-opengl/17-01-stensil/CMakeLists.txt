@@ -38,7 +38,6 @@ elseif(UNIX)
     find_package(glm REQUIRED)
     target_link_libraries(17-01-stensil PRIVATE SDL3::SDL3-shared ${ASSIMP_LIBRARIES}
                                                   GL
-                                                  stdc++fs
                                                   -lz
                                                   )
 elseif(MSVC)

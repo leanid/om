@@ -184,7 +184,7 @@ int to_gl_filter_enum(const filter value)
 
 void initialize_opengles_3_2() noexcept(false)
 {
-    int result = gladLoadGLES2Loader(&SDL_GL_GetProcAddress);
+    int result = gladLoadGLES2Loader(reinterpret_cast<GLADloadproc>(SDL_GL_GetProcAddress));
     if (0 == result)
     {
         throw std::runtime_error("error: failed initialize GLES");

@@ -38,7 +38,6 @@ elseif(UNIX)
     find_package(glm REQUIRED)
     target_link_libraries(19-01-face-culling PRIVATE SDL3::SDL3-shared ${ASSIMP_LIBRARIES}
                                                   GL
-                                                  stdc++fs
                                                   -lz
                                                   )
 elseif(MSVC)

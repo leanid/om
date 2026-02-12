@@ -22,7 +22,7 @@ texture::texture(const fs::path& path)
     const int prefered_channels_count = 4;
 
     std::unique_ptr<uint8_t, void (*)(void*)> data(
-        stbi_load(path.u8string().c_str(),
+        stbi_load(path.string().c_str(),
                   &width,
                   &height,
                   &channels,
@@ -32,7 +32,7 @@ texture::texture(const fs::path& path)
     if (data.get() == nullptr)
     {
         throw std::runtime_error("can't create texture from file: " +
-                                 path.u8string());
+                                 path.string());
     }
 
     glGenTextures(1, &texture_id);

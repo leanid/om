@@ -42,7 +42,6 @@ elseif(UNIX)
     find_package(glm REQUIRED)
     target_link_libraries(25-03-instancing PRIVATE SDL3::SDL3-shared ${ASSIMP_LIBRARIES}
                                                   GL
-                                                  stdc++fs
                                                   -lz
                                                   )
     target_include_directories(25-03-instancing PRIVATE ${SDL3_INCLUDE_DIRS})

@@ -175,7 +175,7 @@ void render_mesh(gles30::shader&          shader,
     }
 }
 
-[[nodiscard]] std::unique_ptr<void, void (*)(void*)> create_opengl_context(
+[[nodiscard]] std::unique_ptr<std::remove_pointer_t<SDL_GLContext>, decltype(&SDL_GL_DestroyContext)> create_opengl_context(
     SDL_Window* window)
 {
     using namespace std;
@@ -313,14 +313,14 @@ void pull_system_events(bool& continue_loop, int& current_effect)
             }
             else if (event.key.key == SDLK_5)
             {
-                if (!SDL_SetWindowRelativeMouseMode(window.get(), true))
+                if (!SDL_SetWindowRelativeMouseMode(SDL_GetKeyboardFocus(), true))
                 {
                     throw std::runtime_error(SDL_GetError());
                 }
             }
             else if (event.key.key == SDLK_6)
             {
-                if (!SDL_SetWindowRelativeMouseMode(window.get(), false))
+                if (!SDL_SetWindowRelativeMouseMode(SDL_GetKeyboardFocus(), false))
                 {
                     throw std::runtime_error(SDL_GetError());
                 }
@@ -456,7 +456,7 @@ struct scene
     properties_reader properties;
 
     std::unique_ptr<SDL_Window, void (*)(SDL_Window*)> window;
-    std::unique_ptr<void, void (*)(void*)>             context;
+    std::unique_ptr<std::remove_pointer_t<SDL_GLContext>, decltype(&SDL_GL_DestroyContext)> context;
 
     gles30::shader cube_shader;
     gles30::shader outline;

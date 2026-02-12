@@ -157,7 +157,7 @@ inline void fps_camera::rotate(const float delta_yaw, const float delta_pitch)
     yaw += delta_yaw;
     pitch += delta_pitch;
 
-    std::clamp(pitch, -89.f, 89.f);
+    pitch = std::clamp(pitch, -89.f, 89.f);
 
     update_camera_vectors();
 }
@@ -166,7 +166,7 @@ inline void fps_camera::zoom(const float zoom)
 {
     fovy_ += zoom;
 
-    std::clamp(fovy_, 1.f, 45.f);
+    fovy_ = std::clamp(fovy_, 1.f, 45.f);
 }
 
 inline float fps_camera::fovy() const
@@ -176,7 +176,7 @@ inline float fps_camera::fovy() const
 inline void fps_camera::fovy(const float v)
 {
     fovy_ = v;
-    std::clamp(fovy_, 1.f, 45.f);
+    fovy_ = std::clamp(fovy_, 1.f, 45.f);
 }
 
 inline float fps_camera::aspect() const
@@ -187,7 +187,7 @@ inline float fps_camera::aspect() const
 inline void fps_camera::aspect(const float v)
 {
     aspect_ = v;
-    std::clamp(aspect_, 0.1f, 10.f);
+    aspect_ = std::clamp(aspect_, 0.1f, 10.f);
 }
 
 inline float fps_camera::z_near() const
@@ -198,7 +198,7 @@ inline float fps_camera::z_near() const
 inline void fps_camera::z_near(const float v)
 {
     z_near_ = v;
-    std::clamp(z_near_, 0.01f, 10000.f);
+    z_near_ = std::clamp(z_near_, 0.01f, 10000.f);
 }
 
 inline float fps_camera::z_far() const
@@ -209,5 +209,5 @@ inline float fps_camera::z_far() const
 inline void fps_camera::z_far(const float v)
 {
     z_far_ = v;
-    std::clamp(z_far_, z_near_, 10000.f);
+    z_far_ = std::clamp(z_far_, z_near_, 10000.f);
 }

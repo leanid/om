@@ -316,14 +316,14 @@ int main(int /*argc*/, char* /*argv*/[])
                 }
                 else if (event.key.key == SDLK_5)
                 {
-                    if (!SDL_SetWindowRelativeMouseMode(window.get(), true))
+                    if (!SDL_SetWindowRelativeMouseMode(SDL_GetKeyboardFocus(), true))
                     {
                         throw std::runtime_error(SDL_GetError());
                     }
                 }
                 else if (event.key.key == SDLK_6)
                 {
-                    if (!SDL_SetWindowRelativeMouseMode(window.get(), false))
+                    if (!SDL_SetWindowRelativeMouseMode(SDL_GetKeyboardFocus(), false))
                     {
                         throw std::runtime_error(SDL_GetError());
                     }

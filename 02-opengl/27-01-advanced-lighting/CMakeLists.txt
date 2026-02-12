@@ -42,7 +42,6 @@ elseif(UNIX)
     find_package(glm REQUIRED)
     target_link_libraries(27-01-advanced-lighting PRIVATE SDL3::SDL3-shared ${ASSIMP_LIBRARIES}
                                                   GL
-                                                  stdc++fs
                                                   -lz
                                                   )
     target_include_directories(27-01-advanced-lighting PRIVATE ${SDL3_INCLUDE_DIRS})

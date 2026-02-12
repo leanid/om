@@ -48,7 +48,6 @@ elseif(UNIX)
     find_package(glm REQUIRED)
     target_link_libraries(29-01-shadow-map PRIVATE SDL3::SDL3-shared ${ASSIMP_LIBRARIES}
                                                   GL
-                                                  #stdc++fs
                                                   #-lz
                                                   )
     target_include_directories(29-01-shadow-map PRIVATE ${SDL3_INCLUDE_DIRS})

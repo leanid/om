@@ -58,7 +58,7 @@ void texture::gen_texture_set_filters_and_wrap()
 texture::texture(const std::filesystem::path& path,
                  const type                   tex_type,
                  const opt                    options)
-    : file_name{ path.u8string() }
+    : file_name{ path.string() }
     , texture_id{ 0 }
     , texture_type{ tex_type }
 {
@@ -131,19 +131,17 @@ texture::texture(const std::filesystem::path& path,
 static std::string join_strings_with_spaces(
     const std::array<std::filesystem::path, 6>& faces)
 {
-    std::string result;
-    std::accumulate(begin(faces),
-                    end(faces),
-                    result,
-                    [](std::string& result, const std::filesystem::path& p)
-                    {
-                        if (!result.empty())
-                        {
-                            result.push_back(' ');
-                        }
-                        return result += p.string();
-                    });
-    return result;
+    return std::accumulate(begin(faces),
+                          end(faces),
+                          std::string{},
+                          [](std::string result, const std::filesystem::path& p)
+                          {
+                              if (!result.empty())
+                              {
+                                  result.push_back(' ');
+                              }
+                              return result += p.string();
+                          });
 }
 
 texture::texture(const std::array<std::filesystem::path, 6>& faces,
@@ -168,7 +166,7 @@ texture::texture(const std::array<std::filesystem::path, 6>& faces,
 
     for (size_t i = 0; i < faces.size(); ++i)
     {
-        const auto& path = faces.at(i).u8string();
+        const auto& path = faces.at(i).string();
         const auto& type = face_type.at(i);
         int32_t     width{};
         int32_t     height{};

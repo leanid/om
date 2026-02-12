@@ -41,7 +41,6 @@ elseif(UNIX)
         16-01-z-buffer
         PRIVATE SDL3::SDL3-shared ${ASSIMP_LIBRARIES}
                 GL
-                stdc++fs
                 -lz)
 elseif(MSVC)
     add_executable(16-01-z-buffer)

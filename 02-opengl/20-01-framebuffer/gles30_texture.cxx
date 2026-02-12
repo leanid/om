@@ -48,7 +48,7 @@ void texture::gen_texture_set_filters_and_wrap()
 texture::texture(const std::filesystem::path& path,
                  const type                   tex_type,
                  const opt                    options)
-    : file_name{ path.u8string() }
+    : file_name{ path.string() }
     , texture_id{ 0 }
     , texture_type{ tex_type }
 {

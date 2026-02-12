@@ -30,7 +30,6 @@ elseif(UNIX)
     add_executable(15-01-model)
     find_package(SDL3 REQUIRED)
     target_link_libraries(15-01-model PRIVATE SDL3::SDL3-shared GL
-                                                  stdc++fs
                                                   -lz
                                                   )
 elseif(MSVC)

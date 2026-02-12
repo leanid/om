@@ -61,7 +61,7 @@ elseif(UNIX)
     target_link_libraries(
         30-1-point-shadow
         PRIVATE SDL3::SDL3-shared ${ASSIMP_LIBRARIES}
-                GL # stdc++fs -lz
+                GL -lz
     )
     target_include_directories(
         30-1-point-shadow
