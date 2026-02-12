@@ -1,3 +1,4 @@
+#include <array>
 #include <cstdlib>
 #include <iostream>
 #include <memory>
@@ -25,8 +26,8 @@ void print_view_port()
 {
     using namespace std;
 
-    GLint view_port[4];
-    glGetIntegerv(GL_VIEWPORT, view_port);
+    std::array<GLint, 4> view_port{};
+    glGetIntegerv(GL_VIEWPORT, view_port.data());
     gl_check();
     clog << "view port is: x=" << view_port[0] << " y=" << view_port[1]
          << " w=" << view_port[2] << " h=" << view_port[3] << endl;
@@ -142,16 +143,17 @@ int main(int /*argc*/, char* /*argv*/[])
 
     // check compilation status of our shader
     int  success;
-    char info_log[1024] = { 0 };
+    std::array<char, 1024> info_log{};
     glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &success);
     gl_check();
 
     if (0 == success)
     {
-        glGetShaderInfoLog(vertex_shader, sizeof(info_log), nullptr, info_log);
+        glGetShaderInfoLog(
+            vertex_shader, sizeof(info_log), nullptr, info_log.data());
         gl_check();
 
-        clog << "error: in vertex shader: " << info_log << endl;
+        clog << "error: in vertex shader: " << info_log.data() << endl;
         exit(-1);
     }
 
@@ -182,10 +184,10 @@ int main(int /*argc*/, char* /*argv*/[])
     if (0 == success)
     {
         glGetShaderInfoLog(
-            fragment_shader, sizeof(info_log), nullptr, info_log);
+            fragment_shader, sizeof(info_log), nullptr, info_log.data());
         gl_check();
 
-        clog << "error: in fragment shader: " << info_log << endl;
+        clog << "error: in fragment shader: " << info_log.data() << endl;
         exit(-1);
     }
 
@@ -211,10 +213,10 @@ int main(int /*argc*/, char* /*argv*/[])
     if (0 == success)
     {
         glGetProgramInfoLog(
-            shader_program, sizeof(info_log), nullptr, info_log);
+            shader_program, sizeof(info_log), nullptr, info_log.data());
         gl_check();
 
-        clog << "error: linking: " << info_log << endl;
+        clog << "error: linking: " << info_log.data() << endl;
         exit(-1);
     }
 
@@ -225,14 +227,14 @@ int main(int /*argc*/, char* /*argv*/[])
     glDeleteShader(fragment_shader);
     gl_check();
 
-    float vertices[] = {
+    const std::array<float, 12> vertices = {
         0.5f,  0.5f,  0.0f, // top right
         0.5f,  -0.5f, 0.0f, // bottom right
         -0.5f, -0.5f, 0.0f, // bottom left
         -0.5f, 0.5f,  0.0f  // top left
     };
 
-    uint32_t indices[] = {
+    const std::array<uint32_t, 6> indices = {
         0, 1, 3, // first triangle
         1, 2, 3  // second triangle
     };
@@ -263,7 +265,8 @@ int main(int /*argc*/, char* /*argv*/[])
     //    very rarely.
     // GL_DYNAMIC_DRAW: the data is likely to change a lot.
     // GL_STREAM_DRAW: the data will change every time it is drawn.
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBufferData(
+        GL_ARRAY_BUFFER, sizeof(vertices), vertices.data(), GL_STATIC_DRAW);
     gl_check();
 
     uint32_t EBO; // ElementBufferObject - indices buffer
@@ -273,8 +276,10 @@ int main(int /*argc*/, char* /*argv*/[])
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     gl_check();
 
-    glBufferData(
-        GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+                 sizeof(indices),
+                 indices.data(),
+                 GL_STATIC_DRAW);
     gl_check();
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
@@ -307,12 +312,8 @@ int main(int /*argc*/, char* /*argv*/[])
         SDL_Event event;
         while (SDL_PollEvent(&event))
         {
-            if (SDL_EVENT_FINGER_DOWN == event.type)
-            {
-                continue_loop = false;
-                break;
-            }
-            else if (SDL_EVENT_QUIT == event.type)
+            if (SDL_EVENT_FINGER_DOWN == event.type ||
+                SDL_EVENT_QUIT == event.type)
             {
                 continue_loop = false;
                 break;
@@ -368,7 +369,7 @@ int main(int /*argc*/, char* /*argv*/[])
         glBindVertexArray(VAO);
         gl_check();
 
-        glDrawElements(primitive_render_mode, 6, GL_UNSIGNED_INT, 0);
+        glDrawElements(primitive_render_mode, 6, GL_UNSIGNED_INT, nullptr);
         gl_check();
 
         SDL_GL_SwapWindow(window.get());

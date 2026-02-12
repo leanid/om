@@ -125,8 +125,8 @@ void check_gl_error(std::string_view file, int line)
 
     const std::array<SDL_MessageBoxButtonData, 2> buttons = {{
         /// .flags, .buttonid, .text
-        { 0, 0, "continue" },
-        { SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, 1, "break" },
+        { .flags = 0, .buttonID = 0, .text = "continue" },
+        { .flags = SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, .buttonID = 1, .text = "break" },
     }};
 
     SDL_MessageBoxData msg_box_data;
