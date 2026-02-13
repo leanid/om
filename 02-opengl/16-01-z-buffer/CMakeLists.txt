@@ -19,29 +19,32 @@ project(16-01-z-buffer CXX)
 if(SDL3_SRC_DIR) # Android
     add_library(16-01-z-buffer SHARED)
     target_include_directories(16-01-z-buffer PRIVATE ${SDL3_SRC_DIR}/include)
-    target_link_libraries(16-01-z-buffer PRIVATE SDL3::SDL3-shared )
+    target_link_libraries(16-01-z-buffer PRIVATE SDL3::SDL3-shared)
 elseif(MINGW)
     add_executable(16-01-z-buffer)
     find_package(SDL3 CONFIG REQUIRED)
     target_link_libraries(
         16-01-z-buffer
-        PRIVATE SDL3::SDL3-shared mingw32
+        PRIVATE SDL3::SDL3-shared
+                mingw32
                 opengl32
                 -mwindows)
 elseif(APPLE)
     add_executable(16-01-z-buffer)
     find_package(SDL3 CONFIG REQUIRED)
-    target_link_libraries(16-01-z-buffer PRIVATE SDL3::SDL3-shared "-framework OpenGL")
+    target_link_libraries(16-01-z-buffer PRIVATE SDL3::SDL3-shared
+                                                 "-framework OpenGL")
 elseif(UNIX)
     add_executable(16-01-z-buffer)
     find_package(SDL3 REQUIRED)
+    # find_package(zlib REQUIRED)
     find_package(assimp REQUIRED) # sudo dnf install assimp-devel
     find_package(glm REQUIRED)
     target_link_libraries(
         16-01-z-buffer
-        PRIVATE SDL3::SDL3-shared ${ASSIMP_LIBRARIES}
-                GL
-                -lz)
+        PRIVATE SDL3::SDL3-shared assimp::assimp
+                # zlibstatic
+                GL)
 elseif(MSVC)
     add_executable(16-01-z-buffer)
     find_package(SDL3 CONFIG REQUIRED)
@@ -49,7 +52,8 @@ elseif(MSVC)
     find_package(assimp CONFIG REQUIRED)
     target_link_libraries(
         16-01-z-buffer
-        PRIVATE SDL3::SDL3-shared glm
+        PRIVATE SDL3::SDL3-shared
+                glm
                 ${ASSIMP_LIBRARIES}
                 opengl32
                 IrrXMLd.lib
