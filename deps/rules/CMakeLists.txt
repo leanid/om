@@ -9,6 +9,11 @@ get_filename_component(prebuilt_dir "${CMAKE_SOURCE_DIR}/../prebuilt" ABSOLUTE)
 message(STATUS "${prebuilt_dir}")
 
 set(CMAKE_INSTALL_PREFIX "${prebuilt_dir}/${OM_TRIPLET_NAME}")
+if(UNIX)
+    set(OM_INSTALL_LIB_DIR "${CMAKE_INSTALL_PREFIX}/lib64")
+else()
+    set(OM_INSTALL_LIB_DIR "${CMAKE_INSTALL_PREFIX}/lib")
+endif()
 message(STATUS "CMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}")
 
 include(ExternalProject)
@@ -164,7 +169,7 @@ externalproject_add(
                -DCMAKE_LINKER_TYPE=${CMAKE_LINKER_TYPE}
                -DCMAKE_EXE_LINKER_FLAGS=${CMAKE_EXE_LINKER_FLAGS}
                -DCMAKE_SHARED_LINKER_FLAGS=${CMAKE_SHARED_LINKER_FLAGS}
-               -DINSTALL_LIB_DIR=${CMAKE_INSTALL_PREFIX}/lib64
+               -DINSTALL_LIB_DIR=${OM_INSTALL_LIB_DIR}
                -DZLIB_BUILD_EXAMPLES=OFF
                -DBUILD_SHARED_LIBS=OFF)
 
