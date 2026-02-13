@@ -384,7 +384,8 @@ void scene::pull_system_events(bool& continue_loop, int& current_effect)
     SDL_Event event;
     while (SDL_PollEvent(&event))
     {
-        if (SDL_EVENT_FINGER_DOWN == event.type || SDL_EVENT_QUIT == event.type)
+        if (SDL_EVENT_FINGER_DOWN == event.type || SDL_EVENT_QUIT == event.type ||
+            (SDL_EVENT_KEY_UP == event.type && event.key.key == SDLK_ESCAPE))
         {
             continue_loop = false;
             break;
