@@ -10,7 +10,10 @@ framebuffer::framebuffer(uint32_t width, uint32_t height)
 {
     glGenRenderbuffers(1, &rbo);
     glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+    glRenderbufferStorage(GL_RENDERBUFFER,
+                          GL_DEPTH24_STENCIL8,
+                          static_cast<GLsizei>(width),
+                          static_cast<GLsizei>(height));
     glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
     glGenFramebuffers(1, &fbo);

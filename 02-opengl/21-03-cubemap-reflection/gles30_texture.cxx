@@ -22,8 +22,8 @@ texture::texture(const type tex_type, const extent size)
 {
     gen_texture_set_filters_and_wrap();
 
-    const GLsizei gl_width  = static_cast<GLsizei>(size.width);
-    const GLsizei gl_height = static_cast<GLsizei>(size.height);
+    const auto gl_width  = static_cast<GLsizei>(size.width);
+    const auto gl_height = static_cast<GLsizei>(size.height);
     GLint        mipmap_level = 0;
     GLint        border       = 0;
     // allocate memory for texture

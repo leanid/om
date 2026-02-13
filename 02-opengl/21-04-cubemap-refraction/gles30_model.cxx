@@ -1,6 +1,7 @@
 #include "gles30_model.hxx"
 
 #include <algorithm>
+#include <ranges>
 #include <iostream>
 #include <sstream>
 #include <vector>
@@ -14,9 +15,8 @@ namespace gles30
 
 void model::draw(shader& shader) const
 {
-    std::for_each(begin(meshes),
-                  end(meshes),
-                  [&shader](const mesh& m) { m.draw(shader); });
+    std::ranges::for_each(meshes,
+                          [&shader](const mesh& m) { m.draw(shader); });
 }
 
 static void                  process_node(const aiNode*      node,
@@ -123,7 +123,7 @@ static mesh process_mesh(const aiMesh*      mesh,
     // process indices
     std::vector<uint32_t> indices;
 
-    indices.reserve(3 * mesh->mNumFaces);
+    indices.reserve(static_cast<std::vector<uint32_t>::size_type>(3) * mesh->mNumFaces);
 
     for (size_t i = 0; i < mesh->mNumFaces; i++)
     {
@@ -156,8 +156,7 @@ static mesh process_mesh(const aiMesh*      mesh,
             end(textures), begin(specular_maps), end(specular_maps));
     }
 
-    return gles30::mesh(
-        std::move(vertices), std::move(indices), std::move(textures));
+    return { std::move(vertices), std::move(indices), std::move(textures) };
 }
 
 std::vector<texture*> load_material_textures(const aiMaterial*  mat,
@@ -177,8 +176,8 @@ std::vector<texture*> load_material_textures(const aiMaterial*  mat,
         std::filesystem::path texture_file_path{ directory };
         texture_file_path /= str.C_Str();
 
-        texture* texture = new gles30::texture(texture_file_path, type_name);
-        textures.push_back(texture);
+        auto* tex = new gles30::texture(texture_file_path, type_name);
+        textures.push_back(tex);
     }
     return textures;
 }

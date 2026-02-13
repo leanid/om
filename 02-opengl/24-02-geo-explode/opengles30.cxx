@@ -2,6 +2,8 @@
 
 #include <algorithm>
 #include <array>
+#include <ranges>
+#include <string>
 #include <csignal>
 #include <iostream>
 #include <sstream>
@@ -185,8 +187,10 @@ static const char* source_to_strv(GLenum source)
             return "APPLICATION";
         case GL_DEBUG_SOURCE_OTHER:
             return "OTHER";
+        default:
+            throw std::runtime_error("unknown GL debug source: " +
+                                    std::to_string(static_cast<unsigned>(source)));
     }
-    return "unknown";
 }
 
 static const char* type_to_strv(GLenum type)
@@ -211,8 +215,10 @@ static const char* type_to_strv(GLenum type)
             return "POP_GROUP";
         case GL_DEBUG_TYPE_OTHER:
             return "OTHER";
+        default:
+            throw std::runtime_error("unknown GL debug type: " +
+                                    std::to_string(static_cast<unsigned>(type)));
     }
-    return "unknown";
 }
 
 static const char* severity_to_strv(GLenum severity)
@@ -227,8 +233,10 @@ static const char* severity_to_strv(GLenum severity)
             return "LOW";
         case GL_DEBUG_SEVERITY_NOTIFICATION:
             return "NOTIFICATION";
+        default:
+            throw std::runtime_error("unknown GL debug severity: " +
+                                    std::to_string(static_cast<unsigned>(severity)));
     }
-    return "unknown";
 }
 
 // 30Kb on my system, too much for stack
@@ -275,11 +283,10 @@ int get_gl_constant(
     const std::array<std::pair<std::string_view, int>, 8>& operations,
     std::string_view                                       name)
 {
-    auto it = std::find_if(begin(operations),
-                           end(operations),
-                           [&name](const std::pair<std::string_view, int>& p)
-                           { return p.first == name; });
-    if (it == end(operations))
+    auto it = std::ranges::find_if(operations,
+                                   [&name](const std::pair<std::string_view, int>& p)
+                                   { return p.first == name; });
+    if (it == std::end(operations))
     {
         throw std::out_of_range(std::string("operation not found: ") +
                                 std::string(name));

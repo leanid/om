@@ -247,8 +247,9 @@ void shader::set_uniform(std::string_view name, const glm::vec2& v)
 void shader::bind_uniform_block(std::string_view uniform_block_name,
                                 uint32_t         binding_point)
 {
-    uint32_t block_index =
-        glGetUniformBlockIndex(program_id, uniform_block_name.data());
+    std::string block_name(uniform_block_name);
+    uint32_t    block_index =
+        glGetUniformBlockIndex(program_id, block_name.c_str());
 
     glUniformBlockBinding(program_id, block_index, binding_point);
 }

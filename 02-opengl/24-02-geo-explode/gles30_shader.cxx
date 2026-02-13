@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <ranges>
 #include <charconv>
 #include <cstdint>
 #include <fstream>
@@ -28,8 +29,11 @@ std::ostream& operator<<(std::ostream&                      os,
 {
     using namespace std;
 
-    const char* open_braket = find(begin(list.err_msg), end(list.err_msg), '(');
-    const char* close_braket = find(open_braket, end(list.err_msg), ')');
+    auto       open_it     = std::ranges::find(list.err_msg, '(');
+    const char* open_braket = (open_it != list.err_msg.end()) ? &*open_it : list.err_msg.data();
+    auto close_range = std::string_view(open_braket, list.err_msg.data() + list.err_msg.size());
+    auto       close_it    = std::ranges::find(close_range, ')');
+    const char* close_braket = (close_it != close_range.end()) ? &*close_it : close_range.data() + close_range.size();
 
     uint32_t value;
     auto [p, ec] = from_chars(open_braket + 1, close_braket, value);
@@ -43,7 +47,7 @@ std::ostream& operator<<(std::ostream&                      os,
     for (auto first = list.src.begin(), last = list.src.end(); first != last;
          first += 1, ++line_num)
     {
-        auto it = find(first, last, '\n');
+        auto it = std::ranges::find(std::ranges::subrange(first, last), '\n');
         os << setw(3) << right << line_num << ' '
            << string_view(first, it - first);
         if (line_num == value)
@@ -91,27 +95,25 @@ static uint32_t compile_shader(std::string_view src,
 
         std::stringstream ss;
         ss << "error: in shader:\n"
-           << list_code_with_line_numbers{ src, info_log.data() } << '\n';
+           << list_code_with_line_numbers{ .src = src,
+                                           .err_msg = std::string_view(info_log.data()) } << '\n';
         throw std::runtime_error(ss.str());
     }
     return shader;
 }
 
-void shader::create(std::string_view vertex_shader_src,
-                    std::string_view geometry_shader_src,
-                    std::string_view fragment_shader_src)
+void shader::create(shader_sources src)
 {
-
     uint32_t vertex_shader =
-        compile_shader(vertex_shader_src, GL_VERTEX_SHADER);
+        compile_shader(src.vertex, GL_VERTEX_SHADER);
 
     uint32_t geometry_shader =
-        geometry_shader_src.empty()
+        src.geometry.empty()
             ? 0
-            : compile_shader(geometry_shader_src, GL_GEOMETRY_SHADER);
+            : compile_shader(src.geometry, GL_GEOMETRY_SHADER);
 
     uint32_t fragment_shader =
-        compile_shader(fragment_shader_src, GL_FRAGMENT_SHADER);
+        compile_shader(src.fragment, GL_FRAGMENT_SHADER);
 
     // create complete shader program and reseive id (vertex + geometry +
     // fragment) geometry shader - will have default value
@@ -119,7 +121,7 @@ void shader::create(std::string_view vertex_shader_src,
 
     glAttachShader(program_id, vertex_shader);
 
-    if (!geometry_shader_src.empty())
+    if (!src.geometry.empty())
     {
         glAttachShader(program_id, geometry_shader);
     }
@@ -176,7 +178,7 @@ shader::shader(
     std::string v_src{ read_file_content(vertex_shader_path) };
     std::string f_src{ read_file_content(fragment_shader_path) };
 
-    create(v_src, {}, f_src);
+    create({ .vertex = v_src, .geometry = {}, .fragment = f_src });
 }
 
 shader::shader(
@@ -189,7 +191,7 @@ shader::shader(
     std::string g_src{ read_file_content(geometry_shader_path) };
     std::string f_src{ read_file_content(fragment_shader_path) };
 
-    create(v_src, g_src, f_src);
+    create({ .vertex = v_src, .geometry = g_src, .fragment = f_src });
 }
 
 shader::shader(shader&& other) noexcept
@@ -279,8 +281,9 @@ void shader::set_uniform(std::string_view name, const glm::vec2& v)
 void shader::bind_uniform_block(std::string_view uniform_block_name,
                                 uint32_t         binding_point)
 {
-    uint32_t block_index =
-        glGetUniformBlockIndex(program_id, uniform_block_name.data());
+    std::string block_name(uniform_block_name);
+    uint32_t    block_index =
+        glGetUniformBlockIndex(program_id, block_name.c_str());
 
     glUniformBlockBinding(program_id, block_index, binding_point);
 }

@@ -5,6 +5,7 @@
 #include <iostream>
 #include <memory>
 #include <numeric>
+#include <ranges>
 #include <string>
 #include <vector>
 #include <type_traits>
@@ -120,7 +121,22 @@ void mouse_callback(float xpos, float ypos)
     cameraFront = glm::normalize(front);
 }
 
+static int main_impl();
+
 int main(int /*argc*/, char* /*argv*/[])
+{
+    try
+    {
+        return main_impl();
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << e.what() << std::endl;
+        return 1;
+    }
+}
+
+static int main_impl()
 {
     using namespace std;
     using namespace std::chrono;
@@ -284,7 +300,7 @@ int main(int /*argc*/, char* /*argv*/[])
     bool continue_loop = true;
     while (continue_loop)
     {
-        float currentFrame = SDL_GetTicks() * 0.001f; // seconds
+        float currentFrame = static_cast<float>(SDL_GetTicks()) * 0.001f; // seconds
         deltaTime          = currentFrame - lastFrame;
         lastFrame          = currentFrame;
 
@@ -378,8 +394,8 @@ int main(int /*argc*/, char* /*argv*/[])
 
         if (use_cube)
         {
-            uint32_t cube_indexes[36];
-            std::iota(begin(cube_indexes), end(cube_indexes), 0);
+            std::array<uint32_t, 36> cube_indexes;
+            std::ranges::iota(cube_indexes, 0);
 
             glBufferData(GL_ARRAY_BUFFER,
                          cube_vertices.size() * sizeof(float),
@@ -388,8 +404,8 @@ int main(int /*argc*/, char* /*argv*/[])
             gl_check();
 
             glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-                         sizeof(cube_indexes),
-                         cube_indexes,
+                         cube_indexes.size() * sizeof(uint32_t),
+                         cube_indexes.data(),
                          GL_DYNAMIC_DRAW);
             gl_check();
         }
@@ -431,7 +447,7 @@ int main(int /*argc*/, char* /*argv*/[])
         {
             model = glm::rotate(
                 model,
-                glm::radians(float(now.count() * 0.001f * angle_per_sec)),
+                glm::radians(static_cast<float>(now.count()) * 0.001f * angle_per_sec),
                 rotate_axis);
         }
 
@@ -443,7 +459,7 @@ int main(int /*argc*/, char* /*argv*/[])
         if (!use_wasd)
         {
             uint32_t time_from_init_ms = SDL_GetTicks();
-            float    seconds           = time_from_init_ms * 0.001f;
+            float    seconds           = static_cast<float>(time_from_init_ms) * 0.001f;
 
             glm::vec3 camera_position{ radius * std::sin(seconds),
                                        0.f,
@@ -488,7 +504,7 @@ int main(int /*argc*/, char* /*argv*/[])
 
         if (multi_cube && use_cube)
         {
-            glm::vec3 cube_positions[] = {
+            const std::array<glm::vec3, 10> cube_positions = {
                 glm::vec3(0.0f, 0.0f, 0.0f),    glm::vec3(2.0f, 5.0f, -15.0f),
                 glm::vec3(-1.5f, -2.2f, -2.5f), glm::vec3(-3.8f, -2.0f, -12.3f),
                 glm::vec3(2.4f, -0.4f, -3.5f),  glm::vec3(-1.7f, 3.0f, -7.5f),
@@ -500,7 +516,7 @@ int main(int /*argc*/, char* /*argv*/[])
             for (glm::vec3 pos : cube_positions)
             {
                 model       = glm::translate(model, pos);
-                float angle = 20.0f * i++;
+                float angle = 20.0f * static_cast<float>(i++);
                 model       = glm::rotate(
                     model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
                 shader.set_uniform("model", model);

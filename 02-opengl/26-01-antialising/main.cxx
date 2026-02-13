@@ -337,7 +337,8 @@ struct scene
                                const uint32_t         binding_point,
                                gles30::shader&        shader,
                                uint32_t&              ubo_handle);
-    void pull_system_events(bool& continue_loop, int& current_effect);
+    struct event_state { bool& continue_loop; int& current_effect; };
+    void pull_system_events(event_state state);
     void regenerate_rock_matrixes();
 
     properties_reader properties;
@@ -371,7 +372,7 @@ void scene::create_uniform_buffer(const void*            buffer_ptr,
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
-void scene::pull_system_events(bool& continue_loop, int& current_effect)
+void scene::pull_system_events(event_state state)
 {
     using namespace std;
     SDL_Event event;
@@ -379,7 +380,7 @@ void scene::pull_system_events(bool& continue_loop, int& current_effect)
     {
         if (SDL_EVENT_FINGER_DOWN == event.type || SDL_EVENT_QUIT == event.type)
         {
-            continue_loop = false;
+            state.continue_loop = false;
             break;
         }
         else if (SDL_EVENT_MOUSE_MOTION == event.type)
@@ -403,15 +404,15 @@ void scene::pull_system_events(bool& continue_loop, int& current_effect)
             }
             else if (event.key.key == SDLK_2)
             {
-                current_effect = 2;
+                state.current_effect = 2;
             }
             else if (event.key.key == SDLK_3)
             {
-                current_effect = 3;
+                state.current_effect = 3;
             }
             else if (event.key.key == SDLK_4)
             {
-                current_effect = 4;
+                state.current_effect = 4;
             }
             else if (event.key.key == SDLK_5)
             {
@@ -489,7 +490,8 @@ int main(int /*argc*/, char* /*argv*/[])
 
             scene.properties.update_changes();
 
-            scene.pull_system_events(continue_loop, current_post_process);
+            scene.pull_system_events({ .continue_loop = continue_loop,
+                          .current_effect = current_post_process });
 
             scene.render(delta_time);
 

@@ -1,5 +1,6 @@
 #include "gles30_mesh.hxx"
 
+#include <array>
 #include <cstddef>
 
 #include "opengles30.hxx"
@@ -11,9 +12,6 @@ mesh::mesh(mesh&& other) noexcept
     : vertices{ std::move(other.vertices) }
     , indices{ std::move(other.indices) }
     , textures{ std::move(other.textures) }
-    , VAO{ 0 }
-    , VBO{ 0 }
-    , EBO{ 0 }
 {
     std::swap(VBO, other.VBO);
     std::swap(EBO, other.EBO);
@@ -60,26 +58,26 @@ void mesh::draw(shader& shader)
         // retrieve texture number (the N in diffuse_textureN)
         texture&         texture = *textures.at(i);
         texture::uv_type type    = texture.get_type();
-        char             str[32];
+        std::array<char, 32> str{};
 
         int32_t is_ok = 0;
 
         if (type == texture::uv_type::diffuse)
         {
-            is_ok = snprintf(str, sizeof(str), "tex_diffuse%d", diffuseNr++);
+            is_ok = snprintf(str.data(), str.size(), "tex_diffuse%d", diffuseNr++);
             assert(is_ok > 0);
         }
         else if (type == texture::uv_type::specular)
         {
-            is_ok = snprintf(str, sizeof(str), "tex_specular%d", specularNr++);
+            is_ok = snprintf(str.data(), str.size(), "tex_specular%d", specularNr++);
             assert(is_ok > 0);
         }
 
-        char mat_name[64];
-        is_ok = snprintf(mat_name, sizeof(mat_name), "material.%32s", str);
+        std::array<char, 64> mat_name{};
+        is_ok = snprintf(mat_name.data(), mat_name.size(), "material.%32s", str.data());
         assert(is_ok > 0);
 
-        shader.set_uniform(mat_name, static_cast<int32_t>(i));
+        shader.set_uniform(mat_name.data(), static_cast<int32_t>(i));
         texture.bind();
     }
 

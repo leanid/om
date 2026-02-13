@@ -6,6 +6,7 @@
 #include <iostream>
 #include <memory>
 #include <numeric>
+#include <ranges>
 #include <string>
 #include <vector>
 
@@ -58,7 +59,7 @@ void render_mesh(gles30::shader&          shader,
         shader.set_uniform("view", camera.view_matrix());
 
         {
-            glm::mat4 model = glm::mat4(1.0f);
+            auto model = glm::mat4(1.0f);
             model           = glm::translate(model, position);
             model           = glm::scale(model, glm::vec3(scale));
             shader.set_uniform("model", model);
@@ -95,10 +96,9 @@ static bool destroy_opengl_context(SDL_GLContext ptr)
                                                    "Mac OS X",
                                                    "Linux" };
 
-    auto it =
-        find(begin(desktop_platforms), end(desktop_platforms), platform_name);
+    auto it = std::ranges::find(desktop_platforms, platform_name);
 
-    if (it != end(desktop_platforms))
+    if (it != std::end(desktop_platforms))
     {
         // we want OpenGL Core 3.3 context
         ask_context.name          = "OpenGL Core";
@@ -181,7 +181,13 @@ static bool destroy_opengl_context(SDL_GLContext ptr)
     return gl_context;
 };
 
-void pull_system_events(bool& continue_loop, int& current_effect)
+struct event_state
+{
+    bool& continue_loop;
+    int&  current_effect;
+};
+
+void pull_system_events(event_state state)
 {
     using namespace std;
     SDL_Event event;
@@ -189,7 +195,7 @@ void pull_system_events(bool& continue_loop, int& current_effect)
     {
         if (SDL_EVENT_FINGER_DOWN == event.type || SDL_EVENT_QUIT == event.type)
         {
-            continue_loop = false;
+            state.continue_loop = false;
             break;
         }
         else if (SDL_EVENT_MOUSE_MOTION == event.type)
@@ -207,23 +213,23 @@ void pull_system_events(bool& continue_loop, int& current_effect)
         {
             if (event.key.key == SDLK_0)
             {
-                current_effect = 5;
+                state.current_effect = 5;
             }
             else if (event.key.key == SDLK_1)
             {
-                current_effect = 1;
+                state.current_effect = 1;
             }
             else if (event.key.key == SDLK_2)
             {
-                current_effect = 2;
+                state.current_effect = 2;
             }
             else if (event.key.key == SDLK_3)
             {
-                current_effect = 3;
+                state.current_effect = 3;
             }
             else if (event.key.key == SDLK_4)
             {
-                current_effect = 4;
+                state.current_effect = 4;
             }
             else if (event.key.key == SDLK_5)
             {
@@ -246,8 +252,8 @@ void pull_system_events(bool& continue_loop, int& current_effect)
                  << event.window.data2 << ' ';
             // play with it to understand OpenGL origin point
             // for window screen coordinate system
-            screen_width  = event.window.data1;
-            screen_height = event.window.data2;
+            screen_width  = static_cast<float>(event.window.data1);
+            screen_height = static_cast<float>(event.window.data2);
             screen_aspect = screen_width / screen_height;
             camera.aspect(screen_aspect);
             glViewport(0, 0, event.window.data1, event.window.data2);
@@ -258,7 +264,7 @@ void pull_system_events(bool& continue_loop, int& current_effect)
 
 float update_delta_time(float& lastFrame)
 {
-    float currentFrame = SDL_GetTicks() * 0.001f; // seconds
+    float currentFrame = static_cast<float>(SDL_GetTicks()) * 0.001f; // seconds
     float deltaTime    = currentFrame - lastFrame;
     lastFrame          = currentFrame;
     return deltaTime;
@@ -350,10 +356,9 @@ gles30::mesh create_mesh(const float*                  vertices,
         vert.push_back(v);
     }
     vector<uint32_t> indexes(count_vert);
-    std::iota(begin(indexes), end(indexes), 0);
+    std::ranges::iota(indexes, 0);
 
-    return gles30::mesh(
-        std::move(vert), std::move(indexes), std::move(textures));
+    return { std::move(vert), std::move(indexes), std::move(textures) };
 }
 
 void create_camera(const properties_reader& properties)
@@ -403,7 +408,7 @@ void scene::create_uniform_buffer(const void*            buffer_ptr,
     glGenBuffers(1, &ubo_handle);
     glBindBuffer(GL_UNIFORM_BUFFER, ubo_handle);
     glBufferData(GL_UNIFORM_BUFFER,
-                 buffer_size,
+                 static_cast<GLsizeiptr>(buffer_size),
                  buffer_ptr,
                  GL_STATIC_DRAW); // allocate "buffer_size" bytes of memory
 
@@ -475,7 +480,8 @@ int main(int /*argc*/, char* /*argv*/[])
 
             scene.properties.update_changes();
 
-            pull_system_events(continue_loop, current_post_process);
+            pull_system_events({ .continue_loop = continue_loop,
+                    .current_effect = current_post_process });
 
             scene.render(delta_time);
 

@@ -481,7 +481,8 @@ int main(int /*argc*/, char* /*argv*/[])
 
             scene.properties.update_changes();
 
-            pull_system_events(continue_loop, current_post_process);
+            pull_system_events({ .continue_loop = continue_loop,
+                    .current_effect = current_post_process });
 
             scene.render(delta_time);
 

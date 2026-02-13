@@ -4,6 +4,7 @@
 #include <iostream>
 #include <memory>
 #include <numeric>
+#include <ranges>
 #include <string>
 #include <vector>
 #include <type_traits>
@@ -101,7 +102,22 @@ void update_vertex_attributes()
     glEnableVertexAttribArray(2);
 }
 
+static int main_impl();
+
 int main(int /*argc*/, char* /*argv*/[])
+{
+    try
+    {
+        return main_impl();
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << e.what() << std::endl;
+        return 1;
+    }
+}
+
+static int main_impl()
 {
     using namespace std;
     using namespace std::chrono;
@@ -226,8 +242,8 @@ int main(int /*argc*/, char* /*argv*/[])
     //    very rarely.
     // GL_DYNAMIC_DRAW: the data is likely to change a lot.
     // GL_STREAM_DRAW: the data will change every time it is drawn.
-    uint32_t cube_indexes[36];
-    std::iota(begin(cube_indexes), end(cube_indexes), 0);
+    std::array<uint32_t, 36> cube_indexes;
+    std::ranges::iota(cube_indexes, 0);
 
     glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
     gl_check();
@@ -236,12 +252,9 @@ int main(int /*argc*/, char* /*argv*/[])
     glGenBuffers(1, &EBO);
     gl_check();
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    gl_check();
-
     glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-                 sizeof(cube_indexes),
-                 cube_indexes,
+                 cube_indexes.size() * sizeof(uint32_t),
+                 cube_indexes.data(),
                  GL_STATIC_DRAW);
     gl_check();
 
@@ -287,7 +300,7 @@ int main(int /*argc*/, char* /*argv*/[])
     bool continue_loop = true;
     while (continue_loop)
     {
-        float currentFrame = SDL_GetTicks() * 0.001f; // seconds
+        float currentFrame = static_cast<float>(SDL_GetTicks()) * 0.001f; // seconds
         deltaTime          = currentFrame - lastFrame;
         lastFrame          = currentFrame;
 

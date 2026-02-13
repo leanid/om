@@ -1,5 +1,6 @@
 #include <array>
 #include <cassert>
+#include <ranges>
 #include <chrono>
 #include <cstdio>
 #include <cstdlib>
@@ -54,11 +55,10 @@ int get_gl_constant(
     const std::array<std::pair<std::string_view, int>, 8>& operations,
     std::string_view                                       name)
 {
-    auto it = std::find_if(begin(operations),
-                           end(operations),
-                           [&name](const std::pair<std::string_view, int>& p)
-                           { return p.first == name; });
-    if (it == end(operations))
+    auto it = std::ranges::find_if(operations,
+                                    [&name](const std::pair<std::string_view, int>& p)
+                                    { return p.first == name; });
+    if (it == std::end(operations))
     {
         throw std::out_of_range(std::string("operation not found: ") +
                                 std::string(name));
@@ -158,7 +158,7 @@ void render_mesh(gles30::shader&          shader,
         shader.set_uniform("view", camera.view_matrix());
 
         {
-            glm::mat4 model = glm::mat4(1.0f);
+            auto model = glm::mat4(1.0f);
             model           = glm::translate(model, position);
             model           = glm::scale(model, glm::vec3(scale));
             shader.set_uniform("model", model);
@@ -199,8 +199,10 @@ static const char* source_to_strv(GLenum source)
             return "APPLICATION";
         case GL_DEBUG_SOURCE_OTHER:
             return "OTHER";
+        default:
+            throw std::runtime_error("unknown GL debug source: " +
+                                    std::to_string(static_cast<unsigned>(source)));
     }
-    return "unknown";
 }
 
 static const char* type_to_strv(GLenum type)
@@ -225,8 +227,10 @@ static const char* type_to_strv(GLenum type)
             return "POP_GROUP";
         case GL_DEBUG_TYPE_OTHER:
             return "OTHER";
+        default:
+            throw std::runtime_error("unknown GL debug type: " +
+                                    std::to_string(static_cast<unsigned>(type)));
     }
-    return "unknown";
 }
 
 static const char* severity_to_strv(GLenum severity)
@@ -241,8 +245,10 @@ static const char* severity_to_strv(GLenum severity)
             return "LOW";
         case GL_DEBUG_SEVERITY_NOTIFICATION:
             return "NOTIFICATION";
+        default:
+            throw std::runtime_error("unknown GL debug severity: " +
+                                    std::to_string(static_cast<unsigned>(severity)));
     }
-    return "unknown";
 }
 
 // 30Kb on my system, too much for stack
@@ -298,10 +304,9 @@ callback_opengl_debug(GLenum                       source,
                                                    "Mac OS X",
                                                    "Linux" };
 
-    auto it =
-        find(begin(desktop_platforms), end(desktop_platforms), platform_name);
+    auto it = std::ranges::find(desktop_platforms, platform_name);
 
-    if (it != end(desktop_platforms))
+    if (it != std::end(desktop_platforms))
     {
         // we want OpenGL Core 3.3 context
         ask_context.name          = "OpenGL Core";
@@ -384,7 +389,13 @@ callback_opengl_debug(GLenum                       source,
     return gl_context;
 };
 
-void pull_system_events(bool& continue_loop, int& current_effect)
+struct event_state
+{
+    bool& continue_loop;
+    int& current_effect;
+};
+
+void pull_system_events(event_state state)
 {
     using namespace std;
     SDL_Event event;
@@ -392,7 +403,7 @@ void pull_system_events(bool& continue_loop, int& current_effect)
     {
         if (SDL_EVENT_FINGER_DOWN == event.type || SDL_EVENT_QUIT == event.type)
         {
-            continue_loop = false;
+            state.continue_loop = false;
             break;
         }
         else if (SDL_EVENT_MOUSE_MOTION == event.type)
@@ -410,23 +421,23 @@ void pull_system_events(bool& continue_loop, int& current_effect)
         {
             if (event.key.key == SDLK_0)
             {
-                current_effect = 5;
+                state.current_effect = 5;
             }
             else if (event.key.key == SDLK_1)
             {
-                current_effect = 1;
+                state.current_effect = 1;
             }
             else if (event.key.key == SDLK_2)
             {
-                current_effect = 2;
+                state.current_effect = 2;
             }
             else if (event.key.key == SDLK_3)
             {
-                current_effect = 3;
+                state.current_effect = 3;
             }
             else if (event.key.key == SDLK_4)
             {
-                current_effect = 4;
+                state.current_effect = 4;
             }
             else if (event.key.key == SDLK_5)
             {
@@ -449,8 +460,8 @@ void pull_system_events(bool& continue_loop, int& current_effect)
                  << event.window.data2 << ' ';
             // play with it to understand OpenGL origin point
             // for window screen coordinate system
-            screen_width  = event.window.data1;
-            screen_height = event.window.data2;
+            screen_width  = static_cast<float>(event.window.data1);
+            screen_height = static_cast<float>(event.window.data2);
             screen_aspect = screen_width / screen_height;
             camera.aspect(screen_aspect);
             glViewport(0, 0, event.window.data1, event.window.data2);
@@ -461,7 +472,7 @@ void pull_system_events(bool& continue_loop, int& current_effect)
 
 float update_delta_time(float& lastFrame)
 {
-    float currentFrame = SDL_GetTicks() * 0.001f; // seconds
+    float currentFrame = static_cast<float>(SDL_GetTicks()) * 0.001f; // seconds
     float deltaTime    = currentFrame - lastFrame;
     lastFrame          = currentFrame;
     return deltaTime;
@@ -553,10 +564,9 @@ gles30::mesh create_mesh(const float*                  vertices,
         vert.push_back(v);
     }
     vector<uint32_t> indexes(count_vert);
-    std::iota(begin(indexes), end(indexes), 0);
+    std::ranges::iota(indexes, 0);
 
-    return gles30::mesh(
-        std::move(vert), std::move(indexes), std::move(textures));
+    return { std::move(vert), std::move(indexes), std::move(textures) };
 }
 
 void create_camera(const properties_reader& properties)
@@ -593,9 +603,9 @@ struct scene
 
     gles30::shader house_shader;
 
-    uint32_t vao;
-    uint32_t vbo;
-    uint32_t ebo;
+    uint32_t vao{ 0 };
+    uint32_t vbo{ 0 };
+    uint32_t ebo{ 0 };
 };
 
 void scene::create_uniform_buffer(const void*            buffer_ptr,
@@ -608,7 +618,7 @@ void scene::create_uniform_buffer(const void*            buffer_ptr,
     glGenBuffers(1, &ubo_handle);
     glBindBuffer(GL_UNIFORM_BUFFER, ubo_handle);
     glBufferData(GL_UNIFORM_BUFFER,
-                 buffer_size,
+                 static_cast<GLsizeiptr>(buffer_size),
                  buffer_ptr,
                  GL_STATIC_DRAW); // allocate "buffer_size" bytes of memory
 
@@ -625,9 +635,6 @@ scene::scene()
     , window{ create_window(properties) }
     , context{ create_opengl_context(window.get()) }
     , house_shader("res/house.vsh", "res/house.gsh", "res/house.fsh")
-    , vao{ 0 }
-    , vbo{ 0 }
-    , ebo{ 0 }
 {
     create_camera(properties);
 
@@ -641,15 +648,18 @@ scene::scene()
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
-    glBufferData(GL_ARRAY_BUFFER, points.size() * sizeof(float), points.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER,
+                 static_cast<GLsizeiptr>(points.size() * sizeof(float)),
+                 points.data(),
+                 GL_STATIC_DRAW);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 
     std::vector<uint32_t> indexes(4);
-    std::iota(begin(indexes), end(indexes), 0);
+    std::ranges::iota(indexes, 0);
 
     glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-                 static_cast<signed>(indexes.size() * sizeof(uint32_t)),
+                 static_cast<GLsizeiptr>(indexes.size() * sizeof(uint32_t)),
                  indexes.data(),
                  GL_STATIC_DRAW);
 
@@ -715,7 +725,8 @@ int main(int /*argc*/, char* /*argv*/[])
 
             scene.properties.update_changes();
 
-            pull_system_events(continue_loop, current_post_process);
+            pull_system_events({ .continue_loop = continue_loop,
+                    .current_effect = current_post_process });
 
             scene.render(delta_time);
 

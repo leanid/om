@@ -18,6 +18,7 @@
 #include "properties_reader.hxx"
 
 #include <algorithm>
+#include <array>
 // #include <charconv>
 #include <forward_list>
 #include <fstream>
@@ -148,7 +149,7 @@ private:
                 tok.type                   = token_best_type;
                 auto&       first_match    = token_best_match[0];
                 const char* first_char_ptr = first_match.first;
-                size_t      length = static_cast<size_t>(first_match.length());
+                auto length = static_cast<size_t>(first_match.length());
                 tok.value          = std::string_view(first_char_ptr, length);
 
                 rest_content = rest_content.substr(tok.value.size());
@@ -374,8 +375,8 @@ struct parser_t
             ss << " but got: EOF";
             throw std::runtime_error(ss.str());
         }
-        auto type_it = std::find(begin(types), end(types), it->type);
-        if (type_it == end(types))
+        auto type_it = std::ranges::find(types, it->type);
+        if (type_it == std::end(types))
         {
             std::stringstream ss;
             ss << "error: expected ";
@@ -473,8 +474,8 @@ struct parser_t
     {
         if (std::holds_alternative<std::string>(left))
         {
-            const std::string& str0 = std::get<std::string>(left);
-            const std::string& str1 = std::get<std::string>(right);
+            const auto& str0 = std::get<std::string>(left);
+            const auto& str1 = std::get<std::string>(right);
             if (operator_literal == "+")
             {
                 return { str0 + str1 };
@@ -563,8 +564,8 @@ private:
 class properties_reader::impl
 {
 public:
-    impl(const fs::path& path_)
-        : path{ path_ }
+    impl(fs::path path_)
+        : path{ std::move(path_) }
         , last_update_time{ fs::last_write_time(path) }
     {
         build_properties_map();
@@ -644,7 +645,7 @@ bool properties_reader::get_bool(std::string_view name) const
     return std::get<bool>(ptr->get_map()[std::string{ name }]);
 }
 
-properties_reader::~properties_reader() {}
+properties_reader::~properties_reader() = default;
 
 std::ostream& operator<<(std::ostream& stream, const enum token::type t)
 {
@@ -656,7 +657,7 @@ std::ostream& operator<<(std::ostream& stream, const enum token::type t)
     }
 
     // clang-format off
-    const char* names[]{ "none",
+    const std::array<const char*, 11> names{ "none",
                          "type_id",
                          "identifier",
                          "operation",

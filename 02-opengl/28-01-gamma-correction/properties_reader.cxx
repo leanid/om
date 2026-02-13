@@ -18,6 +18,7 @@
 #include "properties_reader.hxx"
 
 #include <algorithm>
+#include <array>
 // #include <charconv>
 #include <forward_list>
 #include <fstream>
@@ -41,7 +42,7 @@ static std::string demangle(const char* name)
     int status;
 
     std::unique_ptr<char, void (*)(void*)> res{
-        abi::__cxa_demangle(name, NULL, NULL, &status), std::free
+        abi::__cxa_demangle(name, nullptr, nullptr, &status), std::free
     };
 
     return (status == 0) ? res.get() : name;
@@ -175,7 +176,7 @@ private:
                 tok.type                   = token_best_type;
                 auto&       first_match    = token_best_match[0];
                 const char* first_char_ptr = first_match.first;
-                size_t      length = static_cast<size_t>(first_match.length());
+                auto length = static_cast<size_t>(first_match.length());
                 tok.value          = std::string_view(first_char_ptr, length);
 
                 rest_content = rest_content.substr(tok.value.size());
@@ -401,8 +402,8 @@ struct parser_t
             ss << " but got: EOF";
             throw std::runtime_error(ss.str());
         }
-        auto type_it = std::find(begin(types), end(types), it->type);
-        if (type_it == end(types))
+        auto type_it = std::ranges::find(types, it->type);
+        if (type_it == std::end(types))
         {
             std::stringstream ss;
             ss << "error: expected ";
@@ -500,8 +501,8 @@ struct parser_t
     {
         if (std::holds_alternative<std::string>(left))
         {
-            const std::string& str0 = std::get<std::string>(left);
-            const std::string& str1 = std::get<std::string>(right);
+            const auto& str0 = std::get<std::string>(left);
+            const auto& str1 = std::get<std::string>(right);
             if (operator_literal == "+")
             {
                 return { str0 + str1 };
@@ -590,16 +591,16 @@ private:
 class properties_reader::impl
 {
 public:
-    explicit impl(const std::filesystem::path& path_)
-        : path{ path_ }
+    explicit impl(std::filesystem::path path_)
+        : path{ std::move(path_) }
         , last_update_time{ std::filesystem::last_write_time(path) }
     {
         build_properties_map();
     }
 
-    const std::filesystem::path& get_filepath() const { return path; }
+    [[nodiscard]] const std::filesystem::path& get_filepath() const { return path; }
 
-    const std::unordered_map<std::string, value_t>& get_map() const
+    [[nodiscard]] const std::unordered_map<std::string, value_t>& get_map() const
     {
         return key_values;
     }
@@ -641,8 +642,7 @@ public:
                   << "]" << std::endl
                   << "    from file [" << path << "]" << std::endl;
 
-        uint32_t match_80_percent =
-            static_cast<uint32_t>(size(best_match) * 0.8);
+        auto match_80_percent = static_cast<uint32_t>(static_cast<double>(size(best_match)) * 0.8);
         if (best_mathc_score >= match_80_percent)
         {
             std::cerr << "    best match is [" << best_match << "]"
@@ -650,7 +650,7 @@ public:
         }
     }
 
-    const value_t* get_value_t(std::string_view name) const
+    [[nodiscard]] const value_t* get_value_t(std::string_view name) const
     {
         try
         {
@@ -783,7 +783,7 @@ uint32_t properties_reader::get_uint(std::string_view name) const
     return static_cast<uint32_t>(f);
 }
 
-properties_reader::~properties_reader() {}
+properties_reader::~properties_reader() = default;
 
 std::ostream& operator<<(std::ostream& stream, const enum token::type t)
 {
@@ -795,7 +795,7 @@ std::ostream& operator<<(std::ostream& stream, const enum token::type t)
     }
 
     // clang-format off
-    const char* names[]{ "none",
+    const std::array<const char*, 11> names{ "none",
                          "type_id",
                          "identifier",
                          "operation",

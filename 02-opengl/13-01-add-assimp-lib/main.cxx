@@ -4,6 +4,7 @@
 #include <iostream>
 #include <memory>
 #include <numeric>
+#include <ranges>
 #include <string>
 #include <vector>
 #include <type_traits>
@@ -101,7 +102,22 @@ void update_vertex_attributes()
     glEnableVertexAttribArray(2);
 }
 
+static int main_impl();
+
 int main(int /*argc*/, char* /*argv*/[])
+{
+    try
+    {
+        return main_impl();
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << e.what() << std::endl;
+        return 1;
+    }
+}
+
+static int main_impl()
 {
     using namespace std;
     using namespace std::chrono;
@@ -226,8 +242,8 @@ int main(int /*argc*/, char* /*argv*/[])
     //    very rarely.
     // GL_DYNAMIC_DRAW: the data is likely to change a lot.
     // GL_STREAM_DRAW: the data will change every time it is drawn.
-    uint32_t cube_indexes[36];
-    std::iota(begin(cube_indexes), end(cube_indexes), 0);
+    std::array<uint32_t, 36> cube_indexes;
+    std::ranges::iota(cube_indexes, 0);
 
     glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
     gl_check();
@@ -240,8 +256,8 @@ int main(int /*argc*/, char* /*argv*/[])
     gl_check();
 
     glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-                 sizeof(cube_indexes),
-                 cube_indexes,
+                 cube_indexes.size() * sizeof(uint32_t),
+                 cube_indexes.data(),
                  GL_STATIC_DRAW);
     gl_check();
 
@@ -287,7 +303,7 @@ int main(int /*argc*/, char* /*argv*/[])
     bool continue_loop = true;
     while (continue_loop)
     {
-        float currentFrame = SDL_GetTicks() * 0.001f; // seconds
+        float currentFrame = static_cast<float>(SDL_GetTicks()) * 0.001f; // seconds
         deltaTime          = currentFrame - lastFrame;
         lastFrame          = currentFrame;
 
@@ -399,7 +415,7 @@ int main(int /*argc*/, char* /*argv*/[])
             angle += properties.get_float("angle");
             rotate_axis = properties.get_vec3("rotate_axis");
 
-            glm::vec3 cubePositions[] = {
+            const std::array<glm::vec3, 10> cubePositions = {
                 glm::vec3(0.0f, 0.0f, 0.0f),    glm::vec3(2.0f, 5.0f, -15.0f),
                 glm::vec3(-1.5f, -2.2f, -2.5f), glm::vec3(-3.8f, -2.0f, -12.3f),
                 glm::vec3(2.4f, -0.4f, -3.5f),  glm::vec3(-1.7f, 3.0f, -7.5f),
@@ -407,10 +423,12 @@ int main(int /*argc*/, char* /*argv*/[])
                 glm::vec3(1.5f, 0.2f, -1.5f),   glm::vec3(-1.3f, 1.0f, -1.5f)
             };
 
-            glm::vec3 pointLightPositions[] = { glm::vec3(0.7f, 0.2f, 2.0f),
-                                                glm::vec3(2.3f, -3.3f, -4.0f),
-                                                glm::vec3(-4.0f, 2.0f, -12.0f),
-                                                glm::vec3(0.0f, 0.0f, -3.0f) };
+            const std::array<glm::vec3, 4> pointLightPositions = {
+                glm::vec3(0.7f, 0.2f, 2.0f),
+                glm::vec3(2.3f, -3.3f, -4.0f),
+                glm::vec3(-4.0f, 2.0f, -12.0f),
+                glm::vec3(0.0f, 0.0f, -3.0f)
+            };
 
             std::vector<std::string> names{
                 "pointLights[0].position",  "pointLights[0].ambient",
@@ -425,20 +443,18 @@ int main(int /*argc*/, char* /*argv*/[])
             material.set_uniform("dirLight.diffuse", { 0.4f, 0.4f, 0.4f });
             material.set_uniform("dirLight.specular", { 0.5f, 0.5f, 0.5f });
             // point lights
-            std::array<size_t, std::size(pointLightPositions)> indexes;
-            std::iota(begin(indexes), end(indexes), 0);
-            std::for_each(
-                begin(indexes),
-                end(indexes),
+            std::array<size_t, 4> indexes;
+            std::ranges::iota(indexes, 0);
+            std::ranges::for_each(
+                indexes,
                 [&material, &pointLightPositions, &names](size_t index)
                 {
                     char   i        = static_cast<char>('0' + index);
                     size_t zero_pos = names.front().find('[') + 1;
 
-                    std::for_each(begin(names),
-                                  end(names),
-                                  [i, zero_pos](std::string& v)
-                                  { v[zero_pos] = i; });
+                    std::ranges::for_each(names,
+                                          [i, zero_pos](std::string& v)
+                                          { v[zero_pos] = i; });
 
                     material.set_uniform(names[0], pointLightPositions[index]);
                     material.set_uniform(names[1], { 0.05f, 0.05f, 0.05f });
@@ -469,13 +485,13 @@ int main(int /*argc*/, char* /*argv*/[])
             material.set_uniform("view", view);
             material.set_uniform("projection", projection);
 
-            for (size_t i = 0; i < std::size(cubePositions); i++)
+            for (size_t i = 0; i < cubePositions.size(); i++)
             {
                 // calculate the model matrix for each object and pass it to
                 // shader before drawing
-                glm::mat4 model = glm::mat4(1.0f);
-                model           = glm::translate(model, cubePositions[i]);
-                float angle     = 20.0f * i;
+                auto model = glm::mat4(1.0f);
+                model      = glm::translate(model, cubePositions[i]);
+                float angle = 20.0f * static_cast<float>(i);
                 model           = glm::rotate(
                     model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
                 material.set_uniform("model", model);
@@ -492,10 +508,10 @@ int main(int /*argc*/, char* /*argv*/[])
 
             // we now draw as many light bulbs as we have point lights.
             glBindVertexArray(light_VAO);
-            for (unsigned int i = 0; i < std::size(pointLightPositions); i++)
+            for (const auto& pointLightPosition : pointLightPositions)
             {
                 model = glm::mat4(1.0f);
-                model = glm::translate(model, pointLightPositions[i]);
+                model = glm::translate(model, pointLightPosition);
                 model = glm::scale(model,
                                    glm::vec3(0.2f)); // Make it a smaller cube
                 light_shader.set_uniform("model", model);
