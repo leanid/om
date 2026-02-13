@@ -60,8 +60,8 @@ elseif(UNIX)
     find_package(glm REQUIRED)
     target_link_libraries(
         30-1-point-shadow
-        PRIVATE SDL3::SDL3-shared ${ASSIMP_LIBRARIES}
-                GL -lz
+        PRIVATE SDL3::SDL3-shared assimp::assimp
+                GL
     )
     target_include_directories(
         30-1-point-shadow
@@ -81,7 +81,7 @@ elseif(MSVC)
     target_link_libraries(
         30-1-point-shadow
         PRIVATE SDL3::SDL3-shared glm
-                ${ASSIMP_LIBRARIES}
+                assimp::assimp
                 opengl32
                 IrrXMLd.lib
                 zlibstaticd.lib

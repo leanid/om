@@ -54,7 +54,7 @@ elseif(MSVC)
         16-01-z-buffer
         PRIVATE SDL3::SDL3-shared
                 glm
-                ${ASSIMP_LIBRARIES}
+                assimp::assimp
                 opengl32
                 IrrXMLd.lib
                 zlibstaticd.lib)

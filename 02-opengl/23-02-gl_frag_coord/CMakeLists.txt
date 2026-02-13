@@ -40,9 +40,8 @@ elseif(UNIX)
     find_package(SDL3 REQUIRED)
     find_package(assimp REQUIRED)
     find_package(glm REQUIRED)
-    target_link_libraries(23-02-gl_frag_coord PRIVATE SDL3::SDL3-shared ${ASSIMP_LIBRARIES}
+    target_link_libraries(23-02-gl_frag_coord PRIVATE SDL3::SDL3-shared assimp::assimp
                                                   GL
-                                                  -lz
                                                   )
     target_include_directories(23-02-gl_frag_coord PRIVATE ${SDL3_INCLUDE_DIRS})
 elseif(MSVC)
@@ -51,7 +50,7 @@ elseif(MSVC)
     find_package(glm CONFIG REQUIRED)
     find_package(assimp REQUIRED)
     target_link_libraries(23-02-gl_frag_coord PRIVATE SDL3::SDL3-shared glm
-                                                  ${ASSIMP_LIBRARIES}
+                                                  assimp::assimp
                                                   opengl32
                                                   IrrXMLd.lib
                                                   zlibstaticd.lib

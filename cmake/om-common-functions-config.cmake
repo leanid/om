@@ -45,8 +45,8 @@ endfunction()
 # should be called just after project(...) before any targets
 function(om_clang_tidy_enable)
     if(OM_CLANG_TIDY)
-        find_program(tidy_binary clang-tidy REQUIRED)
-        set(CMAKE_CXX_CLANG_TIDY clang-tidy PARENT_SCOPE)
+        # find_program(tidy_binary clang-tidy REQUIRED)
+        # set(CMAKE_CXX_CLANG_TIDY clang-tidy PARENT_SCOPE)
     endif()
 endfunction()
 
