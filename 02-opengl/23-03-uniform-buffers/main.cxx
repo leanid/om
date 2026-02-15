@@ -58,9 +58,10 @@ int get_gl_constant(
     const std::array<std::pair<std::string_view, int>, 8>& operations,
     std::string_view                                       name)
 {
-    auto it = std::ranges::find_if(operations,
-                           [&name](const std::pair<std::string_view, int>& p)
-                           { return p.first == name; });
+    auto it =
+        std::ranges::find_if(operations,
+                             [&name](const std::pair<std::string_view, int>& p)
+                             { return p.first == name; });
     if (it == std::end(operations))
     {
         throw std::out_of_range(std::string("operation not found: ") +
@@ -120,10 +121,14 @@ void print_view_port()
          << " w=" << view_port[2] << " h=" << view_port[3] << endl;
 }
 
-extern const std::array<float, std::size_t{36} * std::size_t{8}> cube_vertices;
-extern const std::array<float, std::size_t{6} * std::size_t{8}> plane_vertices;
-extern const std::array<float, std::size_t{6} * std::size_t{8}> transparent_vert;
-extern const std::array<float, std::size_t{6} * std::size_t{8}> fullscreen_vertices;
+extern const std::array<float, std::size_t{ 36 } * std::size_t{ 8 }>
+    cube_vertices;
+extern const std::array<float, std::size_t{ 6 } * std::size_t{ 8 }>
+    plane_vertices;
+extern const std::array<float, std::size_t{ 6 } * std::size_t{ 8 }>
+    transparent_vert;
+extern const std::array<float, std::size_t{ 6 } * std::size_t{ 8 }>
+    fullscreen_vertices;
 
 enum class render_options
 {
@@ -161,8 +166,8 @@ void render_mesh(gles30::shader&          shader,
 
         {
             auto model = glm::mat4(1.0f);
-            model           = glm::translate(model, position);
-            model           = glm::scale(model, glm::vec3(scale));
+            model      = glm::translate(model, position);
+            model      = glm::scale(model, glm::vec3(scale));
             shader.set_uniform("model", model);
             mesh.draw(shader);
         }
@@ -202,8 +207,9 @@ static const char* source_to_strv(GLenum source)
         case GL_DEBUG_SOURCE_OTHER:
             return "OTHER";
         default:
-            throw std::runtime_error("unknown GL debug source: " +
-                                    std::to_string(static_cast<unsigned>(source)));
+            throw std::runtime_error(
+                "unknown GL debug source: " +
+                std::to_string(static_cast<unsigned>(source)));
     }
 }
 
@@ -230,8 +236,9 @@ static const char* type_to_strv(GLenum type)
         case GL_DEBUG_TYPE_OTHER:
             return "OTHER";
         default:
-            throw std::runtime_error("unknown GL debug type: " +
-                                    std::to_string(static_cast<unsigned>(type)));
+            throw std::runtime_error(
+                "unknown GL debug type: " +
+                std::to_string(static_cast<unsigned>(type)));
     }
 }
 
@@ -248,8 +255,9 @@ static const char* severity_to_strv(GLenum severity)
         case GL_DEBUG_SEVERITY_NOTIFICATION:
             return "NOTIFICATION";
         default:
-            throw std::runtime_error("unknown GL debug severity: " +
-                                    std::to_string(static_cast<unsigned>(severity)));
+            throw std::runtime_error(
+                "unknown GL debug severity: " +
+                std::to_string(static_cast<unsigned>(severity)));
     }
 }
 
@@ -294,8 +302,9 @@ callback_opengl_debug(GLenum                       source,
     }
 }
 
-[[nodiscard]] std::unique_ptr<std::remove_pointer_t<SDL_GLContext>, decltype(&SDL_GL_DestroyContext)> create_opengl_context(
-    SDL_Window* window)
+[[nodiscard]] std::unique_ptr<std::remove_pointer_t<SDL_GLContext>,
+                              decltype(&SDL_GL_DestroyContext)>
+create_opengl_context(SDL_Window* window)
 {
     using namespace std;
     context_parameters ask_context;
@@ -306,8 +315,7 @@ callback_opengl_debug(GLenum                       source,
                                                    "Mac OS X",
                                                    "Linux" };
 
-    auto it =
-        std::ranges::find(desktop_platforms, platform_name);
+    auto it = std::ranges::find(desktop_platforms, platform_name);
 
     if (it != std::end(desktop_platforms))
     {
@@ -340,7 +348,7 @@ callback_opengl_debug(GLenum                       source,
     using gl_context_t = std::unique_ptr<std::remove_pointer_t<SDL_GLContext>,
                                          decltype(&SDL_GL_DestroyContext)>;
     gl_context_t gl_context(SDL_GL_CreateContext(window),
-                                                 destroy_opengl_context);
+                            destroy_opengl_context);
     if (nullptr == gl_context)
     {
         clog << "Failed to create: " << ask_context
@@ -395,7 +403,7 @@ callback_opengl_debug(GLenum                       source,
 struct event_state
 {
     bool& continue_loop;
-    int& current_effect;
+    int&  current_effect;
 };
 
 void pull_system_events(event_state state)
@@ -404,7 +412,8 @@ void pull_system_events(event_state state)
     SDL_Event event;
     while (SDL_PollEvent(&event))
     {
-        if (SDL_EVENT_FINGER_DOWN == event.type || SDL_EVENT_QUIT == event.type ||
+        if (SDL_EVENT_FINGER_DOWN == event.type ||
+            SDL_EVENT_QUIT == event.type ||
             (SDL_EVENT_KEY_UP == event.type && event.key.key == SDLK_ESCAPE))
         {
             state.continue_loop = false;
@@ -445,14 +454,16 @@ void pull_system_events(event_state state)
             }
             else if (event.key.key == SDLK_5)
             {
-                if (!SDL_SetWindowRelativeMouseMode(SDL_GetKeyboardFocus(), true))
+                if (!SDL_SetWindowRelativeMouseMode(SDL_GetKeyboardFocus(),
+                                                    true))
                 {
                     throw std::runtime_error(SDL_GetError());
                 }
             }
             else if (event.key.key == SDLK_6)
             {
-                if (!SDL_SetWindowRelativeMouseMode(SDL_GetKeyboardFocus(), false))
+                if (!SDL_SetWindowRelativeMouseMode(SDL_GetKeyboardFocus(),
+                                                    false))
                 {
                     throw std::runtime_error(SDL_GetError());
                 }
@@ -529,7 +540,10 @@ std::unique_ptr<SDL_Window, void (*)(SDL_Window*)> create_window(
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
 
     unique_ptr<SDL_Window, void (*)(SDL_Window*)> window(
-        SDL_CreateWindow(title.c_str(), static_cast<int>(screen_width), static_cast<int>(screen_height), SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE),
+        SDL_CreateWindow(title.c_str(),
+                         static_cast<int>(screen_width),
+                         static_cast<int>(screen_height),
+                         SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE),
         destroy_window);
 
     if (window.get() == nullptr)
@@ -603,7 +617,9 @@ struct scene
     properties_reader properties;
 
     std::unique_ptr<SDL_Window, void (*)(SDL_Window*)> window;
-    std::unique_ptr<std::remove_pointer_t<SDL_GLContext>, decltype(&SDL_GL_DestroyContext)> context;
+    std::unique_ptr<std::remove_pointer_t<SDL_GLContext>,
+                    decltype(&SDL_GL_DestroyContext)>
+        context;
 
     gles30::shader cube_shader;
 
@@ -655,8 +671,12 @@ scene::scene()
     , tex_window("res/blending_transparent_window.png",
                  gles30::texture::type::diffuse,
                  gles30::texture::opt::no_flip)
-    , tex_color_buffer(gles30::texture::type::diffuse,
-                       gles30::texture::extent{ .width = static_cast<size_t>(properties.get_float("screen_width")), .height = static_cast<size_t>(properties.get_float("screen_height")) })
+    , tex_color_buffer(
+          gles30::texture::type::diffuse,
+          gles30::texture::extent{ .width = static_cast<size_t>(
+                                       properties.get_float("screen_width")),
+                                   .height = static_cast<size_t>(
+                                       properties.get_float("screen_height")) })
     , tex_cubemap(faces, gles30::texture::opt::no_flip)
     , cube_mesh{ create_mesh(
           cube_vertices.data(), cube_vertices.size() / 8, { &tex_metal }) }
@@ -733,8 +753,8 @@ void scene::render(float delta_time)
     } data;
 
     auto model = glm::mat4(1.0f);
-    model           = glm::translate(model, glm::vec3(0, 0, 0));
-    model           = glm::scale(model, glm::vec3(scale));
+    model      = glm::translate(model, glm::vec3(0, 0, 0));
+    model      = glm::scale(model, glm::vec3(scale));
 
     data.model      = model;
     data.view       = camera.view_matrix();
@@ -755,6 +775,7 @@ void scene::render(float delta_time)
 
 int main(int /*argc*/, char* /*argv*/[])
 {
+    try
     {
         scene scene;
 
@@ -767,13 +788,18 @@ int main(int /*argc*/, char* /*argv*/[])
 
             scene.properties.update_changes();
 
-            pull_system_events({ .continue_loop = continue_loop,
-                    .current_effect = current_post_process });
+            pull_system_events({ .continue_loop  = continue_loop,
+                                 .current_effect = current_post_process });
 
             scene.render(delta_time);
 
             SDL_GL_SwapWindow(scene.window.get());
         }
+    }
+    catch (std::exception& ex)
+    {
+        std::cerr << ex.what();
+        return 1;
     }
 
     return 0;

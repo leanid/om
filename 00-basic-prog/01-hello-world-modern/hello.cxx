@@ -2,7 +2,14 @@ import std;
 
 int main()
 {
-    std::println(std::cout, "hello world");
-    std::cout << std::flush;
-    return std::cout.fail();
+    try
+    {
+        std::println(std::cout, "hello world");
+        std::cout << std::flush;
+        return std::cout.fail();
+    }
+    catch (...)
+    {
+        return 1;
+    }
 }

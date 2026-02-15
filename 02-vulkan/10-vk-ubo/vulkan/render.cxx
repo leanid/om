@@ -1471,7 +1471,7 @@ void render::create_logical_device()
     queue_family.index.transfer =
         get_transfer_queue_family_index(devices.physical);
 
-    if (std::cmp_equal(queue_family.index.graphics , ~0))
+    if (std::cmp_equal(queue_family.index.graphics, ~0))
 
     {
         throw std::runtime_error("error: could not find a queue for graphics "
@@ -1522,7 +1522,7 @@ void render::create_logical_device()
         .pNext = &feature_chain.get<vk::PhysicalDeviceFeatures2>(),
         .queueCreateInfoCount = static_cast<uint32_t>(queue_infos.size()),
         .pQueueCreateInfos    = queue_infos.data(),
-        .enabledLayerCount    = 0, // in vk_1_1+ this takes from vk::instance
+        //.enabledLayerCount    = 0, // in vk_1_1+ this takes from vk::instance
         .enabledExtensionCount =
             static_cast<uint32_t>(required_device_extensions.size()),
         .ppEnabledExtensionNames = required_device_extensions.data(),
