@@ -17,6 +17,13 @@
 
 **'mini.files' plugin for file system fast lookup**
 
+```
+:LazyExtras
+```
+```
+
+or restart nvim and select x
+
 j / k — перемещение вверх/вниз.
 h / l — зайти в папку (вправо) или выйти на уровень выше (влево).
 g q   — закрыть проводник.

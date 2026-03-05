@@ -19,17 +19,17 @@ project(
     # SPDX_LICENSE "Zlib"
     DESCRIPTION
         "RGD - real game dev study project. \
-This is a collection of tutorials about basic programming in game dev with modern C++. \
-simple bash tutorials, C++ terminal progamming, Input, Graphics, OpenGL, Vulkan, Audio \
-programming. Cross-platform linux/windows/macos/ios/android developing. \
-All with modern C++."
+This is a collection of tutorials about basic programming in game dev with \
+modern C++. Simple bash tutorials, C++ terminal progamming, Input, \
+Graphics, OpenGL, Vulkan, Audio programming. Cross-platform \
+linux/windows/macos/ios/android developing. All with modern C++."
     HOMEPAGE_URL "https://github.com/leanid/om"
     LANGUAGES CXX)
 
 list(PREPEND CMAKE_PREFIX_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
-find_package(om-triplet-name REQUIRED)
 find_package(om-common-functions REQUIRED)
+find_package(om-triplet-name REQUIRED)
 
 list(PREPEND CMAKE_PREFIX_PATH
      ${CMAKE_SOURCE_DIR}/deps/prebuilt/${OM_TRIPLET_NAME})
