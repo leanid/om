@@ -19,11 +19,29 @@ message(STATUS "CMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}")
 include(ExternalProject)
 
 externalproject_add(
+    hiredis
+    GIT_REPOSITORY https://github.com/redis/hiredis.git
+    GIT_TAG v1.2.0
+    GIT_PROGRESS ON
+    GIT_SHALLOW ON
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+               -DCMAKE_BUILD_TYPE=RelWithDebInfo
+               -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
+               -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}
+               -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+               -DCMAKE_LINKER_TYPE=${CMAKE_LINKER_TYPE}
+               -DCMAKE_EXE_LINKER_FLAGS=${CMAKE_EXE_LINKER_FLAGS}
+               -DCMAKE_SHARED_LINKER_FLAGS=${CMAKE_SHARED_LINKER_FLAGS}
+               -DDISABLE_TESTS=ON
+               -DENABLE_EXAMPLES=OFF)
+
+externalproject_add(
     redis_plus_plus
     GIT_REPOSITORY https://github.com/sewenew/redis-plus-plus.git
     GIT_TAG 1.3.12
     GIT_PROGRESS ON
     GIT_SHALLOW ON
+    DEPENDS hiredis
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
                -DCMAKE_PREFIX_PATH=${CMAKE_INSTALL_PREFIX}
                -DCMAKE_BUILD_TYPE=RelWithDebInfo
