@@ -32,7 +32,11 @@ externalproject_add(
                -DCMAKE_LINKER_TYPE=${CMAKE_LINKER_TYPE}
                -DCMAKE_EXE_LINKER_FLAGS=${CMAKE_EXE_LINKER_FLAGS}
                -DCMAKE_SHARED_LINKER_FLAGS=${CMAKE_SHARED_LINKER_FLAGS}
+               -DBUILD_SHARED_LIBS=OFF
+               -DENABLE_SSL=OFF
                -DDISABLE_TESTS=ON
+               -DENABLE_SSL_TESTS=OFF
+               -DENABLE_ASYNC_TESTS=OFF
                -DENABLE_EXAMPLES=OFF)
 
 externalproject_add(
