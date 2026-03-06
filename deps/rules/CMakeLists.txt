@@ -19,6 +19,28 @@ message(STATUS "CMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}")
 include(ExternalProject)
 
 externalproject_add(
+    redis_plus_plus
+    GIT_REPOSITORY https://github.com/sewenew/redis-plus-plus.git
+    GIT_TAG 1.3.12
+    GIT_PROGRESS ON
+    GIT_SHALLOW ON
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+               -DCMAKE_PREFIX_PATH=${CMAKE_INSTALL_PREFIX}
+               -DCMAKE_BUILD_TYPE=RelWithDebInfo
+               -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
+               -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}
+               -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+               -DCMAKE_LINKER_TYPE=${CMAKE_LINKER_TYPE}
+               -DCMAKE_EXE_LINKER_FLAGS=${CMAKE_EXE_LINKER_FLAGS}
+               -DCMAKE_SHARED_LINKER_FLAGS=${CMAKE_SHARED_LINKER_FLAGS}
+               -DREDIS_PLUS_PLUS_BUILD_SHARED=OFF
+               -DREDIS_PLUS_PLUS_BUILD_STATIC=ON
+               -DREDIS_PLUS_PLUS_BUILD_STATIC_WITH_PIC=ON
+               -DREDIS_PLUS_PLUS_BUILD_TEST=OFF
+               -DREDIS_PLUS_PLUS_BUILD_ASYNC_TEST=OFF
+               -DREDIS_PLUS_PLUS_BUILD_MOCK=OFF)
+
+externalproject_add(
     microsoft_gsl
     GIT_REPOSITORY https://github.com/microsoft/GSL.git
     GIT_TAG v4.2.1
@@ -219,6 +241,7 @@ externalproject_add(
                -DASSIMP_BUILD_ASSIMP_TOOLS=OFF
                -DASSIMP_NO_EXPORT=ON
                -DASSIMP_WARNINGS_AS_ERRORS=OFF)
+
 
 # stb header-only libraries (installs headers into include/stb)
 # https://github.com/nothings/stb

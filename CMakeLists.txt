@@ -55,6 +55,7 @@ find_package(trompeloeil REQUIRED)
 find_package(stb REQUIRED)
 find_package(assimp REQUIRED)
 find_package(Microsoft.GSL CONFIG REQUIRED)
+find_package(redis++ REQUIRED)
 
 enable_testing()
 
