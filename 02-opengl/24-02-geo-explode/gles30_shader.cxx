@@ -3,11 +3,11 @@
 
 #include <algorithm>
 #include <cassert>
-#include <ranges>
 #include <charconv>
 #include <cstdint>
 #include <fstream>
 #include <iostream>
+#include <ranges>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -29,11 +29,15 @@ std::ostream& operator<<(std::ostream&                      os,
 {
     using namespace std;
 
-    auto       open_it     = std::ranges::find(list.err_msg, '(');
-    const char* open_braket = (open_it != list.err_msg.end()) ? &*open_it : list.err_msg.data();
-    auto close_range = std::string_view(open_braket, list.err_msg.data() + list.err_msg.size());
-    auto       close_it    = std::ranges::find(close_range, ')');
-    const char* close_braket = (close_it != close_range.end()) ? &*close_it : close_range.data() + close_range.size();
+    auto        open_it = std::ranges::find(list.err_msg, '(');
+    const char* open_braket =
+        (open_it != list.err_msg.end()) ? &*open_it : list.err_msg.data();
+    auto close_range = std::string_view(
+        open_braket, list.err_msg.data() + list.err_msg.size());
+    auto        close_it     = std::ranges::find(close_range, ')');
+    const char* close_braket = (close_it != close_range.end())
+                                   ? &*close_it
+                                   : close_range.data() + close_range.size();
 
     uint32_t value;
     auto [p, ec] = from_chars(open_braket + 1, close_braket, value);
@@ -95,8 +99,10 @@ static uint32_t compile_shader(std::string_view src,
 
         std::stringstream ss;
         ss << "error: in shader:\n"
-           << list_code_with_line_numbers{ .src = src,
-                                           .err_msg = std::string_view(info_log.data()) } << '\n';
+           << list_code_with_line_numbers{ .src     = src,
+                                           .err_msg = std::string_view(
+                                               info_log.data()) }
+           << '\n';
         throw std::runtime_error(ss.str());
     }
     return shader;
@@ -104,16 +110,13 @@ static uint32_t compile_shader(std::string_view src,
 
 void shader::create(shader_sources src)
 {
-    uint32_t vertex_shader =
-        compile_shader(src.vertex, GL_VERTEX_SHADER);
+    uint32_t vertex_shader = compile_shader(src.vertex, GL_VERTEX_SHADER);
 
     uint32_t geometry_shader =
-        src.geometry.empty()
-            ? 0
-            : compile_shader(src.geometry, GL_GEOMETRY_SHADER);
+        src.geometry.empty() ? 0
+                             : compile_shader(src.geometry, GL_GEOMETRY_SHADER);
 
-    uint32_t fragment_shader =
-        compile_shader(src.fragment, GL_FRAGMENT_SHADER);
+    uint32_t fragment_shader = compile_shader(src.fragment, GL_FRAGMENT_SHADER);
 
     // create complete shader program and reseive id (vertex + geometry +
     // fragment) geometry shader - will have default value
@@ -137,7 +140,8 @@ void shader::create(shader_sources src)
     if (0 == success)
     {
         std::array<char, 1024> info_log{};
-        glGetProgramInfoLog(program_id, sizeof(info_log), nullptr, info_log.data());
+        glGetProgramInfoLog(
+            program_id, sizeof(info_log), nullptr, info_log.data());
 
         std::stringstream ss;
         ss << "error: linking: " << info_log.data() << std::endl;
@@ -221,7 +225,8 @@ void shader::use()
 GLint get_uniform_index(std::string_view name, uint32_t program_id)
 {
     const std::string uniform_name(name);
-    GLint uniform_index = glGetUniformLocation(program_id, uniform_name.c_str());
+    GLint             uniform_index =
+        glGetUniformLocation(program_id, uniform_name.c_str());
 
     if (uniform_index == -1)
     {
@@ -299,7 +304,8 @@ std::string shader::validate() noexcept(false)
     if (1 == success)
     {
         std::array<char, 4096> info_log{};
-        glGetProgramInfoLog(program_id, sizeof(info_log), nullptr, info_log.data());
+        glGetProgramInfoLog(
+            program_id, sizeof(info_log), nullptr, info_log.data());
 
         if (strlen(info_log.data()) > 0)
         {

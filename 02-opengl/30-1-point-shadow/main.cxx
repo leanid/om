@@ -24,9 +24,12 @@
 
 static fps_camera camera;
 
-extern const std::array<float, std::size_t{6} * std::size_t{8}> quad_virtices;
-extern const std::array<float, std::size_t{36} * std::size_t{8}> cube_vertices;
-extern const std::array<float, std::size_t{6} * std::size_t{8}> plane_vertices;
+extern const std::array<float, std::size_t{ 6 } * std::size_t{ 8 }>
+    quad_virtices;
+extern const std::array<float, std::size_t{ 36 } * std::size_t{ 8 }>
+    cube_vertices;
+extern const std::array<float, std::size_t{ 6 } * std::size_t{ 8 }>
+    plane_vertices;
 
 enum class render_options
 {
@@ -88,8 +91,9 @@ static bool destroy_opengl_context(SDL_GLContext ptr)
     return SDL_GL_DestroyContext(ptr);
 }
 
-[[nodiscard]] std::unique_ptr<std::remove_pointer_t<SDL_GLContext>, decltype(&SDL_GL_DestroyContext)> create_opengl_context(
-    SDL_Window* window)
+[[nodiscard]] std::unique_ptr<std::remove_pointer_t<SDL_GLContext>,
+                              decltype(&SDL_GL_DestroyContext)>
+create_opengl_context(SDL_Window* window)
 {
     using namespace std;
     using namespace gles30;
@@ -127,7 +131,7 @@ static bool destroy_opengl_context(SDL_GLContext ptr)
     using gl_context_t = std::unique_ptr<std::remove_pointer_t<SDL_GLContext>,
                                          decltype(&SDL_GL_DestroyContext)>;
     gl_context_t gl_context(SDL_GL_CreateContext(window),
-                                                 destroy_opengl_context);
+                            destroy_opengl_context);
     if (nullptr == gl_context)
     {
         clog << "Failed to create: " << ask_context
@@ -263,11 +267,14 @@ std::unique_ptr<SDL_Window, void (*)(SDL_Window*)> create_window(
         // TODO
     }
 
-    unique_ptr<SDL_Window, void (*)(SDL_Window*)> window(
-        SDL_CreateWindow(title.c_str(), static_cast<int>(screen_width), static_cast<int>(screen_height), SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE /*|
-                             SDL_WINDOW_ALLOW_HIGHDPI*/ /*|
-                             SDL_WINDOW_FULLSCREEN_DESKTOP*/),
-        destroy_window);
+    unique_ptr<SDL_Window, void (*)(SDL_Window*)>
+        window(SDL_CreateWindow(title.c_str(),
+                                static_cast<int>(screen_width),
+                                static_cast<int>(screen_height),
+                                SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE /*|
+SDL_WINDOW_ALLOW_HIGHDPI*/                                               /*|
+                                              SDL_WINDOW_FULLSCREEN_DESKTOP*/),
+               destroy_window);
 
     if (window.get() == nullptr)
     {
@@ -343,7 +350,9 @@ struct scene
     properties_reader properties;
 
     std::unique_ptr<SDL_Window, void (*)(SDL_Window*)> window;
-    std::unique_ptr<std::remove_pointer_t<SDL_GLContext>, decltype(&SDL_GL_DestroyContext)> context;
+    std::unique_ptr<std::remove_pointer_t<SDL_GLContext>,
+                    decltype(&SDL_GL_DestroyContext)>
+        context;
 
     gles30::shader depth_shader;
     gles30::shader shader_shadow;
@@ -367,7 +376,8 @@ void scene::pull_system_events(bool& continue_loop)
     SDL_Event event;
     while (SDL_PollEvent(&event))
     {
-        if (SDL_EVENT_FINGER_DOWN == event.type || SDL_EVENT_QUIT == event.type ||
+        if (SDL_EVENT_FINGER_DOWN == event.type ||
+            SDL_EVENT_QUIT == event.type ||
             (SDL_EVENT_KEY_UP == event.type && event.key.key == SDLK_ESCAPE))
         {
             continue_loop = false;
@@ -430,14 +440,16 @@ void scene::pull_system_events(bool& continue_loop)
             }
             else if (event.key.key == SDLK_5)
             {
-                if (!SDL_SetWindowRelativeMouseMode(SDL_GetKeyboardFocus(), true))
+                if (!SDL_SetWindowRelativeMouseMode(SDL_GetKeyboardFocus(),
+                                                    true))
                 {
                     throw std::runtime_error(SDL_GetError());
                 }
             }
             else if (event.key.key == SDLK_6)
             {
-                if (!SDL_SetWindowRelativeMouseMode(SDL_GetKeyboardFocus(), false))
+                if (!SDL_SetWindowRelativeMouseMode(SDL_GetKeyboardFocus(),
+                                                    false))
                 {
                     throw std::runtime_error(SDL_GetError());
                 }
@@ -587,27 +599,35 @@ void scene::render([[maybe_unused]] float delta_time)
 
 int main(int /*argc*/, char* /*argv*/[])
 {
-    gles30::windows_make_process_dpi_aware();
-
+    try
     {
-        scene scene;
+        gles30::windows_make_process_dpi_aware();
 
-        float last_frame_time = 0.0f; // Time of last frame
-
-        for (bool continue_loop = true; continue_loop;
-             SDL_GL_SwapWindow(scene.window.get()))
         {
-            float delta_time = update_delta_time(last_frame_time);
+            scene scene;
 
-            scene.properties.update_changes();
+            float last_frame_time = 0.0f; // Time of last frame
 
-            scene.pull_system_events(continue_loop);
+            for (bool continue_loop = true; continue_loop;
+                 SDL_GL_SwapWindow(scene.window.get()))
+            {
+                float delta_time = update_delta_time(last_frame_time);
 
-            scene.render(delta_time);
+                scene.properties.update_changes();
+
+                scene.pull_system_events(continue_loop);
+
+                scene.render(delta_time);
+            }
         }
-    }
 
-    return 0;
+        return 0;
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+        return EXIT_FAILURE;
+    }
 }
 
 // clang-format off

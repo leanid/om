@@ -1,13 +1,14 @@
 #include <array>
 #include <chrono>
 #include <cstdlib>
+#include <exception>
 #include <iostream>
 #include <memory>
 #include <numeric>
 #include <ranges>
 #include <string>
-#include <vector>
 #include <type_traits>
+#include <vector>
 
 #include "fps_camera.hxx"
 #include "gles30_model.hxx"
@@ -46,9 +47,10 @@ int get_gl_constant(
     const std::array<std::pair<std::string_view, int>, 8>& operations,
     std::string_view                                       name)
 {
-    auto it = std::ranges::find_if(operations,
-                                    [&name](const std::pair<std::string_view, int>& p)
-                                    { return p.first == name; });
+    auto it =
+        std::ranges::find_if(operations,
+                             [&name](const std::pair<std::string_view, int>& p)
+                             { return p.first == name; });
     if (it == std::end(operations))
     {
         throw std::out_of_range(std::string("operation not found: ") +
@@ -107,9 +109,12 @@ void print_view_port()
          << " w=" << view_port[2] << " h=" << view_port[3] << endl;
 }
 
-extern const std::array<float, std::size_t{36} * std::size_t{8}> cube_vertices;
-extern const std::array<float, std::size_t{6} * std::size_t{8}> plane_vertices;
-extern const std::array<float, std::size_t{6} * std::size_t{8}> transparent_vert;
+extern const std::array<float, std::size_t{ 36 } * std::size_t{ 8 }>
+    cube_vertices;
+extern const std::array<float, std::size_t{ 6 } * std::size_t{ 8 }>
+    plane_vertices;
+extern const std::array<float, std::size_t{ 6 } * std::size_t{ 8 }>
+    transparent_vert;
 
 enum class render_options
 {
@@ -142,15 +147,16 @@ void render_mesh(gles30::shader&          shader,
 
     {
         auto model = glm::mat4(1.0f);
-        model           = glm::translate(model, position);
-        model           = glm::scale(model, glm::vec3(scale));
+        model      = glm::translate(model, position);
+        model      = glm::scale(model, glm::vec3(scale));
         shader.set_uniform("model", model);
         mesh.draw(shader);
     }
 }
 
-[[nodiscard]] std::unique_ptr<std::remove_pointer_t<SDL_GLContext>, decltype(&SDL_GL_DestroyContext)> create_opengl_context(
-    SDL_Window* window)
+[[nodiscard]] std::unique_ptr<std::remove_pointer_t<SDL_GLContext>,
+                              decltype(&SDL_GL_DestroyContext)>
+create_opengl_context(SDL_Window* window)
 {
     using namespace std;
     context_parameters ask_context;
@@ -161,8 +167,7 @@ void render_mesh(gles30::shader&          shader,
                                                    "Mac OS X",
                                                    "Linux" };
 
-    auto it =
-        std::ranges::find(desktop_platforms, platform_name);
+    auto it = std::ranges::find(desktop_platforms, platform_name);
 
     if (it != std::end(desktop_platforms))
     {
@@ -195,7 +200,7 @@ void render_mesh(gles30::shader&          shader,
     using gl_context_t = std::unique_ptr<std::remove_pointer_t<SDL_GLContext>,
                                          decltype(&SDL_GL_DestroyContext)>;
     gl_context_t gl_context(SDL_GL_CreateContext(window),
-                                                 SDL_GL_DestroyContext);
+                            SDL_GL_DestroyContext);
     if (nullptr == gl_context)
     {
         clog << "Failed to create: " << ask_context
@@ -249,7 +254,8 @@ void pull_system_events(event_state state)
     SDL_Event event;
     while (SDL_PollEvent(&event))
     {
-        if (SDL_EVENT_FINGER_DOWN == event.type || SDL_EVENT_QUIT == event.type ||
+        if (SDL_EVENT_FINGER_DOWN == event.type ||
+            SDL_EVENT_QUIT == event.type ||
             (SDL_EVENT_KEY_UP == event.type && event.key.key == SDLK_ESCAPE))
         {
             state.continue_loop = false;
@@ -272,7 +278,7 @@ void pull_system_events(event_state state)
             // so we try to emulate it with next render primitive types
             if (event.key.key == SDLK_1)
             {
-                show_z_buffer         = !show_z_buffer;
+                show_z_buffer               = !show_z_buffer;
                 state.primitive_render_mode = GL_TRIANGLES;
             }
             else if (event.key.key == SDLK_2)
@@ -289,14 +295,16 @@ void pull_system_events(event_state state)
             }
             else if (event.key.key == SDLK_5)
             {
-                if (!SDL_SetWindowRelativeMouseMode(SDL_GetKeyboardFocus(), true))
+                if (!SDL_SetWindowRelativeMouseMode(SDL_GetKeyboardFocus(),
+                                                    true))
                 {
                     throw std::runtime_error(SDL_GetError());
                 }
             }
             else if (event.key.key == SDLK_6)
             {
-                if (!SDL_SetWindowRelativeMouseMode(SDL_GetKeyboardFocus(), false))
+                if (!SDL_SetWindowRelativeMouseMode(SDL_GetKeyboardFocus(),
+                                                    false))
                 {
                     throw std::runtime_error(SDL_GetError());
                 }
@@ -366,7 +374,10 @@ std::unique_ptr<SDL_Window, void (*)(SDL_Window*)> create_window(
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
     unique_ptr<SDL_Window, void (*)(SDL_Window*)> window(
-        SDL_CreateWindow(title.c_str(), static_cast<int>(screen_width), static_cast<int>(screen_height), SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE),
+        SDL_CreateWindow(title.c_str(),
+                         static_cast<int>(screen_width),
+                         static_cast<int>(screen_height),
+                         SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE),
         SDL_DestroyWindow);
 
     if (window.get() == nullptr)
@@ -427,124 +438,134 @@ void create_camera(const properties_reader& properties)
 
 int main(int /*argc*/, char* /*argv*/[])
 {
-    using namespace std;
-    using namespace gles30;
-
-    properties_reader properties("res/runtime.properties.hxx");
-
-    auto window = create_window(properties);
-    // destroy only on exit from main
-    [[maybe_unused]] auto gl_context = create_opengl_context(window.get());
-
-    shader cube_shader("res/cube.vsh", "res/cube.fsh");
-    shader outline("res/cube.vsh", "res/outline.fsh");
-    shader transparend_shader("res/cube.vsh", "res/discard.fsh");
-
-    texture tex_marble("res/marble.jpg", texture::type::diffuse);
-    texture tex_metal("res/metal.png", texture::type::diffuse);
-    texture tex_grass(
-        "res/grass.png", texture::type::diffuse, texture::opt::no_flip);
-
-    mesh cube_marble = create_mesh(
-        cube_vertices.data(), cube_vertices.size() / 8, { &tex_marble });
-    mesh cube_metal = create_mesh(
-        cube_vertices.data(), cube_vertices.size() / 8, { &tex_metal });
-
-    mesh cube_marble_no_tex =
-        create_mesh(cube_vertices.data(), cube_vertices.size() / 8, {});
-    mesh cube_metal_no_tex =
-        create_mesh(cube_vertices.data(), cube_vertices.size() / 8, {});
-
-    mesh plane_metal = create_mesh(
-        plane_vertices.data(), plane_vertices.size() / 8, { &tex_metal });
-
-    mesh transparent_quad = create_mesh(
-        transparent_vert.data(), transparent_vert.size() / 8, { &tex_grass });
-
-    // transparent vegetation locations
-    // --------------------------------
-    vector<glm::vec3> vegetation{ glm::vec3(-1.5f, 0.0f, -0.48f),
-                                  glm::vec3(1.5f, 0.0f, 0.51f),
-                                  glm::vec3(0.0f, 0.0f, 0.7f),
-                                  glm::vec3(-0.3f, 0.0f, -2.3f),
-                                  glm::vec3(0.5f, 0.0f, -0.6f) };
-
-    [[maybe_unused]] GLenum primitive_render_mode = GL_TRIANGLES;
-
-    float last_frame_time = 0.0f; // Time of last frame
-
-    create_camera(properties);
-
-    glEnable(GL_DEPTH_TEST);
-    gl_check();
-    // glEnable(GL_BLEND);
-    gl_check();
-    // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    gl_check();
-
-    bool continue_loop = true;
-    while (continue_loop)
+    try
     {
-        float delta_time = update_delta_time(last_frame_time);
+        using namespace std;
+        using namespace gles30;
 
-        properties.update_changes();
+        properties_reader properties("res/runtime.properties.hxx");
 
-        int z_buf_op =
-            get_z_buf_operation(properties.get_string("z_buf_operation"));
-        glDepthFunc(static_cast<GLenum>(z_buf_op));
+        auto window = create_window(properties);
+        // destroy only on exit from main
+        [[maybe_unused]] auto gl_context = create_opengl_context(window.get());
+
+        shader cube_shader("res/cube.vsh", "res/cube.fsh");
+        shader outline("res/cube.vsh", "res/outline.fsh");
+        shader transparend_shader("res/cube.vsh", "res/discard.fsh");
+
+        texture tex_marble("res/marble.jpg", texture::type::diffuse);
+        texture tex_metal("res/metal.png", texture::type::diffuse);
+        texture tex_grass(
+            "res/grass.png", texture::type::diffuse, texture::opt::no_flip);
+
+        mesh cube_marble = create_mesh(
+            cube_vertices.data(), cube_vertices.size() / 8, { &tex_marble });
+        mesh cube_metal = create_mesh(
+            cube_vertices.data(), cube_vertices.size() / 8, { &tex_metal });
+
+        mesh cube_marble_no_tex =
+            create_mesh(cube_vertices.data(), cube_vertices.size() / 8, {});
+        mesh cube_metal_no_tex =
+            create_mesh(cube_vertices.data(), cube_vertices.size() / 8, {});
+
+        mesh plane_metal = create_mesh(
+            plane_vertices.data(), plane_vertices.size() / 8, { &tex_metal });
+
+        mesh transparent_quad = create_mesh(transparent_vert.data(),
+                                            transparent_vert.size() / 8,
+                                            { &tex_grass });
+
+        // transparent vegetation locations
+        // --------------------------------
+        vector<glm::vec3> vegetation{ glm::vec3(-1.5f, 0.0f, -0.48f),
+                                      glm::vec3(1.5f, 0.0f, 0.51f),
+                                      glm::vec3(0.0f, 0.0f, 0.7f),
+                                      glm::vec3(-0.3f, 0.0f, -2.3f),
+                                      glm::vec3(0.5f, 0.0f, -0.6f) };
+
+        [[maybe_unused]] GLenum primitive_render_mode = GL_TRIANGLES;
+
+        float last_frame_time = 0.0f; // Time of last frame
+
+        create_camera(properties);
+
+        glEnable(GL_DEPTH_TEST);
+        gl_check();
+        // glEnable(GL_BLEND);
+        gl_check();
+        // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         gl_check();
 
-        pull_system_events({ .continue_loop = continue_loop,
-                            .primitive_render_mode = primitive_render_mode });
-
-        camera.move_using_keyboard_wasd(delta_time);
-
-        glDisable(GL_STENCIL_TEST);
-        gl_check();
-        clear_back_buffer(properties.get_vec3("clear_color"));
-
-        float scale = 1.0f;
-        render_mesh(cube_shader,
-                    camera,
-                    plane_metal,
-                    glm::vec3(0.0f, 0.0f, 0.0f),
-                    scale,
-                    properties,
-                    render_options::only_pro_view_model);
-
-        render_mesh(cube_shader,
-                    camera,
-                    cube_marble,
-                    glm::vec3(-1.0f, 0.0f, -1.0f),
-                    scale,
-                    properties,
-                    render_options::only_pro_view_model);
-        render_mesh(cube_shader,
-                    camera,
-                    cube_metal,
-                    glm::vec3(2.0f, 0.0f, 0.0f),
-                    scale,
-                    properties,
-                    render_options::only_pro_view_model);
-
-        transparend_shader.use();
-        for (auto pos : vegetation)
+        bool continue_loop = true;
+        while (continue_loop)
         {
-            render_mesh(transparend_shader,
+            float delta_time = update_delta_time(last_frame_time);
+
+            properties.update_changes();
+
+            int z_buf_op =
+                get_z_buf_operation(properties.get_string("z_buf_operation"));
+            glDepthFunc(static_cast<GLenum>(z_buf_op));
+            gl_check();
+
+            pull_system_events(
+                { .continue_loop         = continue_loop,
+                  .primitive_render_mode = primitive_render_mode });
+
+            camera.move_using_keyboard_wasd(delta_time);
+
+            glDisable(GL_STENCIL_TEST);
+            gl_check();
+            clear_back_buffer(properties.get_vec3("clear_color"));
+
+            float scale = 1.0f;
+            render_mesh(cube_shader,
                         camera,
-                        transparent_quad,
-                        pos,
+                        plane_metal,
+                        glm::vec3(0.0f, 0.0f, 0.0f),
                         scale,
                         properties,
                         render_options::only_pro_view_model);
+
+            render_mesh(cube_shader,
+                        camera,
+                        cube_marble,
+                        glm::vec3(-1.0f, 0.0f, -1.0f),
+                        scale,
+                        properties,
+                        render_options::only_pro_view_model);
+            render_mesh(cube_shader,
+                        camera,
+                        cube_metal,
+                        glm::vec3(2.0f, 0.0f, 0.0f),
+                        scale,
+                        properties,
+                        render_options::only_pro_view_model);
+
+            transparend_shader.use();
+            for (auto pos : vegetation)
+            {
+                render_mesh(transparend_shader,
+                            camera,
+                            transparent_quad,
+                            pos,
+                            scale,
+                            properties,
+                            render_options::only_pro_view_model);
+            }
+
+            SDL_GL_SwapWindow(window.get());
         }
 
-        SDL_GL_SwapWindow(window.get());
+        SDL_Quit();
+
+        return 0;
     }
-
-    SDL_Quit();
-
-    return 0;
+    catch (const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+        return EXIT_FAILURE;
+    }
 }
 
 // clang-format off

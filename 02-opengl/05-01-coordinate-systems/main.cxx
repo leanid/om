@@ -1,13 +1,13 @@
 #include <array>
-#include <ranges>
 #include <chrono>
 #include <cstdlib>
 #include <iostream>
 #include <memory>
 #include <numeric>
+#include <ranges>
 #include <string>
-#include <vector>
 #include <type_traits>
+#include <vector>
 
 #include "gles30_shader.hxx"
 #include "gles30_texture.hxx"
@@ -44,7 +44,7 @@ void print_view_port()
          << " w=" << view_port[2] << " h=" << view_port[3] << endl;
 }
 
-extern std::array<float, std::size_t{36} * std::size_t{8}> cube_vertices;
+extern std::array<float, std::size_t{ 36 } * std::size_t{ 8 }> cube_vertices;
 
 void update_vertex_attributes()
 {
@@ -136,7 +136,8 @@ static int main_impl()
     const std::string title = properties.get_string("title");
 
     unique_ptr<SDL_Window, void (*)(SDL_Window*)> window(
-        SDL_CreateWindow(title.c_str(), 640, 480, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE),
+        SDL_CreateWindow(
+            title.c_str(), 640, 480, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE),
         SDL_DestroyWindow);
 
     if (window == nullptr)
@@ -183,8 +184,8 @@ static int main_impl()
 
     using gl_context_t = std::unique_ptr<std::remove_pointer_t<SDL_GLContext>,
                                          decltype(&SDL_GL_DestroyContext)>;
-    gl_context_t gl_context(
-        SDL_GL_CreateContext(window.get()), SDL_GL_DestroyContext);
+    gl_context_t gl_context(SDL_GL_CreateContext(window.get()),
+                            SDL_GL_DestroyContext);
     if (nullptr == gl_context)
     {
         clog << "Failed to create: " << ask_context
@@ -254,7 +255,8 @@ static int main_impl()
     //    very rarely.
     // GL_DYNAMIC_DRAW: the data is likely to change a lot.
     // GL_STREAM_DRAW: the data will change every time it is drawn.
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices.data(), GL_DYNAMIC_DRAW);
+    glBufferData(
+        GL_ARRAY_BUFFER, sizeof(vertices), vertices.data(), GL_DYNAMIC_DRAW);
     gl_check();
 
     uint32_t EBO; // ElementBufferObject - indices buffer
@@ -264,8 +266,10 @@ static int main_impl()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     gl_check();
 
-    glBufferData(
-        GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices.data(), GL_DYNAMIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+                 sizeof(indices),
+                 indices.data(),
+                 GL_DYNAMIC_DRAW);
     gl_check();
 
     update_vertex_attributes();
@@ -280,8 +284,10 @@ static int main_impl()
         SDL_Event event;
         while (SDL_PollEvent(&event))
         {
-            if (SDL_EVENT_FINGER_DOWN == event.type || SDL_EVENT_QUIT == event.type ||
-                (SDL_EVENT_KEY_UP == event.type && event.key.key == SDLK_ESCAPE))
+            if (SDL_EVENT_FINGER_DOWN == event.type ||
+                SDL_EVENT_QUIT == event.type ||
+                (SDL_EVENT_KEY_UP == event.type &&
+                 event.key.key == SDLK_ESCAPE))
             {
                 continue_loop = false;
                 break;
@@ -313,8 +319,7 @@ static int main_impl()
                      << event.window.data2 << ' ';
                 // play with it to understand OpenGL origin point
                 // for window screen coordinate system
-                glViewport(
-                    0, 0, event.window.data1, event.window.data2);
+                glViewport(0, 0, event.window.data1, event.window.data2);
                 gl_check();
                 print_view_port();
             }
@@ -354,8 +359,10 @@ static int main_impl()
         }
         else
         {
-            glBufferData(
-                GL_ARRAY_BUFFER, sizeof(vertices), vertices.data(), GL_DYNAMIC_DRAW);
+            glBufferData(GL_ARRAY_BUFFER,
+                         sizeof(vertices),
+                         vertices.data(),
+                         GL_DYNAMIC_DRAW);
             gl_check();
 
             glBufferData(GL_ELEMENT_ARRAY_BUFFER,
@@ -388,10 +395,10 @@ static int main_impl()
         angle_per_sec = properties.get_float("angle_per_sec");
         if (!multi_cube)
         {
-            model = glm::rotate(
-                model,
-                glm::radians(static_cast<float>(now.count()) * 0.001f * angle_per_sec),
-                rotate_axis);
+            model = glm::rotate(model,
+                                glm::radians(static_cast<float>(now.count()) *
+                                             0.001f * angle_per_sec),
+                                rotate_axis);
         }
 
         glm::mat4 view(1.f);

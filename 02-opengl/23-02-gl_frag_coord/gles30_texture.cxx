@@ -21,10 +21,10 @@ texture::texture(const type tex_type, const extent size)
 {
     gen_texture_set_filters_and_wrap();
 
-    const auto gl_width  = static_cast<GLsizei>(size.width);
-    const auto gl_height = static_cast<GLsizei>(size.height);
-    GLint        mipmap_level = 0;
-    GLint        border       = 0;
+    const auto gl_width     = static_cast<GLsizei>(size.width);
+    const auto gl_height    = static_cast<GLsizei>(size.height);
+    GLint      mipmap_level = 0;
+    GLint      border       = 0;
     // allocate memory for texture
     glTexImage2D(GL_TEXTURE_2D,
                  mipmap_level,
@@ -132,17 +132,18 @@ texture::texture(const std::filesystem::path& path,
 static std::string join_strings_with_spaces(
     const std::array<std::filesystem::path, 6>& faces)
 {
-    return std::accumulate(begin(faces),
-                          end(faces),
-                          std::string{},
-                          [](std::string result, const std::filesystem::path& p)
-                          {
-                              if (!result.empty())
-                              {
-                                  result.push_back(' ');
-                              }
-                              return result += p.string();
-                          });
+    return std::accumulate(
+        begin(faces),
+        end(faces),
+        std::string{},
+        [](std::string result, const std::filesystem::path& p)
+        {
+            if (!result.empty())
+            {
+                result.push_back(' ');
+            }
+            return result += p.string();
+        });
 }
 
 texture::texture(const std::array<std::filesystem::path, 6>& faces,

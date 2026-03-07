@@ -68,7 +68,7 @@ void mesh::draw(shader& shader) const
         // retrieve texture number (the N in diffuse_textureN)
         texture& texture = *textures.at(i);
         texture.bind();
-        texture::type type = texture.get_type();
+        texture::type        type = texture.get_type();
         std::array<char, 32> str{};
 
         int32_t is_ok = 0;
@@ -76,27 +76,31 @@ void mesh::draw(shader& shader) const
         if (type == texture::type::diffuse ||
             type == texture::type::depth_component)
         {
-            is_ok = snprintf(str.data(), str.size(), "tex_diffuse%u", diffuse_index);
+            is_ok = snprintf(
+                str.data(), str.size(), "tex_diffuse%u", diffuse_index);
             assert(is_ok > 0);
             ++diffuse_index;
         }
         else if (type == texture::type::specular)
         {
-            is_ok =
-                snprintf(str.data(), str.size(), "tex_specular%u", specular_index);
+            is_ok = snprintf(
+                str.data(), str.size(), "tex_specular%u", specular_index);
             assert(is_ok > 0);
             ++specular_index;
         }
         else if (type == texture::type::cubemap)
         {
-            is_ok = snprintf(str.data(), str.size(), "tex_cubemap%u", cubemap_index);
+            is_ok = snprintf(
+                str.data(), str.size(), "tex_cubemap%u", cubemap_index);
             assert(is_ok > 0);
             ++cubemap_index;
         }
 
         std::array<char, 64> tex_uniform_name{};
-        is_ok = snprintf(
-            tex_uniform_name.data(), tex_uniform_name.size(), "material.%s", str.data());
+        is_ok = snprintf(tex_uniform_name.data(),
+                         tex_uniform_name.size(),
+                         "material.%s",
+                         str.data());
         if (is_ok <= 0)
         {
             throw std::runtime_error("error: can't fit name in 64 chars");
@@ -132,34 +136,38 @@ void mesh::draw_instanced(shader&               shader,
         // retrieve texture number (the N in diffuse_textureN)
         texture& texture = *textures.at(i);
         texture.bind();
-        texture::type type = texture.get_type();
+        texture::type        type = texture.get_type();
         std::array<char, 32> str{};
 
         int32_t is_ok = 0;
 
         if (type == texture::type::diffuse)
         {
-            is_ok = snprintf(str.data(), str.size(), "tex_diffuse%u", diffuse_index);
+            is_ok = snprintf(
+                str.data(), str.size(), "tex_diffuse%u", diffuse_index);
             assert(is_ok > 0);
             ++diffuse_index;
         }
         else if (type == texture::type::specular)
         {
-            is_ok =
-                snprintf(str.data(), str.size(), "tex_specular%u", specular_index);
+            is_ok = snprintf(
+                str.data(), str.size(), "tex_specular%u", specular_index);
             assert(is_ok > 0);
             ++specular_index;
         }
         else if (type == texture::type::cubemap)
         {
-            is_ok = snprintf(str.data(), str.size(), "tex_cubemap%u", cubemap_index);
+            is_ok = snprintf(
+                str.data(), str.size(), "tex_cubemap%u", cubemap_index);
             assert(is_ok > 0);
             ++cubemap_index;
         }
 
         std::array<char, 64> tex_uniform_name{};
-        is_ok = snprintf(
-            tex_uniform_name.data(), tex_uniform_name.size(), "material.%s", str.data());
+        is_ok = snprintf(tex_uniform_name.data(),
+                         tex_uniform_name.size(),
+                         "material.%s",
+                         str.data());
         assert(is_ok > 0);
 
         shader.set_uniform(tex_uniform_name.data(), static_cast<int32_t>(i));

@@ -1,13 +1,14 @@
 #include <array>
 #include <chrono>
 #include <cstdlib>
+#include <exception>
 #include <iostream>
 #include <memory>
 #include <numeric>
 #include <ranges>
 #include <string>
-#include <vector>
 #include <type_traits>
+#include <vector>
 
 #include "fps_camera.hxx"
 #include "gles30_model.hxx"
@@ -46,9 +47,10 @@ int get_gl_constant(
     const std::array<std::pair<std::string_view, int>, 8>& operations,
     std::string_view                                       name)
 {
-    auto it = std::ranges::find_if(operations,
-                                    [&name](const std::pair<std::string_view, int>& p)
-                                    { return p.first == name; });
+    auto it =
+        std::ranges::find_if(operations,
+                             [&name](const std::pair<std::string_view, int>& p)
+                             { return p.first == name; });
     if (it == std::end(operations))
     {
         throw std::out_of_range(std::string("operation not found: ") +
@@ -107,8 +109,10 @@ void print_view_port()
          << " w=" << view_port[2] << " h=" << view_port[3] << endl;
 }
 
-extern const std::array<float, std::size_t{36} * std::size_t{8}> cube_vertices;
-extern const std::array<float, std::size_t{6} * std::size_t{8}> plane_vertices;
+extern const std::array<float, std::size_t{ 36 } * std::size_t{ 8 }>
+    cube_vertices;
+extern const std::array<float, std::size_t{ 6 } * std::size_t{ 8 }>
+    plane_vertices;
 
 void render_mesh(gles30::shader&          shader,
                  const fps_camera&        camera,
@@ -135,15 +139,16 @@ void render_mesh(gles30::shader&          shader,
 
     {
         auto model = glm::mat4(1.0f);
-        model           = glm::translate(model, position);
-        model           = glm::scale(model, glm::vec3(scale));
+        model      = glm::translate(model, position);
+        model      = glm::scale(model, glm::vec3(scale));
         shader.set_uniform("model", model);
         mesh.draw(shader);
     }
 }
 
-[[nodiscard]] std::unique_ptr<std::remove_pointer_t<SDL_GLContext>, decltype(&SDL_GL_DestroyContext)> create_opengl_context(
-    SDL_Window* window)
+[[nodiscard]] std::unique_ptr<std::remove_pointer_t<SDL_GLContext>,
+                              decltype(&SDL_GL_DestroyContext)>
+create_opengl_context(SDL_Window* window)
 {
     using namespace std;
     context_parameters ask_context;
@@ -154,8 +159,7 @@ void render_mesh(gles30::shader&          shader,
                                                    "Mac OS X",
                                                    "Linux" };
 
-    auto it =
-        std::ranges::find(desktop_platforms, platform_name);
+    auto it = std::ranges::find(desktop_platforms, platform_name);
 
     if (it != std::end(desktop_platforms))
     {
@@ -188,7 +192,7 @@ void render_mesh(gles30::shader&          shader,
     using gl_context_t = std::unique_ptr<std::remove_pointer_t<SDL_GLContext>,
                                          decltype(&SDL_GL_DestroyContext)>;
     gl_context_t gl_context(SDL_GL_CreateContext(window),
-                                                 SDL_GL_DestroyContext);
+                            SDL_GL_DestroyContext);
     if (nullptr == gl_context)
     {
         clog << "Failed to create: " << ask_context
@@ -242,7 +246,8 @@ void pull_system_events(event_state state)
     SDL_Event event;
     while (SDL_PollEvent(&event))
     {
-        if (SDL_EVENT_FINGER_DOWN == event.type || SDL_EVENT_QUIT == event.type ||
+        if (SDL_EVENT_FINGER_DOWN == event.type ||
+            SDL_EVENT_QUIT == event.type ||
             (SDL_EVENT_KEY_UP == event.type && event.key.key == SDLK_ESCAPE))
         {
             state.continue_loop = false;
@@ -265,7 +270,7 @@ void pull_system_events(event_state state)
             // so we try to emulate it with next render primitive types
             if (event.key.key == SDLK_1)
             {
-                show_z_buffer         = !show_z_buffer;
+                show_z_buffer               = !show_z_buffer;
                 state.primitive_render_mode = GL_TRIANGLES;
             }
             else if (event.key.key == SDLK_2)
@@ -282,14 +287,16 @@ void pull_system_events(event_state state)
             }
             else if (event.key.key == SDLK_5)
             {
-                if (!SDL_SetWindowRelativeMouseMode(SDL_GetKeyboardFocus(), true))
+                if (!SDL_SetWindowRelativeMouseMode(SDL_GetKeyboardFocus(),
+                                                    true))
                 {
                     throw std::runtime_error(SDL_GetError());
                 }
             }
             else if (event.key.key == SDLK_6)
             {
-                if (!SDL_SetWindowRelativeMouseMode(SDL_GetKeyboardFocus(), false))
+                if (!SDL_SetWindowRelativeMouseMode(SDL_GetKeyboardFocus(),
+                                                    false))
                 {
                     throw std::runtime_error(SDL_GetError());
                 }
@@ -359,7 +366,10 @@ std::unique_ptr<SDL_Window, void (*)(SDL_Window*)> create_window(
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
     unique_ptr<SDL_Window, void (*)(SDL_Window*)> window(
-        SDL_CreateWindow(title.c_str(), static_cast<int>(screen_width), static_cast<int>(screen_height), SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE),
+        SDL_CreateWindow(title.c_str(),
+                         static_cast<int>(screen_width),
+                         static_cast<int>(screen_height),
+                         SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE),
         SDL_DestroyWindow);
 
     if (window.get() == nullptr)
@@ -420,153 +430,162 @@ void create_camera(const properties_reader& properties)
 
 int main(int /*argc*/, char* /*argv*/[])
 {
-    using namespace std;
-    using namespace gles30;
-
-    properties_reader properties("res/runtime.properties.hxx");
-
-    auto window = create_window(properties);
-    // destroy only on exit from main
-    [[maybe_unused]] auto gl_context = create_opengl_context(window.get());
-
-    shader cube_shader("res/cube.vsh", "res/cube.fsh");
-    shader outline("res/cube.vsh", "res/outline.fsh");
-
-    texture tex_marble("res/marble.jpg", texture::type::diffuse);
-    texture tex_metal("res/metal.png", texture::type::diffuse);
-
-    mesh cube_marble = create_mesh(
-        cube_vertices.data(), cube_vertices.size() / 8, { &tex_marble });
-    mesh cube_metal = create_mesh(
-        cube_vertices.data(), cube_vertices.size() / 8, { &tex_metal });
-
-    mesh cube_marble_no_tex =
-        create_mesh(cube_vertices.data(), cube_vertices.size() / 8, {});
-    mesh cube_metal_no_tex =
-        create_mesh(cube_vertices.data(), cube_vertices.size() / 8, {});
-
-    mesh plane_metal = create_mesh(
-        plane_vertices.data(), plane_vertices.size() / 8, { &tex_metal });
-
-    [[maybe_unused]] GLenum primitive_render_mode = GL_TRIANGLES;
-
-    float last_frame_time = 0.0f; // Time of last frame
-
-    create_camera(properties);
-
-    bool continue_loop = true;
-    while (continue_loop)
+    try
     {
-        float delta_time = update_delta_time(last_frame_time);
+        using namespace std;
+        using namespace gles30;
 
-        properties.update_changes();
+        properties_reader properties("res/runtime.properties.hxx");
 
-        int z_buf_op =
-            get_z_buf_operation(properties.get_string("z_buf_operation"));
-        glDepthFunc(static_cast<GLenum>(z_buf_op));
-        gl_check();
+        auto window = create_window(properties);
+        // destroy only on exit from main
+        [[maybe_unused]] auto gl_context = create_opengl_context(window.get());
 
-        pull_system_events({ .continue_loop = continue_loop,
-                            .primitive_render_mode = primitive_render_mode });
+        shader cube_shader("res/cube.vsh", "res/cube.fsh");
+        shader outline("res/cube.vsh", "res/outline.fsh");
 
-        camera.move_using_keyboard_wasd(delta_time);
+        texture tex_marble("res/marble.jpg", texture::type::diffuse);
+        texture tex_metal("res/metal.png", texture::type::diffuse);
 
-        glEnable(GL_DEPTH_TEST);
-        glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+        mesh cube_marble = create_mesh(
+            cube_vertices.data(), cube_vertices.size() / 8, { &tex_marble });
+        mesh cube_metal = create_mesh(
+            cube_vertices.data(), cube_vertices.size() / 8, { &tex_metal });
 
-        glStencilMask(0xFF); // enable writing to the stencil buffer
-        clear_back_buffer(properties.get_vec3("clear_color"));
+        mesh cube_marble_no_tex =
+            create_mesh(cube_vertices.data(), cube_vertices.size() / 8, {});
+        mesh cube_metal_no_tex =
+            create_mesh(cube_vertices.data(), cube_vertices.size() / 8, {});
 
-        glEnable(GL_DEPTH_TEST);
-        gl_check();
-        glStencilMask(0x00); // make sure we don't update the stencil buffer
-                             // while drawing the floor
-        gl_check();
+        mesh plane_metal = create_mesh(
+            plane_vertices.data(), plane_vertices.size() / 8, { &tex_metal });
 
-        float scale = 1.0f;
-        render_mesh(cube_shader,
-                    camera,
-                    plane_metal,
-                    glm::vec3(0.0f, 0.0f, 0.0f),
-                    scale,
-                    properties);
+        [[maybe_unused]] GLenum primitive_render_mode = GL_TRIANGLES;
 
-        // enable stensil writing
-        auto sfail  = static_cast<GLenum>(get_stensil_operation(
-            properties.get_string("stensil_operation_sfail")));
-        auto dpfail = static_cast<GLenum>(get_stensil_operation(
-            properties.get_string("stensil_operation_dpfail")));
-        auto dppass = static_cast<GLenum>(get_stensil_operation(
-            properties.get_string("stensil_operation_dppass")));
-        // default  keep   keep    replace  - for write to stensil buffer
-        glStencilOp(sfail, dpfail, dppass);
-        gl_check();
+        float last_frame_time = 0.0f; // Time of last frame
 
-        auto stensil_mask =
-            static_cast<uint32_t>(properties.get_float("stensil_mask_value"));
-        auto stensil_ref =
-            static_cast<int>(properties.get_float("stensil_ref_value"));
-        glStencilFunc(
-            GL_ALWAYS,     // all fragments should update the stencil buffer
-            stensil_ref,   // default 1
-            stensil_mask); // default 0xFF (255)
-        gl_check();
+        create_camera(properties);
 
-        glStencilMask(0xFF); // enable writing to the stencil buffer
-        gl_check();
+        bool continue_loop = true;
+        while (continue_loop)
+        {
+            float delta_time = update_delta_time(last_frame_time);
 
-        render_mesh(cube_shader,
-                    camera,
-                    cube_marble,
-                    glm::vec3(-1.0f, 0.0f, -1.0f),
-                    scale,
-                    properties);
-        render_mesh(cube_shader,
-                    camera,
-                    cube_metal,
-                    glm::vec3(2.0f, 0.0f, 0.0f),
-                    scale,
-                    properties);
+            properties.update_changes();
 
-        // disable stensil test
-        glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-        gl_check();
+            int z_buf_op =
+                get_z_buf_operation(properties.get_string("z_buf_operation"));
+            glDepthFunc(static_cast<GLenum>(z_buf_op));
+            gl_check();
 
-        // only allow fragments with stensil NOT equal to 1
-        glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
-        gl_check();
-        glStencilMask(0x00); // disable writing to the stencil buffer
-        gl_check();
-        glDisable(GL_DEPTH_TEST);
-        gl_check();
+            pull_system_events(
+                { .continue_loop         = continue_loop,
+                  .primitive_render_mode = primitive_render_mode });
 
-        outline.use();
-        glm::vec3 color = properties.get_vec3("outline_color");
-        outline.set_uniform("color", color);
-        scale = properties.get_float("object_scale_outline");
+            camera.move_using_keyboard_wasd(delta_time);
 
-        render_mesh(outline,
-                    camera,
-                    cube_marble_no_tex,
-                    glm::vec3(-1.0f, 0.0f, -1.0f),
-                    scale,
-                    properties);
-        render_mesh(outline,
-                    camera,
-                    cube_metal_no_tex,
-                    glm::vec3(2.0f, 0.0f, 0.0f),
-                    scale,
-                    properties);
+            glEnable(GL_DEPTH_TEST);
+            glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
-        glEnable(GL_DEPTH_TEST);
-        gl_check();
+            glStencilMask(0xFF); // enable writing to the stencil buffer
+            clear_back_buffer(properties.get_vec3("clear_color"));
 
-        SDL_GL_SwapWindow(window.get());
+            glEnable(GL_DEPTH_TEST);
+            gl_check();
+            glStencilMask(0x00); // make sure we don't update the stencil buffer
+                                 // while drawing the floor
+            gl_check();
+
+            float scale = 1.0f;
+            render_mesh(cube_shader,
+                        camera,
+                        plane_metal,
+                        glm::vec3(0.0f, 0.0f, 0.0f),
+                        scale,
+                        properties);
+
+            // enable stensil writing
+            auto sfail  = static_cast<GLenum>(get_stensil_operation(
+                properties.get_string("stensil_operation_sfail")));
+            auto dpfail = static_cast<GLenum>(get_stensil_operation(
+                properties.get_string("stensil_operation_dpfail")));
+            auto dppass = static_cast<GLenum>(get_stensil_operation(
+                properties.get_string("stensil_operation_dppass")));
+            // default  keep   keep    replace  - for write to stensil buffer
+            glStencilOp(sfail, dpfail, dppass);
+            gl_check();
+
+            auto stensil_mask = static_cast<uint32_t>(
+                properties.get_float("stensil_mask_value"));
+            auto stensil_ref =
+                static_cast<int>(properties.get_float("stensil_ref_value"));
+            glStencilFunc(
+                GL_ALWAYS,     // all fragments should update the stencil buffer
+                stensil_ref,   // default 1
+                stensil_mask); // default 0xFF (255)
+            gl_check();
+
+            glStencilMask(0xFF); // enable writing to the stencil buffer
+            gl_check();
+
+            render_mesh(cube_shader,
+                        camera,
+                        cube_marble,
+                        glm::vec3(-1.0f, 0.0f, -1.0f),
+                        scale,
+                        properties);
+            render_mesh(cube_shader,
+                        camera,
+                        cube_metal,
+                        glm::vec3(2.0f, 0.0f, 0.0f),
+                        scale,
+                        properties);
+
+            // disable stensil test
+            glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+            gl_check();
+
+            // only allow fragments with stensil NOT equal to 1
+            glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+            gl_check();
+            glStencilMask(0x00); // disable writing to the stencil buffer
+            gl_check();
+            glDisable(GL_DEPTH_TEST);
+            gl_check();
+
+            outline.use();
+            glm::vec3 color = properties.get_vec3("outline_color");
+            outline.set_uniform("color", color);
+            scale = properties.get_float("object_scale_outline");
+
+            render_mesh(outline,
+                        camera,
+                        cube_marble_no_tex,
+                        glm::vec3(-1.0f, 0.0f, -1.0f),
+                        scale,
+                        properties);
+            render_mesh(outline,
+                        camera,
+                        cube_metal_no_tex,
+                        glm::vec3(2.0f, 0.0f, 0.0f),
+                        scale,
+                        properties);
+
+            glEnable(GL_DEPTH_TEST);
+            gl_check();
+
+            SDL_GL_SwapWindow(window.get());
+        }
+
+        SDL_Quit();
+
+        return 0;
     }
-
-    SDL_Quit();
-
-    return 0;
+    catch (const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+        return EXIT_FAILURE;
+    }
 }
 
 // clang-format off

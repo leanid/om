@@ -176,7 +176,7 @@ private:
                 tok.type                   = token_best_type;
                 auto&       first_match    = token_best_match[0];
                 const char* first_char_ptr = first_match.first;
-                auto length = static_cast<size_t>(first_match.length());
+                auto        length = static_cast<size_t>(first_match.length());
                 tok.value          = std::string_view(first_char_ptr, length);
 
                 rest_content = rest_content.substr(tok.value.size());
@@ -598,9 +598,13 @@ public:
         build_properties_map();
     }
 
-    [[nodiscard]] const std::filesystem::path& get_filepath() const { return path; }
+    [[nodiscard]] const std::filesystem::path& get_filepath() const
+    {
+        return path;
+    }
 
-    [[nodiscard]] const std::unordered_map<std::string, value_t>& get_map() const
+    [[nodiscard]] const std::unordered_map<std::string, value_t>& get_map()
+        const
     {
         return key_values;
     }
@@ -642,7 +646,8 @@ public:
                   << "]" << std::endl
                   << "    from file [" << path << "]" << std::endl;
 
-        auto match_80_percent = static_cast<uint32_t>(static_cast<double>(size(best_match)) * 0.8);
+        auto match_80_percent =
+            static_cast<uint32_t>(static_cast<double>(size(best_match)) * 0.8);
         if (best_mathc_score >= match_80_percent)
         {
             std::cerr << "    best match is [" << best_match << "]"

@@ -108,11 +108,13 @@ void check_gl_error(std::string_view file, int line)
 
     std::string message = ss.str();
 
-    const std::array<SDL_MessageBoxButtonData, 2> buttons = {{
+    const std::array<SDL_MessageBoxButtonData, 2> buttons = { {
         /// .flags, .buttonid, .text
         { .flags = 0, .buttonID = 0, .text = "continue" },
-        { .flags = SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, .buttonID = 1, .text = "break" },
-    }};
+        { .flags    = SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT,
+          .buttonID = 1,
+          .text     = "break" },
+    } };
 
     SDL_MessageBoxData msg_box_data;
     msg_box_data.flags       = 0;
@@ -138,7 +140,8 @@ void check_gl_error(std::string_view file, int line)
 
 void initialize_opengles_3_2() noexcept(false)
 {
-    int result = gladLoadGLES2Loader(reinterpret_cast<GLADloadproc>(SDL_GL_GetProcAddress));
+    int result = gladLoadGLES2Loader(
+        reinterpret_cast<GLADloadproc>(SDL_GL_GetProcAddress));
     if (0 == result)
     {
         throw std::runtime_error("error: failed initialize GLES");

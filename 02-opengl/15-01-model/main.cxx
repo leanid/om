@@ -1,13 +1,14 @@
 #include <array>
-#include <ranges>
 #include <chrono>
 #include <cstdlib>
+#include <exception>
 #include <iostream>
 #include <memory>
 #include <numeric>
+#include <ranges>
 #include <string>
-#include <vector>
 #include <type_traits>
+#include <vector>
 
 #include "fps_camera.hxx"
 #include "gles30_model.hxx"
@@ -60,7 +61,8 @@ void print_view_port()
          << " w=" << view_port[2] << " h=" << view_port[3] << endl;
 }
 
-extern const std::array<float, std::size_t{36} * std::size_t{8}> cube_vertices;
+extern const std::array<float, std::size_t{ 36 } * std::size_t{ 8 }>
+                                      cube_vertices;
 extern const std::array<glm::vec3, 4> light_positions;
 
 void render_light_cubes(gles30::shader&     light_cube_shader,
@@ -76,15 +78,16 @@ void render_light_cubes(gles30::shader&     light_cube_shader,
     for (auto& light_position : light_positions)
     {
         auto model = glm::mat4(1.0f);
-        model           = glm::translate(model, light_position);
-        model           = glm::scale(model, glm::vec3(0.2f));
+        model      = glm::translate(model, light_position);
+        model      = glm::scale(model, glm::vec3(0.2f));
         light_cube_shader.set_uniform("model", model);
         mesh.draw(light_cube_shader);
     }
 }
 
-[[nodiscard]] std::unique_ptr<std::remove_pointer_t<SDL_GLContext>, decltype(&SDL_GL_DestroyContext)> create_opengl_context(
-    SDL_Window* window)
+[[nodiscard]] std::unique_ptr<std::remove_pointer_t<SDL_GLContext>,
+                              decltype(&SDL_GL_DestroyContext)>
+create_opengl_context(SDL_Window* window)
 {
     using namespace std;
     context_parameters ask_context;
@@ -128,7 +131,7 @@ void render_light_cubes(gles30::shader&     light_cube_shader,
     using gl_context_t = std::unique_ptr<std::remove_pointer_t<SDL_GLContext>,
                                          decltype(&SDL_GL_DestroyContext)>;
     gl_context_t gl_context(SDL_GL_CreateContext(window),
-                                                 SDL_GL_DestroyContext);
+                            SDL_GL_DestroyContext);
     if (nullptr == gl_context)
     {
         clog << "Failed to create: " << ask_context
@@ -170,7 +173,8 @@ void pull_system_events(event_state state)
     SDL_Event event;
     while (SDL_PollEvent(&event))
     {
-        if (SDL_EVENT_FINGER_DOWN == event.type || SDL_EVENT_QUIT == event.type ||
+        if (SDL_EVENT_FINGER_DOWN == event.type ||
+            SDL_EVENT_QUIT == event.type ||
             (SDL_EVENT_KEY_UP == event.type && event.key.key == SDLK_ESCAPE))
         {
             state.continue_loop = false;
@@ -209,14 +213,16 @@ void pull_system_events(event_state state)
             }
             else if (event.key.key == SDLK_5)
             {
-                if (!SDL_SetWindowRelativeMouseMode(SDL_GetKeyboardFocus(), true))
+                if (!SDL_SetWindowRelativeMouseMode(SDL_GetKeyboardFocus(),
+                                                    true))
                 {
                     throw std::runtime_error(SDL_GetError());
                 }
             }
             else if (event.key.key == SDLK_6)
             {
-                if (!SDL_SetWindowRelativeMouseMode(SDL_GetKeyboardFocus(), false))
+                if (!SDL_SetWindowRelativeMouseMode(SDL_GetKeyboardFocus(),
+                                                    false))
                 {
                     throw std::runtime_error(SDL_GetError());
                 }
@@ -439,51 +445,61 @@ void render_nanosuit_model(gles30::shader&          nanosuit_shader,
 
 int main(int /*argc*/, char* /*argv*/[])
 {
-    using namespace std;
-    using namespace gles30;
-
-    properties_reader properties("res/runtime.properties.hxx");
-
-    auto window = create_window(properties);
-    // destroy only on exit from main
-    [[maybe_unused]] auto gl_context = create_opengl_context(window.get());
-
-    shader nanosuit_shader("res/nanosuit.vsh", "res/nanosuit.fsh");
-    shader light_cube_shader("res/light_cube.vsh", "res/light_cube.fsh");
-
-    mesh  cube_mesh = create_cube_mesh();
-    model nanosuit("res/model/nanosuit.obj");
-
-    [[maybe_unused]] GLenum primitive_render_mode = GL_TRIANGLES;
-
-    float last_frame_time = 0.0f; // Time of last frame
-
-    create_camera(properties);
-
-    bool continue_loop = true;
-    while (continue_loop)
+    try
     {
-        float delta_time = update_delta_time(last_frame_time);
+        using namespace std;
+        using namespace gles30;
 
-        properties.update_changes();
+        properties_reader properties("res/runtime.properties.hxx");
 
-        pull_system_events({ .continue_loop = continue_loop,
-                            .primitive_render_mode = primitive_render_mode });
+        auto window = create_window(properties);
+        // destroy only on exit from main
+        [[maybe_unused]] auto gl_context = create_opengl_context(window.get());
 
-        camera.move_using_keyboard_wasd(delta_time);
+        shader nanosuit_shader("res/nanosuit.vsh", "res/nanosuit.fsh");
+        shader light_cube_shader("res/light_cube.vsh", "res/light_cube.fsh");
 
-        clear_back_buffer(properties.get_vec3("clear_color"));
+        mesh  cube_mesh = create_cube_mesh();
+        model nanosuit("res/model/nanosuit.obj");
 
-        render_nanosuit_model(nanosuit_shader, properties, nanosuit, camera);
+        [[maybe_unused]] GLenum primitive_render_mode = GL_TRIANGLES;
 
-        render_light_cubes(light_cube_shader, camera, cube_mesh);
+        float last_frame_time = 0.0f; // Time of last frame
 
-        SDL_GL_SwapWindow(window.get());
+        create_camera(properties);
+
+        bool continue_loop = true;
+        while (continue_loop)
+        {
+            float delta_time = update_delta_time(last_frame_time);
+
+            properties.update_changes();
+
+            pull_system_events(
+                { .continue_loop         = continue_loop,
+                  .primitive_render_mode = primitive_render_mode });
+
+            camera.move_using_keyboard_wasd(delta_time);
+
+            clear_back_buffer(properties.get_vec3("clear_color"));
+
+            render_nanosuit_model(
+                nanosuit_shader, properties, nanosuit, camera);
+
+            render_light_cubes(light_cube_shader, camera, cube_mesh);
+
+            SDL_GL_SwapWindow(window.get());
+        }
+
+        SDL_Quit();
+
+        return 0;
     }
-
-    SDL_Quit();
-
-    return 0;
+    catch (const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+        return EXIT_FAILURE;
+    }
 }
 
 // clang-format off

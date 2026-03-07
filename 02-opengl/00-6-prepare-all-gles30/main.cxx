@@ -1,4 +1,5 @@
 #include <cstdlib>
+#include <exception>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -87,113 +88,124 @@ std::ostream& operator<<(std::ostream& out, const context_parameters& params)
 
 int main(int /*argc*/, char* /*argv*/[])
 {
-    using namespace std;
-    const bool init_result = SDL_Init(SDL_INIT_VIDEO);
-    if (!init_result)
-
+    try
     {
-        const char* err_message = SDL_GetError();
-        clog << "error: failed call SDL_Init: " << err_message << endl;
-        return -1;
-    }
+        using namespace std;
+        const bool init_result = SDL_Init(SDL_INIT_VIDEO);
+        if (!init_result)
 
-    unique_ptr<SDL_Window, void (*)(SDL_Window*)> window(
-        SDL_CreateWindow("title", 640, 480, SDL_WINDOW_OPENGL),
-        SDL_DestroyWindow);
-
-    if (window == nullptr)
-    {
-        const char* err_message = SDL_GetError();
-        clog << "error: failed call SDL_CreateWindow: " << err_message << endl;
-        SDL_Quit();
-        return -1;
-    }
-
-    int                r;
-    context_parameters ask_context;
-
-    using namespace std::string_literals;
-
-    const char* platform_name = SDL_GetPlatform();
-    if (platform_name == "Windows"s || platform_name == "Mac OS X"s)
-    {
-        // we want OpenGL Core 3.3 context
-        ask_context.name          = "OpenGL Core";
-        ask_context.major_version = 3;
-        ask_context.minor_version = 3;
-        ask_context.profile_type  = SDL_GL_CONTEXT_PROFILE_CORE;
-    }
-    else
-    {
-        // we want OpenGL ES 3.0 context
-        ask_context.name          = "OpenGL ES";
-        ask_context.major_version = 3;
-        ask_context.minor_version = 0;
-        ask_context.profile_type  = SDL_GL_CONTEXT_PROFILE_ES;
-    }
-
-    r = SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
-                            ask_context.profile_type);
-    SDL_assert_always(r);
-    r = SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION,
-                            ask_context.major_version);
-    SDL_assert_always(r);
-    r = SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION,
-                            ask_context.minor_version);
-    SDL_assert_always(r);
-
-    using gl_context_t = std::unique_ptr<std::remove_pointer_t<SDL_GLContext>,
-                                         decltype(&SDL_GL_DestroyContext)>;
-    gl_context_t gl_context(SDL_GL_CreateContext(window.get()),
-                            SDL_GL_DestroyContext);
-    if (nullptr == gl_context)
-    {
-        clog << "Failed to create: " << ask_context
-             << " error: " << SDL_GetError() << endl;
-        SDL_Quit();
-        return -1;
-    }
-
-    context_parameters got_context = ask_context;
-
-    int result = SDL_GL_GetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION,
-                                     &got_context.major_version);
-    SDL_assert_always(result);
-    result = SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION,
-                                 &got_context.minor_version);
-    SDL_assert_always(result);
-
-    clog << "Ask for " << ask_context << endl;
-    clog << "Receive " << got_context << endl;
-
-    bool continue_loop = true;
-    while (continue_loop)
-    {
-        SDL_Event event;
-        while (SDL_PollEvent(&event))
         {
-            if (SDL_EVENT_FINGER_DOWN == event.type ||
-                SDL_EVENT_QUIT == event.type ||
-                (SDL_EVENT_KEY_UP == event.type && event.key.key == SDLK_ESCAPE))
-            {
-                continue_loop = false;
-                break;
-            }
+            const char* err_message = SDL_GetError();
+            clog << "error: failed call SDL_Init: " << err_message << endl;
+            return -1;
         }
 
-        float red   = 0.f;
-        float green = 1.f;
-        float blue  = 0.f;
-        float alpha = 0.f;
+        unique_ptr<SDL_Window, void (*)(SDL_Window*)> window(
+            SDL_CreateWindow("title", 640, 480, SDL_WINDOW_OPENGL),
+            SDL_DestroyWindow);
 
-        glClearColor(red, green, blue, alpha);
+        if (window == nullptr)
+        {
+            const char* err_message = SDL_GetError();
+            clog << "error: failed call SDL_CreateWindow: " << err_message
+                 << endl;
+            SDL_Quit();
+            return -1;
+        }
 
-        glClear(GL_COLOR_BUFFER_BIT);
+        int                r;
+        context_parameters ask_context;
 
-        SDL_GL_SwapWindow(window.get());
+        using namespace std::string_literals;
+
+        const char* platform_name = SDL_GetPlatform();
+        if (platform_name == "Windows"s || platform_name == "Mac OS X"s)
+        {
+            // we want OpenGL Core 3.3 context
+            ask_context.name          = "OpenGL Core";
+            ask_context.major_version = 3;
+            ask_context.minor_version = 3;
+            ask_context.profile_type  = SDL_GL_CONTEXT_PROFILE_CORE;
+        }
+        else
+        {
+            // we want OpenGL ES 3.0 context
+            ask_context.name          = "OpenGL ES";
+            ask_context.major_version = 3;
+            ask_context.minor_version = 0;
+            ask_context.profile_type  = SDL_GL_CONTEXT_PROFILE_ES;
+        }
+
+        r = SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
+                                ask_context.profile_type);
+        SDL_assert_always(r);
+        r = SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION,
+                                ask_context.major_version);
+        SDL_assert_always(r);
+        r = SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION,
+                                ask_context.minor_version);
+        SDL_assert_always(r);
+
+        using gl_context_t =
+            std::unique_ptr<std::remove_pointer_t<SDL_GLContext>,
+                            decltype(&SDL_GL_DestroyContext)>;
+        gl_context_t gl_context(SDL_GL_CreateContext(window.get()),
+                                SDL_GL_DestroyContext);
+        if (nullptr == gl_context)
+        {
+            clog << "Failed to create: " << ask_context
+                 << " error: " << SDL_GetError() << endl;
+            SDL_Quit();
+            return -1;
+        }
+
+        context_parameters got_context = ask_context;
+
+        int result = SDL_GL_GetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION,
+                                         &got_context.major_version);
+        SDL_assert_always(result);
+        result = SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION,
+                                     &got_context.minor_version);
+        SDL_assert_always(result);
+
+        clog << "Ask for " << ask_context << endl;
+        clog << "Receive " << got_context << endl;
+
+        bool continue_loop = true;
+        while (continue_loop)
+        {
+            SDL_Event event;
+            while (SDL_PollEvent(&event))
+            {
+                if (SDL_EVENT_FINGER_DOWN == event.type ||
+                    SDL_EVENT_QUIT == event.type ||
+                    (SDL_EVENT_KEY_UP == event.type &&
+                     event.key.key == SDLK_ESCAPE))
+                {
+                    continue_loop = false;
+                    break;
+                }
+            }
+
+            float red   = 0.f;
+            float green = 1.f;
+            float blue  = 0.f;
+            float alpha = 0.f;
+
+            glClearColor(red, green, blue, alpha);
+
+            glClear(GL_COLOR_BUFFER_BIT);
+
+            SDL_GL_SwapWindow(window.get());
+        }
+
+        SDL_Quit();
+
+        return 0;
     }
-
-    SDL_Quit();
-
-    return 0;
+    catch (const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+        return EXIT_FAILURE;
+    }
 }

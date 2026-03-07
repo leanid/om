@@ -1,7 +1,7 @@
 #include "gles30_shader.hxx"
 
-#include <array>
 #include <algorithm>
+#include <array>
 #include <cassert>
 #include <cstdint>
 #include <fstream>
@@ -39,14 +39,15 @@ shader::shader(std::string_view vertex_shader_src,
     gl_check();
 
     // check compilation status of our shader
-    int  success;
+    int                    success;
     std::array<char, 1024> info_log{};
     glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &success);
     gl_check();
 
     if (0 == success)
     {
-        glGetShaderInfoLog(vertex_shader, sizeof(info_log), nullptr, info_log.data());
+        glGetShaderInfoLog(
+            vertex_shader, sizeof(info_log), nullptr, info_log.data());
         gl_check();
 
         std::stringstream ss;
@@ -104,7 +105,8 @@ shader::shader(std::string_view vertex_shader_src,
 
     if (0 == success)
     {
-        glGetProgramInfoLog(program_id, sizeof(info_log), nullptr, info_log.data());
+        glGetProgramInfoLog(
+            program_id, sizeof(info_log), nullptr, info_log.data());
         gl_check();
 
         std::stringstream ss;
@@ -187,7 +189,8 @@ void shader::use()
 GLint get_uniform_index(std::string_view name, uint32_t program_id)
 {
     const std::string uniform_name(name);
-    GLint uniform_index = glGetUniformLocation(program_id, uniform_name.c_str());
+    GLint             uniform_index =
+        glGetUniformLocation(program_id, uniform_name.c_str());
     gl_check();
     assert(uniform_index != -1);
     return uniform_index;
@@ -225,7 +228,8 @@ std::string shader::validate() noexcept(false)
     if (1 == success)
     {
         std::array<char, 4096> info_log{};
-        glGetProgramInfoLog(program_id, sizeof(info_log), nullptr, info_log.data());
+        glGetProgramInfoLog(
+            program_id, sizeof(info_log), nullptr, info_log.data());
         gl_check();
 
         if (strlen(info_log.data()) > 0)

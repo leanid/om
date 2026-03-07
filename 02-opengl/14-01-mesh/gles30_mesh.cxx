@@ -56,25 +56,28 @@ void mesh::draw(shader& shader)
         glActiveTexture(GL_TEXTURE0 + i);
         gl_check();
         // retrieve texture number (the N in diffuse_textureN)
-        texture&         texture = *textures.at(i);
-        texture::uv_type type    = texture.get_type();
+        texture&             texture = *textures.at(i);
+        texture::uv_type     type    = texture.get_type();
         std::array<char, 32> str{};
 
         int32_t is_ok = 0;
 
         if (type == texture::uv_type::diffuse)
         {
-            is_ok = snprintf(str.data(), str.size(), "tex_diffuse%d", diffuseNr++);
+            is_ok =
+                snprintf(str.data(), str.size(), "tex_diffuse%d", diffuseNr++);
             assert(is_ok > 0);
         }
         else if (type == texture::uv_type::specular)
         {
-            is_ok = snprintf(str.data(), str.size(), "tex_specular%d", specularNr++);
+            is_ok = snprintf(
+                str.data(), str.size(), "tex_specular%d", specularNr++);
             assert(is_ok > 0);
         }
 
         std::array<char, 64> mat_name{};
-        is_ok = snprintf(mat_name.data(), mat_name.size(), "material.%32s", str.data());
+        is_ok = snprintf(
+            mat_name.data(), mat_name.size(), "material.%32s", str.data());
         assert(is_ok > 0);
 
         shader.set_uniform(mat_name.data(), static_cast<int32_t>(i));

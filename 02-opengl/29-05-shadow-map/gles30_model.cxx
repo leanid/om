@@ -1,8 +1,8 @@
 #include "gles30_model.hxx"
 
 #include <algorithm>
-#include <ranges>
 #include <iostream>
+#include <ranges>
 #include <sstream>
 #include <vector>
 
@@ -15,8 +15,7 @@ namespace gles30
 
 void model::draw(shader& shader) const
 {
-    std::ranges::for_each(meshes,
-                          [&shader](const mesh& m) { m.draw(shader); });
+    std::ranges::for_each(meshes, [&shader](const mesh& m) { m.draw(shader); });
 }
 
 void model::draw_instanced(shader&               shader,
@@ -134,7 +133,8 @@ static mesh process_mesh(const aiMesh*      mesh,
     // process indices
     std::vector<uint32_t> indices;
 
-    indices.reserve(static_cast<std::vector<uint32_t>::size_type>(3) * mesh->mNumFaces);
+    indices.reserve(static_cast<std::vector<uint32_t>::size_type>(3) *
+                    mesh->mNumFaces);
 
     for (size_t i = 0; i < mesh->mNumFaces; i++)
     {

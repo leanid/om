@@ -138,7 +138,8 @@ void shader::create(std::string_view vertex_shader_src,
     if (0 == success)
     {
         std::array<char, 1024> info_log{};
-        glGetProgramInfoLog(program_id, sizeof(info_log), nullptr, info_log.data());
+        glGetProgramInfoLog(
+            program_id, sizeof(info_log), nullptr, info_log.data());
 
         std::stringstream ss;
         ss << "error: linking: " << info_log.data() << std::endl;
@@ -222,7 +223,8 @@ void shader::use()
 GLint get_uniform_index(std::string_view name, uint32_t program_id)
 {
     const std::string uniform_name(name);
-    GLint uniform_index = glGetUniformLocation(program_id, uniform_name.c_str());
+    GLint             uniform_index =
+        glGetUniformLocation(program_id, uniform_name.c_str());
 
     if (uniform_index == -1)
     {
@@ -299,7 +301,8 @@ std::string shader::validate() noexcept(false)
     if (1 == success)
     {
         std::array<char, 4096> info_log{};
-        glGetProgramInfoLog(program_id, sizeof(info_log), nullptr, info_log.data());
+        glGetProgramInfoLog(
+            program_id, sizeof(info_log), nullptr, info_log.data());
 
         if (strlen(info_log.data()) > 0)
         {

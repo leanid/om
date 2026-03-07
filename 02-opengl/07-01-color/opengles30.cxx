@@ -102,11 +102,13 @@ void check_gl_error(const char* file, int line)
 
     std::string message = ss.str();
 
-    const std::array<SDL_MessageBoxButtonData, 2> buttons = {{
+    const std::array<SDL_MessageBoxButtonData, 2> buttons = { {
         /// .flags, .buttonid, .text
         { .flags = 0, .buttonID = 0, .text = "continue" },
-        { .flags = SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, .buttonID = 1, .text = "break" },
-    }};
+        { .flags    = SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT,
+          .buttonID = 1,
+          .text     = "break" },
+    } };
 
     SDL_MessageBoxData msg_box_data;
     msg_box_data.flags       = 0;

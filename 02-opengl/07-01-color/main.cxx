@@ -6,8 +6,8 @@
 #include <numeric>
 #include <ranges>
 #include <string>
-#include <vector>
 #include <type_traits>
+#include <vector>
 
 #include "fps_camera.hxx"
 #include "gles30_shader.hxx"
@@ -47,7 +47,7 @@ void print_view_port()
          << " w=" << view_port[2] << " h=" << view_port[3] << endl;
 }
 
-extern std::array<float, std::size_t{36} * std::size_t{8}> cube_vertices;
+extern std::array<float, std::size_t{ 36 } * std::size_t{ 8 }> cube_vertices;
 
 void update_vertex_attributes()
 {
@@ -137,7 +137,8 @@ static int main_impl()
     const std::string title = properties.get_string("title");
 
     unique_ptr<SDL_Window, void (*)(SDL_Window*)> window(
-        SDL_CreateWindow(title.c_str(), 640, 480, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE),
+        SDL_CreateWindow(
+            title.c_str(), 640, 480, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE),
         SDL_DestroyWindow);
 
     if (window == nullptr)
@@ -184,8 +185,8 @@ static int main_impl()
 
     using gl_context_t = std::unique_ptr<std::remove_pointer_t<SDL_GLContext>,
                                          decltype(&SDL_GL_DestroyContext)>;
-    gl_context_t gl_context(
-        SDL_GL_CreateContext(window.get()), SDL_GL_DestroyContext);
+    gl_context_t gl_context(SDL_GL_CreateContext(window.get()),
+                            SDL_GL_DestroyContext);
     if (nullptr == gl_context)
     {
         clog << "Failed to create: " << ask_context
@@ -308,17 +309,20 @@ static int main_impl()
     bool continue_loop = true;
     while (continue_loop)
     {
-        float currentFrame = static_cast<float>(SDL_GetTicks()) * 0.001f; // seconds
-        deltaTime          = currentFrame - lastFrame;
-        lastFrame          = currentFrame;
+        float currentFrame =
+            static_cast<float>(SDL_GetTicks()) * 0.001f; // seconds
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
 
         properties.update_changes();
 
         SDL_Event event;
         while (SDL_PollEvent(&event))
         {
-            if (SDL_EVENT_FINGER_DOWN == event.type || SDL_EVENT_QUIT == event.type ||
-                (SDL_EVENT_KEY_UP == event.type && event.key.key == SDLK_ESCAPE))
+            if (SDL_EVENT_FINGER_DOWN == event.type ||
+                SDL_EVENT_QUIT == event.type ||
+                (SDL_EVENT_KEY_UP == event.type &&
+                 event.key.key == SDLK_ESCAPE))
             {
                 continue_loop = false;
                 break;
@@ -356,14 +360,16 @@ static int main_impl()
                 }
                 else if (event.key.key == SDLK_5)
                 {
-                    if (!SDL_SetWindowRelativeMouseMode(SDL_GetKeyboardFocus(), true))
+                    if (!SDL_SetWindowRelativeMouseMode(SDL_GetKeyboardFocus(),
+                                                        true))
                     {
                         throw std::runtime_error(SDL_GetError());
                     }
                 }
                 else if (event.key.key == SDLK_6)
                 {
-                    if (!SDL_SetWindowRelativeMouseMode(SDL_GetKeyboardFocus(), false))
+                    if (!SDL_SetWindowRelativeMouseMode(SDL_GetKeyboardFocus(),
+                                                        false))
                     {
                         throw std::runtime_error(SDL_GetError());
                     }
@@ -375,8 +381,7 @@ static int main_impl()
                      << event.window.data2 << ' ';
                 // play with it to understand OpenGL origin point
                 // for window screen coordinate system
-                glViewport(
-                    0, 0, event.window.data1, event.window.data2);
+                glViewport(0, 0, event.window.data1, event.window.data2);
                 gl_check();
                 print_view_port();
             }

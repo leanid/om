@@ -1,7 +1,7 @@
 #include "gles30_texture.hxx"
 
-#include <array>
 #include <algorithm>
+#include <array>
 #include <numeric>
 
 #pragma GCC diagnostic push
@@ -40,10 +40,10 @@ texture::texture(const type tex_type, const extent size)
     throw_exception_if_not_diffuse_or_specular();
     gen_texture_set_filters_and_wrap();
 
-    const auto gl_width  = static_cast<GLsizei>(size.width);
-    const auto gl_height = static_cast<GLsizei>(size.height);
-    GLint        mipmap_level = 0;
-    GLint        border       = 0;
+    const auto gl_width     = static_cast<GLsizei>(size.width);
+    const auto gl_height    = static_cast<GLsizei>(size.height);
+    GLint      mipmap_level = 0;
+    GLint      border       = 0;
     // allocate memory for texture
     glTexImage2D(GL_TEXTURE_2D,
                  mipmap_level,
@@ -274,9 +274,9 @@ static GLenum to_gl_type(texture::pixel_type type)
     }
 }
 
-texture::texture(const type tex_type,
+texture::texture(const type   tex_type,
                  const extent size,
-                 pixel_type pixel_data_type)
+                 pixel_type   pixel_data_type)
     : file_name{ "from memory" }
     , texture_id{ 0 }
     , texture_type{ tex_type }
@@ -293,11 +293,11 @@ texture::texture(const type tex_type,
     max_filter(filter::nearest);
     min_filter(filter::nearest);
 
-    const auto gl_width  = static_cast<GLsizei>(size.width);
-    const auto gl_height = static_cast<GLsizei>(size.height);
-    GLint        mipmap_level = 0;
-    GLint        border       = 0;
-    GLenum       pixel_type   = to_gl_type(pixel_data_type);
+    const auto gl_width     = static_cast<GLsizei>(size.width);
+    const auto gl_height    = static_cast<GLsizei>(size.height);
+    GLint      mipmap_level = 0;
+    GLint      border       = 0;
+    GLenum     pixel_type   = to_gl_type(pixel_data_type);
 
     // allocate memory for texture
     glTexImage2D(GL_TEXTURE_2D,
@@ -376,7 +376,8 @@ void texture::wrap_t(const wrap value)
 void texture::set_border_color(float r, float g, float b, float a)
 {
     const std::array<float, 4> border_color{ r, g, b, a };
-    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, border_color.data());
+    glTexParameterfv(
+        GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, border_color.data());
 }
 
 texture::~texture()

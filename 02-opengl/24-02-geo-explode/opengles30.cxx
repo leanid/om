@@ -2,11 +2,11 @@
 
 #include <algorithm>
 #include <array>
-#include <ranges>
-#include <string>
 #include <csignal>
 #include <iostream>
+#include <ranges>
 #include <sstream>
+#include <string>
 
 #include <SDL3/SDL.h>
 #ifdef __ANDROID__
@@ -112,11 +112,13 @@ void check_gl_error(std::string_view file, int line)
 
     std::string message = ss.str();
 
-    const std::array<SDL_MessageBoxButtonData, 2> buttons = {{
+    const std::array<SDL_MessageBoxButtonData, 2> buttons = { {
         /// .flags, .buttonid, .text
         { .flags = 0, .buttonID = 0, .text = "continue" },
-        { .flags = SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, .buttonID = 1, .text = "break" },
-    }};
+        { .flags    = SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT,
+          .buttonID = 1,
+          .text     = "break" },
+    } };
 
     SDL_MessageBoxData msg_box_data;
     msg_box_data.flags       = 0;
@@ -142,7 +144,8 @@ void check_gl_error(std::string_view file, int line)
 
 void initialize_opengles_3_2() noexcept(false)
 {
-    int result = gladLoadGLES2Loader(reinterpret_cast<GLADloadproc>(SDL_GL_GetProcAddress));
+    int result = gladLoadGLES2Loader(
+        reinterpret_cast<GLADloadproc>(SDL_GL_GetProcAddress));
     if (0 == result)
     {
         throw std::runtime_error("error: failed initialize GLES");
@@ -188,8 +191,9 @@ static const char* source_to_strv(GLenum source)
         case GL_DEBUG_SOURCE_OTHER:
             return "OTHER";
         default:
-            throw std::runtime_error("unknown GL debug source: " +
-                                    std::to_string(static_cast<unsigned>(source)));
+            throw std::runtime_error(
+                "unknown GL debug source: " +
+                std::to_string(static_cast<unsigned>(source)));
     }
 }
 
@@ -216,8 +220,9 @@ static const char* type_to_strv(GLenum type)
         case GL_DEBUG_TYPE_OTHER:
             return "OTHER";
         default:
-            throw std::runtime_error("unknown GL debug type: " +
-                                    std::to_string(static_cast<unsigned>(type)));
+            throw std::runtime_error(
+                "unknown GL debug type: " +
+                std::to_string(static_cast<unsigned>(type)));
     }
 }
 
@@ -234,8 +239,9 @@ static const char* severity_to_strv(GLenum severity)
         case GL_DEBUG_SEVERITY_NOTIFICATION:
             return "NOTIFICATION";
         default:
-            throw std::runtime_error("unknown GL debug severity: " +
-                                    std::to_string(static_cast<unsigned>(severity)));
+            throw std::runtime_error(
+                "unknown GL debug severity: " +
+                std::to_string(static_cast<unsigned>(severity)));
     }
 }
 
@@ -283,9 +289,10 @@ int get_gl_constant(
     const std::array<std::pair<std::string_view, int>, 8>& operations,
     std::string_view                                       name)
 {
-    auto it = std::ranges::find_if(operations,
-                                   [&name](const std::pair<std::string_view, int>& p)
-                                   { return p.first == name; });
+    auto it =
+        std::ranges::find_if(operations,
+                             [&name](const std::pair<std::string_view, int>& p)
+                             { return p.first == name; });
     if (it == std::end(operations))
     {
         throw std::out_of_range(std::string("operation not found: ") +

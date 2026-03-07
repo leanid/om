@@ -20,11 +20,11 @@
 #include <algorithm>
 #include <array>
 #include <charconv>
-#include <ranges>
 #include <forward_list>
 #include <fstream>
 #include <iostream>
 #include <iterator>
+#include <ranges>
 #include <regex>
 #include <sstream>
 #include <string>
@@ -148,7 +148,7 @@ private:
                 tok.type                   = token_best_type;
                 auto&       first_match    = token_best_match[0];
                 const char* first_char_ptr = first_match.first;
-                auto length = static_cast<size_t>(first_match.length());
+                auto        length = static_cast<size_t>(first_match.length());
                 tok.value          = std::string_view(first_char_ptr, length);
 
                 rest_content = rest_content.substr(tok.value.size());

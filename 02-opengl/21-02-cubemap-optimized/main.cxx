@@ -1,6 +1,7 @@
 #include <array>
 #include <chrono>
 #include <cstdlib>
+#include <exception>
 #include <iostream>
 #include <memory>
 #include <numeric>
@@ -54,9 +55,10 @@ int get_gl_constant(
     const std::array<std::pair<std::string_view, int>, 8>& operations,
     std::string_view                                       name)
 {
-    auto it = std::ranges::find_if(operations,
-                           [&name](const std::pair<std::string_view, int>& p)
-                           { return p.first == name; });
+    auto it =
+        std::ranges::find_if(operations,
+                             [&name](const std::pair<std::string_view, int>& p)
+                             { return p.first == name; });
     if (it == std::end(operations))
     {
         throw std::out_of_range(std::string("operation not found: ") +
@@ -115,10 +117,14 @@ void print_view_port()
          << " w=" << view_port[2] << " h=" << view_port[3] << endl;
 }
 
-extern const std::array<float, std::size_t{36} * std::size_t{8}> cube_vertices;
-extern const std::array<float, std::size_t{6} * std::size_t{8}> plane_vertices;
-extern const std::array<float, std::size_t{6} * std::size_t{8}> transparent_vert;
-extern const std::array<float, std::size_t{6} * std::size_t{8}> fullscreen_vertices;
+extern const std::array<float, std::size_t{ 36 } * std::size_t{ 8 }>
+    cube_vertices;
+extern const std::array<float, std::size_t{ 6 } * std::size_t{ 8 }>
+    plane_vertices;
+extern const std::array<float, std::size_t{ 6 } * std::size_t{ 8 }>
+    transparent_vert;
+extern const std::array<float, std::size_t{ 6 } * std::size_t{ 8 }>
+    fullscreen_vertices;
 
 enum class render_options
 {
@@ -156,8 +162,8 @@ void render_mesh(gles30::shader&          shader,
 
         {
             auto model = glm::mat4(1.0f);
-            model           = glm::translate(model, position);
-            model           = glm::scale(model, glm::vec3(scale));
+            model      = glm::translate(model, position);
+            model      = glm::scale(model, glm::vec3(scale));
             shader.set_uniform("model", model);
             mesh.draw(shader);
         }
@@ -175,8 +181,9 @@ void render_mesh(gles30::shader&          shader,
     }
 }
 
-[[nodiscard]] std::unique_ptr<std::remove_pointer_t<SDL_GLContext>, decltype(&SDL_GL_DestroyContext)> create_opengl_context(
-    SDL_Window* window)
+[[nodiscard]] std::unique_ptr<std::remove_pointer_t<SDL_GLContext>,
+                              decltype(&SDL_GL_DestroyContext)>
+create_opengl_context(SDL_Window* window)
 {
     using namespace std;
     context_parameters ask_context;
@@ -187,8 +194,7 @@ void render_mesh(gles30::shader&          shader,
                                                    "Mac OS X",
                                                    "Linux" };
 
-    auto it =
-        std::ranges::find(desktop_platforms, platform_name);
+    auto it = std::ranges::find(desktop_platforms, platform_name);
 
     if (it != std::end(desktop_platforms))
     {
@@ -221,7 +227,7 @@ void render_mesh(gles30::shader&          shader,
     using gl_context_t = std::unique_ptr<std::remove_pointer_t<SDL_GLContext>,
                                          decltype(&SDL_GL_DestroyContext)>;
     gl_context_t gl_context(SDL_GL_CreateContext(window),
-                                                 SDL_GL_DestroyContext);
+                            SDL_GL_DestroyContext);
     if (nullptr == gl_context)
     {
         clog << "Failed to create: " << ask_context
@@ -265,7 +271,7 @@ void render_mesh(gles30::shader&          shader,
 struct event_state
 {
     bool& continue_loop;
-    int& current_effect;
+    int&  current_effect;
 };
 
 void pull_system_events(event_state state)
@@ -274,7 +280,8 @@ void pull_system_events(event_state state)
     SDL_Event event;
     while (SDL_PollEvent(&event))
     {
-        if (SDL_EVENT_FINGER_DOWN == event.type || SDL_EVENT_QUIT == event.type ||
+        if (SDL_EVENT_FINGER_DOWN == event.type ||
+            SDL_EVENT_QUIT == event.type ||
             (SDL_EVENT_KEY_UP == event.type && event.key.key == SDLK_ESCAPE))
         {
             state.continue_loop = false;
@@ -315,14 +322,16 @@ void pull_system_events(event_state state)
             }
             else if (event.key.key == SDLK_5)
             {
-                if (!SDL_SetWindowRelativeMouseMode(SDL_GetKeyboardFocus(), true))
+                if (!SDL_SetWindowRelativeMouseMode(SDL_GetKeyboardFocus(),
+                                                    true))
                 {
                     throw std::runtime_error(SDL_GetError());
                 }
             }
             else if (event.key.key == SDLK_6)
             {
-                if (!SDL_SetWindowRelativeMouseMode(SDL_GetKeyboardFocus(), false))
+                if (!SDL_SetWindowRelativeMouseMode(SDL_GetKeyboardFocus(),
+                                                    false))
                 {
                     throw std::runtime_error(SDL_GetError());
                 }
@@ -389,7 +398,10 @@ std::unique_ptr<SDL_Window, void (*)(SDL_Window*)> create_window(
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
     unique_ptr<SDL_Window, void (*)(SDL_Window*)> window(
-        SDL_CreateWindow(title.c_str(), static_cast<int>(screen_width), static_cast<int>(screen_height), SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE),
+        SDL_CreateWindow(title.c_str(),
+                         static_cast<int>(screen_width),
+                         static_cast<int>(screen_height),
+                         SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE),
         SDL_DestroyWindow);
 
     if (window.get() == nullptr)
@@ -457,7 +469,9 @@ struct scene
     properties_reader properties;
 
     std::unique_ptr<SDL_Window, void (*)(SDL_Window*)> window;
-    std::unique_ptr<std::remove_pointer_t<SDL_GLContext>, decltype(&SDL_GL_DestroyContext)> context;
+    std::unique_ptr<std::remove_pointer_t<SDL_GLContext>,
+                    decltype(&SDL_GL_DestroyContext)>
+        context;
 
     gles30::shader cube_shader;
     gles30::shader outline;
@@ -501,8 +515,12 @@ scene::scene()
     , tex_window("res/blending_transparent_window.png",
                  gles30::texture::type::diffuse,
                  gles30::texture::opt::no_flip)
-    , tex_color_buffer(gles30::texture::type::diffuse,
-                       gles30::texture::extent{ .width = static_cast<size_t>(properties.get_float("screen_width")), .height = static_cast<size_t>(properties.get_float("screen_height")) })
+    , tex_color_buffer(
+          gles30::texture::type::diffuse,
+          gles30::texture::extent{ .width = static_cast<size_t>(
+                                       properties.get_float("screen_width")),
+                                   .height = static_cast<size_t>(
+                                       properties.get_float("screen_height")) })
     , tex_cubemap(faces, gles30::texture::opt::no_flip)
     , cube_marble{ create_mesh(
           cube_vertices.data(), cube_vertices.size() / 8, { &tex_marble }) }
@@ -512,8 +530,9 @@ scene::scene()
           cube_vertices.data(), cube_vertices.size() / 8, { &tex_cubemap }) }
     , plane_metal{ create_mesh(
           plane_vertices.data(), plane_vertices.size() / 8, { &tex_metal }) }
-    , transparent_quad{ create_mesh(
-          transparent_vert.data(), transparent_vert.size() / 8, { &tex_window }) }
+    , transparent_quad{ create_mesh(transparent_vert.data(),
+                                    transparent_vert.size() / 8,
+                                    { &tex_window }) }
     , fullscreen_quad{ create_mesh(fullscreen_vertices.data(),
                                    fullscreen_vertices.size() / 8,
                                    { &tex_color_buffer }) }
@@ -522,7 +541,8 @@ scene::scene()
                   glm::vec3(0.0f, 0.0f, 0.7f),
                   glm::vec3(-0.3f, 0.0f, -2.3f),
                   glm::vec3(0.5f, 0.0f, -0.6f) }
-    , frame(static_cast<uint32_t>(properties.get_float("screen_width")), static_cast<uint32_t>(properties.get_float("screen_height")))
+    , frame(static_cast<uint32_t>(properties.get_float("screen_width")),
+            static_cast<uint32_t>(properties.get_float("screen_height")))
 {
     create_camera(properties);
 
@@ -575,11 +595,13 @@ void scene::render(float delta_time)
     {
         glm::vec3 cam_position = camera.position();
         // we want to sort in order of far from camera
-        std::ranges::sort(vegetation,
-                         [&cam_position](const glm::vec3& l, const glm::vec3& r) {
-                      return glm::length(l - cam_position) >
-                             glm::length(r - cam_position);
-                  });
+        std::ranges::sort(
+            vegetation,
+            [&cam_position](const glm::vec3& l, const glm::vec3& r)
+            {
+                return glm::length(l - cam_position) >
+                       glm::length(r - cam_position);
+            });
     }
 
     for (auto pos : vegetation)
@@ -621,35 +643,43 @@ void scene::render_fullscreen_quad()
 
 int main(int /*argc*/, char* /*argv*/[])
 {
-    scene scene;
-
-    float last_frame_time      = 0.0f; // Time of last frame
-    int   current_post_process = 0;
-
-    for (bool continue_loop = true; continue_loop;)
+    try
     {
-        float delta_time = update_delta_time(last_frame_time);
+        scene scene;
 
-        scene.properties.update_changes();
+        float last_frame_time      = 0.0f; // Time of last frame
+        int   current_post_process = 0;
 
-        pull_system_events({ .continue_loop = continue_loop,
-                    .current_effect = current_post_process });
+        for (bool continue_loop = true; continue_loop;)
+        {
+            float delta_time = update_delta_time(last_frame_time);
 
-        scene.frame.bind();
-        scene.render(delta_time);
+            scene.properties.update_changes();
 
-        scene.frame.unbind();
-        scene.quad_shader.use();
-        scene.quad_shader.set_uniform("current_post_process",
-                                      current_post_process);
-        scene.render_fullscreen_quad();
+            pull_system_events({ .continue_loop  = continue_loop,
+                                 .current_effect = current_post_process });
 
-        SDL_GL_SwapWindow(scene.window.get());
+            scene.frame.bind();
+            scene.render(delta_time);
+
+            scene.frame.unbind();
+            scene.quad_shader.use();
+            scene.quad_shader.set_uniform("current_post_process",
+                                          current_post_process);
+            scene.render_fullscreen_quad();
+
+            SDL_GL_SwapWindow(scene.window.get());
+        }
+
+        SDL_Quit();
+
+        return 0;
     }
-
-    SDL_Quit();
-
-    return 0;
+    catch (const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+        return EXIT_FAILURE;
+    }
 }
 
 // clang-format off
