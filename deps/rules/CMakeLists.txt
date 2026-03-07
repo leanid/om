@@ -32,6 +32,7 @@ externalproject_add(
                -DCMAKE_LINKER_TYPE=${CMAKE_LINKER_TYPE}
                -DCMAKE_EXE_LINKER_FLAGS=${CMAKE_EXE_LINKER_FLAGS}
                -DCMAKE_SHARED_LINKER_FLAGS=${CMAKE_SHARED_LINKER_FLAGS}
+               -DCMAKE_POLICY_VERSION_MINIMUM=3.5
                -DBUILD_SHARED_LIBS=OFF
                -DENABLE_SSL=OFF
                -DDISABLE_TESTS=ON
