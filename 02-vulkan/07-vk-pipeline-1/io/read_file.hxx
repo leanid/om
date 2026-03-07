@@ -16,7 +16,6 @@ struct content
 
     content() noexcept
         : memory{}
-        , size{}
     {
     }
     content(content&& other) noexcept
@@ -32,11 +31,11 @@ struct content
         return *this;
     }
 
-    std::string_view as_string_view() const noexcept
+    [[nodiscard]] std::string_view as_string_view() const noexcept
     {
         return { reinterpret_cast<char*>(memory.get()), size };
     }
-    std::span<std::byte> as_span() const noexcept
+    [[nodiscard]] std::span<std::byte> as_span() const noexcept
     {
         return std::span{ memory.get(), size };
     }
