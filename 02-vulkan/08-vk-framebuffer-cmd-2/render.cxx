@@ -118,7 +118,10 @@ debug_callback(vk::DebugUtilsMessageSeverityFlagBitsEXT      severity,
                        vk::DebugUtilsObjectNameInfoEXT object_info = object;
                        ss << "type: " << vk::to_string(object_info.objectType)
                           << ' ';
-                       ss << "name: " << object_info.pObjectName << ' ';
+                       const char* obj_name = object_info.pObjectName
+                                                  ? object_info.pObjectName
+                                                  : "";
+                       ss << "name: " << obj_name << ' ';
                    });
         return ss.str();
     };
