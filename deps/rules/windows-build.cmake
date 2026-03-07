@@ -22,7 +22,7 @@ execute_process(
         ${CMAKE_COMMAND} -B ${CMAKE_CURRENT_LIST_DIR}/build -S
         ${CMAKE_CURRENT_LIST_DIR} -G "Visual Studio 17 2022" -T v143
         -DCMAKE_TOOLCHAIN_FILE=${toolchain_path}
-        -DCMAKE_BUILD_TYPE=RelWithDebInfo
+        -DCMAKE_BUILD_TYPE=RelWithDebInfo --fresh
     WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR} COMMAND_ERROR_IS_FATAL ANY)
 
 execute_process(
