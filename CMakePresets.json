@@ -12,6 +12,10 @@
       "hidden": true,
       "binaryDir": "${sourceDir}/.build/${presetName}",
       "cacheVariables": {
+        "CMAKE_SUPPRESS_DEVELOPER_WARNINGS": {
+          "type": "BOOL",
+          "value": "ON"
+        },
         "CMAKE_EXPORT_COMPILE_COMMANDS": {
           "type": "BOOL",
           "value": "ON"
