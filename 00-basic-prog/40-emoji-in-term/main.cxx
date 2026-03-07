@@ -3,7 +3,21 @@
 #include <iostream>
 #include <utility>
 
+int main_impl(int argc, char** argv);
+
 int main(int argc, char** argv)
+{
+    try
+    {
+        return main_impl(argc, argv);
+    }
+    catch (...)
+    {
+        return 1;
+    }
+}
+
+int main_impl(int argc, char** argv)
 {
     std::cout << "Можем ли мы писать по русски и использовать Эмоджи?\n";
     std::cout
