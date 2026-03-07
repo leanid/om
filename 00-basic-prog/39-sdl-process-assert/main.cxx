@@ -16,21 +16,30 @@ om::gui::msg_box parse_args_or_stdin(int argc, char** argv);
 
 int main(int argc, char** argv)
 {
+    try
     {
+        {
 
-        om::gui::msg_box msg_box = om::parse_args_or_stdin(argc, argv);
+            om::gui::msg_box msg_box = om::parse_args_or_stdin(argc, argv);
 
 #if 1
-        std::cout << "after parsing: " << msg_box << std::endl;
+            std::cout << "after parsing: " << msg_box << std::endl;
 #endif
 
-        using namespace std;
-        bool     is_child_process = argc == 2 && argv[1] == "--pipe"s;
-        uint32_t selected_button_index =
-            is_child_process ? msg_box.show() : msg_box.show_in_child_process();
-        std::cout << "user select button: " << selected_button_index
-                  << std::endl;
-        return static_cast<int>(selected_button_index);
+            using namespace std;
+            bool     is_child_process = argc == 2 && argv[1] == "--pipe"s;
+            uint32_t selected_button_index =
+                is_child_process ? msg_box.show()
+                                 : msg_box.show_in_child_process();
+            std::cout << "user select button: " << selected_button_index
+                      << std::endl;
+            return static_cast<int>(selected_button_index);
+        }
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+        return EXIT_FAILURE;
     }
 }
 namespace om
