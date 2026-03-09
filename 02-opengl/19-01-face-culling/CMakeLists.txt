@@ -39,7 +39,7 @@ elseif(UNIX)
     target_link_libraries(19-01-face-culling PRIVATE SDL3::SDL3-shared assimp::assimp
                                                   GL
                                                   )
-elseif(MSVC)
+elseif(WIN32)
     add_executable(19-01-face-culling)
     find_package(SDL3 CONFIG REQUIRED)
     find_package(glm CONFIG REQUIRED)

@@ -67,7 +67,7 @@ elseif(UNIX)
         30-1-point-shadow
         PRIVATE ${SDL3_INCLUDE_DIRS}
     )
-elseif(MSVC)
+elseif(WIN32)
     add_executable(30-1-point-shadow)
     find_package(SDL3 CONFIG
         REQUIRED

@@ -34,7 +34,7 @@ elseif(UNIX)
     find_package(OpenGL REQUIRED)
     target_link_libraries(${PROJECT_NAME} PRIVATE SDL3::SDL3-shared
         OpenGL::GL)
-elseif(MSVC)
+elseif(WIN32)
     add_executable(${PROJECT_NAME} main.cxx)
     find_package(SDL3 CONFIG REQUIRED)
     target_link_libraries(${PROJECT_NAME} PRIVATE SDL3::SDL3-shared

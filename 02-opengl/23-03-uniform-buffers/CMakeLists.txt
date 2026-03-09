@@ -50,7 +50,7 @@ elseif(UNIX)
                                                         assimp::assimp GL)
     target_include_directories(23-03-uniform-buffers
                                PRIVATE ${SDL3_INCLUDE_DIRS})
-elseif(MSVC)
+elseif(WIN32)
     add_executable(23-03-uniform-buffers)
     find_package(SDL3 CONFIG REQUIRED)
     find_package(glm CONFIG REQUIRED)

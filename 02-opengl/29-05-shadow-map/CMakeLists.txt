@@ -67,7 +67,7 @@ elseif(UNIX)
         29-05-shadow-map
         PRIVATE ${SDL3_INCLUDE_DIRS}
     )
-elseif(MSVC)
+elseif(WIN32)
     add_executable(29-05-shadow-map)
     find_package(SDL3 CONFIG
         REQUIRED

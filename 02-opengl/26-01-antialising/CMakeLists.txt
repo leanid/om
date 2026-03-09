@@ -44,7 +44,7 @@ elseif(UNIX)
                                                   GL
                                                   )
     target_include_directories(26-01-antialising PRIVATE ${SDL3_INCLUDE_DIRS})
-elseif(MSVC)
+elseif(WIN32)
     add_executable(26-01-antialising)
     find_package(SDL3 CONFIG REQUIRED)
     find_package(glm CONFIG REQUIRED)

@@ -41,7 +41,7 @@ elseif(UNIX)
     find_package(glm REQUIRED)
     target_link_libraries(18-01-blending PRIVATE SDL3::SDL3-shared
                                                  assimp::assimp GL)
-elseif(MSVC)
+elseif(WIN32)
     add_executable(18-01-blending)
     find_package(SDL3 CONFIG REQUIRED)
     find_package(glm CONFIG REQUIRED)

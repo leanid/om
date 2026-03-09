@@ -40,7 +40,7 @@ elseif(UNIX)
                                                   GL
                                                   )
     target_include_directories(20-01-framebuffer PRIVATE ${SDL3_INCLUDE_DIRS})
-elseif(MSVC)
+elseif(WIN32)
     add_executable(20-01-framebuffer)
     find_package(SDL3 CONFIG REQUIRED)
     find_package(glm CONFIG REQUIRED)

@@ -45,7 +45,7 @@ elseif(UNIX)
         PRIVATE SDL3::SDL3-shared assimp::assimp
                 # zlibstatic
                 GL)
-elseif(MSVC)
+elseif(WIN32)
     add_executable(16-01-z-buffer)
     find_package(SDL3 CONFIG REQUIRED)
     find_package(glm CONFIG REQUIRED)

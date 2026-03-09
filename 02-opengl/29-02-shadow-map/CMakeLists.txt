@@ -50,7 +50,7 @@ elseif(UNIX)
                                                   GL
                                                   )
     target_include_directories(29-02-shadow-map PRIVATE ${SDL3_INCLUDE_DIRS})
-elseif(MSVC)
+elseif(WIN32)
     add_executable(29-02-shadow-map)
     find_package(SDL3 CONFIG REQUIRED)
     find_package(glm CONFIG REQUIRED)
