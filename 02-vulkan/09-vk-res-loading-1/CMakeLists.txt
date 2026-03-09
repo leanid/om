@@ -1,12 +1,8 @@
 cmake_minimum_required(VERSION 4.2)
 
 project(09-vk-res-loading-1 CXX)
-find_package(
-    slang
-    CONFIG
-    REQUIRED
-    HINTS
-    "$ENV{VULKAN_SDK}/lib/cmake")
+
+find_program(SLANGC_EXECUTABLE slangc HINTS "$ENV{VULKAN_SDK}/bin" REQUIRED)
 message(STATUS "SLANGC_EXECUTABLE: ${SLANGC_EXECUTABLE}")
 
 # set up Vulkan C++ module
