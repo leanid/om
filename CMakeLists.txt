@@ -1,4 +1,13 @@
 cmake_minimum_required(VERSION 4.2)
+
+option(OM_BASIC_GAME_DEV "turn ON to build 01-basic-game-dev" ON)
+option(OM_BASIC_PROG "turn ON if need to build 00-basic-prog" ON)
+option(OM_OPENGL "turn ON if need to build 02-opengl" ON)
+option(OM_VULKAN "turn ON if need to build 02-vulkan" ON)
+option(OM_GAME_EXAMPLE "turn ON if need to build 05-game" OFF)
+option(OM_WEB "turn ON if need to build 08-web" ON)
+option(OM_CLANG_TIDY "turn ON if need to run clang-tidy" ON)
+
 # Enables the Standard module support. This needs to be done
 # before selecting the languages.
 # https://github.com/Kitware/CMake/blob/master/Help/dev/experimental.rst
@@ -29,20 +38,11 @@ linux/windows/macos/ios/android developing. All with modern C++."
 list(PREPEND CMAKE_PREFIX_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
 find_package(om-common-functions REQUIRED)
-find_package(om-triplet-name REQUIRED)
-
-list(PREPEND CMAKE_PREFIX_PATH
-     ${CMAKE_SOURCE_DIR}/deps/prebuilt/${OM_TRIPLET_NAME})
-
 om_add_custom_build_types()
 
-option(OM_BUILD_COURSE_BASIC_GAME_DEV "turn ON to build 01-basic-game-dev" ON)
-option(OM_BUILD_COURSE_BASIC_PROG "turn ON if need to build 00-basic-prog" ON)
-option(OM_BUILD_COURSE_OPENGL "turn ON if need to build 02-opengl" ON)
-option(OM_BUILD_COURSE_VULKAN "turn ON if need to build 02-vulkan" ON)
-option(OM_BUILD_GAME_EXAMPLE "turn ON if need to build 05-game" OFF)
-option(OM_BUILD_WEB "turn ON if need to build 08-web" ON)
-option(OM_CLANG_TIDY "turn ON if need to run clang-tidy" ON)
+find_package(om-triplet-name REQUIRED)
+list(PREPEND CMAKE_PREFIX_PATH
+     ${CMAKE_SOURCE_DIR}/deps/prebuilt/${OM_TRIPLET_NAME})
 
 find_package(Boost COMPONENTS program_options stacktrace REQUIRED)
 find_package(Catch2 REQUIRED)
@@ -62,26 +62,26 @@ enable_testing()
 om_clang_tidy_enable()
 
 # courses
-if(OM_BUILD_COURSE_BASIC_PROG)
+if(OM_BASIC_PROG)
     add_subdirectory(00-basic-prog)
 endif()
 
-if(OM_BUILD_COURSE_BASIC_GAME_DEV)
+if(OM_BASIC_GAME_DEV)
     add_subdirectory(01-basic-game-dev)
 endif()
 
-if(OM_BUILD_COURSE_OPENGL)
+if(OM_OPENGL)
     add_subdirectory(02-opengl)
 endif()
 
-if(OM_BUILD_COURSE_VULKAN)
+if(OM_VULKAN)
     add_subdirectory(02-vulkan)
 endif()
 
-if(OM_BUILD_GAME_EXAMPLE)
+if(OM_GAME_EXAMPLE)
     add_subdirectory(05-game)
-endif(OM_BUILD_GAME_EXAMPLE)
+endif()
 
-if(OM_BUILD_WEB)
+if(OM_WEB)
     add_subdirectory(08-web)
-endif(OM_BUILD_WEB)
+endif()
