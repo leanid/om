@@ -117,7 +117,7 @@
       "description": "build using Ninja Multi-Config generator and llvm toolchain",
       "generator": "Ninja Multi-Config",
       "binaryDir": "${sourceDir}/build/ninja-llvm",
-      "toolchainFile": "${sourceDir}/cmake/toolchain/linux.cmake",
+      "toolchainFile": "${sourceDir}/cmake/toolchain/${hostSystemName}.cmake",
       "cacheVariables": {
         "CMAKE_CXX_STANDARD": "23",
         "CMAKE_CXX_STANDARD_REQUIRED": "ON",
@@ -244,8 +244,8 @@
       "configurePreset": "xcode"
     },
     {
-      "name": "vs2022-x64",
-      "configurePreset": "vs2022-x64"
+      "name": "vs2026-x64",
+      "configurePreset": "vs2026-x64"
     },
     {
       "name": "mingw",
