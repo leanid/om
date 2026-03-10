@@ -166,14 +166,14 @@
       }
     },
     {
-      "name": "vs2022-x64",
+      "name": "vs2026-x64",
       "inherits": "common",
-      "generator": "Visual Studio 17 2022",
-      "displayName": "Visual Studio 17 2022",
-      "description": "build using Visual Studio 17 2022 generator",
+      "generator": "Visual Studio 18 2026",
+      "displayName": "Visual Studio 18 2026",
+      "description": "build using Visual Studio 18 2026 generator",
       "architecture": "x64",
-      "toolset": "v143",
-      "binaryDir": "${sourceDir}/build/vs2022-x64",
+      "toolset": "v145",
+      "binaryDir": "${sourceDir}/build/vs2026-x64",
       "cacheVariables": {
         "CMAKE_MSVC_RUNTIME_LIBRARY": {
           "type": "INTERNAL",
