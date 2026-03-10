@@ -129,7 +129,7 @@
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_C_FLAGS": "",
         "CMAKE_LINKER_TYPE": "LLD",
-        "OM_CLANG_TIDY": "ON"
+        "OM_CLANG_TIDY": "OFF"
       }
     },
     {

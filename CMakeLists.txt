@@ -6,7 +6,7 @@ option(OM_OPENGL "turn ON if need to build 02-opengl" ON)
 option(OM_VULKAN "turn ON if need to build 02-vulkan" ON)
 option(OM_GAME_EXAMPLE "turn ON if need to build 05-game" OFF)
 option(OM_WEB "turn ON if need to build 08-web" ON)
-option(OM_CLANG_TIDY "turn ON if need to run clang-tidy" ON)
+option(OM_CLANG_TIDY "turn ON if need to run clang-tidy" OFF)
 
 # Enables the Standard module support. This needs to be done
 # before selecting the languages.

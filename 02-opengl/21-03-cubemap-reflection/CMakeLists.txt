@@ -15,6 +15,8 @@ endif()
 
 project(21-03-cubemap-reflection CXX)
 
+find_package(OpenGL REQUIRED)
+
 if (SDL3_SRC_DIR) # Android
     add_library(21-03-cubemap-reflection SHARED)
     target_include_directories(21-03-cubemap-reflection PRIVATE ${SDL3_SRC_DIR}/include )
