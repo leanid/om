@@ -123,7 +123,7 @@ int main_cant_throw(int argc, char** argv)
     }
 
     std::unique_ptr<sdl::SDL_Window, decltype(&sdl::DestroyWindow)> window(
-        sdl::CreateWindow("09-vk-res-loading-1", 800, 600, window_flags),
+        sdl::CreateWindow("11-vk-texture", 800, 600, window_flags),
         sdl::DestroyWindow);
     std::experimental::scope_exit destroy_window(
         []() { om::cout << "destroy sdl window\n"; });
