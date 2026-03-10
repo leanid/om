@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 4.2)
 
 get_filename_component(
     toolchain_path
-    "${CMAKE_CURRENT_LIST_DIR}/../../cmake/toolchain/linux.cmake" ABSOLUTE)
+    "${CMAKE_CURRENT_LIST_DIR}/../../cmake/toolchain/Linux.cmake" ABSOLUTE)
 
 execute_process(
     COMMAND
