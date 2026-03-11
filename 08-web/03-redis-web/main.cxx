@@ -18,7 +18,8 @@ int main()
     httplib::Server svr;
 
     // Раздаем статические файлы из папки public
-    svr.set_mount_point("/", "./08-web/03-redis-web/public");
+    const std::string public_dir = "./08-web/03-redis-web/public";
+    svr.set_mount_point("/", public_dir);
 
     // API: Получить список всех устройств
     svr.Get("/api/devices",
@@ -94,7 +95,7 @@ int main()
     int port = 8080;
     std::cout << "Starting web server on http://localhost:" << port
               << std::endl;
-    std::cout << "Serving static files from ./public" << std::endl;
+    std::cout << "Serving static files from " << public_dir << std::endl;
 
     if (!svr.listen("0.0.0.0", port))
     {
