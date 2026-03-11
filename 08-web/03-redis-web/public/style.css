@@ -159,9 +159,10 @@ h1 {
     padding: 15px;
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
     font-size: 0.9rem;
-    line-height: 1.5;
+    line-height: 1.3; /* Уменьшил межстрочный интервал для большей плотности */
     background-color: #1e1e1e; /* Темный фон для логов */
     color: #d4d4d4;
+    user-select: text; /* Убеждаемся, что весь контейнер можно выделять */
 }
 
 .log-line {
@@ -169,6 +170,9 @@ h1 {
     word-wrap: break-word;
     white-space: pre-wrap;
     border-bottom: 1px solid #333;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
 }
 
 .log-line:hover {
@@ -178,7 +182,8 @@ h1 {
 .log-time {
     color: #858585;
     margin-right: 10px;
-    user-select: none; /* Время обычно не нужно копировать */
+    flex-shrink: 0;
+    /* Убрано user-select: none, чтобы время тоже выделялось */
 }
 
 .log-level {
@@ -186,6 +191,7 @@ h1 {
     width: 60px;
     font-weight: bold;
     margin-right: 10px;
+    flex-shrink: 0;
 }
 
 .level-INFO { color: #4fc1ff; }
@@ -195,6 +201,7 @@ h1 {
 
 .log-message {
     color: #d4d4d4;
+    flex: 1;
 }
 
 /* Подсветка новых логов */

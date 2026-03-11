@@ -180,12 +180,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const level = log.level || 'UNKNOWN';
         const message = log.message || '';
 
-        // Используем span'ы для раскраски, но структура остается текстовой
-        div.innerHTML = `
-            <span class="log-time">[${timeStr}]</span>
-            <span class="log-level level-${level}">${level}</span>
-            <span class="log-message">${message}</span>
-        `;
+        // Убрали лишние пробелы и переносы между span'ами, чтобы при копировании текст был слитным
+        div.innerHTML = `<span class="log-time">[${timeStr}]</span> <span class="log-level level-${level}">${level}</span> <span class="log-message">${message}</span>`;
         
         return div;
     }
