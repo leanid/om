@@ -42,9 +42,14 @@
             <div class="panel-header">
                 <h2>Log Output</h2>
                 <span id="current-stream-label" class="subtitle"></span>
-                <div style="margin-left: auto; display: flex; gap: 5px;">
-                    <button id="download-logs-btn" class="icon-btn" title="Download Log" style="display: none;">⬇️</button>
-                    <button id="clear-logs-btn" class="icon-btn" title="Clear View">🗑</button>
+                <div style="margin-left: auto; display: flex; gap: 15px; align-items: center;">
+                    <label class="filter-label" style="color: #666; margin: 0;">
+                        <input type="checkbox" id="autoscroll-cb" checked> Auto-scroll
+                    </label>
+                    <div style="display: flex; gap: 5px;">
+                        <button id="download-logs-btn" class="icon-btn" title="Download Log" style="display: none;">⬇️</button>
+                        <button id="clear-logs-btn" class="icon-btn" title="Clear View">🗑</button>
+                    </div>
                 </div>
             </div>
             <div class="logs-container" id="logs-container">

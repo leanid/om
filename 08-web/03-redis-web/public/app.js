@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const refreshDevicesBtn = document.getElementById('refresh-devices-btn');
     const clearLogsBtn = document.getElementById('clear-logs-btn');
     const downloadLogsBtn = document.getElementById('download-logs-btn');
+    const autoscrollCb = document.getElementById('autoscroll-cb');
 
     let allDevicesData = []; // Храним полный список {name, platform}
     let activePlatforms = new Set(); // Какие платформы сейчас выбраны
@@ -206,8 +207,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 logsContainer.appendChild(createLogElement(log, false));
             });
             
-            // Прокручиваем вниз
-            scrollToBottom();
+            // Прокручиваем вниз, если включена автопрокрутка
+            if (autoscrollCb.checked) {
+                scrollToBottom();
+            }
         });
 
         eventSource.addEventListener('new_logs', (event) => {
@@ -218,16 +221,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 logsContainer.innerHTML = '';
             }
 
-            // Проверяем, был ли скролл в самом низу до добавления новых логов
-            const isScrolledToBottom = logsContainer.scrollHeight - logsContainer.clientHeight <= logsContainer.scrollTop + 10;
-
             // Добавляем новые логи В КОНЕЦ (снизу)
             logs.forEach(log => {
                 logsContainer.appendChild(createLogElement(log, true));
             });
             
-            // Если мы были внизу, прокручиваем дальше вниз
-            if (isScrolledToBottom) {
+            // Если включена автопрокрутка, прокручиваем вниз
+            if (autoscrollCb.checked) {
                 scrollToBottom();
             }
         });
@@ -242,7 +242,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function scrollToBottom() {
-        logsContainer.scrollTop = logsContainer.scrollHeight;
+        // Используем requestAnimationFrame, чтобы браузер успел отрендерить новые элементы перед скроллом
+        requestAnimationFrame(() => {
+            logsContainer.scrollTop = logsContainer.scrollHeight;
+        });
     }
 
     // Создание DOM элемента для лога (текстовый формат)
