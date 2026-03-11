@@ -303,7 +303,7 @@ externalproject_add(
 externalproject_add(
     httplib
     GIT_REPOSITORY https://github.com/yhirose/cpp-httplib.git
-    GIT_TAG v0.15.3
+    GIT_TAG v0.37.1
     GIT_PROGRESS ON
     GIT_SHALLOW ON
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
