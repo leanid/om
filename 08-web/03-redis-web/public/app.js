@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const refreshDevicesBtn = document.getElementById('refresh-devices-btn');
     const clearLogsBtn = document.getElementById('clear-logs-btn');
+    const downloadLogsBtn = document.getElementById('download-logs-btn');
 
     let allDevicesData = []; // Храним полный список {name, platform}
     let activePlatforms = new Set(); // Какие платформы сейчас выбраны
@@ -132,6 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Сбрасываем стрим
         currentStream = null;
         currentStreamLabel.textContent = '';
+        downloadLogsBtn.style.display = 'none';
         closeStream();
         logsContainer.innerHTML = '<div class="empty-state">Select a stream to view logs</div>';
 
@@ -162,6 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         currentStream = stream;
         currentStreamLabel.textContent = `(${stream})`;
+        downloadLogsBtn.style.display = 'inline-block';
         
         // Обновляем выделение
         Array.from(streamsList.children).forEach(el => {
@@ -256,5 +259,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentDevice && currentStream) {
             logsContainer.innerHTML = '<div class="empty-state">Logs cleared from view. Waiting for new logs...</div>';
         }
+    });
+    downloadLogsBtn.addEventListener('click', () => {
+        if (!currentDevice || !currentStream) return;
+        const url = `/api/logs/download?device=${encodeURIComponent(currentDevice)}&stream=${encodeURIComponent(currentStream)}`;
+        window.location.href = url;
     });
 });
