@@ -313,7 +313,6 @@ document.addEventListener('DOMContentLoaded', () => {
     connectToDevicesStream();
 
     // Обработчики кнопок
-    refreshDevicesBtn.addEventListener('click', connectToDevicesStream);
     clearLogsBtn.addEventListener('click', () => {
         if (currentDevice && currentStream) {
             logsContainer.innerHTML = '<div class="empty-state">Logs cleared from view. Waiting for new logs...</div>';
