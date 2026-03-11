@@ -84,10 +84,36 @@ int main()
                      stream_name,
                      "ERROR",
                      "Failed to connect to secondary database!");
-        log_to_redis(redis, stream_name, "INFO", "Application shutting down.");
 
-        std::cout << "All logs sent to stream '" << stream_name << "'."
+        std::cout << "Initial logs sent to stream '" << stream_name << "'."
                   << std::endl;
+
+        std::cout << "\n=== Interactive Mode ===" << std::endl;
+        std::cout << "Type a message and press Enter to send it as a log." << std::endl;
+        std::cout << "Type 'quit' or 'exit' to stop the application.\n" << std::endl;
+
+        std::string user_input;
+        while (true)
+        {
+            std::cout << "Log message > ";
+            if (!std::getline(std::cin, user_input))
+            {
+                break; // Выход по EOF (Ctrl+D)
+            }
+
+            if (user_input == "quit" || user_input == "exit")
+            {
+                break;
+            }
+
+            if (!user_input.empty())
+            {
+                // Отправляем введенное сообщение с уровнем INFO (можно расширить при желании)
+                log_to_redis(redis, stream_name, "INFO", user_input);
+            }
+        }
+
+        log_to_redis(redis, stream_name, "INFO", "Application shutting down.");
     }
     catch (const Error& e)
     {
