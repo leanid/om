@@ -56,6 +56,8 @@ find_package(stb REQUIRED)
 find_package(assimp REQUIRED)
 find_package(Microsoft.GSL CONFIG REQUIRED)
 find_package(redis++ REQUIRED)
+find_package(httplib REQUIRED)
+find_package(nlohmann_json REQUIRED)
 
 enable_testing()
 

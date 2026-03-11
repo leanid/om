@@ -300,3 +300,41 @@ externalproject_add(
     COMMAND
         ${CMAKE_COMMAND} -E copy ${stb_src}/stb_truetype.h ${stb_include_dir}/)
 
+externalproject_add(
+    httplib
+    GIT_REPOSITORY https://github.com/yhirose/cpp-httplib.git
+    GIT_TAG v0.15.3
+    GIT_PROGRESS ON
+    GIT_SHALLOW ON
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+               -DCMAKE_BUILD_TYPE=RelWithDebInfo
+               -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
+               -DCMAKE_CXX_STANDARD=23
+               -DCMAKE_CXX_STANDARD_REQUIRED=ON
+               -DCMAKE_CXX_EXTENSIONS=OFF
+               -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+               -DCMAKE_LINKER_TYPE=${CMAKE_LINKER_TYPE}
+               -DCMAKE_EXE_LINKER_FLAGS=${CMAKE_EXE_LINKER_FLAGS}
+               -DCMAKE_SHARED_LINKER_FLAGS=${CMAKE_SHARED_LINKER_FLAGS}
+               -DHTTPLIB_COMPILE=OFF
+               -DHTTPLIB_TEST=OFF)
+
+externalproject_add(
+    nlohmann_json
+    GIT_REPOSITORY https://github.com/nlohmann/json.git
+    GIT_TAG v3.11.3
+    GIT_PROGRESS ON
+    GIT_SHALLOW ON
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+               -DCMAKE_BUILD_TYPE=RelWithDebInfo
+               -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
+               -DCMAKE_CXX_STANDARD=23
+               -DCMAKE_CXX_STANDARD_REQUIRED=ON
+               -DCMAKE_CXX_EXTENSIONS=OFF
+               -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+               -DCMAKE_LINKER_TYPE=${CMAKE_LINKER_TYPE}
+               -DCMAKE_EXE_LINKER_FLAGS=${CMAKE_EXE_LINKER_FLAGS}
+               -DCMAKE_SHARED_LINKER_FLAGS=${CMAKE_SHARED_LINKER_FLAGS}
+               -DJSON_BuildTests=OFF)
+
+

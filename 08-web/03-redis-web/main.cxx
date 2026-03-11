@@ -18,7 +18,7 @@ int main()
     httplib::Server svr;
 
     // Раздаем статические файлы из папки public
-    svr.set_mount_point("/", "./public");
+    svr.set_mount_point("/", "./08-web/03-redis-web/public");
 
     // API: Получить список всех устройств
     svr.Get("/api/devices",
