@@ -14,10 +14,16 @@
 
         <main>
             <div class="controls">
-                <label for="device-select">Select Device:</label>
+                <label for="device-select">Device:</label>
                 <select id="device-select">
                     <option value="">-- Loading devices... --</option>
                 </select>
+
+                <label for="stream-select">Stream:</label>
+                <select id="stream-select" disabled>
+                    <option value="">-- Select device first --</option>
+                </select>
+
                 <button id="refresh-btn">Refresh Logs</button>
             </div>
 

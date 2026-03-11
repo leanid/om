@@ -1,5 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     const deviceSelect = document.getElementById('device-select');
+    const streamSelect = document.getElementById('stream-select');
     const refreshBtn = document.getElementById('refresh-btn');
     const logsBody = document.getElementById('logs-body');
 
@@ -37,11 +38,59 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Получение логов для выбранного устройства (SSE)
+    // Получение списка стримов для выбранного устройства
+    async function fetchStreams() {
+        const device = deviceSelect.value;
+        
+        // Сбрасываем стримы и логи
+        streamSelect.innerHTML = '<option value="">-- Select stream --</option>';
+        streamSelect.disabled = true;
+        
+        if (eventSource) {
+            eventSource.close();
+            eventSource = null;
+        }
+        logsBody.innerHTML = '<tr><td colspan="3" class="empty-state">Select a stream to view logs</td></tr>';
+
+        if (!device) return;
+
+        try {
+            streamSelect.innerHTML = '<option value="">Loading streams...</option>';
+            const response = await fetch(`/api/streams?device=${encodeURIComponent(device)}`);
+            if (!response.ok) throw new Error('Failed to fetch streams');
+            
+            const streams = await response.json();
+            
+            streamSelect.innerHTML = '<option value="">-- Select a stream --</option>';
+            
+            if (streams.length === 0) {
+                streamSelect.innerHTML = '<option value="">No streams found</option>';
+                return;
+            }
+
+            // Сортируем стримы по имени (по убыванию, чтобы новые были сверху)
+            streams.sort().reverse();
+
+            streams.forEach(stream => {
+                const option = document.createElement('option');
+                option.value = stream;
+                option.textContent = stream;
+                streamSelect.appendChild(option);
+            });
+            
+            streamSelect.disabled = false;
+        } catch (error) {
+            console.error('Error fetching streams:', error);
+            streamSelect.innerHTML = '<option value="">Error loading streams</option>';
+        }
+    }
+
+    // Получение логов для выбранного устройства и стрима (SSE)
     let eventSource = null;
 
     function fetchLogs() {
         const device = deviceSelect.value;
+        const stream = streamSelect.value;
         
         // Закрываем предыдущее соединение, если оно было
         if (eventSource) {
@@ -49,22 +98,22 @@ document.addEventListener('DOMContentLoaded', () => {
             eventSource = null;
         }
 
-        if (!device) {
-            logsBody.innerHTML = '<tr><td colspan="3" class="empty-state">Select a device to view logs</td></tr>';
+        if (!device || !stream) {
+            logsBody.innerHTML = '<tr><td colspan="3" class="empty-state">Select a device and stream to view logs</td></tr>';
             return;
         }
 
         logsBody.innerHTML = '<tr><td colspan="3" class="empty-state">Connecting to stream...</td></tr>';
         
         // Открываем SSE соединение
-        eventSource = new EventSource(`/api/logs/stream?device=${encodeURIComponent(device)}`);
+        eventSource = new EventSource(`/api/logs/stream?device=${encodeURIComponent(device)}&stream=${encodeURIComponent(stream)}`);
 
         // Обработка начальных данных (все старые логи)
         eventSource.addEventListener('init', (event) => {
             const logs = JSON.parse(event.data);
             
             if (logs.length === 0) {
-                logsBody.innerHTML = '<tr><td colspan="3" class="empty-state">No logs found for this device</td></tr>';
+                logsBody.innerHTML = '<tr><td colspan="3" class="empty-state">No logs found for this stream</td></tr>';
                 return;
             }
 
@@ -89,12 +138,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 logsBody.innerHTML = '';
             }
 
-            // Сортируем новые логи (хотя они и так должны приходить по порядку)
+            // Сортируем новые логи
             logs.sort((a, b) => parseInt(b.timestamp || 0) - parseInt(a.timestamp || 0));
 
-            // Добавляем новые логи В НАЧАЛО таблицы (так как у нас новые сверху)
-            // Поскольку мы отсортировали массив новых логов (новые сверху), мы можем просто вставлять их по одному в начало
-            // Но чтобы сохранить правильный порядок, нужно вставлять в обратном порядке массива
+            // Добавляем новые логи В НАЧАЛО таблицы
             for (let i = logs.length - 1; i >= 0; i--) {
                 const tr = createLogRow(logs[i]);
                 // Эффект подсветки для новых строк
@@ -134,7 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchDevices();
 
     // Обработчики событий
-    deviceSelect.addEventListener('change', fetchLogs);
-    // Кнопка Refresh теперь просто переподключает стрим
+    deviceSelect.addEventListener('change', fetchStreams);
+    streamSelect.addEventListener('change', fetchLogs);
     refreshBtn.addEventListener('click', fetchLogs);
 });

@@ -42,20 +42,54 @@ int main()
                 }
             });
 
+    // API: Получить список стримов для конкретного устройства
+    svr.Get("/api/streams",
+            [&redis](const httplib::Request& req, httplib::Response& res)
+            {
+                if (!req.has_param("device"))
+                {
+                    res.status = 400;
+                    res.set_content(R"({"error": "Missing 'device' parameter"})",
+                                    "application/json");
+                    return;
+                }
+
+                std::string device = req.get_param_value("device");
+                std::vector<std::string> streams;
+                try
+                {
+                    redis->smembers("streams:" + device,
+                                    std::inserter(streams, streams.begin()));
+
+                    json j = streams;
+                    res.set_content(j.dump(), "application/json");
+                }
+                catch (const Error& e)
+                {
+                    json j     = { { "error", e.what() } };
+                    res.status = 500;
+                    res.set_content(j.dump(), "application/json");
+                }
+            });
+
     // API: Получить логи для конкретного устройства (SSE)
     svr.Get(
         "/api/logs/stream",
         [&redis](const httplib::Request& req, httplib::Response& res)
         {
-            if (!req.has_param("device"))
+            if (!req.has_param("device") || !req.has_param("stream"))
             {
                 res.status = 400;
-                res.set_content(R"({"error": "Missing 'device' parameter"})",
+                res.set_content(R"({"error": "Missing 'device' or 'stream' parameter"})",
                                 "application/json");
                 return;
             }
 
             std::string device = req.get_param_value("device");
+            std::string stream = req.get_param_value("stream");
+            
+            // Формируем полный ключ стрима
+            std::string stream_key = "log:" + device + ":" + stream;
 
             // Настраиваем заголовки для SSE(Server Side Event)
             res.set_header("Content-Type", "text/event-stream");
@@ -65,7 +99,7 @@ int main()
             // Используем chunked передачу данных
             res.set_content_provider(
                 "text/event-stream",
-                [&redis, device](size_t offset, httplib::DataSink& sink)
+                [&redis, stream_key](size_t offset, httplib::DataSink& sink)
                 {
                     // Изначально читаем все существующие логи
                     std::string last_id = "0-0";
@@ -79,7 +113,7 @@ int main()
                         std::vector<Item> stream_data;
 
                         redis->xrange(
-                            device, "-", "+", std::back_inserter(stream_data));
+                            stream_key, "-", "+", std::back_inserter(stream_data));
 
                         if (!stream_data.empty())
                         {
@@ -113,7 +147,7 @@ int main()
 
                             // Блокирующее чтение (таймаут 1 секунда, чтобы
                             // проверять закрытие соединения)
-                            redis->xread(device,
+                            redis->xread(stream_key,
                                          last_id,
                                          1000,
                                          std::back_inserter(new_data));
