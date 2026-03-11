@@ -42,9 +42,9 @@ int main()
                 }
             });
 
-    // API: Получить логи для конкретного устройства
+    // API: Получить логи для конкретного устройства (SSE)
     svr.Get(
-        "/api/logs",
+        "/api/logs/stream",
         [&redis](const httplib::Request& req, httplib::Response& res)
         {
             if (!req.has_param("device"))
@@ -57,39 +57,111 @@ int main()
 
             std::string device = req.get_param_value("device");
 
-            try
-            {
-                // Читаем все записи из стрима
-                // XRANGE device - +
-                using Item =
-                    std::pair<std::string,
-                              std::vector<std::pair<std::string, std::string>>>;
-                std::vector<Item> stream_data;
+            // Настраиваем заголовки для SSE(Server Side Event)
+            res.set_header("Content-Type", "text/event-stream");
+            res.set_header("Cache-Control", "no-cache");
+            res.set_header("Connection", "keep-alive");
 
-                redis->xrange(
-                    device, "-", "+", std::back_inserter(stream_data));
-
-                json logs = json::array();
-                for (const auto& item : stream_data)
+            // Используем chunked передачу данных
+            res.set_content_provider(
+                "text/event-stream",
+                [&redis, device](size_t offset, httplib::DataSink& sink)
                 {
-                    json log_entry;
-                    log_entry["id"] = item.first;
+                    // Изначально читаем все существующие логи
+                    std::string last_id = "0-0";
 
-                    for (const auto& field : item.second)
+                    try
                     {
-                        log_entry[field.first] = field.second;
-                    }
-                    logs.push_back(log_entry);
-                }
+                        // Сначала отправляем все старые логи
+                        using Item = std::pair<
+                            std::string,
+                            std::vector<std::pair<std::string, std::string>>>;
+                        std::vector<Item> stream_data;
 
-                res.set_content(logs.dump(), "application/json");
-            }
-            catch (const Error& e)
-            {
-                json j     = { { "error", e.what() } };
-                res.status = 500;
-                res.set_content(j.dump(), "application/json");
-            }
+                        redis->xrange(
+                            device, "-", "+", std::back_inserter(stream_data));
+
+                        if (!stream_data.empty())
+                        {
+                            json logs = json::array();
+                            for (const auto& item : stream_data)
+                            {
+                                json log_entry;
+                                log_entry["id"] = item.first;
+                                for (const auto& field : item.second)
+                                {
+                                    log_entry[field.first] = field.second;
+                                }
+                                logs.push_back(log_entry);
+                                last_id = item.first; // Запоминаем последний ID
+                            }
+
+                            // Отправляем начальный батч логов
+                            std::string event_data =
+                                "event: init\ndata: " + logs.dump() + "\n\n";
+                            if (!sink.write(event_data.c_str(),
+                                            event_data.size()))
+                                return false;
+                        }
+
+                        // Бесконечный цикл чтения новых логов (XREAD BLOCK)
+                        while (true)
+                        {
+                            std::vector<
+                                std::pair<std::string, std::vector<Item>>>
+                                new_data;
+
+                            // Блокирующее чтение (таймаут 1 секунда, чтобы
+                            // проверять закрытие соединения)
+                            redis->xread(device,
+                                         last_id,
+                                         1000,
+                                         std::back_inserter(new_data));
+
+                            if (!new_data.empty() &&
+                                !new_data[0].second.empty())
+                            {
+                                json logs = json::array();
+                                for (const auto& item : new_data[0].second)
+                                {
+                                    json log_entry;
+                                    log_entry["id"] = item.first;
+                                    for (const auto& field : item.second)
+                                    {
+                                        log_entry[field.first] = field.second;
+                                    }
+                                    logs.push_back(log_entry);
+                                    last_id = item.first; // Обновляем ID
+                                }
+
+                                // Отправляем новые логи
+                                std::string event_data =
+                                    "event: new_logs\ndata: " + logs.dump() +
+                                    "\n\n";
+                                if (!sink.write(event_data.c_str(),
+                                                event_data.size()))
+                                    return false;
+                            }
+                            else
+                            {
+                                // Отправляем ping (комментарий), чтобы
+                                // поддерживать соединение живым
+                                if (!sink.write(":\n\n", 3))
+                                    return false;
+                            }
+                        }
+                    }
+                    catch (const Error& e)
+                    {
+                        std::string error_msg =
+                            std::string("event: error\ndata: ") + e.what() +
+                            "\n\n";
+                        sink.write(error_msg.c_str(), error_msg.size());
+                        return false;
+                    }
+
+                    return true;
+                });
         });
 
     int port = 8080;

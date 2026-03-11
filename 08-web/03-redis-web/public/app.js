@@ -37,21 +37,31 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Получение логов для выбранного устройства
-    async function fetchLogs() {
+    // Получение логов для выбранного устройства (SSE)
+    let eventSource = null;
+
+    function fetchLogs() {
         const device = deviceSelect.value;
+        
+        // Закрываем предыдущее соединение, если оно было
+        if (eventSource) {
+            eventSource.close();
+            eventSource = null;
+        }
+
         if (!device) {
             logsBody.innerHTML = '<tr><td colspan="3" class="empty-state">Select a device to view logs</td></tr>';
             return;
         }
 
-        try {
-            logsBody.innerHTML = '<tr><td colspan="3" class="empty-state">Loading logs...</td></tr>';
-            
-            const response = await fetch(`/api/logs?device=${encodeURIComponent(device)}`);
-            if (!response.ok) throw new Error('Failed to fetch logs');
-            
-            const logs = await response.json();
+        logsBody.innerHTML = '<tr><td colspan="3" class="empty-state">Connecting to stream...</td></tr>';
+        
+        // Открываем SSE соединение
+        eventSource = new EventSource(`/api/logs/stream?device=${encodeURIComponent(device)}`);
+
+        // Обработка начальных данных (все старые логи)
+        eventSource.addEventListener('init', (event) => {
+            const logs = JSON.parse(event.data);
             
             if (logs.length === 0) {
                 logsBody.innerHTML = '<tr><td colspan="3" class="empty-state">No logs found for this device</td></tr>';
@@ -64,24 +74,60 @@ document.addEventListener('DOMContentLoaded', () => {
             logs.sort((a, b) => parseInt(b.timestamp || 0) - parseInt(a.timestamp || 0));
 
             logs.forEach(log => {
-                const tr = document.createElement('tr');
-                
-                const timeStr = formatTime(log.timestamp);
-                const level = log.level || 'UNKNOWN';
-                const message = log.message || '';
-
-                tr.innerHTML = `
-                    <td>${timeStr}</td>
-                    <td><span class="level-badge level-${level}">${level}</span></td>
-                    <td>${message}</td>
-                `;
-                
+                const tr = createLogRow(log);
                 logsBody.appendChild(tr);
             });
-        } catch (error) {
-            console.error('Error fetching logs:', error);
-            logsBody.innerHTML = '<tr><td colspan="3" class="empty-state" style="color: red;">Error loading logs</td></tr>';
-        }
+        });
+
+        // Обработка новых логов в реальном времени
+        eventSource.addEventListener('new_logs', (event) => {
+            const logs = JSON.parse(event.data);
+            
+            // Убираем сообщение "No logs", если оно есть
+            const emptyState = logsBody.querySelector('.empty-state');
+            if (emptyState) {
+                logsBody.innerHTML = '';
+            }
+
+            // Сортируем новые логи (хотя они и так должны приходить по порядку)
+            logs.sort((a, b) => parseInt(b.timestamp || 0) - parseInt(a.timestamp || 0));
+
+            // Добавляем новые логи В НАЧАЛО таблицы (так как у нас новые сверху)
+            // Поскольку мы отсортировали массив новых логов (новые сверху), мы можем просто вставлять их по одному в начало
+            // Но чтобы сохранить правильный порядок, нужно вставлять в обратном порядке массива
+            for (let i = logs.length - 1; i >= 0; i--) {
+                const tr = createLogRow(logs[i]);
+                // Эффект подсветки для новых строк
+                tr.style.backgroundColor = '#e8f5e9';
+                setTimeout(() => { tr.style.backgroundColor = ''; }, 2000);
+                
+                logsBody.insertBefore(tr, logsBody.firstChild);
+            }
+        });
+
+        eventSource.addEventListener('error', (event) => {
+            console.error('SSE Error:', event);
+            if (event.data) {
+                logsBody.innerHTML = `<tr><td colspan="3" class="empty-state" style="color: red;">Error: ${event.data}</td></tr>`;
+                eventSource.close();
+            }
+        });
+    }
+
+    function createLogRow(log) {
+        const tr = document.createElement('tr');
+        tr.style.transition = 'background-color 1s ease';
+        
+        const timeStr = formatTime(log.timestamp);
+        const level = log.level || 'UNKNOWN';
+        const message = log.message || '';
+
+        tr.innerHTML = `
+            <td>${timeStr}</td>
+            <td><span class="level-badge level-${level}">${level}</span></td>
+            <td>${message}</td>
+        `;
+        return tr;
     }
 
     // Инициализация
@@ -89,5 +135,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Обработчики событий
     deviceSelect.addEventListener('change', fetchLogs);
+    // Кнопка Refresh теперь просто переподключает стрим
     refreshBtn.addEventListener('click', fetchLogs);
 });
