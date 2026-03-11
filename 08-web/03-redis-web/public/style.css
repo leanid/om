@@ -192,38 +192,16 @@ h1 {
     word-wrap: break-word;
     white-space: pre-wrap;
     border-bottom: 1px solid #333;
-    display: flex;
-    flex-direction: row;
-    align-items: flex-start;
+    /* Убрали flex, так как теперь это просто одна строка текста */
 }
 
 .log-line:hover {
     background-color: #2a2d2e;
 }
 
-.log-time {
-    color: #858585;
-    margin-right: 10px;
-    flex-shrink: 0;
-    /* Убрано user-select: none, чтобы время тоже выделялось */
-}
-
-.log-level {
-    display: inline-block;
-    width: 75px; /* Увеличили ширину, чтобы влезло слово WARNING */
-    font-weight: bold;
-    margin-right: 10px;
-    flex-shrink: 0;
-}
-
-.level-INFO { color: #4fc1ff; }
-.level-WARNING { color: #cca700; }
-.level-ERROR { color: #f48771; }
-.level-DEBUG { color: #858585; }
-
+/* Оставляем стили для раскраски, если мы захотим раскрашивать текст на клиенте */
 .log-message {
     color: #d4d4d4;
-    flex: 1;
 }
 
 /* Подсветка новых логов */

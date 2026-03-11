@@ -201,12 +201,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // Сортируем логи по времени (новые сверху)
-            logs.sort((a, b) => parseInt(b.timestamp || 0) - parseInt(a.timestamp || 0));
-
+            // Не сортируем логи, выводим в том порядке, в котором они пришли из Redis (от старых к новым)
             logs.forEach(log => {
                 logsContainer.appendChild(createLogElement(log, false));
             });
+            
+            // Прокручиваем вниз
+            scrollToBottom();
         });
 
         eventSource.addEventListener('new_logs', (event) => {
@@ -217,22 +218,31 @@ document.addEventListener('DOMContentLoaded', () => {
                 logsContainer.innerHTML = '';
             }
 
-            logs.sort((a, b) => parseInt(b.timestamp || 0) - parseInt(a.timestamp || 0));
+            // Проверяем, был ли скролл в самом низу до добавления новых логов
+            const isScrolledToBottom = logsContainer.scrollHeight - logsContainer.clientHeight <= logsContainer.scrollTop + 10;
 
-            // Добавляем новые логи В НАЧАЛО
-            for (let i = logs.length - 1; i >= 0; i--) {
-                const el = createLogElement(logs[i], true);
-                logsContainer.insertBefore(el, logsContainer.firstChild);
+            // Добавляем новые логи В КОНЕЦ (снизу)
+            logs.forEach(log => {
+                logsContainer.appendChild(createLogElement(log, true));
+            });
+            
+            // Если мы были внизу, прокручиваем дальше вниз
+            if (isScrolledToBottom) {
+                scrollToBottom();
             }
         });
 
         eventSource.addEventListener('error', (event) => {
             console.error('SSE Error:', event);
             if (event.data) {
-                logsContainer.innerHTML = `<div class="empty-state" style="color: #f48771;">Error: ${event.data}</div>`;
+                logsContainer.innerHTML += `<div class="empty-state" style="color: #f48771;">Error: ${event.data}</div>`;
                 closeStream();
             }
         });
+    }
+
+    function scrollToBottom() {
+        logsContainer.scrollTop = logsContainer.scrollHeight;
     }
 
     // Создание DOM элемента для лога (текстовый формат)
@@ -240,14 +250,27 @@ document.addEventListener('DOMContentLoaded', () => {
         const div = document.createElement('div');
         div.className = `log-line ${isNew ? 'new' : ''}`;
         
-        const timeStr = formatTime(log.timestamp);
-        const level = log.level || 'UNKNOWN';
-        const message = log.message || '';
+        let message = log.message || '';
+        
+        // Простая раскраска уровней логов на клиенте для визуального удобства
+        // Ищем паттерн уровня лога, например "] INFO "
+        message = message.replace(/\] (INFO|WARNING|ERROR|DEBUG) /, (match, level) => {
+            return `] <span style="color: ${getColorForLevel(level)}; font-weight: bold;">${level}</span> `;
+        });
 
-        // Убрали лишние пробелы и переносы между span'ами, чтобы при копировании текст был слитным
-        div.innerHTML = `<span class="log-time">[${timeStr}]</span> <span class="log-level level-${level}">${level}</span> <span class="log-message">${message}</span>`;
+        div.innerHTML = message;
         
         return div;
+    }
+    
+    function getColorForLevel(level) {
+        switch(level) {
+            case 'INFO': return '#4fc1ff';
+            case 'WARNING': return '#cca700';
+            case 'ERROR': return '#f48771';
+            case 'DEBUG': return '#858585';
+            default: return '#d4d4d4';
+        }
     }
 
     // Инициализация

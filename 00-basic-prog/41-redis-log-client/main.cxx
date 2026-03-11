@@ -28,21 +28,24 @@ void log_to_redis(Redis&             redis,
                   const std::string& level,
                   const std::string& message)
 {
-    // Получаем текущий timestamp в миллисекундах
+    // Получаем текущее время
     auto now = std::chrono::system_clock::now();
-    auto timestamp =
-        std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(
-                           now.time_since_epoch())
-                           .count());
+    std::time_t now_c = std::chrono::system_clock::to_time_t(now);
+    std::tm* now_tm = std::localtime(&now_c);
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
+    
+    // Формируем единую строку лога: [HH:MM:SS.ms] LEVEL Message
+    std::ostringstream oss;
+    oss << "[" << std::put_time(now_tm, "%H:%M:%S") << "." << std::setfill('0') << std::setw(3) << ms.count() << "] "
+        << level << " " << message;
+    
+    std::string formatted_message = oss.str();
 
     try
     {
-        redis.xadd(stream_key,
-                   "*",
-                   { std::make_pair("timestamp", timestamp),
-                     std::make_pair("level", level),
-                     std::make_pair("message", message) });
-        std::cout << "Logged [" << level << "]: " << message << std::endl;
+        // Отправляем только одно поле - message
+        redis.xadd(stream_key, "*", { std::make_pair("message", formatted_message) });
+        std::cout << formatted_message << std::endl;
     }
     catch (const Error& e)
     {

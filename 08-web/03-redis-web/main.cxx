@@ -12,7 +12,7 @@
 using namespace sw::redis;
 using json = nlohmann::json;
 
-// Вспомогательная функция для форматирования времени
+// Вспомогательная функция для форматирования времени (больше не используется, но оставим на всякий случай)
 std::string format_timestamp(const std::string& ts_str) {
     try {
         long long ms = std::stoll(ts_str);
@@ -254,14 +254,15 @@ int main()
                 std::ostringstream out;
                 for (const auto& item : stream_data)
                 {
-                    std::string ts, lvl, msg;
+                    std::string msg;
                     for (const auto& field : item.second)
                     {
-                        if (field.first == "timestamp") ts = field.second;
-                        else if (field.first == "level") lvl = field.second;
-                        else if (field.first == "message") msg = field.second;
+                        if (field.first == "message") {
+                            msg = field.second;
+                            break;
+                        }
                     }
-                    out << "[" << format_timestamp(ts) << "] " << lvl << " " << msg << "\n";
+                    out << msg << "\n";
                 }
 
                 // Устанавливаем заголовки для скачивания файла
