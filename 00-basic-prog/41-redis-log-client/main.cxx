@@ -2,23 +2,24 @@
 
 #include <chrono>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <vector>
-#include <iomanip>
-#include <sstream>
 
 using namespace sw::redis;
 
 // Функция для генерации имени файла лога на основе текущего времени
 std::string generate_stream_name()
 {
-    auto now = std::chrono::system_clock::now();
-    std::time_t now_c = std::chrono::system_clock::to_time_t(now);
-    std::tm* now_tm = std::localtime(&now_c);
-    
+    auto        now    = std::chrono::system_clock::now();
+    std::time_t now_c  = std::chrono::system_clock::to_time_t(now);
+    std::tm*    now_tm = std::localtime(&now_c);
+
     std::ostringstream oss;
-    oss << "log_" << std::put_time(now_tm, "%d_%m_%Y") << "T" << std::put_time(now_tm, "%H_%M") << ".txt";
+    oss << "log_" << std::put_time(now_tm, "%d_%m_%Y") << "T"
+        << std::put_time(now_tm, "%H_%M") << ".txt";
     return oss.str();
 }
 
@@ -74,35 +75,53 @@ int main()
         Redis redis(connection_string);
 
         // Имя устройства
-        std::string device_name = "leo_phone";
-        
+        std::string device_name = "phone_leo";
+
+        // Платформа устройства
+        std::string platform = "Linux";
+
         // Генерируем имя стрима (файла)
         std::string stream_name = generate_stream_name();
-        
+
         // Полный ключ для стрима в Redis: log:device_name:stream_name
         std::string stream_key = "log:" + device_name + ":" + stream_name;
 
         // Регистрируем устройство в общем списке
         redis.sadd("all_devices", device_name);
-        
+
+        // Сохраняем информацию о платформе устройства (используем Hash)
+        redis.hset("device_info:" + device_name, "platform", platform);
+
         // Регистрируем стрим для этого устройства
         redis.sadd("streams:" + device_name, stream_name);
 
-        std::cout << "Connecting to Redis at " << connection_string << "..." << std::endl;
+        std::cout << "Connecting to Redis at " << connection_string << "..."
+                  << std::endl;
         std::cout << "Device: " << device_name << std::endl;
         std::cout << "Stream: " << stream_name << std::endl;
 
         // Отправляем несколько заготовленных логов
-        log_to_redis(redis, stream_key, "INFO", "Application started successfully.");
-        log_to_redis(redis, stream_key, "DEBUG", "Initializing internal modules...");
-        log_to_redis(redis, stream_key, "WARNING", "Config file not found, using default parameters.");
-        log_to_redis(redis, stream_key, "ERROR", "Failed to connect to secondary database!");
+        log_to_redis(
+            redis, stream_key, "INFO", "Application started successfully.");
+        log_to_redis(
+            redis, stream_key, "DEBUG", "Initializing internal modules...");
+        log_to_redis(redis,
+                     stream_key,
+                     "WARNING",
+                     "Config file not found, using default parameters.");
+        log_to_redis(redis,
+                     stream_key,
+                     "ERROR",
+                     "Failed to connect to secondary database!");
 
-        std::cout << "Initial logs sent to stream '" << stream_key << "'." << std::endl;
+        std::cout << "Initial logs sent to stream '" << stream_key << "'."
+                  << std::endl;
 
         std::cout << "\n=== Interactive Mode ===" << std::endl;
-        std::cout << "Type a message and press Enter to send it as a log." << std::endl;
-        std::cout << "Type 'quit' or 'exit' to stop the application.\n" << std::endl;
+        std::cout << "Type a message and press Enter to send it as a log."
+                  << std::endl;
+        std::cout << "Type 'quit' or 'exit' to stop the application.\n"
+                  << std::endl;
 
         std::string user_input;
         while (true)
@@ -128,7 +147,8 @@ int main()
     }
     catch (const Error& e)
     {
-        std::cerr << "Redis connection/execution error: " << e.what() << std::endl;
+        std::cerr << "Redis connection/execution error: " << e.what()
+                  << std::endl;
         return EXIT_FAILURE;
     }
 

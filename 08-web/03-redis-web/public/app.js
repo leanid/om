@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const devicesList = document.getElementById('devices-list');
     const streamsList = document.getElementById('streams-list');
     const logsContainer = document.getElementById('logs-container');
+    const platformFiltersContainer = document.getElementById('platform-filters');
     
     const currentDeviceLabel = document.getElementById('current-device-label');
     const currentStreamLabel = document.getElementById('current-stream-label');
@@ -9,6 +10,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const refreshDevicesBtn = document.getElementById('refresh-devices-btn');
     const clearLogsBtn = document.getElementById('clear-logs-btn');
 
+    let allDevicesData = []; // Храним полный список {name, platform}
+    let activePlatforms = new Set(); // Какие платформы сейчас выбраны
+    
     let currentDevice = null;
     let currentStream = null;
     let eventSource = null;
@@ -37,6 +41,52 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Отрисовка чекбоксов платформ
+    function renderPlatformFilters(platforms) {
+        platformFiltersContainer.innerHTML = '';
+        
+        if (platforms.size === 0) {
+            platformFiltersContainer.style.display = 'none';
+            return;
+        }
+        
+        platformFiltersContainer.style.display = 'flex';
+
+        platforms.forEach(platform => {
+            const label = document.createElement('label');
+            label.className = 'filter-label';
+            
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.value = platform;
+            checkbox.checked = activePlatforms.has(platform);
+            
+            checkbox.addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    activePlatforms.add(platform);
+                } else {
+                    activePlatforms.delete(platform);
+                }
+                filterAndRenderDevices();
+            });
+
+            label.appendChild(checkbox);
+            label.appendChild(document.createTextNode(platform));
+            platformFiltersContainer.appendChild(label);
+        });
+    }
+
+    // Фильтрация и отрисовка устройств
+    function filterAndRenderDevices() {
+        // Фильтруем устройства по выбранным платформам
+        const filteredDevices = allDevicesData
+            .filter(d => activePlatforms.has(d.platform))
+            .map(d => d.name)
+            .sort(); // Алфавитная сортировка имен
+            
+        renderList(devicesList, filteredDevices, selectDevice, currentDevice);
+    }
+
     // Получение списка устройств
     async function fetchDevices() {
         try {
@@ -44,10 +94,21 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch('/api/devices');
             if (!response.ok) throw new Error('Failed to fetch devices');
             
-            const devices = await response.json();
-            devices.sort(); // Алфавитная сортировка
+            allDevicesData = await response.json();
             
-            renderList(devicesList, devices, selectDevice, currentDevice);
+            // Собираем все уникальные платформы
+            const platforms = new Set();
+            allDevicesData.forEach(d => {
+                if (!d.platform) d.platform = 'Unknown';
+                platforms.add(d.platform);
+            });
+
+            // Если загружаем первый раз или появились новые платформы, включаем их по умолчанию
+            platforms.forEach(p => activePlatforms.add(p));
+
+            renderPlatformFilters(platforms);
+            filterAndRenderDevices();
+            
         } catch (error) {
             console.error('Error fetching devices:', error);
             devicesList.innerHTML = '<div class="empty-state" style="color: red;">Error loading devices</div>';

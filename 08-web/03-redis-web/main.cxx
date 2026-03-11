@@ -21,7 +21,7 @@ int main()
     const std::string public_dir = "./08-web/03-redis-web/public";
     svr.set_mount_point("/", public_dir);
 
-    // API: Получить список всех устройств
+    // API: Получить список всех устройств с их платформами
     svr.Get("/api/devices",
             [&redis](const httplib::Request& req, httplib::Response& res)
             {
@@ -31,7 +31,19 @@ int main()
                     redis->smembers("all_devices",
                                     std::inserter(devices, devices.begin()));
 
-                    json j = devices;
+                    json j = json::array();
+                    
+                    // Для каждого устройства получаем его платформу
+                    for (const auto& device : devices) {
+                        auto platform_opt = redis->hget("device_info:" + device, "platform");
+                        std::string platform = platform_opt ? *platform_opt : "Unknown";
+                        
+                        j.push_back({
+                            {"name", device},
+                            {"platform", platform}
+                        });
+                    }
+
                     res.set_content(j.dump(), "application/json");
                 }
                 catch (const Error& e)

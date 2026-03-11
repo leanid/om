@@ -118,6 +118,28 @@ h1 {
     color: #333;
 }
 
+.filters-container {
+    padding: 10px 15px;
+    background-color: #f9f9f9;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.filter-label {
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.filter-label input[type="checkbox"] {
+    cursor: pointer;
+}
+
 .list-container {
     flex: 1;
     overflow-y: auto;
