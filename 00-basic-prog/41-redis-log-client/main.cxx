@@ -19,7 +19,7 @@ std::string generate_stream_name()
 
     std::ostringstream oss;
     oss << "log_" << std::put_time(now_tm, "%d_%m_%Y") << "T"
-        << std::put_time(now_tm, "%H_%M") << ".txt";
+        << std::put_time(now_tm, "%H_%M_%S") << ".txt";
     return oss.str();
 }
 
@@ -29,22 +29,25 @@ void log_to_redis(Redis&             redis,
                   const std::string& message)
 {
     // Получаем текущее время
-    auto now = std::chrono::system_clock::now();
-    std::time_t now_c = std::chrono::system_clock::to_time_t(now);
-    std::tm* now_tm = std::localtime(&now_c);
-    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
-    
+    auto        now    = std::chrono::system_clock::now();
+    std::time_t now_c  = std::chrono::system_clock::to_time_t(now);
+    std::tm*    now_tm = std::localtime(&now_c);
+    auto        ms     = std::chrono::duration_cast<std::chrono::milliseconds>(
+                  now.time_since_epoch()) %
+              1000;
+
     // Формируем единую строку лога: [HH:MM:SS.ms] LEVEL Message
     std::ostringstream oss;
-    oss << "[" << std::put_time(now_tm, "%H:%M:%S") << "." << std::setfill('0') << std::setw(3) << ms.count() << "] "
-        << level << " " << message;
-    
+    oss << "[" << std::put_time(now_tm, "%H:%M:%S") << "." << std::setfill('0')
+        << std::setw(3) << ms.count() << "] " << level << " " << message;
+
     std::string formatted_message = oss.str();
 
     try
     {
         // Отправляем только одно поле - message
-        redis.xadd(stream_key, "*", { std::make_pair("message", formatted_message) });
+        redis.xadd(
+            stream_key, "*", { std::make_pair("message", formatted_message) });
         std::cout << formatted_message << std::endl;
     }
     catch (const Error& e)
@@ -78,10 +81,10 @@ int main()
         Redis redis(connection_string);
 
         // Имя устройства
-        std::string device_name = "phone_leo";
+        std::string device_name = "anastasia_device";
 
         // Платформа устройства
-        std::string platform = "Linux";
+        std::string platform = "MacOS";
 
         // Генерируем имя стрима (файла)
         std::string stream_name = generate_stream_name();

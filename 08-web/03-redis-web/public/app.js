@@ -7,7 +7,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const currentDeviceLabel = document.getElementById('current-device-label');
     const currentStreamLabel = document.getElementById('current-stream-label');
     
-    const refreshDevicesBtn = document.getElementById('refresh-devices-btn');
     const clearLogsBtn = document.getElementById('clear-logs-btn');
     const downloadLogsBtn = document.getElementById('download-logs-btn');
     const autoscrollCb = document.getElementById('autoscroll-cb');
@@ -17,7 +16,10 @@ document.addEventListener('DOMContentLoaded', () => {
     
     let currentDevice = null;
     let currentStream = null;
-    let eventSource = null;
+    
+    let devicesEventSource = null;
+    let streamsEventSource = null;
+    let logsEventSource = null;
 
     // Форматирование времени из миллисекунд (только время для компактности)
     function formatTime(timestampMs) {
@@ -89,14 +91,17 @@ document.addEventListener('DOMContentLoaded', () => {
         renderList(devicesList, filteredDevices, selectDevice, currentDevice);
     }
 
-    // Получение списка устройств
-    async function fetchDevices() {
-        try {
-            devicesList.innerHTML = '<div class="empty-state">Loading...</div>';
-            const response = await fetch('/api/devices');
-            if (!response.ok) throw new Error('Failed to fetch devices');
-            
-            allDevicesData = await response.json();
+    // Получение списка устройств (SSE)
+    function connectToDevicesStream() {
+        if (devicesEventSource) {
+            devicesEventSource.close();
+        }
+
+        devicesList.innerHTML = '<div class="empty-state">Connecting...</div>';
+        devicesEventSource = new EventSource('/api/devices/stream');
+
+        const handleDevicesData = (event) => {
+            allDevicesData = JSON.parse(event.data);
             
             // Собираем все уникальные платформы
             const platforms = new Set();
@@ -105,16 +110,37 @@ document.addEventListener('DOMContentLoaded', () => {
                 platforms.add(d.platform);
             });
 
-            // Если загружаем первый раз или появились новые платформы, включаем их по умолчанию
-            platforms.forEach(p => activePlatforms.add(p));
+            // Если появились новые платформы, которых не было раньше, включаем их по умолчанию
+            platforms.forEach(p => {
+                // Если мы только загрузились (activePlatforms пуст) или это реально новая платформа
+                // (тут немного упрощенно: если мы сняли галочку, она удалилась из activePlatforms.
+                // Чтобы не включать ее обратно при каждом апдейте, мы должны хранить "известные" платформы.
+                // Но для простоты пока оставим так, или будем добавлять только если это первый инит).
+            });
+            
+            // Лучше так: при первом 'init' добавляем все
+            if (event.type === 'init') {
+                platforms.forEach(p => activePlatforms.add(p));
+            } else {
+                // При апдейте добавляем только те, которых вообще нет в DOM
+                const existingCheckboxes = Array.from(platformFiltersContainer.querySelectorAll('input[type="checkbox"]')).map(cb => cb.value);
+                platforms.forEach(p => {
+                    if (!existingCheckboxes.includes(p)) {
+                        activePlatforms.add(p);
+                    }
+                });
+            }
 
             renderPlatformFilters(platforms);
             filterAndRenderDevices();
-            
-        } catch (error) {
-            console.error('Error fetching devices:', error);
-            devicesList.innerHTML = '<div class="empty-state" style="color: red;">Error loading devices</div>';
-        }
+        };
+
+        devicesEventSource.addEventListener('init', handleDevicesData);
+        devicesEventSource.addEventListener('update', handleDevicesData);
+
+        devicesEventSource.addEventListener('error', (event) => {
+            console.error('Devices SSE Error:', event);
+        });
     }
 
     // Выбор устройства
@@ -135,28 +161,35 @@ document.addEventListener('DOMContentLoaded', () => {
         currentStream = null;
         currentStreamLabel.textContent = '';
         downloadLogsBtn.style.display = 'none';
-        closeStream();
+        closeLogStream();
         logsContainer.innerHTML = '<div class="empty-state">Select a stream to view logs</div>';
 
-        fetchStreams(device);
+        connectToStreamsStream(device);
     }
 
-    // Получение списка стримов
-    async function fetchStreams(device) {
-        try {
-            streamsList.innerHTML = '<div class="empty-state">Loading...</div>';
-            const response = await fetch(`/api/streams?device=${encodeURIComponent(device)}`);
-            if (!response.ok) throw new Error('Failed to fetch streams');
-            
-            const streams = await response.json();
+    // Получение списка стримов (SSE)
+    function connectToStreamsStream(device) {
+        if (streamsEventSource) {
+            streamsEventSource.close();
+        }
+
+        streamsList.innerHTML = '<div class="empty-state">Connecting...</div>';
+        streamsEventSource = new EventSource(`/api/streams/stream?device=${encodeURIComponent(device)}`);
+
+        const handleStreamsData = (event) => {
+            const streams = JSON.parse(event.data);
             // Сортируем по убыванию (новые сверху)
             streams.sort().reverse();
             
             renderList(streamsList, streams, selectStream, currentStream);
-        } catch (error) {
-            console.error('Error fetching streams:', error);
-            streamsList.innerHTML = '<div class="empty-state" style="color: red;">Error loading streams</div>';
-        }
+        };
+
+        streamsEventSource.addEventListener('init', handleStreamsData);
+        streamsEventSource.addEventListener('update', handleStreamsData);
+
+        streamsEventSource.addEventListener('error', (event) => {
+            console.error('Streams SSE Error:', event);
+        });
     }
 
     // Выбор стрима
@@ -177,23 +210,23 @@ document.addEventListener('DOMContentLoaded', () => {
         connectToLogStream();
     }
 
-    function closeStream() {
-        if (eventSource) {
-            eventSource.close();
-            eventSource = null;
+    function closeLogStream() {
+        if (logsEventSource) {
+            logsEventSource.close();
+            logsEventSource = null;
         }
     }
 
     // Подключение к SSE
     function connectToLogStream() {
-        closeStream();
+        closeLogStream();
         logsContainer.innerHTML = '<div class="empty-state">Connecting...</div>';
 
         if (!currentDevice || !currentStream) return;
 
-        eventSource = new EventSource(`/api/logs/stream?device=${encodeURIComponent(currentDevice)}&stream=${encodeURIComponent(currentStream)}`);
+        logsEventSource = new EventSource(`/api/logs/stream?device=${encodeURIComponent(currentDevice)}&stream=${encodeURIComponent(currentStream)}`);
 
-        eventSource.addEventListener('init', (event) => {
+        logsEventSource.addEventListener('init', (event) => {
             const logs = JSON.parse(event.data);
             logsContainer.innerHTML = '';
             
@@ -213,7 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        eventSource.addEventListener('new_logs', (event) => {
+        logsEventSource.addEventListener('new_logs', (event) => {
             const logs = JSON.parse(event.data);
             
             const emptyState = logsContainer.querySelector('.empty-state');
@@ -232,11 +265,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        eventSource.addEventListener('error', (event) => {
+        logsEventSource.addEventListener('error', (event) => {
             console.error('SSE Error:', event);
             if (event.data) {
                 logsContainer.innerHTML += `<div class="empty-state" style="color: #f48771;">Error: ${event.data}</div>`;
-                closeStream();
+                closeLogStream();
             }
         });
     }
@@ -277,10 +310,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Инициализация
-    fetchDevices();
+    connectToDevicesStream();
 
     // Обработчики кнопок
-    refreshDevicesBtn.addEventListener('click', fetchDevices);
+    refreshDevicesBtn.addEventListener('click', connectToDevicesStream);
     clearLogsBtn.addEventListener('click', () => {
         if (currentDevice && currentStream) {
             logsContainer.innerHTML = '<div class="empty-state">Logs cleared from view. Waiting for new logs...</div>';

@@ -39,68 +39,147 @@ int main()
     const std::string public_dir = "./08-web/03-redis-web/public";
     svr.set_mount_point("/", public_dir);
 
-    // API: Получить список всех устройств с их платформами
-    svr.Get("/api/devices",
-            [&redis](const httplib::Request& req, httplib::Response& res)
-            {
-                std::vector<std::string> devices;
-                try
-                {
-                    redis->smembers("all_devices",
-                                    std::inserter(devices, devices.begin()));
+    // API: Получить список всех устройств с их платформами (SSE)
+    svr.Get(
+        "/api/devices/stream",
+        [&redis](const httplib::Request& req, httplib::Response& res)
+        {
+            res.set_header("Content-Type", "text/event-stream");
+            res.set_header("Cache-Control", "no-cache");
+            res.set_header("Connection", "keep-alive");
 
-                    json j = json::array();
-                    
-                    // Для каждого устройства получаем его платформу
-                    for (const auto& device : devices) {
-                        auto platform_opt = redis->hget("device_info:" + device, "platform");
-                        std::string platform = platform_opt ? *platform_opt : "Unknown";
+            res.set_content_provider(
+                "text/event-stream",
+                [&redis](size_t offset, httplib::DataSink& sink)
+                {
+                    try
+                    {
+                        // Функция для получения текущего списка устройств
+                        auto get_devices_json = [&redis]() {
+                            std::vector<std::string> devices;
+                            redis->smembers("all_devices", std::inserter(devices, devices.begin()));
+
+                            json j = json::array();
+                            for (const auto& device : devices) {
+                                auto platform_opt = redis->hget("device_info:" + device, "platform");
+                                std::string platform = platform_opt ? *platform_opt : "Unknown";
+                                j.push_back({
+                                    {"name", device},
+                                    {"platform", platform}
+                                });
+                            }
+                            return j;
+                        };
+
+                        // Отправляем начальный список
+                        json initial_devices = get_devices_json();
+                        std::string event_data = "event: init\ndata: " + initial_devices.dump() + "\n\n";
+                        if (!sink.write(event_data.c_str(), event_data.size())) return false;
+
+                        // Так как Redis множества (Sets) не поддерживают блокирующее чтение,
+                        // мы будем делать поллинг раз в секунду.
+                        // Это не создаст большой нагрузки, так как мы просто сравниваем размер/хэш 
+                        // или просто переотправляем данные, если они изменились.
+                        // Для простоты будем отправлять список каждую секунду, а фронтенд сам разберется,
+                        // изменилось ли что-то.
                         
-                        j.push_back({
-                            {"name", device},
-                            {"platform", platform}
-                        });
+                        std::string last_dump = initial_devices.dump();
+
+                        while (true)
+                        {
+                            std::this_thread::sleep_for(std::chrono::seconds(1));
+                            
+                            json current_devices = get_devices_json();
+                            std::string current_dump = current_devices.dump();
+
+                            if (current_dump != last_dump)
+                            {
+                                std::string update_event = "event: update\ndata: " + current_dump + "\n\n";
+                                if (!sink.write(update_event.c_str(), update_event.size())) return false;
+                                last_dump = current_dump;
+                            }
+                            else
+                            {
+                                // Ping
+                                if (!sink.write(":\n\n", 3)) return false;
+                            }
+                        }
                     }
+                    catch (const Error& e)
+                    {
+                        std::string error_msg = std::string("event: error\ndata: ") + e.what() + "\n\n";
+                        sink.write(error_msg.c_str(), error_msg.size());
+                        return false;
+                    }
+                    return true;
+                });
+        });
 
-                    res.set_content(j.dump(), "application/json");
-                }
-                catch (const Error& e)
-                {
-                    json j     = { { "error", e.what() } };
-                    res.status = 500;
-                    res.set_content(j.dump(), "application/json");
-                }
-            });
-
-    // API: Получить список стримов для конкретного устройства
-    svr.Get("/api/streams",
-            [&redis](const httplib::Request& req, httplib::Response& res)
+    // API: Получить список стримов для конкретного устройства (SSE)
+    svr.Get(
+        "/api/streams/stream",
+        [&redis](const httplib::Request& req, httplib::Response& res)
+        {
+            if (!req.has_param("device"))
             {
-                if (!req.has_param("device"))
-                {
-                    res.status = 400;
-                    res.set_content(R"({"error": "Missing 'device' parameter"})",
-                                    "application/json");
-                    return;
-                }
+                res.status = 400;
+                res.set_content(R"({"error": "Missing 'device' parameter"})", "application/json");
+                return;
+            }
 
-                std::string device = req.get_param_value("device");
-                std::vector<std::string> streams;
-                try
-                {
-                    redis->smembers("streams:" + device,
-                                    std::inserter(streams, streams.begin()));
+            std::string device = req.get_param_value("device");
 
-                    json j = streams;
-                    res.set_content(j.dump(), "application/json");
-                }
-                catch (const Error& e)
+            res.set_header("Content-Type", "text/event-stream");
+            res.set_header("Cache-Control", "no-cache");
+            res.set_header("Connection", "keep-alive");
+
+            res.set_content_provider(
+                "text/event-stream",
+                [&redis, device](size_t offset, httplib::DataSink& sink)
                 {
-                    json j     = { { "error", e.what() } };
-                    res.status = 500;
-                    res.set_content(j.dump(), "application/json");
-                }
-            });
+                    try
+                    {
+                        auto get_streams_json = [&redis, &device]() {
+                            std::vector<std::string> streams;
+                            redis->smembers("streams:" + device, std::inserter(streams, streams.begin()));
+                            return json(streams);
+                        };
+
+                        json initial_streams = get_streams_json();
+                        std::string event_data = "event: init\ndata: " + initial_streams.dump() + "\n\n";
+                        if (!sink.write(event_data.c_str(), event_data.size())) return false;
+
+                        std::string last_dump = initial_streams.dump();
+
+                        while (true)
+                        {
+                            std::this_thread::sleep_for(std::chrono::seconds(1));
+                            
+                            json current_streams = get_streams_json();
+                            std::string current_dump = current_streams.dump();
+
+                            if (current_dump != last_dump)
+                            {
+                                std::string update_event = "event: update\ndata: " + current_dump + "\n\n";
+                                if (!sink.write(update_event.c_str(), update_event.size())) return false;
+                                last_dump = current_dump;
+                            }
+                            else
+                            {
+                                // Ping
+                                if (!sink.write(":\n\n", 3)) return false;
+                            }
+                        }
+                    }
+                    catch (const Error& e)
+                    {
+                        std::string error_msg = std::string("event: error\ndata: ") + e.what() + "\n\n";
+                        sink.write(error_msg.c_str(), error_msg.size());
+                        return false;
+                    }
+                    return true;
+                });
+        });
 
     // API: Получить логи для конкретного устройства (SSE)
     svr.Get(
