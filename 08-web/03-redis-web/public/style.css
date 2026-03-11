@@ -1,11 +1,13 @@
 :root {
     --bg-color: #f4f4f9;
     --text-color: #333;
-    --border-color: #ccc;
+    --border-color: #e0e0e0;
     --header-bg: #2c3e50;
     --header-text: #fff;
-    --row-alt-bg: #f9f9f9;
-    --row-hover: #eef2f5;
+    --panel-bg: #fff;
+    --hover-bg: #f0f4f8;
+    --selected-bg: #e3f2fd;
+    --selected-border: #2196f3;
     
     --level-info: #3498db;
     --level-warning: #f39c12;
@@ -23,113 +25,210 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: var(--bg-color);
     color: var(--text-color);
-    line-height: 1.6;
-}
-
-.container {
-    max-width: 1000px;
-    margin: 0 auto;
-    padding: 20px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Запрещаем скролл всей страницы */
+    margin: 0; /* Убираем margin по умолчанию */
 }
 
 header {
     background-color: var(--header-bg);
     color: var(--header-text);
-    padding: 20px;
-    border-radius: 8px 8px 0 0;
-    margin-bottom: 20px;
+    padding: 15px 20px;
+    flex-shrink: 0;
 }
 
 h1 {
-    font-size: 1.5rem;
+    font-size: 1.2rem;
+    margin: 0;
 }
 
-.controls {
-    background: #fff;
-    padding: 15px 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    margin-bottom: 20px;
+.layout {
+    display: flex;
+    flex-direction: row; /* Явно указываем горизонтальное расположение */
+    flex: 1;
+    overflow: hidden;
+    padding: 10px;
+    gap: 10px;
+}
+
+.panel {
+    background: var(--panel-bg);
+    border-radius: 6px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    height: 100%; /* Убеждаемся, что панели занимают всю высоту контейнера */
+}
+
+.devices-panel {
+    width: 250px;
+    flex-shrink: 0;
+}
+
+.streams-panel {
+    width: 300px;
+    flex-shrink: 0;
+}
+
+.logs-panel {
+    flex: 1;
+    min-width: 0;
+}
+
+.panel-header {
+    padding: 12px 15px;
+    background-color: #fafafa;
+    border-bottom: 1px solid var(--border-color);
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 10px;
 }
 
-select {
-    padding: 8px 12px;
+.panel-header h2 {
     font-size: 1rem;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    min-width: 250px;
+    margin: 0;
+    color: #444;
 }
 
-button {
-    padding: 8px 16px;
-    font-size: 1rem;
-    background-color: var(--header-bg);
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-button:hover {
-    background-color: #1a252f;
-}
-
-.logs-container {
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+.subtitle {
+    font-size: 0.85rem;
+    color: #777;
+    white-space: nowrap;
     overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-table {
-    width: 100%;
-    border-collapse: collapse;
+.icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.1rem;
+    color: #666;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: auto;
 }
 
-th, td {
-    padding: 12px 15px;
-    text-align: left;
-    border-bottom: 1px solid var(--border-color);
+.icon-btn:hover {
+    background-color: #e0e0e0;
+    color: #333;
 }
 
-th {
-    background-color: #eaeaea;
-    font-weight: 600;
+.list-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 5px 0;
 }
 
-tbody tr:nth-child(even) {
-    background-color: var(--row-alt-bg);
+.list-item {
+    padding: 10px 15px;
+    cursor: pointer;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background-color 0.1s;
+    font-size: 0.95rem;
+    word-break: break-all;
 }
 
-tbody tr:hover {
-    background-color: var(--row-hover);
+.list-item:hover {
+    background-color: var(--hover-bg);
+}
+
+.list-item.selected {
+    background-color: var(--selected-bg);
+    border-left: 4px solid var(--selected-border);
+    padding-left: 11px;
+    font-weight: 500;
 }
 
 .empty-state {
+    padding: 20px;
     text-align: center;
-    color: #777;
+    color: #999;
     font-style: italic;
-    padding: 30px !important;
+    font-size: 0.9rem;
 }
 
-.col-time { width: 200px; }
-.col-level { width: 100px; }
+/* Стили для логов (текстовый формат для удобного выделения) */
+.logs-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    background-color: #1e1e1e; /* Темный фон для логов */
+    color: #d4d4d4;
+}
 
-.level-badge {
+.log-line {
+    padding: 2px 0;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+    border-bottom: 1px solid #333;
+}
+
+.log-line:hover {
+    background-color: #2a2d2e;
+}
+
+.log-time {
+    color: #858585;
+    margin-right: 10px;
+    user-select: none; /* Время обычно не нужно копировать */
+}
+
+.log-level {
     display: inline-block;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 0.85rem;
+    width: 60px;
     font-weight: bold;
-    color: white;
-    text-transform: uppercase;
+    margin-right: 10px;
 }
 
-.level-INFO { background-color: var(--level-info); }
-.level-WARNING { background-color: var(--level-warning); }
-.level-ERROR { background-color: var(--level-error); }
-.level-DEBUG { background-color: var(--level-debug); }
+.level-INFO { color: #4fc1ff; }
+.level-WARNING { color: #cca700; }
+.level-ERROR { color: #f48771; }
+.level-DEBUG { color: #858585; }
+
+.log-message {
+    color: #d4d4d4;
+}
+
+/* Подсветка новых логов */
+@keyframes highlightNew {
+    0% { background-color: #063b15; }
+    100% { background-color: transparent; }
+}
+
+.log-line.new {
+    animation: highlightNew 2s ease-out;
+}
+
+/* Кастомный скроллбар */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: #f1f1f1; 
+}
+::-webkit-scrollbar-thumb {
+    background: #c1c1c1; 
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8; 
+}
+
+.logs-container::-webkit-scrollbar-track {
+    background: #1e1e1e;
+}
+.logs-container::-webkit-scrollbar-thumb {
+    background: #424242;
+}
+.logs-container::-webkit-scrollbar-thumb:hover {
+    background: #4f4f4f;
+}

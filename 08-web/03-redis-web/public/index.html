@@ -7,41 +7,43 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>Device Logs Viewer</h1>
-        </header>
+    <header>
+        <h1>Device Logs Viewer</h1>
+    </header>
 
-        <main>
-            <div class="controls">
-                <label for="device-select">Device:</label>
-                <select id="device-select">
-                    <option value="">-- Loading devices... --</option>
-                </select>
-
-                <label for="stream-select">Stream:</label>
-                <select id="stream-select" disabled>
-                    <option value="">-- Select device first --</option>
-                </select>
-
-                <button id="refresh-btn">Refresh Logs</button>
+    <div class="layout">
+        <!-- Левая панель: Устройства -->
+        <aside class="panel devices-panel">
+            <div class="panel-header">
+                <h2>Devices</h2>
+                <button id="refresh-devices-btn" class="icon-btn" title="Refresh Devices">↻</button>
             </div>
+            <div class="list-container" id="devices-list">
+                <div class="empty-state">Loading devices...</div>
+            </div>
+        </aside>
 
-            <div class="logs-container">
-                <table id="logs-table">
-                    <thead>
-                        <tr>
-                            <th class="col-time">Time</th>
-                            <th class="col-level">Level</th>
-                            <th class="col-message">Message</th>
-                        </tr>
-                    </thead>
-                    <tbody id="logs-body">
-                        <tr>
-                            <td colspan="3" class="empty-state">Select a device to view logs</td>
-                        </tr>
-                    </tbody>
-                </table>
+        <!-- Средняя панель: Стримы (Логи) -->
+        <aside class="panel streams-panel">
+            <div class="panel-header">
+                <h2>Streams</h2>
+                <span id="current-device-label" class="subtitle"></span>
+            </div>
+            <div class="list-container" id="streams-list">
+                <div class="empty-state">Select a device</div>
+            </div>
+        </aside>
+
+        <!-- Правая панель: Содержимое лога -->
+        <main class="panel logs-panel">
+            <div class="panel-header">
+                <h2>Log Output</h2>
+                <span id="current-stream-label" class="subtitle"></span>
+                <button id="clear-logs-btn" class="icon-btn" title="Clear View" style="margin-left: auto;">🗑</button>
+            </div>
+            <div class="logs-container" id="logs-container">
+                <div class="empty-state">Select a stream to view logs</div>
+                <!-- Логи будут добавляться сюда как текстовые блоки -->
             </div>
         </main>
     </div>
