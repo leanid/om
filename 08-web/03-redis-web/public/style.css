@@ -188,7 +188,7 @@ h1 {
 
 .log-level {
     display: inline-block;
-    width: 60px;
+    width: 75px; /* Увеличили ширину, чтобы влезло слово WARNING */
     font-weight: bold;
     margin-right: 10px;
     flex-shrink: 0;
