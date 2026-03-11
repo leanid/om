@@ -1,0 +1,135 @@
+:root {
+    --bg-color: #f4f4f9;
+    --text-color: #333;
+    --border-color: #ccc;
+    --header-bg: #2c3e50;
+    --header-text: #fff;
+    --row-alt-bg: #f9f9f9;
+    --row-hover: #eef2f5;
+    
+    --level-info: #3498db;
+    --level-warning: #f39c12;
+    --level-error: #e74c3c;
+    --level-debug: #7f8c8d;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+header {
+    background-color: var(--header-bg);
+    color: var(--header-text);
+    padding: 20px;
+    border-radius: 8px 8px 0 0;
+    margin-bottom: 20px;
+}
+
+h1 {
+    font-size: 1.5rem;
+}
+
+.controls {
+    background: #fff;
+    padding: 15px 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+select {
+    padding: 8px 12px;
+    font-size: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    min-width: 250px;
+}
+
+button {
+    padding: 8px 16px;
+    font-size: 1rem;
+    background-color: var(--header-bg);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+button:hover {
+    background-color: #1a252f;
+}
+
+.logs-container {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+th {
+    background-color: #eaeaea;
+    font-weight: 600;
+}
+
+tbody tr:nth-child(even) {
+    background-color: var(--row-alt-bg);
+}
+
+tbody tr:hover {
+    background-color: var(--row-hover);
+}
+
+.empty-state {
+    text-align: center;
+    color: #777;
+    font-style: italic;
+    padding: 30px !important;
+}
+
+.col-time { width: 200px; }
+.col-level { width: 100px; }
+
+.level-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: white;
+    text-transform: uppercase;
+}
+
+.level-INFO { background-color: var(--level-info); }
+.level-WARNING { background-color: var(--level-warning); }
+.level-ERROR { background-color: var(--level-error); }
+.level-DEBUG { background-color: var(--level-debug); }

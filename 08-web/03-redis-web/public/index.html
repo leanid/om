@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Device Logs Viewer</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Device Logs Viewer</h1>
+        </header>
+
+        <main>
+            <div class="controls">
+                <label for="device-select">Select Device:</label>
+                <select id="device-select">
+                    <option value="">-- Loading devices... --</option>
+                </select>
+                <button id="refresh-btn">Refresh Logs</button>
+            </div>
+
+            <div class="logs-container">
+                <table id="logs-table">
+                    <thead>
+                        <tr>
+                            <th class="col-time">Time</th>
+                            <th class="col-level">Level</th>
+                            <th class="col-message">Message</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logs-body">
+                        <tr>
+                            <td colspan="3" class="empty-state">Select a device to view logs</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

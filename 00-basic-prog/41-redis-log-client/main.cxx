@@ -65,6 +65,9 @@ int main()
         // Имя ключа стрима
         std::string stream_name = "leo_phone_11_03_2026";
 
+        // Регистрируем устройство в общем списке
+        redis.sadd("all_devices", stream_name);
+
         std::cout << "Connecting to Redis at " << connection_string << "..."
                   << std::endl;
 
