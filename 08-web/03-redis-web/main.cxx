@@ -190,8 +190,9 @@ struct server_config
     int         server_port  = 8080;
     std::string public_dir   = "./08-web/03-redis-web/public";
     int         socket_flags   = 0;
-    size_t      max_threads    = 256;
-    size_t      log_batch_size = 1000;
+    size_t      max_threads     = 256;
+    size_t      log_batch_size  = 1000;
+    size_t      redis_pool_size = 128;
 };
 
 server_config load_config(const std::string& filepath)
@@ -218,6 +219,8 @@ server_config load_config(const std::string& filepath)
                 config.max_threads = j["max_threads"];
             if (j.contains("log_batch_size"))
                 config.log_batch_size = j["log_batch_size"];
+            if (j.contains("redis_pool_size"))
+                config.redis_pool_size = j["redis_pool_size"];
         }
         catch (const std::exception& e)
         {
@@ -612,7 +615,11 @@ int main(int argc, char* argv[])
                      argv[0]);
     }
 
-    auto redis_client = std::make_shared<redis::Redis>(config.redis_url);
+    redis::ConnectionPoolOptions pool_opts;
+    pool_opts.size = config.redis_pool_size;
+
+    auto redis_client = std::make_shared<redis::Redis>(
+        redis::Uri(config.redis_url).connection_options(), pool_opts);
 
     auto notifier = std::make_shared<om::notification_center>(redis_client);
     notifier->start();
@@ -662,6 +669,7 @@ int main(int argc, char* argv[])
                  CPPHTTPLIB_THREAD_POOL_COUNT,
                  config.max_threads);
     std::println("Log batch size: {}", config.log_batch_size);
+    std::println("Redis pool size: {}", config.redis_pool_size);
 
     if (!svr.listen(
             config.server_host, config.server_port, config.socket_flags))
