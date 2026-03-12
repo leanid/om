@@ -227,7 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (!currentDevice || !currentStream) return;
 
-        logsEventSource = new EventSource(`/api/logs/stream?device=${encodeURIComponent(currentDevice)}&stream=${encodeURIComponent(currentStream)}`);
+        logsEventSource = new EventSource(`/api/logs/stream?device=${encodeURIComponent(currentDevice)}&log_name=${encodeURIComponent(currentStream)}`);
 
         logsEventSource.addEventListener('init', (event) => {
             const logs = JSON.parse(event.data);
@@ -329,7 +329,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     downloadLogsBtn.addEventListener('click', () => {
         if (!currentDevice || !currentStream) return;
-        const url = `/api/logs/download?device=${encodeURIComponent(currentDevice)}&stream=${encodeURIComponent(currentStream)}`;
+        const url = `/api/logs/download?device=${encodeURIComponent(currentDevice)}&log_name=${encodeURIComponent(currentStream)}`;
         window.location.href = url;
     });
 });

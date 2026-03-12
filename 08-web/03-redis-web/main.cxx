@@ -56,8 +56,8 @@ public:
             worker_thread.request_stop();
             try
             {
-                redis_client->publish(
-                    std::string(keyspace_all_devices), "stop");
+                redis_client->publish(std::string(keyspace_all_devices),
+                                      "stop");
             }
             catch (...)
             {
@@ -104,7 +104,7 @@ public:
                                 else if (channel.starts_with(
                                              keyspace_log_names))
                                 {
-                                    std::string device(channel.substr(
+                                    std::string      device(channel.substr(
                                         keyspace_log_names.size()));
                                     std::scoped_lock lock(mtx);
                                     streams_version[device]++;
@@ -113,8 +113,7 @@ public:
                             });
 
                         sub.psubscribe(std::string(keyspace_all_devices));
-                        sub.psubscribe(
-                            std::format("{}*", keyspace_log_names));
+                        sub.psubscribe(std::format("{}*", keyspace_log_names));
 
                         while (!stoken.stop_requested())
                         {
@@ -143,11 +142,10 @@ public:
                     {
                         if (!stoken.stop_requested())
                         {
-                            std::println(
-                                stderr,
-                                "Redis subscriber error: {}. "
-                                "Reconnecting in 1s...",
-                                e.what());
+                            std::println(stderr,
+                                         "Redis subscriber error: {}. "
+                                         "Reconnecting in 1s...",
+                                         e.what());
                             std::this_thread::sleep_for(
                                 std::chrono::seconds(1));
                         }
@@ -272,8 +270,8 @@ public:
         try
         {
             auto current_version = notifier_->get_devices_version();
-            auto event_data      = std::format(
-                "event: init\ndata: {}\n\n", get_devices_json().dump());
+            auto event_data      = std::format("event: init\ndata: {}\n\n",
+                                          get_devices_json().dump());
             if (!sink.write(event_data.c_str(), event_data.size()))
                 return false;
 
@@ -282,11 +280,10 @@ public:
                 if (notifier_->wait_for_devices_change(current_version, 15))
                 {
                     current_version = notifier_->get_devices_version();
-                    auto update_event = std::format(
-                        "event: update\ndata: {}\n\n",
-                        get_devices_json().dump());
-                    if (!sink.write(update_event.c_str(),
-                                    update_event.size()))
+                    auto update_event =
+                        std::format("event: update\ndata: {}\n\n",
+                                    get_devices_json().dump());
+                    if (!sink.write(update_event.c_str(), update_event.size()))
                         return false;
                 }
                 else
@@ -360,8 +357,8 @@ public:
         try
         {
             auto current_version = notifier_->get_streams_version(device_);
-            auto event_data      = std::format(
-                "event: init\ndata: {}\n\n", get_log_names_json().dump());
+            auto event_data      = std::format("event: init\ndata: {}\n\n",
+                                          get_log_names_json().dump());
             if (!sink.write(event_data.c_str(), event_data.size()))
                 return false;
 
@@ -370,13 +367,11 @@ public:
                 if (notifier_->wait_for_streams_change(
                         device_, current_version, 15))
                 {
-                    current_version =
-                        notifier_->get_streams_version(device_);
-                    auto update_event = std::format(
-                        "event: update\ndata: {}\n\n",
-                        get_log_names_json().dump());
-                    if (!sink.write(update_event.c_str(),
-                                    update_event.size()))
+                    current_version = notifier_->get_streams_version(device_);
+                    auto update_event =
+                        std::format("event: update\ndata: {}\n\n",
+                                    get_log_names_json().dump());
+                    if (!sink.write(update_event.c_str(), update_event.size()))
                         return false;
                 }
                 else
@@ -449,8 +444,8 @@ class logs_stream_provider
             return entry;
         };
 
-        return json(items | std::views::transform(to_entry)
-                    | std::ranges::to<std::vector<json>>());
+        return json(items | std::views::transform(to_entry) |
+                    std::ranges::to<std::vector<json>>());
     }
 
 public:
@@ -472,9 +467,9 @@ public:
 
             if (!stream_data.empty())
             {
-                auto event_data = std::format(
-                    "event: init\ndata: {}\n\n",
-                    items_to_json(stream_data).dump());
+                auto event_data =
+                    std::format("event: init\ndata: {}\n\n",
+                                items_to_json(stream_data).dump());
                 if (!sink.write(event_data.c_str(), event_data.size()))
                     return false;
                 last_id = stream_data.back().first;
@@ -486,15 +481,14 @@ public:
                     new_data;
 
                 redis_client_->xread(
-                    stream_key_, last_id, 15000,
-                    std::back_inserter(new_data));
+                    stream_key_, last_id, 15000, std::back_inserter(new_data));
 
                 if (!new_data.empty() && !new_data[0].second.empty())
                 {
                     const auto& items = new_data[0].second;
-                    auto        event_data = std::format(
-                        "event: new_logs\ndata: {}\n\n",
-                        items_to_json(items).dump());
+                    auto        event_data =
+                        std::format("event: new_logs\ndata: {}\n\n",
+                                    items_to_json(items).dump());
                     if (!sink.write(event_data.c_str(), event_data.size()))
                         return false;
                     last_id = items.back().first;
@@ -530,18 +524,18 @@ public:
 
     void operator()(const httplib::Request& req, httplib::Response& res) const
     {
-        if (!req.has_param("device") || !req.has_param("stream"))
+        if (!req.has_param("device") || !req.has_param("log_name"))
         {
             res.status = 400;
             res.set_content(
-                R"({"error": "Missing 'device' or 'stream' parameter"})",
+                R"({"error": "Missing 'device' or 'log_name' parameter"})",
                 "application/json");
             return;
         }
 
         auto stream_key = std::format("log:{}:{}",
                                       req.get_param_value("device"),
-                                      req.get_param_value("stream"));
+                                      req.get_param_value("log_name"));
 
         res.set_header("Content-Type", "text/event-stream");
         res.set_header("Cache-Control", "no-cache");
@@ -575,8 +569,7 @@ public:
         {
             std::vector<stream_item> stream_data;
 
-            std::string start_id =
-                (*last_id_ == "-") ? "-" : "(" + *last_id_;
+            std::string start_id = (*last_id_ == "-") ? "-" : "(" + *last_id_;
 
             redis_client_->xrange(stream_key_,
                                   start_id,
@@ -642,20 +635,20 @@ public:
 
     void operator()(const httplib::Request& req, httplib::Response& res) const
     {
-        if (!req.has_param("device") || !req.has_param("stream"))
+        if (!req.has_param("device") || !req.has_param("log_name"))
         {
             res.status = 400;
-            res.set_content("Missing 'device' or 'stream' parameter",
+            res.set_content("Missing 'device' or 'log_name' parameter",
                             "text/plain");
             return;
         }
 
         auto device     = req.get_param_value("device");
-        auto stream     = req.get_param_value("stream");
-        auto stream_key = std::format("log:{}:{}", device, stream);
+        auto log_name   = req.get_param_value("log_name");
+        auto stream_key = std::format("log:{}:{}", device, log_name);
 
         res.set_header("Content-Disposition",
-                       std::format("attachment; filename=\"{}\"", stream));
+                       std::format("attachment; filename=\"{}\"", log_name));
 
         res.set_chunked_content_provider(
             "text/plain", logs_download_provider{ redis_client_, stream_key });
@@ -724,14 +717,17 @@ int main(int argc, char* argv[])
     svr.Get("/api/logs/download", om::logs_download_handler{ redis_client });
 
     std::println("Starting web server on http://{}:{}",
-                 config.server_host, config.server_port);
+                 config.server_host,
+                 config.server_port);
     std::println("Serving static files from {}", config.public_dir);
 
-    if (!svr.listen(config.server_host, config.server_port,
-                    config.socket_flags))
+    if (!svr.listen(
+            config.server_host, config.server_port, config.socket_flags))
     {
-        std::println(stderr, "Failed to start server on {}:{}",
-                     config.server_host, config.server_port);
+        std::println(stderr,
+                     "Failed to start server on {}:{}",
+                     config.server_host,
+                     config.server_port);
         return 1;
     }
 
