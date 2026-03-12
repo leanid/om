@@ -204,10 +204,10 @@ public:
 
 struct server_config
 {
-    std::string redis_url   = "tcp://127.0.0.1:6379";
-    std::string server_host = "0.0.0.0";
-    int         server_port = 8080;
-    std::string public_dir  = "./08-web/03-redis-web/public";
+    std::string redis_url    = "tcp://127.0.0.1:6379";
+    std::string server_host  = "0.0.0.0";
+    int         server_port  = 8080;
+    std::string public_dir   = "./08-web/03-redis-web/public";
     int         socket_flags = 0;
 };
 
@@ -480,19 +480,28 @@ int main(int argc, char* argv[])
     httplib::Server svr;
 
     // Отключаем SO_REUSEPORT (если он есть), оставляем только SO_REUSEADDR,
-    // чтобы при попытке запустить второй сервер на том же порту мы получали ошибку.
-    svr.set_socket_options([](auto sock) {
+    // чтобы при попытке запустить второй сервер на том же порту мы получали
+    // ошибку.
+    svr.set_socket_options(
+        [](auto sock)
+        {
 #ifndef _WIN32
-        int yes = 1;
-        setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,
-                   reinterpret_cast<const void*>(&yes), sizeof(yes));
+            int yes = 1;
+            setsockopt(sock,
+                       SOL_SOCKET,
+                       SO_REUSEADDR,
+                       reinterpret_cast<const void*>(&yes),
+                       sizeof(yes));
 #ifdef SO_REUSEPORT
-        int no = 0;
-        setsockopt(sock, SOL_SOCKET, SO_REUSEPORT,
-                   reinterpret_cast<const void*>(&no), sizeof(no));
+            int no = 0;
+            setsockopt(sock,
+                       SOL_SOCKET,
+                       SO_REUSEPORT,
+                       reinterpret_cast<const void*>(&no),
+                       sizeof(no));
 #endif
 #endif
-    });
+        });
 
     // Раздаем статические файлы из папки public
     const std::string public_dir = config.public_dir;
@@ -745,8 +754,8 @@ int main(int argc, char* argv[])
                 });
         });
 
-    int         port = config.server_port;
-    std::string host = config.server_host;
+    int         port         = config.server_port;
+    std::string host         = config.server_host;
     int         socket_flags = config.socket_flags;
     std::cout << "Starting web server on http://" << host << ":" << port
               << std::endl;
