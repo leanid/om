@@ -1,0 +1,55 @@
+---
+description: Enforce Boost style, modern C++, and snake_case for C++ code
+alwaysApply: true
+---
+
+# C++ Coding Style Guidelines
+
+When writing or modifying C++ code, ALWAYS adhere to the following style guidelines:
+
+## 1. Naming Conventions (snake_case)
+- Use `snake_case` for ALL identifiers, including:
+  - Variables (`my_variable`)
+  - Functions and methods (`calculate_total()`)
+  - Classes and structs (`my_class`, `data_record`)
+  - Namespaces (`my_namespace`)
+- This matches the C++ Standard Library and Boost conventions.
+- ONLY Macros `UPPER_SNAKE_CASE`.
+
+## 2. Modern C++
+- Prefer modern C++ features (C++11/14/17/20/23) over legacy C-style approaches.
+- Use `auto` for type deduction when the type is obvious.
+- Use smart pointers (`std::unique_ptr`, `std::shared_ptr`) instead of raw `new`/`delete`.
+- Prefer `std::string` and `std::string_view` over `const char*`.
+- Use range-based for loops.
+- Use `<algorithm>` and `<ranges>` where applicable.
+
+## 3. Boost Style
+- Write robust, generic, and standard-library-compatible code.
+- Keep headers clean and self-contained.
+- Use clear and consistent indentation (typically 4 spaces).
+- Place braces according to standard Boost/STL practices (usually opening brace on the same line or next line, but be consistent with the surrounding code).
+
+## Example
+
+```cpp
+// ❌ BAD: Mixed cases, raw pointers, old C-style
+class MyDataProcessor {
+public:
+    void ProcessData(int* rawData, int size) {
+        for (int i = 0; i < size; ++i) {
+            // ...
+        }
+    }
+};
+
+// ✅ GOOD: snake_case, modern C++, Boost-like style
+class my_data_processor {
+public:
+    void process_data(std::span<const int> raw_data) {
+        for (const auto& item : raw_data) {
+            // ...
+        }
+    }
+};
+```
