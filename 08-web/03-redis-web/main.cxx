@@ -489,42 +489,75 @@ int main()
             std::string stream     = req.get_param_value("stream");
             std::string stream_key = "log:" + device + ":" + stream;
 
-            try
-            {
-                using Item =
-                    std::pair<std::string,
-                              std::vector<std::pair<std::string, std::string>>>;
-                std::vector<Item> stream_data;
-
-                redis->xrange(
-                    stream_key, "-", "+", std::back_inserter(stream_data));
-
-                std::ostringstream out;
-                for (const auto& item : stream_data)
+            // Устанавливаем заголовки для скачивания файла
+            res.set_header("Content-Disposition",
+                           "attachment; filename=\"" + stream + "\"");
+            
+            // Используем chunked передачу данных (Chunked Transfer Encoding)
+            res.set_chunked_content_provider(
+                "text/plain",
+                [redis, stream_key, last_id = std::make_shared<std::string>("-")](size_t offset, httplib::DataSink& sink) mutable
                 {
-                    std::string msg;
-                    for (const auto& field : item.second)
+                    const int batch_size = 5000; // Читаем по 5000 записей за раз
+                    
+                    try
                     {
-                        if (field.first == "message")
-                        {
-                            msg = field.second;
-                            break;
-                        }
-                    }
-                    out << msg << "\n";
-                }
+                        using Item = std::pair<std::string, std::vector<std::pair<std::string, std::string>>>;
+                        std::vector<Item> stream_data;
+                        
+                        // Читаем батч данных (XRANGE stream_key last_id + COUNT batch_size)
+                        // Если last_id != "-", используем синтаксис (last_id для исключения уже прочитанного элемента
+                        std::string start_id = (*last_id == "-") ? "-" : "(" + *last_id;
+                        
+                        redis->xrange(stream_key, start_id, "+", batch_size, std::back_inserter(stream_data));
 
-                // Устанавливаем заголовки для скачивания файла
-                res.set_header("Content-Disposition",
-                               "attachment; filename=\"" + stream + "\"");
-                res.set_content(out.str(), "text/plain");
-            }
-            catch (const Error& e)
-            {
-                res.status = 500;
-                res.set_content(std::string("Redis error: ") + e.what(),
-                                "text/plain");
-            }
+                        if (stream_data.empty()) {
+                            sink.done();
+                            return false; // Данные закончились, завершаем
+                        }
+
+                        std::string chunk;
+                        // Резервируем память (примерно 100 байт на строку), чтобы избежать лишних аллокаций
+                        chunk.reserve(stream_data.size() * 100);
+
+                        for (size_t i = 0; i < stream_data.size(); ++i)
+                        {
+                            const auto& item = stream_data[i];
+                            
+                            for (const auto& field : item.second)
+                            {
+                                if (field.first == "message")
+                                {
+                                    chunk += field.second;
+                                    chunk += '\n';
+                                    break;
+                                }
+                            }
+                            *last_id = item.first; // Обновляем ID для следующего запроса
+                        }
+
+                        // Отправляем чанк браузеру
+                        if (!chunk.empty()) {
+                            if (!sink.write(chunk.c_str(), chunk.size())) {
+                                return false; // Ошибка записи
+                            }
+                        }
+
+                        // Если мы получили меньше записей, чем просили, значит это был последний батч
+                        if (stream_data.size() < static_cast<size_t>(batch_size)) {
+                            sink.done();
+                            return false;
+                        }
+                        
+                        return true; // Продолжаем передачу
+                    }
+                    catch (const Error& e)
+                    {
+                        std::cerr << "Redis download error: " << e.what() << std::endl;
+                        sink.done();
+                        return false;
+                    }
+                });
         });
 
     int port = 8080;
