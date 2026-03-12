@@ -174,7 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         streamsList.innerHTML = '<div class="empty-state">Connecting...</div>';
-        streamsEventSource = new EventSource(`/api/streams/stream?device=${encodeURIComponent(device)}`);
+        streamsEventSource = new EventSource(`/api/log_names/stream?device=${encodeURIComponent(device)}`);
 
         const handleStreamsData = (event) => {
             const streams = JSON.parse(event.data);

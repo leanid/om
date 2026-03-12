@@ -118,10 +118,10 @@ public:
                                     cv_devices.notify_all();
                                 }
                                 else if (channel.find(
-                                             "__keyspace@0__:streams:") == 0)
+                                             "__keyspace@0__:log_names:") == 0)
                                 {
                                     std::string device = channel.substr(
-                                        std::string("__keyspace@0__:streams:")
+                                        std::string("__keyspace@0__:log_names:")
                                             .length());
                                     std::lock_guard<std::mutex> lock(mtx);
                                     streams_version[device]++;
@@ -130,7 +130,7 @@ public:
                             });
 
                         sub.psubscribe("__keyspace@0__:all_devices");
-                        sub.psubscribe("__keyspace@0__:streams:*");
+                        sub.psubscribe("__keyspace@0__:log_names:*");
 
                         while (!stoken.stop_requested())
                         {
@@ -347,7 +347,7 @@ public:
     }
 };
 
-class streams_stream_provider
+class log_names_stream_provider
 {
     std::shared_ptr<redis::Redis>        redis_client_;
     std::shared_ptr<notification_center> notifier_;
@@ -356,15 +356,15 @@ class streams_stream_provider
     json get_streams_json() const
     {
         std::vector<std::string> streams;
-        redis_client_->smembers("streams:" + device_,
+        redis_client_->smembers("log_names:" + device_,
                                 std::inserter(streams, streams.begin()));
         return json(streams);
     }
 
 public:
-    streams_stream_provider(std::shared_ptr<redis::Redis>        r,
-                            std::shared_ptr<notification_center> n,
-                            std::string                          device)
+    log_names_stream_provider(std::shared_ptr<redis::Redis>        r,
+                              std::shared_ptr<notification_center> n,
+                              std::string                          device)
         : redis_client_(std::move(r))
         , notifier_(std::move(n))
         , device_(std::move(device))
@@ -416,14 +416,14 @@ public:
     }
 };
 
-class streams_stream_handler
+class log_names_stream_handler
 {
     std::shared_ptr<redis::Redis>        redis_client_;
     std::shared_ptr<notification_center> notifier_;
 
 public:
-    streams_stream_handler(std::shared_ptr<redis::Redis>        r,
-                           std::shared_ptr<notification_center> n)
+    log_names_stream_handler(std::shared_ptr<redis::Redis>        r,
+                             std::shared_ptr<notification_center> n)
         : redis_client_(std::move(r))
         , notifier_(std::move(n))
     {
@@ -447,7 +447,7 @@ public:
 
         res.set_content_provider(
             "text/event-stream",
-            streams_stream_provider{ redis_client_, notifier_, device });
+            log_names_stream_provider{ redis_client_, notifier_, device });
     }
 };
 
@@ -640,8 +640,8 @@ int main(int argc, char* argv[])
             om::devices_stream_handler{ redis_client, notifier });
 
     // API: Получить список стримов для конкретного устройства (SSE)
-    svr.Get("/api/streams/stream",
-            om::streams_stream_handler{ redis_client, notifier });
+    svr.Get("/api/log_names/stream",
+            om::log_names_stream_handler{ redis_client, notifier });
 
     // API: Получить логи для конкретного устройства (SSE)
     svr.Get("/api/logs/stream", om::logs_stream_handler{ redis_client });

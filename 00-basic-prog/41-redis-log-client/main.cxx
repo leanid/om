@@ -13,7 +13,7 @@ namespace om
 
 namespace redis = sw::redis;
 // Функция для генерации имени файла лога на основе текущего времени
-std::string generate_stream_name()
+std::string generate_log_file_name()
 {
     auto        now    = std::chrono::system_clock::now();
     std::time_t now_c  = std::chrono::system_clock::to_time_t(now);
@@ -92,10 +92,10 @@ int main()
         std::string platform = "MacOS";
 
         // Генерируем имя стрима (файла)
-        std::string stream_name = om::generate_stream_name();
+        std::string log_file_name = om::generate_log_file_name();
 
         // Полный ключ для стрима в Redis: log:device_name:stream_name
-        std::string stream_key = "log:" + device_name + ":" + stream_name;
+        std::string stream_key = "log:" + device_name + ":" + log_file_name;
 
         // Регистрируем устройство в общем списке
         redis_client.sadd("all_devices", device_name);
@@ -103,13 +103,13 @@ int main()
         // Сохраняем информацию о платформе устройства (используем Hash)
         redis_client.hset("device_info:" + device_name, "platform", platform);
 
-        // Регистрируем стрим для этого устройства
-        redis_client.sadd("streams:" + device_name, stream_name);
+        // Регистрируем текущий лог файл для этого устройства
+        redis_client.sadd("log_names:" + device_name, log_file_name);
 
         std::cout << "Connecting to Redis at " << connection_string << "..."
                   << std::endl;
         std::cout << "Device: " << device_name << std::endl;
-        std::cout << "Stream: " << stream_name << std::endl;
+        std::cout << "Log: " << log_file_name << std::endl;
 
         // Отправляем несколько заготовленных логов
         om::log_to_redis(redis_client,
