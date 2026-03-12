@@ -579,6 +579,132 @@ public:
     }
 };
 
+class logs_download_provider
+{
+    std::shared_ptr<redis::Redis> redis_client_;
+    std::string                   stream_key_;
+    std::shared_ptr<std::string>  last_id_;
+
+public:
+    logs_download_provider(std::shared_ptr<redis::Redis> r,
+                           std::string                   stream_key)
+        : redis_client_(std::move(r))
+        , stream_key_(std::move(stream_key))
+        , last_id_(std::make_shared<std::string>("-"))
+    {
+    }
+
+    bool operator()(size_t offset, httplib::DataSink& sink)
+    {
+        const int batch_size = 5000; // Читаем по 5000 записей за раз
+
+        try
+        {
+            using item_type =
+                std::pair<std::string,
+                          std::vector<std::pair<std::string, std::string>>>;
+            std::vector<item_type> stream_data;
+
+            // Читаем батч данных (XRANGE stream_key last_id + COUNT batch_size)
+            // Если last_id != "-", используем синтаксис (last_id для исключения
+            // уже прочитанного элемента
+            std::string start_id = (*last_id_ == "-") ? "-" : "(" + *last_id_;
+
+            redis_client_->xrange(stream_key_,
+                                  start_id,
+                                  "+",
+                                  batch_size,
+                                  std::back_inserter(stream_data));
+
+            if (stream_data.empty())
+            {
+                sink.done();
+                return false; // Данные закончились, завершаем
+            }
+
+            std::string chunk;
+            // Резервируем память (примерно 100 байт на строку),
+            // чтобы избежать лишних аллокаций
+            chunk.reserve(stream_data.size() * 100);
+
+            for (size_t i = 0; i < stream_data.size(); ++i)
+            {
+                const auto& item = stream_data[i];
+
+                for (const auto& field : item.second)
+                {
+                    if (field.first == "message")
+                    {
+                        chunk += field.second;
+                        chunk += '\n';
+                        break;
+                    }
+                }
+                *last_id_ = item.first; // Обновляем ID для следующего запроса
+            }
+
+            // Отправляем чанк браузеру
+            if (!chunk.empty())
+            {
+                if (!sink.write(chunk.c_str(), chunk.size()))
+                {
+                    return false; // Ошибка записи
+                }
+            }
+
+            // Если мы получили меньше записей, чем просили, значит это был
+            // последний батч
+            if (stream_data.size() < static_cast<size_t>(batch_size))
+            {
+                sink.done();
+                return false;
+            }
+
+            return true; // Продолжаем передачу
+        }
+        catch (const redis::Error& e)
+        {
+            std::cerr << "Redis download error: " << e.what() << std::endl;
+            sink.done();
+            return false;
+        }
+    }
+};
+
+class logs_download_handler
+{
+    std::shared_ptr<redis::Redis> redis_client_;
+
+public:
+    explicit logs_download_handler(std::shared_ptr<redis::Redis> r)
+        : redis_client_(std::move(r))
+    {
+    }
+
+    void operator()(const httplib::Request& req, httplib::Response& res) const
+    {
+        if (!req.has_param("device") || !req.has_param("stream"))
+        {
+            res.status = 400;
+            res.set_content("Missing 'device' or 'stream' parameter",
+                            "text/plain");
+            return;
+        }
+
+        std::string device     = req.get_param_value("device");
+        std::string stream     = req.get_param_value("stream");
+        std::string stream_key = "log:" + device + ":" + stream;
+
+        // Устанавливаем заголовки для скачивания файла
+        res.set_header("Content-Disposition",
+                       "attachment; filename=\"" + stream + "\"");
+
+        // Используем chunked передачу данных (Chunked Transfer Encoding)
+        res.set_chunked_content_provider(
+            "text/plain", logs_download_provider{ redis_client_, stream_key });
+    }
+};
+
 } // namespace om
 
 int main(int argc, char* argv[])
@@ -647,113 +773,7 @@ int main(int argc, char* argv[])
     svr.Get("/api/logs/stream", om::logs_stream_handler{ redis_client });
 
     // API: Скачать лог целиком как текстовый файл
-    svr.Get(
-        "/api/logs/download",
-        [&redis_client](const httplib::Request& req, httplib::Response& res)
-        {
-            if (!req.has_param("device") || !req.has_param("stream"))
-            {
-                res.status = 400;
-                res.set_content("Missing 'device' or 'stream' parameter",
-                                "text/plain");
-                return;
-            }
-
-            std::string device     = req.get_param_value("device");
-            std::string stream     = req.get_param_value("stream");
-            std::string stream_key = "log:" + device + ":" + stream;
-
-            // Устанавливаем заголовки для скачивания файла
-            res.set_header("Content-Disposition",
-                           "attachment; filename=\"" + stream + "\"");
-
-            // Используем chunked передачу данных (Chunked Transfer Encoding)
-            res.set_chunked_content_provider(
-                "text/plain",
-                [redis_client,
-                 stream_key,
-                 last_id = std::make_shared<std::string>("-")](
-                    size_t offset, httplib::DataSink& sink) mutable
-                {
-                    const int batch_size =
-                        5000; // Читаем по 5000 записей за раз
-
-                    try
-                    {
-                        using item_type = std::pair<
-                            std::string,
-                            std::vector<std::pair<std::string, std::string>>>;
-                        std::vector<item_type> stream_data;
-
-                        // Читаем батч данных (XRANGE stream_key last_id + COUNT
-                        // batch_size) Если last_id != "-", используем синтаксис
-                        // (last_id для исключения уже прочитанного элемента
-                        std::string start_id =
-                            (*last_id == "-") ? "-" : "(" + *last_id;
-
-                        redis_client->xrange(stream_key,
-                                             start_id,
-                                             "+",
-                                             batch_size,
-                                             std::back_inserter(stream_data));
-
-                        if (stream_data.empty())
-                        {
-                            sink.done();
-                            return false; // Данные закончились, завершаем
-                        }
-
-                        std::string chunk;
-                        // Резервируем память (примерно 100 байт на строку),
-                        // чтобы избежать лишних аллокаций
-                        chunk.reserve(stream_data.size() * 100);
-
-                        for (size_t i = 0; i < stream_data.size(); ++i)
-                        {
-                            const auto& item = stream_data[i];
-
-                            for (const auto& field : item.second)
-                            {
-                                if (field.first == "message")
-                                {
-                                    chunk += field.second;
-                                    chunk += '\n';
-                                    break;
-                                }
-                            }
-                            *last_id = item.first; // Обновляем ID для
-                                                   // следующего запроса
-                        }
-
-                        // Отправляем чанк браузеру
-                        if (!chunk.empty())
-                        {
-                            if (!sink.write(chunk.c_str(), chunk.size()))
-                            {
-                                return false; // Ошибка записи
-                            }
-                        }
-
-                        // Если мы получили меньше записей, чем просили, значит
-                        // это был последний батч
-                        if (stream_data.size() <
-                            static_cast<size_t>(batch_size))
-                        {
-                            sink.done();
-                            return false;
-                        }
-
-                        return true; // Продолжаем передачу
-                    }
-                    catch (const redis::Error& e)
-                    {
-                        std::cerr << "Redis download error: " << e.what()
-                                  << std::endl;
-                        sink.done();
-                        return false;
-                    }
-                });
-        });
+    svr.Get("/api/logs/download", om::logs_download_handler{ redis_client });
 
     int         port         = config.server_port;
     std::string host         = config.server_host;
