@@ -2,5 +2,6 @@
     "redis_url": "tcp://127.0.0.1:6379",
     "server_host": "0.0.0.0",
     "server_port": 8080,
-    "public_dir": "./08-web/03-redis-web/public"
+    "public_dir": "./08-web/03-redis-web/public",
+    "socket_flags": 0
 }

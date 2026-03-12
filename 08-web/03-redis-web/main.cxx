@@ -208,6 +208,7 @@ struct server_config
     std::string server_host = "0.0.0.0";
     int         server_port = 8080;
     std::string public_dir  = "./08-web/03-redis-web/public";
+    int         socket_flags = 0;
 };
 
 server_config load_config(const std::string& filepath)
@@ -228,6 +229,8 @@ server_config load_config(const std::string& filepath)
                 config.server_port = j["server_port"];
             if (j.contains("public_dir"))
                 config.public_dir = j["public_dir"];
+            if (j.contains("socket_flags"))
+                config.socket_flags = j["socket_flags"];
         }
         catch (const std::exception& e)
         {
@@ -372,12 +375,26 @@ int main(int argc, char* argv[])
 
     httplib::Server svr;
 
-    // Отключаем SO_REUSEPORT, оставляем только SO_REUSEADDR,
-    // чтобы при попытке запустить второй сервер на том же порту мы получали ошибку
+    // Отключаем SO_REUSEPORT (если он есть), оставляем только SO_REUSEADDR,
+    // чтобы при попытке запустить второй сервер на том же порту мы получали ошибку.
+    // Оборачиваем в кроссплатформенный код, так как SO_REUSEPORT есть не везде.
     svr.set_socket_options([](auto sock) {
         int yes = 1;
+#ifdef _WIN32
+        // На Windows SO_REUSEADDR работает по-другому, часто его лучше не трогать
+        // для обычных TCP сокетов, если мы хотим получить ошибку занятого порта.
+        // Но для совместимости с httplib можно оставить.
+        setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,
+                   reinterpret_cast<const char*>(&yes), sizeof(yes));
+#else
         setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,
                    reinterpret_cast<const void*>(&yes), sizeof(yes));
+#ifdef SO_REUSEPORT
+        int no = 0;
+        setsockopt(sock, SOL_SOCKET, SO_REUSEPORT,
+                   reinterpret_cast<const void*>(&no), sizeof(no));
+#endif
+#endif
     });
 
     // Раздаем статические файлы из папки public
@@ -711,11 +728,12 @@ int main(int argc, char* argv[])
 
     int         port = config.server_port;
     std::string host = config.server_host;
+    int         socket_flags = config.socket_flags;
     std::cout << "Starting web server on http://" << host << ":" << port
               << std::endl;
     std::cout << "Serving static files from " << public_dir << std::endl;
 
-    if (!svr.listen(host, port))
+    if (!svr.listen(host, port, socket_flags))
     {
         std::cerr << "Failed to start server on " << host << ":" << port
                   << std::endl;
