@@ -5,12 +5,13 @@
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
+#include <format>
 #include <fstream>
-#include <iomanip>
-#include <iostream>
 #include <mutex>
-#include <sstream>
+#include <print>
+#include <ranges>
 #include <string>
+#include <string_view>
 #include <thread>
 #include <unordered_map>
 #include <vector>
@@ -21,27 +22,12 @@ namespace om
 namespace redis = sw::redis;
 using json      = nlohmann::json;
 
-// Вспомогательная функция для форматирования времени (больше не используется,
-// но оставим на всякий случай)
-std::string format_timestamp(const std::string& ts_str)
-{
-    try
-    {
-        long long                             ms = std::stoll(ts_str);
-        std::chrono::system_clock::time_point tp{ std::chrono::milliseconds(
-            ms) };
-        std::time_t        t  = std::chrono::system_clock::to_time_t(tp);
-        std::tm*           tm = std::localtime(&t);
-        std::ostringstream oss;
-        oss << std::put_time(tm, "%H:%M:%S") << "." << std::setfill('0')
-            << std::setw(3) << (ms % 1000);
-        return oss.str();
-    }
-    catch (...)
-    {
-        return ts_str;
-    }
-}
+// Redis stream entry: (id, [(field_name, field_value), ...])
+using stream_item =
+    std::pair<std::string, std::vector<std::pair<std::string, std::string>>>;
+
+constexpr std::string_view keyspace_all_devices = "__keyspace@0__:all_devices";
+constexpr std::string_view keyspace_log_names   = "__keyspace@0__:log_names:";
 
 // Класс для централизованного отслеживания изменений в Redis через Keyspace
 // Notifications
@@ -59,7 +45,7 @@ class notification_center
 
 public:
     notification_center(std::shared_ptr<redis::Redis> r)
-        : redis_client(r)
+        : redis_client(std::move(r))
     {
     }
 
@@ -68,11 +54,10 @@ public:
         if (worker_thread.joinable())
         {
             worker_thread.request_stop();
-            // Публикуем фиктивное сообщение, чтобы разбудить блокирующий
-            // sub.consume()
             try
             {
-                redis_client->publish("__keyspace@0__:all_devices", "stop");
+                redis_client->publish(
+                    std::string(keyspace_all_devices), "stop");
             }
             catch (...)
             {
@@ -82,8 +67,6 @@ public:
 
     void start()
     {
-        // Включаем Keyspace Notifications (K: keyspace events, E: keyevent
-        // events, s: set commands)
         try
         {
             redis_client->command(
@@ -91,8 +74,9 @@ public:
         }
         catch (const redis::Error& e)
         {
-            std::cerr << "error: Could not set notify-keyspace-events: "
-                      << e.what() << std::endl;
+            std::println(stderr,
+                         "error: Could not set notify-keyspace-events: {}",
+                         e.what());
             std::terminate();
         }
 
@@ -112,25 +96,25 @@ public:
                                 if (stoken.stop_requested())
                                     return;
 
-                                if (channel == "__keyspace@0__:all_devices")
+                                if (channel == keyspace_all_devices)
                                 {
                                     devices_version++;
                                     cv_devices.notify_all();
                                 }
-                                else if (channel.find(
-                                             "__keyspace@0__:log_names:") == 0)
+                                else if (channel.starts_with(
+                                             keyspace_log_names))
                                 {
-                                    std::string device = channel.substr(
-                                        std::string("__keyspace@0__:log_names:")
-                                            .length());
-                                    std::lock_guard<std::mutex> lock(mtx);
+                                    std::string device(channel.substr(
+                                        keyspace_log_names.size()));
+                                    std::scoped_lock lock(mtx);
                                     streams_version[device]++;
                                     cv_streams.notify_all();
                                 }
                             });
 
-                        sub.psubscribe("__keyspace@0__:all_devices");
-                        sub.psubscribe("__keyspace@0__:log_names:*");
+                        sub.psubscribe(std::string(keyspace_all_devices));
+                        sub.psubscribe(
+                            std::format("{}*", keyspace_log_names));
 
                         while (!stoken.stop_requested())
                         {
@@ -140,20 +124,18 @@ public:
                             }
                             catch (const redis::TimeoutError&)
                             {
-                                // Это нормально, таймаут ожидания, продолжаем
-                                // слушать
                                 continue;
                             }
                             catch (const redis::Error& e)
                             {
                                 if (!stoken.stop_requested())
                                 {
-                                    std::cerr
-                                        << "Redis subscriber consume error: "
-                                        << e.what() << std::endl;
+                                    std::println(
+                                        stderr,
+                                        "Redis subscriber consume error: {}",
+                                        e.what());
                                 }
-                                break; // Выходим из внутреннего цикла, чтобы
-                                       // переподключиться
+                                break;
                             }
                         }
                     }
@@ -161,8 +143,11 @@ public:
                     {
                         if (!stoken.stop_requested())
                         {
-                            std::cerr << "Redis subscriber error: " << e.what()
-                                      << ". Reconnecting in 1s..." << std::endl;
+                            std::println(
+                                stderr,
+                                "Redis subscriber error: {}. "
+                                "Reconnecting in 1s...",
+                                e.what());
                             std::this_thread::sleep_for(
                                 std::chrono::seconds(1));
                         }
@@ -175,17 +160,17 @@ public:
 
     uint64_t get_streams_version(const std::string& device)
     {
-        std::lock_guard<std::mutex> lock(mtx);
+        std::scoped_lock lock(mtx);
         return streams_version[device];
     }
 
     bool wait_for_devices_change(uint64_t old_version, int timeout_sec = 15)
     {
-        std::unique_lock<std::mutex> lock(mtx);
+        std::unique_lock lock(mtx);
         return cv_devices.wait_for(
             lock,
             std::chrono::seconds(timeout_sec),
-            [this, old_version]()
+            [this, old_version]
             { return devices_version.load() > old_version; });
     }
 
@@ -193,11 +178,11 @@ public:
                                  uint64_t           old_version,
                                  int                timeout_sec = 15)
     {
-        std::unique_lock<std::mutex> lock(mtx);
+        std::unique_lock lock(mtx);
         return cv_streams.wait_for(
             lock,
             std::chrono::seconds(timeout_sec),
-            [this, device, old_version]()
+            [this, device, old_version]
             { return streams_version[device] > old_version; });
     }
 };
@@ -234,14 +219,16 @@ server_config load_config(const std::string& filepath)
         }
         catch (const std::exception& e)
         {
-            std::cerr << "Error parsing config file: " << e.what()
-                      << "\nUsing defaults.\n";
+            std::println(stderr,
+                         "Error parsing config file: {}\nUsing defaults.",
+                         e.what());
         }
     }
     else
     {
-        std::cerr << "Could not open config file: " << filepath
-                  << "\nUsing defaults.\n";
+        std::println(stderr,
+                     "Could not open config file: {}\nUsing defaults.",
+                     filepath);
     }
     return config;
 }
@@ -264,10 +251,10 @@ class devices_stream_provider
         json j = json::array();
         for (const auto& device : devices)
         {
-            auto platform_opt =
-                redis_client_->hget("device_info:" + device, "platform");
-            std::string platform = platform_opt ? *platform_opt : "Unknown";
-            j.push_back({ { "name", device }, { "platform", platform } });
+            auto platform = redis_client_->hget(
+                std::format("device_info:{}", device), "platform");
+            j.push_back({ { "name", device },
+                          { "platform", platform.value_or("Unknown") } });
         }
         return j;
     }
@@ -284,25 +271,22 @@ public:
     {
         try
         {
-            uint64_t    current_version = notifier_->get_devices_version();
-            json        initial_devices = get_devices_json();
-            std::string event_data =
-                "event: init\ndata: " + initial_devices.dump() + "\n\n";
+            auto current_version = notifier_->get_devices_version();
+            auto event_data      = std::format(
+                "event: init\ndata: {}\n\n", get_devices_json().dump());
             if (!sink.write(event_data.c_str(), event_data.size()))
                 return false;
 
             while (true)
             {
-                bool changed =
-                    notifier_->wait_for_devices_change(current_version, 15);
-                if (changed)
+                if (notifier_->wait_for_devices_change(current_version, 15))
                 {
                     current_version = notifier_->get_devices_version();
-                    json        current_devices = get_devices_json();
-                    std::string update_event =
-                        "event: update\ndata: " + current_devices.dump() +
-                        "\n\n";
-                    if (!sink.write(update_event.c_str(), update_event.size()))
+                    auto update_event = std::format(
+                        "event: update\ndata: {}\n\n",
+                        get_devices_json().dump());
+                    if (!sink.write(update_event.c_str(),
+                                    update_event.size()))
                         return false;
                 }
                 else
@@ -314,8 +298,8 @@ public:
         }
         catch (const redis::Error& e)
         {
-            std::string error_msg =
-                std::string("event: error\ndata: ") + e.what() + "\n\n";
+            auto error_msg =
+                std::format("event: error\ndata: {}\n\n", e.what());
             sink.write(error_msg.c_str(), error_msg.size());
             return false;
         }
@@ -353,12 +337,12 @@ class log_names_stream_provider
     std::shared_ptr<notification_center> notifier_;
     std::string                          device_;
 
-    json get_streams_json() const
+    json get_log_names_json() const
     {
-        std::vector<std::string> streams;
-        redis_client_->smembers("log_names:" + device_,
-                                std::inserter(streams, streams.begin()));
-        return json(streams);
+        std::vector<std::string> names;
+        redis_client_->smembers(std::format("log_names:{}", device_),
+                                std::inserter(names, names.begin()));
+        return json(names);
     }
 
 public:
@@ -375,31 +359,28 @@ public:
     {
         try
         {
-            uint64_t current_version = notifier_->get_streams_version(device_);
-            json     initial_streams = get_streams_json();
-            std::string event_data =
-                "event: init\ndata: " + initial_streams.dump() + "\n\n";
+            auto current_version = notifier_->get_streams_version(device_);
+            auto event_data      = std::format(
+                "event: init\ndata: {}\n\n", get_log_names_json().dump());
             if (!sink.write(event_data.c_str(), event_data.size()))
                 return false;
 
             while (true)
             {
-                bool changed = notifier_->wait_for_streams_change(
-                    device_, current_version, 15);
-
-                if (changed)
+                if (notifier_->wait_for_streams_change(
+                        device_, current_version, 15))
                 {
-                    current_version = notifier_->get_streams_version(device_);
-                    json        current_streams = get_streams_json();
-                    std::string update_event =
-                        "event: update\ndata: " + current_streams.dump() +
-                        "\n\n";
-                    if (!sink.write(update_event.c_str(), update_event.size()))
+                    current_version =
+                        notifier_->get_streams_version(device_);
+                    auto update_event = std::format(
+                        "event: update\ndata: {}\n\n",
+                        get_log_names_json().dump());
+                    if (!sink.write(update_event.c_str(),
+                                    update_event.size()))
                         return false;
                 }
                 else
                 {
-                    // Ping
                     if (!sink.write(":\n\n", 3))
                         return false;
                 }
@@ -407,8 +388,8 @@ public:
         }
         catch (const redis::Error& e)
         {
-            std::string error_msg =
-                std::string("event: error\ndata: ") + e.what() + "\n\n";
+            auto error_msg =
+                std::format("event: error\ndata: {}\n\n", e.what());
             sink.write(error_msg.c_str(), error_msg.size());
             return false;
         }
@@ -439,7 +420,7 @@ public:
             return;
         }
 
-        std::string device = req.get_param_value("device");
+        auto device = req.get_param_value("device");
 
         res.set_header("Content-Type", "text/event-stream");
         res.set_header("Cache-Control", "no-cache");
@@ -456,6 +437,22 @@ class logs_stream_provider
     std::shared_ptr<redis::Redis> redis_client_;
     std::string                   stream_key_;
 
+    static json items_to_json(const auto& items)
+    {
+        auto to_entry = [](const stream_item& si)
+        {
+            const auto& [id, fields] = si;
+            json entry;
+            entry["id"] = id;
+            for (const auto& [key, value] : fields)
+                entry[key] = value;
+            return entry;
+        };
+
+        return json(items | std::views::transform(to_entry)
+                    | std::ranges::to<std::vector<json>>());
+    }
+
 public:
     logs_stream_provider(std::shared_ptr<redis::Redis> r, std::string key)
         : redis_client_(std::move(r))
@@ -469,62 +466,38 @@ public:
 
         try
         {
-            using item_type =
-                std::pair<std::string,
-                          std::vector<std::pair<std::string, std::string>>>;
-            std::vector<item_type> stream_data;
-
+            std::vector<stream_item> stream_data;
             redis_client_->xrange(
                 stream_key_, "-", "+", std::back_inserter(stream_data));
 
             if (!stream_data.empty())
             {
-                json logs = json::array();
-                for (const auto& item : stream_data)
-                {
-                    json log_entry;
-                    log_entry["id"] = item.first;
-                    for (const auto& field : item.second)
-                    {
-                        log_entry[field.first] = field.second;
-                    }
-                    logs.push_back(log_entry);
-                    last_id = item.first;
-                }
-
-                std::string event_data =
-                    "event: init\ndata: " + logs.dump() + "\n\n";
+                auto event_data = std::format(
+                    "event: init\ndata: {}\n\n",
+                    items_to_json(stream_data).dump());
                 if (!sink.write(event_data.c_str(), event_data.size()))
                     return false;
+                last_id = stream_data.back().first;
             }
 
             while (true)
             {
-                std::vector<std::pair<std::string, std::vector<item_type>>>
+                std::vector<std::pair<std::string, std::vector<stream_item>>>
                     new_data;
 
                 redis_client_->xread(
-                    stream_key_, last_id, 15000, std::back_inserter(new_data));
+                    stream_key_, last_id, 15000,
+                    std::back_inserter(new_data));
 
                 if (!new_data.empty() && !new_data[0].second.empty())
                 {
-                    json logs = json::array();
-                    for (const auto& item : new_data[0].second)
-                    {
-                        json log_entry;
-                        log_entry["id"] = item.first;
-                        for (const auto& field : item.second)
-                        {
-                            log_entry[field.first] = field.second;
-                        }
-                        logs.push_back(log_entry);
-                        last_id = item.first;
-                    }
-
-                    std::string event_data =
-                        "event: new_logs\ndata: " + logs.dump() + "\n\n";
+                    const auto& items = new_data[0].second;
+                    auto        event_data = std::format(
+                        "event: new_logs\ndata: {}\n\n",
+                        items_to_json(items).dump());
                     if (!sink.write(event_data.c_str(), event_data.size()))
                         return false;
+                    last_id = items.back().first;
                 }
                 else
                 {
@@ -535,8 +508,8 @@ public:
         }
         catch (const redis::Error& e)
         {
-            std::string error_msg =
-                std::string("event: error\ndata: ") + e.what() + "\n\n";
+            auto error_msg =
+                std::format("event: error\ndata: {}\n\n", e.what());
             sink.write(error_msg.c_str(), error_msg.size());
             return false;
         }
@@ -566,9 +539,9 @@ public:
             return;
         }
 
-        std::string device     = req.get_param_value("device");
-        std::string stream     = req.get_param_value("stream");
-        std::string stream_key = "log:" + device + ":" + stream;
+        auto stream_key = std::format("log:{}:{}",
+                                      req.get_param_value("device"),
+                                      req.get_param_value("stream"));
 
         res.set_header("Content-Type", "text/event-stream");
         res.set_header("Cache-Control", "no-cache");
@@ -596,19 +569,14 @@ public:
 
     bool operator()(size_t offset, httplib::DataSink& sink)
     {
-        const int batch_size = 5000; // Читаем по 5000 записей за раз
+        constexpr size_t batch_size = 5000;
 
         try
         {
-            using item_type =
-                std::pair<std::string,
-                          std::vector<std::pair<std::string, std::string>>>;
-            std::vector<item_type> stream_data;
+            std::vector<stream_item> stream_data;
 
-            // Читаем батч данных (XRANGE stream_key last_id + COUNT batch_size)
-            // Если last_id != "-", используем синтаксис (last_id для исключения
-            // уже прочитанного элемента
-            std::string start_id = (*last_id_ == "-") ? "-" : "(" + *last_id_;
+            std::string start_id =
+                (*last_id_ == "-") ? "-" : "(" + *last_id_;
 
             redis_client_->xrange(stream_key_,
                                   start_id,
@@ -619,52 +587,43 @@ public:
             if (stream_data.empty())
             {
                 sink.done();
-                return false; // Данные закончились, завершаем
+                return false;
             }
 
             std::string chunk;
-            // Резервируем память (примерно 100 байт на строку),
-            // чтобы избежать лишних аллокаций
             chunk.reserve(stream_data.size() * 100);
 
-            for (size_t i = 0; i < stream_data.size(); ++i)
+            for (const auto& [id, fields] : stream_data)
             {
-                const auto& item = stream_data[i];
-
-                for (const auto& field : item.second)
+                for (const auto& [key, value] : fields)
                 {
-                    if (field.first == "message")
+                    if (key == "message")
                     {
-                        chunk += field.second;
+                        chunk += value;
                         chunk += '\n';
                         break;
                     }
                 }
-                *last_id_ = item.first; // Обновляем ID для следующего запроса
+                *last_id_ = id;
             }
 
-            // Отправляем чанк браузеру
             if (!chunk.empty())
             {
                 if (!sink.write(chunk.c_str(), chunk.size()))
-                {
-                    return false; // Ошибка записи
-                }
+                    return false;
             }
 
-            // Если мы получили меньше записей, чем просили, значит это был
-            // последний батч
-            if (stream_data.size() < static_cast<size_t>(batch_size))
+            if (stream_data.size() < batch_size)
             {
                 sink.done();
                 return false;
             }
 
-            return true; // Продолжаем передачу
+            return true;
         }
         catch (const redis::Error& e)
         {
-            std::cerr << "Redis download error: " << e.what() << std::endl;
+            std::println(stderr, "Redis download error: {}", e.what());
             sink.done();
             return false;
         }
@@ -691,15 +650,13 @@ public:
             return;
         }
 
-        std::string device     = req.get_param_value("device");
-        std::string stream     = req.get_param_value("stream");
-        std::string stream_key = "log:" + device + ":" + stream;
+        auto device     = req.get_param_value("device");
+        auto stream     = req.get_param_value("stream");
+        auto stream_key = std::format("log:{}:{}", device, stream);
 
-        // Устанавливаем заголовки для скачивания файла
         res.set_header("Content-Disposition",
-                       "attachment; filename=\"" + stream + "\"");
+                       std::format("attachment; filename=\"{}\"", stream));
 
-        // Используем chunked передачу данных (Chunked Transfer Encoding)
         res.set_chunked_content_provider(
             "text/plain", logs_download_provider{ redis_client_, stream_key });
     }
@@ -710,7 +667,6 @@ public:
 int main(int argc, char* argv[])
 {
     namespace redis = sw::redis;
-    using json      = nlohmann::json;
 
     om::server_config config;
     if (argc > 1)
@@ -719,15 +675,13 @@ int main(int argc, char* argv[])
     }
     else
     {
-        std::cout << "Usage: " << argv[0] << " [config.json]\n"
-                  << "No config file provided, using default configuration.\n";
+        std::println("Usage: {} [config.json]\n"
+                     "No config file provided, using default configuration.",
+                     argv[0]);
     }
 
-    // Подключаемся к Redis
-    std::string connection_string = config.redis_url;
-    auto redis_client = std::make_shared<redis::Redis>(connection_string);
+    auto redis_client = std::make_shared<redis::Redis>(config.redis_url);
 
-    // Запускаем центр уведомлений
     auto notifier = std::make_shared<om::notification_center>(redis_client);
     notifier->start();
 
@@ -757,35 +711,27 @@ int main(int argc, char* argv[])
 #endif
         });
 
-    // Раздаем статические файлы из папки public
-    const std::string public_dir = config.public_dir;
-    svr.set_mount_point("/", public_dir);
+    svr.set_mount_point("/", config.public_dir);
 
-    // API: Получить список всех устройств с их платформами (SSE)
     svr.Get("/api/devices/stream",
             om::devices_stream_handler{ redis_client, notifier });
 
-    // API: Получить список стримов для конкретного устройства (SSE)
     svr.Get("/api/log_names/stream",
             om::log_names_stream_handler{ redis_client, notifier });
 
-    // API: Получить логи для конкретного устройства (SSE)
     svr.Get("/api/logs/stream", om::logs_stream_handler{ redis_client });
 
-    // API: Скачать лог целиком как текстовый файл
     svr.Get("/api/logs/download", om::logs_download_handler{ redis_client });
 
-    int         port         = config.server_port;
-    std::string host         = config.server_host;
-    int         socket_flags = config.socket_flags;
-    std::cout << "Starting web server on http://" << host << ":" << port
-              << std::endl;
-    std::cout << "Serving static files from " << public_dir << std::endl;
+    std::println("Starting web server on http://{}:{}",
+                 config.server_host, config.server_port);
+    std::println("Serving static files from {}", config.public_dir);
 
-    if (!svr.listen(host, port, socket_flags))
+    if (!svr.listen(config.server_host, config.server_port,
+                    config.socket_flags))
     {
-        std::cerr << "Failed to start server on " << host << ":" << port
-                  << std::endl;
+        std::println(stderr, "Failed to start server on {}:{}",
+                     config.server_host, config.server_port);
         return 1;
     }
 
