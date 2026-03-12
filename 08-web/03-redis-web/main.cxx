@@ -14,6 +14,9 @@
 #include <unordered_map>
 #include <vector>
 
+namespace om
+{
+
 namespace redis = sw::redis;
 using json      = nlohmann::json;
 
@@ -170,14 +173,19 @@ public:
     }
 };
 
+} // namespace om
+
 int main()
 {
+    namespace redis = sw::redis;
+    using json      = nlohmann::json;
+
     // Подключаемся к Redis
     std::string connection_string = "tcp://127.0.0.1:6379";
     auto redis_client = std::make_shared<redis::Redis>(connection_string);
 
     // Запускаем центр уведомлений
-    auto notifier = std::make_shared<notification_center>(redis_client);
+    auto notifier = std::make_shared<om::notification_center>(redis_client);
     notifier->start();
 
     httplib::Server svr;

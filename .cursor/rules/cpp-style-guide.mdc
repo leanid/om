@@ -30,10 +30,14 @@ When writing or modifying C++ code, ALWAYS adhere to the following style guideli
 - Use clear and consistent indentation (typically 4 spaces).
 - Place braces according to standard Boost/STL practices (usually opening brace on the same line or next line, but be consistent with the surrounding code).
 
+## 4. Namespaces
+- NEVER write code in the global namespace (except for the `main()` function).
+- All project code MUST be wrapped in the `om` namespace or its nested namespaces (e.g., `namespace om { ... }` or `namespace om::detail { ... }`).
+
 ## Example
 
 ```cpp
-// ❌ BAD: Mixed cases, raw pointers, old C-style
+// ❌ BAD: Mixed cases, raw pointers, old C-style, global namespace
 class MyDataProcessor {
 public:
     void ProcessData(int* rawData, int size) {
@@ -43,7 +47,9 @@ public:
     }
 };
 
-// ✅ GOOD: snake_case, modern C++, Boost-like style
+// ✅ GOOD: snake_case, modern C++, Boost-like style, om namespace
+namespace om {
+
 class my_data_processor {
 public:
     void process_data(std::span<const int> raw_data) {
@@ -52,4 +58,6 @@ public:
         }
     }
 };
+
+} // namespace om
 ```

@@ -8,8 +8,10 @@
 #include <string>
 #include <vector>
 
-namespace redis = sw::redis;
+namespace om
+{
 
+namespace redis = sw::redis;
 // Функция для генерации имени файла лога на основе текущего времени
 std::string generate_stream_name()
 {
@@ -56,8 +58,11 @@ void log_to_redis(redis::Redis&      redis_client,
     }
 }
 
+} // namespace om
+
 int main()
 {
+    namespace redis = sw::redis;
     // Читаем строку подключения из файла
     std::ifstream config_file(
         "./00-basic-prog/41-redis-log-client/redis_config.txt");
@@ -87,7 +92,7 @@ int main()
         std::string platform = "MacOS";
 
         // Генерируем имя стрима (файла)
-        std::string stream_name = generate_stream_name();
+        std::string stream_name = om::generate_stream_name();
 
         // Полный ключ для стрима в Redis: log:device_name:stream_name
         std::string stream_key = "log:" + device_name + ":" + stream_name;
@@ -107,18 +112,22 @@ int main()
         std::cout << "Stream: " << stream_name << std::endl;
 
         // Отправляем несколько заготовленных логов
-        log_to_redis(
-            redis_client, stream_key, "INFO", "Application started successfully.");
-        log_to_redis(
-            redis_client, stream_key, "DEBUG", "Initializing internal modules...");
-        log_to_redis(redis_client,
-                     stream_key,
-                     "WARNING",
-                     "Config file not found, using default parameters.");
-        log_to_redis(redis_client,
-                     stream_key,
-                     "ERROR",
-                     "Failed to connect to secondary database!");
+        om::log_to_redis(redis_client,
+                         stream_key,
+                         "INFO",
+                         "Application started successfully.");
+        om::log_to_redis(redis_client,
+                         stream_key,
+                         "DEBUG",
+                         "Initializing internal modules...");
+        om::log_to_redis(redis_client,
+                         stream_key,
+                         "WARNING",
+                         "Config file not found, using default parameters.");
+        om::log_to_redis(redis_client,
+                         stream_key,
+                         "ERROR",
+                         "Failed to connect to secondary database!");
 
         std::cout << "Initial logs sent to stream '" << stream_key << "'."
                   << std::endl;
@@ -145,11 +154,12 @@ int main()
 
             if (!user_input.empty())
             {
-                log_to_redis(redis_client, stream_key, "INFO", user_input);
+                om::log_to_redis(redis_client, stream_key, "INFO", user_input);
             }
         }
 
-        log_to_redis(redis_client, stream_key, "INFO", "Application shutting down.");
+        om::log_to_redis(
+            redis_client, stream_key, "INFO", "Application shutting down.");
     }
     catch (const redis::Error& e)
     {
