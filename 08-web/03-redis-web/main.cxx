@@ -55,11 +55,29 @@ class notification_center
     std::unordered_map<std::string, uint64_t> streams_version;
 
     std::shared_ptr<redis::Redis> redis_client;
+    std::jthread                  worker_thread;
 
 public:
     notification_center(std::shared_ptr<redis::Redis> r)
         : redis_client(r)
     {
+    }
+
+    ~notification_center()
+    {
+        if (worker_thread.joinable())
+        {
+            worker_thread.request_stop();
+            // Публикуем фиктивное сообщение, чтобы разбудить блокирующий
+            // sub.consume()
+            try
+            {
+                redis_client->publish("__keyspace@0__:all_devices", "stop");
+            }
+            catch (...)
+            {
+            }
+        }
     }
 
     void start()
@@ -78,19 +96,22 @@ public:
             std::terminate();
         }
 
-        std::thread(
-            [this]()
+        worker_thread = std::jthread(
+            [this](std::stop_token stoken)
             {
-                while (true)
+                while (!stoken.stop_requested())
                 {
                     try
                     {
                         auto sub = redis_client->subscriber();
                         sub.on_pmessage(
-                            [this](std::string pattern,
-                                   std::string channel,
-                                   std::string msg)
+                            [this, stoken](std::string pattern,
+                                           std::string channel,
+                                           std::string msg)
                             {
+                                if (stoken.stop_requested())
+                                    return;
+
                                 if (channel == "__keyspace@0__:all_devices")
                                 {
                                     devices_version++;
@@ -111,7 +132,7 @@ public:
                         sub.psubscribe("__keyspace@0__:all_devices");
                         sub.psubscribe("__keyspace@0__:streams:*");
 
-                        while (true)
+                        while (!stoken.stop_requested())
                         {
                             try
                             {
@@ -125,8 +146,12 @@ public:
                             }
                             catch (const redis::Error& e)
                             {
-                                std::cerr << "Redis subscriber consume error: "
-                                          << e.what() << std::endl;
+                                if (!stoken.stop_requested())
+                                {
+                                    std::cerr
+                                        << "Redis subscriber consume error: "
+                                        << e.what() << std::endl;
+                                }
                                 break; // Выходим из внутреннего цикла, чтобы
                                        // переподключиться
                             }
@@ -134,13 +159,16 @@ public:
                     }
                     catch (const redis::Error& e)
                     {
-                        std::cerr << "Redis subscriber error: " << e.what()
-                                  << ". Reconnecting in 1s..." << std::endl;
-                        std::this_thread::sleep_for(std::chrono::seconds(1));
+                        if (!stoken.stop_requested())
+                        {
+                            std::cerr << "Redis subscriber error: " << e.what()
+                                      << ". Reconnecting in 1s..." << std::endl;
+                            std::this_thread::sleep_for(
+                                std::chrono::seconds(1));
+                        }
                     }
                 }
-            })
-            .detach();
+            });
     }
 
     uint64_t get_devices_version() { return devices_version.load(); }
@@ -663,7 +691,8 @@ int main(int argc, char* argv[])
 
     if (!svr.listen(host, port))
     {
-        std::cerr << "Failed to start server on " << host << ":" << port << std::endl;
+        std::cerr << "Failed to start server on " << host << ":" << port
+                  << std::endl;
         return 1;
     }
 
