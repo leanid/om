@@ -189,8 +189,9 @@ struct server_config
     std::string server_host  = "0.0.0.0";
     int         server_port  = 8080;
     std::string public_dir   = "./08-web/03-redis-web/public";
-    int         socket_flags = 0;
-    size_t      max_threads  = 256;
+    int         socket_flags   = 0;
+    size_t      max_threads    = 256;
+    size_t      log_batch_size = 1000;
 };
 
 server_config load_config(const std::string& filepath)
@@ -215,6 +216,8 @@ server_config load_config(const std::string& filepath)
                 config.socket_flags = j["socket_flags"];
             if (j.contains("max_threads"))
                 config.max_threads = j["max_threads"];
+            if (j.contains("log_batch_size"))
+                config.log_batch_size = j["log_batch_size"];
         }
         catch (const std::exception& e)
         {
@@ -243,6 +246,7 @@ class unified_stream_provider
     std::shared_ptr<notification_center> notifier_;
     std::string                          device_;
     std::string                          stream_key_;
+    size_t                               batch_size_;
 
     json get_devices_json() const
     {
@@ -297,11 +301,13 @@ public:
     unified_stream_provider(std::shared_ptr<redis::Redis>        r,
                             std::shared_ptr<notification_center> n,
                             std::string                          device,
-                            std::string                          stream_key)
+                            std::string                          stream_key,
+                            size_t                               batch_size)
         : redis_client_(std::move(r))
         , notifier_(std::move(n))
         , device_(std::move(device))
         , stream_key_(std::move(stream_key))
+        , batch_size_(batch_size)
     {
     }
 
@@ -326,17 +332,37 @@ public:
             std::string last_log_id = "0-0";
             if (!stream_key_.empty())
             {
-                std::vector<stream_item> data;
-                redis_client_->xrange(
-                    stream_key_, "-", "+", std::back_inserter(data));
+                bool first_batch = true;
 
-                if (!send_sse(sink, "logs_init",
-                              data.empty() ? json::array()
-                                           : items_to_json(data)))
-                    return false;
+                while (true)
+                {
+                    std::vector<stream_item> batch;
+                    auto start = (last_log_id == "0-0")
+                                     ? std::string("-")
+                                     : std::format("({}", last_log_id);
 
-                if (!data.empty())
-                    last_log_id = data.back().first;
+                    redis_client_->xrange(stream_key_, start, "+",
+                                          batch_size_,
+                                          std::back_inserter(batch));
+
+                    if (batch.empty())
+                    {
+                        if (first_batch
+                            && !send_sse(sink, "logs_init", json::array()))
+                            return false;
+                        break;
+                    }
+
+                    auto event = first_batch ? "logs_init" : "logs_new";
+                    if (!send_sse(sink, event, items_to_json(batch)))
+                        return false;
+
+                    last_log_id = batch.back().first;
+                    first_batch = false;
+
+                    if (batch.size() < batch_size_)
+                        break;
+                }
             }
 
             // --- Polling loop ---
@@ -416,12 +442,15 @@ class unified_stream_handler
 {
     std::shared_ptr<redis::Redis>        redis_client_;
     std::shared_ptr<notification_center> notifier_;
+    size_t                               batch_size_;
 
 public:
     unified_stream_handler(std::shared_ptr<redis::Redis>        r,
-                           std::shared_ptr<notification_center> n)
+                           std::shared_ptr<notification_center> n,
+                           size_t                               batch_size)
         : redis_client_(std::move(r))
         , notifier_(std::move(n))
+        , batch_size_(batch_size)
     {
     }
 
@@ -447,7 +476,8 @@ public:
         res.set_content_provider(
             "text/event-stream",
             unified_stream_provider{
-                redis_client_, notifier_, device, stream_key });
+                redis_client_, notifier_, device, stream_key,
+                batch_size_ });
     }
 };
 
@@ -619,7 +649,8 @@ int main(int argc, char* argv[])
     svr.set_mount_point("/", config.public_dir);
 
     svr.Get("/api/stream",
-            om::unified_stream_handler{ redis_client, notifier });
+            om::unified_stream_handler{
+                redis_client, notifier, config.log_batch_size });
 
     svr.Get("/api/logs/download", om::logs_download_handler{ redis_client });
 
@@ -630,6 +661,7 @@ int main(int argc, char* argv[])
     std::println("Thread pool: {} base, {} max",
                  CPPHTTPLIB_THREAD_POOL_COUNT,
                  config.max_threads);
+    std::println("Log batch size: {}", config.log_batch_size);
 
     if (!svr.listen(
             config.server_host, config.server_port, config.socket_flags))
