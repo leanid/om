@@ -34,8 +34,10 @@ class notification_center
     std::mutex              mtx;
     std::condition_variable cv_devices;
     std::condition_variable cv_streams;
+    std::condition_variable cv_any;
 
     std::atomic<uint64_t>                     devices_version{ 0 };
+    std::atomic<uint64_t>                     any_version{ 0 };
     std::unordered_map<std::string, uint64_t> streams_version;
 
     std::shared_ptr<redis::Redis> redis_client;
@@ -97,7 +99,9 @@ public:
                                 if (channel == keyspace_all_devices)
                                 {
                                     devices_version++;
+                                    any_version++;
                                     cv_devices.notify_all();
+                                    cv_any.notify_all();
                                 }
                                 else if (channel.starts_with(
                                              keyspace_log_names))
@@ -106,7 +110,9 @@ public:
                                         keyspace_log_names.size()));
                                     std::scoped_lock lock(mtx);
                                     streams_version[device]++;
+                                    any_version++;
                                     cv_streams.notify_all();
+                                    cv_any.notify_all();
                                 }
                             });
 
@@ -181,6 +187,18 @@ public:
             [this, device, old_version]
             { return streams_version[device] > old_version; });
     }
+
+    bool wait_for_any_change(uint64_t                      old_version,
+                             std::chrono::milliseconds      timeout)
+    {
+        std::unique_lock lock(mtx);
+        return cv_any.wait_for(
+            lock, timeout,
+            [this, old_version]
+            { return any_version.load() > old_version; });
+    }
+
+    uint64_t get_any_version() { return any_version.load(); }
 };
 
 struct server_config
@@ -190,9 +208,10 @@ struct server_config
     int         server_port  = 8080;
     std::string public_dir   = "./08-web/03-redis-web/public";
     int         socket_flags   = 0;
-    size_t      max_threads     = 256;
-    size_t      log_batch_size  = 1000;
-    size_t      redis_pool_size = 128;
+    size_t      max_threads          = 256;
+    size_t      log_batch_size       = 1000;
+    size_t      redis_pool_size      = 128;
+    size_t      sse_poll_interval_ms = 5000;
 };
 
 server_config load_config(const std::string& filepath)
@@ -221,6 +240,8 @@ server_config load_config(const std::string& filepath)
                 config.log_batch_size = j["log_batch_size"];
             if (j.contains("redis_pool_size"))
                 config.redis_pool_size = j["redis_pool_size"];
+            if (j.contains("sse_poll_interval_ms"))
+                config.sse_poll_interval_ms = j["sse_poll_interval_ms"];
         }
         catch (const std::exception& e)
         {
@@ -250,6 +271,7 @@ class unified_stream_provider
     std::string                          device_;
     std::string                          stream_key_;
     size_t                               batch_size_;
+    std::chrono::milliseconds            poll_interval_;
 
     json get_devices_json() const
     {
@@ -305,12 +327,14 @@ public:
                             std::shared_ptr<notification_center> n,
                             std::string                          device,
                             std::string                          stream_key,
-                            size_t                               batch_size)
+                            size_t                               batch_size,
+                            std::chrono::milliseconds            poll_interval)
         : redis_client_(std::move(r))
         , notifier_(std::move(n))
         , device_(std::move(device))
         , stream_key_(std::move(stream_key))
         , batch_size_(batch_size)
+        , poll_interval_(poll_interval)
     {
     }
 
@@ -370,21 +394,23 @@ public:
 
             // --- Polling loop ---
 
+            auto any_ver = notifier_->get_any_version();
+
             while (true)
             {
                 bool any_sent = false;
 
-                // xread doubles as our "sleep" — blocks up to 2s,
-                // returns immediately when new log data arrives
                 if (!stream_key_.empty())
                 {
+                    // xread doubles as our "sleep" — blocks up to
+                    // poll_interval_, returns immediately on new data
                     std::vector<
                         std::pair<std::string, std::vector<stream_item>>>
                         new_data;
-                    redis_client_->xread(stream_key_,
-                                         last_log_id,
-                                         2000,
-                                         std::back_inserter(new_data));
+                    redis_client_->xread(
+                        stream_key_, last_log_id,
+                        static_cast<long long>(poll_interval_.count()),
+                        std::back_inserter(new_data));
 
                     if (!new_data.empty() && !new_data[0].second.empty())
                     {
@@ -397,7 +423,11 @@ public:
                 }
                 else
                 {
-                    std::this_thread::sleep_for(std::chrono::seconds(2));
+                    // No log stream selected — sleep on CV,
+                    // wake instantly on any device/log_name change
+                    notifier_->wait_for_any_change(any_ver,
+                                                   poll_interval_);
+                    any_ver = notifier_->get_any_version();
                 }
 
                 auto new_devices_ver = notifier_->get_devices_version();
@@ -446,14 +476,17 @@ class unified_stream_handler
     std::shared_ptr<redis::Redis>        redis_client_;
     std::shared_ptr<notification_center> notifier_;
     size_t                               batch_size_;
+    std::chrono::milliseconds            poll_interval_;
 
 public:
     unified_stream_handler(std::shared_ptr<redis::Redis>        r,
                            std::shared_ptr<notification_center> n,
-                           size_t                               batch_size)
+                           size_t                               batch_size,
+                           std::chrono::milliseconds            poll_interval)
         : redis_client_(std::move(r))
         , notifier_(std::move(n))
         , batch_size_(batch_size)
+        , poll_interval_(poll_interval)
     {
     }
 
@@ -480,7 +513,7 @@ public:
             "text/event-stream",
             unified_stream_provider{
                 redis_client_, notifier_, device, stream_key,
-                batch_size_ });
+                batch_size_, poll_interval_ });
     }
 };
 
@@ -657,7 +690,8 @@ int main(int argc, char* argv[])
 
     svr.Get("/api/stream",
             om::unified_stream_handler{
-                redis_client, notifier, config.log_batch_size });
+                redis_client, notifier, config.log_batch_size,
+                std::chrono::milliseconds(config.sse_poll_interval_ms) });
 
     svr.Get("/api/logs/download", om::logs_download_handler{ redis_client });
 
@@ -670,6 +704,7 @@ int main(int argc, char* argv[])
                  config.max_threads);
     std::println("Log batch size: {}", config.log_batch_size);
     std::println("Redis pool size: {}", config.redis_pool_size);
+    std::println("SSE poll interval: {}ms", config.sse_poll_interval_ms);
 
     if (!svr.listen(
             config.server_host, config.server_port, config.socket_flags))

@@ -6,5 +6,6 @@
     "socket_flags": 0,
     "max_threads": 256,
     "log_batch_size": 1000,
-    "redis_pool_size": 128
+    "redis_pool_size": 128,
+    "sse_poll_interval_ms": 5000
 }
