@@ -3,5 +3,6 @@
     "server_host": "0.0.0.0",
     "server_port": 8080,
     "public_dir": "./08-web/03-redis-web/public",
-    "socket_flags": 0
+    "socket_flags": 0,
+    "max_threads": 256
 }
