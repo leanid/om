@@ -14,8 +14,8 @@
 #include <unordered_map>
 #include <vector>
 
-using namespace sw::redis;
-using json = nlohmann::json;
+namespace redis = sw::redis;
+using json      = nlohmann::json;
 
 // Вспомогательная функция для форматирования времени (больше не используется,
 // но оставим на всякий случай)
@@ -41,7 +41,7 @@ std::string format_timestamp(const std::string& ts_str)
 
 // Класс для централизованного отслеживания изменений в Redis через Keyspace
 // Notifications
-class NotificationCenter
+class notification_center
 {
     std::mutex              mtx;
     std::condition_variable cv_devices;
@@ -50,11 +50,11 @@ class NotificationCenter
     std::atomic<uint64_t>                     devices_version{ 0 };
     std::unordered_map<std::string, uint64_t> streams_version;
 
-    std::shared_ptr<Redis> redis;
+    std::shared_ptr<redis::Redis> redis_client;
 
 public:
-    NotificationCenter(std::shared_ptr<Redis> r)
-        : redis(r)
+    notification_center(std::shared_ptr<redis::Redis> r)
+        : redis_client(r)
     {
     }
 
@@ -64,9 +64,10 @@ public:
         // events, s: set commands)
         try
         {
-            redis->command("CONFIG", "SET", "notify-keyspace-events", "KEA");
+            redis_client->command(
+                "CONFIG", "SET", "notify-keyspace-events", "KEA");
         }
-        catch (const Error& e)
+        catch (const redis::Error& e)
         {
             std::cerr << "error: Could not set notify-keyspace-events: "
                       << e.what() << std::endl;
@@ -80,7 +81,7 @@ public:
                 {
                     try
                     {
-                        auto sub = redis->subscriber();
+                        auto sub = redis_client->subscriber();
                         sub.on_pmessage(
                             [this](std::string pattern,
                                    std::string channel,
@@ -108,18 +109,26 @@ public:
 
                         while (true)
                         {
-                            try {
+                            try
+                            {
                                 sub.consume();
-                            } catch (const sw::redis::TimeoutError&) {
-                                // Это нормально, таймаут ожидания, продолжаем слушать
+                            }
+                            catch (const redis::TimeoutError&)
+                            {
+                                // Это нормально, таймаут ожидания, продолжаем
+                                // слушать
                                 continue;
-                            } catch (const Error& e) {
-                                std::cerr << "Redis subscriber consume error: " << e.what() << std::endl;
-                                break; // Выходим из внутреннего цикла, чтобы переподключиться
+                            }
+                            catch (const redis::Error& e)
+                            {
+                                std::cerr << "Redis subscriber consume error: "
+                                          << e.what() << std::endl;
+                                break; // Выходим из внутреннего цикла, чтобы
+                                       // переподключиться
                             }
                         }
                     }
-                    catch (const Error& e)
+                    catch (const redis::Error& e)
                     {
                         std::cerr << "Redis subscriber error: " << e.what()
                                   << ". Reconnecting in 1s..." << std::endl;
@@ -165,10 +174,10 @@ int main()
 {
     // Подключаемся к Redis
     std::string connection_string = "tcp://127.0.0.1:6379";
-    auto        redis             = std::make_shared<Redis>(connection_string);
+    auto redis_client = std::make_shared<redis::Redis>(connection_string);
 
     // Запускаем центр уведомлений
-    auto notifier = std::make_shared<NotificationCenter>(redis);
+    auto notifier = std::make_shared<notification_center>(redis_client);
     notifier->start();
 
     httplib::Server svr;
@@ -180,7 +189,8 @@ int main()
     // API: Получить список всех устройств с их платформами (SSE)
     svr.Get(
         "/api/devices/stream",
-        [&redis, notifier](const httplib::Request& req, httplib::Response& res)
+        [&redis_client, notifier](const httplib::Request& req,
+                                  httplib::Response&      res)
         {
             res.set_header("Content-Type", "text/event-stream");
             res.set_header("Cache-Control", "no-cache");
@@ -188,22 +198,23 @@ int main()
 
             res.set_content_provider(
                 "text/event-stream",
-                [&redis, &notifier](size_t offset, httplib::DataSink& sink)
+                [&redis_client, &notifier](size_t             offset,
+                                           httplib::DataSink& sink)
                 {
                     try
                     {
                         // Функция для получения текущего списка устройств
-                        auto get_devices_json = [&redis]()
+                        auto get_devices_json = [&redis_client]()
                         {
                             std::vector<std::string> devices;
-                            redis->smembers(
+                            redis_client->smembers(
                                 "all_devices",
                                 std::inserter(devices, devices.begin()));
 
                             json j = json::array();
                             for (const auto& device : devices)
                             {
-                                auto platform_opt = redis->hget(
+                                auto platform_opt = redis_client->hget(
                                     "device_info:" + device, "platform");
                                 std::string platform =
                                     platform_opt ? *platform_opt : "Unknown";
@@ -250,7 +261,7 @@ int main()
                             }
                         }
                     }
-                    catch (const Error& e)
+                    catch (const redis::Error& e)
                     {
                         std::string error_msg =
                             std::string("event: error\ndata: ") + e.what() +
@@ -265,7 +276,8 @@ int main()
     // API: Получить список стримов для конкретного устройства (SSE)
     svr.Get(
         "/api/streams/stream",
-        [&redis, notifier](const httplib::Request& req, httplib::Response& res)
+        [&redis_client, notifier](const httplib::Request& req,
+                                  httplib::Response&      res)
         {
             if (!req.has_param("device"))
             {
@@ -283,15 +295,15 @@ int main()
 
             res.set_content_provider(
                 "text/event-stream",
-                [&redis, notifier, device](size_t             offset,
-                                           httplib::DataSink& sink)
+                [&redis_client, notifier, device](size_t             offset,
+                                                  httplib::DataSink& sink)
                 {
                     try
                     {
-                        auto get_streams_json = [&redis, &device]()
+                        auto get_streams_json = [&redis_client, &device]()
                         {
                             std::vector<std::string> streams;
-                            redis->smembers(
+                            redis_client->smembers(
                                 "streams:" + device,
                                 std::inserter(streams, streams.begin()));
                             return json(streams);
@@ -331,7 +343,7 @@ int main()
                             }
                         }
                     }
-                    catch (const Error& e)
+                    catch (const redis::Error& e)
                     {
                         std::string error_msg =
                             std::string("event: error\ndata: ") + e.what() +
@@ -346,7 +358,7 @@ int main()
     // API: Получить логи для конкретного устройства (SSE)
     svr.Get(
         "/api/logs/stream",
-        [&redis](const httplib::Request& req, httplib::Response& res)
+        [&redis_client](const httplib::Request& req, httplib::Response& res)
         {
             if (!req.has_param("device") || !req.has_param("stream"))
             {
@@ -371,7 +383,8 @@ int main()
             // Используем chunked передачу данных
             res.set_content_provider(
                 "text/event-stream",
-                [&redis, stream_key](size_t offset, httplib::DataSink& sink)
+                [&redis_client, stream_key](size_t             offset,
+                                            httplib::DataSink& sink)
                 {
                     // Изначально читаем все существующие логи
                     std::string last_id = "0-0";
@@ -379,15 +392,15 @@ int main()
                     try
                     {
                         // Сначала отправляем все старые логи
-                        using Item = std::pair<
+                        using item_type = std::pair<
                             std::string,
                             std::vector<std::pair<std::string, std::string>>>;
-                        std::vector<Item> stream_data;
+                        std::vector<item_type> stream_data;
 
-                        redis->xrange(stream_key,
-                                      "-",
-                                      "+",
-                                      std::back_inserter(stream_data));
+                        redis_client->xrange(stream_key,
+                                             "-",
+                                             "+",
+                                             std::back_inserter(stream_data));
 
                         if (!stream_data.empty())
                         {
@@ -416,15 +429,15 @@ int main()
                         while (true)
                         {
                             std::vector<
-                                std::pair<std::string, std::vector<Item>>>
+                                std::pair<std::string, std::vector<item_type>>>
                                 new_data;
 
                             // Блокирующее чтение (таймаут 15 секунд, чтобы
                             // проверять закрытие соединения и отправлять ping)
-                            redis->xread(stream_key,
-                                         last_id,
-                                         15000,
-                                         std::back_inserter(new_data));
+                            redis_client->xread(stream_key,
+                                                last_id,
+                                                15000,
+                                                std::back_inserter(new_data));
 
                             if (!new_data.empty() &&
                                 !new_data[0].second.empty())
@@ -459,7 +472,7 @@ int main()
                             }
                         }
                     }
-                    catch (const Error& e)
+                    catch (const redis::Error& e)
                     {
                         std::string error_msg =
                             std::string("event: error\ndata: ") + e.what() +
@@ -475,7 +488,7 @@ int main()
     // API: Скачать лог целиком как текстовый файл
     svr.Get(
         "/api/logs/download",
-        [&redis](const httplib::Request& req, httplib::Response& res)
+        [&redis_client](const httplib::Request& req, httplib::Response& res)
         {
             if (!req.has_param("device") || !req.has_param("stream"))
             {
@@ -492,38 +505,52 @@ int main()
             // Устанавливаем заголовки для скачивания файла
             res.set_header("Content-Disposition",
                            "attachment; filename=\"" + stream + "\"");
-            
+
             // Используем chunked передачу данных (Chunked Transfer Encoding)
             res.set_chunked_content_provider(
                 "text/plain",
-                [redis, stream_key, last_id = std::make_shared<std::string>("-")](size_t offset, httplib::DataSink& sink) mutable
+                [redis_client,
+                 stream_key,
+                 last_id = std::make_shared<std::string>("-")](
+                    size_t offset, httplib::DataSink& sink) mutable
                 {
-                    const int batch_size = 5000; // Читаем по 5000 записей за раз
-                    
+                    const int batch_size =
+                        5000; // Читаем по 5000 записей за раз
+
                     try
                     {
-                        using Item = std::pair<std::string, std::vector<std::pair<std::string, std::string>>>;
-                        std::vector<Item> stream_data;
-                        
-                        // Читаем батч данных (XRANGE stream_key last_id + COUNT batch_size)
-                        // Если last_id != "-", используем синтаксис (last_id для исключения уже прочитанного элемента
-                        std::string start_id = (*last_id == "-") ? "-" : "(" + *last_id;
-                        
-                        redis->xrange(stream_key, start_id, "+", batch_size, std::back_inserter(stream_data));
+                        using item_type = std::pair<
+                            std::string,
+                            std::vector<std::pair<std::string, std::string>>>;
+                        std::vector<item_type> stream_data;
 
-                        if (stream_data.empty()) {
+                        // Читаем батч данных (XRANGE stream_key last_id + COUNT
+                        // batch_size) Если last_id != "-", используем синтаксис
+                        // (last_id для исключения уже прочитанного элемента
+                        std::string start_id =
+                            (*last_id == "-") ? "-" : "(" + *last_id;
+
+                        redis_client->xrange(stream_key,
+                                             start_id,
+                                             "+",
+                                             batch_size,
+                                             std::back_inserter(stream_data));
+
+                        if (stream_data.empty())
+                        {
                             sink.done();
                             return false; // Данные закончились, завершаем
                         }
 
                         std::string chunk;
-                        // Резервируем память (примерно 100 байт на строку), чтобы избежать лишних аллокаций
+                        // Резервируем память (примерно 100 байт на строку),
+                        // чтобы избежать лишних аллокаций
                         chunk.reserve(stream_data.size() * 100);
 
                         for (size_t i = 0; i < stream_data.size(); ++i)
                         {
                             const auto& item = stream_data[i];
-                            
+
                             for (const auto& field : item.second)
                             {
                                 if (field.first == "message")
@@ -533,27 +560,34 @@ int main()
                                     break;
                                 }
                             }
-                            *last_id = item.first; // Обновляем ID для следующего запроса
+                            *last_id = item.first; // Обновляем ID для
+                                                   // следующего запроса
                         }
 
                         // Отправляем чанк браузеру
-                        if (!chunk.empty()) {
-                            if (!sink.write(chunk.c_str(), chunk.size())) {
+                        if (!chunk.empty())
+                        {
+                            if (!sink.write(chunk.c_str(), chunk.size()))
+                            {
                                 return false; // Ошибка записи
                             }
                         }
 
-                        // Если мы получили меньше записей, чем просили, значит это был последний батч
-                        if (stream_data.size() < static_cast<size_t>(batch_size)) {
+                        // Если мы получили меньше записей, чем просили, значит
+                        // это был последний батч
+                        if (stream_data.size() <
+                            static_cast<size_t>(batch_size))
+                        {
                             sink.done();
                             return false;
                         }
-                        
+
                         return true; // Продолжаем передачу
                     }
-                    catch (const Error& e)
+                    catch (const redis::Error& e)
                     {
-                        std::cerr << "Redis download error: " << e.what() << std::endl;
+                        std::cerr << "Redis download error: " << e.what()
+                                  << std::endl;
                         sink.done();
                         return false;
                     }

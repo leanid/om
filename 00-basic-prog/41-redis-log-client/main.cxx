@@ -8,7 +8,7 @@
 #include <string>
 #include <vector>
 
-using namespace sw::redis;
+namespace redis = sw::redis;
 
 // Функция для генерации имени файла лога на основе текущего времени
 std::string generate_stream_name()
@@ -23,7 +23,7 @@ std::string generate_stream_name()
     return oss.str();
 }
 
-void log_to_redis(Redis&             redis,
+void log_to_redis(redis::Redis&      redis_client,
                   const std::string& stream_key,
                   const std::string& level,
                   const std::string& message)
@@ -46,11 +46,11 @@ void log_to_redis(Redis&             redis,
     try
     {
         // Отправляем только одно поле - message
-        redis.xadd(
+        redis_client.xadd(
             stream_key, "*", { std::make_pair("message", formatted_message) });
         std::cout << formatted_message << std::endl;
     }
-    catch (const Error& e)
+    catch (const redis::Error& e)
     {
         std::cerr << "Redis XADD error: " << e.what() << std::endl;
     }
@@ -78,7 +78,7 @@ int main()
     try
     {
         // Подключаемся к Redis
-        Redis redis(connection_string);
+        redis::Redis redis_client(connection_string);
 
         // Имя устройства
         std::string device_name = "anastasia_device";
@@ -93,13 +93,13 @@ int main()
         std::string stream_key = "log:" + device_name + ":" + stream_name;
 
         // Регистрируем устройство в общем списке
-        redis.sadd("all_devices", device_name);
+        redis_client.sadd("all_devices", device_name);
 
         // Сохраняем информацию о платформе устройства (используем Hash)
-        redis.hset("device_info:" + device_name, "platform", platform);
+        redis_client.hset("device_info:" + device_name, "platform", platform);
 
         // Регистрируем стрим для этого устройства
-        redis.sadd("streams:" + device_name, stream_name);
+        redis_client.sadd("streams:" + device_name, stream_name);
 
         std::cout << "Connecting to Redis at " << connection_string << "..."
                   << std::endl;
@@ -108,14 +108,14 @@ int main()
 
         // Отправляем несколько заготовленных логов
         log_to_redis(
-            redis, stream_key, "INFO", "Application started successfully.");
+            redis_client, stream_key, "INFO", "Application started successfully.");
         log_to_redis(
-            redis, stream_key, "DEBUG", "Initializing internal modules...");
-        log_to_redis(redis,
+            redis_client, stream_key, "DEBUG", "Initializing internal modules...");
+        log_to_redis(redis_client,
                      stream_key,
                      "WARNING",
                      "Config file not found, using default parameters.");
-        log_to_redis(redis,
+        log_to_redis(redis_client,
                      stream_key,
                      "ERROR",
                      "Failed to connect to secondary database!");
@@ -145,13 +145,13 @@ int main()
 
             if (!user_input.empty())
             {
-                log_to_redis(redis, stream_key, "INFO", user_input);
+                log_to_redis(redis_client, stream_key, "INFO", user_input);
             }
         }
 
-        log_to_redis(redis, stream_key, "INFO", "Application shutting down.");
+        log_to_redis(redis_client, stream_key, "INFO", "Application shutting down.");
     }
-    catch (const Error& e)
+    catch (const redis::Error& e)
     {
         std::cerr << "Redis connection/execution error: " << e.what()
                   << std::endl;
