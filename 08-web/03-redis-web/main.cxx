@@ -347,6 +347,110 @@ public:
     }
 };
 
+class streams_stream_provider
+{
+    std::shared_ptr<redis::Redis>        redis_client_;
+    std::shared_ptr<notification_center> notifier_;
+    std::string                          device_;
+
+    json get_streams_json() const
+    {
+        std::vector<std::string> streams;
+        redis_client_->smembers("streams:" + device_,
+                                std::inserter(streams, streams.begin()));
+        return json(streams);
+    }
+
+public:
+    streams_stream_provider(std::shared_ptr<redis::Redis>        r,
+                            std::shared_ptr<notification_center> n,
+                            std::string                          device)
+        : redis_client_(std::move(r))
+        , notifier_(std::move(n))
+        , device_(std::move(device))
+    {
+    }
+
+    bool operator()(size_t offset, httplib::DataSink& sink) const
+    {
+        try
+        {
+            uint64_t current_version = notifier_->get_streams_version(device_);
+            json     initial_streams = get_streams_json();
+            std::string event_data =
+                "event: init\ndata: " + initial_streams.dump() + "\n\n";
+            if (!sink.write(event_data.c_str(), event_data.size()))
+                return false;
+
+            while (true)
+            {
+                bool changed = notifier_->wait_for_streams_change(
+                    device_, current_version, 15);
+
+                if (changed)
+                {
+                    current_version = notifier_->get_streams_version(device_);
+                    json        current_streams = get_streams_json();
+                    std::string update_event =
+                        "event: update\ndata: " + current_streams.dump() +
+                        "\n\n";
+                    if (!sink.write(update_event.c_str(), update_event.size()))
+                        return false;
+                }
+                else
+                {
+                    // Ping
+                    if (!sink.write(":\n\n", 3))
+                        return false;
+                }
+            }
+        }
+        catch (const redis::Error& e)
+        {
+            std::string error_msg =
+                std::string("event: error\ndata: ") + e.what() + "\n\n";
+            sink.write(error_msg.c_str(), error_msg.size());
+            return false;
+        }
+        return true;
+    }
+};
+
+class streams_stream_handler
+{
+    std::shared_ptr<redis::Redis>        redis_client_;
+    std::shared_ptr<notification_center> notifier_;
+
+public:
+    streams_stream_handler(std::shared_ptr<redis::Redis>        r,
+                           std::shared_ptr<notification_center> n)
+        : redis_client_(std::move(r))
+        , notifier_(std::move(n))
+    {
+    }
+
+    void operator()(const httplib::Request& req, httplib::Response& res) const
+    {
+        if (!req.has_param("device"))
+        {
+            res.status = 400;
+            res.set_content(R"({"error": "Missing 'device' parameter"})",
+                            "application/json");
+            return;
+        }
+
+        std::string device = req.get_param_value("device");
+
+        res.set_header("Content-Type", "text/event-stream");
+        res.set_header("Cache-Control", "no-cache");
+        res.set_header("Connection", "keep-alive");
+
+        res.set_content_provider(
+            "text/event-stream",
+            streams_stream_provider{ redis_client_, notifier_, device });
+    }
+};
+
 } // namespace om
 
 int main(int argc, char* argv[])
@@ -399,86 +503,8 @@ int main(int argc, char* argv[])
             om::devices_stream_handler{ redis_client, notifier });
 
     // API: Получить список стримов для конкретного устройства (SSE)
-    svr.Get(
-        "/api/streams/stream",
-        [&redis_client, notifier](const httplib::Request& req,
-                                  httplib::Response&      res)
-        {
-            if (!req.has_param("device"))
-            {
-                res.status = 400;
-                res.set_content(R"({"error": "Missing 'device' parameter"})",
-                                "application/json");
-                return;
-            }
-
-            std::string device = req.get_param_value("device");
-
-            res.set_header("Content-Type", "text/event-stream");
-            res.set_header("Cache-Control", "no-cache");
-            res.set_header("Connection", "keep-alive");
-
-            res.set_content_provider(
-                "text/event-stream",
-                [&redis_client, notifier, device](size_t             offset,
-                                                  httplib::DataSink& sink)
-                {
-                    try
-                    {
-                        auto get_streams_json = [&redis_client, &device]()
-                        {
-                            std::vector<std::string> streams;
-                            redis_client->smembers(
-                                "streams:" + device,
-                                std::inserter(streams, streams.begin()));
-                            return json(streams);
-                        };
-
-                        uint64_t current_version =
-                            notifier->get_streams_version(device);
-                        json        initial_streams = get_streams_json();
-                        std::string event_data =
-                            "event: init\ndata: " + initial_streams.dump() +
-                            "\n\n";
-                        if (!sink.write(event_data.c_str(), event_data.size()))
-                            return false;
-
-                        while (true)
-                        {
-                            bool changed = notifier->wait_for_streams_change(
-                                device, current_version, 15);
-
-                            if (changed)
-                            {
-                                current_version =
-                                    notifier->get_streams_version(device);
-                                json current_streams = get_streams_json();
-                                std::string update_event =
-                                    "event: update\ndata: " +
-                                    current_streams.dump() + "\n\n";
-                                if (!sink.write(update_event.c_str(),
-                                                update_event.size()))
-                                    return false;
-                            }
-                            else
-                            {
-                                // Ping
-                                if (!sink.write(":\n\n", 3))
-                                    return false;
-                            }
-                        }
-                    }
-                    catch (const redis::Error& e)
-                    {
-                        std::string error_msg =
-                            std::string("event: error\ndata: ") + e.what() +
-                            "\n\n";
-                        sink.write(error_msg.c_str(), error_msg.size());
-                        return false;
-                    }
-                    return true;
-                });
-        });
+    svr.Get("/api/streams/stream",
+            om::streams_stream_handler{ redis_client, notifier });
 
     // API: Получить логи для конкретного устройства (SSE)
     svr.Get(
