@@ -127,6 +127,26 @@ h1 {
     gap: 8px;
 }
 
+.search-container {
+    padding: 10px 15px;
+    border-bottom: 1px solid var(--border-color);
+    background-color: #fafafa;
+}
+
+.search-input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.search-input:focus {
+    border-color: var(--selected-border);
+}
+
 .filter-label {
     font-size: 0.85rem;
     display: flex;

@@ -10,9 +10,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const clearLogsBtn = document.getElementById('clear-logs-btn');
     const downloadLogsBtn = document.getElementById('download-logs-btn');
     const autoscrollCb = document.getElementById('autoscroll-cb');
+    const deviceSearchInput = document.getElementById('device-search');
 
     let allDevicesData = []; // Храним полный список {name, platform}
     let activePlatforms = new Set(); // Какие платформы сейчас выбраны
+    let searchQuery = ''; // Текущий поисковый запрос
     
     let currentDevice = null;
     let currentStream = null;
@@ -82,9 +84,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Фильтрация и отрисовка устройств
     function filterAndRenderDevices() {
-        // Фильтруем устройства по выбранным платформам
+        // Фильтруем устройства по выбранным платформам и поисковому запросу
         const filteredDevices = allDevicesData
             .filter(d => activePlatforms.has(d.platform))
+            .filter(d => d.name.toLowerCase().includes(searchQuery.toLowerCase()))
             .map(d => d.name)
             .sort(); // Алфавитная сортировка имен
             
@@ -311,6 +314,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Инициализация
     connectToDevicesStream();
+
+    // Обработчик поиска
+    deviceSearchInput.addEventListener('input', (e) => {
+        searchQuery = e.target.value;
+        filterAndRenderDevices();
+    });
 
     // Обработчики кнопок
     clearLogsBtn.addEventListener('click', () => {
