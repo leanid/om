@@ -451,6 +451,134 @@ public:
     }
 };
 
+class logs_stream_provider
+{
+    std::shared_ptr<redis::Redis> redis_client_;
+    std::string                   stream_key_;
+
+public:
+    logs_stream_provider(std::shared_ptr<redis::Redis> r, std::string key)
+        : redis_client_(std::move(r))
+        , stream_key_(std::move(key))
+    {
+    }
+
+    bool operator()(size_t offset, httplib::DataSink& sink) const
+    {
+        std::string last_id = "0-0";
+
+        try
+        {
+            using item_type =
+                std::pair<std::string,
+                          std::vector<std::pair<std::string, std::string>>>;
+            std::vector<item_type> stream_data;
+
+            redis_client_->xrange(
+                stream_key_, "-", "+", std::back_inserter(stream_data));
+
+            if (!stream_data.empty())
+            {
+                json logs = json::array();
+                for (const auto& item : stream_data)
+                {
+                    json log_entry;
+                    log_entry["id"] = item.first;
+                    for (const auto& field : item.second)
+                    {
+                        log_entry[field.first] = field.second;
+                    }
+                    logs.push_back(log_entry);
+                    last_id = item.first;
+                }
+
+                std::string event_data =
+                    "event: init\ndata: " + logs.dump() + "\n\n";
+                if (!sink.write(event_data.c_str(), event_data.size()))
+                    return false;
+            }
+
+            while (true)
+            {
+                std::vector<std::pair<std::string, std::vector<item_type>>>
+                    new_data;
+
+                redis_client_->xread(
+                    stream_key_, last_id, 15000, std::back_inserter(new_data));
+
+                if (!new_data.empty() && !new_data[0].second.empty())
+                {
+                    json logs = json::array();
+                    for (const auto& item : new_data[0].second)
+                    {
+                        json log_entry;
+                        log_entry["id"] = item.first;
+                        for (const auto& field : item.second)
+                        {
+                            log_entry[field.first] = field.second;
+                        }
+                        logs.push_back(log_entry);
+                        last_id = item.first;
+                    }
+
+                    std::string event_data =
+                        "event: new_logs\ndata: " + logs.dump() + "\n\n";
+                    if (!sink.write(event_data.c_str(), event_data.size()))
+                        return false;
+                }
+                else
+                {
+                    if (!sink.write(":\n\n", 3))
+                        return false;
+                }
+            }
+        }
+        catch (const redis::Error& e)
+        {
+            std::string error_msg =
+                std::string("event: error\ndata: ") + e.what() + "\n\n";
+            sink.write(error_msg.c_str(), error_msg.size());
+            return false;
+        }
+
+        return true;
+    }
+};
+
+class logs_stream_handler
+{
+    std::shared_ptr<redis::Redis> redis_client_;
+
+public:
+    explicit logs_stream_handler(std::shared_ptr<redis::Redis> r)
+        : redis_client_(std::move(r))
+    {
+    }
+
+    void operator()(const httplib::Request& req, httplib::Response& res) const
+    {
+        if (!req.has_param("device") || !req.has_param("stream"))
+        {
+            res.status = 400;
+            res.set_content(
+                R"({"error": "Missing 'device' or 'stream' parameter"})",
+                "application/json");
+            return;
+        }
+
+        std::string device     = req.get_param_value("device");
+        std::string stream     = req.get_param_value("stream");
+        std::string stream_key = "log:" + device + ":" + stream;
+
+        res.set_header("Content-Type", "text/event-stream");
+        res.set_header("Cache-Control", "no-cache");
+        res.set_header("Connection", "keep-alive");
+        res.set_content_provider(
+            "text/event-stream",
+            logs_stream_provider{ redis_client_, stream_key });
+    }
+};
+
 } // namespace om
 
 int main(int argc, char* argv[])
@@ -516,134 +644,7 @@ int main(int argc, char* argv[])
             om::streams_stream_handler{ redis_client, notifier });
 
     // API: Получить логи для конкретного устройства (SSE)
-    svr.Get(
-        "/api/logs/stream",
-        [&redis_client](const httplib::Request& req, httplib::Response& res)
-        {
-            if (!req.has_param("device") || !req.has_param("stream"))
-            {
-                res.status = 400;
-                res.set_content(
-                    R"({"error": "Missing 'device' or 'stream' parameter"})",
-                    "application/json");
-                return;
-            }
-
-            std::string device = req.get_param_value("device");
-            std::string stream = req.get_param_value("stream");
-
-            // Формируем полный ключ стрима
-            std::string stream_key = "log:" + device + ":" + stream;
-
-            // Настраиваем заголовки для SSE(Server Side Event)
-            res.set_header("Content-Type", "text/event-stream");
-            res.set_header("Cache-Control", "no-cache");
-            res.set_header("Connection", "keep-alive");
-
-            // Используем chunked передачу данных
-            res.set_content_provider(
-                "text/event-stream",
-                [&redis_client, stream_key](size_t             offset,
-                                            httplib::DataSink& sink)
-                {
-                    // Изначально читаем все существующие логи
-                    std::string last_id = "0-0";
-
-                    try
-                    {
-                        // Сначала отправляем все старые логи
-                        using item_type = std::pair<
-                            std::string,
-                            std::vector<std::pair<std::string, std::string>>>;
-                        std::vector<item_type> stream_data;
-
-                        redis_client->xrange(stream_key,
-                                             "-",
-                                             "+",
-                                             std::back_inserter(stream_data));
-
-                        if (!stream_data.empty())
-                        {
-                            json logs = json::array();
-                            for (const auto& item : stream_data)
-                            {
-                                json log_entry;
-                                log_entry["id"] = item.first;
-                                for (const auto& field : item.second)
-                                {
-                                    log_entry[field.first] = field.second;
-                                }
-                                logs.push_back(log_entry);
-                                last_id = item.first; // Запоминаем последний ID
-                            }
-
-                            // Отправляем начальный батч логов
-                            std::string event_data =
-                                "event: init\ndata: " + logs.dump() + "\n\n";
-                            if (!sink.write(event_data.c_str(),
-                                            event_data.size()))
-                                return false;
-                        }
-
-                        // Бесконечный цикл чтения новых логов (XREAD BLOCK)
-                        while (true)
-                        {
-                            std::vector<
-                                std::pair<std::string, std::vector<item_type>>>
-                                new_data;
-
-                            // Блокирующее чтение (таймаут 15 секунд, чтобы
-                            // проверять закрытие соединения и отправлять ping)
-                            redis_client->xread(stream_key,
-                                                last_id,
-                                                15000,
-                                                std::back_inserter(new_data));
-
-                            if (!new_data.empty() &&
-                                !new_data[0].second.empty())
-                            {
-                                json logs = json::array();
-                                for (const auto& item : new_data[0].second)
-                                {
-                                    json log_entry;
-                                    log_entry["id"] = item.first;
-                                    for (const auto& field : item.second)
-                                    {
-                                        log_entry[field.first] = field.second;
-                                    }
-                                    logs.push_back(log_entry);
-                                    last_id = item.first; // Обновляем ID
-                                }
-
-                                // Отправляем новые логи
-                                std::string event_data =
-                                    "event: new_logs\ndata: " + logs.dump() +
-                                    "\n\n";
-                                if (!sink.write(event_data.c_str(),
-                                                event_data.size()))
-                                    return false;
-                            }
-                            else
-                            {
-                                // Отправляем ping (комментарий), чтобы
-                                // поддерживать соединение живым
-                                if (!sink.write(":\n\n", 3))
-                                    return false;
-                            }
-                        }
-                    }
-                    catch (const redis::Error& e)
-                    {
-                        std::string error_msg =
-                            std::string("event: error\ndata: ") + e.what() +
-                            "\n\n";
-                        sink.write(error_msg.c_str(), error_msg.size());
-                        return false;
-                    }
-
-                    return true;
-                });
-        });
+    svr.Get("/api/logs/stream", om::logs_stream_handler{ redis_client });
 
     // API: Скачать лог целиком как текстовый файл
     svr.Get(
