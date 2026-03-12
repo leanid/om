@@ -243,6 +243,107 @@ server_config load_config(const std::string& filepath)
     return config;
 }
 
+// -----------------------------------------------------------------------------
+// Провайдеры и обработчики (Handlers) для API
+// -----------------------------------------------------------------------------
+
+class devices_stream_provider
+{
+    std::shared_ptr<redis::Redis>        redis_client_;
+    std::shared_ptr<notification_center> notifier_;
+
+    json get_devices_json() const
+    {
+        std::vector<std::string> devices;
+        redis_client_->smembers("all_devices",
+                                std::inserter(devices, devices.begin()));
+
+        json j = json::array();
+        for (const auto& device : devices)
+        {
+            auto platform_opt =
+                redis_client_->hget("device_info:" + device, "platform");
+            std::string platform = platform_opt ? *platform_opt : "Unknown";
+            j.push_back({ { "name", device }, { "platform", platform } });
+        }
+        return j;
+    }
+
+public:
+    devices_stream_provider(std::shared_ptr<redis::Redis>        r,
+                            std::shared_ptr<notification_center> n)
+        : redis_client_(std::move(r))
+        , notifier_(std::move(n))
+    {
+    }
+
+    bool operator()(size_t offset, httplib::DataSink& sink) const
+    {
+        try
+        {
+            uint64_t    current_version = notifier_->get_devices_version();
+            json        initial_devices = get_devices_json();
+            std::string event_data =
+                "event: init\ndata: " + initial_devices.dump() + "\n\n";
+            if (!sink.write(event_data.c_str(), event_data.size()))
+                return false;
+
+            while (true)
+            {
+                bool changed =
+                    notifier_->wait_for_devices_change(current_version, 15);
+                if (changed)
+                {
+                    current_version = notifier_->get_devices_version();
+                    json        current_devices = get_devices_json();
+                    std::string update_event =
+                        "event: update\ndata: " + current_devices.dump() +
+                        "\n\n";
+                    if (!sink.write(update_event.c_str(), update_event.size()))
+                        return false;
+                }
+                else
+                {
+                    if (!sink.write(":\n\n", 3))
+                        return false;
+                }
+            }
+        }
+        catch (const redis::Error& e)
+        {
+            std::string error_msg =
+                std::string("event: error\ndata: ") + e.what() + "\n\n";
+            sink.write(error_msg.c_str(), error_msg.size());
+            return false;
+        }
+        return true;
+    }
+};
+
+class devices_stream_handler
+{
+    std::shared_ptr<redis::Redis>        redis_client_;
+    std::shared_ptr<notification_center> notifier_;
+
+public:
+    devices_stream_handler(std::shared_ptr<redis::Redis>        r,
+                           std::shared_ptr<notification_center> n)
+        : redis_client_(std::move(r))
+        , notifier_(std::move(n))
+    {
+    }
+
+    void operator()(const httplib::Request& req, httplib::Response& res) const
+    {
+        res.set_header("Content-Type", "text/event-stream");
+        res.set_header("Cache-Control", "no-cache");
+        res.set_header("Connection", "keep-alive");
+        res.set_content_provider(
+            "text/event-stream",
+            devices_stream_provider{ redis_client_, notifier_ });
+    }
+};
+
 } // namespace om
 
 int main(int argc, char* argv[])
@@ -271,96 +372,21 @@ int main(int argc, char* argv[])
 
     httplib::Server svr;
 
+    // Отключаем SO_REUSEPORT, оставляем только SO_REUSEADDR,
+    // чтобы при попытке запустить второй сервер на том же порту мы получали ошибку
+    svr.set_socket_options([](auto sock) {
+        int yes = 1;
+        setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,
+                   reinterpret_cast<const void*>(&yes), sizeof(yes));
+    });
+
     // Раздаем статические файлы из папки public
     const std::string public_dir = config.public_dir;
     svr.set_mount_point("/", public_dir);
 
     // API: Получить список всех устройств с их платформами (SSE)
-    svr.Get(
-        "/api/devices/stream",
-        [&redis_client, notifier](const httplib::Request& req,
-                                  httplib::Response&      res)
-        {
-            res.set_header("Content-Type", "text/event-stream");
-            res.set_header("Cache-Control", "no-cache");
-            res.set_header("Connection", "keep-alive");
-
-            res.set_content_provider(
-                "text/event-stream",
-                [&redis_client, &notifier](size_t             offset,
-                                           httplib::DataSink& sink)
-                {
-                    try
-                    {
-                        // Функция для получения текущего списка устройств
-                        auto get_devices_json = [&redis_client]()
-                        {
-                            std::vector<std::string> devices;
-                            redis_client->smembers(
-                                "all_devices",
-                                std::inserter(devices, devices.begin()));
-
-                            json j = json::array();
-                            for (const auto& device : devices)
-                            {
-                                auto platform_opt = redis_client->hget(
-                                    "device_info:" + device, "platform");
-                                std::string platform =
-                                    platform_opt ? *platform_opt : "Unknown";
-                                j.push_back({ { "name", device },
-                                              { "platform", platform } });
-                            }
-                            return j;
-                        };
-
-                        // Отправляем начальный список
-                        uint64_t current_version =
-                            notifier->get_devices_version();
-                        json        initial_devices = get_devices_json();
-                        std::string event_data =
-                            "event: init\ndata: " + initial_devices.dump() +
-                            "\n\n";
-                        if (!sink.write(event_data.c_str(), event_data.size()))
-                            return false;
-
-                        while (true)
-                        {
-                            // Ожидаем изменений через condition_variable (без
-                            // активного sleep/polling)
-                            bool changed = notifier->wait_for_devices_change(
-                                current_version, 15);
-
-                            if (changed)
-                            {
-                                current_version =
-                                    notifier->get_devices_version();
-                                json current_devices = get_devices_json();
-                                std::string update_event =
-                                    "event: update\ndata: " +
-                                    current_devices.dump() + "\n\n";
-                                if (!sink.write(update_event.c_str(),
-                                                update_event.size()))
-                                    return false;
-                            }
-                            else
-                            {
-                                // Ping для поддержания соединения
-                                if (!sink.write(":\n\n", 3))
-                                    return false;
-                            }
-                        }
-                    }
-                    catch (const redis::Error& e)
-                    {
-                        std::string error_msg =
-                            std::string("event: error\ndata: ") + e.what() +
-                            "\n\n";
-                        sink.write(error_msg.c_str(), error_msg.size());
-                        return false;
-                    }
-                    return true;
-                });
-        });
+    svr.Get("/api/devices/stream",
+            om::devices_stream_handler{ redis_client, notifier });
 
     // API: Получить список стримов для конкретного устройства (SSE)
     svr.Get(
