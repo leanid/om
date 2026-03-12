@@ -5,6 +5,7 @@
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
+#include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <mutex>
@@ -173,15 +174,67 @@ public:
     }
 };
 
+struct server_config
+{
+    std::string redis_url   = "tcp://127.0.0.1:6379";
+    std::string server_host = "0.0.0.0";
+    int         server_port = 8080;
+    std::string public_dir  = "./08-web/03-redis-web/public";
+};
+
+server_config load_config(const std::string& filepath)
+{
+    server_config config;
+    std::ifstream file(filepath);
+    if (file.is_open())
+    {
+        try
+        {
+            json j;
+            file >> j;
+            if (j.contains("redis_url"))
+                config.redis_url = j["redis_url"];
+            if (j.contains("server_host"))
+                config.server_host = j["server_host"];
+            if (j.contains("server_port"))
+                config.server_port = j["server_port"];
+            if (j.contains("public_dir"))
+                config.public_dir = j["public_dir"];
+        }
+        catch (const std::exception& e)
+        {
+            std::cerr << "Error parsing config file: " << e.what()
+                      << "\nUsing defaults.\n";
+        }
+    }
+    else
+    {
+        std::cerr << "Could not open config file: " << filepath
+                  << "\nUsing defaults.\n";
+    }
+    return config;
+}
+
 } // namespace om
 
-int main()
+int main(int argc, char* argv[])
 {
     namespace redis = sw::redis;
     using json      = nlohmann::json;
 
+    om::server_config config;
+    if (argc > 1)
+    {
+        config = om::load_config(argv[1]);
+    }
+    else
+    {
+        std::cout << "Usage: " << argv[0] << " [config.json]\n"
+                  << "No config file provided, using default configuration.\n";
+    }
+
     // Подключаемся к Redis
-    std::string connection_string = "tcp://127.0.0.1:6379";
+    std::string connection_string = config.redis_url;
     auto redis_client = std::make_shared<redis::Redis>(connection_string);
 
     // Запускаем центр уведомлений
@@ -191,7 +244,7 @@ int main()
     httplib::Server svr;
 
     // Раздаем статические файлы из папки public
-    const std::string public_dir = "./08-web/03-redis-web/public";
+    const std::string public_dir = config.public_dir;
     svr.set_mount_point("/", public_dir);
 
     // API: Получить список всех устройств с их платформами (SSE)
@@ -602,14 +655,15 @@ int main()
                 });
         });
 
-    int port = 8080;
-    std::cout << "Starting web server on http://localhost:" << port
+    int         port = config.server_port;
+    std::string host = config.server_host;
+    std::cout << "Starting web server on http://" << host << ":" << port
               << std::endl;
     std::cout << "Serving static files from " << public_dir << std::endl;
 
-    if (!svr.listen("0.0.0.0", port))
+    if (!svr.listen(host, port))
     {
-        std::cerr << "Failed to start server on port " << port << std::endl;
+        std::cerr << "Failed to start server on " << host << ":" << port << std::endl;
         return 1;
     }
 
