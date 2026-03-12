@@ -377,16 +377,9 @@ int main(int argc, char* argv[])
 
     // Отключаем SO_REUSEPORT (если он есть), оставляем только SO_REUSEADDR,
     // чтобы при попытке запустить второй сервер на том же порту мы получали ошибку.
-    // Оборачиваем в кроссплатформенный код, так как SO_REUSEPORT есть не везде.
     svr.set_socket_options([](auto sock) {
+#ifndef _WIN32
         int yes = 1;
-#ifdef _WIN32
-        // На Windows SO_REUSEADDR работает по-другому, часто его лучше не трогать
-        // для обычных TCP сокетов, если мы хотим получить ошибку занятого порта.
-        // Но для совместимости с httplib можно оставить.
-        setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,
-                   reinterpret_cast<const char*>(&yes), sizeof(yes));
-#else
         setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,
                    reinterpret_cast<const void*>(&yes), sizeof(yes));
 #ifdef SO_REUSEPORT
