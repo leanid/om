@@ -2,36 +2,174 @@
 #include <nlohmann/json.hpp>
 #include <sw/redis++/redis++.h>
 
-#include <iostream>
-#include <string>
-#include <vector>
+#include <atomic>
 #include <chrono>
+#include <condition_variable>
 #include <iomanip>
+#include <iostream>
+#include <mutex>
 #include <sstream>
+#include <string>
+#include <thread>
+#include <unordered_map>
+#include <vector>
 
 using namespace sw::redis;
 using json = nlohmann::json;
 
-// Вспомогательная функция для форматирования времени (больше не используется, но оставим на всякий случай)
-std::string format_timestamp(const std::string& ts_str) {
-    try {
-        long long ms = std::stoll(ts_str);
-        std::chrono::system_clock::time_point tp{std::chrono::milliseconds(ms)};
-        std::time_t t = std::chrono::system_clock::to_time_t(tp);
-        std::tm* tm = std::localtime(&t);
+// Вспомогательная функция для форматирования времени (больше не используется,
+// но оставим на всякий случай)
+std::string format_timestamp(const std::string& ts_str)
+{
+    try
+    {
+        long long                             ms = std::stoll(ts_str);
+        std::chrono::system_clock::time_point tp{ std::chrono::milliseconds(
+            ms) };
+        std::time_t        t  = std::chrono::system_clock::to_time_t(tp);
+        std::tm*           tm = std::localtime(&t);
         std::ostringstream oss;
-        oss << std::put_time(tm, "%H:%M:%S") << "." << std::setfill('0') << std::setw(3) << (ms % 1000);
+        oss << std::put_time(tm, "%H:%M:%S") << "." << std::setfill('0')
+            << std::setw(3) << (ms % 1000);
         return oss.str();
-    } catch (...) {
+    }
+    catch (...)
+    {
         return ts_str;
     }
 }
+
+// Класс для централизованного отслеживания изменений в Redis через Keyspace
+// Notifications
+class NotificationCenter
+{
+    std::mutex              mtx;
+    std::condition_variable cv_devices;
+    std::condition_variable cv_streams;
+
+    std::atomic<uint64_t>                     devices_version{ 0 };
+    std::unordered_map<std::string, uint64_t> streams_version;
+
+    std::shared_ptr<Redis> redis;
+
+public:
+    NotificationCenter(std::shared_ptr<Redis> r)
+        : redis(r)
+    {
+    }
+
+    void start()
+    {
+        // Включаем Keyspace Notifications (K: keyspace events, E: keyevent
+        // events, s: set commands)
+        try
+        {
+            redis->command("CONFIG", "SET", "notify-keyspace-events", "KEA");
+        }
+        catch (const Error& e)
+        {
+            std::cerr << "error: Could not set notify-keyspace-events: "
+                      << e.what() << std::endl;
+            std::terminate();
+        }
+
+        std::thread(
+            [this]()
+            {
+                while (true)
+                {
+                    try
+                    {
+                        auto sub = redis->subscriber();
+                        sub.on_pmessage(
+                            [this](std::string pattern,
+                                   std::string channel,
+                                   std::string msg)
+                            {
+                                if (channel == "__keyspace@0__:all_devices")
+                                {
+                                    devices_version++;
+                                    cv_devices.notify_all();
+                                }
+                                else if (channel.find(
+                                             "__keyspace@0__:streams:") == 0)
+                                {
+                                    std::string device = channel.substr(
+                                        std::string("__keyspace@0__:streams:")
+                                            .length());
+                                    std::lock_guard<std::mutex> lock(mtx);
+                                    streams_version[device]++;
+                                    cv_streams.notify_all();
+                                }
+                            });
+
+                        sub.psubscribe("__keyspace@0__:all_devices");
+                        sub.psubscribe("__keyspace@0__:streams:*");
+
+                        while (true)
+                        {
+                            try {
+                                sub.consume();
+                            } catch (const sw::redis::TimeoutError&) {
+                                // Это нормально, таймаут ожидания, продолжаем слушать
+                                continue;
+                            } catch (const Error& e) {
+                                std::cerr << "Redis subscriber consume error: " << e.what() << std::endl;
+                                break; // Выходим из внутреннего цикла, чтобы переподключиться
+                            }
+                        }
+                    }
+                    catch (const Error& e)
+                    {
+                        std::cerr << "Redis subscriber error: " << e.what()
+                                  << ". Reconnecting in 1s..." << std::endl;
+                        std::this_thread::sleep_for(std::chrono::seconds(1));
+                    }
+                }
+            })
+            .detach();
+    }
+
+    uint64_t get_devices_version() { return devices_version.load(); }
+
+    uint64_t get_streams_version(const std::string& device)
+    {
+        std::lock_guard<std::mutex> lock(mtx);
+        return streams_version[device];
+    }
+
+    bool wait_for_devices_change(uint64_t old_version, int timeout_sec = 15)
+    {
+        std::unique_lock<std::mutex> lock(mtx);
+        return cv_devices.wait_for(
+            lock,
+            std::chrono::seconds(timeout_sec),
+            [this, old_version]()
+            { return devices_version.load() > old_version; });
+    }
+
+    bool wait_for_streams_change(const std::string& device,
+                                 uint64_t           old_version,
+                                 int                timeout_sec = 15)
+    {
+        std::unique_lock<std::mutex> lock(mtx);
+        return cv_streams.wait_for(
+            lock,
+            std::chrono::seconds(timeout_sec),
+            [this, device, old_version]()
+            { return streams_version[device] > old_version; });
+    }
+};
 
 int main()
 {
     // Подключаемся к Redis
     std::string connection_string = "tcp://127.0.0.1:6379";
     auto        redis             = std::make_shared<Redis>(connection_string);
+
+    // Запускаем центр уведомлений
+    auto notifier = std::make_shared<NotificationCenter>(redis);
+    notifier->start();
 
     httplib::Server svr;
 
@@ -42,7 +180,7 @@ int main()
     // API: Получить список всех устройств с их платформами (SSE)
     svr.Get(
         "/api/devices/stream",
-        [&redis](const httplib::Request& req, httplib::Response& res)
+        [&redis, notifier](const httplib::Request& req, httplib::Response& res)
         {
             res.set_header("Content-Type", "text/event-stream");
             res.set_header("Cache-Control", "no-cache");
@@ -50,64 +188,73 @@ int main()
 
             res.set_content_provider(
                 "text/event-stream",
-                [&redis](size_t offset, httplib::DataSink& sink)
+                [&redis, &notifier](size_t offset, httplib::DataSink& sink)
                 {
                     try
                     {
                         // Функция для получения текущего списка устройств
-                        auto get_devices_json = [&redis]() {
+                        auto get_devices_json = [&redis]()
+                        {
                             std::vector<std::string> devices;
-                            redis->smembers("all_devices", std::inserter(devices, devices.begin()));
+                            redis->smembers(
+                                "all_devices",
+                                std::inserter(devices, devices.begin()));
 
                             json j = json::array();
-                            for (const auto& device : devices) {
-                                auto platform_opt = redis->hget("device_info:" + device, "platform");
-                                std::string platform = platform_opt ? *platform_opt : "Unknown";
-                                j.push_back({
-                                    {"name", device},
-                                    {"platform", platform}
-                                });
+                            for (const auto& device : devices)
+                            {
+                                auto platform_opt = redis->hget(
+                                    "device_info:" + device, "platform");
+                                std::string platform =
+                                    platform_opt ? *platform_opt : "Unknown";
+                                j.push_back({ { "name", device },
+                                              { "platform", platform } });
                             }
                             return j;
                         };
 
                         // Отправляем начальный список
-                        json initial_devices = get_devices_json();
-                        std::string event_data = "event: init\ndata: " + initial_devices.dump() + "\n\n";
-                        if (!sink.write(event_data.c_str(), event_data.size())) return false;
-
-                        // Так как Redis множества (Sets) не поддерживают блокирующее чтение,
-                        // мы будем делать поллинг раз в секунду.
-                        // Это не создаст большой нагрузки, так как мы просто сравниваем размер/хэш 
-                        // или просто переотправляем данные, если они изменились.
-                        // Для простоты будем отправлять список каждую секунду, а фронтенд сам разберется,
-                        // изменилось ли что-то.
-                        
-                        std::string last_dump = initial_devices.dump();
+                        uint64_t current_version =
+                            notifier->get_devices_version();
+                        json        initial_devices = get_devices_json();
+                        std::string event_data =
+                            "event: init\ndata: " + initial_devices.dump() +
+                            "\n\n";
+                        if (!sink.write(event_data.c_str(), event_data.size()))
+                            return false;
 
                         while (true)
                         {
-                            std::this_thread::sleep_for(std::chrono::seconds(1));
-                            
-                            json current_devices = get_devices_json();
-                            std::string current_dump = current_devices.dump();
+                            // Ожидаем изменений через condition_variable (без
+                            // активного sleep/polling)
+                            bool changed = notifier->wait_for_devices_change(
+                                current_version, 15);
 
-                            if (current_dump != last_dump)
+                            if (changed)
                             {
-                                std::string update_event = "event: update\ndata: " + current_dump + "\n\n";
-                                if (!sink.write(update_event.c_str(), update_event.size())) return false;
-                                last_dump = current_dump;
+                                current_version =
+                                    notifier->get_devices_version();
+                                json current_devices = get_devices_json();
+                                std::string update_event =
+                                    "event: update\ndata: " +
+                                    current_devices.dump() + "\n\n";
+                                if (!sink.write(update_event.c_str(),
+                                                update_event.size()))
+                                    return false;
                             }
                             else
                             {
-                                // Ping
-                                if (!sink.write(":\n\n", 3)) return false;
+                                // Ping для поддержания соединения
+                                if (!sink.write(":\n\n", 3))
+                                    return false;
                             }
                         }
                     }
                     catch (const Error& e)
                     {
-                        std::string error_msg = std::string("event: error\ndata: ") + e.what() + "\n\n";
+                        std::string error_msg =
+                            std::string("event: error\ndata: ") + e.what() +
+                            "\n\n";
                         sink.write(error_msg.c_str(), error_msg.size());
                         return false;
                     }
@@ -118,12 +265,13 @@ int main()
     // API: Получить список стримов для конкретного устройства (SSE)
     svr.Get(
         "/api/streams/stream",
-        [&redis](const httplib::Request& req, httplib::Response& res)
+        [&redis, notifier](const httplib::Request& req, httplib::Response& res)
         {
             if (!req.has_param("device"))
             {
                 res.status = 400;
-                res.set_content(R"({"error": "Missing 'device' parameter"})", "application/json");
+                res.set_content(R"({"error": "Missing 'device' parameter"})",
+                                "application/json");
                 return;
             }
 
@@ -135,45 +283,59 @@ int main()
 
             res.set_content_provider(
                 "text/event-stream",
-                [&redis, device](size_t offset, httplib::DataSink& sink)
+                [&redis, notifier, device](size_t             offset,
+                                           httplib::DataSink& sink)
                 {
                     try
                     {
-                        auto get_streams_json = [&redis, &device]() {
+                        auto get_streams_json = [&redis, &device]()
+                        {
                             std::vector<std::string> streams;
-                            redis->smembers("streams:" + device, std::inserter(streams, streams.begin()));
+                            redis->smembers(
+                                "streams:" + device,
+                                std::inserter(streams, streams.begin()));
                             return json(streams);
                         };
 
-                        json initial_streams = get_streams_json();
-                        std::string event_data = "event: init\ndata: " + initial_streams.dump() + "\n\n";
-                        if (!sink.write(event_data.c_str(), event_data.size())) return false;
-
-                        std::string last_dump = initial_streams.dump();
+                        uint64_t current_version =
+                            notifier->get_streams_version(device);
+                        json        initial_streams = get_streams_json();
+                        std::string event_data =
+                            "event: init\ndata: " + initial_streams.dump() +
+                            "\n\n";
+                        if (!sink.write(event_data.c_str(), event_data.size()))
+                            return false;
 
                         while (true)
                         {
-                            std::this_thread::sleep_for(std::chrono::seconds(1));
-                            
-                            json current_streams = get_streams_json();
-                            std::string current_dump = current_streams.dump();
+                            bool changed = notifier->wait_for_streams_change(
+                                device, current_version, 15);
 
-                            if (current_dump != last_dump)
+                            if (changed)
                             {
-                                std::string update_event = "event: update\ndata: " + current_dump + "\n\n";
-                                if (!sink.write(update_event.c_str(), update_event.size())) return false;
-                                last_dump = current_dump;
+                                current_version =
+                                    notifier->get_streams_version(device);
+                                json current_streams = get_streams_json();
+                                std::string update_event =
+                                    "event: update\ndata: " +
+                                    current_streams.dump() + "\n\n";
+                                if (!sink.write(update_event.c_str(),
+                                                update_event.size()))
+                                    return false;
                             }
                             else
                             {
                                 // Ping
-                                if (!sink.write(":\n\n", 3)) return false;
+                                if (!sink.write(":\n\n", 3))
+                                    return false;
                             }
                         }
                     }
                     catch (const Error& e)
                     {
-                        std::string error_msg = std::string("event: error\ndata: ") + e.what() + "\n\n";
+                        std::string error_msg =
+                            std::string("event: error\ndata: ") + e.what() +
+                            "\n\n";
                         sink.write(error_msg.c_str(), error_msg.size());
                         return false;
                     }
@@ -189,14 +351,15 @@ int main()
             if (!req.has_param("device") || !req.has_param("stream"))
             {
                 res.status = 400;
-                res.set_content(R"({"error": "Missing 'device' or 'stream' parameter"})",
-                                "application/json");
+                res.set_content(
+                    R"({"error": "Missing 'device' or 'stream' parameter"})",
+                    "application/json");
                 return;
             }
 
             std::string device = req.get_param_value("device");
             std::string stream = req.get_param_value("stream");
-            
+
             // Формируем полный ключ стрима
             std::string stream_key = "log:" + device + ":" + stream;
 
@@ -221,8 +384,10 @@ int main()
                             std::vector<std::pair<std::string, std::string>>>;
                         std::vector<Item> stream_data;
 
-                        redis->xrange(
-                            stream_key, "-", "+", std::back_inserter(stream_data));
+                        redis->xrange(stream_key,
+                                      "-",
+                                      "+",
+                                      std::back_inserter(stream_data));
 
                         if (!stream_data.empty())
                         {
@@ -254,11 +419,11 @@ int main()
                                 std::pair<std::string, std::vector<Item>>>
                                 new_data;
 
-                            // Блокирующее чтение (таймаут 1 секунда, чтобы
-                            // проверять закрытие соединения)
+                            // Блокирующее чтение (таймаут 15 секунд, чтобы
+                            // проверять закрытие соединения и отправлять ping)
                             redis->xread(stream_key,
                                          last_id,
-                                         1000,
+                                         15000,
                                          std::back_inserter(new_data));
 
                             if (!new_data.empty() &&
@@ -315,20 +480,24 @@ int main()
             if (!req.has_param("device") || !req.has_param("stream"))
             {
                 res.status = 400;
-                res.set_content("Missing 'device' or 'stream' parameter", "text/plain");
+                res.set_content("Missing 'device' or 'stream' parameter",
+                                "text/plain");
                 return;
             }
 
-            std::string device = req.get_param_value("device");
-            std::string stream = req.get_param_value("stream");
+            std::string device     = req.get_param_value("device");
+            std::string stream     = req.get_param_value("stream");
             std::string stream_key = "log:" + device + ":" + stream;
 
             try
             {
-                using Item = std::pair<std::string, std::vector<std::pair<std::string, std::string>>>;
+                using Item =
+                    std::pair<std::string,
+                              std::vector<std::pair<std::string, std::string>>>;
                 std::vector<Item> stream_data;
 
-                redis->xrange(stream_key, "-", "+", std::back_inserter(stream_data));
+                redis->xrange(
+                    stream_key, "-", "+", std::back_inserter(stream_data));
 
                 std::ostringstream out;
                 for (const auto& item : stream_data)
@@ -336,7 +505,8 @@ int main()
                     std::string msg;
                     for (const auto& field : item.second)
                     {
-                        if (field.first == "message") {
+                        if (field.first == "message")
+                        {
                             msg = field.second;
                             break;
                         }
@@ -345,13 +515,15 @@ int main()
                 }
 
                 // Устанавливаем заголовки для скачивания файла
-                res.set_header("Content-Disposition", "attachment; filename=\"" + stream + "\"");
+                res.set_header("Content-Disposition",
+                               "attachment; filename=\"" + stream + "\"");
                 res.set_content(out.str(), "text/plain");
             }
             catch (const Error& e)
             {
                 res.status = 500;
-                res.set_content(std::string("Redis error: ") + e.what(), "text/plain");
+                res.set_content(std::string("Redis error: ") + e.what(),
+                                "text/plain");
             }
         });
 
