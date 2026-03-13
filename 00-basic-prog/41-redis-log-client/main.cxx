@@ -99,13 +99,9 @@ int main()
         // Полный ключ для стрима в Redis: log:device_name:stream_name
         std::string stream_key = "log:" + device_name + ":" + log_file_name;
 
-        // Регистрируем устройство в общем списке
-        redis_client.sadd("all_devices", device_name);
+        // Регистрируем устройство и его платформу в общем HASH
+        redis_client.hset("all_devices", device_name, platform);
         redis_client.expire("all_devices", om::key_ttl);
-
-        // Сохраняем информацию о платформе устройства (используем Hash)
-        redis_client.hset("device_info:" + device_name, "platform", platform);
-        redis_client.expire("device_info:" + device_name, om::key_ttl);
 
         // Регистрируем текущий лог файл для этого устройства
         redis_client.sadd("log_names:" + device_name, log_file_name);

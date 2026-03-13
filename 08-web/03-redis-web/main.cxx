@@ -295,17 +295,14 @@ class unified_stream_provider
 
     json get_devices_json() const
     {
-        std::vector<std::string> devices;
-        redis_client_->smembers("all_devices",
-                                std::inserter(devices, devices.begin()));
+        std::unordered_map<std::string, std::string> devices;
+        redis_client_->hgetall("all_devices",
+                               std::inserter(devices, devices.begin()));
 
         json j = json::array();
-        for (const auto& device : devices)
+        for (const auto& [name, platform] : devices)
         {
-            auto platform = redis_client_->hget(
-                std::format("device_info:{}", device), "platform");
-            j.push_back({ { "name", device },
-                          { "platform", platform.value_or("Unknown") } });
+            j.push_back({ { "name", name }, { "platform", platform } });
         }
         return j;
     }
