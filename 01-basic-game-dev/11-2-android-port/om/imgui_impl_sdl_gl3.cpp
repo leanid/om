@@ -28,12 +28,11 @@
 #include <SDL2/SDL_syswm.h>
 #endif
 
-
 #include "gles20.hxx"
-//#include <GL/gl3w.h>    // This example is using gl3w to access OpenGL
-// functions (because it is small). You may use glew/glad/glLoadGen/etc.
-// whatever
-// already works for you.
+// #include <GL/gl3w.h>    // This example is using gl3w to access OpenGL
+//  functions (because it is small). You may use glew/glad/glLoadGen/etc.
+//  whatever
+//  already works for you.
 
 // Data
 static double g_Time            = 0.0f;
@@ -62,7 +61,9 @@ void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
     int      fb_width  = (int)(io.DisplaySize.x * io.DisplayFramebufferScale.x);
     int      fb_height = (int)(io.DisplaySize.y * io.DisplayFramebufferScale.y);
     if (fb_width == 0 || fb_height == 0)
+    {
         return;
+    }
     draw_data->ScaleClipRects(io.DisplayFramebufferScale);
 
     OM_GL_CHECK();
@@ -153,8 +154,8 @@ void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
     };
     glUseProgram(g_ShaderHandle);
     glUniform1i(g_AttribLocationTex, 0);
-    glUniformMatrix4fv(g_AttribLocationProjMtx, 1, GL_FALSE,
-                       &ortho_projection[0][0]);
+    glUniformMatrix4fv(
+        g_AttribLocationProjMtx, 1, GL_FALSE, &ortho_projection[0][0]);
 
     OM_GL_CHECK();
 
@@ -170,14 +171,16 @@ void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
         OM_GL_CHECK();
         glBufferData(GL_ARRAY_BUFFER,
                      (GLsizeiptr)cmd_list->VtxBuffer.Size * sizeof(ImDrawVert),
-                     (const GLvoid*)cmd_list->VtxBuffer.Data, GL_STREAM_DRAW);
+                     (const GLvoid*)cmd_list->VtxBuffer.Data,
+                     GL_STREAM_DRAW);
         OM_GL_CHECK();
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_ElementsHandle);
         OM_GL_CHECK();
         glBufferData(GL_ELEMENT_ARRAY_BUFFER,
                      (GLsizeiptr)cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx),
-                     (const GLvoid*)cmd_list->IdxBuffer.Data, GL_STREAM_DRAW);
+                     (const GLvoid*)cmd_list->IdxBuffer.Data,
+                     GL_STREAM_DRAW);
         OM_GL_CHECK();
 
         glEnableVertexAttribArray(g_AttribLocationPosition);
@@ -187,16 +190,25 @@ void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
         glEnableVertexAttribArray(g_AttribLocationColor);
         OM_GL_CHECK();
 
-        glVertexAttribPointer(g_AttribLocationPosition, 2, GL_FLOAT, GL_FALSE,
+        glVertexAttribPointer(g_AttribLocationPosition,
+                              2,
+                              GL_FLOAT,
+                              GL_FALSE,
                               sizeof(ImDrawVert),
                               (GLvoid*)IM_OFFSETOF(ImDrawVert, pos));
         OM_GL_CHECK();
-        glVertexAttribPointer(g_AttribLocationUV, 2, GL_FLOAT, GL_FALSE,
+        glVertexAttribPointer(g_AttribLocationUV,
+                              2,
+                              GL_FLOAT,
+                              GL_FALSE,
                               sizeof(ImDrawVert),
                               (GLvoid*)IM_OFFSETOF(ImDrawVert, uv));
         OM_GL_CHECK();
-        glVertexAttribPointer(g_AttribLocationColor, 4, GL_UNSIGNED_BYTE,
-                              GL_TRUE, sizeof(ImDrawVert),
+        glVertexAttribPointer(g_AttribLocationColor,
+                              4,
+                              GL_UNSIGNED_BYTE,
+                              GL_TRUE,
+                              sizeof(ImDrawVert),
                               (GLvoid*)IM_OFFSETOF(ImDrawVert, col));
         OM_GL_CHECK();
 
@@ -216,7 +228,8 @@ void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
                           (int)(pcmd->ClipRect.z - pcmd->ClipRect.x),
                           (int)(pcmd->ClipRect.w - pcmd->ClipRect.y));
                 OM_GL_CHECK();
-                glDrawElements(GL_TRIANGLES, (GLsizei)pcmd->ElemCount,
+                glDrawElements(GL_TRIANGLES,
+                               (GLsizei)pcmd->ElemCount,
                                sizeof(ImDrawIdx) == 2 ? GL_UNSIGNED_SHORT
                                                       : GL_UNSIGNED_INT,
                                idx_buffer_offset);
@@ -238,35 +251,57 @@ void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
     glBindBuffer(GL_ARRAY_BUFFER, last_array_buffer);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, last_element_array_buffer);
     glBlendEquationSeparate(last_blend_equation_rgb, last_blend_equation_alpha);
-    glBlendFuncSeparate(last_blend_src_rgb, last_blend_dst_rgb,
-                        last_blend_src_alpha, last_blend_dst_alpha);
+    glBlendFuncSeparate(last_blend_src_rgb,
+                        last_blend_dst_rgb,
+                        last_blend_src_alpha,
+                        last_blend_dst_alpha);
     OM_GL_CHECK();
     if (last_enable_blend)
+    {
         glEnable(GL_BLEND);
+    }
     else
+    {
         glDisable(GL_BLEND);
+    }
     if (last_enable_cull_face)
+    {
         glEnable(GL_CULL_FACE);
+    }
     else
+    {
         glDisable(GL_CULL_FACE);
+    }
     if (last_enable_depth_test)
+    {
         glEnable(GL_DEPTH_TEST);
+    }
     else
+    {
         glDisable(GL_DEPTH_TEST);
+    }
     if (last_enable_scissor_test)
+    {
         glEnable(GL_SCISSOR_TEST);
+    }
     else
+    {
         glDisable(GL_SCISSOR_TEST);
+    }
 
     OM_GL_CHECK();
     // no in opengl es 2.0
     // glPolygonMode(GL_FRONT_AND_BACK, last_polygon_mode[0]);
     OM_GL_CHECK();
-    glViewport(last_viewport[0], last_viewport[1], (GLsizei)last_viewport[2],
+    glViewport(last_viewport[0],
+               last_viewport[1],
+               (GLsizei)last_viewport[2],
                (GLsizei)last_viewport[3]);
     OM_GL_CHECK();
-    glScissor(last_scissor_box[0], last_scissor_box[1],
-              (GLsizei)last_scissor_box[2], (GLsizei)last_scissor_box[3]);
+    glScissor(last_scissor_box[0],
+              last_scissor_box[1],
+              (GLsizei)last_scissor_box[2],
+              (GLsizei)last_scissor_box[3]);
     OM_GL_CHECK();
 }
 
@@ -296,19 +331,29 @@ bool ImGui_ImplSdlGL3_ProcessEvent(SDL_Event* event)
         case SDL_EVENT_MOUSE_WHEEL:
         {
             if (event->wheel.y > 0)
+            {
                 g_MouseWheel = 1;
+            }
             if (event->wheel.y < 0)
+            {
                 g_MouseWheel = -1;
+            }
             return true;
         }
         case SDL_EVENT_MOUSE_BUTTON_DOWN:
         {
             if (event->button.button == SDL_BUTTON_LEFT)
+            {
                 g_MousePressed[0] = true;
+            }
             if (event->button.button == SDL_BUTTON_RIGHT)
+            {
                 g_MousePressed[1] = true;
+            }
             if (event->button.button == SDL_BUTTON_MIDDLE)
+            {
                 g_MousePressed[2] = true;
+            }
             return true;
         }
         case SDL_EVENT_TEXT_INPUT:
@@ -356,8 +401,15 @@ void ImGui_ImplSdlGL3_CreateFontsTexture()
     OM_GL_CHECK();
     // glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
     OM_GL_CHECK();
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA,
-                 GL_UNSIGNED_BYTE, pixels);
+    glTexImage2D(GL_TEXTURE_2D,
+                 0,
+                 GL_RGBA,
+                 width,
+                 height,
+                 0,
+                 GL_RGBA,
+                 GL_UNSIGNED_BYTE,
+                 pixels);
     OM_GL_CHECK();
 
     // Store our identifier
@@ -459,15 +511,24 @@ bool ImGui_ImplSdlGL3_CreateDeviceObjects()
     glEnableVertexAttribArray(g_AttribLocationColor);
     OM_GL_CHECK();
 
-    glVertexAttribPointer(g_AttribLocationPosition, 2, GL_FLOAT, GL_FALSE,
+    glVertexAttribPointer(g_AttribLocationPosition,
+                          2,
+                          GL_FLOAT,
+                          GL_FALSE,
                           sizeof(ImDrawVert),
                           (GLvoid*)IM_OFFSETOF(ImDrawVert, pos));
     OM_GL_CHECK();
-    glVertexAttribPointer(g_AttribLocationUV, 2, GL_FLOAT, GL_FALSE,
+    glVertexAttribPointer(g_AttribLocationUV,
+                          2,
+                          GL_FLOAT,
+                          GL_FALSE,
                           sizeof(ImDrawVert),
                           (GLvoid*)IM_OFFSETOF(ImDrawVert, uv));
     OM_GL_CHECK();
-    glVertexAttribPointer(g_AttribLocationColor, 4, GL_UNSIGNED_BYTE, GL_TRUE,
+    glVertexAttribPointer(g_AttribLocationColor,
+                          4,
+                          GL_UNSIGNED_BYTE,
+                          GL_TRUE,
                           sizeof(ImDrawVert),
                           (GLvoid*)IM_OFFSETOF(ImDrawVert, col));
     OM_GL_CHECK();
@@ -491,25 +552,39 @@ void ImGui_ImplSdlGL3_InvalidateDeviceObjects()
         //   glDeleteVertexArrays(1, &g_VaoHandle);
     }
     if (g_VboHandle)
+    {
         glDeleteBuffers(1, &g_VboHandle);
+    }
     if (g_ElementsHandle)
+    {
         glDeleteBuffers(1, &g_ElementsHandle);
+    }
     g_VaoHandle = g_VboHandle = g_ElementsHandle = 0;
 
     if (g_ShaderHandle && g_VertHandle)
+    {
         glDetachShader(g_ShaderHandle, g_VertHandle);
+    }
     if (g_VertHandle)
+    {
         glDeleteShader(g_VertHandle);
+    }
     g_VertHandle = 0;
 
     if (g_ShaderHandle && g_FragHandle)
+    {
         glDetachShader(g_ShaderHandle, g_FragHandle);
+    }
     if (g_FragHandle)
+    {
         glDeleteShader(g_FragHandle);
+    }
     g_FragHandle = 0;
 
     if (g_ShaderHandle)
+    {
         glDeleteProgram(g_ShaderHandle);
+    }
     g_ShaderHandle = 0;
 
     if (g_FontTexture)
@@ -576,7 +651,9 @@ void ImGui_ImplSdlGL3_Shutdown()
 void ImGui_ImplSdlGL3_NewFrame(SDL_Window* window)
 {
     if (!g_FontTexture)
+    {
         ImGui_ImplSdlGL3_CreateDeviceObjects();
+    }
 
     ImGuiIO& io = ImGui::GetIO();
 
@@ -602,16 +679,20 @@ void ImGui_ImplSdlGL3_NewFrame(SDL_Window* window)
     int    mx, my;
     Uint32 mouseMask = SDL_GetMouseState(&mx, &my);
     if (SDL_GetWindowFlags(window) & SDL_WINDOW_MOUSE_FOCUS)
+    {
         io.MousePos = ImVec2((float)mx, (float)my);
+    }
     else
+    {
         io.MousePos = ImVec2(-FLT_MAX, -FLT_MAX);
+    }
 
-    io.MouseDown[0] = g_MousePressed[0] ||
-                      (mouseMask & SDL_BUTTON(SDL_BUTTON_LEFT)) !=
-                          0; // If a mouse press event came, always pass it as
-                             // "mouse held this frame", so we don't miss
-                             // click-release events that are shorter than 1
-                             // frame.
+    io.MouseDown[0] =
+        g_MousePressed[0] || (mouseMask & SDL_BUTTON(SDL_BUTTON_LEFT)) !=
+                                 0; // If a mouse press event came, always pass
+                                    // it as "mouse held this frame", so we
+                                    // don't miss click-release events that are
+                                    // shorter than 1 frame.
     io.MouseDown[1] =
         g_MousePressed[1] || (mouseMask & SDL_BUTTON(SDL_BUTTON_RIGHT)) != 0;
     io.MouseDown[2] =

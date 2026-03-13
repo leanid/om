@@ -172,7 +172,9 @@ void scanner::impl::scan()
                 if (!tmp->extension.empty())
                 {
                     if (tmp->extension == u8".")
+                    {
                         tmp->name += '.';
+                    }
                     tmp->extension.erase(0, 1);
                 }
 
@@ -260,7 +262,9 @@ scanner::scanner(std::u8string_view path_)
         path = (fs::current_path() / path).u8string();
     }
     if (!fs::exists(path))
+    {
         return;
+    }
     pImpl->root.name = path.u8string();
     pImpl->scan();
 }
@@ -290,7 +294,9 @@ size_t scanner::get_file_size(std::u8string_view name) const
     size_t result = std::numeric_limits<size_t>::max();
     file*  fl     = pImpl->find_file_ptr(name);
     if (fl)
+    {
         result = fl->size;
+    }
     return result;
 }
 

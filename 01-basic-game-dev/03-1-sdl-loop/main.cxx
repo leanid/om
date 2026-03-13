@@ -18,19 +18,19 @@ void check_input(const SDL_Event& e)
 {
     using namespace std;
 
-    const array<::bind, 8> keys{ { { .key=SDLK_W, .name="up" },
-                                   { .key=SDLK_A, .name="left" },
-                                   { .key=SDLK_S, .name="down" },
-                                   { .key=SDLK_D, .name="right" },
-                                   { .key=SDLK_LCTRL, .name="button_one" },
-                                   { .key=SDLK_SPACE, .name="button_two" },
-                                   { .key=SDLK_ESCAPE, .name="select" },
-                                   { .key=SDLK_RETURN, .name="start" } } };
+    const array<::bind, 8> keys{ { { .key = SDLK_W, .name = "up" },
+                                   { .key = SDLK_A, .name = "left" },
+                                   { .key = SDLK_S, .name = "down" },
+                                   { .key = SDLK_D, .name = "right" },
+                                   { .key = SDLK_LCTRL, .name = "button_one" },
+                                   { .key = SDLK_SPACE, .name = "button_two" },
+                                   { .key = SDLK_ESCAPE, .name = "select" },
+                                   { .key = SDLK_RETURN, .name = "start" } } };
 
-    const auto it =
-        std::ranges::find_if(keys,
-               
-                [&](const ::bind& b) { return b.key == e.key.key; });
+    const auto it = std::ranges::find_if(keys,
+
+                                         [&](const ::bind& b)
+                                         { return b.key == e.key.key; });
 
     if (it != end(keys))
     {

@@ -92,9 +92,10 @@ static bool check_input(const SDL_Event& e, const bind*& result)
 {
     using namespace std;
 
-    const auto it = std::ranges::find_if(keys,
-                           
-                            [&](const bind& b) { return b.key == e.key.key; });
+    const auto it =
+        std::ranges::find_if(keys,
+
+                             [&](const bind& b) { return b.key == e.key.key; });
 
     if (it != end(keys))
     {
@@ -170,9 +171,9 @@ public:
                 else
                 {
                     std::println(stderr,
-                            "Could not open gamecontroller {}: {}",
-                            i,
-                            SDL_GetError());
+                                 "Could not open gamecontroller {}: {}",
+                                 i,
+                                 SDL_GetError());
                 }
             }
         }

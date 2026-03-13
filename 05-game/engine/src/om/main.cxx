@@ -113,7 +113,8 @@ std::string get_game_library_path(om::engine&)
     return "./libgame.so";
 }
 #else
-std::string get_game_library_path(om::engine&){
+std::string get_game_library_path(om::engine&)
+{
 #error implement it
 }
 #endif

@@ -453,17 +453,25 @@ template <typename T> static inline void ImSwap(T& a, T& b)
 template <typename T> static inline T ImAddClampOverflow(T a, T b, T mn, T mx)
 {
     if (b < 0 && (a < mn - b))
+    {
         return mn;
+    }
     if (b > 0 && (a > mx - b))
+    {
         return mx;
+    }
     return a + b;
 }
 template <typename T> static inline T ImSubClampOverflow(T a, T b, T mn, T mx)
 {
     if (b > 0 && (a < mn + b))
+    {
         return mn;
+    }
     if (b < 0 && (a > mx + b))
+    {
         return mx;
+    }
     return a - b;
 }
 // - Misc maths helpers
@@ -516,7 +524,9 @@ static inline float ImInvLength(const ImVec2& lhs, float fail_value)
 {
     float d = lhs.x * lhs.x + lhs.y * lhs.y;
     if (d > 0.0f)
+    {
         return 1.0f / ImSqrt(d);
+    }
     return fail_value;
 }
 static inline float ImFloor(float f)
@@ -538,9 +548,13 @@ static inline ImVec2 ImRotate(const ImVec2& v, float cos_a, float sin_a)
 static inline float ImLinearSweep(float current, float target, float speed)
 {
     if (current < target)
+    {
         return ImMin(current + speed, target);
+    }
     if (current > target)
+    {
         return ImMax(current - speed, target);
+    }
     return current;
 }
 static inline ImVec2 ImMul(const ImVec2& lhs, const ImVec2& rhs)
@@ -571,9 +585,13 @@ struct ImBoolVector
         int off  = (n >> 5);
         int mask = 1 << (n & 31);
         if (v)
+        {
             Storage[off] |= mask;
+        }
         else
+        {
             Storage[off] &= ~mask;
+        }
     }
 };
 
@@ -605,7 +623,9 @@ template <typename T> struct IMGUI_API ImPool
     {
         int* p_idx = Map.GetIntRef(key, -1);
         if (*p_idx != -1)
+        {
             return &Data[*p_idx];
+        }
         *p_idx = FreeIdx;
         return Add();
     }
@@ -619,7 +639,9 @@ template <typename T> struct IMGUI_API ImPool
         {
             int idx = Map.Data[n].val_i;
             if (idx != -1)
+            {
                 Data[idx].~T();
+            }
         }
         Map.Clear();
         Data.clear();
@@ -966,24 +988,40 @@ struct IMGUI_API ImRect
     void Add(const ImVec2& p)
     {
         if (Min.x > p.x)
+        {
             Min.x = p.x;
+        }
         if (Min.y > p.y)
+        {
             Min.y = p.y;
+        }
         if (Max.x < p.x)
+        {
             Max.x = p.x;
+        }
         if (Max.y < p.y)
+        {
             Max.y = p.y;
+        }
     }
     void Add(const ImRect& r)
     {
         if (Min.x > r.Min.x)
+        {
             Min.x = r.Min.x;
+        }
         if (Min.y > r.Min.y)
+        {
             Min.y = r.Min.y;
+        }
         if (Max.x < r.Max.x)
+        {
             Max.x = r.Max.x;
+        }
         if (Max.y < r.Max.y)
+        {
             Max.y = r.Max.y;
+        }
     }
     void Expand(const float amount)
     {
@@ -1298,12 +1336,16 @@ struct ImDrawDataBuilder
     void Clear()
     {
         for (int n = 0; n < IM_ARRAYSIZE(Layers); n++)
+        {
             Layers[n].resize(0);
+        }
     }
     void ClearFreeMemory()
     {
         for (int n = 0; n < IM_ARRAYSIZE(Layers); n++)
+        {
             Layers[n].clear();
+        }
     }
     IMGUI_API void FlattenIntoSingleLayer();
 };

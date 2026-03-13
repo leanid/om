@@ -183,34 +183,50 @@ void boost_locale_boundary_example()
     {
         std::cout << "Part [" << *p << "] has ";
         if (p->rule() & boundary::word_number)
+        {
             std::cout << "number(s) ";
+        }
         if (p->rule() & boundary::word_letter)
+        {
             std::cout << "letter(s) ";
+        }
         if (p->rule() & boundary::word_kana)
+        {
             std::cout << "kana character(s) ";
+        }
         if (p->rule() & boundary::word_ideo)
+        {
             std::cout << "ideographic character(s) ";
+        }
         if (p->rule() & boundary::word_none)
+        {
             std::cout << "no word characters";
+        }
         std::cout << std::endl;
     }
 
     index.map(boundary::character, text.begin(), text.end());
 
     for (const boundary::ssegment& p : index)
+    {
         std::cout << "|" << p;
+    }
     std::cout << "|\n\n";
 
     index.map(boundary::line, text.begin(), text.end());
 
     for (const boundary::ssegment& p : index)
+    {
         std::cout << "|" << p;
+    }
     std::cout << "|\n\n";
 
     index.map(boundary::sentence, text.begin(), text.end());
 
     for (const boundary::ssegment& p : index)
+    {
         std::cout << "|" << p;
+    }
     std::cout << "|\n\n";
 }
 
@@ -225,15 +241,19 @@ void std_locale_messages_facet_example()
         auto& facet = std::use_facet<std::messages<char>>(loc);
         auto  cat   = facet.open("sed", loc);
         if (cat < 0)
+        {
             std::cout
                 << "Could not open german \"sed\" message catalog\n"
                 << std::make_error_code(static_cast<std::errc>(errno)).message()
                 << std::endl;
+        }
         else
+        {
             std::cout << "\"No match\" in German: "
                       << facet.get(cat, 0, 0, "No match") << '\n'
                       << "\"Memory exhausted\" in German: "
                       << facet.get(cat, 0, 0, "Memory exhausted") << std::endl;
+        }
         facet.close(cat);
     }
 

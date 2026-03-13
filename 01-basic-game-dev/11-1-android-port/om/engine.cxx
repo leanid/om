@@ -777,7 +777,8 @@ bool pool_event(event& e)
             e.type      = om::event_type::hardware;
             return true;
         }
-        else if (sdl_event.type == SDL_EVENT_KEY_DOWN || sdl_event.type == SDL_EVENT_KEY_UP)
+        else if (sdl_event.type == SDL_EVENT_KEY_DOWN ||
+                 sdl_event.type == SDL_EVENT_KEY_UP)
         {
             if (developer_mode && sdl_event.key.keysym.sym == SDLK_BACKSPACE &&
                 sdl_event.type == SDL_EVENT_KEY_UP)
@@ -1451,20 +1452,17 @@ void audio_callback(void*, uint8_t* stream, int stream_size)
             if (rest <= static_cast<uint32_t>(stream_size))
             {
                 // copy rest to buffer
-                SDL_MixAudio(stream,
-                                   current_buff,
-                                   audio_device_spec.format,
-                                   rest,
-                                   1.f);
+                SDL_MixAudio(
+                    stream, current_buff, audio_device_spec.format, rest, 1.f);
                 snd->current_index += rest;
             }
             else
             {
                 SDL_MixAudio(stream,
-                                   current_buff,
-                                   audio_device_spec.format,
-                                   static_cast<uint32_t>(stream_size),
-                                   1.f);
+                             current_buff,
+                             audio_device_spec.format,
+                             static_cast<uint32_t>(stream_size),
+                             1.f);
                 snd->current_index += static_cast<uint32_t>(stream_size);
             }
 

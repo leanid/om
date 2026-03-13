@@ -94,7 +94,9 @@ public:
                                            std::string msg)
                             {
                                 if (stoken.stop_requested())
+                                {
                                     return;
+                                }
 
                                 if (channel == keyspace_all_devices)
                                 {
@@ -225,23 +227,41 @@ server_config load_config(const std::string& filepath)
             json j;
             file >> j;
             if (j.contains("redis_url"))
+            {
                 config.redis_url = j["redis_url"];
+            }
             if (j.contains("server_host"))
+            {
                 config.server_host = j["server_host"];
+            }
             if (j.contains("server_port"))
+            {
                 config.server_port = j["server_port"];
+            }
             if (j.contains("public_dir"))
+            {
                 config.public_dir = j["public_dir"];
+            }
             if (j.contains("socket_flags"))
+            {
                 config.socket_flags = j["socket_flags"];
+            }
             if (j.contains("max_threads"))
+            {
                 config.max_threads = j["max_threads"];
+            }
             if (j.contains("log_batch_size"))
+            {
                 config.log_batch_size = j["log_batch_size"];
+            }
             if (j.contains("redis_pool_size"))
+            {
                 config.redis_pool_size = j["redis_pool_size"];
+            }
             if (j.contains("sse_poll_interval_ms"))
+            {
                 config.sse_poll_interval_ms = j["sse_poll_interval_ms"];
+            }
         }
         catch (const std::exception& e)
         {
@@ -306,7 +326,9 @@ class unified_stream_provider
             json entry;
             entry["id"] = id;
             for (const auto& [key, value] : fields)
+            {
                 entry[key] = value;
+            }
             return entry;
         };
 
@@ -346,14 +368,18 @@ public:
 
             auto devices_ver = notifier_->get_devices_version();
             if (!send_sse(sink, "devices_init", get_devices_json()))
+            {
                 return false;
+            }
 
             uint64_t log_names_ver = 0;
             if (!device_.empty())
             {
                 log_names_ver = notifier_->get_streams_version(device_);
                 if (!send_sse(sink, "log_names_init", get_log_names_json()))
+                {
                     return false;
+                }
             }
 
             std::string last_log_id = "0-0";
@@ -378,19 +404,25 @@ public:
                     {
                         if (first_batch &&
                             !send_sse(sink, "logs_init", json::array()))
+                        {
                             return false;
+                        }
                         break;
                     }
 
                     auto event = first_batch ? "logs_init" : "logs_new";
                     if (!send_sse(sink, event, items_to_json(batch)))
+                    {
                         return false;
+                    }
 
                     last_log_id = batch.back().first;
                     first_batch = false;
 
                     if (batch.size() < batch_size_)
+                    {
                         break;
+                    }
                 }
             }
 
@@ -418,7 +450,9 @@ public:
                     {
                         const auto& items = new_data[0].second;
                         if (!send_sse(sink, "logs_new", items_to_json(items)))
+                        {
                             return false;
+                        }
                         last_log_id = items.back().first;
                         any_sent    = true;
                     }
@@ -436,7 +470,9 @@ public:
                 {
                     devices_ver = new_devices_ver;
                     if (!send_sse(sink, "devices_update", get_devices_json()))
+                    {
                         return false;
+                    }
                     any_sent = true;
                 }
 
@@ -448,7 +484,9 @@ public:
                         log_names_ver = new_ver;
                         if (!send_sse(
                                 sink, "log_names_update", get_log_names_json()))
+                        {
                             return false;
+                        }
                         any_sent = true;
                     }
                 }
@@ -456,7 +494,9 @@ public:
                 if (!any_sent)
                 {
                     if (!sink.write(":\n\n", 3))
+                    {
                         return false;
+                    }
                 }
             }
         }
@@ -580,7 +620,9 @@ public:
             if (!chunk.empty())
             {
                 if (!sink.write(chunk.c_str(), chunk.size()))
+                {
                     return false;
+                }
             }
 
             if (stream_data.size() < batch_size)

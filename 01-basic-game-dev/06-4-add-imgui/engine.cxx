@@ -1615,19 +1615,29 @@ bool ImGui_ImplSdlGL3_ProcessEvent(const SDL_Event* event)
         case SDL_EVENT_MOUSE_WHEEL:
         {
             if (event->wheel.y > 0)
+            {
                 g_MouseWheel = 1;
+            }
             if (event->wheel.y < 0)
+            {
                 g_MouseWheel = -1;
+            }
             return true;
         }
         case SDL_EVENT_MOUSE_BUTTON_DOWN:
         {
             if (event->button.button == SDL_BUTTON_LEFT)
+            {
                 g_MousePressed[0] = true;
+            }
             if (event->button.button == SDL_BUTTON_RIGHT)
+            {
                 g_MousePressed[1] = true;
+            }
             if (event->button.button == SDL_BUTTON_MIDDLE)
+            {
                 g_MousePressed[2] = true;
+            }
             return true;
         }
         case SDL_EVENT_TEXT_INPUT:
@@ -1852,9 +1862,13 @@ void ImGui_ImplSdlGL3_NewFrame(SDL_Window* window)
     float  mx, my;
     Uint32 mouseMask = SDL_GetMouseState(&mx, &my);
     if (SDL_GetWindowFlags(window) & SDL_WINDOW_MOUSE_FOCUS)
+    {
         io.MousePos = ImVec2(mx, my);
+    }
     else
+    {
         io.MousePos = ImVec2(-FLT_MAX, -FLT_MAX);
+    }
 
     io.MouseDown[0] =
         g_MousePressed[0] || (mouseMask & SDL_BUTTON_MASK(SDL_BUTTON_LEFT)) !=

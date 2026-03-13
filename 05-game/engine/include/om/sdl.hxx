@@ -12,7 +12,7 @@ namespace om
 
 struct rect
 {
-    rect(){};
+    rect() {};
     rect(std::int32_t in_x,
          std::int32_t in_y,
          std::int32_t in_w,
@@ -103,7 +103,7 @@ public:
     {
         std::int32_t x = 0;
         std::int32_t y = 0;
-        position(){};
+        position() {};
         position(std::int32_t in_x, std::int32_t in_y)
             : x(in_x)
             , y(in_y)
@@ -116,7 +116,7 @@ public:
     {
         std::size_t w = 0;
         std::size_t h = 0;
-        size(){};
+        size() {};
         size(std::size_t in_w, std::size_t in_h)
             : w(in_w)
             , h(in_h)

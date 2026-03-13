@@ -491,7 +491,9 @@ Estimate<double> bootstrap(double        confidence_level,
     double point = estimator(first, last);
     // Degenerate case with a single sample
     if (n_samples == 1)
+    {
         return { point, point, point, confidence_level };
+    }
 
     sample jack        = jackknife(estimator, first, last);
     double jack_mean   = mean(jack.data(), jack.data() + jack.size());
@@ -1208,9 +1210,13 @@ Capturer::Capturer(StringRef             macroName,
         for (auto i = start + 1; i < names.size(); ++i)
         {
             if (names[i] == quote)
+            {
                 return i;
+            }
             if (names[i] == '\\')
+            {
                 ++i;
+            }
         }
         CATCH_INTERNAL_ERROR("CAPTURE parsing encountered unmatched quote");
     };
@@ -1265,7 +1271,9 @@ Capturer::~Capturer()
     {
         assert(m_captured == m_messages.size());
         for (size_t i = 0; i < m_captured; ++i)
+        {
             m_resultCapture.popScopedMessage(m_messages[i]);
+        }
     }
 }
 
@@ -1502,9 +1510,13 @@ public:
         for (auto const& testCase : m_tests)
         {
             if (!m_context.aborting())
+            {
                 totals += m_context.runTest(*testCase);
+            }
             else
+            {
                 m_reporter->skipTest(testCase->getTestCaseInfo());
+            }
         }
 
         for (auto const& match : m_matches)
@@ -1641,9 +1653,13 @@ int Session::applyCommandLine(int argc, char const* const* argv)
     }
 
     if (m_configData.showHelp)
+    {
         showHelp();
+    }
     if (m_configData.libIdentify)
+    {
         libIdentify();
+    }
 
     m_config.reset();
     return 0;
@@ -1669,7 +1685,9 @@ int Session::applyCommandLine(int argc, wchar_t const* const* argv)
     int returnCode = applyCommandLine(argc, utf8Argv);
 
     for (int i = 0; i < argc; ++i)
+    {
         delete[] utf8Argv[i];
+    }
 
     delete[] utf8Argv;
 
@@ -1718,7 +1736,9 @@ ConfigData& Session::configData()
 Config& Session::config()
 {
     if (!m_config)
+    {
         m_config = Detail::make_unique<Config>(m_configData);
+    }
     return *m_config;
 }
 
@@ -1888,19 +1908,33 @@ constexpr bool applies(TestCaseProperties tcp)
 TestCaseProperties parseSpecialTag(StringRef tag)
 {
     if (!tag.empty() && tag[0] == '.')
+    {
         return TestCaseProperties::IsHidden;
+    }
     else if (tag == "!throws"_sr)
+    {
         return TestCaseProperties::Throws;
+    }
     else if (tag == "!shouldfail"_sr)
+    {
         return TestCaseProperties::ShouldFail;
+    }
     else if (tag == "!mayfail"_sr)
+    {
         return TestCaseProperties::MayFail;
+    }
     else if (tag == "!nonportable"_sr)
+    {
         return TestCaseProperties::NonPortable;
+    }
     else if (tag == "!benchmark"_sr)
+    {
         return TestCaseProperties::Benchmark | TestCaseProperties::IsHidden;
+    }
     else
+    {
         return TestCaseProperties::None;
+    }
 }
 bool isReservedTag(StringRef tag)
 {
@@ -2257,9 +2291,13 @@ TestSpec::Matches TestSpec::matchesByFilter(
     {
         std::vector<TestCaseHandle const*> currentMatches;
         for (auto const& test : testCases)
+        {
             if (isThrowSafe(test, config) &&
                 filter.matches(test.getTestCaseInfo()))
+            {
                 currentMatches.emplace_back(&test);
+            }
+        }
         matches.push_back(
             FilterMatch{ extractFilterName(filter), currentMatches });
     }
@@ -2370,7 +2408,9 @@ template <typename T> std::string fpToString(T value, int precision)
     if (i != std::string::npos && i != d.size() - 1)
     {
         if (d[i] == '.')
+        {
             i++;
+        }
         d = d.substr(0, i + 1);
     }
     return d;
@@ -2439,7 +2479,9 @@ std::string rawMemoryToString(const void* object, std::size_t size)
     ReusableStringStream rss;
     rss << "0x" << std::setfill('0') << std::hex;
     for (; i != end; i += inc)
+    {
         rss << std::setw(2) << static_cast<unsigned>(bytes[i]);
+    }
     return rss.str();
 }
 } // namespace Detail
@@ -2683,13 +2725,21 @@ Totals Totals::delta(Totals const& prevTotals) const
 {
     Totals diff = *this - prevTotals;
     if (diff.assertions.failed > 0)
+    {
         ++diff.testCases.failed;
+    }
     else if (diff.assertions.failedButOk > 0)
+    {
         ++diff.testCases.failedButOk;
+    }
     else if (diff.assertions.skipped > 0)
+    {
         ++diff.testCases.skipped;
+    }
     else
+    {
         ++diff.testCases.passed;
+    }
     return diff;
 }
 
@@ -3234,7 +3284,9 @@ TokenStream& TokenStream::operator++()
     else
     {
         if (it != itEnd)
+        {
             ++it;
+        }
         loadBuffer();
     }
     return *this;
@@ -3315,22 +3367,30 @@ Detail::InternalParseResult Arg::parse(std::string const&,
 {
     auto validationResult = validate();
     if (!validationResult)
+    {
         return Detail::InternalParseResult(validationResult);
+    }
 
     auto token = *tokens;
     if (token.type != Detail::TokenType::Argument)
+    {
         return Detail::InternalParseResult::ok(
             Detail::ParseState(ParseResultType::NoMatch, CATCH_MOVE(tokens)));
+    }
 
     assert(!m_ref->isFlag());
     auto valueRef = static_cast<Detail::BoundValueRefBase*>(m_ref.get());
 
     auto result = valueRef->setValue(static_cast<std::string>(token.token));
     if (!result)
+    {
         return Detail::InternalParseResult(result);
+    }
     else
+    {
         return Detail::InternalParseResult::ok(
             Detail::ParseState(ParseResultType::Matched, CATCH_MOVE(++tokens)));
+    }
 }
 
 Opt::Opt(bool& ref)
@@ -3345,13 +3405,19 @@ Detail::HelpColumns Opt::getHelpColumns() const
     for (auto const& opt : m_optNames)
     {
         if (first)
+        {
             first = false;
+        }
         else
+        {
             oss << ", ";
+        }
         oss << opt;
     }
     if (!m_hint.empty())
+    {
         oss << " <" << m_hint << '>';
+    }
     return { oss.str(), m_description };
 }
 
@@ -3361,7 +3427,9 @@ bool Opt::isMatch(StringRef optToken) const
     for (auto const& name : m_optNames)
     {
         if (normaliseOpt(name) == normalisedToken)
+        {
             return true;
+        }
     }
     return false;
 }
@@ -3371,7 +3439,9 @@ Detail::InternalParseResult Opt::parse(std::string const&,
 {
     auto validationResult = validate();
     if (!validationResult)
+    {
         return Detail::InternalParseResult(validationResult);
+    }
 
     if (tokens && tokens->type == Detail::TokenType::Option)
     {
@@ -3384,10 +3454,14 @@ Detail::InternalParseResult Opt::parse(std::string const&,
                     static_cast<Detail::BoundFlagRefBase*>(m_ref.get());
                 auto result = flagRef->setFlag(true);
                 if (!result)
+                {
                     return Detail::InternalParseResult(result);
+                }
                 if (result.value() == ParseResultType::ShortCircuitAll)
+                {
                     return Detail::InternalParseResult::ok(
                         Detail::ParseState(result.value(), CATCH_MOVE(tokens)));
+                }
             }
             else
             {
@@ -3395,19 +3469,27 @@ Detail::InternalParseResult Opt::parse(std::string const&,
                     static_cast<Detail::BoundValueRefBase*>(m_ref.get());
                 ++tokens;
                 if (!tokens)
+                {
                     return Detail::InternalParseResult::runtimeError(
                         "Expected argument following " + token.token);
+                }
                 auto const& argToken = *tokens;
                 if (argToken.type != Detail::TokenType::Argument)
+                {
                     return Detail::InternalParseResult::runtimeError(
                         "Expected argument following " + token.token);
+                }
                 const auto result = valueRef->setValue(
                     static_cast<std::string>(argToken.token));
                 if (!result)
+                {
                     return Detail::InternalParseResult(result);
+                }
                 if (result.value() == ParseResultType::ShortCircuitAll)
+                {
                     return Detail::InternalParseResult::ok(
                         Detail::ParseState(result.value(), CATCH_MOVE(tokens)));
+                }
             }
             return Detail::InternalParseResult::ok(Detail::ParseState(
                 ParseResultType::Matched, CATCH_MOVE(++tokens)));
@@ -3420,19 +3502,27 @@ Detail::InternalParseResult Opt::parse(std::string const&,
 Detail::Result Opt::validate() const
 {
     if (m_optNames.empty())
+    {
         return Detail::Result::logicError("No options supplied to Opt");
+    }
     for (auto const& name : m_optNames)
     {
         if (name.empty())
+        {
             return Detail::Result::logicError("Option name cannot be empty");
+        }
 #ifdef CATCH_PLATFORM_WINDOWS
         if (name[0] != '-' && name[0] != '/')
+        {
             return Detail::Result::logicError(
                 "Option name must begin with '-' or '/'");
+        }
 #else
         if (name[0] != '-')
+        {
             return Detail::Result::logicError(
                 "Option name must begin with '-'");
+        }
 #endif
     }
     return ParserRefImpl::validate();
@@ -3465,9 +3555,13 @@ ParserResult ExeName::set(std::string const& newName)
 
     *m_name = filename;
     if (m_ref)
+    {
         return m_ref->setValue(filename);
+    }
     else
+    {
         return ParserResult::ok(ParseResultType::Matched);
+    }
 }
 
 Parser& Parser::operator|=(Parser const& other)
@@ -3499,9 +3593,13 @@ void Parser::writeToStream(std::ostream& os) const
         for (auto const& arg : m_args)
         {
             if (first)
+            {
                 first = false;
+            }
             else
+            {
                 os << ' ';
+            }
             if (arg.isOptional() && required)
             {
                 os << '[';
@@ -3509,12 +3607,18 @@ void Parser::writeToStream(std::ostream& os) const
             }
             os << '<' << arg.hint() << '>';
             if (arg.cardinality() == 0)
+            {
                 os << " ... ";
+            }
         }
         if (!required)
+        {
             os << ']';
+        }
         if (!m_options.empty())
+        {
             os << " options";
+        }
         os << "\n\nwhere options are:\n";
     }
 
@@ -3522,7 +3626,9 @@ void Parser::writeToStream(std::ostream& os) const
     size_t consoleWidth = CATCH_CONFIG_CONSOLE_WIDTH;
     size_t optWidth     = 0;
     for (auto const& cols : rows)
+    {
         optWidth = (std::max)(optWidth, cols.left.size() + 2);
+    }
 
     optWidth = (std::min)(optWidth, consoleWidth / 2);
 
@@ -3543,13 +3649,17 @@ Detail::Result Parser::validate() const
     {
         auto result = opt.validate();
         if (!result)
+        {
             return result;
+        }
     }
     for (auto const& arg : m_args)
     {
         auto result = arg.validate();
         if (!result)
+        {
             return result;
+        }
     }
     return Detail::Result::ok();
 }
@@ -3590,7 +3700,9 @@ Detail::InternalParseResult Parser::parse(std::string const&  exeName,
                 result = parseInfo.parser->parse(
                     exeName, CATCH_MOVE(result).value().remainingTokens());
                 if (!result)
+                {
                     return result;
+                }
                 if (result.value().type() != ParseResultType::NoMatch)
                 {
                     tokenParsed = true;
@@ -3601,11 +3713,15 @@ Detail::InternalParseResult Parser::parse(std::string const&  exeName,
         }
 
         if (result.value().type() == ParseResultType::ShortCircuitAll)
+        {
             return result;
+        }
         if (!tokenParsed)
+        {
             return Detail::InternalParseResult::runtimeError(
                 "Unrecognised token: " +
                 result.value().remainingTokens()->token);
+        }
     }
     // !TBD Check missing required options
     return result;
@@ -3671,8 +3787,10 @@ Clara::Parser makeCommandLineParser(ConfigData& config)
     {
         std::ifstream f(filename.c_str());
         if (!f.is_open())
+        {
             return ParserResult::runtimeError("Unable to load input file: '" +
                                               filename + '\'');
+        }
 
         std::string line;
         while (std::getline(f, line))
@@ -3681,28 +3799,40 @@ Clara::Parser makeCommandLineParser(ConfigData& config)
             if (!line.empty() && !startsWith(line, '#'))
             {
                 if (!startsWith(line, '"'))
+                {
                     line = '"' + CATCH_MOVE(line) + '"';
+                }
                 config.testsOrTags.push_back(line);
                 config.testsOrTags.emplace_back(",");
             }
         }
         // Remove comma in the end
         if (!config.testsOrTags.empty())
+        {
             config.testsOrTags.erase(config.testsOrTags.end() - 1);
+        }
 
         return ParserResult::ok(ParseResultType::Matched);
     };
     auto const setTestOrder = [&](std::string const& order)
     {
         if (startsWith("declared", order))
+        {
             config.runOrder = TestRunOrder::Declared;
+        }
         else if (startsWith("lexical", order))
+        {
             config.runOrder = TestRunOrder::LexicographicallySorted;
+        }
         else if (startsWith("random", order))
+        {
             config.runOrder = TestRunOrder::Randomized;
+        }
         else
+        {
             return ParserResult::runtimeError("Unrecognised ordering: '" +
                                               order + '\'');
+        }
         return ParserResult::ok(ParseResultType::Matched);
     };
     auto const setRngSeed = [&](std::string const& seed)
@@ -3754,32 +3884,50 @@ Clara::Parser makeCommandLineParser(ConfigData& config)
     {
         auto keypressLc = toLower(keypress);
         if (keypressLc == "never")
+        {
             config.waitForKeypress = WaitForKeypress::Never;
+        }
         else if (keypressLc == "start")
+        {
             config.waitForKeypress = WaitForKeypress::BeforeStart;
+        }
         else if (keypressLc == "exit")
+        {
             config.waitForKeypress = WaitForKeypress::BeforeExit;
+        }
         else if (keypressLc == "both")
+        {
             config.waitForKeypress = WaitForKeypress::BeforeStartAndExit;
+        }
         else
+        {
             return ParserResult::runtimeError(
                 "keypress argument must be one of: never, start, exit or both. "
                 "'" +
                 keypress + "' not recognised");
+        }
         return ParserResult::ok(ParseResultType::Matched);
     };
     auto const setVerbosity = [&](std::string const& verbosity)
     {
         auto lcVerbosity = toLower(verbosity);
         if (lcVerbosity == "quiet")
+        {
             config.verbosity = Verbosity::Quiet;
+        }
         else if (lcVerbosity == "normal")
+        {
             config.verbosity = Verbosity::Normal;
+        }
         else if (lcVerbosity == "high")
+        {
             config.verbosity = Verbosity::High;
+        }
         else
+        {
             return ParserResult::runtimeError("Unrecognised verbosity, '" +
                                               verbosity + '\'');
+        }
         return ParserResult::ok(ParseResultType::Matched);
     };
     auto const setReporter = [&](std::string const& userReporterSpec)
@@ -3883,7 +4031,8 @@ Clara::Parser makeCommandLineParser(ConfigData& config)
         Opt(accept_many, setWarning, "warning name")["-w"]["--warn"](
             "enable warnings") |
         Opt(
-            [&](bool flag) {
+            [&](bool flag)
+            {
                 config.showDurations =
                     flag ? ShowDurations::Always : ShowDurations::Never;
             },
@@ -4495,9 +4644,13 @@ void formatReconstructedExpression(std::ostream&      os,
 {
     if (lhs.size() + rhs.size() < 40 && lhs.find('\n') == std::string::npos &&
         rhs.find('\n') == std::string::npos)
+    {
         os << lhs << ' ' << op << ' ' << rhs;
+    }
     else
+    {
         os << lhs << '\n' << op << '\n' << rhs;
+    }
 }
 } // namespace Catch
 
@@ -4578,7 +4731,9 @@ StringRef EnumInfo::lookup(int value) const
     for (auto const& valueToName : m_values)
     {
         if (valueToName.first == value)
+        {
             return valueToName.second;
+        }
     }
     return "{** unexpected enum value **}"_sr;
 }
@@ -4595,7 +4750,9 @@ Catch::Detail::unique_ptr<EnumInfo> makeEnumInfo(StringRef enumName,
     assert(valueNames.size() == values.size());
     std::size_t i = 0;
     for (auto value : values)
+    {
         enumInfo->m_values.emplace_back(value, valueNames[i++]);
+    }
 
     return enumInfo;
 }
@@ -5088,9 +5245,13 @@ private:
         if (c != EOF)
         {
             if (pbase() == epptr())
+            {
                 m_writer(std::string(1, static_cast<char>(c)));
+            }
             else
+            {
                 sputc(static_cast<char>(c));
+            }
         }
         return 0;
     }
@@ -5431,15 +5592,21 @@ auto operator<<(std::ostream& os, LazyExpression const& lazyExpr)
     -> std::ostream&
 {
     if (lazyExpr.m_isNegated)
+    {
         os << '!';
+    }
 
     if (lazyExpr)
     {
         if (lazyExpr.m_isNegated &&
             lazyExpr.m_transientExpression->isBinaryExpression())
+        {
             os << '(' << *lazyExpr.m_transientExpression << ')';
+        }
         else
+        {
             os << *lazyExpr.m_transientExpression;
+        }
     }
     else
     {
@@ -5506,9 +5673,11 @@ void listTags(IEventListener& reporter, IConfig const& config)
         {
             auto it = tagCounts.find(tagName.original);
             if (it == tagCounts.end())
+            {
                 it = tagCounts
                          .insert(std::make_pair(tagName.original, TagInfo()))
                          .first;
+            }
             it->second.add(tagName.original);
         }
     }
@@ -6267,7 +6436,9 @@ IEventListenerPtr ReporterRegistry::create(std::string const& name,
 {
     auto it = m_impl->factories.find(name);
     if (it == m_impl->factories.end())
+    {
         return nullptr;
+    }
     return it->second->create(CATCH_MOVE(config));
 }
 
@@ -6654,9 +6825,9 @@ struct GeneratorTracker final : TestCaseTracking::TrackerBase, IGeneratorTracker
             // If at least one child started executing, don't wait
             if (std::find_if(m_children.begin(),
                              m_children.end(),
-                             [](TestCaseTracking::ITrackerPtr const& tracker) {
-                                 return tracker->hasStarted();
-                             }) != m_children.end())
+                             [](TestCaseTracking::ITrackerPtr const& tracker)
+                             { return tracker->hasStarted(); }) !=
+                m_children.end())
             {
                 return false;
             }
@@ -6865,9 +7036,13 @@ void RunContext::assertionEnded(AssertionResult&& result)
         {
         }
         else if (m_activeTestCase->getTestCaseInfo().okToFail())
+        {
             m_totals.assertions.failedButOk++;
+        }
         else
+        {
             m_totals.assertions.failed++;
+        }
     }
     else
     {
@@ -6912,7 +7087,9 @@ bool RunContext::sectionStarted(StringRef             sectionName,
         TestCaseTracking::NameAndLocationRef(sectionName, sectionLineInfo));
 
     if (!sectionTracker.isOpen())
+    {
         return false;
+    }
     m_activeSections.push_back(&sectionTracker);
 
     SectionInfo sectionInfo(sectionLineInfo,
@@ -6964,11 +7141,17 @@ IGeneratorTracker* RunContext::createGeneratorTracker(
 bool RunContext::testForMissingAssertions(Counts& assertions)
 {
     if (assertions.total() != 0)
+    {
         return false;
+    }
     if (!m_config->warnAboutMissingAssertions())
+    {
         return false;
+    }
     if (m_trackerContext.currentTracker().hasChildren())
+    {
         return false;
+    }
     m_totals.assertions.failed++;
     assertions.failed++;
     return true;
@@ -7347,9 +7530,13 @@ void RunContext::handleNonExpr(AssertionInfo const& info,
 IResultCapture& getResultCapture()
 {
     if (auto* capture = getCurrentContext().getResultCapture())
+    {
         return *capture;
+    }
     else
+    {
         CATCH_INTERNAL_ERROR("No result capture instance");
+    }
 }
 
 void seedRng(IConfig const& config)
@@ -7436,7 +7623,9 @@ static auto getSingletons() -> std::vector<ISingleton*>*&
 {
     static std::vector<ISingleton*>* g_singletons = nullptr;
     if (!g_singletons)
+    {
         g_singletons = new std::vector<ISingleton*>();
+    }
     return g_singletons;
 }
 } // namespace
@@ -7451,7 +7640,9 @@ void cleanupSingletons()
 {
     auto& singletons = getSingletons();
     for (auto singleton : *singletons)
+    {
         delete singleton;
+    }
     delete singletons;
     singletons = nullptr;
 }
@@ -7636,9 +7827,13 @@ bool replaceInPlace(std::string&       str,
         str += withThis;
         copyBegin = i + replaceThis.size();
         if (copyBegin < origStr.size())
+        {
             i = origStr.find(replaceThis, copyBegin);
+        }
         else
+        {
             i = std::string::npos;
+        }
     } while (i != std::string::npos);
     if (copyBegin < origStr.size())
     {
@@ -7656,12 +7851,16 @@ std::vector<StringRef> splitStringRef(StringRef str, char delimiter)
         if (str[pos] == delimiter)
         {
             if (pos - start > 1)
+            {
                 subStrings.push_back(str.substr(start, pos - start));
+            }
             start = pos + 1;
         }
     }
     if (start < str.size())
+    {
         subStrings.push_back(str.substr(start, str.size() - start));
+    }
     return subStrings;
 }
 
@@ -7669,7 +7868,9 @@ std::ostream& operator<<(std::ostream& os, pluralise const& pluraliser)
 {
     os << pluraliser.m_count << ' ' << pluraliser.m_label;
     if (pluraliser.m_count != 1)
+    {
         os << 's';
+    }
     return os;
 }
 
@@ -7755,9 +7956,13 @@ TagAlias const* TagAliasRegistry::find(std::string const& alias) const
 {
     auto it = m_registry.find(alias);
     if (it != m_registry.end())
+    {
         return &(it->second);
+    }
     else
+    {
         return nullptr;
+    }
 }
 
 std::string TagAliasRegistry::expandAliases(
@@ -7892,11 +8097,11 @@ std::vector<TestCaseHandle> sortTests(
         case TestRunOrder::LexicographicallySorted:
         {
             std::vector<TestCaseHandle> sorted = unsortedTestCases;
-            std::sort(sorted.begin(),
-                      sorted.end(),
-                      [](TestCaseHandle const& lhs, TestCaseHandle const& rhs) {
-                          return lhs.getTestCaseInfo() < rhs.getTestCaseInfo();
-                      });
+            std::sort(
+                sorted.begin(),
+                sorted.end(),
+                [](TestCaseHandle const& lhs, TestCaseHandle const& rhs)
+                { return lhs.getTestCaseInfo() < rhs.getTestCaseInfo(); });
             return sorted;
         }
         case TestRunOrder::Randomized:
@@ -7992,7 +8197,9 @@ std::vector<TestCaseHandle> const& TestRegistry::getAllTestsSorted(
     IConfig const& config) const
 {
     if (m_sortedFunctions.empty())
+    {
         enforceNoDuplicateTestCases(m_handles);
+    }
 
     if (m_currentSortOrder != config.runOrder() || m_sortedFunctions.empty())
     {
@@ -8126,7 +8333,9 @@ void TrackerBase::open()
     m_runState = Executing;
     moveToThis();
     if (m_parent)
+    {
         m_parent->openChild();
+    }
 }
 
 void TrackerBase::close()
@@ -8134,7 +8343,9 @@ void TrackerBase::close()
 
     // Close any still open children (e.g. generators)
     while (&m_ctx.currentTracker() != this)
+    {
         m_ctx.currentTracker().close();
+    }
 
     switch (m_runState)
     {
@@ -8149,7 +8360,9 @@ void TrackerBase::close()
                             m_children.end(),
                             [](ITrackerPtr const& t)
                             { return t->isComplete(); }))
+            {
                 m_runState = CompletedSuccessfully;
+            }
             break;
 
         case NotStarted:
@@ -8167,7 +8380,9 @@ void TrackerBase::fail()
 {
     m_runState = Failed;
     if (m_parent)
+    {
         m_parent->markAsNeedingAnotherRun();
+    }
     moveToParent();
     m_ctx.completeCycle();
 }
@@ -8252,7 +8467,9 @@ SectionTracker& SectionTracker::acquire(
 void SectionTracker::tryOpen()
 {
     if (!isComplete())
+    {
         open();
+    }
 }
 
 void SectionTracker::addInitialFilters(std::vector<std::string> const& filters)
@@ -8268,7 +8485,9 @@ void SectionTracker::addInitialFilters(std::vector<std::string> const& filters)
 void SectionTracker::addNextFilters(std::vector<StringRef> const& filters)
 {
     if (filters.size() > 1)
+    {
         m_filters.insert(m_filters.end(), filters.begin() + 1, filters.end());
+    }
 }
 
 StringRef SectionTracker::trimmedName() const
@@ -8407,12 +8626,14 @@ TestSpecParser& TestSpecParser::parse(std::string const& arg)
     m_realPatternPos = 0;
 
     for (m_pos = 0; m_pos < m_arg.size(); ++m_pos)
+    {
         // if visitChar fails
         if (!visitChar(m_arg[m_pos]))
         {
             m_testSpec.m_invalidSpecs.push_back(arg);
             break;
         }
+    }
     endMode();
     return *this;
 }
@@ -8438,7 +8659,9 @@ bool TestSpecParser::visitChar(char c)
     {
         case None:
             if (processNoneChar(c))
+            {
                 return true;
+            }
             break;
         case Name:
             processNameChar(c);
@@ -8451,7 +8674,9 @@ bool TestSpecParser::visitChar(char c)
         case Tag:
         case QuotedName:
             if (processOtherChar(c))
+            {
                 return true;
+            }
             break;
     }
 
@@ -8490,16 +8715,22 @@ void TestSpecParser::processNameChar(char c)
     if (c == '[')
     {
         if (m_substring == "exclude:")
+        {
             m_exclusion = true;
+        }
         else
+        {
             endMode();
+        }
         startNewMode(Tag);
     }
 }
 bool TestSpecParser::processOtherChar(char c)
 {
     if (!isControlChar(c))
+    {
         return false;
+    }
     m_substring += c;
     endMode();
     return true;
@@ -8591,8 +8822,10 @@ std::string TestSpecParser::preprocessPattern()
 {
     std::string token = m_patternName;
     for (std::size_t i = 0; i < m_escapeChars.size(); ++i)
+    {
         token = token.substr(0, m_escapeChars[i] - i) +
                 token.substr(m_escapeChars[i] - i + 1);
+    }
     m_escapeChars.clear();
     if (startsWith(token, "exclude:"))
     {
@@ -9273,16 +9506,24 @@ void XmlEncode::encodeTo(std::ostream& os) const
             case '>':
                 // See: http://www.w3.org/TR/xml/#syntax
                 if (idx > 2 && m_str[idx - 1] == ']' && m_str[idx - 2] == ']')
+                {
                     os << "&gt;";
+                }
                 else
+                {
                     os << c;
+                }
                 break;
 
             case '\"':
                 if (m_forWhat == ForAttributes)
+                {
                     os << "&quot;";
+                }
                 else
+                {
                     os << c;
+                }
                 break;
 
             default:
@@ -9484,8 +9725,10 @@ XmlWriter& XmlWriter::endElement(XmlFormatting fmt)
 XmlWriter& XmlWriter::writeAttribute(StringRef name, StringRef attribute)
 {
     if (!name.empty() && !attribute.empty())
+    {
         m_os << ' ' << name << "=\""
              << XmlEncode(attribute, XmlEncode::ForAttributes) << '"';
+    }
     return *this;
 }
 
@@ -10109,9 +10352,13 @@ std::string describe_multi_matcher(StringRef          combine,
     for (auto desc = descriptions_begin; desc != descriptions_end; ++desc)
     {
         if (first)
+        {
             first = false;
+        }
         else
+        {
             description += combine;
+        }
         description += *desc;
     }
     description += " )";
@@ -10269,16 +10516,24 @@ public:
                 printOriginalExpression();
                 printReconstructedExpression();
                 if (!result.hasExpression())
+                {
                     printRemainingMessages(Colour::None);
+                }
                 else
+                {
                     printRemainingMessages();
+                }
                 break;
             case ResultWas::ExpressionFailed:
                 if (result.isOk())
+                {
                     printResultType(Colour::ResultSuccess,
                                     compactFailedString + " - but was ok"_sr);
+                }
                 else
+                {
                     printResultType(Colour::Error, compactFailedString);
+                }
                 printOriginalExpression();
                 printReconstructedExpression();
                 printRemainingMessages();
@@ -10392,7 +10647,9 @@ private:
     void printRemainingMessages(Colour::Code colour = compactDimColour)
     {
         if (itMessage == messages.end())
+        {
             return;
+        }
 
         const auto itEnd = messages.cend();
         const auto N     = static_cast<std::size_t>(itEnd - itMessage);
@@ -10459,7 +10716,9 @@ void CompactReporter::assertionEnded(AssertionStats const& _assertionStats)
     {
         if (result.getResultType() != ResultWas::Warning &&
             result.getResultType() != ResultWas::ExplicitSkip)
+        {
             return;
+        }
         printInfoMessages = false;
     }
 
@@ -10496,8 +10755,8 @@ CompactReporter::~CompactReporter() = default;
 
 #if defined(_MSC_VER)
 #pragma warning(push)
-#pragma warning(                                                               \
-    disable : 4061) // Not all labels are EXPLICITLY handled in switch
+#pragma warning(disable                                                        \
+                : 4061) // Not all labels are EXPLICITLY handled in switch
   // Note that 4062 (not all labels are handled and default is missing) is
   // enabled
 #endif
@@ -10539,9 +10798,13 @@ public:
                 passOrFail = "PASSED"_sr;
                 // if( result.hasMessage() )
                 if (messages.size() == 1)
+                {
                     messageLabel = "with message"_sr;
+                }
                 if (messages.size() > 1)
+                {
                     messageLabel = "with messages"_sr;
+                }
                 break;
             case ResultWas::ExpressionFailed:
                 if (result.isOk())
@@ -10555,9 +10818,13 @@ public:
                     passOrFail = "FAILED"_sr;
                 }
                 if (messages.size() == 1)
+                {
                     messageLabel = "with message"_sr;
+                }
                 if (messages.size() > 1)
+                {
                     messageLabel = "with messages"_sr;
+                }
                 break;
             case ResultWas::ThrewException:
                 colour     = Colour::Error;
@@ -10599,17 +10866,25 @@ public:
                 passOrFail = "FAILED"_sr;
                 colour     = Colour::Error;
                 if (messages.size() == 1)
+                {
                     messageLabel = "explicitly with message"_sr;
+                }
                 if (messages.size() > 1)
+                {
                     messageLabel = "explicitly with messages"_sr;
+                }
                 break;
             case ResultWas::ExplicitSkip:
                 colour     = Colour::Skip;
                 passOrFail = "SKIPPED"_sr;
                 if (messages.size() == 1)
+                {
                     messageLabel = "explicitly with message"_sr;
+                }
                 if (messages.size() > 1)
+                {
                     messageLabel = "explicitly with messages"_sr;
+                }
                 break;
                 // These cases are here to prevent compiler warnings
             case ResultWas::Unknown:
@@ -10666,12 +10941,16 @@ private:
     void printMessage() const
     {
         if (!messageLabel.empty())
+        {
             stream << messageLabel << ':' << '\n';
+        }
         for (auto const& msg : messages)
         {
             // If this assertion is a warning ignore any INFO messages
             if (printInfoMessages || msg.type != ResultWas::Info)
+            {
                 stream << TextFlow::Column(msg.message).indent(2) << '\n';
+            }
         }
     }
     void printSourceInfo() const
@@ -10704,13 +10983,21 @@ std::size_t& findMax(std::size_t& i,
                      std::size_t& l)
 {
     if (i > j && i > k && i > l)
+    {
         return i;
+    }
     else if (j > k && j > l)
+    {
         return j;
+    }
     else if (k > l)
+    {
         return k;
+    }
     else
+    {
         return l;
+    }
 }
 
 struct ColumnBreak
@@ -10752,15 +11039,25 @@ public:
         if (m_units == Unit::Auto)
         {
             if (m_inNanoseconds < s_nanosecondsInAMicrosecond)
+            {
                 m_units = Unit::Nanoseconds;
+            }
             else if (m_inNanoseconds < s_nanosecondsInAMillisecond)
+            {
                 m_units = Unit::Microseconds;
+            }
             else if (m_inNanoseconds < s_nanosecondsInASecond)
+            {
                 m_units = Unit::Milliseconds;
+            }
             else if (m_inNanoseconds < s_nanosecondsInAMinute)
+            {
                 m_units = Unit::Seconds;
+            }
             else
+            {
                 m_units = Unit::Minutes;
+            }
         }
     }
 
@@ -10897,9 +11194,13 @@ public:
                            ? std::string(colInfo.width - (strSize + 1), ' ')
                            : std::string();
         if (colInfo.justification == Justification::Left)
+        {
             tp.m_os << colStr << padding << ' ';
+        }
         else
+        {
             tp.m_os << padding << colStr << ' ';
+        }
         return tp;
     }
 
@@ -10983,7 +11284,9 @@ void ConsoleReporter::assertionEnded(AssertionStats const& _assertionStats)
     // TODO: Make configurable whether skips should be printed
     if (!includeResults && result.getResultType() != ResultWas::Warning &&
         result.getResultType() != ResultWas::ExplicitSkip)
+    {
         return;
+    }
 
     lazyPrint();
 
@@ -11008,9 +11311,13 @@ void ConsoleReporter::sectionEnded(SectionStats const& _sectionStats)
         auto guard =
             m_colour->guardColour(Colour::ResultError).engage(m_stream);
         if (m_sectionStack.size() > 1)
+        {
             m_stream << "\nNo assertions in section";
+        }
         else
+        {
             m_stream << "\nNo assertions in test case";
+        }
         m_stream << " '" << _sectionStats.sectionInfo.name << "'\n\n"
                  << std::flush;
     }
@@ -11039,10 +11346,14 @@ void ConsoleReporter::benchmarkPreparing(StringRef name)
     for (auto line : nameCol)
     {
         if (!firstLine)
+        {
             (*m_tablePrinter)
                 << ColumnBreak() << ColumnBreak() << ColumnBreak();
+        }
         else
+        {
             firstLine = false;
+        }
 
         (*m_tablePrinter) << line << ColumnBreak();
     }
@@ -11155,7 +11466,9 @@ void ConsoleReporter::printTestCaseAndSectionHeader()
         auto it = m_sectionStack.begin() + 1, // Skip first section (test case)
             itEnd = m_sectionStack.end();
         for (; it != itEnd; ++it)
+        {
             printHeaderString(it->name, 2);
+        }
     }
 
     SourceLineInfo lineInfo = m_sectionStack.back().lineInfo;
@@ -11231,10 +11544,14 @@ void ConsoleReporter::printTotalsDivider(Totals const& totals)
             makeRatio(totals.testCases.skipped, totals.testCases.total());
         while (failedRatio + failedButOkRatio + passedRatio + skippedRatio <
                CATCH_CONFIG_CONSOLE_WIDTH - 1)
+        {
             findMax(failedRatio, failedButOkRatio, passedRatio, skippedRatio)++;
+        }
         while (failedRatio + failedButOkRatio + passedRatio >
                CATCH_CONFIG_CONSOLE_WIDTH - 1)
+        {
             findMax(failedRatio, failedButOkRatio, passedRatio, skippedRatio)--;
+        }
 
         m_stream << m_colour->guardColour(Colour::Error)
                  << std::string(failedRatio, '=')
@@ -12300,12 +12617,11 @@ std::string getCurrentTimestamp()
 
 std::string fileNameTag(std::vector<Tag> const& tags)
 {
-    auto it = std::find_if(begin(tags),
-                           end(tags),
-                           [](Tag const& tag) {
-                               return tag.original.size() > 0 &&
-                                      tag.original[0] == '#';
-                           });
+    auto it = std::find_if(
+        begin(tags),
+        end(tags),
+        [](Tag const& tag)
+        { return tag.original.size() > 0 && tag.original[0] == '#'; });
     if (it != tags.end())
     {
         return static_cast<std::string>(
@@ -12373,7 +12689,9 @@ void JunitReporter::assertionEnded(AssertionStats const& assertionStats)
     if (assertionStats.assertionResult.getResultType() ==
             ResultWas::ThrewException &&
         !m_okToFail)
+    {
         unexpectedExceptions++;
+    }
     CumulativeReporterBase::assertionEnded(assertionStats);
 }
 
@@ -12404,9 +12722,13 @@ void JunitReporter::writeRun(TestRunNode const& testRunNode, double suiteTime)
     xml.writeAttribute("tests"_sr, stats.totals.assertions.total());
     xml.writeAttribute("hostname"_sr, "tbd"_sr); // !TBD
     if (m_config->showDurations() == ShowDurations::Never)
+    {
         xml.writeAttribute("time"_sr, ""_sr);
+    }
     else
+    {
         xml.writeAttribute("time"_sr, formatDuration(suiteTime));
+    }
     xml.writeAttribute("timestamp"_sr, getCurrentTimestamp());
 
     // Write properties
@@ -12425,7 +12747,9 @@ void JunitReporter::writeRun(TestRunNode const& testRunNode, double suiteTime)
 
     // Write test cases
     for (auto const& child : testRunNode.children)
+    {
         writeTestCase(*child);
+    }
 
     xml.scopedElement("system-out")
         .writeText(trim(stdOutForSuite), XmlFormatting::Newline);
@@ -12454,8 +12778,10 @@ void JunitReporter::writeTestCase(TestCaseNode const& testCaseNode)
     }
 
     if (!m_config->name().empty())
+    {
         className =
             static_cast<std::string>(m_config->name()) + '.' + className;
+    }
 
     normalizeNamespaceMarkers(className);
 
@@ -12469,7 +12795,9 @@ void JunitReporter::writeSection(std::string const& className,
 {
     std::string name = trim(sectionNode.stats.sectionInfo.name);
     if (!rootName.empty())
+    {
         name = rootName + '/' + name;
+    }
 
     if (sectionNode.stats.assertions.total() > 0 ||
         !sectionNode.stdOut.empty() || !sectionNode.stdErr.empty())
@@ -12502,17 +12830,27 @@ void JunitReporter::writeSection(std::string const& className,
         writeAssertions(sectionNode);
 
         if (!sectionNode.stdOut.empty())
+        {
             xml.scopedElement("system-out")
                 .writeText(trim(sectionNode.stdOut), XmlFormatting::Newline);
+        }
         if (!sectionNode.stdErr.empty())
+        {
             xml.scopedElement("system-err")
                 .writeText(trim(sectionNode.stdErr), XmlFormatting::Newline);
+        }
     }
     for (auto const& childNode : sectionNode.childSections)
+    {
         if (className.empty())
+        {
             writeSection(name, "", *childNode, testOkToFail);
+        }
         else
+        {
             writeSection(className, name, *childNode, testOkToFail);
+        }
+    }
 }
 
 void JunitReporter::writeAssertions(SectionNode const& sectionNode)
@@ -12587,10 +12925,16 @@ void JunitReporter::writeAssertion(AssertionStats const& stats)
         }
 
         if (result.hasMessage())
+        {
             rss << result.getMessage() << '\n';
+        }
         for (auto const& msg : stats.infoMessages)
+        {
             if (msg.type == ResultWas::Info)
+            {
                 rss << msg.message << '\n';
+            }
+        }
 
         rss << "at " << result.getSourceInfo();
         xml.writeText(rss.str(), XmlFormatting::Newline);
@@ -12916,7 +13260,9 @@ void SonarQubeReporter::writeTestFile(
     xml.writeAttribute("path"_sr, filename);
 
     for (auto const& child : testCaseNodes)
+    {
         writeTestCase(*child);
+    }
 }
 
 void SonarQubeReporter::writeTestCase(TestCaseNode const& testCaseNode)
@@ -12933,7 +13279,9 @@ void SonarQubeReporter::writeSection(std::string const& rootName,
 {
     std::string name = trim(sectionNode.stats.sectionInfo.name);
     if (!rootName.empty())
+    {
         name = rootName + '/' + name;
+    }
 
     if (sectionNode.stats.assertions.total() > 0 ||
         !sectionNode.stdOut.empty() || !sectionNode.stdErr.empty())
@@ -12948,7 +13296,9 @@ void SonarQubeReporter::writeSection(std::string const& rootName,
     }
 
     for (auto const& childNode : sectionNode.childSections)
+    {
         writeSection(name, *childNode, okToFail);
+    }
 }
 
 void SonarQubeReporter::writeAssertions(SectionNode const& sectionNode,
@@ -13029,11 +13379,17 @@ void SonarQubeReporter::writeAssertion(AssertionStats const& stats,
         }
 
         if (result.hasMessage())
+        {
             textRss << result.getMessage() << '\n';
+        }
 
         for (auto const& msg : stats.infoMessages)
+        {
             if (msg.type == ResultWas::Info)
+            {
                 textRss << msg.message << '\n';
+            }
+        }
 
         textRss << "at " << result.getSourceInfo();
         xml.writeText(textRss.str(), XmlFormatting::Newline);
@@ -13103,9 +13459,13 @@ public:
                 printOriginalExpression();
                 printReconstructedExpression();
                 if (!result.hasExpression())
+                {
                     printRemainingMessages(Colour::None);
+                }
                 else
+                {
                     printRemainingMessages();
+                }
                 break;
             case ResultWas::ExpressionFailed:
                 if (result.isOk())
@@ -13320,9 +13680,13 @@ void printHeaderString(std::ostream&      os,
 {
     std::size_t i = _string.find(": ");
     if (i != std::string::npos)
+    {
         i += 2;
+    }
     else
+    {
         i = 0;
+    }
     os << TextFlow::Column(_string).indent(indent + i).initialIndent(indent)
        << '\n';
 }
@@ -13362,7 +13726,9 @@ void TeamCityReporter::assertionEnded(AssertionStats const& assertionStats)
 
         ReusableStringStream msg;
         if (!m_headerPrintedForThisSection)
+        {
             printSectionHeader(msg.get());
+        }
         m_headerPrintedForThisSection = true;
 
         msg << result.getSourceInfo() << '\n';
@@ -13400,11 +13766,17 @@ void TeamCityReporter::assertionEnded(AssertionStats const& assertionStats)
                 CATCH_ERROR("Not implemented");
         }
         if (assertionStats.infoMessages.size() == 1)
+        {
             msg << " with message:";
+        }
         if (assertionStats.infoMessages.size() > 1)
+        {
             msg << " with messages:";
+        }
         for (auto const& messageInfo : assertionStats.infoMessages)
+        {
             msg << "\n  \"" << messageInfo.message << '"';
+        }
 
         if (result.hasExpression())
         {
@@ -13448,11 +13820,15 @@ void TeamCityReporter::testCaseEnded(TestCaseStats const& testCaseStats)
     StreamingReporterBase::testCaseEnded(testCaseStats);
     auto const& testCaseInfo = *testCaseStats.testInfo;
     if (!testCaseStats.stdOut.empty())
+    {
         m_stream << "##teamcity[testStdOut name='" << escape(testCaseInfo.name)
                  << "' out='" << escape(testCaseStats.stdOut) << "']\n";
+    }
     if (!testCaseStats.stdErr.empty())
+    {
         m_stream << "##teamcity[testStdErr name='" << escape(testCaseInfo.name)
                  << "' out='" << escape(testCaseStats.stdErr) << "']\n";
+    }
     m_stream << "##teamcity[testFinished name='" << escape(testCaseInfo.name)
              << "' duration='" << m_testTimer.getElapsedMilliseconds()
              << "']\n";
@@ -13471,7 +13847,9 @@ void TeamCityReporter::printSectionHeader(std::ostream& os)
             it = m_sectionStack.begin() + 1, // Skip first section (test case)
             itEnd = m_sectionStack.end();
         for (; it != itEnd; ++it)
+        {
             printHeaderString(os, it->name);
+        }
         os << lineOfChars('-') << '\n';
     }
 
@@ -13523,7 +13901,9 @@ void XmlReporter::testRunStarting(TestRunInfo const& testInfo)
     StreamingReporterBase::testRunStarting(testInfo);
     std::string stylesheetRef = getStylesheetRef();
     if (!stylesheetRef.empty())
+    {
         m_xml.writeStylesheetRef(stylesheetRef);
+    }
     m_xml.startElement("Catch2TestRun")
         .writeAttribute("name"_sr, m_config->name())
         .writeAttribute("rng-seed"_sr, m_config->rngSeed())
@@ -13545,7 +13925,9 @@ void XmlReporter::testCaseStarting(TestCaseInfo const& testInfo)
     writeSourceInfo(testInfo.lineInfo);
 
     if (m_config->showDurations() == ShowDurations::Always)
+    {
         m_testCaseTimer.start();
+    }
     m_xml.ensureTagClosed();
 }
 
@@ -13650,7 +14032,9 @@ void XmlReporter::assertionEnded(AssertionStats const& assertionStats)
     }
 
     if (result.hasExpression())
+    {
         m_xml.endElement();
+    }
 }
 
 void XmlReporter::sectionEnded(SectionStats const& sectionStats)
@@ -13667,8 +14051,10 @@ void XmlReporter::sectionEnded(SectionStats const& sectionStats)
             e.writeAttribute("skipped"_sr, sectionStats.assertions.skipped > 0);
 
             if (m_config->showDurations() == ShowDurations::Always)
+            {
                 e.writeAttribute("durationInSeconds"_sr,
                                  sectionStats.durationInSeconds);
+            }
         }
         // Ends assertion tag
         m_xml.endElement();
@@ -13683,14 +14069,20 @@ void XmlReporter::testCaseEnded(TestCaseStats const& testCaseStats)
     e.writeAttribute("skips"_sr, testCaseStats.totals.assertions.skipped);
 
     if (m_config->showDurations() == ShowDurations::Always)
+    {
         e.writeAttribute("durationInSeconds"_sr,
                          m_testCaseTimer.getElapsedSeconds());
+    }
     if (!testCaseStats.stdOut.empty())
+    {
         m_xml.scopedElement("StdOut").writeText(
             trim(StringRef(testCaseStats.stdOut)), XmlFormatting::Newline);
+    }
     if (!testCaseStats.stdErr.empty())
+    {
         m_xml.scopedElement("StdErr").writeText(
             trim(StringRef(testCaseStats.stdErr)), XmlFormatting::Newline);
+    }
 
     m_xml.endElement();
 }

@@ -139,7 +139,7 @@ std::u8string wrap_lines<std::u8string_view>(const std::u8string_view& text,
 
     std::ranges::for_each(text, process_octet);
 
-    auto           str    = os.str();
+    auto  str    = os.str();
     auto& result = reinterpret_cast<std::u8string&>(str);
     return result;
 }
@@ -174,7 +174,7 @@ int main()
         u8string_view u8view =
             u8"тут странный текст на русском языке, 37+ символов";
         u8string wraped_u8 = om::wrap_lines(u8view, 10);
-        auto&  u8ascii   = reinterpret_cast<string&>(wraped_u8);
+        auto&    u8ascii   = reinterpret_cast<string&>(wraped_u8);
         cout << u8ascii << endl;
 
         cout << "-------------------" << endl;
@@ -182,7 +182,7 @@ int main()
         u8string u8str_2 =
             u8"тут странный текст на русском языке, 37+ символов";
         u8string wraped_u8_2 = om::wrap_lines(u8str_2, 10);
-        auto&  u8ascii_2   = reinterpret_cast<string&>(wraped_u8_2);
+        auto&    u8ascii_2   = reinterpret_cast<string&>(wraped_u8_2);
         cout << u8ascii_2 << endl;
 
         return 0;

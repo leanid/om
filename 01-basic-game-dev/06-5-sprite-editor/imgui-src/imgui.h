@@ -83,10 +83,10 @@ ImFontAtlasFlags, ImFontAtlas, ImFont)
 #endif
 #if defined(__clang__) || defined(__GNUC__)
 #define IM_FMTARGS(FMT)                                                        \
-    __attribute__(                                                             \
-        (format(printf,                                                        \
-                FMT,                                                           \
-                FMT + 1))) // Apply printf-style warnings to user functions.
+    __attribute__((                                                            \
+        format(printf,                                                         \
+               FMT,                                                            \
+               FMT + 1))) // Apply printf-style warnings to user functions.
 #define IM_FMTLIST(FMT) __attribute__((format(printf, FMT, 0)))
 #else
 #define IM_FMTARGS(FMT)
@@ -96,9 +96,9 @@ ImFontAtlasFlags, ImFontAtlas, ImFont)
     ((int)(sizeof(_ARR) / sizeof(*_ARR))) // Size of a static C-style array.
                                           // Don't use on pointers!
 #define IM_OFFSETOF(_TYPE, _MEMBER)                                            \
-    ((size_t) &                                                                \
-     (((_TYPE*)0)->_MEMBER)) // Offset of _MEMBER within _TYPE. Standardized as
-                             // offsetof() in modern C++.
+    ((size_t)&(                                                                \
+        ((_TYPE*)0)->_MEMBER)) // Offset of _MEMBER within _TYPE. Standardized
+                               // as offsetof() in modern C++.
 #define IM_UNUSED(_VAR)                                                        \
     ((void)_VAR) // Used to silence "unused variable warnings". Often useful as
                  // asserts may be stripped out from final builds.
@@ -329,7 +329,7 @@ IMGUI_API ImGuiIO&
 GetIO(); // access the IO structure (mouse/keyboard/gamepad inputs, time,
          // various configuration options/flags)
 IMGUI_API ImGuiStyle&
-          GetStyle(); // access the Style structure (colors, sizes). Always use
+GetStyle(); // access the Style structure (colors, sizes). Always use
             // PushStyleCol(), PushStyleVar() to modify style mid-frame.
 IMGUI_API void NewFrame(); // start a new ImGui frame, you can submit any
                            // command from this point until Render()/EndFrame().
@@ -578,13 +578,13 @@ IMGUI_API void SetScrollFromPosY(
 // Parameters stacks (shared)
 IMGUI_API void PushFont(
     ImFont* font); // use NULL as a shortcut to push default font
-IMGUI_API void  PopFont();
-IMGUI_API void  PushStyleColor(ImGuiCol idx, ImU32 col);
-IMGUI_API void  PushStyleColor(ImGuiCol idx, const ImVec4& col);
-IMGUI_API void  PopStyleColor(int count = 1);
-IMGUI_API void  PushStyleVar(ImGuiStyleVar idx, float val);
-IMGUI_API void  PushStyleVar(ImGuiStyleVar idx, const ImVec2& val);
-IMGUI_API void  PopStyleVar(int count = 1);
+IMGUI_API void          PopFont();
+IMGUI_API void          PushStyleColor(ImGuiCol idx, ImU32 col);
+IMGUI_API void          PushStyleColor(ImGuiCol idx, const ImVec4& col);
+IMGUI_API void          PopStyleColor(int count = 1);
+IMGUI_API void          PushStyleVar(ImGuiStyleVar idx, float val);
+IMGUI_API void          PushStyleVar(ImGuiStyleVar idx, const ImVec2& val);
+IMGUI_API void          PopStyleVar(int count = 1);
 IMGUI_API const ImVec4& GetStyleColorVec4(
     ImGuiCol
         idx); // retrieve style color as stored in ImGuiStyle structure. use to
@@ -1856,10 +1856,11 @@ enum ImGuiWindowFlags_
 
     // [Obsolete]
     // ImGuiWindowFlags_ShowBorders          = 1 << 7,   // --> Set
-    // style.FrameBorderSize=1.0f / style.WindowBorderSize=1.0f to enable borders
-    // around windows and items ImGuiWindowFlags_ResizeFromAnySide    = 1 << 17,
-    // // --> Set io.ConfigWindowsResizeFromEdges and make sure mouse cursors are
-    // supported by back-end (io.BackendFlags &
+    // style.FrameBorderSize=1.0f / style.WindowBorderSize=1.0f to enable
+    // borders around windows and items ImGuiWindowFlags_ResizeFromAnySide    =
+    // 1 << 17,
+    // // --> Set io.ConfigWindowsResizeFromEdges and make sure mouse cursors
+    // are supported by back-end (io.BackendFlags &
     // ImGuiBackendFlags_HasMouseCursors)
 };
 
@@ -2415,9 +2416,9 @@ enum ImGuiCol_
     ImGuiCol_ColumnHovered = ImGuiCol_SeparatorHovered,
     ImGuiCol_ColumnActive  = ImGuiCol_SeparatorActive // [renamed in 1.51]
 // ImGuiCol_CloseButton, ImGuiCol_CloseButtonActive,
-// ImGuiCol_CloseButtonHovered, // [unused since 1.60+] the close button now uses
-// regular button colors. ImGuiCol_ComboBg, // [unused since 1.53+] ComboBg has
-// been merged with PopupBg, so a redirect isn't accurate.
+// ImGuiCol_CloseButtonHovered, // [unused since 1.60+] the close button now
+// uses regular button colors. ImGuiCol_ComboBg, // [unused since 1.53+] ComboBg
+// has been merged with PopupBg, so a redirect isn't accurate.
 #endif
 };
 
@@ -2634,8 +2635,7 @@ enum ImGuiCond_
 // structures used by dear imgui can be safely initialized by a zero-memset.
 //-----------------------------------------------------------------------------
 
-template <typename T>
-struct ImVector
+template <typename T> struct ImVector
 {
     int Size;
     int Capacity;
@@ -2656,7 +2656,7 @@ struct ImVector
     {
         Size = Capacity = 0;
         Data            = NULL;
-        operator        =(src);
+        operator=(src);
     }
     inline ImVector<T>& operator=(const ImVector<T>& src)
     {
@@ -2668,7 +2668,9 @@ struct ImVector
     inline ~ImVector()
     {
         if (Data)
+        {
             ImGui::MemFree(Data);
+        }
     }
 
     inline bool empty() const { return Size == 0; }
@@ -2740,22 +2742,32 @@ struct ImVector
     inline void resize(int new_size)
     {
         if (new_size > Capacity)
+        {
             reserve(_grow_capacity(new_size));
+        }
         Size = new_size;
     }
     inline void resize(int new_size, const T& v)
     {
         if (new_size > Capacity)
+        {
             reserve(_grow_capacity(new_size));
+        }
         if (new_size > Size)
+        {
             for (int n = Size; n < new_size; n++)
+            {
                 memcpy(&Data[n], &v, sizeof(v));
+            }
+        }
         Size = new_size;
     }
     inline void reserve(int new_capacity)
     {
         if (new_capacity <= Capacity)
+        {
             return;
+        }
         T* new_data = (T*)ImGui::MemAlloc((size_t)new_capacity * sizeof(T));
         if (Data)
         {
@@ -2772,7 +2784,9 @@ struct ImVector
     inline void push_back(const T& v)
     {
         if (Size == Capacity)
+        {
             reserve(_grow_capacity(Size + 1));
+        }
         memcpy(&Data[Size], &v, sizeof(v));
         Size++;
     }
@@ -2784,9 +2798,13 @@ struct ImVector
     inline void push_front(const T& v)
     {
         if (Size == 0)
+        {
             push_back(v);
+        }
         else
+        {
             insert(Data, v);
+        }
     }
     inline T* erase(const T* it)
     {
@@ -2815,7 +2833,9 @@ struct ImVector
         IM_ASSERT(it >= Data && it < Data + Size);
         const ptrdiff_t off = it - Data;
         if (it < Data + Size - 1)
+        {
             memcpy(Data + off, Data + Size - 1, sizeof(T));
+        }
         Size--;
         return Data + off;
     }
@@ -2824,11 +2844,15 @@ struct ImVector
         IM_ASSERT(it >= Data && it <= Data + Size);
         const ptrdiff_t off = it - Data;
         if (Size == Capacity)
+        {
             reserve(_grow_capacity(Size + 1));
+        }
         if (off < (int)Size)
+        {
             memmove(Data + off + 1,
                     Data + off,
                     ((size_t)Size - (size_t)off) * sizeof(T));
+        }
         memcpy(&Data[off], &v, sizeof(v));
         Size++;
         return Data + off;
@@ -2838,8 +2862,12 @@ struct ImVector
         const T* data     = Data;
         const T* data_end = Data + Size;
         while (data < data_end)
+        {
             if (*data++ == v)
+            {
                 return true;
+            }
+        }
         return false;
     }
     inline int index_from_ptr(const T* it) const
@@ -3492,8 +3520,7 @@ inline void operator delete(void*, ImNewDummy, void*) {
 } // This is only required so we can use the symetrical new()
 #define IM_PLACEMENT_NEW(_PTR) new (ImNewDummy(), _PTR)
 #define IM_NEW(_TYPE) new (ImNewDummy(), ImGui::MemAlloc(sizeof(_TYPE))) _TYPE
-template <typename T>
-void IM_DELETE(T* p)
+template <typename T> void IM_DELETE(T* p)
 {
     if (p)
     {
@@ -3514,7 +3541,9 @@ struct ImGuiOnceUponAFrame
     {
         int current_frame = ImGui::GetFrameCount();
         if (RefFrame == current_frame)
+        {
             return false;
+        }
         RefFrame = current_frame;
         return true;
     }
@@ -3755,7 +3784,7 @@ struct ImGuiListClipper
     (((ImU32)(A) << IM_COL32_A_SHIFT) | ((ImU32)(B) << IM_COL32_B_SHIFT) |     \
      ((ImU32)(G) << IM_COL32_G_SHIFT) | ((ImU32)(R) << IM_COL32_R_SHIFT))
 #define IM_COL32_WHITE IM_COL32(255, 255, 255, 255) // Opaque white = 0xFFFFFFFF
-#define IM_COL32_BLACK IM_COL32(0, 0, 0, 255) // Opaque black
+#define IM_COL32_BLACK IM_COL32(0, 0, 0, 255)       // Opaque black
 #define IM_COL32_BLACK_TRANS                                                   \
     IM_COL32(0, 0, 0, 0) // Transparent black = 0x00000000
 
@@ -4128,7 +4157,9 @@ struct ImDrawList
     {
         if (_Path.Size == 0 ||
             memcmp(&_Path.Data[_Path.Size - 1], &pos, 8) != 0)
+        {
             _Path.push_back(pos);
+        }
     }
     inline void PathFillConvex(ImU32 col)
     {
@@ -4300,8 +4331,8 @@ struct ImFontConfig
                       //          maps to the resulting font height).
     int OversampleH;  // 3        // Rasterize at higher quality for sub-pixel
                       // positioning. Read
-                     // https://github.com/nothings/stb/blob/master/tests/oversample/README.md
-                     // for details.
+    // https://github.com/nothings/stb/blob/master/tests/oversample/README.md
+    // for details.
     int OversampleV; // 1        // Rasterize at higher quality for sub-pixel
                      // positioning. We don't use sub-pixel positions on the Y
                      // axis.
@@ -4372,16 +4403,17 @@ struct ImFontGlyphRangesBuilder
         int off  = (n >> 5);
         int mask = 1 << (n & 31);
         UsedChars[off] |= mask;
-    }                                                // Set bit n in the array
+    } // Set bit n in the array
     void           AddChar(ImWchar c) { SetBit(c); } // Add character
     IMGUI_API void AddText(
         const char* text,
         const char* text_end =
             NULL); // Add string (each character of the UTF-8 string are added)
     IMGUI_API void AddRanges(
-        const ImWchar* ranges); // Add ranges, e.g.
-                                // builder.AddRanges(ImFontAtlas::GetGlyphRangesDefault())
-                                // to force add all of ASCII/Latin+Ext
+        const ImWchar*
+            ranges); // Add ranges, e.g.
+                     // builder.AddRanges(ImFontAtlas::GetGlyphRangesDefault())
+                     // to force add all of ASCII/Latin+Ext
     IMGUI_API void BuildRanges(
         ImVector<ImWchar>* out_ranges); // Output new ranges
 };
@@ -4512,9 +4544,9 @@ struct ImFontAtlas
     // details. NB: Consider using ImFontGlyphRangesBuilder to build glyph
     // ranges from textual data.
     IMGUI_API const ImWchar*
-                    GetGlyphRangesDefault(); // Basic Latin, Extended Latin
+    GetGlyphRangesDefault(); // Basic Latin, Extended Latin
     IMGUI_API const ImWchar*
-                    GetGlyphRangesKorean(); // Default + Korean characters
+    GetGlyphRangesKorean(); // Default + Korean characters
     IMGUI_API const ImWchar*
     GetGlyphRangesJapanese(); // Default + Hiragana, Katakana, Half-Width,
                               // Selection of 1946 Ideographs
@@ -4582,7 +4614,9 @@ struct ImFontAtlas
     const CustomRect* GetCustomRectByIndex(int index) const
     {
         if (index < 0)
+        {
             return NULL;
+        }
         return &CustomRects[index];
     }
 

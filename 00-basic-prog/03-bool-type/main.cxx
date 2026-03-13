@@ -1,5 +1,5 @@
 #pragma clang diagnostic push
-#pragma ide diagnostic   ignored "Simplify"
+#pragma ide diagnostic ignored "Simplify"
 #include <iostream>
 
 #include "bool.hxx"

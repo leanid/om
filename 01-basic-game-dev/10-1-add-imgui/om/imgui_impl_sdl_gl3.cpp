@@ -59,7 +59,9 @@ void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
     int      fb_width  = (int)(io.DisplaySize.x * io.DisplayFramebufferScale.x);
     int      fb_height = (int)(io.DisplaySize.y * io.DisplayFramebufferScale.y);
     if (fb_width == 0 || fb_height == 0)
+    {
         return;
+    }
     draw_data->ScaleClipRects(io.DisplayFramebufferScale);
 
     OM_GL_CHECK();
@@ -256,21 +258,37 @@ void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
                         last_blend_dst_alpha);
     OM_GL_CHECK();
     if (last_enable_blend)
+    {
         glEnable(GL_BLEND);
+    }
     else
+    {
         glDisable(GL_BLEND);
+    }
     if (last_enable_cull_face)
+    {
         glEnable(GL_CULL_FACE);
+    }
     else
+    {
         glDisable(GL_CULL_FACE);
+    }
     if (last_enable_depth_test)
+    {
         glEnable(GL_DEPTH_TEST);
+    }
     else
+    {
         glDisable(GL_DEPTH_TEST);
+    }
     if (last_enable_scissor_test)
+    {
         glEnable(GL_SCISSOR_TEST);
+    }
     else
+    {
         glDisable(GL_SCISSOR_TEST);
+    }
 
     OM_GL_CHECK();
     // no in opengl es 2.0
@@ -314,19 +332,29 @@ bool ImGui_ImplSdlGL3_ProcessEvent(SDL_Event* event)
         case SDL_EVENT_MOUSE_WHEEL:
         {
             if (event->wheel.y > 0)
+            {
                 g_MouseWheel = 1;
+            }
             if (event->wheel.y < 0)
+            {
                 g_MouseWheel = -1;
+            }
             return true;
         }
         case SDL_EVENT_MOUSE_BUTTON_DOWN:
         {
             if (event->button.button == SDL_BUTTON_LEFT)
+            {
                 g_MousePressed[0] = true;
+            }
             if (event->button.button == SDL_BUTTON_RIGHT)
+            {
                 g_MousePressed[1] = true;
+            }
             if (event->button.button == SDL_BUTTON_MIDDLE)
+            {
                 g_MousePressed[2] = true;
+            }
             return true;
         }
         case SDL_EVENT_TEXT_INPUT:
@@ -523,25 +551,39 @@ void ImGui_ImplSdlGL3_InvalidateDeviceObjects()
         //   glDeleteVertexArrays(1, &g_VaoHandle);
     }
     if (g_VboHandle)
+    {
         glDeleteBuffers(1, &g_VboHandle);
+    }
     if (g_ElementsHandle)
+    {
         glDeleteBuffers(1, &g_ElementsHandle);
+    }
     g_VaoHandle = g_VboHandle = g_ElementsHandle = 0;
 
     if (g_ShaderHandle && g_VertHandle)
+    {
         glDetachShader(g_ShaderHandle, g_VertHandle);
+    }
     if (g_VertHandle)
+    {
         glDeleteShader(g_VertHandle);
+    }
     g_VertHandle = 0;
 
     if (g_ShaderHandle && g_FragHandle)
+    {
         glDetachShader(g_ShaderHandle, g_FragHandle);
+    }
     if (g_FragHandle)
+    {
         glDeleteShader(g_FragHandle);
+    }
     g_FragHandle = 0;
 
     if (g_ShaderHandle)
+    {
         glDeleteProgram(g_ShaderHandle);
+    }
     g_ShaderHandle = 0;
 
     if (g_FontTexture)
@@ -616,7 +658,9 @@ void ImGui_ImplSdlGL3_Shutdown()
 void ImGui_ImplSdlGL3_NewFrame(SDL_Window* window)
 {
     if (!g_FontTexture)
+    {
         ImGui_ImplSdlGL3_CreateDeviceObjects();
+    }
 
     ImGuiIO& io = ImGui::GetIO();
 
@@ -642,9 +686,13 @@ void ImGui_ImplSdlGL3_NewFrame(SDL_Window* window)
     float  mx, my;
     Uint32 mouseMask = SDL_GetMouseState(&mx, &my);
     if (SDL_GetWindowFlags(window) & SDL_WINDOW_MOUSE_FOCUS)
+    {
         io.MousePos = ImVec2(mx, my);
+    }
     else
+    {
         io.MousePos = ImVec2(-FLT_MAX, -FLT_MAX);
+    }
 
     io.MouseDown[0] =
         g_MousePressed[0] || (mouseMask & SDL_BUTTON_MASK(SDL_BUTTON_LEFT)) !=

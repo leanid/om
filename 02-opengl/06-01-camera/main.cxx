@@ -109,9 +109,13 @@ void mouse_callback(float xpos, float ypos)
     pitch += ypos * sensitivity; // yoffset;
 
     if (pitch > 89.0f)
+    {
         pitch = 89.0f;
+    }
     if (pitch < -89.0f)
+    {
         pitch = -89.0f;
+    }
 
     glm::vec3 front;
     front.x = std::sin(glm::radians(yaw));
@@ -331,11 +335,17 @@ static int main_impl()
             else if (SDL_EVENT_MOUSE_WHEEL == event.type)
             {
                 if (fovy >= 1.0f && fovy <= 45.0f)
+                {
                     fovy -= event.wheel.y;
+                }
                 if (fovy <= 1.0f)
+                {
                     fovy = 1.0f;
+                }
                 if (fovy >= 45.0f)
+                {
                     fovy = 45.0f;
+                }
             }
             else if (SDL_EVENT_KEY_UP == event.type)
             {
@@ -483,15 +493,23 @@ static int main_impl()
             cameraSpeed            = properties.get_float("cameraSpeed");
             const bool* keys_state = SDL_GetKeyboardState(nullptr);
             if (keys_state[SDL_SCANCODE_W])
+            {
                 cameraPos += cameraSpeed * deltaTime * cameraFront;
+            }
             if (keys_state[SDL_SCANCODE_S])
+            {
                 cameraPos -= cameraSpeed * deltaTime * cameraFront;
+            }
             if (keys_state[SDL_SCANCODE_A])
+            {
                 cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) *
                              cameraSpeed * deltaTime;
+            }
             if (keys_state[SDL_SCANCODE_D])
+            {
                 cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) *
                              cameraSpeed * deltaTime;
+            }
 
             view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
         }

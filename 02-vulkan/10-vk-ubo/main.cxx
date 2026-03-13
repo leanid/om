@@ -184,7 +184,9 @@ int main_cant_throw(int argc, char** argv)
                     case sdl::EventType::KEY_DOWN:
                         if (static_cast<sdl::Keycode>(event.key.key) ==
                             sdl::Keycode::ESCAPE)
+                        {
                             running = false;
+                        }
                         break;
                     case sdl::EventType::WINDOW_RESIZED:
                         render.recreate_swapchain();

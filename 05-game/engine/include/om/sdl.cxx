@@ -741,7 +741,7 @@ class gl_context::impl
 {
 public:
     SDL_GLContext context = nullptr;
-    ~impl(){};
+    ~impl() {};
 };
 
 gl_context::gl_context()
@@ -759,7 +759,9 @@ gl_context::gl_context(gl_context&& ctx)
 gl_context::~gl_context()
 {
     if (data)
+    {
         delete data;
+    }
 }
 
 std::vector<std::string_view> video::get_drivers()
@@ -851,7 +853,9 @@ bool video::gl_make_current(const window& window, const gl_context& context)
             "Window is not valid. It might had already been closed");
     }
     if (SDL_GL_MakeCurrent(window.data->window, context.data->context))
+    {
         return true;
+    }
     return false;
 }
 

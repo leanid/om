@@ -1715,19 +1715,29 @@ bool ImGui_ImplSdlGL3_ProcessEvent(const SDL_Event* event)
         case SDL_EVENT_MOUSE_WHEEL:
         {
             if (event->wheel.y > 0)
+            {
                 g_MouseWheel = 1;
+            }
             if (event->wheel.y < 0)
+            {
                 g_MouseWheel = -1;
+            }
             return true;
         }
         case SDL_EVENT_MOUSE_BUTTON_DOWN:
         {
             if (event->button.button == SDL_BUTTON_LEFT)
+            {
                 g_MousePressed[0] = true;
+            }
             if (event->button.button == SDL_BUTTON_RIGHT)
+            {
                 g_MousePressed[1] = true;
+            }
             if (event->button.button == SDL_BUTTON_MIDDLE)
+            {
                 g_MousePressed[2] = true;
+            }
             return true;
         }
         case SDL_EVENT_TEXT_INPUT:

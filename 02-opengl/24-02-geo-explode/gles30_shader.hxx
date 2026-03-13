@@ -54,7 +54,7 @@ private:
         std::string_view geometry;
         std::string_view fragment;
     };
-    void create(shader_sources src) noexcept(false);
+    void          create(shader_sources src) noexcept(false);
     std::uint32_t program_id;
 };
 } // end namespace gles30

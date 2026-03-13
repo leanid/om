@@ -340,7 +340,9 @@ static inline float ImInvLength(const ImVec2& lhs, float fail_value)
 {
     float d = lhs.x * lhs.x + lhs.y * lhs.y;
     if (d > 0.0f)
+    {
         return 1.0f / sqrtf(d);
+    }
     return fail_value;
 }
 static inline float ImFloor(float f)
@@ -362,9 +364,13 @@ static inline ImVec2 ImRotate(const ImVec2& v, float cos_a, float sin_a)
 static inline float ImLinearSweep(float current, float target, float speed)
 {
     if (current < target)
+    {
         return ImMin(current + speed, target);
+    }
     if (current > target)
+    {
         return ImMax(current - speed, target);
+    }
     return current;
 }
 static inline ImVec2 ImMul(const ImVec2& lhs, const ImVec2& rhs)
@@ -576,24 +582,40 @@ struct IMGUI_API ImRect
     void Add(const ImVec2& p)
     {
         if (Min.x > p.x)
+        {
             Min.x = p.x;
+        }
         if (Min.y > p.y)
+        {
             Min.y = p.y;
+        }
         if (Max.x < p.x)
+        {
             Max.x = p.x;
+        }
         if (Max.y < p.y)
+        {
             Max.y = p.y;
+        }
     }
     void Add(const ImRect& r)
     {
         if (Min.x > r.Min.x)
+        {
             Min.x = r.Min.x;
+        }
         if (Min.y > r.Min.y)
+        {
             Min.y = r.Min.y;
+        }
         if (Max.x < r.Max.x)
+        {
             Max.x = r.Max.x;
+        }
         if (Max.y < r.Max.y)
+        {
             Max.y = r.Max.y;
+        }
     }
     void Expand(const float amount)
     {
@@ -637,9 +659,13 @@ struct IMGUI_API ImRect
     void FixInverted()
     {
         if (Min.x > Max.x)
+        {
             ImSwap(Min.x, Max.x);
+        }
         if (Min.y > Max.y)
+        {
             ImSwap(Min.y, Max.y);
+        }
     }
     bool IsFinite() const { return Min.x != FLT_MAX; }
 };

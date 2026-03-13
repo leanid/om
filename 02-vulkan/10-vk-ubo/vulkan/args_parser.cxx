@@ -25,9 +25,14 @@ export std::ostream& operator<<(std::ostream& out, const args_parser& arg)
     out << "│ Parameter             │ Value                       │\n";
     out << "├───────────────────────┼─────────────────────────────┤\n";
     out << "│ Help                  │ " << std::setw(28) << std::left
-        << (arg.help.empty() ? "(empty)" : arg.help.substr(0, 25) + (arg.help.length() > 25 ? "..." : "")) << "│\n";
+        << (arg.help.empty() ? "(empty)"
+                             : arg.help.substr(0, 25) +
+                                   (arg.help.length() > 25 ? "..." : ""))
+        << "│\n";
     out << "│ Vulkan version        │ " << std::setw(28) << std::left
-        << (std::to_string(arg.vulkan_version_major) + "." + std::to_string(arg.vulkan_version_minor)) << "│\n";
+        << (std::to_string(arg.vulkan_version_major) + "." +
+            std::to_string(arg.vulkan_version_minor))
+        << "│\n";
     out << "│ Verbose               │ " << std::setw(28) << std::left
         << (arg.verbose ? "enabled" : "disabled") << "│\n";
     out << "│ Validation layer      │ " << std::setw(28) << std::left

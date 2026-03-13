@@ -93,7 +93,9 @@ void check_gl_error(const char* file, int line)
     {
         const GLenum err = glGetError();
         if (GL_NO_ERROR == err)
+        {
             break;
+        }
 
         std::clog << file << "(" << line << ")"
                   << " gl error: " << gl_err_to_s(err) << std::endl;

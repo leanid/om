@@ -5,7 +5,7 @@
 
 int main(int argc, char** argv)
 {
-    uint32_t num_extensions{};
+    uint32_t   num_extensions{};
     vk::Result r = vk::enumerateInstanceExtensionProperties(
         nullptr, &num_extensions, nullptr);
     if (vk::Result::eSuccess != r)

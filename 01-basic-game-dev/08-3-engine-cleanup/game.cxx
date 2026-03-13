@@ -40,7 +40,9 @@ std::unique_ptr<om::lila> om_tat_sat()
 {
     om::log << "initialize engine" << std::endl;
 
-    om::window_mode window_mode = { .width=screen_width, .heigth=screen_height, .is_fullscreen=false };
+    om::window_mode window_mode = { .width         = screen_width,
+                                    .heigth        = screen_height,
+                                    .is_fullscreen = false };
     om::initialize("tanks", window_mode);
 
     om::log << "creating main game object..." << std::endl;
@@ -71,7 +73,7 @@ void tanks_game::on_initialize()
     else
     {
         std::array<om::vertex, 6> vertexes;
-        for (auto & vertexe : vertexes)
+        for (auto& vertexe : vertexes)
         {
             file >> vertexe;
         }

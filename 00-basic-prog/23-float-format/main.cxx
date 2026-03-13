@@ -78,16 +78,18 @@ std::ostream& operator<<(std::ostream& out, const float_bits& value)
 
 int main(int argc, char** argv)
 {
-    std::float16_t  f16_support = 10.f16;  // just checking see CMakelists.txt
-    std::float32_t  f32_support = 10.f32;  // just checking
-    std::float64_t  f64_support = 10.f64;  // just checking
+    std::float16_t  f16_support  = 10.f16;  // just checking see CMakelists.txt
+    std::float32_t  f32_support  = 10.f32;  // just checking
+    std::float64_t  f64_support  = 10.f64;  // just checking
     std::float128_t f128_support = 10.f128; // just checking
 
     float f32_value = 10.f;
     if (std::memcmp(&f32_support, &f32_value, sizeof(f32_value)) == 0)
     {
         std::cout << "float32_t binary same as 10.f" << std::endl;
-    } else {
+    }
+    else
+    {
         std::cout << "float32_t binary different from 10.f" << std::endl;
     }
 

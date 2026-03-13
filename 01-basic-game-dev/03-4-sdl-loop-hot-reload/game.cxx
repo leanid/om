@@ -9,8 +9,7 @@ class my_concole_game : public om::game
 {
 public:
     explicit my_concole_game(om::engine&)
-        : 
-         rotations_chars{ { '-', '/', '|', '\\' } }
+        : rotations_chars{ { '-', '/', '|', '\\' } }
     {
     }
     void initialize() override {}
