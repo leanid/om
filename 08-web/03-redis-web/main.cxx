@@ -692,11 +692,25 @@ int main(int argc, char* argv[])
                      argv[0]);
     }
 
-    redis::ConnectionPoolOptions pool_opts;
-    pool_opts.size = config.redis_pool_size;
+    std::shared_ptr<redis::Redis> redis_client;
+    try
+    {
+        redis::ConnectionPoolOptions pool_opts;
+        pool_opts.size = config.redis_pool_size;
 
-    auto redis_client = std::make_shared<redis::Redis>(
-        redis::Uri(config.redis_url).connection_options(), pool_opts);
+        redis_client = std::make_shared<redis::Redis>(
+            redis::Uri(config.redis_url).connection_options(), pool_opts);
+
+        redis_client->ping();
+    }
+    catch (const redis::Error& e)
+    {
+        std::println(stderr,
+                     "Failed to connect to Redis at '{}': {}",
+                     config.redis_url,
+                     e.what());
+        return 1;
+    }
 
     auto notifier = std::make_shared<om::notification_center>(redis_client);
     notifier->start();

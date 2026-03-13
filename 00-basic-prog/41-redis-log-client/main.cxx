@@ -67,7 +67,7 @@ int main()
     namespace redis = sw::redis;
     // Читаем строку подключения из файла
     std::ifstream config_file(
-        "./00-basic-prog/41-redis-log-client/redis_config.txt");
+        "./00-basic-prog/41-redis-log-client/log_client_config.txt");
     std::string connection_string;
 
     if (config_file.is_open())
