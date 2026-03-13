@@ -188,14 +188,14 @@ public:
             { return streams_version[device] > old_version; });
     }
 
-    bool wait_for_any_change(uint64_t                      old_version,
-                             std::chrono::milliseconds      timeout)
+    bool wait_for_any_change(uint64_t                  old_version,
+                             std::chrono::milliseconds timeout)
     {
         std::unique_lock lock(mtx);
-        return cv_any.wait_for(
-            lock, timeout,
-            [this, old_version]
-            { return any_version.load() > old_version; });
+        return cv_any.wait_for(lock,
+                               timeout,
+                               [this, old_version]
+                               { return any_version.load() > old_version; });
     }
 
     uint64_t get_any_version() { return any_version.load(); }
@@ -203,11 +203,11 @@ public:
 
 struct server_config
 {
-    std::string redis_url    = "tcp://127.0.0.1:6379";
-    std::string server_host  = "0.0.0.0";
-    int         server_port  = 8080;
-    std::string public_dir   = "./08-web/03-redis-web/public";
-    int         socket_flags   = 0;
+    std::string redis_url            = "tcp://127.0.0.1:6379";
+    std::string server_host          = "0.0.0.0";
+    int         server_port          = 8080;
+    std::string public_dir           = "./08-web/03-redis-web/public";
+    int         socket_flags         = 0;
     size_t      max_threads          = 256;
     size_t      log_batch_size       = 1000;
     size_t      redis_pool_size      = 128;
@@ -364,18 +364,20 @@ public:
                 while (true)
                 {
                     std::vector<stream_item> batch;
-                    auto start = (last_log_id == "0-0")
-                                     ? std::string("-")
-                                     : std::format("({}", last_log_id);
+                    auto                     start = (last_log_id == "0-0")
+                                                         ? std::string("-")
+                                                         : std::format("({}", last_log_id);
 
-                    redis_client_->xrange(stream_key_, start, "+",
+                    redis_client_->xrange(stream_key_,
+                                          start,
+                                          "+",
                                           batch_size_,
                                           std::back_inserter(batch));
 
                     if (batch.empty())
                     {
-                        if (first_batch
-                            && !send_sse(sink, "logs_init", json::array()))
+                        if (first_batch &&
+                            !send_sse(sink, "logs_init", json::array()))
                             return false;
                         break;
                     }
@@ -407,10 +409,10 @@ public:
                     std::vector<
                         std::pair<std::string, std::vector<stream_item>>>
                         new_data;
-                    redis_client_->xread(
-                        stream_key_, last_log_id,
-                        static_cast<long long>(poll_interval_.count()),
-                        std::back_inserter(new_data));
+                    redis_client_->xread(stream_key_,
+                                         last_log_id,
+                                         poll_interval_,
+                                         std::back_inserter(new_data));
 
                     if (!new_data.empty() && !new_data[0].second.empty())
                     {
@@ -425,8 +427,7 @@ public:
                 {
                     // No log stream selected — sleep on CV,
                     // wake instantly on any device/log_name change
-                    notifier_->wait_for_any_change(any_ver,
-                                                   poll_interval_);
+                    notifier_->wait_for_any_change(any_ver, poll_interval_);
                     any_ver = notifier_->get_any_version();
                 }
 
@@ -441,13 +442,12 @@ public:
 
                 if (!device_.empty())
                 {
-                    auto new_ver =
-                        notifier_->get_streams_version(device_);
+                    auto new_ver = notifier_->get_streams_version(device_);
                     if (new_ver != log_names_ver)
                     {
                         log_names_ver = new_ver;
-                        if (!send_sse(sink, "log_names_update",
-                                      get_log_names_json()))
+                        if (!send_sse(
+                                sink, "log_names_update", get_log_names_json()))
                             return false;
                         any_sent = true;
                     }
@@ -509,11 +509,13 @@ public:
         res.set_header("Cache-Control", "no-cache");
         res.set_header("Connection", "keep-alive");
 
-        res.set_content_provider(
-            "text/event-stream",
-            unified_stream_provider{
-                redis_client_, notifier_, device, stream_key,
-                batch_size_, poll_interval_ });
+        res.set_content_provider("text/event-stream",
+                                 unified_stream_provider{ redis_client_,
+                                                          notifier_,
+                                                          device,
+                                                          stream_key,
+                                                          batch_size_,
+                                                          poll_interval_ });
     }
 };
 
@@ -690,7 +692,9 @@ int main(int argc, char* argv[])
 
     svr.Get("/api/stream",
             om::unified_stream_handler{
-                redis_client, notifier, config.log_batch_size,
+                redis_client,
+                notifier,
+                config.log_batch_size,
                 std::chrono::milliseconds(config.sse_poll_interval_ms) });
 
     svr.Get("/api/logs/download", om::logs_download_handler{ redis_client });
