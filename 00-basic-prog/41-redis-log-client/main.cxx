@@ -12,6 +12,8 @@ namespace om
 {
 
 namespace redis = sw::redis;
+
+constexpr auto key_ttl = std::chrono::hours(72); // 3 days
 // Функция для генерации имени файла лога на основе текущего времени
 std::string generate_log_file_name()
 {
@@ -99,12 +101,15 @@ int main()
 
         // Регистрируем устройство в общем списке
         redis_client.sadd("all_devices", device_name);
+        redis_client.expire("all_devices", om::key_ttl);
 
         // Сохраняем информацию о платформе устройства (используем Hash)
         redis_client.hset("device_info:" + device_name, "platform", platform);
+        redis_client.expire("device_info:" + device_name, om::key_ttl);
 
         // Регистрируем текущий лог файл для этого устройства
         redis_client.sadd("log_names:" + device_name, log_file_name);
+        redis_client.expire("log_names:" + device_name, om::key_ttl);
 
         std::cout << "Connecting to Redis at " << connection_string << "..."
                   << std::endl;
@@ -128,6 +133,8 @@ int main()
                          stream_key,
                          "ERROR",
                          "Failed to connect to secondary database!");
+
+        redis_client.expire(stream_key, om::key_ttl);
 
         std::cout << "Initial logs sent to stream '" << stream_key << "'."
                   << std::endl;
