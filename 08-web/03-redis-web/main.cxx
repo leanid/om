@@ -290,6 +290,7 @@ class unified_stream_provider
     std::shared_ptr<notification_center> notifier_;
     std::string                          device_;
     std::string                          stream_key_;
+    std::string                          last_event_id_;
     size_t                               batch_size_;
     std::chrono::milliseconds            poll_interval_;
 
@@ -341,17 +342,29 @@ class unified_stream_provider
         return sink.write(msg.c_str(), msg.size());
     }
 
+    bool send_sse(httplib::DataSink& sink,
+                  std::string_view   event,
+                  const json&        data,
+                  std::string_view   id) const
+    {
+        auto msg = std::format(
+            "id: {}\nevent: {}\ndata: {}\n\n", id, event, data.dump());
+        return sink.write(msg.c_str(), msg.size());
+    }
+
 public:
     unified_stream_provider(std::shared_ptr<redis::Redis>        r,
                             std::shared_ptr<notification_center> n,
                             std::string                          device,
                             std::string                          stream_key,
+                            std::string                          last_event_id,
                             size_t                               batch_size,
                             std::chrono::milliseconds            poll_interval)
         : redis_client_(std::move(r))
         , notifier_(std::move(n))
         , device_(std::move(device))
         , stream_key_(std::move(stream_key))
+        , last_event_id_(std::move(last_event_id))
         , batch_size_(batch_size)
         , poll_interval_(poll_interval)
     {
@@ -379,8 +392,12 @@ public:
                 }
             }
 
-            std::string last_log_id = "0-0";
-            if (!stream_key_.empty())
+            std::string last_log_id =
+                last_event_id_.empty() ? "0-0" : last_event_id_;
+
+            // Reconnect: client already has logs up to last_event_id_,
+            // skip straight to polling loop for new entries.
+            if (!stream_key_.empty() && last_event_id_.empty())
             {
                 bool first_batch = true;
 
@@ -407,13 +424,13 @@ public:
                         break;
                     }
 
-                    auto event = first_batch ? "logs_init" : "logs_new";
-                    if (!send_sse(sink, event, items_to_json(batch)))
+                    auto event  = first_batch ? "logs_init" : "logs_new";
+                    last_log_id = batch.back().first;
+                    if (!send_sse(
+                            sink, event, items_to_json(batch), last_log_id))
                     {
                         return false;
                     }
-
-                    last_log_id = batch.back().first;
                     first_batch = false;
 
                     if (batch.size() < batch_size_)
@@ -446,12 +463,15 @@ public:
                     if (!new_data.empty() && !new_data[0].second.empty())
                     {
                         const auto& items = new_data[0].second;
-                        if (!send_sse(sink, "logs_new", items_to_json(items)))
+                        last_log_id       = items.back().first;
+                        if (!send_sse(sink,
+                                      "logs_new",
+                                      items_to_json(items),
+                                      last_log_id))
                         {
                             return false;
                         }
-                        last_log_id = items.back().first;
-                        any_sent    = true;
+                        any_sent = true;
                     }
                 }
                 else
@@ -531,6 +551,7 @@ public:
     {
         std::string device;
         std::string stream_key;
+        std::string last_event_id;
 
         if (req.has_param("device"))
         {
@@ -542,6 +563,11 @@ public:
             }
         }
 
+        if (req.has_header("Last-Event-Id"))
+        {
+            last_event_id = req.get_header_value("Last-Event-Id");
+        }
+
         res.set_header("Content-Type", "text/event-stream");
         res.set_header("Cache-Control", "no-cache");
         res.set_header("Connection", "keep-alive");
@@ -551,6 +577,7 @@ public:
                                                           notifier_,
                                                           device,
                                                           stream_key,
+                                                          last_event_id,
                                                           batch_size_,
                                                           poll_interval_ });
     }
