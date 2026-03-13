@@ -1,10 +1,10 @@
 #include <sw/redis++/redis++.h>
 
 #include <chrono>
+#include <format>
 #include <fstream>
-#include <iomanip>
 #include <iostream>
-#include <sstream>
+#include <print>
 #include <string>
 #include <vector>
 
@@ -14,17 +14,29 @@ namespace om
 namespace redis = sw::redis;
 
 constexpr auto key_ttl = std::chrono::hours(72); // 3 days
-// Функция для генерации имени файла лога на основе текущего времени
+
+std::tm to_local_tm(std::chrono::system_clock::time_point tp)
+{
+    auto    t = std::chrono::system_clock::to_time_t(tp);
+    std::tm result{};
+#ifdef _WIN32
+    localtime_s(&result, &t);
+#else
+    localtime_r(&t, &result);
+#endif
+    return result;
+}
+
 std::string generate_log_file_name()
 {
-    auto        now    = std::chrono::system_clock::now();
-    std::time_t now_c  = std::chrono::system_clock::to_time_t(now);
-    std::tm*    now_tm = std::localtime(&now_c);
-
-    std::ostringstream oss;
-    oss << "log_" << std::put_time(now_tm, "%d_%m_%Y") << "T"
-        << std::put_time(now_tm, "%H_%M_%S") << ".txt";
-    return oss.str();
+    auto tm = to_local_tm(std::chrono::system_clock::now());
+    return std::format("log_{:02}_{:02}_{}T{:02}_{:02}_{:02}.txt",
+                       tm.tm_mday,
+                       tm.tm_mon + 1,
+                       tm.tm_year + 1900,
+                       tm.tm_hour,
+                       tm.tm_min,
+                       tm.tm_sec);
 }
 
 void log_to_redis(redis::Redis&      redis_client,
@@ -32,31 +44,29 @@ void log_to_redis(redis::Redis&      redis_client,
                   const std::string& level,
                   const std::string& message)
 {
-    // Получаем текущее время
-    auto        now    = std::chrono::system_clock::now();
-    std::time_t now_c  = std::chrono::system_clock::to_time_t(now);
-    std::tm*    now_tm = std::localtime(&now_c);
-    auto        ms     = std::chrono::duration_cast<std::chrono::milliseconds>(
+    auto now = std::chrono::system_clock::now();
+    auto tm  = to_local_tm(now);
+    auto ms  = std::chrono::duration_cast<std::chrono::milliseconds>(
                   now.time_since_epoch()) %
               1000;
 
-    // Формируем единую строку лога: [HH:MM:SS.ms] LEVEL Message
-    std::ostringstream oss;
-    oss << "[" << std::put_time(now_tm, "%H:%M:%S") << "." << std::setfill('0')
-        << std::setw(3) << ms.count() << "] " << level << " " << message;
-
-    std::string formatted_message = oss.str();
+    auto formatted_message = std::format("[{:02}:{:02}:{:02}.{:03}] {} {}",
+                                         tm.tm_hour,
+                                         tm.tm_min,
+                                         tm.tm_sec,
+                                         ms.count(),
+                                         level,
+                                         message);
 
     try
     {
-        // Отправляем только одно поле - message
         redis_client.xadd(
             stream_key, "*", { std::make_pair("message", formatted_message) });
-        std::cout << formatted_message << std::endl;
+        std::println("{}", formatted_message);
     }
     catch (const redis::Error& e)
     {
-        std::cerr << "Redis XADD error: " << e.what() << std::endl;
+        std::println(stderr, "Redis XADD error: {}", e.what());
     }
 }
 
