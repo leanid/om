@@ -634,7 +634,6 @@ public:
                     if (key == "message")
                     {
                         chunk += value;
-                        chunk += '\n';
                         break;
                     }
                 }
