@@ -178,7 +178,11 @@ document.addEventListener('DOMContentLoaded', () => {
         eventSource.addEventListener('error', (event) => {
             console.error('SSE Error:', event);
             if (event.data) {
-                logsContainer.innerHTML += `<div class="empty-state" style="color: #f48771;">Error: ${event.data}</div>`;
+                const errDiv = document.createElement('div');
+                errDiv.className = 'empty-state';
+                errDiv.style.color = '#f48771';
+                errDiv.textContent = 'Error: ' + event.data;
+                logsContainer.appendChild(errDiv);
             }
         });
     }
@@ -231,11 +235,17 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    function escapeHtml(text) {
+        const el = document.createElement('span');
+        el.textContent = text;
+        return el.innerHTML;
+    }
+
     function createLogElement(log, isNew) {
         const div = document.createElement('div');
         div.className = `log-line ${isNew ? 'new' : ''}`;
 
-        let message = log.message || '';
+        let message = escapeHtml(log.message || '');
 
         message = message.replace(/\] (INFO|WARNING|ERROR|DEBUG) /, (match, level) => {
             return `] <span style="color: ${getColorForLevel(level)}; font-weight: bold;">${level}</span> `;
