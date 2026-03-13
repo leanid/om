@@ -7,7 +7,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const currentDeviceLabel = document.getElementById('current-device-label');
     const currentStreamLabel = document.getElementById('current-stream-label');
 
-    const clearLogsBtn = document.getElementById('clear-logs-btn');
     const downloadLogsBtn = document.getElementById('download-logs-btn');
     const autoscrollCb = document.getElementById('autoscroll-cb');
     const deviceSearchInput = document.getElementById('device-search');
@@ -274,12 +273,6 @@ document.addEventListener('DOMContentLoaded', () => {
     deviceSearchInput.addEventListener('input', (e) => {
         searchQuery = e.target.value;
         filterAndRenderDevices();
-    });
-
-    clearLogsBtn.addEventListener('click', () => {
-        if (currentDevice && currentStream) {
-            logsContainer.innerHTML = '<div class="empty-state">Logs cleared from view. Waiting for new logs...</div>';
-        }
     });
 
     downloadLogsBtn.addEventListener('click', () => {
