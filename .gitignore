@@ -14,3 +14,4 @@ build/
 imgui.ini
 local.properties
 /deps/prebuilt/
+/deps/rules/build_x86_64/
