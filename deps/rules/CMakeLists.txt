@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 4.2)
 project(prebuilt_dependencies CXX)
 
 list(APPEND CMAKE_PREFIX_PATH ${CMAKE_SOURCE_DIR}/../../cmake)
-find_package(om-triplet-name REQUIRED)
+find_package(om-triplet-name CONFIG REQUIRED)
 
 get_filename_component(prebuilt_dir "${CMAKE_SOURCE_DIR}/../prebuilt" ABSOLUTE)
 message(STATUS "${prebuilt_dir}")
@@ -63,6 +63,9 @@ externalproject_add(
                -DREDIS_PLUS_PLUS_BUILD_TEST=OFF
                -DREDIS_PLUS_PLUS_BUILD_ASYNC_TEST=OFF
                -DREDIS_PLUS_PLUS_BUILD_MOCK=OFF)
+
+# temporary stop here
+return()
 
 externalproject_add(
     microsoft_gsl
