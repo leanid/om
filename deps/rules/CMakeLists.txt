@@ -95,9 +95,6 @@ externalproject_add(
                -DREDIS_PLUS_PLUS_BUILD_ASYNC_TEST=OFF
                -DREDIS_PLUS_PLUS_BUILD_MOCK=OFF)
 
-# temporary stop here
-return()
-
 externalproject_add(
     microsoft_gsl
     GIT_REPOSITORY https://github.com/microsoft/GSL.git
