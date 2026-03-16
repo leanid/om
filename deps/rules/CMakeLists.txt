@@ -1,20 +1,41 @@
 cmake_minimum_required(VERSION 4.2)
 
-project(prebuilt_dependencies CXX)
+project(prebuilt_dependencies C CXX)
 
-list(APPEND CMAKE_PREFIX_PATH ${CMAKE_SOURCE_DIR}/../../cmake)
+get_filename_component(cmake_custom_pkg_dir "${CMAKE_SOURCE_DIR}/../../cmake" ABSOLUTE)
+list(APPEND CMAKE_PREFIX_PATH ${cmake_custom_pkg_dir})
+message(STATUS "CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}")
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Android")
+    set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM BOTH)
+    set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY BOTH)
+    set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE BOTH)
+    set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE BOTH)
+
+    list(
+        APPEND
+        CMAKE_FIND_ROOT_PATH
+        "${CMAKE_SOURCE_DIR}/../../cmake")
+    message(STATUS "CMAKE_FIND_ROOT_PATH=${CMAKE_FIND_ROOT_PATH}")
+endif()
+
 find_package(om-triplet-name CONFIG REQUIRED)
 
 get_filename_component(prebuilt_dir "${CMAKE_SOURCE_DIR}/../prebuilt" ABSOLUTE)
 message(STATUS "${prebuilt_dir}")
 
 set(CMAKE_INSTALL_PREFIX "${prebuilt_dir}/${OM_TRIPLET_NAME}")
-if(UNIX)
+
+if(CMAKE_SYSTEM_NAME EQUAL "Android")
+
+elseif(UNIX)
     set(OM_INSTALL_LIB_DIR "${CMAKE_INSTALL_PREFIX}/lib64")
 else()
     set(OM_INSTALL_LIB_DIR "${CMAKE_INSTALL_PREFIX}/lib")
 endif()
+
 message(STATUS "CMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}")
+message(STATUS "CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}")
 
 include(ExternalProject)
 
@@ -25,6 +46,7 @@ externalproject_add(
     GIT_PROGRESS ON
     GIT_SHALLOW ON
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+               -DCMAKE_PREFIX_PATH=${CMAKE_INSTALL_PREFIX}
                -DCMAKE_BUILD_TYPE=RelWithDebInfo
                -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
                -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}
@@ -39,6 +61,8 @@ externalproject_add(
                -DENABLE_SSL_TESTS=OFF
                -DENABLE_ASYNC_TESTS=OFF
                -DENABLE_EXAMPLES=OFF)
+
+return()
 
 externalproject_add(
     redis_plus_plus
