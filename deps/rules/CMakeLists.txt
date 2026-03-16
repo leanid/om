@@ -27,7 +27,7 @@ message(STATUS "${prebuilt_dir}")
 set(CMAKE_INSTALL_PREFIX "${prebuilt_dir}/${OM_TRIPLET_NAME}")
 
 if(CMAKE_SYSTEM_NAME EQUAL "Android")
-
+    set(OM_INSTALL_LIB_DIR "${CMAKE_INSTALL_PREFIX}/lib")
 elseif(UNIX)
     set(OM_INSTALL_LIB_DIR "${CMAKE_INSTALL_PREFIX}/lib64")
 else()
@@ -55,14 +55,16 @@ externalproject_add(
                -DCMAKE_EXE_LINKER_FLAGS=${CMAKE_EXE_LINKER_FLAGS}
                -DCMAKE_SHARED_LINKER_FLAGS=${CMAKE_SHARED_LINKER_FLAGS}
                -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+               $<$<PLATFORM_ID:Android>:-DANDROID_ABI=${ANDROID_ABI}>
+               $<$<PLATFORM_ID:Android>:-DANDROID_PLATFORM=${ANDROID_PLATFORM}>
+               $<$<PLATFORM_ID:Android>:-DCMAKE_ANDROID_ARCH_ABI=${CMAKE_ANDROID_ARCH_ABI}>
+               $<$<PLATFORM_ID:Android>:-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}>
                -DBUILD_SHARED_LIBS=OFF
                -DENABLE_SSL=OFF
                -DDISABLE_TESTS=ON
                -DENABLE_SSL_TESTS=OFF
                -DENABLE_ASYNC_TESTS=OFF
                -DENABLE_EXAMPLES=OFF)
-
-return()
 
 externalproject_add(
     redis_plus_plus
@@ -81,6 +83,10 @@ externalproject_add(
                -DCMAKE_EXE_LINKER_FLAGS=${CMAKE_EXE_LINKER_FLAGS}
                -DCMAKE_SHARED_LINKER_FLAGS=${CMAKE_SHARED_LINKER_FLAGS}
                -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+               $<$<PLATFORM_ID:Android>:-DANDROID_ABI=${ANDROID_ABI}>
+               $<$<PLATFORM_ID:Android>:-DANDROID_PLATFORM=${ANDROID_PLATFORM}>
+               $<$<PLATFORM_ID:Android>:-DCMAKE_ANDROID_ARCH_ABI=${CMAKE_ANDROID_ARCH_ABI}>
+               $<$<PLATFORM_ID:Android>:-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}>
                -DREDIS_PLUS_PLUS_BUILD_SHARED=OFF
                -DREDIS_PLUS_PLUS_BUILD_STATIC=ON
                -DREDIS_PLUS_PLUS_BUILD_STATIC_WITH_PIC=ON
