@@ -29,7 +29,7 @@ set(CMAKE_INSTALL_PREFIX "${prebuilt_dir}/${OM_TRIPLET_NAME}")
 if(CMAKE_SYSTEM_NAME EQUAL "Android")
     set(OM_INSTALL_LIB_DIR "${CMAKE_INSTALL_PREFIX}/lib")
 elseif(UNIX)
-    set(OM_INSTALL_LIB_DIR "${CMAKE_INSTALL_PREFIX}/lib64")
+    set(OM_INSTALL_LIB_DIR "${CMAKE_INSTALL_PREFIX}/lib") # old lib64
 else()
     set(OM_INSTALL_LIB_DIR "${CMAKE_INSTALL_PREFIX}/lib")
 endif()
