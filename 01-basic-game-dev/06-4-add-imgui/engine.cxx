@@ -24,8 +24,8 @@
 
 #include "picopng.hxx"
 
-#include "imgui.h"
 #include "backends/imgui_impl_sdl3.h"
+#include "imgui.h"
 
 struct ImDrawData;
 void imgui_ensure_device_objects();
@@ -1043,7 +1043,7 @@ private:
 };
 #pragma pack(pop)
 
-static bool    already_exist   = false;
+static bool    already_exist  = false;
 static engine* g_imgui_engine = nullptr;
 
 engine* create_engine()
@@ -1052,9 +1052,9 @@ engine* create_engine()
     {
         throw std::runtime_error("engine already exist");
     }
-    engine* result   = new engine_impl();
-    g_imgui_engine   = result;
-    already_exist    = true;
+    engine* result = new engine_impl();
+    g_imgui_engine = result;
+    already_exist  = true;
     return result;
 }
 
@@ -1243,8 +1243,8 @@ std::string engine_impl::initialize(std::string_view)
              << compiled << " " << linked << endl;
     }
 
-    const int init_result = SDL_Init(SDL_INIT_VIDEO);
-    if (init_result != 0)
+    const bool init_result = SDL_Init(SDL_INIT_VIDEO);
+    if (!init_result)
     {
         const char* err_message = SDL_GetError();
         serr << "error: failed call SDL_Init: " << err_message << endl;
@@ -1280,13 +1280,13 @@ std::string engine_impl::initialize(std::string_view)
         }
     }
 
-    int gl_major_ver = 0;
-    int result =
+    int  gl_major_ver = 0;
+    bool result =
         SDL_GL_GetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, &gl_major_ver);
-    assert(result == 0);
+    assert(result);
     int gl_minor_ver = 0;
     result = SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, &gl_minor_ver);
-    assert(result == 0);
+    assert(result);
 
     if (gl_major_ver < 2)
     {
@@ -1510,14 +1510,15 @@ vertex_buffer_impl::~vertex_buffer_impl()
 }
 
 } // end namespace om
-// Dear ImGui: custom rendering through om::engine (textured indexed triangles), SDL3 input via imgui_impl_sdl3 only.
+// Dear ImGui: custom rendering through om::engine (textured indexed triangles),
+// SDL3 input via imgui_impl_sdl3 only.
 
-static float                        g_imgui_time            = 0.0F;
-static bool                         g_imgui_mouse_down[3] = { false, false, false };
-static float                        g_imgui_mouse_wheel   = 0.0F;
-static om::shader_gl_es20*         g_imgui_shader         = nullptr;
-static om::texture*                 g_imgui_font_texture   = nullptr;
-static void imgui_destroy_font_texture()
+static float               g_imgui_time          = 0.0F;
+static bool                g_imgui_mouse_down[3] = { false, false, false };
+static float               g_imgui_mouse_wheel   = 0.0F;
+static om::shader_gl_es20* g_imgui_shader        = nullptr;
+static om::texture*        g_imgui_font_texture  = nullptr;
+static void                imgui_destroy_font_texture()
 {
     if (g_imgui_font_texture != nullptr && om::g_imgui_engine != nullptr)
     {
@@ -1535,7 +1536,7 @@ void imgui_invalidate_device_objects()
 
 static bool imgui_create_font_texture()
 {
-    ImGuiIO& io = ImGui::GetIO();
+    ImGuiIO&       io     = ImGui::GetIO();
     unsigned char* pixels = nullptr;
     int            w      = 0;
     int            h      = 0;
@@ -1549,32 +1550,34 @@ static bool imgui_create_font_texture()
 
 static bool imgui_create_device_objects()
 {
-    const GLchar* vertex_shader = "#if defined(GL_ES)\n"
-                                  "precision highp float;\n"
-                                  "#endif\n"
-                                  "uniform mat3 ProjMtx;\n"
-                                  "attribute vec2 Position;\n"
-                                  "attribute vec2 UV;\n"
-                                  "attribute vec4 Color;\n"
-                                  "varying vec2 Frag_UV;\n"
-                                  "varying vec4 Frag_Color;\n"
-                                  "void main()\n"
-                                  "{\n"
-                                  "  Frag_UV = UV;\n"
-                                  "  Frag_Color = Color;\n"
-                                  "  gl_Position = vec4(ProjMtx * vec3(Position.xy,1), 1);\n"
-                                  "}\n";
+    const GLchar* vertex_shader =
+        "#if defined(GL_ES)\n"
+        "precision highp float;\n"
+        "#endif\n"
+        "uniform mat3 ProjMtx;\n"
+        "attribute vec2 Position;\n"
+        "attribute vec2 UV;\n"
+        "attribute vec4 Color;\n"
+        "varying vec2 Frag_UV;\n"
+        "varying vec4 Frag_Color;\n"
+        "void main()\n"
+        "{\n"
+        "  Frag_UV = UV;\n"
+        "  Frag_Color = Color;\n"
+        "  gl_Position = vec4(ProjMtx * vec3(Position.xy,1), 1);\n"
+        "}\n";
 
-    const GLchar* fragment_shader = "#if defined(GL_ES)\n"
-                                    "precision highp float;\n"
-                                    "#endif\n"
-                                    "uniform sampler2D Texture;\n"
-                                    "varying vec2 Frag_UV;\n"
-                                    "varying vec4 Frag_Color;\n"
-                                    "void main()\n"
-                                    "{\n"
-                                    "  gl_FragColor = Frag_Color * texture2D(Texture, Frag_UV);\n"
-                                    "}\n";
+    const GLchar* fragment_shader =
+        "#if defined(GL_ES)\n"
+        "precision highp float;\n"
+        "#endif\n"
+        "uniform sampler2D Texture;\n"
+        "varying vec2 Frag_UV;\n"
+        "varying vec4 Frag_Color;\n"
+        "void main()\n"
+        "{\n"
+        "  gl_FragColor = Frag_Color * texture2D(Texture, Frag_UV);\n"
+        "}\n";
 
     g_imgui_shader = new om::shader_gl_es20(
         vertex_shader,
@@ -1598,16 +1601,16 @@ void imgui_ensure_device_objects()
 
 void imgui_to_engine_render(ImDrawData* draw_data)
 {
-    if (draw_data == nullptr || !draw_data->Valid || draw_data->CmdListsCount == 0)
+    if (draw_data == nullptr || !draw_data->Valid ||
+        draw_data->CmdListsCount == 0)
     {
         return;
     }
 
     ImGuiIO& io       = ImGui::GetIO();
     ImVec2   fb_scale = draw_data->FramebufferScale;
-    int      fb_width =
-        static_cast<int>(draw_data->DisplaySize.x * fb_scale.x);
-    int fb_height = static_cast<int>(draw_data->DisplaySize.y * fb_scale.y);
+    int      fb_width = static_cast<int>(draw_data->DisplaySize.x * fb_scale.x);
+    int fb_height     = static_cast<int>(draw_data->DisplaySize.y * fb_scale.y);
     if (fb_width <= 0 || fb_height <= 0)
     {
         return;
@@ -1649,8 +1652,8 @@ void imgui_to_engine_render(ImDrawData* draw_data)
             }
 
             const ImTextureID tid = pcmd->GetTexID();
-            auto*               tex = reinterpret_cast<om::texture*>(
-                static_cast<uintptr_t>(tid));
+            auto*             tex =
+                reinterpret_cast<om::texture*>(static_cast<uintptr_t>(tid));
             auto* gl_tex = static_cast<om::texture_gl_es20*>(tex);
             g_imgui_shader->set_uniform("Texture", gl_tex);
 
