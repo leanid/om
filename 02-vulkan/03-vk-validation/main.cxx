@@ -306,8 +306,9 @@ private:
         device_create_info.pQueueCreateInfos       = &device_queue_create_info;
         device_create_info.enabledExtensionCount   = 0;
         device_create_info.ppEnabledExtensionNames = nullptr;
-        device_create_info.enabledLayerCount = 0; // in vk_1_1 this in instance
-        device_create_info.pEnabledFeatures  = &device_features;
+        // device_create_info.enabledLayerCount = 0; // in vk_1_1 this in
+        // instance
+        device_create_info.pEnabledFeatures = &device_features;
 
         devices.logical = devices.physical.createDevice(device_create_info);
         log << "logical device created\n";
