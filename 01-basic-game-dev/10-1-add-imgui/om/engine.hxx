@@ -144,7 +144,13 @@ OM_DECLSPEC bool pool_event(event& e);
 OM_DECLSPEC bool is_key_down(const enum keys);
 
 OM_DECLSPEC texture* create_texture(std::string_view path);
+OM_DECLSPEC texture* create_texture_rgba32(const void*  pixels,
+                                          std::size_t  width,
+                                          std::size_t  height);
 OM_DECLSPEC void     destroy_texture(texture* t);
+
+/// Call once per frame before ImGui::NewFrame (font atlas / ImGui GPU state).
+OM_DECLSPEC void imgui_ensure_device_objects();
 
 OM_DECLSPEC vbo* create_vbo(const vertex*, std::size_t);
 OM_DECLSPEC void destroy_vbo(vbo*);

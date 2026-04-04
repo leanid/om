@@ -8,6 +8,7 @@
 #include <cassert>
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
 #include <cstdlib>
 #include <exception>
 #include <fstream>
@@ -30,7 +31,11 @@
 #include "gles20.hxx"
 
 #include "imgui.h"
-#include "imgui_impl_sdl_gl3.h"
+#include "backends/imgui_impl_sdl3.h"
+
+struct ImDrawData;
+void imgui_invalidate_device_objects();
+void imgui_to_engine_render(ImDrawData* draw_data);
 
 PFNGLCREATESHADERPROC             glCreateShader             = nullptr;
 PFNGLSHADERSOURCEPROC             glShaderSource             = nullptr;
@@ -57,8 +62,9 @@ PFNGLUNIFORMMATRIX3FVPROC         glUniformMatrix3fv         = nullptr;
 PFNGLUNIFORMMATRIX4FVPROC         glUniformMatrix4fv         = nullptr;
 PFNGLBINDBUFFERPROC               glBindBuffer               = nullptr;
 PFNGLBUFFERDATAPROC               glBufferData               = nullptr;
-PFNGLGENBUFFERSPROC               glGenBuffers               = nullptr;
-PFNGLGETATTRIBLOCATIONPROC        glGetAttribLocation        = nullptr;
+PFNGLGENBUFFERSPROC        glGenBuffers        = nullptr;
+om_pfn_gl_draw_elements    gl_draw_elements    = nullptr;
+PFNGLGETATTRIBLOCATIONPROC glGetAttribLocation = nullptr;
 PFNGLBLENDFUNCSEPARATEPROC        glBlendFuncSeparate        = nullptr;
 PFNGLBLENDEQUATIONSEPARATEPROC    glBlendEquationSeparate    = nullptr;
 PFNGLDETACHSHADERPROC             glDetachShader             = nullptr;
@@ -372,6 +378,7 @@ class texture_gl_es20 final : public texture
 {
 public:
     explicit texture_gl_es20(std::string_view path);
+    texture_gl_es20(const void* pixels, std::size_t width, std::size_t height);
     ~texture_gl_es20() override;
 
     void bind() const
@@ -702,7 +709,7 @@ bool pool_event(event& e)
     SDL_Event sdl_event;
     if (SDL_PollEvent(&sdl_event))
     {
-        /*bool used_with_imgui = */ ImGui_ImplSdlGL3_ProcessEvent(&sdl_event);
+        ImGui_ImplSDL3_ProcessEvent(&sdl_event);
 
         const bind* binding = nullptr;
 
@@ -755,6 +762,14 @@ texture* create_texture(std::string_view path)
 {
     return new texture_gl_es20(path);
 }
+
+texture* create_texture_rgba32(const void* pixels,
+                                 const std::size_t width,
+                                 const std::size_t height)
+{
+    return new texture_gl_es20(pixels, width, height);
+}
+
 void destroy_texture(texture* t)
 {
     delete t;
@@ -1001,6 +1016,7 @@ static void initialize_internal(std::string_view   title,
             load_gl_func("glBindBuffer", glBindBuffer);
             load_gl_func("glBufferData", glBufferData);
             load_gl_func("glGenBuffers", glGenBuffers);
+            load_gl_func("glDrawElements", gl_draw_elements);
             load_gl_func("glGetAttribLocation", glGetAttribLocation);
             load_gl_func("glBlendFuncSeparate", glBlendFuncSeparate);
             load_gl_func("glBlendEquationSeparate", glBlendEquationSeparate);
@@ -1218,10 +1234,13 @@ static void initialize_internal(std::string_view   title,
         }
     }
 
-    // TODO initialize ImGui
-    if (!ImGui_ImplSdlGL3_Init(window))
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGui::StyleColorsDark();
+    ImGui::GetIO().Fonts->AddFontDefault();
+    if (!ImGui_ImplSDL3_InitForOpenGL(window, gl_context))
     {
-        log << "can't initialize ImGui" << std::endl;
+        log << "can't initialize ImGui (SDL3)" << std::endl;
         throw std::runtime_error("failed initialize ImGui");
     }
 
@@ -1231,8 +1250,9 @@ static void uninitialize()
 {
     if (already_exist)
     {
-        // TODO uninitialize ImGui
-        ImGui_ImplSdlGL3_Shutdown();
+        imgui_invalidate_device_objects();
+        ImGui_ImplSDL3_Shutdown();
+        ImGui::DestroyContext();
 
         SDL_GL_DestroyContext(gl_context);
         SDL_DestroyWindow(window);
@@ -1371,6 +1391,37 @@ texture_gl_es20::texture_gl_es20(std::string_view path)
     OM_GL_CHECK();
 }
 
+texture_gl_es20::texture_gl_es20(const void* pixels,
+                                 const std::size_t w,
+                                 const std::size_t h)
+    : file_path("::memory::")
+    , width(static_cast<std::uint32_t>(w))
+    , height(static_cast<std::uint32_t>(h))
+{
+    glGenTextures(1, &tex_handl);
+    OM_GL_CHECK();
+    glBindTexture(GL_TEXTURE_2D, tex_handl);
+    OM_GL_CHECK();
+
+    const GLint mipmap_level = 0;
+    const GLint border       = 0;
+    glTexImage2D(GL_TEXTURE_2D,
+                 mipmap_level,
+                 GL_RGBA,
+                 static_cast<GLsizei>(w),
+                 static_cast<GLsizei>(h),
+                 border,
+                 GL_RGBA,
+                 GL_UNSIGNED_BYTE,
+                 pixels);
+    OM_GL_CHECK();
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    OM_GL_CHECK();
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    OM_GL_CHECK();
+}
+
 texture_gl_es20::~texture_gl_es20()
 {
     glDeleteTextures(1, &tex_handl);
@@ -1436,6 +1487,217 @@ window_mode get_current_window_mode()
 lila::~lila() = default;
 
 } // end namespace om
+
+// Dear ImGui: custom draw via om::create_texture_rgba32 / destroy_texture, GL
+// buffers + gl_draw_elements; ImGui_ImplSDL3 for input only.
+
+static om::shader_gl_es20* g_imgui_shader       = nullptr;
+static om::texture*        g_imgui_font_texture = nullptr;
+
+static void imgui_destroy_font_texture()
+{
+    if (g_imgui_font_texture != nullptr)
+    {
+        om::destroy_texture(g_imgui_font_texture);
+        g_imgui_font_texture = nullptr;
+    }
+}
+
+void imgui_invalidate_device_objects()
+{
+    imgui_destroy_font_texture();
+    delete g_imgui_shader;
+    g_imgui_shader = nullptr;
+}
+
+static bool imgui_create_font_texture()
+{
+    ImGuiIO&       io     = ImGui::GetIO();
+    unsigned char* pixels = nullptr;
+    int            w      = 0;
+    int            h      = 0;
+    io.Fonts->GetTexDataAsRGBA32(&pixels, &w, &h);
+    g_imgui_font_texture = om::create_texture_rgba32(
+        pixels, static_cast<size_t>(w), static_cast<size_t>(h));
+    io.Fonts->SetTexID(static_cast<ImTextureID>(
+        reinterpret_cast<uintptr_t>(g_imgui_font_texture)));
+    return true;
+}
+
+static bool imgui_create_device_objects()
+{
+    const GLchar* vertex_shader = "#if defined(GL_ES)\n"
+                                  "precision highp float;\n"
+                                  "#endif\n"
+                                  "uniform mat3 u_matrix;\n"
+                                  "attribute vec2 Position;\n"
+                                  "attribute vec2 UV;\n"
+                                  "attribute vec4 Color;\n"
+                                  "varying vec2 Frag_UV;\n"
+                                  "varying vec4 Frag_Color;\n"
+                                  "void main()\n"
+                                  "{\n"
+                                  "  Frag_UV = UV;\n"
+                                  "  Frag_Color = Color;\n"
+                                  "  vec3 pos = vec3(Position.xy, 1.0) * u_matrix;\n"
+                                  "  gl_Position = vec4(pos, 1.0);\n"
+                                  "}\n";
+
+    const GLchar* fragment_shader = "#if defined(GL_ES)\n"
+                                    "precision highp float;\n"
+                                    "#endif\n"
+                                    "uniform sampler2D s_texture;\n"
+                                    "varying vec2 Frag_UV;\n"
+                                    "varying vec4 Frag_Color;\n"
+                                    "void main()\n"
+                                    "{\n"
+                                    "  gl_FragColor = texture2D(s_texture, Frag_UV) * Frag_Color;\n"
+                                    "}\n";
+
+    g_imgui_shader = new om::shader_gl_es20(
+        vertex_shader,
+        fragment_shader,
+        { { 0, "Position" }, { 1, "UV" }, { 2, "Color" } });
+
+    return imgui_create_font_texture();
+}
+
+void om::imgui_ensure_device_objects()
+{
+    if (g_imgui_shader != nullptr)
+    {
+        return;
+    }
+    if (!imgui_create_device_objects())
+    {
+        std::cerr << "imgui_create_device_objects failed\n";
+    }
+}
+
+void imgui_to_engine_render(ImDrawData* draw_data)
+{
+    if (g_imgui_shader == nullptr || gl_draw_elements == nullptr ||
+        draw_data == nullptr || !draw_data->Valid ||
+        draw_data->CmdListsCount == 0)
+    {
+        return;
+    }
+
+    ImGuiIO& io       = ImGui::GetIO();
+    ImVec2   fb_scale = draw_data->FramebufferScale;
+    const int fb_w =
+        static_cast<int>(draw_data->DisplaySize.x * fb_scale.x);
+    const int fb_h =
+        static_cast<int>(draw_data->DisplaySize.y * fb_scale.y);
+    if (fb_w <= 0 || fb_h <= 0)
+    {
+        return;
+    }
+    draw_data->ScaleClipRects(fb_scale);
+
+    const om::matrix orto_matrix =
+        om::matrix::scale(2.0F / io.DisplaySize.x, -2.0F / io.DisplaySize.y) *
+        om::matrix::move(om::vec2(-1.0F, 1.0F));
+
+    g_imgui_shader->use();
+    g_imgui_shader->set_uniform("u_matrix", orto_matrix);
+
+    const GLsizei stride = static_cast<GLsizei>(sizeof(ImDrawVert));
+
+    for (int n = 0; n < draw_data->CmdListsCount; n++)
+    {
+        const ImDrawList* cmd_list = draw_data->CmdLists[n];
+        GLuint              vbo    = 0;
+        GLuint              ibo    = 0;
+        glGenBuffers(1, &vbo);
+        OM_GL_CHECK();
+        glGenBuffers(1, &ibo);
+        OM_GL_CHECK();
+
+        const auto vb_size = static_cast<GLsizeiptr>(
+            cmd_list->VtxBuffer.Size * sizeof(ImDrawVert));
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        OM_GL_CHECK();
+        glBufferData(GL_ARRAY_BUFFER,
+                     vb_size,
+                     static_cast<const void*>(cmd_list->VtxBuffer.Data),
+                     GL_STREAM_DRAW);
+        OM_GL_CHECK();
+
+        const auto ib_size = static_cast<GLsizeiptr>(
+            cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx));
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+        OM_GL_CHECK();
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+                     ib_size,
+                     cmd_list->IdxBuffer.Data,
+                     GL_STREAM_DRAW);
+        OM_GL_CHECK();
+
+        glEnableVertexAttribArray(0);
+        OM_GL_CHECK();
+        glEnableVertexAttribArray(1);
+        OM_GL_CHECK();
+        glEnableVertexAttribArray(2);
+        OM_GL_CHECK();
+
+        glVertexAttribPointer(
+            0, 2, GL_FLOAT, GL_FALSE, stride, reinterpret_cast<void*>(0));
+        OM_GL_CHECK();
+        glVertexAttribPointer(
+            1, 2, GL_FLOAT, GL_FALSE, stride, reinterpret_cast<void*>(8));
+        OM_GL_CHECK();
+        glVertexAttribPointer(2,
+                              4,
+                              GL_UNSIGNED_BYTE,
+                              GL_TRUE,
+                              stride,
+                              reinterpret_cast<void*>(16));
+        OM_GL_CHECK();
+
+        auto index_byte_offset = static_cast<std::uintptr_t>(0);
+        for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++)
+        {
+            const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
+            if (pcmd->UserCallback != nullptr)
+            {
+                pcmd->UserCallback(cmd_list, pcmd);
+                continue;
+            }
+
+            const ImTextureID tid = pcmd->GetTexID();
+            auto*               tex = reinterpret_cast<om::texture*>(
+                static_cast<uintptr_t>(tid));
+            auto* gl_tex = static_cast<om::texture_gl_es20*>(tex);
+            g_imgui_shader->set_uniform("s_texture", gl_tex);
+
+            gl_draw_elements(GL_TRIANGLES,
+                             static_cast<GLsizei>(pcmd->ElemCount),
+                             sizeof(ImDrawIdx) == 2 ? GL_UNSIGNED_SHORT
+                                                    : GL_UNSIGNED_INT,
+                             reinterpret_cast<void*>(index_byte_offset));
+            OM_GL_CHECK();
+            index_byte_offset += static_cast<std::uintptr_t>(pcmd->ElemCount) *
+                                 sizeof(ImDrawIdx);
+        }
+
+        glDisableVertexAttribArray(0);
+        OM_GL_CHECK();
+        glDisableVertexAttribArray(1);
+        OM_GL_CHECK();
+        glDisableVertexAttribArray(2);
+        OM_GL_CHECK();
+
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        OM_GL_CHECK();
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+        OM_GL_CHECK();
+        glDeleteBuffers(1, &vbo);
+        OM_GL_CHECK();
+        glDeleteBuffers(1, &ibo);
+        OM_GL_CHECK();
+    }
+}
 
 int initialize_and_start_main_loop()
 {
@@ -1542,12 +1804,15 @@ start_game_again:
             continue;                  // wait till more time
         }
 
-        ImGui_ImplSdlGL3_NewFrame(om::window);
+        om::imgui_ensure_device_objects();
+        ImGui_ImplSDL3_NewFrame();
+        ImGui::NewFrame();
 
         game->on_update(frame_delta);
         game->on_render();
 
         ImGui::Render();
+        imgui_to_engine_render(ImGui::GetDrawData());
         OM_GL_CHECK();
 
         om::swap_buffers();

@@ -17,18 +17,25 @@ else()
 endif()
 
 add_library(engine SHARED om/engine.cxx
-                      om/imgui_impl_sdl_gl3.cpp
+                      om/backends/imgui_impl_sdl2.cpp
+                      om/backends/imgui_impl_opengl3.cpp
                       om/imgui.cpp
                       om/imgui_draw.cpp
+                      om/imgui_tables.cpp
+                      om/imgui_widgets.cpp
                       om/imgui_demo.cpp
                       om/imgui.h
-                      om/imgui_impl_sdl_gl3.h
                       om/imgui_internal.h
                       om/imconfig.h
+                      om/imstb_rectpack.h
+                      om/imstb_textedit.h
+                      om/imstb_truetype.h
                       om/gles20.hxx
-                      om/engine.hxx 
+                      om/engine.hxx
                       om/picopng.hxx)
 set_target_properties(engine PROPERTIES ENABLE_EXPORTS TRUE)
+target_include_directories(engine PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/om
+                                          ${CMAKE_CURRENT_SOURCE_DIR}/om/backends)
 
 if(WIN32)
   target_compile_definitions(engine PRIVATE "-DOM_DECLSPEC=__declspec(dllexport)")

@@ -170,6 +170,8 @@ public:
     virtual std::uint32_t get_width() const  = 0;
     virtual std::uint32_t get_height() const = 0;
     virtual std::string   get_name() const   = 0;
+    /// OpenGL texture object name (e.g. for debugging).
+    virtual std::uint32_t gl_texture_name() const = 0;
 };
 
 class OM_DECLSPEC vertex_buffer
@@ -229,5 +231,8 @@ public:
     virtual void swap_buffers()                                        = 0;
     virtual void uninitialize()                                        = 0;
 };
+
+/// Call once per frame before ImGui::NewFrame (font atlas / ImGui GPU state).
+OM_DECLSPEC void imgui_ensure_device_objects();
 
 } // end namespace om

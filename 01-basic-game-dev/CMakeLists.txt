@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.16)
 
 project(01-basic-game-dev CXX)
 
+add_subdirectory(imgui_vendor)
+
 add_subdirectory(01-1-hello-world)
 add_subdirectory(01-2-hello-lib)
 

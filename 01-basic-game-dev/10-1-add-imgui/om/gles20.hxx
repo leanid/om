@@ -5,6 +5,11 @@
 #include <SDL3/SDL_opengl.h>
 #include <SDL3/SDL_opengl_glext.h>
 
+using om_pfn_gl_draw_elements = void (*)(GLenum  mode,
+                                         GLsizei count,
+                                         GLenum  type,
+                                         const void* indices);
+
 // we have to load all extension GL function pointers
 // dynamically from OpenGL library
 // so first declare function pointers for all we need
@@ -33,8 +38,9 @@ extern PFNGLUNIFORMMATRIX3FVPROC         glUniformMatrix3fv;
 extern PFNGLUNIFORMMATRIX4FVPROC         glUniformMatrix4fv;
 extern PFNGLBINDBUFFERPROC               glBindBuffer;
 extern PFNGLBUFFERDATAPROC               glBufferData;
-extern PFNGLGENBUFFERSPROC               glGenBuffers;
-extern PFNGLGETATTRIBLOCATIONPROC        glGetAttribLocation;
+extern PFNGLGENBUFFERSPROC        glGenBuffers;
+extern om_pfn_gl_draw_elements    gl_draw_elements;
+extern PFNGLGETATTRIBLOCATIONPROC glGetAttribLocation;
 extern PFNGLBLENDFUNCSEPARATEPROC        glBlendFuncSeparate;
 extern PFNGLBLENDEQUATIONSEPARATEPROC    glBlendEquationSeparate;
 extern PFNGLDETACHSHADERPROC             glDetachShader;

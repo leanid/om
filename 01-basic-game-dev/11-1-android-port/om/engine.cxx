@@ -33,7 +33,8 @@
 #include "gles20.hxx"
 
 #include "imgui.h"
-#include "imgui_impl_sdl_gl3.h"
+#include "backends/imgui_impl_sdl2.h"
+#include "backends/imgui_impl_opengl3.h"
 
 PFNGLCREATESHADERPROC             glCreateShader             = nullptr;
 PFNGLSHADERSOURCEPROC             glShaderSource             = nullptr;
@@ -766,7 +767,7 @@ bool pool_event(event& e)
     SDL_Event sdl_event;
     if (SDL_PollEvent(&sdl_event))
     {
-        /*bool used_with_imgui = */ ImGui_ImplSdlGL3_ProcessEvent(&sdl_event);
+        ImGui_ImplSDL2_ProcessEvent(&sdl_event);
 
         const bind* binding = nullptr;
 
@@ -1301,10 +1302,17 @@ static void initialize_internal(std::string_view   title,
         }
     }
 
-    // TODO initialize ImGui
-    if (!ImGui_ImplSdlGL3_Init(window))
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGui::StyleColorsDark();
+    if (!ImGui_ImplSDL2_InitForOpenGL(window, gl_context))
     {
-        log << "can't initialize ImGui" << std::endl;
+        log << "can't initialize ImGui (SDL2)" << std::endl;
+        throw std::runtime_error("failed initialize ImGui");
+    }
+    if (!ImGui_ImplOpenGL3_Init(nullptr))
+    {
+        log << "can't initialize ImGui (OpenGL3)" << std::endl;
         throw std::runtime_error("failed initialize ImGui");
     }
 
@@ -1314,8 +1322,9 @@ static void uninitialize()
 {
     if (already_exist)
     {
-        // TODO uninitialize ImGui
-        ImGui_ImplSdlGL3_Shutdown();
+        ImGui_ImplOpenGL3_Shutdown();
+        ImGui_ImplSDL2_Shutdown();
+        ImGui::DestroyContext();
 
         SDL_GL_DestroyContext(gl_context);
         SDL_DestroyWindow(window);
@@ -1602,12 +1611,15 @@ start_game_again:
             continue;                  // wait till more time
         }
 
-        ImGui_ImplSdlGL3_NewFrame(om::window);
+        ImGui_ImplSDL2_NewFrame();
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui::NewFrame();
 
         game->on_update(frame_delta);
         game->on_render();
 
         ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         OM_GL_CHECK();
 
         om::swap_buffers();

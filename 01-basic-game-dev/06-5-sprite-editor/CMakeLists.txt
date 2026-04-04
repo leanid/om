@@ -9,9 +9,6 @@ add_library(
     picopng.hxx)
 target_compile_features(engine-06-5 PUBLIC cxx_std_20)
 
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/imgui-src)
-target_link_libraries(engine-06-5 PUBLIC imgui_editor)
-
 if(WIN32)
     target_compile_definitions(engine-06-5
                                PRIVATE "-DOM_DECLSPEC=__declspec(dllexport)")
@@ -20,8 +17,8 @@ endif(WIN32)
 find_package(SDL3 REQUIRED)
 find_package(OpenGL REQUIRED)
 
-target_link_libraries(engine-06-5 PRIVATE SDL3::SDL3-shared OpenGL::GL)
-target_link_libraries(engine-06-5 PRIVATE stb::stb)
+target_link_libraries(engine-06-5 PUBLIC om_imgui)
+target_link_libraries(engine-06-5 PRIVATE SDL3::SDL3-shared OpenGL::GL stb::stb)
 
 add_executable(
     06-5-sprite-editor

@@ -7,21 +7,12 @@ add_executable(
     om/engine.cxx
     om/engine.hxx
     om/gles20.hxx
-    om/imconfig.h
-    om/imgui.cpp
-    om/imgui.h
-    om/imgui_demo.cpp
-    om/imgui_draw.cpp
-    om/imgui_impl_sdl_gl3.cpp
-    om/imgui_impl_sdl_gl3.h
-    om/imgui_internal.h
     om/math.hxx
-    om/picopng.hxx
-    om/stb_rect_pack.h
-    om/stb_textedit.h
-    om/stb_truetype.h)
+    om/picopng.hxx)
 set_target_properties(engine-10-1 PROPERTIES ENABLE_EXPORTS ON)
 target_compile_features(engine-10-1 PRIVATE cxx_std_20)
+
+target_include_directories(engine-10-1 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/om)
 
 target_compile_definitions(
     engine-10-1
@@ -36,7 +27,7 @@ target_compile_definitions(
 find_package(SDL3 REQUIRED)
 find_package(OpenGL REQUIRED)
 
-target_link_libraries(engine-10-1 PRIVATE SDL3::SDL3 OpenGL::GL)
+target_link_libraries(engine-10-1 PUBLIC om_imgui PRIVATE SDL3::SDL3 OpenGL::GL)
 
 # cmake-format: off
 add_library(

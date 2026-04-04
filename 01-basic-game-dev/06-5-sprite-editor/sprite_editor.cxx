@@ -1,5 +1,6 @@
 #include <array>
 #include <chrono>
+#include <cstdint>
 #include <cstdlib>
 #include <fstream>
 #include <iomanip>
@@ -13,6 +14,8 @@
 #pragma GCC diagnostic ignored "-Wall"
 #include "imgui.h"
 #pragma GCC diagnostic pop
+
+#include "backends/imgui_impl_sdl3.h"
 
 #include "ani2d.hxx"
 #include "engine.hxx"
@@ -160,6 +163,9 @@ int main(int /*argc*/, char* /*argv*/[])
 
         mouse_pos = engine.mouse_pos();
 
+        om::imgui_ensure_device_objects();
+        ImGui_ImplSDL3_NewFrame();
+
         om::mat2x3 move        = om::mat2x3::move(om::vec2(0.f, 0.f));
         om::vec2   screen_size = engine.screen_size();
         om::mat2x3 aspect = om::mat2x3::scale(1, screen_size.x / screen_size.y);
@@ -215,11 +221,13 @@ int main(int /*argc*/, char* /*argv*/[])
                 image_screen_start_pos.x = cur_screen_pos.x;
                 image_screen_start_pos.y = cur_screen_pos.y;
 
-                ImGui::Image(texture,
-                             ImVec2(static_cast<float>(texture->get_width()),
-                                    static_cast<float>(texture->get_height())),
-                             ImVec2(0, 1),
-                             ImVec2(1, 0));
+                ImGui::Image(
+                    ImTextureRef(static_cast<ImTextureID>(
+                        reinterpret_cast<uintptr_t>(texture))),
+                    ImVec2(static_cast<float>(texture->get_width()),
+                           static_cast<float>(texture->get_height())),
+                    ImVec2(0, 1),
+                    ImVec2(1, 0));
 
                 if (start_drag_pos.x >= image_screen_start_pos.x &&
                     start_drag_pos.y >= image_screen_start_pos.y &&

@@ -11,7 +11,8 @@
 #include <vector>
 
 #include <om/engine.hxx>
-#include <om/imgui.h>
+
+#include "imgui.h"
 
 #include "configuration_loader.hxx"
 #include "game_object.hxx"

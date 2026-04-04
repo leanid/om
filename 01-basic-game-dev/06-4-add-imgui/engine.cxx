@@ -7,6 +7,7 @@
 #include <cassert>
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
 #include <exception>
 #include <fstream>
 #include <iostream>
@@ -24,15 +25,12 @@
 #include "picopng.hxx"
 
 #include "imgui.h"
+#include "backends/imgui_impl_sdl3.h"
 
-bool ImGui_ImplSdlGL3_Init(SDL_Window* window);
-void ImGui_ImplSdlGL3_Shutdown();
-void ImGui_ImplSdlGL3_NewFrame(SDL_Window* window);
-bool ImGui_ImplSdlGL3_ProcessEvent(const SDL_Event* event);
-
-// Use if you want to reset your rendering device without losing ImGui state.
-void ImGui_ImplSdlGL3_InvalidateDeviceObjects();
-bool ImGui_ImplSdlGL3_CreateDeviceObjects();
+struct ImDrawData;
+void imgui_ensure_device_objects();
+void imgui_to_engine_render(ImDrawData* draw_data);
+void imgui_invalidate_device_objects();
 
 // we have to load all extension GL function pointers
 // dynamically from OpenGL library
@@ -714,7 +712,7 @@ public:
         SDL_Event sdl_event;
         if (SDL_PollEvent(&sdl_event))
         {
-            ImGui_ImplSdlGL3_ProcessEvent(&sdl_event);
+            ImGui_ImplSDL3_ProcessEvent(&sdl_event);
 
             const bind* binding = nullptr;
 
@@ -996,8 +994,9 @@ public:
 
     void swap_buffers() final
     {
-        // TODO draw future game editor
-        ImGui_ImplSdlGL3_NewFrame(window);
+        imgui_ensure_device_objects();
+        ImGui_ImplSDL3_NewFrame();
+        ImGui::NewFrame();
         // 1. Show the big demo window (Most of the sample code is in
         // ImGui::ShowDemoWindow()! You can browse its code to learn
         // more about
@@ -1013,9 +1012,8 @@ public:
             std::cout << "try move tank" << std::endl;
         }
 
-        // Rendering
         ImGui::Render();
-        // ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        imgui_to_engine_render(ImGui::GetDrawData());
 
         SDL_GL_SwapWindow(window);
 
@@ -1024,6 +1022,9 @@ public:
     }
     void uninitialize() final
     {
+        imgui_invalidate_device_objects();
+        ImGui_ImplSDL3_Shutdown();
+        ImGui::DestroyContext();
         SDL_GL_DestroyContext(gl_context);
         SDL_DestroyWindow(window);
         SDL_Quit();
@@ -1042,8 +1043,8 @@ private:
 };
 #pragma pack(pop)
 
-static bool    already_exist = false;
-static engine* g_engine      = nullptr;
+static bool    already_exist   = false;
+static engine* g_imgui_engine = nullptr;
 
 engine* create_engine()
 {
@@ -1051,9 +1052,9 @@ engine* create_engine()
     {
         throw std::runtime_error("engine already exist");
     }
-    engine* result = new engine_impl();
-    g_engine       = result;
-    already_exist  = true;
+    engine* result   = new engine_impl();
+    g_imgui_engine   = result;
+    already_exist    = true;
     return result;
 }
 
@@ -1068,6 +1069,8 @@ void destroy_engine(engine* e)
         throw std::runtime_error("e is nullptr");
     }
     delete e;
+    g_imgui_engine = nullptr;
+    already_exist  = false;
 }
 
 color::color(std::uint32_t rgba_)
@@ -1463,9 +1466,13 @@ std::string engine_impl::initialize(std::string_view)
     glViewport(0, 0, 800, 600);
     OM_GL_CHECK()
 
-    if (!ImGui_ImplSdlGL3_Init(window))
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGui::StyleColorsDark();
+    ImGui::GetIO().Fonts->AddFontDefault();
+    if (!ImGui_ImplSDL3_InitForOpenGL(window, gl_context))
     {
-        return "error: failed to init ImGui";
+        return "error: failed to init ImGui (SDL3)";
     }
 
     return "";
@@ -1503,400 +1510,159 @@ vertex_buffer_impl::~vertex_buffer_impl()
 }
 
 } // end namespace om
+// Dear ImGui: custom rendering through om::engine (textured indexed triangles), SDL3 input via imgui_impl_sdl3 only.
 
-// ImGui SDL2 binding with our custom engine fuctions (no optimization,
-// just study)
-// Data
-static float g_Time                        = 0.0;
-static bool  g_MousePressed[3]             = { false, false, false }; // NOLINT
-static float g_MouseWheel                  = 0.0f;
-static om::shader_gl_es20* g_im_gui_shader = nullptr;
-
-// This is the main rendering function that you have to implement and provide to
-// ImGui (via setting up 'RenderDrawListsFn' in the ImGuiIO structure)
-// Note that this implementation is little overcomplicated because we are
-// saving/setting up/restoring every OpenGL state explicitly, in order to be
-// able to run within any OpenGL engine that doesn't do so.
-// If text or lines are blurry when integrating ImGui in your engine: in your
-// Render function, try translating your projection matrix by (0.5f,0.5f) or
-// (0.375f,0.375f)
-void imgui_to_engine_render(ImDrawData* draw_data)
+static float                        g_imgui_time            = 0.0F;
+static bool                         g_imgui_mouse_down[3] = { false, false, false };
+static float                        g_imgui_mouse_wheel   = 0.0F;
+static om::shader_gl_es20*         g_imgui_shader         = nullptr;
+static om::texture*                 g_imgui_font_texture   = nullptr;
+static void imgui_destroy_font_texture()
 {
-    // Avoid rendering when minimized, scale coordinates for retina displays
-    // (screen coordinates != framebuffer coordinates)
-    ImGuiIO& io        = ImGui::GetIO();
-    int      fb_width  = int(io.DisplaySize.x * io.DisplayFramebufferScale.x);
-    int      fb_height = int(io.DisplaySize.y * io.DisplayFramebufferScale.y);
-    if (fb_width == 0 || fb_height == 0)
+    if (g_imgui_font_texture != nullptr && om::g_imgui_engine != nullptr)
+    {
+        om::g_imgui_engine->destroy_texture(g_imgui_font_texture);
+        g_imgui_font_texture = nullptr;
+    }
+}
+
+void imgui_invalidate_device_objects()
+{
+    imgui_destroy_font_texture();
+    delete g_imgui_shader;
+    g_imgui_shader = nullptr;
+}
+
+static bool imgui_create_font_texture()
+{
+    ImGuiIO& io = ImGui::GetIO();
+    unsigned char* pixels = nullptr;
+    int            w      = 0;
+    int            h      = 0;
+    io.Fonts->GetTexDataAsRGBA32(&pixels, &w, &h);
+    g_imgui_font_texture = om::g_imgui_engine->create_texture_rgba32(
+        pixels, static_cast<size_t>(w), static_cast<size_t>(h));
+    io.Fonts->SetTexID(static_cast<ImTextureID>(
+        reinterpret_cast<uintptr_t>(g_imgui_font_texture)));
+    return true;
+}
+
+static bool imgui_create_device_objects()
+{
+    const GLchar* vertex_shader = "#if defined(GL_ES)\n"
+                                  "precision highp float;\n"
+                                  "#endif\n"
+                                  "uniform mat3 ProjMtx;\n"
+                                  "attribute vec2 Position;\n"
+                                  "attribute vec2 UV;\n"
+                                  "attribute vec4 Color;\n"
+                                  "varying vec2 Frag_UV;\n"
+                                  "varying vec4 Frag_Color;\n"
+                                  "void main()\n"
+                                  "{\n"
+                                  "  Frag_UV = UV;\n"
+                                  "  Frag_Color = Color;\n"
+                                  "  gl_Position = vec4(ProjMtx * vec3(Position.xy,1), 1);\n"
+                                  "}\n";
+
+    const GLchar* fragment_shader = "#if defined(GL_ES)\n"
+                                    "precision highp float;\n"
+                                    "#endif\n"
+                                    "uniform sampler2D Texture;\n"
+                                    "varying vec2 Frag_UV;\n"
+                                    "varying vec4 Frag_Color;\n"
+                                    "void main()\n"
+                                    "{\n"
+                                    "  gl_FragColor = Frag_Color * texture2D(Texture, Frag_UV);\n"
+                                    "}\n";
+
+    g_imgui_shader = new om::shader_gl_es20(
+        vertex_shader,
+        fragment_shader,
+        { { 0, "Position" }, { 1, "UV" }, { 2, "Color" } });
+
+    return imgui_create_font_texture();
+}
+
+void imgui_ensure_device_objects()
+{
+    if (g_imgui_shader != nullptr)
     {
         return;
     }
-    draw_data->ScaleClipRects(io.DisplayFramebufferScale);
+    if (!imgui_create_device_objects())
+    {
+        std::cerr << "imgui_create_device_objects failed\n";
+    }
+}
 
-    auto* texture = reinterpret_cast<om::texture_gl_es20*>(io.Fonts->TexID);
-    assert(texture != nullptr);
+void imgui_to_engine_render(ImDrawData* draw_data)
+{
+    if (draw_data == nullptr || !draw_data->Valid || draw_data->CmdListsCount == 0)
+    {
+        return;
+    }
+
+    ImGuiIO& io       = ImGui::GetIO();
+    ImVec2   fb_scale = draw_data->FramebufferScale;
+    int      fb_width =
+        static_cast<int>(draw_data->DisplaySize.x * fb_scale.x);
+    int fb_height = static_cast<int>(draw_data->DisplaySize.y * fb_scale.y);
+    if (fb_width <= 0 || fb_height <= 0)
+    {
+        return;
+    }
+    draw_data->ScaleClipRects(fb_scale);
 
     om::mat2x3 orto_matrix =
-        om::mat2x3::scale(2.0f / io.DisplaySize.x, -2.0f / io.DisplaySize.y) *
-        om::mat2x3::move(om::vec2(-1.0f, 1.0f));
+        om::mat2x3::scale(2.0F / io.DisplaySize.x, -2.0F / io.DisplaySize.y) *
+        om::mat2x3::move(om::vec2(-1.0F, 1.0F));
 
-    g_im_gui_shader->use();
-    g_im_gui_shader->set_uniform("Texture", texture);
-    g_im_gui_shader->set_uniform("ProjMtx", orto_matrix);
+    g_imgui_shader->use();
+    g_imgui_shader->set_uniform("ProjMtx", orto_matrix);
 
     for (int n = 0; n < draw_data->CmdListsCount; n++)
     {
         const ImDrawList* cmd_list          = draw_data->CmdLists[n];
         const ImDrawIdx*  idx_buffer_offset = nullptr;
 
-        // om engine vertex format completely the same, prof:
-        static_assert(sizeof(om::v2) == sizeof(ImDrawVert));
-        static_assert(sizeof(om::v2::pos) == sizeof(ImDrawVert::pos));
-        static_assert(sizeof(om::v2::uv) == sizeof(ImDrawVert::uv));
-        static_assert(offsetof(om::v2, pos) == offsetof(ImDrawVert, pos));
-        static_assert(offsetof(om::v2, uv) == offsetof(ImDrawVert, uv));
-
         const auto* vertex_data =
             reinterpret_cast<const om::v2*>(cmd_list->VtxBuffer.Data);
-        auto vert_count = static_cast<size_t>(cmd_list->VtxBuffer.size());
+        auto vert_count = static_cast<size_t>(cmd_list->VtxBuffer.Size);
 
         om::vertex_buffer* vertex_buff =
-            om::g_engine->create_vertex_buffer(vertex_data, vert_count);
+            om::g_imgui_engine->create_vertex_buffer(vertex_data, vert_count);
 
         const std::uint16_t* indexes = cmd_list->IdxBuffer.Data;
-        auto index_count = static_cast<size_t>(cmd_list->IdxBuffer.size());
+        auto index_count = static_cast<size_t>(cmd_list->IdxBuffer.Size);
 
         om::index_buffer* index_buff =
-            om::g_engine->create_index_buffer(indexes, index_count);
+            om::g_imgui_engine->create_index_buffer(indexes, index_count);
 
         for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++)
         {
             const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
-            assert(pcmd->UserCallback == nullptr); // we not use it
+            if (pcmd->UserCallback != nullptr)
+            {
+                pcmd->UserCallback(cmd_list, pcmd);
+                continue;
+            }
 
-            auto* tex = reinterpret_cast<om::texture*>(pcmd->TextureId);
+            const ImTextureID tid = pcmd->GetTexID();
+            auto*               tex = reinterpret_cast<om::texture*>(
+                static_cast<uintptr_t>(tid));
+            auto* gl_tex = static_cast<om::texture_gl_es20*>(tex);
+            g_imgui_shader->set_uniform("Texture", gl_tex);
 
-            om::g_engine->render(vertex_buff,
-                                 index_buff,
-                                 tex,
-                                 idx_buffer_offset,
-                                 pcmd->ElemCount);
+            om::g_imgui_engine->render(vertex_buff,
+                                       index_buff,
+                                       tex,
+                                       idx_buffer_offset,
+                                       static_cast<size_t>(pcmd->ElemCount));
 
             idx_buffer_offset += pcmd->ElemCount;
-        } // end for cmd_i
-        om::g_engine->destroy_vertex_buffer(vertex_buff);
-        om::g_engine->destroy_index_buffer(index_buff);
-    } // end for n
-}
-
-static const char* ImGui_ImplSdlGL3_GetClipboardText(void*)
-{
-    return SDL_GetClipboardText();
-}
-
-static void ImGui_ImplSdlGL3_SetClipboardText(void*, const char* text)
-{
-    SDL_SetClipboardText(text);
-}
-
-// You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if
-// dear imgui wants to use your inputs.
-// - When io.WantCaptureMouse is true, do not dispatch mouse input data to your
-// main application.
-// - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to
-// your main application.
-// Generally you may always pass all inputs to dear imgui, and hide them from
-// your application based on those two flags.
-bool ImGui_ImplSdlGL3_ProcessEvent(const SDL_Event* event)
-{
-    ImGuiIO& io = ImGui::GetIO();
-    switch (event->type) // NOLINT
-    {
-        case SDL_EVENT_MOUSE_WHEEL:
-        {
-            if (event->wheel.y > 0)
-            {
-                g_MouseWheel = 1;
-            }
-            if (event->wheel.y < 0)
-            {
-                g_MouseWheel = -1;
-            }
-            return true;
         }
-        case SDL_EVENT_MOUSE_BUTTON_DOWN:
-        {
-            if (event->button.button == SDL_BUTTON_LEFT)
-            {
-                g_MousePressed[0] = true;
-            }
-            if (event->button.button == SDL_BUTTON_RIGHT)
-            {
-                g_MousePressed[1] = true;
-            }
-            if (event->button.button == SDL_BUTTON_MIDDLE)
-            {
-                g_MousePressed[2] = true;
-            }
-            return true;
-        }
-        case SDL_EVENT_TEXT_INPUT:
-        {
-            io.AddInputCharactersUTF8(event->text.text);
-            return true;
-        }
-        case SDL_EVENT_KEY_DOWN:
-        case SDL_EVENT_KEY_UP:
-        {
-            unsigned key           = event->key.key;
-            io.KeysDown[key]       = (event->type == SDL_EVENT_KEY_DOWN);
-            uint32_t mod_keys_mask = SDL_GetModState();
-            io.KeyShift            = ((mod_keys_mask & SDL_KMOD_SHIFT) != 0);
-            io.KeyCtrl             = ((mod_keys_mask & SDL_KMOD_CTRL) != 0);
-            io.KeyAlt              = ((mod_keys_mask & SDL_KMOD_ALT) != 0);
-            io.KeySuper            = ((mod_keys_mask & SDL_KMOD_GUI) != 0);
-            return true;
-        }
+        om::g_imgui_engine->destroy_vertex_buffer(vertex_buff);
+        om::g_imgui_engine->destroy_index_buffer(index_buff);
     }
-    return false;
-}
-
-void ImGui_ImplSdlGL3_CreateFontsTexture()
-{
-    // Build texture atlas
-    ImGuiIO&       io     = ImGui::GetIO();
-    unsigned char* pixels = nullptr;
-    int            width  = 0;
-    int            height = 0;
-    io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
-
-    // Store our identifier
-    io.Fonts->TexID = om::g_engine->create_texture_rgba32(
-        pixels, static_cast<size_t>(width), static_cast<size_t>(height));
-}
-
-bool ImGui_ImplSdlGL3_CreateDeviceObjects()
-{
-    const GLchar* vertex_shader =
-        //"#version 150\n"
-        "#if defined(GL_ES)\n"
-        "precision highp float;\n"
-        "#endif //GL_ES\n"
-        "uniform mat3 ProjMtx;\n"
-        "attribute vec2 Position;\n"
-        "attribute vec2 UV;\n"
-        "attribute vec4 Color;\n"
-        "varying vec2 Frag_UV;\n"
-        "varying vec4 Frag_Color;\n"
-        "void main()\n"
-        "{\n"
-        "	Frag_UV = UV;\n"
-        "	Frag_Color = Color;\n"
-        "	gl_Position = vec4(ProjMtx * vec3(Position.xy,1), 1);\n"
-        "}\n";
-
-    const GLchar* fragment_shader =
-        //"#version 150\n"
-        "#if defined(GL_ES)\n"
-        "precision highp float;\n"
-        "#endif //GL_ES\n"
-        "uniform sampler2D Texture;\n"
-        "varying vec2 Frag_UV;\n"
-        "varying vec4 Frag_Color;\n"
-        //"out vec4 Out_Color;\n"
-        "void main()\n"
-        "{\n"
-        "	gl_FragColor = Frag_Color * texture2D( Texture, Frag_UV);\n"
-        "}\n";
-
-    g_im_gui_shader = new om::shader_gl_es20(
-        vertex_shader,
-        fragment_shader,
-        { { 0, "Position" }, { 1, "UV" }, { 2, "Color" } });
-
-    ImGui_ImplSdlGL3_CreateFontsTexture();
-
-    return true;
-}
-
-void ImGui_ImplSdlGL3_InvalidateDeviceObjects()
-{
-    void* ptr     = ImGui::GetIO().Fonts->TexID;
-    auto* texture = reinterpret_cast<om::texture*>(ptr);
-    om::g_engine->destroy_texture(texture);
-
-    delete g_im_gui_shader;
-    g_im_gui_shader = nullptr;
-}
-
-bool ImGui_ImplSdlGL3_Init(SDL_Window* window)
-{
-    // Setup Dear ImGui context
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    // io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard
-    // Controls
-
-    // Setup Dear ImGui style
-    ImGui::StyleColorsDark();
-    // ImGui::StyleColorsClassic();
-
-    ImGuiIO& io = ImGui::GetIO();
-    // g_Window    = window;
-
-    // Setup back-end capabilities flags
-    // io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors; // We can honor
-    // GetMouseCursor()
-    //                                           // values (optional)
-    //    io.BackendFlags |=
-    //        ImGuiBackendFlags_HasSetMousePos; // We can honor
-    //        io.WantSetMousePos
-    //                                          // requests (optional, rarely
-    //                                          used)
-    io.BackendPlatformName = "custom_micro_engine";
-
-    // Keyboard mapping. ImGui will use those indices to peek into the
-    // io.KeysDown[] array.
-    io.KeyMap[ImGuiKey_Tab]        = SDL_SCANCODE_TAB;
-    io.KeyMap[ImGuiKey_LeftArrow]  = SDL_SCANCODE_LEFT;
-    io.KeyMap[ImGuiKey_RightArrow] = SDL_SCANCODE_RIGHT;
-    io.KeyMap[ImGuiKey_UpArrow]    = SDL_SCANCODE_UP;
-    io.KeyMap[ImGuiKey_DownArrow]  = SDL_SCANCODE_DOWN;
-    io.KeyMap[ImGuiKey_PageUp]     = SDL_SCANCODE_PAGEUP;
-    io.KeyMap[ImGuiKey_PageDown]   = SDL_SCANCODE_PAGEDOWN;
-    io.KeyMap[ImGuiKey_Home]       = SDL_SCANCODE_HOME;
-    io.KeyMap[ImGuiKey_End]        = SDL_SCANCODE_END;
-    io.KeyMap[ImGuiKey_Insert]     = SDL_SCANCODE_INSERT;
-    io.KeyMap[ImGuiKey_Delete]     = SDL_SCANCODE_DELETE;
-    io.KeyMap[ImGuiKey_Backspace]  = SDL_SCANCODE_BACKSPACE;
-    io.KeyMap[ImGuiKey_Space]      = SDL_SCANCODE_SPACE;
-    io.KeyMap[ImGuiKey_Enter]      = SDL_SCANCODE_RETURN;
-    io.KeyMap[ImGuiKey_Escape]     = SDL_SCANCODE_ESCAPE;
-    io.KeyMap[ImGuiKey_A]          = SDL_SCANCODE_A;
-    io.KeyMap[ImGuiKey_C]          = SDL_SCANCODE_C;
-    io.KeyMap[ImGuiKey_V]          = SDL_SCANCODE_V;
-    io.KeyMap[ImGuiKey_X]          = SDL_SCANCODE_X;
-    io.KeyMap[ImGuiKey_Y]          = SDL_SCANCODE_Y;
-    io.KeyMap[ImGuiKey_Z]          = SDL_SCANCODE_Z;
-    /*
-        g_MouseCursors[ImGuiMouseCursor_Arrow] =
-            SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW);
-        g_MouseCursors[ImGuiMouseCursor_TextInput] =
-            SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_IBEAM);
-        g_MouseCursors[ImGuiMouseCursor_ResizeAll] =
-            SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZEALL);
-        g_MouseCursors[ImGuiMouseCursor_ResizeNS] =
-            SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZENS);
-        g_MouseCursors[ImGuiMouseCursor_ResizeEW] =
-            SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZEWE);
-        g_MouseCursors[ImGuiMouseCursor_ResizeNESW] =
-            SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZENESW);
-        g_MouseCursors[ImGuiMouseCursor_ResizeNWSE] =
-            SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZENWSE);
-        g_MouseCursors[ImGuiMouseCursor_Hand] =
-            SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_HAND);
-    */
-    io.RenderDrawListsFn =
-        imgui_to_engine_render; // Alternatively you can set this to
-                                // NULL and call ImGui::GetDrawData()
-                                // after ImGui::Render() to get the
-                                // same ImDrawData pointer.
-    io.SetClipboardTextFn = ImGui_ImplSdlGL3_SetClipboardText;
-    io.GetClipboardTextFn = ImGui_ImplSdlGL3_GetClipboardText;
-    io.ClipboardUserData  = nullptr;
-
-#ifdef _WIN32
-    // SDL_SysWMinfo wmInfo;
-    // SDL_GetWindowWMInfo(window, &wmInfo, SDL_SYSWM_CURRENT_VERSION);
-    // io.ImeWindowHandle = wmInfo.info.win.window;
-    HWND hwnd = (HWND)SDL_GetPointerProperty(
-        SDL_GetWindowProperties(window), "SDL.window.win32.hwnd", nullptr);
-    io.ImeWindowHandle = hwnd;
-#else
-    (void)window;
-#endif
-
-    g_Time = static_cast<float>(SDL_GetTicks()) / 1000.f;
-
-    return true;
-}
-
-void ImGui_ImplSdlGL3_Shutdown()
-{
-    ImGui_ImplSdlGL3_InvalidateDeviceObjects();
-    ImGui::DestroyContext();
-}
-
-void ImGui_ImplSdlGL3_NewFrame(SDL_Window* window)
-{
-    ImGuiIO& io = ImGui::GetIO();
-
-    if (io.Fonts->TexID == nullptr)
-    {
-        ImGui_ImplSdlGL3_CreateDeviceObjects();
-    }
-
-    // Setup display size (every frame to accommodate for window resizing)
-    int w, h;
-    int display_w, display_h;
-    SDL_GetWindowSize(window, &w, &h);
-    SDL_GetWindowSizeInPixels(window, &display_w, &display_h);
-    io.DisplaySize = ImVec2(float(w), float(h));
-    io.DisplayFramebufferScale =
-        ImVec2(w > 0 ? float(display_w / w) : 0.f,  // NOLINT
-               h > 0 ? float(display_h / h) : 0.f); // NOLINT
-
-    // Setup time step
-    Uint32 time         = SDL_GetTicks();
-    float  current_time = static_cast<float>(time) / 1000.0f;
-    io.DeltaTime        = current_time - g_Time; // (1.0f / 60.0f);
-    if (io.DeltaTime <= 0)
-    {
-        io.DeltaTime = 0.00001f;
-    }
-    g_Time = current_time;
-
-    // Setup inputs
-    // (we already got mouse wheel, keyboard keys & characters from
-    // SDL_PollEvent())
-    float  mx, my;
-    Uint32 mouseMask = SDL_GetMouseState(&mx, &my);
-    if (SDL_GetWindowFlags(window) & SDL_WINDOW_MOUSE_FOCUS)
-    {
-        io.MousePos = ImVec2(mx, my);
-    }
-    else
-    {
-        io.MousePos = ImVec2(-FLT_MAX, -FLT_MAX);
-    }
-
-    io.MouseDown[0] =
-        g_MousePressed[0] || (mouseMask & SDL_BUTTON_MASK(SDL_BUTTON_LEFT)) !=
-                                 0; // If a mouse press event came, always pass
-                                    // it as "mouse held this frame", so we
-                                    // don't miss click-release events that are
-                                    // shorter than 1 frame.
-    io.MouseDown[1] = g_MousePressed[1] ||
-                      (mouseMask & SDL_BUTTON_MASK(SDL_BUTTON_RIGHT)) != 0;
-    io.MouseDown[2] = g_MousePressed[2] ||
-                      (mouseMask & SDL_BUTTON_MASK(SDL_BUTTON_MIDDLE)) != 0;
-    g_MousePressed[0] = g_MousePressed[1] = g_MousePressed[2] = false;
-
-    io.MouseWheel = g_MouseWheel;
-    g_MouseWheel  = 0.0f;
-
-    // Hide OS mouse cursor if ImGui is drawing it
-    if (io.MouseDrawCursor)
-    {
-        SDL_HideCursor();
-    }
-    else
-    {
-        SDL_ShowCursor();
-    }
-
-    // Start the frame. This call will update the io.WantCaptureMouse,
-    // io.WantCaptureKeyboard flag that you can use to dispatch inputs (or not)
-    // to your application.
-    ImGui::NewFrame();
 }

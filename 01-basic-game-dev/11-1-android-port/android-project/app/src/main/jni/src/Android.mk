@@ -1,15 +1,22 @@
 LOCAL_PATH := $(call my-dir)
 
+OM_REL := $(LOCAL_PATH)/../../../../../../om
+
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := main
 
+LOCAL_C_INCLUDES := $(OM_REL) $(OM_REL)/backends
+
 # Add your application source files here...
-LOCAL_SRC_FILES := $(LOCAL_PATH)/../../../../../../om/engine.cxx \
-                   $(LOCAL_PATH)/../../../../../../om/imgui.cpp \
-                   $(LOCAL_PATH)/../../../../../../om/imgui_demo.cpp \
-                   $(LOCAL_PATH)/../../../../../../om/imgui_draw.cpp \
-                   $(LOCAL_PATH)/../../../../../../om/imgui_impl_sdl_gl3.cpp
+LOCAL_SRC_FILES := $(OM_REL)/engine.cxx \
+                   $(OM_REL)/imgui.cpp \
+                   $(OM_REL)/imgui_demo.cpp \
+                   $(OM_REL)/imgui_draw.cpp \
+                   $(OM_REL)/imgui_tables.cpp \
+                   $(OM_REL)/imgui_widgets.cpp \
+                   $(OM_REL)/backends/imgui_impl_sdl2.cpp \
+                   $(OM_REL)/backends/imgui_impl_opengl3.cpp
 
 LOCAL_SHARED_LIBRARIES := SDL2
 LOCAL_LDLIBS := -lGLESv1_CM -lGLESv2 -llog
