@@ -52,6 +52,16 @@ int main()
 
     try
     {
+        using namespace std::chrono_literals;
+        // check status without blocking
+        auto status = future.wait_for(0s);
+
+        if (status == std::future_status::ready)
+        {
+            std::cout << "task is ready!\n";
+            std::cout << "Exceptions are rethrown upon calling .get()!\n";
+        }
+
         data = future.get();
     }
     catch (std::runtime_error& ex)
