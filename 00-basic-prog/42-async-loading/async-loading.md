@@ -124,3 +124,77 @@ int main(int argc, char** argv)
 Такая штука отлично подходит, когда мы пишем консольную утилиту, которая может максимально загрузить наше железо. Но для графического приложения, которое в любой момент должно отреагировать, это не подходит в общем. Дело в том, что в таких системах, мы в своих задачах, не можем сами влиять на что-то, не можем делать никакие wait(), sleep() и тд. иначе мы просто сломаем весь job_pool тк. наши задачи будет висеть и ждать, и новые не будут поступать. Естественно вставлять туда всякие ```std::stop_token``` мы тоже не можем и тем более бросать исключения.
 ## Следующим нужно разобрать как возвращать результат из вспомогательного потока?
 Есть разные варианты как возвращать данные из вспомогательного потока. И они все применимы, но с разными ограничениями. Например можно возвращать готовую структуру по принципу ```std::future``` где будет ```get(), wait()```, можно посылать события в очередь главного потока, можно через отдельно переданный объект в него записать данные, под специальным мьютексом.
+Вот пример, как на С++20 в боковом потоке, делать долгие вычисления, с возможностью отменить их вычисления, без мьютексов, без ручного синхронизирующего кода, вы описываете, структуру, описываете интерфейсы ваших функций, дальше все запускаете на нужном потоке, там где вам удобно и забираете результат когда вам надо. Даже если случиться исключение, это не проблема, ```std::packaged_task``` передаст его через ```std::future``` при попытке получить результат.
+```cpp
+#include <future>
+#include <iostream>
+#include <map>
+#include <thread>
+#include <vector>
+
+namespace om
+{
+struct data
+{
+    std::string                         str;
+    std::vector<std::int32_t>           values;
+    std::map<std::int32_t, std::string> key_value;
+};
+} // namespace om
+
+int main()
+{
+    // future from a packaged_task
+    std::packaged_task<om::data(std::stop_token)> task(
+        [](std::stop_token stoken) -> om::data
+        {
+            if (stoken.stop_requested())
+            {
+                return {};
+            }
+            std::srand(std::time(nullptr));
+            if (std::rand() % 2)
+            {
+                throw std::runtime_error("exceptions can be used too");
+            }
+
+            // we can return any complex struct from job thread
+            return { .str       = "string",
+                     .values    = { 1, 2, 3, 4, 5 },
+                     .key_value = { { 0, "zero" }, { 1, "one" } } };
+        }); // wrap the function
+
+    std::future<om::data> future =
+        task.get_future(); // get a future before pass task to thread (before
+                           // std::move)
+    {
+        // scoped thread to do the task
+        std::jthread t(std::move(task)); // launch on a thread
+
+        // comment out next line to return filled structure
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        t.request_stop();
+    }
+
+    om::data data;
+
+    try
+    {
+        data = future.get();
+    }
+    catch (std::runtime_error& ex)
+    {
+        std::cout << "we got exception during task calculation on jthread: "
+                  << ex.what() << std::endl;
+    }
+
+    std::cout << data.str << std::endl;
+    for (auto value : data.values)
+    {
+        std::cout << value << ",";
+    }
+    std::cout << std::endl;
+
+    return 0;
+}
+```

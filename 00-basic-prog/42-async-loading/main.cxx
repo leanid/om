@@ -24,22 +24,41 @@ int main()
             {
                 return {};
             }
+            std::srand(std::time(nullptr));
+            if (std::rand() % 2)
+            {
+                throw std::runtime_error("exceptions can be used too");
+            }
+
             // we can return any complex struct from job thread
             return { .str       = "string",
                      .values    = { 1, 2, 3, 4, 5 },
                      .key_value = { { 0, "zero" }, { 1, "one" } } };
-        });                                           // wrap the function
-    std::future<om::data> future = task.get_future(); // get a future
+        }); // wrap the function
 
+    std::future<om::data> future =
+        task.get_future(); // get a future before pass task to thread (before
+                           // std::move)
     {
         // scoped thread to do the task
         std::jthread t(std::move(task)); // launch on a thread
+
         // comment out next line to return filled structure
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
         t.request_stop();
     }
 
-    om::data data = future.get();
+    om::data data;
+
+    try
+    {
+        data = future.get();
+    }
+    catch (std::runtime_error& ex)
+    {
+        std::cout << "we got exception during task calculation on jthread: "
+                  << ex.what() << std::endl;
+    }
 
     std::cout << data.str << std::endl;
     for (auto value : data.values)
