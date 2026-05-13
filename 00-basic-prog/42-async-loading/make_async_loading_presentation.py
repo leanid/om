@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import html
+import re
 import subprocess
 import textwrap
 import zipfile
@@ -14,6 +15,117 @@ SLIDE_W = 12_192_000
 SLIDE_H = 6_858_000
 EMU_PER_INCH = 914_400
 FONT_FAMILY = "JetBrains Mono"
+LIGHT_BG = "F8FAFC"
+SURFACE = "FFFFFF"
+SURFACE_2 = "F1F5F9"
+TEXT = "0F172A"
+MUTED = "475569"
+SUBTLE = "64748B"
+CODE_KEYWORD = "2563EB"
+CODE_TYPE = "7C3AED"
+CODE_STRING = "15803D"
+CODE_COMMENT = "64748B"
+CODE_NUMBER = "B45309"
+CODE_FUNCTION = "0F766E"
+CODE_PUNCT = "334155"
+
+CPP_KEYWORDS = {
+    "alignas",
+    "alignof",
+    "auto",
+    "break",
+    "case",
+    "catch",
+    "class",
+    "const",
+    "constexpr",
+    "continue",
+    "decltype",
+    "default",
+    "delete",
+    "do",
+    "else",
+    "enum",
+    "explicit",
+    "export",
+    "extern",
+    "false",
+    "for",
+    "if",
+    "inline",
+    "mutable",
+    "namespace",
+    "new",
+    "noexcept",
+    "nullptr",
+    "operator",
+    "private",
+    "protected",
+    "public",
+    "return",
+    "sizeof",
+    "static",
+    "struct",
+    "switch",
+    "template",
+    "this",
+    "throw",
+    "true",
+    "try",
+    "typename",
+    "using",
+    "virtual",
+    "void",
+    "while",
+}
+CPP_TYPES = {
+    "bool",
+    "char",
+    "chrono_literals",
+    "data",
+    "double",
+    "exception",
+    "float",
+    "future",
+    "int",
+    "jthread",
+    "packaged_task",
+    "runtime_error",
+    "std",
+    "stop_token",
+    "string",
+}
+
+FILL_MAP = {
+    "08111F": LIGHT_BG,
+    "0B1020": LIGHT_BG,
+    "0F172A": LIGHT_BG,
+    "111827": LIGHT_BG,
+    "102033": "E0F2FE",
+    "151F33": SURFACE,
+    "172033": SURFACE,
+    "1F2937": SURFACE,
+    "1E1B4B": "F3E8FF",
+    "052E2B": "DCFCE7",
+    "064E3B": "DCFCE7",
+    "3B1D0A": "FEF3C7",
+    "78350F": "FEF3C7",
+    "1E3A8A": "DBEAFE",
+    "581C87": "F3E8FF",
+}
+
+TEXT_COLOR_MAP = {
+    "FFFFFF": TEXT,
+    "E5E7EB": TEXT,
+    "E2E8F0": TEXT,
+    "CBD5E1": MUTED,
+    "A7B3C8": MUTED,
+    "94A3B8": SUBTLE,
+    "FECACA": "991B1B",
+    "FEF3C7": "92400E",
+    "DCFCE7": "166534",
+    "EDE9FE": "6B21A8",
+}
 
 OUT_DIR = Path(__file__).resolve().parent
 PPTX_PATH = OUT_DIR / "async-loading-presentation.pptx"
@@ -26,6 +138,96 @@ def inch(value: float) -> int:
 
 def esc(value: str) -> str:
     return html.escape(value, quote=True)
+
+
+def fill_color(value: str) -> str:
+    return FILL_MAP.get(value, value)
+
+
+def text_color(value: str) -> str:
+    return TEXT_COLOR_MAP.get(value, value)
+
+
+def accent_tint(value: str) -> str:
+    return {
+        "38BDF8": "E0F2FE",
+        "7DD3FC": "E0F2FE",
+        "A78BFA": "F3E8FF",
+        "C084FC": "F3E8FF",
+        "34D399": "DCFCE7",
+        "FBBF24": "FEF3C7",
+        "FB7185": "FFE4E6",
+    }.get(value, SURFACE_2)
+
+
+def highlight_cpp_line(line: str) -> list[tuple[str, str, bool, bool]]:
+    result: list[tuple[str, str, bool, bool]] = []
+    i = 0
+    while i < len(line):
+        if line.startswith("//", i):
+            result.append((line[i:], CODE_COMMENT, False, True))
+            break
+
+        ch = line[i]
+        if ch in {'"', "'"}:
+            quote = ch
+            start = i
+            i += 1
+            escaped = False
+            while i < len(line):
+                current = line[i]
+                if current == quote and not escaped:
+                    i += 1
+                    break
+                escaped = current == "\\" and not escaped
+                if current != "\\":
+                    escaped = False
+                i += 1
+            result.append((line[start:i], CODE_STRING, False, False))
+            continue
+
+        if ch.isspace():
+            start = i
+            while i < len(line) and line[i].isspace():
+                i += 1
+            result.append((line[start:i], TEXT, False, False))
+            continue
+
+        if ch.isdigit():
+            start = i
+            while i < len(line) and re.match(r"[0-9A-Fa-f_xX'.]", line[i]):
+                i += 1
+            while i < len(line) and line[i].isalpha():
+                i += 1
+            result.append((line[start:i], CODE_NUMBER, False, False))
+            continue
+
+        if ch == "#":
+            result.append((line[i:], CODE_KEYWORD, True, False))
+            break
+
+        if ch.isalpha() or ch == "_":
+            start = i
+            while i < len(line) and (line[i].isalnum() or line[i] == "_"):
+                i += 1
+            word = line[start:i]
+            lookahead = i
+            while lookahead < len(line) and line[lookahead].isspace():
+                lookahead += 1
+            if word in CPP_KEYWORDS:
+                result.append((word, CODE_KEYWORD, True, False))
+            elif word in CPP_TYPES:
+                result.append((word, CODE_TYPE, False, False))
+            elif lookahead < len(line) and line[lookahead] == "(":
+                result.append((word, CODE_FUNCTION, False, False))
+            else:
+                result.append((word, TEXT, False, False))
+            continue
+
+        result.append((ch, CODE_PUNCT, False, False))
+        i += 1
+
+    return result or [(" ", TEXT, False, False)]
 
 
 @dataclass
@@ -76,6 +278,9 @@ class pptx_writer:
     ) -> str:
         sid = self.next_id()
         shape = "roundRect" if radius else "rect"
+        color = text_color(color)
+        fill = fill_color(fill) if fill else fill
+        line = fill_color(line) if line else line
         fill_xml = f"<a:solidFill><a:srgbClr val=\"{fill}\"/></a:solidFill>" if fill else "<a:noFill/>"
         line_xml = (
             f"<a:ln w=\"14000\"><a:solidFill><a:srgbClr val=\"{line}\"/></a:solidFill></a:ln>"
@@ -120,8 +325,73 @@ class pptx_writer:
               <a:solidFill><a:srgbClr val="{color}"/></a:solidFill>
               <a:latin typeface="{esc(font)}"/><a:ea typeface="{esc(font)}"/><a:cs typeface="{esc(font)}"/>
             </a:rPr>
-            <a:t>{esc(text)}</a:t>
+            <a:t xml:space="preserve">{esc(text)}</a:t>
           </a:r>
+          <a:endParaRPr lang="ru-RU" sz="{size * 100}" dirty="0"/>
+        </a:p>
+        """
+
+    def rich_text_box(
+        self,
+        x: int,
+        y: int,
+        w: int,
+        h: int,
+        lines: Iterable[list[tuple[str, str, bool, bool]]],
+        *,
+        size: int = 13,
+        fill: str | None = None,
+        line: str | None = None,
+        radius: bool = False,
+        margin: int = 90_000,
+        name: str = "RichText",
+    ) -> str:
+        sid = self.next_id()
+        shape = "roundRect" if radius else "rect"
+        fill = fill_color(fill) if fill else fill
+        line = fill_color(line) if line else line
+        fill_xml = f"<a:solidFill><a:srgbClr val=\"{fill}\"/></a:solidFill>" if fill else "<a:noFill/>"
+        line_xml = (
+            f"<a:ln w=\"14000\"><a:solidFill><a:srgbClr val=\"{line}\"/></a:solidFill></a:ln>"
+            if line
+            else "<a:ln><a:noFill/></a:ln>"
+        )
+        paragraph_xml = "".join(self.rich_paragraph(item, size=size) for item in lines)
+        return f"""
+        <p:sp>
+          <p:nvSpPr><p:cNvPr id="{sid}" name="{esc(name)} {sid}"/><p:cNvSpPr txBox="1"/><p:nvPr/></p:nvSpPr>
+          <p:spPr>
+            <a:xfrm><a:off x="{x}" y="{y}"/><a:ext cx="{w}" cy="{h}"/></a:xfrm>
+            <a:prstGeom prst="{shape}"><a:avLst/></a:prstGeom>
+            {fill_xml}{line_xml}
+          </p:spPr>
+          <p:txBody>
+            <a:bodyPr wrap="none" lIns="{margin}" tIns="{margin}" rIns="{margin}" bIns="{margin}" anchor="mid"/>
+            <a:lstStyle/>
+            {paragraph_xml}
+          </p:txBody>
+        </p:sp>
+        """
+
+    def rich_paragraph(self, runs: list[tuple[str, str, bool, bool]], *, size: int) -> str:
+        run_xml = []
+        for text, color, bold, italic in runs:
+            bold_attr = ' b="1"' if bold else ""
+            italic_attr = ' i="1"' if italic else ""
+            run_xml.append(
+                f"""
+          <a:r>
+            <a:rPr lang="ru-RU" sz="{size * 100}"{bold_attr}{italic_attr} dirty="0">
+              <a:solidFill><a:srgbClr val="{color}"/></a:solidFill>
+              <a:latin typeface="{esc(FONT_FAMILY)}"/><a:ea typeface="{esc(FONT_FAMILY)}"/><a:cs typeface="{esc(FONT_FAMILY)}"/>
+            </a:rPr>
+            <a:t xml:space="preserve">{esc(text)}</a:t>
+          </a:r>"""
+            )
+        return f"""
+        <a:p>
+          <a:pPr algn="l"/>
+          {''.join(run_xml)}
           <a:endParaRPr lang="ru-RU" sz="{size * 100}" dirty="0"/>
         </a:p>
         """
@@ -140,6 +410,8 @@ class pptx_writer:
     ) -> str:
         sid = self.next_id()
         shape = "roundRect" if radius else "rect"
+        fill = fill_color(fill)
+        line = fill_color(line) if line else line
         line_xml = (
             f"<a:ln w=\"16000\"><a:solidFill><a:srgbClr val=\"{line}\"/></a:solidFill></a:ln>"
             if line
@@ -169,6 +441,8 @@ class pptx_writer:
         name: str = "Circle",
     ) -> str:
         sid = self.next_id()
+        fill = fill_color(fill)
+        line = fill_color(line) if line else line
         line_xml = (
             f"<a:ln w=\"16000\"><a:solidFill><a:srgbClr val=\"{line}\"/></a:solidFill></a:ln>"
             if line
@@ -202,7 +476,7 @@ class pptx_writer:
 
     def slide_xml(self, item: slide, index: int) -> str:
         self.shape_id = 1
-        pieces = [self.rect(0, 0, SLIDE_W, SLIDE_H, fill=item.background, name="Background")]
+        pieces = [self.rect(0, 0, SLIDE_W, SLIDE_H, fill=LIGHT_BG, name="Background")]
         pieces.append(self.rect(0, 0, inch(0.18), SLIDE_H, fill=item.accent, name="Accent"))
         pieces.append(
             self.text_box(
@@ -213,7 +487,7 @@ class pptx_writer:
                 item.title,
                 size=24,
                 bold=True,
-                color="FFFFFF",
+                color=TEXT,
                 fill=None,
                 margin=0,
                 name="Title",
@@ -228,7 +502,7 @@ class pptx_writer:
                     inch(0.40),
                     item.subtitle,
                 size=11,
-                    color="A7B3C8",
+                    color=MUTED,
                     margin=0,
                     name="Subtitle",
                 )
@@ -376,8 +650,8 @@ def theme_xml() -> str:
 <a:theme xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" name="AsyncLoading">
   <a:themeElements>
     <a:clrScheme name="AsyncLoading">
-      <a:dk1><a:srgbClr val="0B1020"/></a:dk1><a:lt1><a:srgbClr val="FFFFFF"/></a:lt1>
-      <a:dk2><a:srgbClr val="111827"/></a:dk2><a:lt2><a:srgbClr val="E5E7EB"/></a:lt2>
+      <a:dk1><a:srgbClr val="{TEXT}"/></a:dk1><a:lt1><a:srgbClr val="{SURFACE}"/></a:lt1>
+      <a:dk2><a:srgbClr val="{MUTED}"/></a:dk2><a:lt2><a:srgbClr val="{LIGHT_BG}"/></a:lt2>
       <a:accent1><a:srgbClr val="7DD3FC"/></a:accent1><a:accent2><a:srgbClr val="A78BFA"/></a:accent2>
       <a:accent3><a:srgbClr val="34D399"/></a:accent3><a:accent4><a:srgbClr val="FBBF24"/></a:accent4>
       <a:accent5><a:srgbClr val="FB7185"/></a:accent5><a:accent6><a:srgbClr val="94A3B8"/></a:accent6>
@@ -395,20 +669,21 @@ def wrap(text: str, width: int = 24) -> list[str]:
 
 
 def card(s: slide, x: float, y: float, w: float, h: float, title: str, body: str, *, color: str = "172033", accent: str = "7DD3FC") -> None:
-    body_width = max(10, int(w * 9.2))
-    s.add("rect", inch(x), inch(y), inch(w), inch(h), fill=color, line=accent, radius=True)
-    s.add("text_box", inch(x + 0.14), inch(y + 0.13), inch(w - 0.28), inch(0.28), title, size=11, bold=True, color=accent, fill=None, margin=0)
-    s.add("text_box", inch(x + 0.14), inch(y + 0.43), inch(w - 0.28), inch(max(0.36, h - 0.55)), wrap(body, body_width), size=11, bold=False, color="E5E7EB", fill=None, margin=0)
+    body_width = max(10, int(w * 8.3))
+    s.add("rect", inch(x), inch(y), inch(w), inch(h), fill=accent_tint(accent), line=accent, radius=True)
+    s.add("text_box", inch(x + 0.14), inch(y + 0.11), inch(w - 0.28), inch(0.32), title, size=12, bold=True, color=accent, fill=None, margin=0)
+    s.add("text_box", inch(x + 0.14), inch(y + 0.45), inch(w - 0.28), inch(max(0.42, h - 0.55)), wrap(body, body_width), size=12, bold=False, color=TEXT, fill=None, margin=0)
 
 
 def big_number(s: slide, x: float, y: float, number: str, label: str, color: str) -> None:
     s.add("ellipse", inch(x), inch(y), inch(1.62), inch(1.62), fill=color, line="FFFFFF")
     s.add("text_box", inch(x), inch(y + 0.3), inch(1.62), inch(0.42), number, size=19, bold=True, color="0B1020", align="ctr", margin=0)
-    s.add("text_box", inch(x - 0.34), inch(y + 1.76), inch(2.3), inch(0.55), wrap(label, 16), size=10, color="CBD5E1", align="ctr", margin=0)
+    s.add("text_box", inch(x - 0.34), inch(y + 1.76), inch(2.3), inch(0.6), wrap(label, 15), size=11, color="CBD5E1", align="ctr", margin=0)
 
 
 def code_slide(s: slide, code: str, *, y: float = 1.35, size: int = 13) -> None:
-    s.add("text_box", inch(0.68), inch(y), inch(11.05), inch(5.55), code.splitlines(), size=size, color="E2E8F0", font=FONT_FAMILY, fill="111827", line="334155", radius=True, margin=95_000)
+    highlighted = [highlight_cpp_line(line) for line in code.splitlines()]
+    s.add("rich_text_box", inch(0.42), inch(1.16), inch(11.36), inch(5.85), highlighted, size=size, fill=SURFACE, line="94A3B8", radius=True, margin=85_000)
 
 
 def build_slides() -> list[slide]:
@@ -430,6 +705,7 @@ def build_slides() -> list[slide]:
         ("Потоки", "почему нельзя просто убить thread"),
         ("Callbacks", "почему try/catch обязателен"),
         ("FPS", "как зависимости задач упираются в кадры"),
+        ("Result", "как вернуть данные и ошибки"),
     ]
     for i, (title, body) in enumerate(items):
         x = 0.75 + (i % 3) * 3.75
@@ -562,7 +838,7 @@ def build_slides() -> list[slide]:
     }
 }
 
-std::jthread worker(do_work);""", size=12)
+std::jthread worker(do_work);""", size=16)
     slides.append(s)
 
     s = slide("Отмена остается кооперативной", "stop_token сам ничего не прерывает", background="0F172A", accent="38BDF8")
@@ -590,7 +866,7 @@ std::jthread worker(do_work);""", size=12)
 }
 
 thread.interrupt();
-thread.join();""", size=12)
+thread.join();""", size=16)
     slides.append(s)
 
     s = slide("Почему try/catch обязателен в callback", "Исключение в чужом потоке не вернется магически на main", background="0B1020", accent="FB7185")
@@ -612,7 +888,7 @@ thread.join();""", size=12)
         log_error("unknown worker exception");
         post_result(failure{"unknown"});
     }
-}""", size=12)
+}""", size=18)
     slides.append(s)
 
     s = slide("Где ставить точки отмены", "Ответ рождается из таймингов", background="0F172A", accent="FBBF24")
@@ -705,6 +981,70 @@ thread.join();""", size=12)
         ("owner missing", "weak_ptr не залочился"),
     ]):
         card(s, 0.9 + (i % 2) * 5.4, 1.55 + (i // 2) * 1.85, 4.7, 1.25, title, body, color="052E2B", accent="34D399")
+    slides.append(s)
+
+    s = slide("Как вернуть результат из worker", "Есть несколько вариантов, у каждого своя цена", background="0F172A", accent="38BDF8")
+    for i, (title, body) in enumerate([
+        ("std::future", "get(), wait(), wait_for()"),
+        ("main queue", "callback на следующем кадре"),
+        ("shared object", "данные под mutex"),
+        ("typed result", "success / error / cancelled"),
+    ]):
+        card(s, 0.9 + (i % 2) * 5.4, 1.55 + (i // 2) * 1.85, 4.7, 1.25, title, body, color="102033", accent=["38BDF8", "A78BFA", "FBBF24", "34D399"][i])
+    s.add("text_box", inch(0.95), inch(5.15), inch(10.3), inch(0.55), "Главное правило: main не должен блокироваться, пока ждет результат.", size=14, color=MUTED, align="ctr", margin=0)
+    slides.append(s)
+
+    s = slide("packaged_task + future", "Стандартная библиотека умеет переносить значение и исключение", background="08111F", accent="38BDF8")
+    code_slide(s, """std::packaged_task<om::data(std::stop_token)> task(
+    [](std::stop_token stoken) -> om::data {
+        if (stoken.stop_requested()) {
+            return {};
+        }
+
+        if (something_bad()) {
+            throw std::runtime_error("load failed");
+        }
+
+        return make_loaded_data();
+    });
+
+std::future<om::data> future = task.get_future();
+std::jthread worker(std::move(task));""", size=16)
+    slides.append(s)
+
+    s = slide("future: не блокируем main", "Состояние можно проверить без ожидания", background="0F172A", accent="FBBF24")
+    code_slide(s, """using namespace std::chrono_literals;
+
+auto status = future.wait_for(0s);
+if (status == std::future_status::ready) {
+    try {
+        om::data data = future.get();
+        apply_loaded_data(std::move(data));
+    } catch (const std::exception& e) {
+        show_load_error(e.what());
+    }
+}
+
+// future.get() перебросит исключение из worker.""", size=18)
+    slides.append(s)
+
+    s = slide("Отмена + future", "request_stop() просит worker завершиться, result все равно типизирован", background="08111F", accent="A78BFA")
+    card(s, 0.95, 1.7, 3.05, 1.25, "owner", "держит handle операции", color="1E1B4B", accent="A78BFA")
+    card(s, 4.6, 1.7, 3.05, 1.25, "request_stop()", "сигнал в stop_token", color="1E1B4B", accent="A78BFA")
+    card(s, 8.25, 1.7, 3.05, 1.25, "future", "value или exception", color="1E1B4B", accent="A78BFA")
+    s.add("line", inch(4.05), inch(2.33), inch(4.5), inch(2.33), color="A78BFA")
+    s.add("line", inch(7.7), inch(2.33), inch(8.15), inch(2.33), color="A78BFA")
+    s.add("text_box", inch(0.95), inch(4.35), inch(10.3), inch(0.85), "Даже при исключении у вызывающего кода есть точка, где его можно поймать и превратить в UI-сообщение.", size=16, color="6B21A8", align="ctr", margin=0)
+    slides.append(s)
+
+    s = slide("Альтернативы future", "Они работают, но синхронизацию придется держать руками", background="111827", accent="FB7185")
+    for i, (title, body) in enumerate([
+        ("объект + mutex", "легко ошибиться с lock lifetime"),
+        ("lambda на main", "результат придет только в кадре"),
+        ("сырой buffer", "указатель + размер плохо типизированы"),
+        ("ручные ошибки", "нужен единый error channel"),
+    ]):
+        card(s, 0.9 + (i % 2) * 5.4, 1.55 + (i // 2) * 1.85, 4.7, 1.25, title, body, color="1F2937", accent="FB7185")
     slides.append(s)
 
     s = slide("Практический чек-лист", "Что должно быть в реальной async-загрузке", background="08111F", accent="FBBF24")
