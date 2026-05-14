@@ -285,14 +285,13 @@ class notification_center
         while (true)
         {
             boost::system::error_code ec;
-            co_await conn_.async_receive(
+            co_await conn_.async_receive2(
                 net::redirect_error(net::deferred, ec));
             if (ec)
             {
                 break;
             }
             process_push(resp);
-            bredis::consume_one(resp);
         }
     }
 
