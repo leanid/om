@@ -1,1 +1,1 @@
-add_executable(42-async-loading main.cxx)
+add_executable(42-async-loading std_main.cxx)
