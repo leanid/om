@@ -295,14 +295,13 @@ private:
                        vk::raii::Buffer&       buffer,
                        vk::raii::DeviceMemory& bufferMemory);
 
-    void create_image(uint32_t                width,
-                      uint32_t                height,
-                      vk::Format              format,
-                      vk::ImageTiling         tiling,
-                      vk::ImageUsageFlags     usage,
-                      vk::MemoryPropertyFlags properties,
-                      vk::raii::Image&        image,
-                      vk::raii::DeviceMemory& image_memory);
+    std::pair<vk::raii::Image, vk::raii::DeviceMemory> create_image(
+        uint32_t                width,
+        uint32_t                height,
+        vk::Format              format,
+        vk::ImageTiling         tiling,
+        vk::ImageUsageFlags     usage,
+        vk::MemoryPropertyFlags properties);
 
     void transition_image_layout(vk::ImageLayout        layout_old,
                                  const vk::raii::Image& img,
@@ -2607,15 +2606,13 @@ image::image(render& r, std::filesystem::path path, std::string dbg_name)
                          .height = static_cast<uint32_t>(height),
                          .depth  = 1u };
 
-    r.create_image(extent.width,
-                   extent.height,
-                   vk::Format::eR8G8B8A8Srgb,
-                   vk::ImageTiling::eOptimal,
-                   vk::ImageUsageFlagBits::eTransferDst |
-                       vk::ImageUsageFlagBits::eSampled,
-                   vk::MemoryPropertyFlagBits::eDeviceLocal,
-                   img,
-                   img_memory);
+    std::tie(img, img_memory) = r.create_image(
+        extent.width,
+        extent.height,
+        vk::Format::eR8G8B8A8Srgb,
+        vk::ImageTiling::eOptimal,
+        vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled,
+        vk::MemoryPropertyFlagBits::eDeviceLocal);
 
     r.transition_image_layout(
         vk::ImageLayout::eUndefined, img, vk::ImageLayout::eTransferDstOptimal);
@@ -2698,14 +2695,13 @@ void render::create_buffer(vk::DeviceSize          size,
     buffer.bindMemory(*bufferMemory, 0);
 }
 
-void render::create_image(uint32_t                width,
-                          uint32_t                height,
-                          vk::Format              format,
-                          vk::ImageTiling         tiling,
-                          vk::ImageUsageFlags     usage,
-                          vk::MemoryPropertyFlags properties,
-                          vk::raii::Image&        image,
-                          vk::raii::DeviceMemory& image_memory)
+std::pair<vk::raii::Image, vk::raii::DeviceMemory> render::create_image(
+    uint32_t                width,
+    uint32_t                height,
+    vk::Format              format,
+    vk::ImageTiling         tiling,
+    vk::ImageUsageFlags     usage,
+    vk::MemoryPropertyFlags properties)
 {
     vk::ImageCreateInfo img_info{
         .pNext       = nullptr,
@@ -2724,7 +2720,7 @@ void render::create_image(uint32_t                width,
         .initialLayout         = vk::ImageLayout::eUndefined
     };
 
-    image = vk::raii::Image(devices.logical, img_info);
+    vk::raii::Image image = vk::raii::Image(devices.logical, img_info);
 
     vk::MemoryRequirements img_mem_requirements = image.getMemoryRequirements();
     vk::MemoryAllocateInfo alloc_info{
@@ -2735,8 +2731,11 @@ void render::create_image(uint32_t                width,
                                 properties,
                                 devices.physical.getMemoryProperties())
     };
-    image_memory = vk::raii::DeviceMemory(devices.logical, alloc_info);
+    vk::raii::DeviceMemory image_memory =
+        vk::raii::DeviceMemory(devices.logical, alloc_info);
     image.bindMemory(*image_memory, 0);
+
+    return { std::move(image), std::move(image_memory) };
 }
 
 void render::transition_image_layout(vk::ImageLayout        layout_old,
