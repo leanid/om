@@ -2633,17 +2633,21 @@ image::image(render& r, std::filesystem::path path, std::string dbg_name)
         r.devices.physical.getProperties();
 
     vk::SamplerCreateInfo sampler_info{
-        .magFilter        = vk::Filter::eLinear,
-        .minFilter        = vk::Filter::eLinear,
-        .mipmapMode       = vk::SamplerMipmapMode::eLinear,
-        .addressModeU     = vk::SamplerAddressMode::eRepeat,
-        .addressModeV     = vk::SamplerAddressMode::eRepeat,
-        .addressModeW     = vk::SamplerAddressMode::eRepeat,
-        .mipLodBias       = 0.0f,
-        .anisotropyEnable = vk::True,
-        .maxAnisotropy    = properties.limits.maxSamplerAnisotropy,
-        .compareEnable    = vk::False,
-        .compareOp        = vk::CompareOp::eAlways
+        .magFilter               = vk::Filter::eLinear,
+        .minFilter               = vk::Filter::eLinear,
+        .mipmapMode              = vk::SamplerMipmapMode::eLinear,
+        .addressModeU            = vk::SamplerAddressMode::eRepeat,
+        .addressModeV            = vk::SamplerAddressMode::eRepeat,
+        .addressModeW            = vk::SamplerAddressMode::eRepeat,
+        .mipLodBias              = 0.0f,
+        .anisotropyEnable        = vk::True,
+        .maxAnisotropy           = properties.limits.maxSamplerAnisotropy,
+        .compareEnable           = vk::False,
+        .compareOp               = vk::CompareOp::eAlways,
+        .minLod                  = 0.0f,
+        .maxLod                  = 0.0f,
+        .borderColor             = vk::BorderColor::eIntOpaqueBlack,
+        .unnormalizedCoordinates = vk::False
     };
 
     img_sampler = vk::raii::Sampler(r.devices.logical, sampler_info);
