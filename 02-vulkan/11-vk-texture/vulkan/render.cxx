@@ -1845,18 +1845,34 @@ void render::wait_idle()
 
 void render::create_descriptor_set_layout()
 {
-    vk::DescriptorSetLayoutBinding ubo_layout_binding(
-        0,                                  // binding index
-        vk::DescriptorType::eUniformBuffer, // descriptorType
-        1,                                  // descriptorCount
-        vk::ShaderStageFlagBits::eVertex,   // stageFlags
-        nullptr);                           // immutableSamplers
+    vk::DescriptorSetLayoutBinding layout_binding_vertex{
+        .binding         = 0,                                  // binding index
+        .descriptorType  = vk::DescriptorType::eUniformBuffer, // descriptorType
+        .descriptorCount = 1,                                // descriptorCount
+        .stageFlags      = vk::ShaderStageFlagBits::eVertex, // stageFlags
+        .pImmutableSamplers = nullptr // immutableSamplers
+    };
 
-    vk::DescriptorSetLayoutCreateInfo layoutInfo{
-        .flags = {}, .bindingCount = 1, .pBindings = &ubo_layout_binding
+    vk::DescriptorSetLayoutBinding layout_binding_sampler{
+        .binding = 1, // binding index
+        .descriptorType =
+            vk::DescriptorType::eCombinedImageSampler, // descriptorType
+        .descriptorCount    = 1,                       // descriptorCount
+        .stageFlags         = vk::ShaderStageFlagBits::eFragment, // stageFlags
+        .pImmutableSamplers = nullptr // immutableSamplers
+    };
+
+    std::array<vk::DescriptorSetLayoutBinding, 2> bindings{
+        layout_binding_vertex, layout_binding_sampler
+    };
+
+    vk::DescriptorSetLayoutCreateInfo layout_info{
+        .flags        = {},
+        .bindingCount = static_cast<std::uint32_t>(bindings.size()),
+        .pBindings    = bindings.data()
     };
     descriptor_set_layout =
-        vk::raii::DescriptorSetLayout(devices.logical, layoutInfo);
+        vk::raii::DescriptorSetLayout(devices.logical, layout_info);
 }
 
 void render::create_graphics_pipeline()
@@ -2319,14 +2335,24 @@ void render::create_uniform_buffers()
 
 void render::create_descriptor_pool()
 {
-    vk::DescriptorPoolSize       pool_size{ .type =
-                                          vk::DescriptorType::eUniformBuffer,
-                                            .descriptorCount = max_frames_in_flight };
+    vk::DescriptorPoolSize pool_vertex_size{
+        .type            = vk::DescriptorType::eUniformBuffer,
+        .descriptorCount = max_frames_in_flight
+    };
+
+    vk::DescriptorPoolSize pool_sampler_size{
+        .type            = vk::DescriptorType::eCombinedImageSampler,
+        .descriptorCount = max_frames_in_flight
+    };
+
+    std::array<vk::DescriptorPoolSize, 2> pools_size{ pool_vertex_size,
+                                                      pool_sampler_size };
+
     vk::DescriptorPoolCreateInfo pool_info{
         .flags   = { vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet },
         .maxSets = max_frames_in_flight,
-        .poolSizeCount = 1,
-        .pPoolSizes    = &pool_size
+        .poolSizeCount = static_cast<std::uint32_t>(pools_size.size()),
+        .pPoolSizes    = pools_size.data()
     };
 
     descriptor_pool = vk::raii::DescriptorPool(devices.logical, pool_info);
