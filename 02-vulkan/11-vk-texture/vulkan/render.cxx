@@ -31,6 +31,7 @@ export struct vertex final
 {
     glm::vec3 pos; // vertex positions x, y, z
     glm::vec3 col; // vertex color r, g, b
+    glm::vec2 tex; // vertex uv coords
 
     static vk::VertexInputBindingDescription get_binding_description()
     {
@@ -44,7 +45,7 @@ export struct vertex final
         };
     }
 
-    static std::array<vk::VertexInputAttributeDescription, 2>
+    static std::array<vk::VertexInputAttributeDescription, 3>
     get_attribute_description()
     {
         return {
@@ -65,6 +66,12 @@ export struct vertex final
                 .binding  = 0,
                 .format   = vk::Format::eR32G32B32Sfloat,
                 .offset   = offsetof(vertex, col),
+            },
+            vk::VertexInputAttributeDescription{
+                .location = 2,
+                .binding  = 0,
+                .format   = vk::Format::eR32G32Sfloat,
+                .offset   = offsetof(vertex, tex),
             }
         };
     }
@@ -207,7 +214,9 @@ public:
 
     /// @brief Render the mesh
     /// if !span.empty() copy ubo data to buffer
-    void draw(const mesh& mesh, std::span<std::byte> ubo = {});
+    void draw(const mesh&          mesh,
+              const image&         image,
+              std::span<std::byte> ubo = {});
 
     /// call if windows resized
     void recreate_swapchain();
@@ -287,7 +296,7 @@ private:
     void create_synchronization_objects();
     void create_uniform_buffers();
     void create_descriptor_pool();
-    void create_descriptor_sets();
+    void create_descriptor_sets(const image& image);
 
     void create_buffer(vk::DeviceSize          size,
                        vk::BufferUsageFlags    usage,
@@ -713,7 +722,7 @@ render::render(platform_interface& platform, hints hints)
     create_command_buffers();
     create_uniform_buffers();
     create_descriptor_pool();
-    create_descriptor_sets();
+    // create_descriptor_sets(); we need texture, so wait till start render
     create_synchronization_objects();
 }
 
@@ -732,8 +741,12 @@ catch (std::exception& e)
     std::cerr << "error: during render::~render() " << e.what() << std::endl;
 }
 
-void render::draw(const mesh& mesh, std::span<std::byte> ubo)
+void render::draw(const mesh&          mesh,
+                  const image&         image,
+                  std::span<std::byte> ubo)
 {
+    create_descriptor_sets(image);
+
     auto& draw_fence = *sync.draw_fence[current_frame];
 
     // wait current frame fence signaled GPU -> CPU
@@ -1917,7 +1930,7 @@ void render::create_graphics_pipeline()
         vertex::get_binding_description();
 
     // how the data for an attribute is defined within a vertex
-    std::array<vk::VertexInputAttributeDescription, 2> attribute_description =
+    std::array<vk::VertexInputAttributeDescription, 3> attribute_description =
         vertex::get_attribute_description();
 
     auto vertex_input_state_info =
@@ -2358,8 +2371,13 @@ void render::create_descriptor_pool()
     descriptor_pool = vk::raii::DescriptorPool(devices.logical, pool_info);
 }
 
-void render::create_descriptor_sets()
+void render::create_descriptor_sets(const image& image)
 {
+    if (!descriptor_sets.empty())
+    {
+        // only once set for totorial
+        return;
+    }
     std::vector<vk::DescriptorSetLayout> layouts(max_frames_in_flight,
                                                  *descriptor_set_layout);
     vk::DescriptorSetAllocateInfo        alloc_info{
@@ -2376,17 +2394,36 @@ void render::create_descriptor_sets()
         vk::DescriptorBufferInfo buffer_info{ .buffer = uniform_buffers.at(i),
                                               .offset = 0,
                                               .range  = sizeof(glm::mat4) * 3 };
-        vk::WriteDescriptorSet   descriptorWrite{
-              .dstSet          = descriptor_sets.at(i),
-              .dstBinding      = 0, // index binding
-              .dstArrayElement = 0, // index if array of descriptors
-              .descriptorCount = 1,
-              .descriptorType  = vk::DescriptorType::eUniformBuffer,
-              .pBufferInfo     = &buffer_info
+        vk::DescriptorImageInfo  image_info{
+             .sampler     = image.img_sampler, // texture_sampler,
+             .imageView   = image.img_view,    // texture_image_view,
+             .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal
         };
 
-        devices.logical.updateDescriptorSets(descriptorWrite, {});
-    }
+        vk::WriteDescriptorSet ubo_descriptor_write{
+            .dstSet          = descriptor_sets.at(i),
+            .dstBinding      = 0, // index binding
+            .dstArrayElement = 0, // index if array of descriptors
+            .descriptorCount = 1,
+            .descriptorType  = vk::DescriptorType::eUniformBuffer,
+            .pBufferInfo     = &buffer_info
+        };
+
+        vk::WriteDescriptorSet sampler_descriptor_write{
+            .dstSet          = descriptor_sets.at(i),
+            .dstBinding      = 1, // index binding
+            .dstArrayElement = 0, // index if array of descriptors
+            .descriptorCount = 1,
+            .descriptorType  = vk::DescriptorType::eCombinedImageSampler,
+            .pImageInfo      = &image_info
+        };
+
+        std::array<vk::WriteDescriptorSet, 2> descriptors_write{
+            ubo_descriptor_write, sampler_descriptor_write
+        };
+
+        devices.logical.updateDescriptorSets(descriptors_write, {});
+    } // end for i
 }
 
 vk::Extent2D render::choose_best_swapchain_image_resolution(

@@ -224,9 +224,9 @@ int main_cant_throw(int argc, char** argv)
 
             ubo.proj[1][1] *= -1; // in Vulkan y-asix point down
 
-            render.draw(mesh,
-                        std::span<std::byte>(reinterpret_cast<std::byte*>(&ubo),
-                                             sizeof(ubo)));
+            std::span<std::byte> ubo_span(reinterpret_cast<std::byte*>(&ubo),
+                                          sizeof(ubo));
+            render.draw(mesh, image, ubo_span);
 
             // running = false;
             // std::this_thread::sleep_for(std::chrono::seconds(2));
