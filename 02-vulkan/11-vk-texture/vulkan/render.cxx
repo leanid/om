@@ -1892,7 +1892,7 @@ void render::create_graphics_pipeline()
 {
     // Static Pipeline States
     auto vertex_and_fragment_shader_code = platform.get_file_content(
-        "./02-vulkan/10-vk-ubo/shaders/shader.vert.frag.slang.spv");
+        "./02-vulkan/11-vk-texture/shaders/shader.vert.frag.slang.spv");
 
     vk::raii::ShaderModule shader_module =
         create_shader(vertex_and_fragment_shader_code.as_span());
