@@ -6,7 +6,10 @@ struct uniform_buffer
     float4x4 view;
     float4x4 proj;
 };
+
 ConstantBuffer<uniform_buffer> ubo;
+
+Sampler2D texture;
 
 struct vertex_in
 {
@@ -38,7 +41,7 @@ float4 main_frag(vertex_output v)
     : SV_Target
 {
     // we need to add alpha value to result color
-    return float4(v.tex_uv, 0.0, 1.0); // float4(v.tex_uv, 0.0, 1.0); // float4(v.frag_col, 1.0);
+    return texture.Sample(v.tex_uv); // float4(v.tex_uv, 0.0, 1.0); // float4(v.frag_col, 1.0);
 }
 // slangc shader.frag.slang -target spirv -o shader.frag.slang.spv -profile
 // spirv_1_0 -emit-spirv-directly -g2
