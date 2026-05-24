@@ -7,9 +7,10 @@ struct uniform_buffer
     float4x4 proj;
 };
 
-ConstantBuffer<uniform_buffer> ubo;
+// if you change ordering for "ubo" and "texture" got validation layout error
+ConstantBuffer<uniform_buffer> ubo; // descriptor set binding 0
 
-Sampler2D texture;
+Sampler2D texture; // descriptor set binding 1
 
 struct vertex_in
 {
