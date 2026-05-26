@@ -1,6 +1,6 @@
-add_library(12-vk-texture-sdl STATIC)
+add_library(12-vk-zbuffer-sdl STATIC)
 target_sources(
-    12-vk-texture-sdl
+    12-vk-zbuffer-sdl
     PUBLIC FILE_SET
            cxx_modules
            TYPE
@@ -9,11 +9,11 @@ target_sources(
            "${CMAKE_CURRENT_SOURCE_DIR}"
            FILES
            "${CMAKE_CURRENT_SOURCE_DIR}/SDL.g.cxx")
-target_link_libraries(12-vk-texture-sdl PRIVATE SDL3::SDL3-shared)
+target_link_libraries(12-vk-zbuffer-sdl PRIVATE SDL3::SDL3-shared)
 
-add_library(12-vk-texture-sdl-vulkan STATIC)
+add_library(12-vk-zbuffer-sdl-vulkan STATIC)
 target_sources(
-    12-vk-texture-sdl-vulkan
+    12-vk-zbuffer-sdl-vulkan
     PUBLIC FILE_SET
            cxx_modules
            TYPE
@@ -22,4 +22,4 @@ target_sources(
            "${CMAKE_CURRENT_SOURCE_DIR}"
            FILES
            "${CMAKE_CURRENT_SOURCE_DIR}/SDL_vulkan.g.cxx")
-target_link_libraries(12-vk-texture-sdl-vulkan PRIVATE SDL3::SDL3-shared)
+target_link_libraries(12-vk-zbuffer-sdl-vulkan PRIVATE SDL3::SDL3-shared)

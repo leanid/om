@@ -1,6 +1,6 @@
-add_library(12-vk-texture-args)
+add_library(12-vk-zbuffer-args)
 target_sources(
-    12-vk-texture-args
+    12-vk-zbuffer-args
     PUBLIC FILE_SET
            cxx_modules
            TYPE
@@ -10,11 +10,11 @@ target_sources(
            FILES
            "${CMAKE_CURRENT_SOURCE_DIR}/args_parser.cxx")
 
-target_link_libraries(12-vk-texture-args PRIVATE Boost::program_options)
+target_link_libraries(12-vk-zbuffer-args PRIVATE Boost::program_options)
 
-add_library(12-vk-texture-vulkan STATIC)
+add_library(12-vk-zbuffer-vulkan STATIC)
 target_sources(
-    12-vk-texture-vulkan
+    12-vk-zbuffer-vulkan
     PUBLIC FILE_SET
            cxx_modules
            TYPE
@@ -25,14 +25,14 @@ target_sources(
            "${CMAKE_CURRENT_SOURCE_DIR}/render.cxx")
 
 target_link_libraries(
-    12-vk-texture-vulkan
+    12-vk-zbuffer-vulkan
     PUBLIC
         $<IF:$<CXX_COMPILER_ID:MSVC>,Boost::stacktrace_basic,Boost::stacktrace>
         SDL3::SDL3-shared
         vulkan::cppm
         glm::cppm
         stb::stb
-        12-vk-texture-args
-        12-vk-texture-log)
-target_include_directories(12-vk-texture-vulkan
+        12-vk-zbuffer-args
+        12-vk-zbuffer-log)
+target_include_directories(12-vk-zbuffer-vulkan
                            PRIVATE ${CMAKE_SOURCE_DIR}/support/cxx_lib/)
