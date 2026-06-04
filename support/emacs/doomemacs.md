@@ -273,3 +273,26 @@ if you need to set 80 characters `C-x f 80 RET`
 ```
 3. doom sync
 4. select word then `M+: gt-translate`
+## How to use LLM in Doomeemacs
+### Ollama use in Doom
+1. install Ollama: `curl -fsSL https://ollama.com/install.sh | sh`
+2. run your model (RTX 4080 works with): `ollama run deepseek-coder:33b`
+3. test model is working
+4. exit with: `/exit`
+5. go to Doom config and add:
+```elisp
+;; --------------------- Ollama
+(use-package! gptel
+  :config
+  (setq gptel-model 'deepseek-coder:33b) ;; 'deepseek-coder:33b ;;'qwen2.5-coder:7b
+  (setq! gptel-backend (gptel-make-ollama "Ollama"
+                         :host "localhost:11434"
+                         :stream t
+                         :models '(deepseek-coder:33b))))
+;; ---------------------- end Ollama
+```
+6. go to Doom init and uncomment:
+```
+llm
+```
+7. now exit Doom and then: `doom sync` and `doom doc`
