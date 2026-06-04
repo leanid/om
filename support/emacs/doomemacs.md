@@ -3,7 +3,7 @@
 ## doom sync, upgrade on windows in any shell
 Try passing it to emacs manually. E.g.
 - `doom sync` -> `emacs -q --no-site-file --script bin/doom -- sync`
-- `doom upgrade` -> `emacs -q --no-site-file --script bin/doom -- upgrade` (`doom upgrade` won't be able to restart and run `doom sync` afterwards, by itself, when used this way, so you'll have to `doom sync -u` manually after upgrading)
+- `doom upgrade` -> `emacs -q --no-site-file --script bin/doom -- upgrade` (`doom upgrade` won't be able to restart and run `doom sync` afterwards, by itself, so you'll have to `doom sync -u` manually after upgrading)
 ## Formatter for your language strange behavior
 Add next to your Doomemacs .config. Or read about it in (format +on-save)
 ```elisp
@@ -296,3 +296,32 @@ if you need to set 80 characters `C-x f 80 RET`
 llm
 ```
 7. now exit Doom and then: `doom sync` and `doom doc`
+### Aider use in Doom
+1. install aider:
+```bash
+python -m pip install aider-install
+aider-install
+```
+2. add to packages.el
+```elisp
+(package! aidermacs)
+```
+3. add to config.el
+```elisp
+(use-package! aidermacs
+  :defer t
+  :config
+  ;; Задаем адрес локальной Ollama для Aider
+  (setenv "OLLAMA_API_BASE" "http://127.0.0.1:11434")
+  ;; Указываем Aider использовать локальную Ollama и конкретную модель
+  (setq aidermacs-args '("--model" "ollama/qwen2.5-coder:7b")))
+
+;; Привязываем клавиши глобально через стандартный механизм Doom
+(map! :leader
+      (:prefix-map ("a" . "AI/Aider")
+       :desc "Run Aider"               "m" #'aidermacs-transient-menu
+       :desc "Aider add current file"  "f" #'aidermacs-add-current-file
+       :desc "Aider reset context"     "r" #'aidermacs-reset))
+```
+4. start play with it!
+```
