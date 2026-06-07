@@ -41,7 +41,8 @@ add_library(glm::cppm ALIAS glm_cppm)
 # cmake-format: off
 target_compile_definitions(
     glm_cppm
-    PUBLIC GLM_GTC_INLINE_NAMESPACE
+    PUBLIC GLM_FORCE_DEPTH_ZERO_TO_ONE # for Vulkan Api projection matrix 0.0 to 1.0
+           GLM_GTC_INLINE_NAMESPACE
            GLM_EXT_INLINE_NAMESPACE
            GLM_GTX_INLINE_NAMESPACE)
 # cmake-format: on
