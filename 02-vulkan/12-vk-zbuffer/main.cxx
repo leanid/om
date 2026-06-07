@@ -156,14 +156,20 @@ int main_cant_throw(int argc, char** argv)
             {.pos{ 0.4f, 0.4f, 0.0f },  .col{0.0f, 1.0f, 0.0f}, .tex{1.0f, 1.f}},
             {.pos{ -0.4f, 0.4f, 0.0f }, .col{0.0f, 0.0f, 1.0f}, .tex{0.0f, 1.f}},
             {.pos{ -0.4f, -0.4f, 0.0f}, .col{1.0f, 1.0f, 0.0f}, .tex{0.0f, 0.f}},
+
+            {.pos{ 0.4f, -0.4f, -0.4f }, .col{1.0f, 0.0f, 0.0f}, .tex{1.0f, 0.f}},
+            {.pos{ 0.4f, 0.4f, -0.4f },  .col{0.0f, 1.0f, 0.0f}, .tex{1.0f, 1.f}},
+            {.pos{ -0.4f, 0.4f, -0.4f }, .col{0.0f, 0.0f, 1.0f}, .tex{0.0f, 1.f}},
+            {.pos{ -0.4f, -0.4f, -0.4f}, .col{1.0f, 1.0f, 0.0f}, .tex{0.0f, 0.f}},
         };
         std::vector<std::uint16_t> mesh_indexes = {
-            0, 1, 2, 2, 3, 0
+            0, 1, 2, 2, 3, 0,
+            4, 5, 6, 6, 7, 4
         };
         // clang-format on
         om::vulkan::image image(
             render,
-            "02-vulkan/11-vk-texture/textures/statue-1275469.jpg",
+            "02-vulkan/12-vk-zbuffer/textures/statue-1275469.jpg",
             "img_texture");
         uniform_buffer_object ubo{};
 
