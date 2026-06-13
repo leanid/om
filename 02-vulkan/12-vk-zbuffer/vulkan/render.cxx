@@ -2240,6 +2240,19 @@ void render::record_commands(vk::raii::CommandBuffer& cmd_buf,
         vk::PipelineStageFlagBits2::eColorAttachmentOutput, // dstStage
         vk::ImageAspectFlagBits::eColor);
 
+    // Transition depth image to depth attachment optimal layout
+    transition_image_layout(cmd_buf,
+                            -1, // -1 == *depth_image,
+                            vk::ImageLayout::eUndefined,
+                            vk::AccessFlagBits2::eDepthStencilAttachmentWrite,
+                            vk::PipelineStageFlagBits2::eEarlyFragmentTests |
+                                vk::PipelineStageFlagBits2::eLateFragmentTests,
+                            vk::ImageLayout::eDepthAttachmentOptimal,
+                            vk::AccessFlagBits2::eDepthStencilAttachmentWrite,
+                            vk::PipelineStageFlagBits2::eEarlyFragmentTests |
+                                vk::PipelineStageFlagBits2::eLateFragmentTests,
+                            vk::ImageAspectFlagBits::eDepth);
+
     vk::ClearValue clear_color =
         vk::ClearColorValue(0.0f, 0.0f, 0.0f, 1.0f); // BGRA?
     vk::ClearValue clear_depth =
@@ -2325,7 +2338,7 @@ void render::record_commands(vk::raii::CommandBuffer& cmd_buf,
 }
 
 void render::transition_image_layout(vk::raii::CommandBuffer& cmd_buf,
-                                     uint32_t                 image_index,
+                                     std::uint32_t            image_index,
                                      vk::ImageLayout          old_layout,
                                      vk::AccessFlags2         src_access_mask,
                                      vk::PipelineStageFlags2  src_stage_mask,
@@ -2343,12 +2356,13 @@ void render::transition_image_layout(vk::raii::CommandBuffer& cmd_buf,
         .newLayout           = new_layout,
         .srcQueueFamilyIndex = vk::QueueFamilyIgnored,
         .dstQueueFamilyIndex = vk::QueueFamilyIgnored,
-        .image               = swapchain_images[image_index],
-        .subresourceRange    = { .aspectMask     = image_aspect_flags,
-                                 .baseMipLevel   = 0,
-                                 .levelCount     = 1,
-                                 .baseArrayLayer = 0,
-                                 .layerCount     = 1 }
+        .image =
+            (-1 == image_index ? *depth_image : swapchain_images[image_index]),
+        .subresourceRange = { .aspectMask     = image_aspect_flags,
+                              .baseMipLevel   = 0,
+                              .levelCount     = 1,
+                              .baseArrayLayer = 0,
+                              .layerCount     = 1 }
     };
     vk::DependencyInfo dependencyInfo = { .dependencyFlags         = {},
                                           .imageMemoryBarrierCount = 1,
