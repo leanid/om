@@ -2069,11 +2069,19 @@ void render::create_graphics_pipeline()
 
     pipeline_layout = vk::raii::PipelineLayout(devices.logical, layout_info);
 
-    // TODO: add Depth and Stensil testing
+    // Depth and Stensil testing
+    vk::PipelineDepthStencilStateCreateInfo depth_stencil{
+        .depthTestEnable       = vk::True,
+        .depthWriteEnable      = vk::True,
+        .depthCompareOp        = vk::CompareOp::eLess,
+        .depthBoundsTestEnable = vk::False,
+        .stencilTestEnable     = vk::False
+    };
 
     vk::PipelineRenderingCreateInfo pipeline_rendering_create_info{
         .colorAttachmentCount    = 1,
-        .pColorAttachmentFormats = &swapchain_image_format
+        .pColorAttachmentFormats = &swapchain_image_format,
+        .depthAttachmentFormat   = find_depth_format()
     };
 
     // Graphics Pipeline creation
@@ -2087,7 +2095,7 @@ void render::create_graphics_pipeline()
         .pViewportState      = &viewport_state_info,
         .pRasterizationState = &rasterization_state_info,
         .pMultisampleState   = &multisample_state_info,
-        .pDepthStencilState  = nullptr,
+        .pDepthStencilState  = &depth_stencil,
         .pColorBlendState    = &blending_state_info,
         .pDynamicState       = &dynamic_state_info,
         .layout              = pipeline_layout,
