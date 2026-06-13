@@ -2241,7 +2241,10 @@ void render::record_commands(vk::raii::CommandBuffer& cmd_buf,
 
     vk::ClearValue clear_color =
         vk::ClearColorValue(0.0f, 0.0f, 0.0f, 1.0f); // BGRA?
-    vk::RenderingAttachmentInfo attachment_info = {
+    vk::ClearValue clear_depth =
+        vk::ClearDepthStencilValue(1.0f, // 1.0f - far view plane
+                                   0u);
+    vk::RenderingAttachmentInfo color_attachment_info = {
         .imageView   = swapchain_image_views[image_index],
         .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
         // The loadOp parameter specifies what to do with the image before
@@ -2251,13 +2254,21 @@ void render::record_commands(vk::raii::CommandBuffer& cmd_buf,
         .storeOp    = vk::AttachmentStoreOp::eStore,
         .clearValue = clear_color
     };
+    vk::RenderingAttachmentInfo depth_attachment_info = {
+        .imageView   = depth_image_view,
+        .imageLayout = vk::ImageLayout::eDepthAttachmentOptimal,
+        .loadOp      = vk::AttachmentLoadOp::eClear,
+        .storeOp     = vk::AttachmentStoreOp::eDontCare,
+        .clearValue  = clear_depth
+    };
 
     vk::RenderingInfo rendering_info = {
         .renderArea           = { .offset = { .x = 0, .y = 0 },
                                   .extent = swapchain_image_extent },
         .layerCount           = 1,
         .colorAttachmentCount = 1,
-        .pColorAttachments    = &attachment_info
+        .pColorAttachments    = &color_attachment_info,
+        .pDepthAttachment     = &depth_attachment_info
     };
 
     cmd_buf.beginRendering(rendering_info);
