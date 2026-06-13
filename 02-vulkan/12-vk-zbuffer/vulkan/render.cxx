@@ -1837,12 +1837,18 @@ void render::create_swapchain()
         });
     log << "create swapchain_image_views count: "
         << swapchain_image_views.size() << std::endl;
+
+    create_depth_resources();
 }
 
 void render::cleanup_swapchain()
 {
     swapchain_image_views.clear();
     swapchain = nullptr;
+
+    depth_image        = nullptr;
+    depth_image_memory = nullptr;
+    depth_image_view   = nullptr;
 }
 
 void render::recreate_swapchain()
