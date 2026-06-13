@@ -292,6 +292,7 @@ private:
     void create_graphics_pipeline();
     void create_framebuffers();
     void create_command_pool();
+    void create_depth_resources();
     void create_command_buffers();
     void create_synchronization_objects();
     void create_uniform_buffers();
@@ -375,6 +376,11 @@ private:
 
     swapchain_details_t get_swapchain_details(const vk::PhysicalDevice& device);
 
+    vk::Format find_depth_format();
+    vk::Format find_supported_format(const std::vector<vk::Format>& candidates,
+                                     vk::ImageTiling                tiling,
+                                     vk::FormatFeatureFlags         features);
+
     static uint32_t find_mem_type_index(
         uint32_t                           allowed_types,
         vk::MemoryPropertyFlags            properties,
@@ -456,6 +462,10 @@ private:
     vk::raii::SwapchainKHR           swapchain = nullptr;
     std::vector<vk::Image>           swapchain_images;
     std::vector<vk::raii::ImageView> swapchain_image_views;
+
+    vk::raii::Image        depth_image        = nullptr;
+    vk::raii::DeviceMemory depth_image_memory = nullptr;
+    vk::raii::ImageView    depth_image_view   = nullptr;
 
     // vulkan pipeline
     vk::raii::DescriptorSetLayout descriptor_set_layout = nullptr;
@@ -719,6 +729,7 @@ render::render(platform_interface& platform, hints hints)
     create_descriptor_set_layout();
     create_graphics_pipeline();
     create_command_pool();
+    create_depth_resources();
     create_command_buffers();
     create_uniform_buffers();
     create_descriptor_pool();
@@ -2137,6 +2148,51 @@ void render::create_command_pool()
     log << "create transfer command pool\n";
 
     set_object_name(*graphics_command_pool, "om_transfer_cmd_pool");
+}
+
+vk::Format render::find_supported_format(
+    const std::vector<vk::Format>& candidates,
+    vk::ImageTiling                tiling,
+    vk::FormatFeatureFlags         features)
+{
+    for (const vk::Format& format : candidates)
+    {
+        const auto props = devices.physical.getFormatProperties(format);
+        const auto actual_features = (tiling == vk::ImageTiling::eLinear)
+                                         ? props.linearTilingFeatures
+                                         : props.optimalTilingFeatures;
+
+        if ((actual_features & features) == features)
+        {
+            return format;
+        }
+    }
+    throw std::runtime_error("failed to find supported format!");
+}
+
+vk::Format render::find_depth_format()
+{
+    return find_supported_format(
+        { vk::Format::eD32Sfloat,
+          vk::Format::eD32SfloatS8Uint,
+          vk::Format::eD24UnormS8Uint },
+        vk::ImageTiling::eOptimal,
+        vk::FormatFeatureFlagBits::eDepthStencilAttachment);
+}
+
+void render::create_depth_resources()
+{
+    vk::Format depth_format = find_depth_format();
+
+    std::tie(depth_image, depth_image_memory) =
+        create_image(swapchain_image_extent.width,
+                     swapchain_image_extent.height,
+                     depth_format,
+                     vk::ImageTiling::eOptimal,
+                     vk::ImageUsageFlagBits::eDepthStencilAttachment,
+                     vk::MemoryPropertyFlagBits::eDeviceLocal);
+    depth_image_view = create_image_view(
+        depth_image, depth_format, vk::ImageAspectFlagBits::eDepth);
 }
 
 void render::create_command_buffers()
