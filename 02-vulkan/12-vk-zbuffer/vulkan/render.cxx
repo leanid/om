@@ -346,7 +346,8 @@ private:
                                  vk::PipelineStageFlags2  src_stage_mask,
                                  vk::ImageLayout          new_layout,
                                  vk::AccessFlags2         dst_access_mask,
-                                 vk::PipelineStageFlags2  dst_stage_mask);
+                                 vk::PipelineStageFlags2  dst_stage_mask,
+                                 vk::ImageAspectFlags     image_aspect_flags);
     // destroy functions
     void destroy_synchronization_objects() noexcept;
     void destroy_debug_callback() noexcept;
@@ -2233,11 +2234,11 @@ void render::record_commands(vk::raii::CommandBuffer& cmd_buf,
         image_index,
         vk::ImageLayout::eUndefined, // old_layout
         {}, // srcAccessMask (no need to wait for previous operations)
-        vk::PipelineStageFlagBits2::eTopOfPipe,            // srcStage
-        vk::ImageLayout::eColorAttachmentOptimal,          // new_layout
-        vk::AccessFlagBits2::eColorAttachmentWrite,        // dstAccessMask
-        vk::PipelineStageFlagBits2::eColorAttachmentOutput // dstStage
-    );
+        vk::PipelineStageFlagBits2::eTopOfPipe,             // srcStage
+        vk::ImageLayout::eColorAttachmentOptimal,           // new_layout
+        vk::AccessFlagBits2::eColorAttachmentWrite,         // dstAccessMask
+        vk::PipelineStageFlagBits2::eColorAttachmentOutput, // dstStage
+        vk::ImageAspectFlagBits::eColor);
 
     vk::ClearValue clear_color =
         vk::ClearColorValue(0.0f, 0.0f, 0.0f, 1.0f); // BGRA?
@@ -2317,8 +2318,8 @@ void render::record_commands(vk::raii::CommandBuffer& cmd_buf,
         vk::PipelineStageFlagBits2::eColorAttachmentOutput, // srcStage
         vk::ImageLayout::ePresentSrcKHR,                    // new layout
         {},                                                 // dstAccessMask
-        vk::PipelineStageFlagBits2::eBottomOfPipe           // dstStage
-    );
+        vk::PipelineStageFlagBits2::eBottomOfPipe,          // dstStage
+        vk::ImageAspectFlagBits::eColor);
 
     cmd_buf.end();
 }
@@ -2330,7 +2331,8 @@ void render::transition_image_layout(vk::raii::CommandBuffer& cmd_buf,
                                      vk::PipelineStageFlags2  src_stage_mask,
                                      vk::ImageLayout          new_layout,
                                      vk::AccessFlags2         dst_access_mask,
-                                     vk::PipelineStageFlags2  dst_stage_mask)
+                                     vk::PipelineStageFlags2  dst_stage_mask,
+                                     vk::ImageAspectFlags image_aspect_flags)
 {
     vk::ImageMemoryBarrier2 barrier = {
         .srcStageMask        = src_stage_mask,
@@ -2342,7 +2344,7 @@ void render::transition_image_layout(vk::raii::CommandBuffer& cmd_buf,
         .srcQueueFamilyIndex = vk::QueueFamilyIgnored,
         .dstQueueFamilyIndex = vk::QueueFamilyIgnored,
         .image               = swapchain_images[image_index],
-        .subresourceRange    = { .aspectMask     = vk::ImageAspectFlagBits::eColor,
+        .subresourceRange    = { .aspectMask     = image_aspect_flags,
                                  .baseMipLevel   = 0,
                                  .levelCount     = 1,
                                  .baseArrayLayer = 0,
