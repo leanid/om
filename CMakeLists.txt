@@ -58,6 +58,7 @@ find_package(Microsoft.GSL CONFIG REQUIRED)
 find_package(redis++ REQUIRED)
 find_package(httplib REQUIRED)
 find_package(nlohmann_json REQUIRED)
+find_package(tinyobjloader CONFIG REQUIRED)
 
 enable_testing()
 
