@@ -340,7 +340,7 @@ private:
                          std::uint32_t            image_index,
                          const mesh&              mesh);
     void transition_image_layout(vk::raii::CommandBuffer& cmd_buf,
-                                 uint32_t                 image_index,
+                                 vk::Image                image,
                                  vk::ImageLayout          old_layout,
                                  vk::AccessFlags2         src_access_mask,
                                  vk::PipelineStageFlags2  src_stage_mask,
@@ -2245,7 +2245,7 @@ void render::record_commands(vk::raii::CommandBuffer& cmd_buf,
     // COLOR_ATTACHMENT_OPTIMAL
     transition_image_layout(
         cmd_buf,
-        image_index,
+        swapchain_images[image_index],
         vk::ImageLayout::eUndefined, // old_layout
         {}, // srcAccessMask (no need to wait for previous operations)
         vk::PipelineStageFlagBits2::eTopOfPipe,             // srcStage
@@ -2256,7 +2256,7 @@ void render::record_commands(vk::raii::CommandBuffer& cmd_buf,
 
     // Transition depth image to depth attachment optimal layout
     transition_image_layout(cmd_buf,
-                            -1, // -1 == *depth_image,
+                            *depth_image,
                             vk::ImageLayout::eUndefined,
                             vk::AccessFlagBits2::eDepthStencilAttachmentWrite,
                             vk::PipelineStageFlagBits2::eEarlyFragmentTests |
@@ -2339,7 +2339,7 @@ void render::record_commands(vk::raii::CommandBuffer& cmd_buf,
     // After rendering, transition the swapchain image to ePresentSrcKHR
     transition_image_layout(
         cmd_buf,
-        image_index,
+        swapchain_images[image_index],
         vk::ImageLayout::eColorAttachmentOptimal,           // old layout
         vk::AccessFlagBits2::eColorAttachmentWrite,         // srcAccessMask
         vk::PipelineStageFlagBits2::eColorAttachmentOutput, // srcStage
@@ -2352,7 +2352,7 @@ void render::record_commands(vk::raii::CommandBuffer& cmd_buf,
 }
 
 void render::transition_image_layout(vk::raii::CommandBuffer& cmd_buf,
-                                     std::uint32_t            image_index,
+                                     vk::Image                image,
                                      vk::ImageLayout          old_layout,
                                      vk::AccessFlags2         src_access_mask,
                                      vk::PipelineStageFlags2  src_stage_mask,
@@ -2370,13 +2370,12 @@ void render::transition_image_layout(vk::raii::CommandBuffer& cmd_buf,
         .newLayout           = new_layout,
         .srcQueueFamilyIndex = vk::QueueFamilyIgnored,
         .dstQueueFamilyIndex = vk::QueueFamilyIgnored,
-        .image =
-            (-1 == image_index ? *depth_image : swapchain_images[image_index]),
-        .subresourceRange = { .aspectMask     = image_aspect_flags,
-                              .baseMipLevel   = 0,
-                              .levelCount     = 1,
-                              .baseArrayLayer = 0,
-                              .layerCount     = 1 }
+        .image               = image,
+        .subresourceRange    = { .aspectMask     = image_aspect_flags,
+                                 .baseMipLevel   = 0,
+                                 .levelCount     = 1,
+                                 .baseArrayLayer = 0,
+                                 .layerCount     = 1 }
     };
     vk::DependencyInfo dependencyInfo = { .dependencyFlags         = {},
                                           .imageMemoryBarrierCount = 1,
