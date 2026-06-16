@@ -12,7 +12,7 @@ set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD
 set(CMAKE_CXX_STANDARD 23) # minimal for import std; to work
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF) # stop using -std=gnu-23
-set(CMAKE_CXX_FLAGS "-stdlib=libc++") # use llvm libc++
+# set(CMAKE_CXX_FLAGS "-stdlib=libc++") # use llvm libc++
 set(CMAKE_CXX_SCAN_FOR_MODULES ON) # automatic scan for import
 
 # C++ needs to be enabled.

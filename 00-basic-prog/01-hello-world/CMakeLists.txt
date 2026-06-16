@@ -40,6 +40,11 @@ if(has_cxx_23_print_include)
     target_compile_features(main_print_std23 PRIVATE cxx_std_23)
     target_link_libraries(main_print_std23
                           PRIVATE $<$<CXX_COMPILER_ID:GNU>:-lstdc++exp>)
+
+    add_executable(main_print_std23_modern main_print_std23_modern.cxx)
+    target_compile_features(main_print_std23_modern PRIVATE cxx_std_23)
+    target_link_libraries(main_print_std23_modern
+                          PRIVATE $<$<CXX_COMPILER_ID:GNU>:-lstdc++exp>)
 else()
     message(STATUS "skip main_print_std23 <print> not found")
 endif(has_cxx_23_print_include)
