@@ -40,7 +40,7 @@ list(PREPEND CMAKE_PREFIX_PATH ${CMAKE_SOURCE_DIR}/cmake)
 find_package(om-common-functions REQUIRED)
 om_add_custom_build_types()
 
-find_package(om-triplet-name REQUIRED)
+find_package(om-triplet-name CONFIG REQUIRED)
 list(PREPEND CMAKE_PREFIX_PATH
      ${CMAKE_SOURCE_DIR}/deps/prebuilt/${OM_TRIPLET_NAME})
 
