@@ -25,6 +25,8 @@ export om::vulkan::mesh load_model(std::filesystem::path path,
         throw std::runtime_error(warn + err);
     }
 
+    std::unordered_map<om::vulkan::vertex, std::uint32_t> unique_vertexes;
+
     std::vector<om::vulkan::vertex> vertices;
     std::vector<std::uint32_t>      indices;
 
@@ -44,8 +46,14 @@ export om::vulkan::mesh load_model(std::filesystem::path path,
                   1.0f - attrib.texcoords[2 * index.texcoord_index + 1] }
             };
 
-            vertices.push_back(vertex);
-            indices.push_back(indices.size());
+            auto [it, inserted] = unique_vertexes.insert(
+                { vertex, static_cast<std::uint32_t>(vertices.size()) });
+            if (inserted)
+            {
+                vertices.push_back(vertex);
+            }
+
+            indices.push_back(it->second);
         }
     }
 

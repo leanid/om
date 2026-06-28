@@ -1,4 +1,5 @@
 module;
+#include <boost/container_hash/hash.hpp>
 #if __has_include(<stacktrace>)
 #include <stacktrace>
 #else
@@ -32,6 +33,8 @@ export struct vertex final
     glm::vec3 pos; // vertex positions x, y, z
     glm::vec3 col; // vertex color r, g, b
     glm::vec2 tex; // vertex uv coords
+
+    bool operator==(const vertex& other) const = default; // sinc c++20
 
     static vk::VertexInputBindingDescription get_binding_description()
     {
@@ -3022,3 +3025,27 @@ void render::copy_buffer(vk::raii::Buffer& src_buffer,
 }
 
 } // namespace om::vulkan
+
+namespace std
+{
+export template <> struct std::hash<om::vulkan::vertex>
+{
+    std::size_t operator()(const om::vulkan::vertex& v) const noexcept
+    {
+        std::size_t seed = 0;
+
+        boost::hash_combine(seed, v.pos.x);
+        boost::hash_combine(seed, v.pos.y);
+        boost::hash_combine(seed, v.pos.z);
+
+        boost::hash_combine(seed, v.col.x);
+        boost::hash_combine(seed, v.col.y);
+        boost::hash_combine(seed, v.col.z);
+
+        boost::hash_combine(seed, v.tex.x);
+        boost::hash_combine(seed, v.tex.y);
+
+        return seed;
+    }
+};
+} // namespace std
