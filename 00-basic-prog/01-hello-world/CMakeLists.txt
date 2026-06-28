@@ -1,22 +1,6 @@
 cmake_minimum_required(VERSION 4.3.2)
-# Enables the Standard module support. This needs to be done
-# before selecting the languages.
-# https://github.com/Kitware/CMake/blob/master/Help/dev/experimental.rst
-set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "451f2fe2-a8a2-47c3-bc32-94786d8fc91b")
-# Currently CMake requires extensions enabled when using import std.
-# https://gitlab.kitware.com/cmake/cmake/-/issues/25916
-# https://gitlab.kitware.com/cmake/cmake/-/issues/25539
-set(CMAKE_CXX_EXTENSIONS OFF) # no -std=gnu-23
-set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-# Tell CMake that we explicitly want `import std`. This will initialize the
-# property on all targets declared after this to 1
-set(CMAKE_CXX_MODULE_STD 1)
 
 project(01-hello-world LANGUAGES CXX)
-# Tell CMake that we explicitly want `import std`. This will initialize the
-# property on all targets declared after this to 1
-set(CMAKE_CXX_MODULE_STD 1)
 
 include(CheckCXXCompilerFlag)
 
