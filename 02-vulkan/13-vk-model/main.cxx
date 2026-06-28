@@ -167,10 +167,9 @@ int main_cant_throw(int argc, char** argv)
             4, 5, 6, 6, 7, 4
         };
         // clang-format on
-        om::vulkan::image image(
-            render,
-            "02-vulkan/12-vk-zbuffer/textures/statue-1275469.jpg",
-            "img_texture");
+        om::vulkan::image     image(render,
+                                "02-vulkan/13-vk-model/model/viking_room.png",
+                                "img_texture");
         uniform_buffer_object ubo{};
 
         om::vulkan::mesh mesh(std::span{ mesh_verticles },
