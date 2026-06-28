@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 4.3.2)
+cmake_minimum_required(VERSION 4.3.4)
 
 option(OM_BASIC_GAME_DEV "turn ON to build 01-basic-game-dev" ON)
 option(OM_BASIC_PROG "turn ON if need to build 00-basic-prog" ON)
