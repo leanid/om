@@ -6,6 +6,20 @@ find_program(SLANGC_EXECUTABLE slangc HINTS "$ENV{VULKAN_SDK}/bin" REQUIRED)
 
 om_clang_tidy_enable()
 
+add_library(13-vk-model-tinyobj)
+target_sources(
+    13-vk-model-tinyobj
+    PUBLIC FILE_SET
+           cxx_modules
+           TYPE
+           CXX_MODULES
+           BASE_DIRS
+           "${CMAKE_CURRENT_SOURCE_DIR}"
+           FILES
+           "${CMAKE_CURRENT_SOURCE_DIR}/tinyobj.cxx")
+target_link_libraries(13-vk-model-tinyobj PRIVATE 13-vk-model-vulkan
+                                                  tinyobjloader::tinyobjloader)
+
 add_library(13-vk-model-log)
 target_sources(
     13-vk-model-log
@@ -36,6 +50,7 @@ target_link_libraries(
             13-vk-model-vulkan
             13-vk-model-sdl
             13-vk-model-sdl-vulkan
+            13-vk-model-tinyobj
             SDL3::SDL3-shared
             om::io::read_file)
 target_include_directories(13-vk-model-platform

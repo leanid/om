@@ -9,6 +9,7 @@ import vulkan;
 import sdl.SDL;
 import sdl.vulkan;
 import glm;
+import tinyobj;
 
 int main_cant_throw(int argc, char** argv);
 
@@ -162,20 +163,22 @@ int main_cant_throw(int argc, char** argv)
             {.pos{ -0.4f, 0.4f, -0.4f }, .col{0.0f, 0.0f, 1.0f}, .tex{0.0f, 1.f}},
             {.pos{ -0.4f, -0.4f, -0.4f}, .col{1.0f, 1.0f, 0.0f}, .tex{0.0f, 0.f}},
         };
-        std::vector<std::uint32_t> mesh_indexes = {
+        std::vector<std::uint16_t> mesh_indexes = {
             0, 1, 2, 2, 3, 0,
             4, 5, 6, 6, 7, 4
         };
         // clang-format on
         om::vulkan::image     image(render,
                                 "02-vulkan/13-vk-model/model/viking_room.png",
-                                "img_texture");
+                                "viking_room.png");
         uniform_buffer_object ubo{};
 
         om::vulkan::mesh mesh(std::span{ mesh_verticles },
                               std::span{ mesh_indexes },
                               render,
                               "rect");
+
+        om::tinyobj::load_model();
 
         auto startTime = std::chrono::high_resolution_clock::now();
 
@@ -241,13 +244,13 @@ int main_cant_throw(int argc, char** argv)
     }
     catch (const vk::SystemError& ex)
     {
-        om::cout << "error: vk::SystemError what: [" << ex.what() << ']'
-                 << "\n    code: [" << ex.code().message() << "]" << std::endl;
+        std::cerr << "error: vk::SystemError what: [" << ex.what() << ']'
+                  << "\n    code: [" << ex.code().message() << "]" << std::endl;
         std::terminate();
     }
     catch (const std::exception& ex)
     {
-        om::cout << "error: got exception [" << ex.what() << ']' << std::endl;
+        std::cerr << "error: got exception [" << ex.what() << ']' << std::endl;
     }
 
     return om::cout.fail() || om::cout.fail() ? 1 : 0;
