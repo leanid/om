@@ -102,6 +102,7 @@ private:
         u16,
         u32
     };
+
     [[nodiscard]] uint32_t   get_vertex_count() const;
     [[nodiscard]] uint32_t   get_index_count() const;
     [[nodiscard]] vk::Buffer get_vertex_buffer() const;
@@ -569,6 +570,11 @@ vk::Buffer mesh::get_vertex_buffer() const
 vk::Buffer mesh::get_index_buffer() const
 {
     return buffer_indx;
+}
+
+mesh::index_type mesh::get_index_type() const
+{
+    return index_size;
 }
 
 void mesh::cleanup() noexcept
@@ -2338,7 +2344,11 @@ void render::record_commands(vk::raii::CommandBuffer& cmd_buf,
 
     vk::Buffer indexes{ mesh.get_index_buffer() };
 
-    cmd_buf.bindIndexBuffer(indexes, 0u, vk::IndexType::eUint16);
+    cmd_buf.bindIndexBuffer(indexes,
+                            0u,
+                            mesh.get_index_type() == mesh::index_type::u16
+                                ? vk::IndexType::eUint16
+                                : vk::IndexType::eUint32);
     cmd_buf.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
                                pipeline_layout,
                                0, // first set index in array
