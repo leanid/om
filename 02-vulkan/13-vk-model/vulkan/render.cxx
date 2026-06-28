@@ -77,14 +77,19 @@ export struct vertex final
     }
 };
 export class render;
+export template <typename T>
+concept Index_t =
+    std::same_as<T, std::uint16_t> || std::same_as<T, std::uint32_t>;
+
 export class mesh final
 {
 public:
     mesh() = default;
-    mesh(std::span<vertex>        vertexes,
-         std::span<std::uint16_t> indexes,
-         render&                  render,
-         std::string              debug_name);
+    template <Index_t N>
+    mesh(std::span<vertex> vertexes,
+         std::span<N>      indexes,
+         render&           render,
+         std::string       debug_name);
     mesh(const mesh& other)            = delete;
     mesh& operator=(const mesh& other) = delete;
     mesh(mesh&& other);
@@ -92,10 +97,16 @@ public:
     ~mesh();
 
 private:
+    enum class index_type
+    {
+        u16,
+        u32
+    };
     [[nodiscard]] uint32_t   get_vertex_count() const;
     [[nodiscard]] uint32_t   get_index_count() const;
     [[nodiscard]] vk::Buffer get_vertex_buffer() const;
     [[nodiscard]] vk::Buffer get_index_buffer() const;
+    [[nodiscard]] index_type get_index_type() const;
 
     void cleanup() noexcept;
 
@@ -105,12 +116,13 @@ private:
                        render&           render,
                        std::string       debug_name = "_dbg");
 
-    void create_buffer(std::span<std::uint16_t> indexes,
-                       render&                  render,
-                       std::string              debug_name = "_dbg");
+    template <Index_t N>
+    void create_buffer(std::span<N> indexes,
+                       render&      render,
+                       std::string  debug_name = "_dbg");
 
     static uint32_t find_mem_type_index(
-        uint32_t                           allowed_types,
+        std::uint32_t                      allowed_types,
         vk::MemoryPropertyFlags            properties,
         vk::PhysicalDeviceMemoryProperties physical_mem_prop);
 
@@ -120,6 +132,7 @@ private:
     vk::raii::DeviceMemory memory_buffer_indx = nullptr;
     uint32_t               num_vertexes{};
     uint32_t               num_indexes{};
+    index_type             index_size = index_type::u16;
 };
 
 export class image final
@@ -522,16 +535,18 @@ private:
     };
 };
 
-mesh::mesh(std::span<vertex>        vertexes,
-           std::span<std::uint16_t> indexes,
-           render&                  render,
-           std::string              debug_name)
+template <Index_t N>
+mesh::mesh(std::span<vertex> vertexes,
+           std::span<N>      indexes,
+           render&           render,
+           std::string       debug_name)
     : buffer_vert(nullptr)
     , buffer_indx(nullptr)
     , memory_buffer_vert(nullptr)
     , memory_buffer_indx(nullptr)
     , num_vertexes(vertexes.size())
     , num_indexes(indexes.size())
+    , index_size(sizeof(N) == 2 ? index_type::u16 : index_type::u32)
 {
     create_buffer(vertexes, render, debug_name);
     create_buffer(indexes, render, debug_name);
@@ -2686,11 +2701,18 @@ void mesh::create_buffer(std::span<vertex> vertexes,
     render.copy_buffer(staging_buffer, size, buffer_vert);
 }
 
-void mesh::create_buffer(std::span<std::uint16_t> indexes,
-                         render&                  render,
-                         std::string              debug_name)
+template <Index_t N>
+void mesh::create_buffer(std::span<N> indexes,
+                         render&      render,
+                         std::string  debug_name)
 {
-    vk::DeviceSize size = sizeof(std::uint16_t) * indexes.size();
+    const size_t index_size_local = sizeof(N);
+    const size_t index_size_this  = index_size == index_type::u16
+                                        ? sizeof(std::uint16_t)
+                                        : sizeof(std::uint32_t);
+    assert(index_size_local == index_size_this);
+
+    vk::DeviceSize size = sizeof(N) * indexes.size();
 
     vk::raii::Buffer       staging_buffer = nullptr;
     vk::raii::DeviceMemory staging_mem    = nullptr;
@@ -2705,7 +2727,7 @@ void mesh::create_buffer(std::span<std::uint16_t> indexes,
     // map memory to vertex buffer
     void* mem = staging_mem.mapMemory(0, size);
     std::uninitialized_copy_n(
-        begin(indexes), indexes.size(), static_cast<std::uint16_t*>(mem));
+        begin(indexes), indexes.size(), static_cast<N*>(mem));
     staging_mem.unmapMemory();
 
     render.create_buffer(size,
