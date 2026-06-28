@@ -125,6 +125,7 @@
         "CMAKE_CXX_COMPILER": "clang++",
         "CMAKE_CXX_FLAGS": "-stdlib=libc++",
         "CMAKE_CXX_SCAN_FOR_MODULES": "ON",
+        "CMAKE_EXPERIMENTAL_CXX_IMPORT_STD": "451f2fe2-a8a2-47c3-bc32-94786d8fc91b",
         "CMAKE_CXX_MODULE_STD": "ON",
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_C_FLAGS": "",

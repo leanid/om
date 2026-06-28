@@ -7,7 +7,7 @@ set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD
   # This specific value changes as experimental support evolves. See
   # `Help/dev/experimental.rst` in the CMake source corresponding to
   # your CMake build for the exact value to use.
-  "d0edc3af-4c50-42ea-a356-e2862fe7a444")
+  "451f2fe2-a8a2-47c3-bc32-94786d8fc91b")
 
 set(CMAKE_CXX_STANDARD 23) # minimal for import std; to work
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
