@@ -39,7 +39,7 @@ export om::vulkan::mesh load_model(std::filesystem::path path,
                   attrib.vertices[3 * index.vertex_index + 2] },
                 // col
                 { 1.0f, 1.0f, 1.0f },
-                // tex
+                // tex Y direction in Vulkan from up to down
                 { attrib.texcoords[2 * index.texcoord_index + 0],
                   1.0f - attrib.texcoords[2 * index.texcoord_index + 1] }
             };
