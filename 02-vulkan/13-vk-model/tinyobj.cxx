@@ -11,7 +11,7 @@ import vulkan_render;
 
 namespace om::tinyobj
 {
-export void load_model()
+export void load_model(std::filesystem::path path)
 {
     using namespace ::tinyobj;
     attrib_t                attrib;
@@ -19,7 +19,7 @@ export void load_model()
     std::vector<material_t> materials;
     std::string             warn, err;
 
-    if (!LoadObj(&attrib, &shapes, &materials, &warn, &err, "not_exist.obj"))
+    if (!LoadObj(&attrib, &shapes, &materials, &warn, &err, path.c_str()))
     {
         throw std::runtime_error(warn + err);
     }

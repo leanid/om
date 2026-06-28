@@ -178,7 +178,7 @@ int main_cant_throw(int argc, char** argv)
                               render,
                               "rect");
 
-        om::tinyobj::load_model();
+        om::tinyobj::load_model("02-vulkan/13-vk-model/model/viking_room.obj");
 
         auto startTime = std::chrono::high_resolution_clock::now();
 
