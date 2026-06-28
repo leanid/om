@@ -173,12 +173,8 @@ int main_cant_throw(int argc, char** argv)
                                 "viking_room.png");
         uniform_buffer_object ubo{};
 
-        om::vulkan::mesh mesh(std::span{ mesh_verticles },
-                              std::span{ mesh_indexes },
-                              render,
-                              "rect");
-
-        om::tinyobj::load_model("02-vulkan/13-vk-model/model/viking_room.obj");
+        om::vulkan::mesh mesh = om::tinyobj::load_model(
+            "02-vulkan/13-vk-model/model/viking_room.obj", render);
 
         auto startTime = std::chrono::high_resolution_clock::now();
 
