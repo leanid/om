@@ -150,6 +150,7 @@ private:
     vk::raii::DeviceMemory img_memory  = nullptr;
     vk::raii::ImageView    img_view    = nullptr;
     vk::raii::Sampler      img_sampler = nullptr;
+    std::uint8_t           mip_levels  = {};
 };
 
 export struct platform_interface
@@ -2772,9 +2773,20 @@ image::image(render& r, std::filesystem::path path, std::string dbg_name)
         throw std::runtime_error("failed to load texture image! [" + path_str +
                                  "]");
     }
+    // 3840 × 2160 pixels == log2(3840) == 11.9069
+    // std::floor(11.9069) == 11
+    // mip_levels == 11 + 1; == like for 4096
+    // даже если бы мы выбрали 4096 картинку, то за 12 шагов получили бы
+    // картинку 2х2 пикселя поэтому нам всегда нужно в конце сделать +1 - для
+    // картинки на 1х1 пиксель
+    mip_levels = static_cast<std::uint8_t>(
+                     std::floor(std::log2(std::max(width, height)))) +
+                 1;
 
     om::cout << "image loaded: " << path << " w: " << width << " h: " << height
-             << " ch: " << channels << '\n';
+             << " ch: " << channels
+             << " mip_levels: " << static_cast<std::uint32_t>(mip_levels)
+             << '\n';
 
     int  size          = width * height * 4;
     auto size_in_bytes = static_cast<vk::DeviceSize>(size);
