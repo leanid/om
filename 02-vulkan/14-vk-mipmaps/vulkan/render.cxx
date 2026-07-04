@@ -333,7 +333,6 @@ private:
         std::uint8_t            mip_levels = 1u);
 
     void generate_mipmaps(vk::raii::Image& image,
-                          vk::Format       image_format,
                           std::uint32_t    width,
                           std::uint32_t    height,
                           std::uint8_t     mip_levels);
@@ -2844,10 +2843,13 @@ image::image(render& r, std::filesystem::path path, std::string dbg_name)
         img,
         vk::Extent2D{ .width = extent.width, .height = extent.height });
 
-    r.transition_image_layout(vk::ImageLayout::eTransferDstOptimal,
-                              img,
-                              vk::ImageLayout::eShaderReadOnlyOptimal,
-                              mip_levels);
+    r.generate_mipmaps(img, width, height, mip_levels);
+
+    // generate_mipmaps transfer for shader_read_only_optimal at the end
+    // r.transition_image_layout(vk::ImageLayout::eTransferDstOptimal,
+    //                           img,
+    //                           vk::ImageLayout::eShaderReadOnlyOptimal,
+    //                           mip_levels);
 
     img_view = r.create_image_view(img,
                                    vk::Format::eR8G8B8A8Srgb,
@@ -2969,7 +2971,6 @@ std::pair<vk::raii::Image, vk::raii::DeviceMemory> render::create_image(
 }
 
 void render::generate_mipmaps(vk::raii::Image& image,
-                              vk::Format       image_format,
                               std::uint32_t    width,
                               std::uint32_t    height,
                               std::uint8_t     mip_levels)
@@ -3061,6 +3062,20 @@ void render::generate_mipmaps(vk::raii::Image& image,
             mip_height /= 2;
         }
     } // end for mip_levels
+
+    // last mip level
+    barrier.subresourceRange.baseMipLevel = mip_levels - 1;
+    barrier.oldLayout     = vk::ImageLayout::eTransferDstOptimal;
+    barrier.newLayout     = vk::ImageLayout::eShaderReadOnlyOptimal;
+    barrier.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
+    barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
+
+    command_buffer.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer,
+                                   vk::PipelineStageFlagBits::eFragmentShader,
+                                   {},
+                                   {},
+                                   {},
+                                   barrier);
 }
 
 void render::transition_image_layout(vk::ImageLayout        layout_old,
