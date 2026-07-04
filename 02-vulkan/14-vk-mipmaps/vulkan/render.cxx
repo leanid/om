@@ -324,16 +324,24 @@ private:
                        vk::raii::DeviceMemory& bufferMemory);
 
     std::pair<vk::raii::Image, vk::raii::DeviceMemory> create_image(
-        uint32_t                width,
-        uint32_t                height,
+        std::uint32_t           width,
+        std::uint32_t           height,
         vk::Format              format,
         vk::ImageTiling         tiling,
         vk::ImageUsageFlags     usage,
-        vk::MemoryPropertyFlags properties);
+        vk::MemoryPropertyFlags properties,
+        std::uint8_t            mip_levels = 1u);
+
+    void generate_mipmaps(vk::raii::Image& image,
+                          vk::Format       image_format,
+                          std::uint32_t    width,
+                          std::uint32_t    height,
+                          std::uint8_t     mip_levels);
 
     void transition_image_layout(vk::ImageLayout        layout_old,
                                  const vk::raii::Image& img,
-                                 vk::ImageLayout        layout_new);
+                                 vk::ImageLayout        layout_new,
+                                 std::uint8_t           mip_levels = 1u);
 
     void copy_buffer_to_image(const vk::raii::Buffer& buffer,
                               vk::raii::Image&        image,
@@ -348,7 +356,8 @@ private:
     [[nodiscard]] vk::raii::ImageView create_image_view(
         vk::Image            image,
         vk::Format           format,
-        vk::ImageAspectFlags aspect_flags) const;
+        vk::ImageAspectFlags aspect_flags,
+        std::uint8_t         mip_levels = 1u) const;
 
     vk::raii::ShaderModule create_shader(std::span<const std::byte> spir_v);
 
@@ -2648,8 +2657,10 @@ render::swapchain_details_t render::get_swapchain_details(
     return details;
 }
 
-vk::raii::ImageView render::create_image_view(
-    vk::Image image, vk::Format format, vk::ImageAspectFlags aspect_flags) const
+vk::raii::ImageView render::create_image_view(vk::Image            image,
+                                              vk::Format           format,
+                                              vk::ImageAspectFlags aspect_flags,
+                                              std::uint8_t mip_levels) const
 {
     vk::ImageViewCreateInfo info{
         .image            = image,
@@ -2661,7 +2672,7 @@ vk::raii::ImageView render::create_image_view(
                               .a = vk::ComponentSwizzle::eIdentity },
         .subresourceRange = { .aspectMask     = aspect_flags,
                               .baseMipLevel   = 0,
-                              .levelCount     = 1,
+                              .levelCount     = mip_levels,
                               .baseArrayLayer = 0,
                               .layerCount     = 1 }
     };
@@ -2812,16 +2823,21 @@ image::image(render& r, std::filesystem::path path, std::string dbg_name)
                          .height = static_cast<uint32_t>(height),
                          .depth  = 1u };
 
-    std::tie(img, img_memory) = r.create_image(
-        extent.width,
-        extent.height,
-        vk::Format::eR8G8B8A8Srgb,
-        vk::ImageTiling::eOptimal,
-        vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled,
-        vk::MemoryPropertyFlagBits::eDeviceLocal);
+    std::tie(img, img_memory) =
+        r.create_image(extent.width,
+                       extent.height,
+                       vk::Format::eR8G8B8A8Srgb,
+                       vk::ImageTiling::eOptimal,
+                       vk::ImageUsageFlagBits::eTransferSrc | // for mip_levels
+                           vk::ImageUsageFlagBits::eTransferDst |
+                           vk::ImageUsageFlagBits::eSampled,
+                       vk::MemoryPropertyFlagBits::eDeviceLocal,
+                       mip_levels);
 
-    r.transition_image_layout(
-        vk::ImageLayout::eUndefined, img, vk::ImageLayout::eTransferDstOptimal);
+    r.transition_image_layout(vk::ImageLayout::eUndefined,
+                              img,
+                              vk::ImageLayout::eTransferDstOptimal,
+                              mip_levels);
 
     r.copy_buffer_to_image(
         staging_buffer,
@@ -2830,10 +2846,13 @@ image::image(render& r, std::filesystem::path path, std::string dbg_name)
 
     r.transition_image_layout(vk::ImageLayout::eTransferDstOptimal,
                               img,
-                              vk::ImageLayout::eShaderReadOnlyOptimal);
+                              vk::ImageLayout::eShaderReadOnlyOptimal,
+                              mip_levels);
 
-    img_view = r.create_image_view(
-        img, vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor);
+    img_view = r.create_image_view(img,
+                                   vk::Format::eR8G8B8A8Srgb,
+                                   vk::ImageAspectFlagBits::eColor,
+                                   mip_levels);
 
     vk::PhysicalDeviceProperties properties =
         r.devices.physical.getProperties();
@@ -2906,12 +2925,13 @@ void render::create_buffer(vk::DeviceSize          size,
 }
 
 std::pair<vk::raii::Image, vk::raii::DeviceMemory> render::create_image(
-    uint32_t                width,
-    uint32_t                height,
+    std::uint32_t           width,
+    std::uint32_t           height,
     vk::Format              format,
     vk::ImageTiling         tiling,
     vk::ImageUsageFlags     usage,
-    vk::MemoryPropertyFlags properties)
+    vk::MemoryPropertyFlags properties,
+    std::uint8_t            mip_levels)
 {
     vk::ImageCreateInfo img_info{
         .pNext       = nullptr,
@@ -2919,7 +2939,7 @@ std::pair<vk::raii::Image, vk::raii::DeviceMemory> render::create_image(
         .imageType   = vk::ImageType::e2D,
         .format      = format,
         .extent      = { .width = width, .height = height, .depth = 1 },
-        .mipLevels   = 1,
+        .mipLevels   = mip_levels,
         .arrayLayers = 1,
         .samples     = vk::SampleCountFlagBits::e1,
         .tiling      = tiling,
@@ -2948,9 +2968,36 @@ std::pair<vk::raii::Image, vk::raii::DeviceMemory> render::create_image(
     return { std::move(image), std::move(image_memory) };
 }
 
+void render::generate_mipmaps(vk::raii::Image& image,
+                              vk::Format       image_format,
+                              std::uint32_t    width,
+                              std::uint32_t    height,
+                              std::uint8_t     mip_levels)
+{
+    one_time_submit gen_mip_levels(
+        devices.logical, graphics_command_pool, graphics_queue);
+
+    // std::unique_ptr<vk::raii::CommandBuffer> commandBuffer =
+    //     beginSingleTimeCommands();
+
+    vk::ImageMemoryBarrier barrier(vk::AccessFlagBits::eTransferWrite,
+                                   vk::AccessFlagBits::eTransferRead,
+                                   vk::ImageLayout::eTransferDstOptimal,
+                                   vk::ImageLayout::eTransferSrcOptimal,
+                                   vk::QueueFamilyIgnored,
+                                   vk::QueueFamilyIgnored,
+                                   image);
+    barrier.subresourceRange.aspectMask     = vk::ImageAspectFlagBits::eColor;
+    barrier.subresourceRange.baseArrayLayer = 0;
+    barrier.subresourceRange.layerCount     = 1;
+    barrier.subresourceRange.levelCount     = 1;
+    // endSingleTimeCommands(commandBuffer);
+}
+
 void render::transition_image_layout(vk::ImageLayout        layout_old,
                                      const vk::raii::Image& img,
-                                     vk::ImageLayout        layout_new)
+                                     vk::ImageLayout        layout_new,
+                                     std::uint8_t           mip_levels)
 {
     one_time_submit transition(
         devices.logical, graphics_command_pool, graphics_queue);
@@ -2966,7 +3013,7 @@ void render::transition_image_layout(vk::ImageLayout        layout_old,
         .image               = { *img },
         .subresourceRange    = { .aspectMask     = vk::ImageAspectFlagBits::eColor,
                                  .baseMipLevel   = 0,
-                                 .levelCount     = 1,
+                                 .levelCount     = mip_levels,
                                  .baseArrayLayer = 0,
                                  .layerCount     = 1 }
 
