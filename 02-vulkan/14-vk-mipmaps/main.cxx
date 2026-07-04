@@ -168,10 +168,16 @@ int main_cant_throw(int argc, char** argv)
             4, 5, 6, 6, 7, 4
         };
         // clang-format on
-        om::vulkan::image     image(render,
-                                "02-vulkan/14-vk-mipmaps/model/viking_room.png",
-                                "viking_room.png",
-                                true);
+        om::vulkan::image image_mip_on(
+            render,
+            "02-vulkan/14-vk-mipmaps/model/viking_room.png",
+            "viking_room.png_on",
+            true);
+        om::vulkan::image image_mip_off(
+            render,
+            "02-vulkan/14-vk-mipmaps/model/viking_room.png",
+            "viking_room.png_off",
+            false);
         uniform_buffer_object ubo{};
 
         om::vulkan::mesh mesh = om::tinyobj::load_model(
@@ -179,7 +185,8 @@ int main_cant_throw(int argc, char** argv)
 
         auto startTime = std::chrono::high_resolution_clock::now();
 
-        bool running = true;
+        bool running         = true;
+        bool mip_level_state = true;
         while (running)
         {
             sdl::Event event;
@@ -196,6 +203,13 @@ int main_cant_throw(int argc, char** argv)
                         {
                             running = false;
                         }
+                        if (static_cast<sdl::Keycode>(event.key.key) ==
+                            sdl::Keycode::SPACE)
+                        {
+                            mip_level_state = !mip_level_state;
+                            om::cout << "change state: " << mip_level_state
+                                     << std::endl;
+                        }
                         break;
                     case sdl::EventType::WINDOW_RESIZED:
                         render.recreate_swapchain();
@@ -205,10 +219,11 @@ int main_cant_throw(int argc, char** argv)
             }
 
             auto  currentTime = std::chrono::high_resolution_clock::now();
-            float time =
-                std::chrono::duration<float, std::chrono::seconds::period>(
-                    currentTime - startTime)
-                    .count();
+            float time        = 4;
+            /* std::chrono::duration<float, std::chrono::seconds::period>(
+             */
+            /*     currentTime - startTime) */
+            /*     .count(); */
 
             auto window_size = render.get_swapchain_image_extent();
 
@@ -231,7 +246,14 @@ int main_cant_throw(int argc, char** argv)
 
             std::span<std::byte> ubo_span(reinterpret_cast<std::byte*>(&ubo),
                                           sizeof(ubo));
-            render.draw(mesh, image, ubo_span);
+            if (mip_level_state)
+            {
+                render.draw(mesh, image_mip_on, ubo_span);
+            }
+            else
+            {
+                render.draw(mesh, image_mip_off, ubo_span);
+            }
 
             // running = false;
             // std::this_thread::sleep_for(std::chrono::seconds(2));
