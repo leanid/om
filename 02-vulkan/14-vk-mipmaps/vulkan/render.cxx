@@ -142,7 +142,10 @@ private:
 export class image final
 {
 public:
-    image(render& r, std::filesystem::path path, std::string dbg_name);
+    image(render&               r,
+          std::filesystem::path path,
+          std::string           dbg_name,
+          bool                  generate_mip_levels = true);
 
 private:
     friend class render;
@@ -333,6 +336,7 @@ private:
         std::uint8_t            mip_levels = 1u);
 
     void generate_mipmaps(vk::raii::Image& image,
+                          vk::Format       image_format,
                           std::uint32_t    width,
                           std::uint32_t    height,
                           std::uint8_t     mip_levels);
@@ -2768,7 +2772,10 @@ void mesh::create_buffer(std::span<N> indexes,
     render.copy_buffer(staging_buffer, size, buffer_indx);
 }
 
-image::image(render& r, std::filesystem::path path, std::string dbg_name)
+image::image(render&               r,
+             std::filesystem::path path,
+             std::string           dbg_name,
+             bool                  generate_mip_levels)
 {
     std::string path_str = path.generic_string();
     int         width    = 0;
@@ -2789,14 +2796,21 @@ image::image(render& r, std::filesystem::path path, std::string dbg_name)
     // даже если бы мы выбрали 4096 картинку, то за 12 шагов получили бы
     // картинку 2х2 пикселя поэтому нам всегда нужно в конце сделать +1 - для
     // картинки на 1х1 пиксель
-    mip_levels = static_cast<std::uint8_t>(
-                     std::floor(std::log2(std::max(width, height)))) +
-                 1;
+    if (generate_mip_levels)
+    {
+        mip_levels = static_cast<std::uint8_t>(
+                         std::floor(std::log2(std::max(width, height)))) +
+                     1;
+    }
+    else
+    {
+        mip_levels = 1;
+    }
 
     om::cout << "image loaded: " << path << " w: " << width << " h: " << height
              << " ch: " << channels
              << " mip_levels: " << static_cast<std::uint32_t>(mip_levels)
-             << '\n';
+             << " gen_mip_levels: " << generate_mip_levels << '\n';
 
     int  size          = width * height * 4;
     auto size_in_bytes = static_cast<vk::DeviceSize>(size);
@@ -2843,13 +2857,19 @@ image::image(render& r, std::filesystem::path path, std::string dbg_name)
         img,
         vk::Extent2D{ .width = extent.width, .height = extent.height });
 
-    r.generate_mipmaps(img, width, height, mip_levels);
-
-    // generate_mipmaps transfer for shader_read_only_optimal at the end
-    // r.transition_image_layout(vk::ImageLayout::eTransferDstOptimal,
-    //                           img,
-    //                           vk::ImageLayout::eShaderReadOnlyOptimal,
-    //                           mip_levels);
+    if (generate_mip_levels)
+    {
+        // generate_mipmaps transfer for shader_read_only_optimal at the end
+        r.generate_mipmaps(
+            img, vk::Format::eR8G8B8A8Srgb, width, height, mip_levels);
+    }
+    else
+    {
+        r.transition_image_layout(vk::ImageLayout::eTransferDstOptimal,
+                                  img,
+                                  vk::ImageLayout::eShaderReadOnlyOptimal,
+                                  mip_levels);
+    }
 
     img_view = r.create_image_view(img,
                                    vk::Format::eR8G8B8A8Srgb,
@@ -2971,10 +2991,22 @@ std::pair<vk::raii::Image, vk::raii::DeviceMemory> render::create_image(
 }
 
 void render::generate_mipmaps(vk::raii::Image& image,
+                              vk::Format       image_format,
                               std::uint32_t    width,
                               std::uint32_t    height,
                               std::uint8_t     mip_levels)
 {
+    // Check if image format supports linear blit-ing
+    vk::FormatProperties format_properties =
+        devices.physical.getFormatProperties(image_format);
+
+    if (!(format_properties.optimalTilingFeatures &
+          vk::FormatFeatureFlagBits::eSampledImageFilterLinear))
+    {
+        throw std::runtime_error(
+            "texture image format does not support linear blitting!");
+    }
+
     one_time_submit command_buffer(
         devices.logical, graphics_command_pool, graphics_queue);
 
