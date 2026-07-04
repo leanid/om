@@ -170,7 +170,8 @@ int main_cant_throw(int argc, char** argv)
         // clang-format on
         om::vulkan::image     image(render,
                                 "02-vulkan/14-vk-mipmaps/model/viking_room.png",
-                                "viking_room.png");
+                                "viking_room.png",
+                                true);
         uniform_buffer_object ubo{};
 
         om::vulkan::mesh mesh = om::tinyobj::load_model(
