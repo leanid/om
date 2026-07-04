@@ -2980,17 +2980,21 @@ void render::generate_mipmaps(vk::raii::Image& image,
     // std::unique_ptr<vk::raii::CommandBuffer> commandBuffer =
     //     beginSingleTimeCommands();
 
-    vk::ImageMemoryBarrier barrier(vk::AccessFlagBits::eTransferWrite,
-                                   vk::AccessFlagBits::eTransferRead,
-                                   vk::ImageLayout::eTransferDstOptimal,
-                                   vk::ImageLayout::eTransferSrcOptimal,
-                                   vk::QueueFamilyIgnored,
-                                   vk::QueueFamilyIgnored,
-                                   image);
-    barrier.subresourceRange.aspectMask     = vk::ImageAspectFlagBits::eColor;
-    barrier.subresourceRange.baseArrayLayer = 0;
-    barrier.subresourceRange.layerCount     = 1;
-    barrier.subresourceRange.levelCount     = 1;
+    vk::ImageMemoryBarrier barrier{
+        .pNext               = nullptr,
+        .srcAccessMask       = vk::AccessFlagBits::eTransferWrite,
+        .dstAccessMask       = vk::AccessFlagBits::eTransferRead,
+        .oldLayout           = vk::ImageLayout::eTransferDstOptimal,
+        .newLayout           = vk::ImageLayout::eTransferSrcOptimal,
+        .srcQueueFamilyIndex = vk::QueueFamilyIgnored,
+        .dstQueueFamilyIndex = vk::QueueFamilyIgnored,
+        .image               = { *image },
+        .subresourceRange    = { .aspectMask     = vk::ImageAspectFlagBits::eColor,
+                                 .baseMipLevel   = 0,
+                                 .levelCount     = 1,
+                                 .baseArrayLayer = 0,
+                                 .layerCount     = 1 }
+    };
     // endSingleTimeCommands(commandBuffer);
 }
 
