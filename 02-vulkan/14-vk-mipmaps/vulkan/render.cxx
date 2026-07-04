@@ -2974,7 +2974,7 @@ void render::generate_mipmaps(vk::raii::Image& image,
                               std::uint32_t    height,
                               std::uint8_t     mip_levels)
 {
-    one_time_submit gen_mip_levels(
+    one_time_submit command_buffer(
         devices.logical, graphics_command_pool, graphics_queue);
 
     // std::unique_ptr<vk::raii::CommandBuffer> commandBuffer =
@@ -2995,6 +2995,53 @@ void render::generate_mipmaps(vk::raii::Image& image,
                                  .baseArrayLayer = 0,
                                  .layerCount     = 1 }
     };
+
+    auto mip_width  = static_cast<std::int32_t>(width);
+    auto mip_height = static_cast<std::int32_t>(height);
+
+    for (std::uint32_t i = 1; i < mip_levels; i++)
+    {
+        barrier.subresourceRange.baseMipLevel = i - 1;
+        barrier.oldLayout     = vk::ImageLayout::eTransferDstOptimal;
+        barrier.newLayout     = vk::ImageLayout::eTransferSrcOptimal;
+        barrier.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
+        barrier.dstAccessMask = vk::AccessFlagBits::eTransferRead;
+
+        command_buffer.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer,
+                                       vk::PipelineStageFlagBits::eTransfer,
+                                       {},
+                                       {},
+                                       {},
+                                       barrier);
+
+        vk::ArrayWrapper1D<vk::Offset3D, 2> offsets;
+        vk::ArrayWrapper1D<vk::Offset3D, 2> dstOffsets;
+        offsets[0]    = vk::Offset3D(0, 0, 0);
+        offsets[1]    = vk::Offset3D(mip_width, mip_height, 1);
+        dstOffsets[0] = vk::Offset3D(0, 0, 0);
+        dstOffsets[1] = vk::Offset3D(mip_width > 1 ? mip_width / 2 : 1,
+                                     mip_height > 1 ? mip_height / 2 : 1,
+                                     1);
+        vk::ImageBlit blit = {
+            .srcSubresource = { .aspectMask = vk::ImageAspectFlagBits::eColor,
+                                .mipLevel   = i - 1,
+                                .baseArrayLayer = 0,
+                                .layerCount     = 1 },
+            .srcOffsets     = offsets,
+            .dstSubresource = { .aspectMask = vk::ImageAspectFlagBits::eColor,
+                                .mipLevel   = i,
+                                .baseArrayLayer = 0,
+                                .layerCount     = 1 },
+            .dstOffsets     = dstOffsets
+        };
+
+        command_buffer.blitImage(image,
+                                 vk::ImageLayout::eTransferSrcOptimal,
+                                 image,
+                                 vk::ImageLayout::eTransferDstOptimal,
+                                 { blit },
+                                 vk::Filter::eLinear);
+    }
     // endSingleTimeCommands(commandBuffer);
 }
 
