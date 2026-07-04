@@ -3038,6 +3038,20 @@ void render::generate_mipmaps(vk::raii::Image& image,
                                  vk::ImageLayout::eTransferDstOptimal,
                                  { blit },
                                  vk::Filter::eLinear);
+
+        barrier.oldLayout     = vk::ImageLayout::eTransferSrcOptimal;
+        barrier.newLayout     = vk::ImageLayout::eShaderReadOnlyOptimal;
+        barrier.srcAccessMask = vk::AccessFlagBits::eTransferRead;
+        barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
+
+        command_buffer.pipelineBarrier(
+            vk::PipelineStageFlagBits::eTransfer,
+            vk::PipelineStageFlagBits::eFragmentShader,
+            {},
+            {},
+            {},
+            barrier);
+
         if (mip_width > 1)
         {
             mip_width /= 2;
@@ -3047,17 +3061,6 @@ void render::generate_mipmaps(vk::raii::Image& image,
             mip_height /= 2;
         }
     } // end for mip_levels
-    barrier.oldLayout     = vk::ImageLayout::eTransferSrcOptimal;
-    barrier.newLayout     = vk::ImageLayout::eShaderReadOnlyOptimal;
-    barrier.srcAccessMask = vk::AccessFlagBits::eTransferRead;
-    barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
-
-    command_buffer.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer,
-                                   vk::PipelineStageFlagBits::eFragmentShader,
-                                   {},
-                                   {},
-                                   {},
-                                   barrier);
 }
 
 void render::transition_image_layout(vk::ImageLayout        layout_old,
