@@ -2513,7 +2513,7 @@ void render::create_descriptor_sets(const image& image)
     if (!descriptor_sets.empty())
     {
         // only once set for totorial
-        return;
+        // return;
     }
     std::vector<vk::DescriptorSetLayout> layouts(max_frames_in_flight,
                                                  *descriptor_set_layout);
@@ -2891,7 +2891,7 @@ image::image(render&               r,
         .maxAnisotropy           = properties.limits.maxSamplerAnisotropy,
         .compareEnable           = vk::False,
         .compareOp               = vk::CompareOp::eAlways,
-        .minLod                  = 0.0f,
+        .minLod                  = (generate_mip_levels ? 5.0f : 0.0f),
         .maxLod                  = vk::LodClampNone,
         .borderColor             = vk::BorderColor::eIntOpaqueBlack,
         .unnormalizedCoordinates = vk::False
