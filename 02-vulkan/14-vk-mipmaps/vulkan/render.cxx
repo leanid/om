@@ -2977,9 +2977,6 @@ void render::generate_mipmaps(vk::raii::Image& image,
     one_time_submit command_buffer(
         devices.logical, graphics_command_pool, graphics_queue);
 
-    // std::unique_ptr<vk::raii::CommandBuffer> commandBuffer =
-    //     beginSingleTimeCommands();
-
     vk::ImageMemoryBarrier barrier{
         .pNext               = nullptr,
         .srcAccessMask       = vk::AccessFlagBits::eTransferWrite,
@@ -3041,8 +3038,26 @@ void render::generate_mipmaps(vk::raii::Image& image,
                                  vk::ImageLayout::eTransferDstOptimal,
                                  { blit },
                                  vk::Filter::eLinear);
-    }
-    // endSingleTimeCommands(commandBuffer);
+        if (mip_width > 1)
+        {
+            mip_width /= 2;
+        }
+        if (mip_height > 1)
+        {
+            mip_height /= 2;
+        }
+    } // end for mip_levels
+    barrier.oldLayout     = vk::ImageLayout::eTransferSrcOptimal;
+    barrier.newLayout     = vk::ImageLayout::eShaderReadOnlyOptimal;
+    barrier.srcAccessMask = vk::AccessFlagBits::eTransferRead;
+    barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
+
+    command_buffer.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer,
+                                   vk::PipelineStageFlagBits::eFragmentShader,
+                                   {},
+                                   {},
+                                   {},
+                                   barrier);
 }
 
 void render::transition_image_layout(vk::ImageLayout        layout_old,
