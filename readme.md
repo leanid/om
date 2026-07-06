@@ -60,6 +60,7 @@ sudo epm install libXfixes-devel
 sudo epm install libXtst-devel
 sudo epm install libXcursor-devel
 sudo epm install libXrandr-devel
+sudo epm install libXScrnSaver-devel
 sudo epm install liburing-devel
 sudo epm install libunwind-devel
 sudo epm install libusb-devel
