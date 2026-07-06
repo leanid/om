@@ -2891,7 +2891,7 @@ image::image(render&               r,
         .maxAnisotropy           = properties.limits.maxSamplerAnisotropy,
         .compareEnable           = vk::False,
         .compareOp               = vk::CompareOp::eAlways,
-        .minLod                  = (generate_mip_levels ? 5.0f : 0.0f),
+        .minLod                  = 0.0f,
         .maxLod                  = vk::LodClampNone,
         .borderColor             = vk::BorderColor::eIntOpaqueBlack,
         .unnormalizedCoordinates = vk::False
