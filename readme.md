@@ -59,6 +59,8 @@ sudo epm install libXext-devel
 sudo epm install libXfixes-devel
 sudo epm install libXtst-devel
 sudo epm install libXcursor-devel
+sudo epm install libXrandr-devel
+sudo epm install liburing-devel
 sudo epm install libunwind-devel
 sudo epm install libusb-devel
 sudo epm install libudev-devel
