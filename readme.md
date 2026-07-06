@@ -53,6 +53,12 @@ sudo epm install libgbm-devel
 sudo epm install libwayland-egl-devel
 sudo epm install libwayland-cursor-devel
 sudo epm install libxkbcommon-devel
+sudo epm install libX11-devel
+sudo epm install libXcursor-devel
+sudo epm install libXext-devel
+sudo epm install libXfixes-devel
+sudo epm install libXtst-devel
+sudo epm install libXcursor-devel
 sudo epm install libunwind-devel
 sudo epm install libusb-devel
 sudo epm install libudev-devel
