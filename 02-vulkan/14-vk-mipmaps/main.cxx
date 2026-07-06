@@ -219,11 +219,10 @@ int main_cant_throw(int argc, char** argv)
             }
 
             auto  currentTime = std::chrono::high_resolution_clock::now();
-            float time        = 4;
-            /* std::chrono::duration<float, std::chrono::seconds::period>(
-             */
-            /*     currentTime - startTime) */
-            /*     .count(); */
+            float time =
+                std::chrono::duration<float, std::chrono::seconds::period>(
+                    currentTime - startTime)
+                    .count();
 
             auto window_size = render.get_swapchain_image_extent();
 
