@@ -124,7 +124,7 @@ int main_cant_throw(int argc, char** argv)
     }
 
     std::unique_ptr<sdl::SDL_Window, decltype(&sdl::DestroyWindow)> window(
-        sdl::CreateWindow("14-vk-mipmaps", 800, 600, window_flags),
+        sdl::CreateWindow("15-vk-multisampling", 800, 600, window_flags),
         sdl::DestroyWindow);
     std::experimental::scope_exit destroy_window(
         []() { om::cout << "destroy sdl window\n"; });
@@ -170,18 +170,18 @@ int main_cant_throw(int argc, char** argv)
         // clang-format on
         om::vulkan::image image_mip_on(
             render,
-            "02-vulkan/14-vk-mipmaps/model/viking_room.png",
+            "02-vulkan/15-vk-multisampling/model/viking_room.png",
             "viking_room.png_on",
             true);
         om::vulkan::image image_mip_off(
             render,
-            "02-vulkan/14-vk-mipmaps/model/viking_room.png",
+            "02-vulkan/15-vk-multisampling/model/viking_room.png",
             "viking_room.png_off",
             false);
         uniform_buffer_object ubo{};
 
         om::vulkan::mesh mesh = om::tinyobj::load_model(
-            "02-vulkan/14-vk-mipmaps/model/viking_room.obj", render);
+            "02-vulkan/15-vk-multisampling/model/viking_room.obj", render);
 
         auto startTime = std::chrono::high_resolution_clock::now();
 
