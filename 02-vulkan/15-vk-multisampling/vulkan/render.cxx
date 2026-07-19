@@ -424,6 +424,7 @@ private:
         const vk::SurfaceKHR&     surface_to_check);
     uint32_t get_transfer_queue_family_index(
         const vk::PhysicalDevice& physical_device);
+    vk::SampleCountFlagBits get_max_usable_sample_count();
 
     // choose functions
     vk::Extent2D choose_best_swapchain_image_resolution(
@@ -520,8 +521,9 @@ private:
     std::vector<vk::raii::DescriptorSet> descriptor_sets;
 
     // vulkan utilities
-    vk::Format   swapchain_image_format{ vk::Format::eUndefined };
-    vk::Extent2D swapchain_image_extent{};
+    vk::Format              swapchain_image_format{ vk::Format::eUndefined };
+    vk::Extent2D            swapchain_image_extent{};
+    vk::SampleCountFlagBits msaa_samples = vk::SampleCountFlagBits::e1;
 
     // sinchronization
     struct
@@ -1471,6 +1473,9 @@ void render::get_physical_device()
 
     log << "selected device: " << devices.physical.getProperties().deviceName
         << '\n';
+    msaa_samples = get_max_usable_sample_count();
+
+    log << "msaa_samples: " << vk::to_string(msaa_samples) << '\n';
 }
 
 uint32_t render::get_graphics_queue_family_index(
@@ -3197,6 +3202,42 @@ void render::copy_buffer(vk::raii::Buffer& src_buffer,
 {
     one_time_submit cmd(devices.logical, transfer_command_pool, transfer_queue);
     cmd.copyBuffer(src_buffer, dst_buffer, vk::BufferCopy(0, 0, size));
+}
+
+vk::SampleCountFlagBits render::get_max_usable_sample_count()
+{
+    vk::PhysicalDeviceProperties physicalDeviceProperties =
+        devices.physical.getProperties();
+
+    vk::SampleCountFlags counts =
+        physicalDeviceProperties.limits.framebufferColorSampleCounts &
+        physicalDeviceProperties.limits.framebufferDepthSampleCounts;
+    if (counts & vk::SampleCountFlagBits::e64)
+    {
+        return vk::SampleCountFlagBits::e64;
+    }
+    if (counts & vk::SampleCountFlagBits::e32)
+    {
+        return vk::SampleCountFlagBits::e32;
+    }
+    if (counts & vk::SampleCountFlagBits::e16)
+    {
+        return vk::SampleCountFlagBits::e16;
+    }
+    if (counts & vk::SampleCountFlagBits::e8)
+    {
+        return vk::SampleCountFlagBits::e8;
+    }
+    if (counts & vk::SampleCountFlagBits::e4)
+    {
+        return vk::SampleCountFlagBits::e4;
+    }
+    if (counts & vk::SampleCountFlagBits::e2)
+    {
+        return vk::SampleCountFlagBits::e2;
+    }
+
+    return vk::SampleCountFlagBits::e1;
 }
 
 } // namespace om::vulkan
