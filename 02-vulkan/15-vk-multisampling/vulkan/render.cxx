@@ -333,7 +333,8 @@ private:
         vk::ImageTiling         tiling,
         vk::ImageUsageFlags     usage,
         vk::MemoryPropertyFlags properties,
-        std::uint8_t            mip_levels = 1u);
+        std::uint8_t            mip_levels  = 1u,
+        vk::SampleCountFlagBits num_samples = vk::SampleCountFlagBits::e1);
 
     void generate_mipmaps(vk::raii::Image& image,
                           vk::Format       image_format,
@@ -494,6 +495,10 @@ private:
     vk::raii::SwapchainKHR           swapchain = nullptr;
     std::vector<vk::Image>           swapchain_images;
     std::vector<vk::raii::ImageView> swapchain_image_views;
+
+    vk::raii::Image        color_image        = nullptr;
+    vk::raii::DeviceMemory color_image_memory = nullptr;
+    vk::raii::ImageView    color_image_view   = nullptr;
 
     vk::raii::Image        depth_image        = nullptr;
     vk::raii::DeviceMemory depth_image_memory = nullptr;
@@ -2958,7 +2963,8 @@ std::pair<vk::raii::Image, vk::raii::DeviceMemory> render::create_image(
     vk::ImageTiling         tiling,
     vk::ImageUsageFlags     usage,
     vk::MemoryPropertyFlags properties,
-    std::uint8_t            mip_levels)
+    std::uint8_t            mip_levels,
+    vk::SampleCountFlagBits num_samples)
 {
     vk::ImageCreateInfo img_info{
         .pNext       = nullptr,
@@ -2968,7 +2974,7 @@ std::pair<vk::raii::Image, vk::raii::DeviceMemory> render::create_image(
         .extent      = { .width = width, .height = height, .depth = 1 },
         .mipLevels   = mip_levels,
         .arrayLayers = 1,
-        .samples     = vk::SampleCountFlagBits::e1,
+        .samples     = num_samples,
         .tiling      = tiling,
         .usage       = usage,
         .sharingMode = vk::SharingMode::eExclusive,
