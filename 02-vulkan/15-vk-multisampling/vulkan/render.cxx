@@ -318,7 +318,7 @@ private:
     void create_synchronization_objects();
     void create_uniform_buffers();
     void create_descriptor_pool();
-    void create_descriptor_sets(const image& image);
+    void create_descriptor_sets(std::size_t frame_index, const image& image);
     void create_color_resources();
 
     void create_buffer(vk::DeviceSize          size,
@@ -801,8 +801,6 @@ void render::draw(const mesh&          mesh,
                   const image&         image,
                   std::span<std::byte> ubo)
 {
-    create_descriptor_sets(image);
-
     auto& draw_fence = *sync.draw_fence[current_frame];
 
     // wait current frame fence signaled GPU -> CPU
@@ -835,6 +833,8 @@ void render::draw(const mesh&          mesh,
     // We need to make sure that the fence is reset if the previous frame
     // has already happened, so we know to wait on it later.
     devices.logical.resetFences(draw_fence);
+
+    create_descriptor_sets(current_frame, image);
 
     auto& cmd_buf = command_buffers[current_frame];
     cmd_buf.reset();
@@ -2546,59 +2546,57 @@ void render::create_descriptor_pool()
     descriptor_pool = vk::raii::DescriptorPool(devices.logical, pool_info);
 }
 
-void render::create_descriptor_sets(const image& image)
+void render::create_descriptor_sets(std::size_t frame_index, const image& image)
 {
-    if (!descriptor_sets.empty())
+    if (descriptor_sets.empty())
     {
-        // only once set for totorial
-        // return;
+        std::vector<vk::DescriptorSetLayout> layouts(max_frames_in_flight,
+                                                     *descriptor_set_layout);
+        vk::DescriptorSetAllocateInfo        alloc_info{
+                   .descriptorPool     = descriptor_pool,
+                   .descriptorSetCount = static_cast<uint32_t>(layouts.size()),
+                   .pSetLayouts        = layouts.data()
+        };
+
+        descriptor_sets = devices.logical.allocateDescriptorSets(alloc_info);
+
+        for (size_t i = 0; i < max_frames_in_flight; i++)
+        {
+            vk::DescriptorBufferInfo buffer_info{ .buffer =
+                                                      uniform_buffers.at(i),
+                                                  .offset = 0,
+                                                  .range =
+                                                      sizeof(glm::mat4) * 3 };
+
+            vk::WriteDescriptorSet ubo_descriptor_write{
+                .dstSet          = descriptor_sets.at(i),
+                .dstBinding      = 0,
+                .dstArrayElement = 0,
+                .descriptorCount = 1,
+                .descriptorType  = vk::DescriptorType::eUniformBuffer,
+                .pBufferInfo     = &buffer_info
+            };
+
+            devices.logical.updateDescriptorSets({ ubo_descriptor_write }, {});
+        }
     }
-    std::vector<vk::DescriptorSetLayout> layouts(max_frames_in_flight,
-                                                 *descriptor_set_layout);
-    vk::DescriptorSetAllocateInfo        alloc_info{
-               .descriptorPool     = descriptor_pool,
-               .descriptorSetCount = static_cast<uint32_t>(layouts.size()),
-               .pSetLayouts        = layouts.data()
+
+    vk::DescriptorImageInfo image_info{
+        .sampler     = image.img_sampler,
+        .imageView   = image.img_view,
+        .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal
     };
 
-    descriptor_sets.clear();
-    descriptor_sets = devices.logical.allocateDescriptorSets(alloc_info);
+    vk::WriteDescriptorSet sampler_descriptor_write{
+        .dstSet          = descriptor_sets.at(frame_index),
+        .dstBinding      = 1,
+        .dstArrayElement = 0,
+        .descriptorCount = 1,
+        .descriptorType  = vk::DescriptorType::eCombinedImageSampler,
+        .pImageInfo      = &image_info
+    };
 
-    for (size_t i = 0; i < max_frames_in_flight; i++)
-    {
-        vk::DescriptorBufferInfo buffer_info{ .buffer = uniform_buffers.at(i),
-                                              .offset = 0,
-                                              .range  = sizeof(glm::mat4) * 3 };
-        vk::DescriptorImageInfo  image_info{
-             .sampler     = image.img_sampler, // texture_sampler,
-             .imageView   = image.img_view,    // texture_image_view,
-             .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal
-        };
-
-        vk::WriteDescriptorSet ubo_descriptor_write{
-            .dstSet          = descriptor_sets.at(i),
-            .dstBinding      = 0, // index binding
-            .dstArrayElement = 0, // index if array of descriptors
-            .descriptorCount = 1,
-            .descriptorType  = vk::DescriptorType::eUniformBuffer,
-            .pBufferInfo     = &buffer_info
-        };
-
-        vk::WriteDescriptorSet sampler_descriptor_write{
-            .dstSet          = descriptor_sets.at(i),
-            .dstBinding      = 1, // index binding
-            .dstArrayElement = 0, // index if array of descriptors
-            .descriptorCount = 1,
-            .descriptorType  = vk::DescriptorType::eCombinedImageSampler,
-            .pImageInfo      = &image_info
-        };
-
-        std::array<vk::WriteDescriptorSet, 2> descriptors_write{
-            ubo_descriptor_write, sampler_descriptor_write
-        };
-
-        devices.logical.updateDescriptorSets(descriptors_write, {});
-    } // end for i
+    devices.logical.updateDescriptorSets({ sampler_descriptor_write }, {});
 }
 
 void render::create_color_resources()
