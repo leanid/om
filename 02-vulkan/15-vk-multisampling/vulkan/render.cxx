@@ -775,8 +775,6 @@ render::render(platform_interface& platform, hints hints)
     create_descriptor_set_layout();
     create_graphics_pipeline();
     create_command_pool();
-    create_color_resources();
-    create_depth_resources();
     create_command_buffers();
     create_uniform_buffers();
     create_descriptor_pool();
@@ -871,9 +869,16 @@ void render::draw(const mesh&          mesh,
 
     result = presentation_queue.presentKHR(present_info);
 
-    if (result != vk::Result::eSuccess)
+    switch (result)
     {
-        throw std::runtime_error("error: present failed");
+        case vk::Result::eSuccess:
+        case vk::Result::eSuboptimalKHR:
+            break;
+        case vk::Result::eErrorOutOfDateKHR:
+            recreate_swapchain();
+            return;
+        default:
+            throw std::runtime_error("error: present failed");
     }
 
     current_semaphore = (current_semaphore + 1) % swapchain_images.size();
@@ -1896,6 +1901,10 @@ void render::cleanup_swapchain()
     swapchain_image_views.clear();
     swapchain = nullptr;
 
+    color_image        = nullptr;
+    color_image_memory = nullptr;
+    color_image_view   = nullptr;
+
     depth_image        = nullptr;
     depth_image_memory = nullptr;
     depth_image_view   = nullptr;
@@ -2083,8 +2092,8 @@ void render::create_graphics_pipeline()
     // requires enabling a GPU feature.
     vk::PipelineMultisampleStateCreateInfo multisample_state_info{
         // number of samples to use per fragment
-        .rasterizationSamples = vk::SampleCountFlagBits::e1,
-        .sampleShadingEnable  = vk::False, // disabled for now
+        .rasterizationSamples = msaa_samples, // vk::SampleCountFlagBits::e1,
+        .sampleShadingEnable  = vk::False,    // disabled for now
     };
 
     // Blending
@@ -2293,18 +2302,27 @@ void render::record_commands(vk::raii::CommandBuffer& cmd_buf,
 {
     cmd_buf.begin({});
 
-    // Before starting rendering, transition the swapchain image to
-    // COLOR_ATTACHMENT_OPTIMAL
-    transition_image_layout(
-        cmd_buf,
-        swapchain_images[image_index],
-        vk::ImageLayout::eUndefined, // old_layout
-        {}, // srcAccessMask (no need to wait for previous operations)
-        vk::PipelineStageFlagBits2::eTopOfPipe,             // srcStage
-        vk::ImageLayout::eColorAttachmentOptimal,           // new_layout
-        vk::AccessFlagBits2::eColorAttachmentWrite,         // dstAccessMask
-        vk::PipelineStageFlagBits2::eColorAttachmentOutput, // dstStage
-        vk::ImageAspectFlagBits::eColor);
+    // Multisampled color target (resolved to swapchain after rendering).
+    transition_image_layout(cmd_buf,
+                            *color_image,
+                            vk::ImageLayout::eUndefined,
+                            {},
+                            vk::PipelineStageFlagBits2::eTopOfPipe,
+                            vk::ImageLayout::eColorAttachmentOptimal,
+                            vk::AccessFlagBits2::eColorAttachmentWrite,
+                            vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+                            vk::ImageAspectFlagBits::eColor);
+
+    // Single-sampled swapchain image used as MSAA resolve target.
+    transition_image_layout(cmd_buf,
+                            swapchain_images[image_index],
+                            vk::ImageLayout::eUndefined,
+                            {},
+                            vk::PipelineStageFlagBits2::eTopOfPipe,
+                            vk::ImageLayout::eColorAttachmentOptimal,
+                            vk::AccessFlagBits2::eColorAttachmentWrite,
+                            vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+                            vk::ImageAspectFlagBits::eColor);
 
     // Transition depth image to depth attachment optimal layout
     transition_image_layout(cmd_buf,
@@ -2325,14 +2343,14 @@ void render::record_commands(vk::raii::CommandBuffer& cmd_buf,
         vk::ClearDepthStencilValue(1.0f, // 1.0f - far view plane
                                    0u);
     vk::RenderingAttachmentInfo color_attachment_info = {
-        .imageView   = swapchain_image_views[image_index],
-        .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
-        // The loadOp parameter specifies what to do with the image before
-        // rendering
-        .loadOp = vk::AttachmentLoadOp::eClear,
-        // storeOp parameter specifies what to do with the image after rendering
-        .storeOp    = vk::AttachmentStoreOp::eStore,
-        .clearValue = clear_color
+        .imageView          = color_image_view,
+        .imageLayout        = vk::ImageLayout::eColorAttachmentOptimal,
+        .resolveMode        = vk::ResolveModeFlagBits::eAverage,
+        .resolveImageView   = swapchain_image_views[image_index],
+        .resolveImageLayout = vk::ImageLayout::eColorAttachmentOptimal,
+        .loadOp             = vk::AttachmentLoadOp::eClear,
+        .storeOp            = vk::AttachmentStoreOp::eDontCare,
+        .clearValue         = clear_color,
     };
     vk::RenderingAttachmentInfo depth_attachment_info = {
         .imageView   = depth_image_view,
