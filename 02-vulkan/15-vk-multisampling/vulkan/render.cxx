@@ -1485,7 +1485,8 @@ void render::get_physical_device()
 
     log << "selected device: " << devices.physical.getProperties().deviceName
         << '\n';
-    msaa_samples = get_max_usable_sample_count();
+    msaa_samples =
+        get_max_usable_sample_count(); // vk::SampleCountFlagBits::e1;
 
     log << "msaa_samples: " << vk::to_string(msaa_samples) << '\n';
 }
@@ -1672,14 +1673,17 @@ void render::create_logical_device()
     vk::StructureChain<vk::PhysicalDeviceFeatures2,
                        vk::PhysicalDeviceVulkan13Features,
                        vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>
-        feature_chain = { { .features = { .samplerAnisotropy = true } },
-                          // Enable dynamic rendering from Vulkan 1.3
-                          {
-                              .synchronization2 = true,
-                              .dynamicRendering = true,
-                          },
-                          // Enable extended dynamic state from the extension
-                          { .extendedDynamicState = true } };
+        feature_chain = {
+            { .features = { .sampleRateShading = true,
+                            .samplerAnisotropy = true } },
+            // Enable dynamic rendering from Vulkan 1.3
+            {
+                .synchronization2 = true,
+                .dynamicRendering = true,
+            },
+            // Enable extended dynamic state from the extension
+            { .extendedDynamicState = true },
+        };
 
     vk::DeviceCreateInfo device_create_info{
         .pNext = &feature_chain.get<vk::PhysicalDeviceFeatures2>(),
@@ -2093,7 +2097,8 @@ void render::create_graphics_pipeline()
     vk::PipelineMultisampleStateCreateInfo multisample_state_info{
         // number of samples to use per fragment
         .rasterizationSamples = msaa_samples, // vk::SampleCountFlagBits::e1,
-        .sampleShadingEnable  = vk::False,    // disabled for now
+        .sampleShadingEnable  = vk::True,     // disabled for now
+        .minSampleShading     = 0.2f          // 1.0f — дороже, но качественнее
     };
 
     // Blending
