@@ -319,6 +319,7 @@ private:
     void create_uniform_buffers();
     void create_descriptor_pool();
     void create_descriptor_sets(const image& image);
+    void create_color_resources();
 
     void create_buffer(vk::DeviceSize          size,
                        vk::BufferUsageFlags    usage,
@@ -774,6 +775,7 @@ render::render(platform_interface& platform, hints hints)
     create_descriptor_set_layout();
     create_graphics_pipeline();
     create_command_pool();
+    create_color_resources();
     create_depth_resources();
     create_command_buffers();
     create_uniform_buffers();
@@ -1885,6 +1887,7 @@ void render::create_swapchain()
     log << "create swapchain_image_views count: "
         << swapchain_image_views.size() << std::endl;
 
+    create_color_resources();
     create_depth_resources();
 }
 
@@ -2252,7 +2255,9 @@ void render::create_depth_resources()
                      depth_format,
                      vk::ImageTiling::eOptimal,
                      vk::ImageUsageFlagBits::eDepthStencilAttachment,
-                     vk::MemoryPropertyFlagBits::eDeviceLocal);
+                     vk::MemoryPropertyFlagBits::eDeviceLocal,
+                     1, // miplevels
+                     msaa_samples);
     depth_image_view = create_image_view(
         depth_image, depth_format, vk::ImageAspectFlagBits::eDepth);
 }
@@ -2571,6 +2576,28 @@ void render::create_descriptor_sets(const image& image)
 
         devices.logical.updateDescriptorSets(descriptors_write, {});
     } // end for i
+}
+
+void render::create_color_resources()
+{
+    vk::Format color_format = swapchain_image_format;
+
+    std::tie(color_image, color_image_memory) =
+        create_image(swapchain_image_extent.width,
+                     swapchain_image_extent.height,
+                     color_format,
+                     vk::ImageTiling::eOptimal,
+                     vk::ImageUsageFlagBits::eTransientAttachment |
+                         vk::ImageUsageFlagBits::eColorAttachment,
+                     vk::MemoryPropertyFlagBits::eDeviceLocal,
+                     1, // miplevels
+                     msaa_samples);
+
+    color_image_view = create_image_view(color_image,
+                                         color_format,
+                                         vk::ImageAspectFlagBits::eColor,
+                                         1 // miplevels
+    );
 }
 
 vk::Extent2D render::choose_best_swapchain_image_resolution(
