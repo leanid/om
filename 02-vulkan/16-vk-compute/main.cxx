@@ -183,7 +183,29 @@ int main_cant_throw(int argc, char** argv)
         om::vulkan::mesh mesh = om::tinyobj::load_model(
             "02-vulkan/16-vk-compute/model/viking_room.obj", render);
 
+        // User creates initial particles (same layout as compute SSBO).
+        std::default_random_engine rnd_engine(
+            static_cast<unsigned>(std::time(nullptr)));
+        std::uniform_real_distribution<float> rnd_dist(0.0f, 1.0f);
+        std::vector<particle> initial_particles(particles::max_count);
+        for (auto& p : initial_particles)
+        {
+            const float r     = 0.25f * std::sqrt(rnd_dist(rnd_engine));
+            const float theta = rnd_dist(rnd_engine) * 2.0f * glm::pi<float>();
+            const float x     = r * std::cos(theta) * 600.0f / 800.0f;
+            const float y     = r * std::sin(theta);
+            p.position        = glm::vec2(x, y);
+            p.velocity        = glm::normalize(glm::vec2(x, y)) * 0.25f;
+            p.velocity.x *= (600.0f / 800.0f);
+            p.color = glm::vec4(rnd_dist(rnd_engine),
+                                rnd_dist(rnd_engine),
+                                rnd_dist(rnd_engine),
+                                1.0f);
+        }
+        om::vulkan::particles parts(initial_particles, render);
+
         auto startTime = std::chrono::high_resolution_clock::now();
+        auto prev_time = startTime;
 
         bool running         = true;
         bool mip_level_state = true;
@@ -219,6 +241,12 @@ int main_cant_throw(int argc, char** argv)
             }
 
             auto  currentTime = std::chrono::high_resolution_clock::now();
+            float delta_time =
+                std::chrono::duration<float, std::chrono::seconds::period>(
+                    currentTime - prev_time)
+                    .count();
+            prev_time = currentTime;
+
             float time =
                 std::chrono::duration<float, std::chrono::seconds::period>(
                     currentTime - startTime)
@@ -243,16 +271,22 @@ int main_cant_throw(int argc, char** argv)
 
             ubo.proj[1][1] *= -1; // in Vulkan y-asix point down
 
+            compute_ubo compute_data{};
+            compute_data.delta_time     = delta_time;
+            compute_data.particle_count = parts.get_count();
+
             std::span<std::byte> ubo_span(reinterpret_cast<std::byte*>(&ubo),
                                           sizeof(ubo));
-            if (mip_level_state)
-            {
-                render.draw(mesh, image_mip_on, ubo_span);
-            }
-            else
-            {
-                render.draw(mesh, image_mip_off, ubo_span);
-            }
+            std::span<std::byte> compute_ubo_span(
+                reinterpret_cast<std::byte*>(&compute_data),
+                sizeof(compute_data));
+
+            render.begin_frame();
+
+            render.draw(mesh, image_mip_on, ubo_span);
+            render.draw(parts, compute_ubo_span);
+
+            render.end_frame();
 
             // running = false;
             // std::this_thread::sleep_for(std::chrono::seconds(2));

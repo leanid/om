@@ -87,12 +87,25 @@ target_link_libraries(
 # Find the shader files
 file(GLOB_RECURSE slang_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
      ${CMAKE_CURRENT_SOURCE_DIR}/shaders/*.slang)
+list(FILTER slang_files EXCLUDE REGEX "compute\\.slang$")
 
-# Add custom target which depends on SPIR-V files
-om_add_slang_shader_target(generate_spirv_12 SOURCES ${slang_files})
+# Add custom target which depends on SPIR-V files (graphics shaders)
+om_add_slang_shader_target(generate_spirv_16 SOURCES ${slang_files})
 
-# Make game target depends on generate_spirv target
-add_dependencies(16-vk-compute generate_spirv_12)
+set(compute_spirv "${CMAKE_CURRENT_SOURCE_DIR}/shaders/compute.slang.spv")
+add_custom_command(
+    OUTPUT ${compute_spirv}
+    COMMAND
+        slangc ${CMAKE_CURRENT_SOURCE_DIR}/shaders/compute.slang -target spirv
+        -fvk-use-entrypoint-name -entry comp_main -o ${compute_spirv} -profile
+        spirv_1_4 -emit-spirv-directly -g2
+    VERBATIM
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/shaders/compute.slang)
+
+add_custom_target(generate_spirv_16_compute DEPENDS ${compute_spirv})
+
+# Make game target depends on generate_spirv targets
+add_dependencies(16-vk-compute generate_spirv_16 generate_spirv_16_compute)
 
 if(CMAKE_SYSTEM_NAME MATCHES "Windows")
     add_custom_command(
