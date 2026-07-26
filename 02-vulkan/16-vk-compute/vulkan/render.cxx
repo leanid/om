@@ -208,8 +208,6 @@ private:
 export class particles final
 {
 public:
-    static constexpr std::uint32_t frame_buffer_count = 3u;
-
     particles(std::span<const particle> initial_data, render& render);
     particles(const particles& other)            = delete;
     particles& operator=(const particles& other) = delete;
@@ -837,8 +835,9 @@ vk::Buffer particles::get_storage_buffer(std::uint32_t frame_index) const
 
 vk::Buffer particles::get_read_buffer(std::uint32_t frame_index) const
 {
-    return storage_buffers_.at((frame_index + frame_buffer_count - 1u) %
-                               frame_buffer_count);
+    return storage_buffers_.at(
+        (frame_index + render::max_frames_in_flight - 1u) %
+        render::max_frames_in_flight);
 }
 
 vk::Buffer particles::get_write_buffer(std::uint32_t frame_index) const
@@ -867,10 +866,10 @@ void particles::create_storage_buffers(render& render)
 
     storage_buffers_.clear();
     storage_memory_.clear();
-    storage_buffers_.reserve(frame_buffer_count);
-    storage_memory_.reserve(frame_buffer_count);
+    storage_buffers_.reserve(render::max_frames_in_flight);
+    storage_memory_.reserve(render::max_frames_in_flight);
 
-    for (std::uint32_t i = 0; i < frame_buffer_count; ++i)
+    for (std::uint32_t i = 0; i < render::max_frames_in_flight; ++i)
     {
         vk::raii::Buffer       storage_buffer({});
         vk::raii::DeviceMemory storage_buffer_memory({});
@@ -893,11 +892,11 @@ void particles::create_uniform_buffers(render& render)
     uniform_buffers_.clear();
     uniform_memory_.clear();
     uniform_mapped_.clear();
-    uniform_buffers_.reserve(frame_buffer_count);
-    uniform_memory_.reserve(frame_buffer_count);
-    uniform_mapped_.reserve(frame_buffer_count);
+    uniform_buffers_.reserve(render::max_frames_in_flight);
+    uniform_memory_.reserve(render::max_frames_in_flight);
+    uniform_mapped_.reserve(render::max_frames_in_flight);
 
-    for (std::uint32_t i = 0; i < frame_buffer_count; ++i)
+    for (std::uint32_t i = 0; i < render::max_frames_in_flight; ++i)
     {
         vk::raii::Buffer       uniform_buffer({});
         vk::raii::DeviceMemory uniform_buffer_memory({});
@@ -1072,7 +1071,6 @@ render::render(platform_interface& platform, hints hints)
     , hints_{ hints }
     , queue_family{}
 {
-    static_assert(particles::frame_buffer_count == max_frames_in_flight);
     create_instance(hints.enable_validation_layers,
                     hints.enable_debug_callback_ext);
     create_debug_callback(hints.enable_debug_callback_ext);
