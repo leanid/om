@@ -23,7 +23,7 @@ vertex_output main_vert(particle_vertex v)
     vertex_output output;
     output.position   = float4(v.position, 0.0, 1.0);
     output.frag_color = v.color;
-    output.point_size = 4.0;
+    output.point_size = 14.0;
     return output;
 }
 
