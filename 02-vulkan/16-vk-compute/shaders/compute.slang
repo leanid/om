@@ -30,6 +30,7 @@ void comp_main(uint3 thread_id : SV_DispatchThreadID)
         particles_in[index].position +
         particles_in[index].velocity * ubo.delta_time;
     particles_out[index].velocity = particles_in[index].velocity;
+    particles_out[index].color    = particles_in[index].color;
 
     if ((particles_out[index].position.x <= -1.0) ||
         (particles_out[index].position.x >= 1.0))

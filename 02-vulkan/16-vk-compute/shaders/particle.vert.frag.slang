@@ -15,6 +15,7 @@ struct vertex_output
 struct fragment_input
 {
     float4 frag_color;
+    float2 point_coord : SV_PointCoord;
 };
 
 [shader("vertex")]
@@ -30,5 +31,6 @@ vertex_output main_vert(particle_vertex v)
 [shader("fragment")]
 float4 main_frag(fragment_input v) : SV_Target
 {
-    return v.frag_color;
+    float2 coord = v.point_coord - float2(0.5, 0.5);
+    return float4(v.frag_color.rgb, 0.5 - length(coord));
 }
