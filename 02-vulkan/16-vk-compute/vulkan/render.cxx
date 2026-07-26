@@ -208,7 +208,6 @@ private:
 export class particles final
 {
 public:
-    static constexpr std::uint32_t max_count          = 4096u;
     static constexpr std::uint32_t frame_buffer_count = 3u;
 
     particles(std::span<const particle> initial_data, render& render);
@@ -784,10 +783,6 @@ particles::particles(std::span<const particle> initial_data, render& render)
     {
         throw std::runtime_error("particles: empty initial data");
     }
-    if (initial_data.size() > max_count)
-    {
-        throw std::runtime_error("particles: too many particles");
-    }
 
     create_storage_buffers(render);
     create_uniform_buffers(render);
@@ -868,7 +863,7 @@ void particles::update_uniform_buffer(std::uint32_t        frame_index,
 
 void particles::create_storage_buffers(render& render)
 {
-    const vk::DeviceSize buffer_size = sizeof(particle) * max_count;
+    const vk::DeviceSize buffer_size = sizeof(particle) * count_;
 
     storage_buffers_.clear();
     storage_memory_.clear();
@@ -924,7 +919,7 @@ void particles::create_uniform_buffers(render& render)
 void particles::upload_initial(std::span<const particle> initial,
                                render&                   render)
 {
-    const vk::DeviceSize buffer_size = sizeof(particle) * max_count;
+    const vk::DeviceSize buffer_size = sizeof(particle) * count_;
 
     vk::raii::Buffer       staging_buffer({});
     vk::raii::DeviceMemory staging_buffer_memory({});
@@ -2823,7 +2818,7 @@ void render::create_descriptor_sets(std::size_t frame_index, const image& image)
 void render::bind_particle_compute_descriptors(const particles& parts)
 {
     const vk::DeviceSize storage_buffer_range =
-        sizeof(particle) * particles::max_count;
+        sizeof(particle) * parts.get_count();
 
     for (std::size_t i = 0; i < max_frames_in_flight; ++i)
     {
@@ -3235,7 +3230,7 @@ void render::record_compute_commands(vk::raii::CommandBuffer& cmd_buf,
         .dstQueueFamilyIndex = vk::QueueFamilyIgnored,
         .buffer              = parts.get_write_buffer(frame_index),
         .offset              = 0,
-        .size                = sizeof(particle) * particles::max_count,
+        .size                = sizeof(particle) * particle_count,
     };
 
     const vk::DependencyInfo dependency_info{

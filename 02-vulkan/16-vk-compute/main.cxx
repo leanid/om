@@ -187,7 +187,7 @@ int main_cant_throw(int argc, char** argv)
         std::default_random_engine rnd_engine(
             static_cast<unsigned>(std::time(nullptr)));
         std::uniform_real_distribution<float> rnd_dist(0.0f, 1.0f);
-        std::vector<particle> initial_particles(particles::max_count);
+        std::vector<particle>                 initial_particles(4096u);
         for (auto& p : initial_particles)
         {
             const float r     = 0.25f * std::sqrt(rnd_dist(rnd_engine));
