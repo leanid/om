@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 4.3.4)
+cmake_minimum_required(VERSION 4.4.0)
 
 option(OM_BASIC_GAME_DEV "turn ON to build 01-basic-game-dev" ON)
 option(OM_BASIC_PROG "turn ON if need to build 00-basic-prog" ON)
@@ -11,7 +11,7 @@ option(OM_CLANG_TIDY "turn ON if need to run clang-tidy" OFF)
 # Enables the Standard module support. This needs to be done
 # before selecting the languages.
 # https://github.com/Kitware/CMake/blob/master/Help/dev/experimental.rst
-set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "451f2fe2-a8a2-47c3-bc32-94786d8fc91b")
+set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "f35a9ac6-8463-4d38-8eec-5d6008153e7d")
 # Currently CMake requires extensions enabled when using import std.
 # https://gitlab.kitware.com/cmake/cmake/-/issues/25916
 # https://gitlab.kitware.com/cmake/cmake/-/issues/25539
