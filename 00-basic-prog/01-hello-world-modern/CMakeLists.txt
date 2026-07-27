@@ -1,5 +1,5 @@
 # CMake 4.2 import std still experimental
-cmake_minimum_required(VERSION 4.2 FATAL_ERROR)
+cmake_minimum_required(VERSION 4.4 FATAL_ERROR)
 
 # Set experimental flag to enable `import std` support from CMake.
 # This must be enabled before C++ language support.
