@@ -324,4 +324,98 @@ aider-install
        :desc "Aider reset context"     "r" #'aidermacs-reset))
 ```
 4. start play with it!
+
+### How to debug CMakeLists.txt with DAP(a) in Doomemacs
+1. SPC + f + P - config
+2. add config for cmake-debug:
+```elisp
+(after! dape
+  (setq dape-buffer-log-level 'io)
+
+  ;; CMake DAP speaks only over a unix domain socket (--debugger-pipe is
+  ;; mandatory). Dape supports stdio or TCP, not unix sockets, so we launch a
+  ;; small socat bridge: ~/.config/doom/bin/cmake-dape-adapter
+  (add-to-list 'dape-configs
+               `(cmake-debug
+                 modes (cmake-mode cmake-ts-mode)
+                 ensure dape-ensure-command
+                 command-cwd dape-command-cwd
+                 command ,(expand-file-name "bin/cmake-dape-adapter" doom-user-dir)
+                 ;; Real configure preset from om/CMakePresets.json
+                 ;; (linux-ninja-clang-x64 does not exist).
+                 command-args ("--preset" "ninja-llvm")
+                 :type "cmake"
+                 :request "launch")))
 ```
+3. copy into `~/.config/doom/bin/cmake-dape-adapter` next content file and make it executable:
+```bash
+#!/usr/bin/env bash
+# Bridge CMake's unix-socket DAP (--debugger-pipe) to stdio for Emacs dape.
+# Usage: cmake-dape-adapter [cmake args...]
+# Adds --debugger --debugger-pipe automatically.
+set -euo pipefail
+
+if ! command -v socat >/dev/null 2>&1; then
+  echo "cmake-dape-adapter: socat is required" >&2
+  exit 1
+fi
+
+if ! command -v cmake >/dev/null 2>&1; then
+  echo "cmake-dape-adapter: cmake not found in PATH" >&2
+  exit 1
+fi
+
+sock="${XDG_RUNTIME_DIR:-/tmp}/cmake-dape-$$.sock"
+rm -f "$sock"
+cmake_pid=
+socat_pid=
+
+cleanup() {
+  if [[ -n "${socat_pid}" ]] && kill -0 "$socat_pid" 2>/dev/null; then
+    kill "$socat_pid" 2>/dev/null || true
+    wait "$socat_pid" 2>/dev/null || true
+  fi
+  if [[ -n "${cmake_pid}" ]] && kill -0 "$cmake_pid" 2>/dev/null; then
+    kill "$cmake_pid" 2>/dev/null || true
+    wait "$cmake_pid" 2>/dev/null || true
+  fi
+  rm -f "$sock"
+}
+trap cleanup EXIT
+
+# Keep cmake chatter on stderr so stdout stays a clean DAP channel for dape.
+cmake "$@" --debugger --debugger-pipe "$sock" >&2 &
+cmake_pid=$!
+
+for _ in $(seq 1 200); do
+  if [[ -S "$sock" ]]; then
+    break
+  fi
+  if ! kill -0 "$cmake_pid" 2>/dev/null; then
+    wait "$cmake_pid" || true
+    echo "cmake-dape-adapter: cmake exited before creating debugger socket" >&2
+    exit 1
+  fi
+  sleep 0.05
+done
+
+if [[ ! -S "$sock" ]]; then
+  echo "cmake-dape-adapter: timed out waiting for $sock" >&2
+  exit 1
+fi
+
+# Non-interactive bash redirects "&" stdin from /dev/null — keep real stdio via fd copies.
+exec {dape_in}<&0 {dape_out}>&1
+socat STDIO "UNIX-CONNECT:$sock" <&$dape_in >&$dape_out &
+socat_pid=$!
+exec {dape_in}<&- {dape_out}>&-
+
+status=0
+wait "$cmake_pid" || status=$?
+kill "$socat_pid" 2>/dev/null || true
+wait "$socat_pid" 2>/dev/null || true
+socat_pid=
+cmake_pid=
+exit "$status"
+```
+
