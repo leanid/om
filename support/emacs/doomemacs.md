@@ -330,22 +330,55 @@ aider-install
 2. add config for cmake-debug:
 ```elisp
 (after! dape
-  (setq dape-buffer-log-level 'io)
+  ;;(setq dape-buffer-log-level 'io)
 
   ;; CMake DAP speaks only over a unix domain socket (--debugger-pipe is
   ;; mandatory). Dape supports stdio or TCP, not unix sockets, so we launch a
   ;; small socat bridge: ~/.config/doom/bin/cmake-dape-adapter
+  ;;
+  ;; Minibuffer overrides (same style as lldb/debugpy):
+  ;;   cmake-debug :cwd "/path/to/src" :preset "ninja-llvm"
+  ;;   cmake-debug :cwd "." :args ["-S" "." "-B" "build" "-DFOO=1"]
+  ;;   cmake-debug :sourceDir "." :binaryDir "build" :preset "ninja-clang"
+  (defun +dape-cmake-debug-config (config)
+    "Build cmake CLI from :cwd/:preset/:args/:sourceDir/:binaryDir."
+    (let* ((base-cwd (or (plist-get config 'command-cwd) default-directory))
+           (cwd (plist-get config :cwd))
+           (preset (plist-get config :preset))
+           (source-dir (plist-get config :sourceDir))
+           (binary-dir (plist-get config :binaryDir))
+           (extra (append (plist-get config :args) nil))
+           (args '()))
+      (when (and (stringp cwd) (not (string-empty-p cwd)))
+        (setq config (plist-put config 'command-cwd
+                                (expand-file-name cwd base-cwd))))
+      (when (and (stringp source-dir) (not (string-empty-p source-dir)))
+        (setq args (append args (list "-S" source-dir))))
+      (when (and (stringp binary-dir) (not (string-empty-p binary-dir)))
+        (setq args (append args (list "-B" binary-dir))))
+      (when (and (stringp preset) (not (string-empty-p preset)))
+        (setq args (append args (list "--preset" preset))))
+      (setq args (append args extra))
+      (setq config (plist-put config 'command-args args))
+      ;; These are only for building the cmake CLI; strip before DAP launch.
+      (dolist (key '(:cwd :preset :sourceDir :binaryDir :args))
+        (setq config (map-delete config key)))
+      config))
+
   (add-to-list 'dape-configs
                `(cmake-debug
                  modes (cmake-mode cmake-ts-mode)
                  ensure dape-ensure-command
                  command-cwd dape-command-cwd
                  command ,(expand-file-name "bin/cmake-dape-adapter" doom-user-dir)
-                 ;; Real configure preset from om/CMakePresets.json
-                 ;; (linux-ninja-clang-x64 does not exist).
-                 command-args ("--preset" "ninja-llvm")
+                 fn +dape-cmake-debug-config
                  :type "cmake"
-                 :request "launch")))
+                 :request "launch"
+                 :cwd "."
+                 :preset ""
+                 :sourceDir ""
+                 :binaryDir ""
+                 :args [])))
 ```
 3. copy into `~/.config/doom/bin/cmake-dape-adapter` next content file and make it executable:
 ```bash
