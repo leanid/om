@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 4.2)
 
+if(CMAKE_SYSTEM_NAME MATCHES "Windows")
+    return()
+endif()
+
 add_executable(03-redis-web main.cxx)
 
 target_link_libraries(03-redis-web PRIVATE 

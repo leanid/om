@@ -9,6 +9,10 @@ or:
 ```cmd
 .\vcpkg install vulkan 
 ```
+or:
+```cmd
+scoop install vulkan
+```
 now you can use Vulkan with cmake like:
 ```cmd
 cmake -DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake
