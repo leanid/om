@@ -35,4 +35,5 @@ target_link_libraries(
         17-vk-profiles-args
         17-vk-profiles-log)
 target_include_directories(17-vk-profiles-vulkan
-                           PRIVATE ${CMAKE_SOURCE_DIR}/support/cxx_lib/)
+                           PRIVATE ${CMAKE_SOURCE_DIR}/support/cxx_lib/
+                                   "${Vulkan_INCLUDE_DIR}")

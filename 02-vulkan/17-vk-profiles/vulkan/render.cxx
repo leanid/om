@@ -18,6 +18,7 @@ auto current()
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb/stb_image.h>
+#include <vulkan/vulkan_profiles.hpp>
 
 export module vulkan_render;
 
@@ -25,6 +26,36 @@ import log;
 import std;
 import glm;
 import vulkan;
+
+namespace om::vulkan::detail
+{
+constexpr VpProfileProperties roadmap_2022_profile{
+    VP_KHR_ROADMAP_2022_NAME,
+    VP_KHR_ROADMAP_2022_SPEC_VERSION,
+};
+
+inline void check_vp_result(VkResult result, std::string_view message)
+{
+    if (result != VK_SUCCESS)
+    {
+        throw std::runtime_error(
+            std::string(message) +
+            " (VkResult=" + std::to_string(static_cast<int>(result)) + ')');
+    }
+}
+
+inline void log_profile_info(std::ostream& log)
+{
+    const uint32_t profile_api_version =
+        vpGetProfileAPIVersion(&roadmap_2022_profile);
+
+    log << "vulkan profile: " << roadmap_2022_profile.profileName << " (spec "
+        << roadmap_2022_profile.specVersion << ")\n";
+    log << "profile min api version: " << vk::versionMajor(profile_api_version)
+        << '.' << vk::versionMinor(profile_api_version) << '.'
+        << vk::versionPatch(profile_api_version) << '\n';
+}
+} // namespace om::vulkan::detail
 
 namespace om::vulkan
 {
@@ -691,11 +722,9 @@ private:
     std::uint64_t graphics_wait_value_   = 0u;
     std::uint64_t graphics_signal_value_ = 0u;
 
-    const std::vector<const char*> required_device_extensions{
+    // Extensions beyond VP_KHR_roadmap_2022 (swapchain is WSI-specific).
+    const std::vector<const char*> additional_device_extensions{
         vk::KHRSwapchainExtensionName,
-        vk::KHRSpirv14ExtensionName,
-        vk::KHRSynchronization2ExtensionName,
-        vk::KHRCreateRenderpass2ExtensionName
     };
 };
 
@@ -1374,17 +1403,47 @@ void render::end_frame()
 void render::create_instance(bool enable_validation_layers,
                              bool enable_debug_callback_ext)
 {
+    using detail::check_vp_result;
+    using detail::log_profile_info;
+    using detail::roadmap_2022_profile;
+
+    log_profile_info(log);
+
+    VkBool32 profile_supported = VK_FALSE;
+    check_vp_result(vpGetInstanceProfileSupport(
+                        nullptr, &roadmap_2022_profile, &profile_supported),
+                    "vpGetInstanceProfileSupport failed");
+
+    if (profile_supported != VK_TRUE)
+    {
+        throw std::runtime_error(
+            "VP_KHR_roadmap_2022 profile is not supported at instance level");
+    }
+
+    log << "VP_KHR_roadmap_2022 profile supported at instance level\n";
+
+    const uint32_t requested_api_version = vk::makeApiVersion(
+        0u, hints_.vulkan_version.major, hints_.vulkan_version.minor, 0u);
+
+    if (vk::versionMajor(requested_api_version) < 1 ||
+        (vk::versionMajor(requested_api_version) == 1 &&
+         vk::versionMinor(requested_api_version) < 3))
+    {
+        throw std::runtime_error(
+            "requested Vulkan version is below VP_KHR_roadmap_2022 minimum "
+            "(1.3)");
+    }
+
+    const uint32_t instance_api_version =
+        std::max(requested_api_version, VP_KHR_ROADMAP_2022_MIN_API_VERSION);
+
     vk::ApplicationInfo application_info{
         .pApplicationName   = "om vulkan tutorial",
         .applicationVersion = vk::makeApiVersion(0u, 0u, 1u, 0u),
         .pEngineName        = "om",
         .engineVersion      = vk::makeApiVersion(0, 0, 1, 0),
-        .apiVersion         = vk::makeApiVersion(
-            0u, hints_.vulkan_version.major, hints_.vulkan_version.minor, 0u)
+        .apiVersion         = instance_api_version,
     };
-
-    vk::InstanceCreateInfo instance_create_info;
-    instance_create_info.pApplicationInfo = &application_info;
 
     platform_interface::extensions extensions =
         platform.get_vulkan_extensions();
@@ -1395,8 +1454,7 @@ void render::create_instance(bool enable_validation_layers,
             "get_instance_extensions callback return nullptr");
     }
 
-    log << "minimal vulkan expected extensions from "
-           "platform.get_vulkan_extensions():\n";
+    log << "platform instance extensions for vpCreateInstance:\n";
 
     std::ranges::for_each(extensions.names,
                           [this](std::string_view instance_extension)
@@ -1408,22 +1466,22 @@ void render::create_instance(bool enable_validation_layers,
         log << "    - " << extensions.names.back() << '\n';
     }
 
-    instance_create_info.ppEnabledExtensionNames = extensions.names.data();
+    vk::InstanceCreateInfo instance_create_info;
+    instance_create_info.pApplicationInfo = &application_info;
     instance_create_info.enabledExtensionCount =
         static_cast<uint32_t>(extensions.names.size());
+    instance_create_info.ppEnabledExtensionNames = extensions.names.data();
 
-    validate_expected_extensions_exists(instance_create_info);
-
+    const char* validation_layer = "VK_LAYER_KHRONOS_validation";
     if (enable_validation_layers)
     {
-        const char* layer = "VK_LAYER_KHRONOS_validation";
         try
         {
-            validate_instance_layers_present({ layer });
+            validate_instance_layers_present({ validation_layer });
 
             instance_create_info.enabledLayerCount   = 1;
-            instance_create_info.ppEnabledLayerNames = &layer;
-            log << "enable layer: " << layer << '\n';
+            instance_create_info.ppEnabledLayerNames = &validation_layer;
+            log << "enable layer: " << validation_layer << '\n';
         }
         catch (std::exception& e)
         {
@@ -1435,9 +1493,20 @@ void render::create_instance(bool enable_validation_layers,
         log << "vulkan validation layer disabled\n";
     }
 
-    instance = vk::raii::Instance(context, instance_create_info);
+    VpInstanceCreateInfo vp_instance_create_info{};
+    vp_instance_create_info.pCreateInfo =
+        reinterpret_cast<const VkInstanceCreateInfo*>(&instance_create_info);
+    vp_instance_create_info.enabledFullProfileCount = 1;
+    vp_instance_create_info.pEnabledFullProfiles    = &roadmap_2022_profile;
 
-    log << "vulkan instance created\n";
+    VkInstance vk_instance = VK_NULL_HANDLE;
+    check_vp_result(
+        vpCreateInstance(&vp_instance_create_info, nullptr, &vk_instance),
+        "vpCreateInstance failed");
+
+    instance = vk::raii::Instance(context, vk_instance);
+
+    log << "vulkan instance created with VP_KHR_roadmap_2022 profile\n";
     log << "vk api version: " << hints_.vulkan_version.major << '.'
         << hints_.vulkan_version.minor << " requested\n";
 
@@ -1597,52 +1666,31 @@ static auto find_render_queue(
 
 bool render::check_device_suitable(const vk::PhysicalDevice& physical)
 {
+    using detail::check_vp_result;
+    using detail::roadmap_2022_profile;
+
+    VkBool32 profile_supported = VK_FALSE;
+    check_vp_result(vpGetPhysicalDeviceProfileSupport(
+                        static_cast<VkInstance>(*instance),
+                        static_cast<VkPhysicalDevice>(physical),
+                        &roadmap_2022_profile,
+                        &profile_supported),
+                    "vpGetPhysicalDeviceProfileSupport failed");
+
+    const bool supports_profile = profile_supported == VK_TRUE;
+
     std::vector<vk::QueueFamilyProperties> queue_properties =
         physical.getQueueFamilyProperties();
 
-    bool supports_graphics =
+    const bool supports_graphics =
         find_render_queue(queue_properties) != queue_properties.end();
-
-    auto available_extensions = physical.enumerateDeviceExtensionProperties();
-    bool supports_all_required_extensions = std::ranges::all_of(
-        required_device_extensions,
-        [&](std::string_view required_extension)
-        {
-            return std::ranges::any_of(
-                available_extensions,
-                [&](const auto& available_extension)
-                {
-                    return available_extension.extensionName.data() ==
-                           required_extension;
-                });
-        });
-    bool supports_vulkan_1_3 =
-        physical.getProperties().apiVersion >= vk::ApiVersion13;
-
-    auto features = physical.template getFeatures2<
-        vk::PhysicalDeviceFeatures2,
-        vk::PhysicalDeviceVulkan13Features,
-        vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>();
-    bool supports_required_features =
-        features.template get<vk::PhysicalDeviceFeatures2>()
-            .features.samplerAnisotropy &&
-        features.template get<vk::PhysicalDeviceVulkan13Features>()
-            .dynamicRendering &&
-        features
-            .template get<vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>()
-            .extendedDynamicState;
 
     log << "physical_device [" << physical.getProperties().deviceName
         << "] suitable:\n"
-        << "    supports_graphics: " << supports_graphics << '\n'
-        << "    supports_all_required_extensions: "
-        << supports_all_required_extensions << '\n'
-        << "    supports_vulkan_1_3: " << supports_vulkan_1_3 << '\n'
-        << "    supports_required_features: " << supports_required_features
-        << '\n';
+        << "    VP_KHR_roadmap_2022 profile: " << supports_profile << '\n'
+        << "    supports_graphics_and_compute: " << supports_graphics << '\n';
 
-    return supports_graphics && supports_all_required_extensions &&
-           supports_vulkan_1_3 && supports_required_features;
+    return supports_profile && supports_graphics;
 }
 
 bool render::check_device_extension_supported(const vk::PhysicalDevice& device,
@@ -2128,6 +2176,25 @@ void render::validate_physical_device()
 
 void render::create_logical_device()
 {
+    using detail::check_vp_result;
+    using detail::roadmap_2022_profile;
+
+    VkBool32 profile_supported = VK_FALSE;
+    check_vp_result(vpGetPhysicalDeviceProfileSupport(
+                        static_cast<VkInstance>(*instance),
+                        static_cast<VkPhysicalDevice>(*devices.physical),
+                        &roadmap_2022_profile,
+                        &profile_supported),
+                    "vpGetPhysicalDeviceProfileSupport failed");
+
+    if (profile_supported != VK_TRUE)
+    {
+        throw std::runtime_error(
+            "VP_KHR_roadmap_2022 profile is not supported on selected device");
+    }
+
+    log << "creating logical device with VP_KHR_roadmap_2022 profile\n";
+
     std::vector<vk::QueueFamilyProperties> queueFamilyProperties =
         devices.physical.getQueueFamilyProperties();
 
@@ -2171,37 +2238,36 @@ void render::create_logical_device()
     log << "queue_family.index.transfer: " << queue_family.index.transfer
         << '\n';
 
-    // Create a chain of feature structures
-    vk::StructureChain<vk::PhysicalDeviceFeatures2,
-                       vk::PhysicalDeviceVulkan13Features,
-                       vk::PhysicalDeviceVulkan12Features,
-                       vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>
-        feature_chain = {
-            { .features = { .sampleRateShading = true,
-                            .largePoints       = true,
-                            .samplerAnisotropy = true } },
-            {
-                .synchronization2 = true,
-                .dynamicRendering = true,
-            },
-            {
-                .timelineSemaphore = true,
-            },
-            { .extendedDynamicState = true },
-        };
-
-    vk::DeviceCreateInfo device_create_info{
-        .pNext = &feature_chain.get<vk::PhysicalDeviceFeatures2>(),
-        .queueCreateInfoCount = static_cast<uint32_t>(queue_infos.size()),
-        .pQueueCreateInfos    = queue_infos.data(),
-        //.enabledLayerCount    = 0, // in vk_1_1+ this takes from vk::instance
-        .enabledExtensionCount =
-            static_cast<uint32_t>(required_device_extensions.size()),
-        .ppEnabledExtensionNames = required_device_extensions.data(),
+    // Particle pipeline uses point sprites; largePoints is not in Roadmap 2022.
+    vk::PhysicalDeviceFeatures2 additional_features{
+        .features = { .largePoints = VK_TRUE },
     };
 
-    devices.logical = vk::raii::Device(devices.physical, device_create_info);
-    log << "logical device created\n";
+    vk::DeviceCreateInfo device_create_info{
+        .pNext                = &additional_features,
+        .queueCreateInfoCount = static_cast<uint32_t>(queue_infos.size()),
+        .pQueueCreateInfos    = queue_infos.data(),
+        .enabledExtensionCount =
+            static_cast<uint32_t>(additional_device_extensions.size()),
+        .ppEnabledExtensionNames = additional_device_extensions.data(),
+    };
+
+    VpDeviceCreateInfo vp_device_create_info{};
+    vp_device_create_info.pCreateInfo =
+        reinterpret_cast<const VkDeviceCreateInfo*>(&device_create_info);
+    vp_device_create_info.enabledFullProfileCount = 1;
+    vp_device_create_info.pEnabledFullProfiles    = &roadmap_2022_profile;
+
+    VkDevice vk_device = VK_NULL_HANDLE;
+    check_vp_result(
+        vpCreateDevice(static_cast<VkPhysicalDevice>(*devices.physical),
+                       &vp_device_create_info,
+                       nullptr,
+                       &vk_device),
+        "vpCreateDevice failed");
+
+    devices.logical = vk::raii::Device(devices.physical, vk_device);
+    log << "logical device created with VP_KHR_roadmap_2022 profile\n";
 
     uint32_t queue_index = 0; // Because we’re only creating a single queue from
                               // this family, we’ll simply use index 0
