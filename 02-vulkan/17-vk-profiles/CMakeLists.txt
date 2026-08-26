@@ -1,0 +1,121 @@
+cmake_minimum_required(VERSION 4.0)
+
+project(17-vk-profiles CXX)
+
+find_program(SLANGC_EXECUTABLE slangc HINTS "$ENV{VULKAN_SDK}/bin" REQUIRED)
+
+om_clang_tidy_enable()
+
+add_library(17-vk-profiles-tinyobj)
+target_sources(
+    17-vk-profiles-tinyobj
+    PUBLIC FILE_SET
+           cxx_modules
+           TYPE
+           CXX_MODULES
+           BASE_DIRS
+           "${CMAKE_CURRENT_SOURCE_DIR}"
+           FILES
+           "${CMAKE_CURRENT_SOURCE_DIR}/tinyobj.cxx")
+target_link_libraries(17-vk-profiles-tinyobj PRIVATE 17-vk-profiles-vulkan
+                                                      tinyobjloader::tinyobjloader)
+
+add_library(17-vk-profiles-log)
+target_sources(
+    17-vk-profiles-log
+    PUBLIC FILE_SET
+           cxx_modules
+           TYPE
+           CXX_MODULES
+           BASE_DIRS
+           "${CMAKE_CURRENT_SOURCE_DIR}"
+           FILES
+           "${CMAKE_CURRENT_SOURCE_DIR}/log.cxx")
+
+target_include_directories(17-vk-profiles-log PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+add_library(17-vk-profiles-platform)
+target_sources(
+    17-vk-profiles-platform
+    PUBLIC FILE_SET
+           cxx_modules
+           TYPE
+           CXX_MODULES
+           BASE_DIRS
+           "${CMAKE_CURRENT_SOURCE_DIR}"
+           FILES
+           "${CMAKE_CURRENT_SOURCE_DIR}/platform_sdl3.cxx")
+target_link_libraries(
+    17-vk-profiles-platform
+    PRIVATE 17-vk-profiles-log
+            17-vk-profiles-vulkan
+            17-vk-profiles-sdl
+            17-vk-profiles-sdl-vulkan
+            17-vk-profiles-tinyobj
+            SDL3::SDL3-shared
+            om::io::read_file)
+target_include_directories(17-vk-profiles-platform
+                           PRIVATE ${CMAKE_SOURCE_DIR}/support/cxx_lib/)
+
+add_subdirectory(sdl)
+add_subdirectory(vulkan)
+
+add_executable(17-vk-profiles main.cxx)
+target_compile_features(17-vk-profiles PRIVATE cxx_std_23)
+target_include_directories(
+    17-vk-profiles PRIVATE ${CMAKE_SOURCE_DIR}/support/cxx_lib/
+                        ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(
+    17-vk-profiles
+    PRIVATE 17-vk-profiles-vulkan
+            17-vk-profiles-platform
+            17-vk-profiles-sdl
+            17-vk-profiles-sdl-vulkan)
+
+# cmake-format: off
+target_link_libraries(
+ 17-vk-profiles
+ PRIVATE
+     $<$<CXX_COMPILER_ID:GNU>:
+     $<IF:$<VERSION_GREATER_EQUAL:$<CXX_COMPILER_VERSION>,14.0.0>,
+         stdc++exp,
+         $<$<VERSION_GREATER_EQUAL:$<CXX_COMPILER_VERSION>,12.1.1>:
+             stdc++_libbacktrace>
+         >
+     >)
+# cmake-format: on
+
+# Find the shader files
+file(GLOB_RECURSE slang_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+     ${CMAKE_CURRENT_SOURCE_DIR}/shaders/*.slang)
+list(FILTER slang_files EXCLUDE REGEX "compute\\.slang$")
+
+# Add custom target which depends on SPIR-V files (graphics shaders)
+om_add_slang_shader_target(generate_spirv_17 SOURCES ${slang_files})
+
+set(compute_spirv "${CMAKE_CURRENT_SOURCE_DIR}/shaders/compute.slang.spv")
+add_custom_command(
+    OUTPUT ${compute_spirv}
+    COMMAND
+        slangc ${CMAKE_CURRENT_SOURCE_DIR}/shaders/compute.slang -target spirv
+        -fvk-use-entrypoint-name -entry comp_main -o ${compute_spirv} -profile
+        spirv_1_4 -emit-spirv-directly -g2
+    VERBATIM
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/shaders/compute.slang)
+
+add_custom_target(generate_spirv_17_compute DEPENDS ${compute_spirv})
+
+# Make game target depends on generate_spirv targets
+add_dependencies(17-vk-profiles generate_spirv_17 generate_spirv_17_compute)
+
+if(CMAKE_SYSTEM_NAME MATCHES "Windows")
+    add_custom_command(
+        TARGET 17-vk-profiles
+        POST_BUILD
+        COMMAND
+            ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:SDL3::SDL3-shared>
+            $<TARGET_FILE_DIR:17-vk-profiles>
+        COMMENT
+            "Copying SDL3 library to target directory (Windows only) vulkan-1.dll also is copied every time - cmake do it for us"
+        VERBATIM)
+endif()
