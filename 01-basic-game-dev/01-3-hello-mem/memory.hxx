@@ -46,7 +46,7 @@ private:
                        std::size_t bytes,
                        std::size_t alignment) override;
 
-    bool do_is_equal(
+    [[nodiscard]] bool do_is_equal(
         const std::pmr::memory_resource& other) const noexcept override;
 };
 
