@@ -6,6 +6,7 @@ add_subdirectory(imgui_vendor)
 
 add_subdirectory(01-1-hello-world)
 add_subdirectory(01-2-hello-lib)
+add_subdirectory(01-3-hello-mem)
 
 add_subdirectory(02-1-sdl-dynamic)
 add_subdirectory(02-2-sdl-static)
