@@ -66,6 +66,43 @@ O3DE): вся куча программы идёт через свой алло�
   дополнительно выравнивается вручную, а заголовок кладётся вплотную
   перед ним.
 
+## А как этот вопрос решают большие движки
+
+Наш пример — это «максималистский» подход: тотальный запрет. Реальные
+движки так не делают, потому что они линкуют third-party (PhysX, Qt,
+AWS SDK...), который честно использует `new`/`malloc`, и собираются с
+выключенными исключениями. Вместо запрета — перехват и наблюдаемость:
+
+| | наш `01-3-hello-mem` | O3DE (`AzCore/Memory`) | Godot (`core/os/memory`) |
+|---|---|---|---|
+| Подход | тотальный бан | перехват + тегирование | соглашение (`memnew`/`memdelete`) |
+| Базовый аллокатор | `mmap` напрямую | `OSAllocator` → `SystemAllocator` (HPHA) → child-аллокаторы | обычный `malloc` + заголовок |
+| Глобальный new/delete | переопределены: throw/nullptr | opt-in перехват через `NewAndDelete.inl` | не тронуты; свои placement-формы с тегом |
+| Защита от случайного `new` | всё падает на линковке/рантайме | `AZ_CLASS_ALLOCATOR` в классе прячет global new для типа | нет механической; raw new работает, но вне трекера; code review |
+| Контейнеры | `std::pmr` + свой resource | `AZStd` с аллокаторами | свои `Vector`/`CowData`/`HashMap` на `memalloc` |
+| Трекинг | счётчики + заголовок | AllocationRecords: стеки, теги подсистем, `sys_DumpAllocators` | счётчики байт в DEBUG + profiler-хуки; `ObjectDB` ловит утечки при выходе |
+| Исключения | есть (`bad_alloc` долетает) | нет (`-fno-exceptions`) | нет (`ERR_FAIL*`-макросы) |
+
+Интересные детали:
+
+- **O3DE**: глобальный new не переопределяют намеренно — цитата из
+  `Memory.h`: *"By default AZCore doesn't overload operator new and
+  delete. This is a no-no for middle-ware."* Вместо этого каждый класс
+  несёт макрос `AZ_CLASS_ALLOCATOR(Class, Allocator)`, чей class-scoped
+  `operator new` прячет глобальный для этого типа: даже сырой
+  `new EngineClass` идёт в AZ-аллокатор. А модуль, желающий перехватить
+  *весь* свой new, один раз инклюдит `NewAndDelete.inl` — готовые
+  глобальные операторы, маршрутизирующие всё в `SystemAllocator`.
+- **Godot**: ближе всех к нашему примеру по устройству — один плоский
+  аллокатор-обёртка над `malloc` с заголовком перед указателем (размер +
+  число элементов массива, поэтому `memarr_len()` знает длину массива
+  по указателю). `memnew(T)` = `::new (DefaultAllocator{}) T` —
+  placement new с фиктивным тегом, выбирающим их перегрузку. Глобальный
+  new сознательно не трогают: сырой `new` работает, просто невидим для
+  трекера; контроль — только code review.
+- **Общее у всех троих**: заголовок перед указателем пользователя и
+  счётчики аллокаций — та же схема, что в нашем `mmap_allocator`.
+
 ## Сборка и запуск
 
 ```sh
@@ -78,6 +115,8 @@ ctest --test-dir build/ninja-llvm -R check_hello_mem
 
 - O3DE: `Code/Framework/AzCore/AzCore/Memory/` — `IAllocator`,
   `SystemAllocator`, схемы `HphaSchema` / `PoolSchema`, child-аллокаторы
-  с тегированием.
+  с тегированием, `NewAndDelete.inl`.
+- Godot: `core/os/memory.h` / `memory.cpp` — `Memory::alloc_static`,
+  макросы `memnew` / `memdelete` / `memnew_arr`, debug-счётчики памяти.
 - `std::pmr` — стандартный механизм «пересадить» контейнеры на свой
   ресурс памяти без правки кода контейнеров.
