@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <charconv>
 #include <cstdint>
 #include <cstdio>
@@ -7,7 +8,9 @@
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <vector>
 
+#include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <unistd.h>
 
@@ -131,6 +134,199 @@ void show_stack_growth(int depth, const char* previous)
     (void)local;
 }
 
+/// Адрес начала сегмента из строки maps ("55...-55... r-xp ...").
+std::uintptr_t mapping_start(std::string_view line)
+{
+    std::uintptr_t start = 0;
+    std::from_chars(line.data(), line.data() + line.size(), start, 16);
+    return start;
+}
+
+/// Строка maps, содержащая needle (например "[heap]" или "[vdso]").
+std::string_view find_mapping_by_name(std::string_view maps,
+                                      std::string_view needle)
+{
+    std::string_view rest = maps;
+    while (!rest.empty())
+    {
+        const std::size_t      eol = rest.find('\n');
+        const std::string_view line =
+            rest.substr(0, eol == std::string_view::npos ? rest.size() : eol);
+        if (line.find(needle) != std::string_view::npos)
+        {
+            return line;
+        }
+        if (eol == std::string_view::npos)
+        {
+            break;
+        }
+        rest.remove_prefix(eol + 1);
+    }
+    return {};
+}
+
+std::string hex_addr(std::uintptr_t addr)
+{
+    char       buffer[24];
+    const auto result =
+        std::to_chars(buffer, buffer + sizeof(buffer), addr, 16);
+    return "0x" + std::string(buffer, result.ptr);
+}
+
+std::string addr_or_dash(std::string_view line)
+{
+    return line.empty() ? std::string("— (нет в maps)")
+                        : hex_addr(mapping_start(line));
+}
+
+struct landmark
+{
+    char        letter;
+    double      position; // 0..1, схематично (НЕ в масштабе!)
+    std::string address;
+    const char* title;
+    std::string why;
+};
+
+/// Рисует всю адресную карту процесса одной горизонтальной прямой с
+/// псевдографикой и легендой под ней. Порядок сегментов верный, но
+/// расстояния условные: при 2^64 адресов честный масштаб бессмысленен -
+/// вся "жизнь" сжата в крошечной доле диапазона.
+void print_address_space_map(std::string_view maps,
+                             const void*      code_ptr,
+                             const void*      mmap_ptr,
+                             const void*      libc_ptr)
+{
+    // ширина терминала (при перенаправлении в файл/pipe - 80)
+    int     width = 80;
+    winsize ws{};
+    if (::ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == 0 && ws.ws_col >= 60)
+    {
+        width = std::min<int>(ws.ws_col, 160);
+    }
+
+    const std::string_view exe_line   = find_mapping(maps, code_ptr);
+    const std::string_view heap_line  = find_mapping_by_name(maps, "[heap]");
+    const std::string_view stack_line = find_mapping_by_name(maps, "[stack]");
+    const std::string_view vvar_line  = find_mapping_by_name(maps, "[vvar]");
+    const std::string_view vdso_line  = find_mapping_by_name(maps, "[vdso]");
+    const std::string_view vsyscall_line =
+        find_mapping_by_name(maps, "[vsyscall]");
+
+    const landmark marks[] = {
+        { 'Z',
+          0.00,
+          "0x0",
+          "zero page (первая страница и первые 64 КиБ)",
+          "PROT_NONE: нельзя ни читать, ни писать, ни исполнять.\n"
+          "      Ядро не даёт mmap ниже mmap_min_addr (65536), поэтому\n"
+          "      разыменование nullptr падает мгновенно (SIGSEGV), а не\n"
+          "      молча читает мусор." },
+        { 'E',
+          0.09,
+          addr_or_dash(exe_line),
+          "наш exe (PIE)",
+          "4 сегмента: r--p (rodata), r-xp (код), r--p (relro),\n"
+          "      rw-p (data+bss). База рандомизируется ASLR при каждом\n"
+          "      запуске - сравни адреса между запусками." },
+        { 'H',
+          0.16,
+          addr_or_dash(heap_line),
+          "[heap]",
+          "растёт ВВЕРХ через brk/sbrk (мы двигали break в п.3).\n"
+          "      Большие malloc glibc обслуживает через mmap - сюда они\n"
+          "      не попадают." },
+        { 'M',
+          0.50,
+          hex_addr(reinterpret_cast<std::uintptr_t>(mmap_ptr)),
+          "mmap-область",
+          std::string("растёт ВНИЗ от верха user space: тут наши mmap, все\n"
+                      "      .so (например libc: ")
+              .append(hex_addr(reinterpret_cast<std::uintptr_t>(libc_ptr)))
+              .append("), большие аллокации glibc.") },
+        { 'V',
+          0.62,
+          addr_or_dash(vvar_line) + " / " + addr_or_dash(vdso_line),
+          "[vvar] / [vdso]",
+          "вспомогательные страницы ЯДРА в нашем адресном\n"
+          "      пространстве: vvar - данные ядра (время и др.), читаемые\n"
+          "      без syscall; vdso - код ядра (clock_gettime, getpid...),\n"
+          "      исполняемый прямо в user mode, без перехода в ядро." },
+        { 'S',
+          0.70,
+          addr_or_dash(stack_line),
+          "[stack]",
+          "растёт ВНИЗ (п.4); наверху лежат argv/environ.\n"
+          "      Лимит ~8 МиБ (ulimit -s), переполнение = SIGSEGV." },
+        { 'U',
+          0.78,
+          "0x7fffffffffff",
+          "потолок user space (48 бит)",
+          "4-уровневая трансляция страниц даёт 128 ТиБ\n"
+          "      пользовательского пространства. Выше - только ядро." },
+        { 'Y',
+          0.86,
+          addr_or_dash(vsyscall_line),
+          "[vsyscall]",
+          "legacy-страница на ФИКСИРОВАННОМ адресе 0xffffffffff600000\n"
+          "      (без ASLR!): формально уже в половине ядра, но исполняема\n"
+          "      из userspace. Деприкейтнута, оставлена для совместимости." },
+        { 'K',
+          0.98,
+          "0xffff800000000000+",
+          "память ядра",
+          "старшая половина адресного пространства - само ядро.\n"
+          "      Из user mode недоступна (обращение = SIGSEGV) и в maps\n"
+          "      не показывается. Именно тут ядро хранит ВСЁ остальное о\n"
+          "      нашем процессе: task_struct, таблицы страниц, файловые\n"
+          "      дескрипторы..." },
+    };
+
+    // сама прямая: ячейки по символу на колонку (UTF-8 "─" - 3 байта,
+    // поэтому считаем по дисплейным ячейкам, а не по байтам)
+    std::vector<std::string> cells(static_cast<std::size_t>(width), "─");
+    auto                     col_of = [&](char letter)
+    {
+        for (const landmark& m : marks)
+        {
+            if (m.letter == letter)
+            {
+                return static_cast<std::size_t>(m.position * (width - 1));
+            }
+        }
+        return std::size_t{ 0 };
+    };
+    // гигантские дыры: heap -> mmap-область и потолок user space -> ядро
+    for (std::size_t c = col_of('H') + 1; c < col_of('M'); ++c)
+    {
+        cells[c] = "~";
+    }
+    for (std::size_t c = col_of('U') + 1; c < col_of('K'); ++c)
+    {
+        cells[c] = "~";
+    }
+    for (const landmark& m : marks)
+    {
+        cells[col_of(m.letter)] = std::string(1, m.letter);
+    }
+
+    std::printf("схема (НЕ в масштабе; порядок верный, адреса - реальные,\n"
+                "этого запуска):\n\n");
+    std::printf("0x0%*s\n", width - 3, "0xffffffffffffffff");
+    for (const auto& cell : cells)
+    {
+        std::printf("%s", cell.c_str());
+    }
+    std::printf("\n\n~~~~ = гигантские дыры (десятки ТиБ несмапленных "
+                "адресов)\n\n");
+
+    for (const landmark& m : marks)
+    {
+        std::printf(" [%c] %-26s %s\n", m.letter, m.title, m.address.c_str());
+        std::printf("      %s\n\n", m.why.c_str());
+    }
+}
+
 } // namespace
 
 int main()
@@ -230,6 +426,12 @@ int main()
 
     std::printf("\n-- 4. стек растёт вниз (к меньшим адресам)\n");
     show_stack_growth(0, nullptr);
+
+    std::printf("\n-- 5. вся адресная карта на одной прямой\n\n");
+    print_address_space_map(maps,
+                            reinterpret_cast<void*>(&find_mapping),
+                            mmap_chunk,
+                            reinterpret_cast<void*>(&std::printf));
 
     std::free(heap_probe);
     ::munmap(mmap_chunk, mmap_size);
