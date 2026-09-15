@@ -94,7 +94,7 @@ Section toggles at configure time: `-DOM_VULKAN=OFF` etc. (see root `CMakeLists.
 
 ## Coding Standards
 
-Detailed rules live in `.cursor/rules/` (auto-applied). Summary:
+Detailed rules live in `.opencode/rules/` (loaded via `opencode.json` `instructions`). Summary:
 
 - **snake_case** for all identifiers; **UPPER_SNAKE_CASE** only for macros
 - All code in `namespace om` (or nested); `main()` is the only global exception
@@ -149,7 +149,7 @@ Detailed rules live in `.cursor/rules/` (auto-applied). Summary:
 
 ## Agent Constraints
 
-### Git — read-only (from `.cursor/rules/no-git-commits.mdc`)
+### Git — read-only (from `.opencode/rules/no-git-commits.md`, enforced by `opencode.json` permissions)
 
 - **Never** `git add`, `git commit`, `git push`, `git rm`, or any git state change
 - Read-only (`git status`, `git diff`, `git log`) is fine; the user commits manually
@@ -161,7 +161,7 @@ Detailed rules live in `.cursor/rules/` (auto-applied). Summary:
 - Change global CMake option defaults without explicit request
 - Add dependencies to root `CMakeLists.txt` without updating `deps/rules/` too
 - Trust `.gitignore` surprises: it ignores `build/`, `deps/prebuilt/`, `*.spv`,
-  `compile_commands.json` — and **all dotfiles** (`.*`)
+  `compile_commands.json` — and **all dotfiles** (`.*`, except `.opencode/`)
 
 ## Common Pitfalls
 
@@ -184,7 +184,7 @@ Detailed rules live in `.cursor/rules/` (auto-applied). Summary:
 | `CMakeLists.txt`                         | Root options, `import std` UUID, section toggles |
 | `CMakePresets.json`                      | Presets; note stale UUID in `ninja-llvm`         |
 | `cmake/om-common-functions-config.cmake` | `om_add_slang_shader_target`, clang-tidy, `Profile` build type |
-| `.cursor/rules/`                         | Style guide, clang-format rule, no-git-commits   |
+| `.opencode/rules/`, `opencode.json`      | Style rules, clang-format, git-mutation denies   |
 | `01-basic-game-dev/readme.md`            | Game-dev course curriculum                       |
 
 ## Quick Verification Checklist

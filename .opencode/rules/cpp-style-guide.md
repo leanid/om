@@ -1,8 +1,3 @@
----
-description: Enforce Boost style, modern C++, and snake_case for C++ code
-alwaysApply: true
----
-
 # C++ Coding Style Guidelines
 
 When writing or modifying C++ code, ALWAYS adhere to the following style guidelines:

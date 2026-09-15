@@ -6,6 +6,7 @@
 *.user
 *.vert.spv
 .*
+!/.opencode/
 /00-basic-prog/29-localization/messages.pot
 /cmake-build-*/
 /compile_commands.json

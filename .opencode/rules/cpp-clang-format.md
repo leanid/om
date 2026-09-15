@@ -1,12 +1,7 @@
----
-description: Run clang-format on modified C++ files
-globs: "**/*.{cxx,cpp,cc,h,hpp,hxx}"
-alwaysApply: false
----
-
 # C++ Formatting with clang-format
 
-After modifying any C++ file, run `clang-format -i <file>` on it before considering the task complete.
+After modifying any C++ file (`*.cxx`, `*.hxx`, `*.cpp`, `*.hpp`, `*.cc`, `*.h`),
+run `clang-format -i <file>` on it before considering the task complete.
 
 ```bash
 clang-format -i path/to/modified_file.cxx
