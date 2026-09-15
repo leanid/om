@@ -296,7 +296,13 @@ void print_address_space_map(std::string_view maps,
         }
         return std::size_t{ 0 };
     };
-    // гигантские дыры: heap -> mmap-область и потолок user space -> ядро
+    // гигантские дыры: zero page -> exe (низ адресного пространства
+    // намеренно пуст - см. Q/A ниже), heap -> mmap-область и
+    // потолок user space -> ядро
+    for (std::size_t c = col_of('Z') + 1; c < col_of('E'); ++c)
+    {
+        cells[c] = "~";
+    }
     for (std::size_t c = col_of('H') + 1; c < col_of('M'); ++c)
     {
         cells[c] = "~";
@@ -325,6 +331,28 @@ void print_address_space_map(std::string_view maps,
         std::printf(" [%c] %-26s %s\n", m.letter, m.title, m.address.c_str());
         std::printf("      %s\n\n", m.why.c_str());
     }
+
+    // -- частый вопрос студента, глядящего на эту прямую --
+    const std::uintptr_t exe_base = mapping_start(exe_line);
+    const std::uintptr_t gap = exe_base - 0x10000; // минус 64 КиБ zero-зоны
+    std::printf(
+        "Q: почему между Z и E такое большое пространство?\n"
+        "A: в этом запуске дыра Z->E = %s (%.1f ТиБ) намеренно пустой\n"
+        "   памяти. Пустота бесплатна: несмапленные виртуальные адреса не\n"
+        "   занимают физической памяти вообще - под них просто не\n"
+        "   заведено записей в таблицах страниц. А низ держат пустым,\n"
+        "   потому что:\n"
+        "   1) wild pointer nullptr+N (даже с большим N) попадает в\n"
+        "      несмапленное -> мгновенный SIGSEGV вместо чтения мусора;\n"
+        "   2) это комната для ASLR: exe - это PIE, загрузчик кладёт его\n"
+        "      на случайную базу при каждом запуске (сравни адрес [E]\n"
+        "      между запусками!) - так атакующий не знает адреса кода;\n"
+        "   3) упаковывать сегменты плотно незачем - user space это\n"
+        "      128 ТиБ, места хватает всем. (Классический non-PIE exe\n"
+        "      грузился на фиксированный 0x400000, и зазор был всего\n"
+        "      4 МиБ.)\n\n",
+        hex_addr(gap).c_str(),
+        static_cast<double>(gap) / 1099511627776.0);
 }
 
 } // namespace
