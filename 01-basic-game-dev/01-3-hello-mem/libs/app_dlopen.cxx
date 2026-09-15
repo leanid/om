@@ -28,9 +28,24 @@ int main()
 
     const std::string_view before = om::snapshot_maps(0);
 
-    // ld.so пользуется своим внутренним аллокатором, поэтому dlopen
-    // работает, даже когда malloc в процессе запрещён.
+    // 1. Современный ld.so (glibc >= 2.35) после старта процесса
+    //    пользуется интерпозируемым malloc, поэтому под тотальным
+    //    запретом dlopen ЛОМАЕТСЯ. На старых glibc у ld.so был свой
+    //    отдельный аллокатор, и загрузка проходила.
     void* handle = ::dlopen(GREEDY_SO_PATH, RTLD_NOW);
+    om::print(handle == nullptr
+                  ? "dlopen под запретом malloc: failed (glibc >= 2.35)\n"
+                  : "dlopen под запретом malloc: worked (старый glibc?)\n");
+
+    // 2. Ослабляем запрет ровно на время загрузки, чтобы увидеть, какие
+    //    сегменты добавит .so в карту процесса.
+    if (handle == nullptr)
+    {
+        om::print("-- ослабляем запрет malloc на время dlopen\n");
+        om::set_malloc_ban(false);
+        handle = ::dlopen(GREEDY_SO_PATH, RTLD_NOW);
+        om::set_malloc_ban(true);
+    }
     if (handle == nullptr)
     {
         om::print("dlopen failed: ");
@@ -55,8 +70,9 @@ int main()
         return 1;
     }
 
-    // Дальше - ровно та же демонстрация, что и у статической и load-time
-    // линковки: интерпозиция глобальна для процесса, dlopen её не обходит.
+    // 3. Дальше - ровно та же демонстрация, что и у статической и
+    //    load-time линковки: интерпозиция глобальна для процесса, и
+    //    dlopen её не обходит.
     om::print("-- четыре способа выделить память внутри библиотеки:\n");
     om::run_allocation_demos(api);
 
