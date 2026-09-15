@@ -33,7 +33,12 @@ const char g_initialized_rodata[] = "r"; // .rodata: только чтение
 /// Читаем /proc/self/maps целиком (в этом примере куча разрешена).
 std::string read_maps()
 {
-    std::ifstream      file{ "/proc/self/maps", std::ios::binary };
+    std::ifstream file{ "/proc/self/maps", std::ios::binary };
+    if (!file.is_open())
+    {
+        std::printf("error: cannot open /proc/self/maps\n");
+        std::exit(1);
+    }
     std::ostringstream content;
     content << file.rdbuf();
     return content.str();
@@ -138,7 +143,12 @@ void show_stack_growth(int depth, const char* previous)
 std::uintptr_t mapping_start(std::string_view line)
 {
     std::uintptr_t start = 0;
-    std::from_chars(line.data(), line.data() + line.size(), start, 16);
+    const auto     result =
+        std::from_chars(line.data(), line.data() + line.size(), start, 16);
+    if (result.ec != std::errc{})
+    {
+        throw std::runtime_error("can't parse mapping line");
+    }
     return start;
 }
 
@@ -334,7 +344,8 @@ void print_address_space_map(std::string_view maps,
 
     // -- частый вопрос студента, глядящего на эту прямую --
     const std::uintptr_t exe_base = mapping_start(exe_line);
-    const std::uintptr_t gap = exe_base - 0x10000; // минус 64 КиБ zero-зоны
+    const std::uintptr_t gap =
+        exe_base - 0x10000; // минус mmap_min_addr (64 КиБ)
     std::printf(
         "Q: почему между Z и E такое большое пространство?\n"
         "A: в этом запуске дыра Z->E = %s (%.1f ТиБ) намеренно пустой\n"
