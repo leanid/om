@@ -1,5 +1,5 @@
 # 1. how to use:> CXX=clang++ cmake -P linux-build.cmake
-cmake_minimum_required(VERSION 4.2)
+cmake_minimum_required(VERSION 4.4.0)
 
 get_filename_component(
     toolchain_path
