@@ -2,16 +2,16 @@
 [tools]
 ninja = "1.13.2"
 cmake = "4.4.3"
-python = ["3.14.5"]
-black = "26.1.0"
-pipenv = "2026.0.3"
-ripgrep = "15.1.0"
-fd = "10.3.0"
+python = ["3.14.7"]
+black = "26.5.1"
+pipenv = "2026.8.0"
+ripgrep = "15.2.0"
+fd = "10.5.0"
 "github:llvm/llvm-project" = "llvmorg-23.1.1"
-"github:neocmakelsp/neocmakelsp" = "v0.9.1"
-pipx = "1.8.0"
+"github:neocmakelsp/neocmakelsp" = "v0.11.1"
+pipx = "1.17.5"
 "pipx:cmakelang" = "0.6.13"
 # NOTE: your gpg --version -> 2.+ expected by 'mise'
-node = "24.13.0"
-npm = "11.8.0"
-shfmt = "3.12.0"
+node = "26.9.0"
+npm = "12.0.2"
+shfmt = "3.14.1"

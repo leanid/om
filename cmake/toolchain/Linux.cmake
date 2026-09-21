@@ -1,6 +1,7 @@
 # on Alt Linux to build with downloaded latest llvm we need to pass search path for
 # objects and libraries path for linker to find crt on current system
 # 1. Ask the system C compiler for the full path to libgcc.a
+# cmake-format: off
 execute_process(
     COMMAND gcc -print-libgcc-file-name
     OUTPUT_VARIABLE libgcc_path
@@ -26,3 +27,4 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 set(CMAKE_C_COMPILER "clang")
 set(CMAKE_CXX_COMPILER "clang++")
+# cmake-format: on
