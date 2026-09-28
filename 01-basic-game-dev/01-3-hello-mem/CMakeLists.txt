@@ -10,6 +10,6 @@ endif()
 project(01-3-hello-mem CXX)
 
 # Трилогия про память процесса (порядок учебный - смотреть по очереди):
-add_subdirectory(layout) # 1. из чего состоит память процесса изнутри
-add_subdirectory(mem)    # 2. запрет new/malloc + свой mmap-аллокатор
-add_subdirectory(libs)   # 3. запрет vs static/shared/dlopen библиотеки
+add_subdirectory(01-layout) # 1. из чего состоит память процесса изнутри
+add_subdirectory(02-mem)    # 2. запрет new/malloc + свой mmap-аллокатор
+add_subdirectory(03-libs)   # 3. запрет vs static/shared/dlopen библиотеки
