@@ -80,7 +80,7 @@ int main(int /*argc*/, char* /*argv*/[])
             // we want OpenGL ES 3.0 context
             ask_context.name          = "OpenGL ES";
             ask_context.major_version = 3;
-            ask_context.minor_version = 0;
+            ask_context.minor_version = 2;
             ask_context.profile_type  = SDL_GL_CONTEXT_PROFILE_ES;
         }
 
