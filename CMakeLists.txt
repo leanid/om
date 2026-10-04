@@ -59,6 +59,7 @@ find_package(redis++ REQUIRED)
 find_package(httplib REQUIRED)
 find_package(nlohmann_json REQUIRED)
 find_package(tinyobjloader CONFIG REQUIRED)
+find_package(fastgltf CONFIG REQUIRED)
 
 enable_testing()
 
