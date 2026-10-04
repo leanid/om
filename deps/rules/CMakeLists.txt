@@ -286,6 +286,11 @@ externalproject_add(
     GIT_TAG v5.4.3
     GIT_PROGRESS ON
     GIT_SHALLOW ON
+    # fix clang 23 + libc++ build: poly2tri uses std::ostream
+    # without including <ostream>
+    PATCH_COMMAND
+        git apply
+        ${CMAKE_CURRENT_SOURCE_DIR}/patches/assimp-poly2tri-ostream.patch
     DEPENDS zlib
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
                -DCMAKE_BUILD_TYPE=RelWithDebInfo
