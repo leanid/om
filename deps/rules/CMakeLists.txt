@@ -391,3 +391,38 @@ externalproject_add(
                -DCMAKE_EXE_LINKER_FLAGS=${CMAKE_EXE_LINKER_FLAGS}
                -DCMAKE_SHARED_LINKER_FLAGS=${CMAKE_SHARED_LINKER_FLAGS}
                -DJSON_BuildTests=OFF)
+
+# fastgltf 0.9.1 - glTF 2.0 parser (for 18-vk-gltf-ktx2 example)
+# Downloads simdjson singleheader itself at configure time.
+externalproject_add(
+    fastgltf
+    GIT_REPOSITORY https://github.com/spnda/fastgltf.git
+    GIT_TAG v0.9.1
+    GIT_PROGRESS ON
+    GIT_SHALLOW ON
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+               -DCMAKE_BUILD_TYPE=RelWithDebInfo
+               -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
+               -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}
+               -DCMAKE_CXX_STANDARD=23
+               -DCMAKE_CXX_STANDARD_REQUIRED=ON
+               -DCMAKE_CXX_EXTENSIONS=OFF
+               -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+               -DCMAKE_LINKER_TYPE=${CMAKE_LINKER_TYPE}
+               -DCMAKE_EXE_LINKER_FLAGS=${CMAKE_EXE_LINKER_FLAGS}
+               -DCMAKE_SHARED_LINKER_FLAGS=${CMAKE_SHARED_LINKER_FLAGS}
+               -DBUILD_SHARED_LIBS=OFF
+               -DFASTGLTF_USE_CUSTOM_SMALLVECTOR=OFF
+               -DFASTGLTF_ENABLE_TESTS=OFF
+               -DFASTGLTF_ENABLE_EXAMPLES=OFF
+               -DFASTGLTF_ENABLE_DOCS=OFF
+               -DFASTGLTF_ENABLE_GLTF_RS=OFF
+               -DFASTGLTF_ENABLE_ASSIMP=OFF
+               -DFASTGLTF_DISABLE_CUSTOM_MEMORY_POOL=OFF
+               -DFASTGLTF_USE_64BIT_FLOAT=OFF
+               -DFASTGLTF_COMPILE_AS_CPP20=OFF
+               -DFASTGLTF_ENABLE_CPP_MODULES=ON
+               -DFASTGLTF_USE_STD_MODULE=OFF
+               -DFASTGLTF_ENABLE_KHR_IMPLICIT_SHAPES=OFF
+               -DFASTGLTF_ENABLE_KHR_PHYSICS_RIGID_BODIES=OFF
+               -DFASTGLTF_ENABLE_INSTALL=ON)
