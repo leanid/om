@@ -1,17 +1,20 @@
 # if something not working do: `$> mise self-update`
 [tools]
-"github:llvm/llvm-project" = "llvmorg-23.1.2"
-ninja = "1.13.2"
-cmake = "4.4.3"
-python = ["3.14.7"]
-black = "26.5.1"
-pipenv = "2026.8.0"
-ripgrep = "15.2.0"
-fd = "10.5.0"
-"github:neocmakelsp/neocmakelsp" = "v0.11.1"
-pipx = "1.17.6"
-"pipx:cmakelang" = "0.6.13"
+# "github:llvm/llvm-project" = "llvmorg-24.1.2"
+# ninja = "1.13.2"
+# cmake = "4.4.3"
+# python = ["3.14.8"]
+# black = "26.5.1"
+# pipenv = "2026.8.0"
+# ripgrep = "15.2.0"
+# fd = "10.5.0"
+# "github:neocmakelsp/neocmakelsp" = "v0.11.2"
+# pipx = "1.17.9"
+# "pipx:cmakelang" = "0.6.13"
 # NOTE: your gpg --version -> 2.+ expected by 'mise'
-node = "26.10.0"
-npm = "12.1.0"
-shfmt = "3.14.1"
+# node = "26.10.0"
+# npm = "12.2.0"
+# shfmt = "3.14.1"
+
+[env]
+# LD_LIBRARY_PATH = "{{xdg_data_home}}/mise/installs/github-llvm-llvm-project/llvmorg-23.1.1/bin:{{env.LD_LIBRARY_PATH}}"
