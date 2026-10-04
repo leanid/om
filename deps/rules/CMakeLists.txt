@@ -45,6 +45,7 @@ externalproject_add(
     GIT_SHALLOW ON
     CMAKE_ARGS
         -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+        -DCMAKE_INSTALL_LIBDIR=lib
         -DCMAKE_PREFIX_PATH=${CMAKE_INSTALL_PREFIX}
         -DCMAKE_BUILD_TYPE=RelWithDebInfo
         -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
@@ -74,6 +75,7 @@ externalproject_add(
     DEPENDS hiredis
     CMAKE_ARGS
         -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+        -DCMAKE_INSTALL_LIBDIR=lib
         -DCMAKE_PREFIX_PATH=${CMAKE_INSTALL_PREFIX}
         -DCMAKE_BUILD_TYPE=RelWithDebInfo
         -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
@@ -102,6 +104,7 @@ externalproject_add(
     GIT_PROGRESS ON
     GIT_SHALLOW ON
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+               -DCMAKE_INSTALL_LIBDIR=lib
                -DCMAKE_BUILD_TYPE=RelWithDebInfo
                -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
                -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}
@@ -124,6 +127,7 @@ externalproject_add(
     GIT_TAG v3.8.1
     # Передаем префикс установки вашего основного проекта во внешний
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+               -DCMAKE_INSTALL_LIBDIR=lib
                -DCMAKE_BUILD_TYPE=RelWithDebInfo
                -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
                -DCMAKE_CXX_STANDARD=23
@@ -147,6 +151,7 @@ externalproject_add(
     GIT_PROGRESS ON
     CMAKE_ARGS
         -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+        -DCMAKE_INSTALL_LIBDIR=lib
         -DCMAKE_BUILD_TYPE=RelWithDebInfo
         -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
         -DCMAKE_POSITION_INDEPENDENT_CODE=ON
@@ -166,6 +171,7 @@ externalproject_add(
     GIT_SHALLOW ON
     GIT_PROGRESS ON
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+               -DCMAKE_INSTALL_LIBDIR=lib
                -DCMAKE_BUILD_TYPE=RelWithDebInfo
                -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
                -DCMAKE_CXX_STANDARD=23
@@ -188,6 +194,7 @@ externalproject_add(
     GIT_PROGRESS ON
     GIT_SHALLOW ON
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+               -DCMAKE_INSTALL_LIBDIR=lib
                -DCMAKE_BUILD_TYPE=RelWithDebInfo
                -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
                -DCMAKE_CXX_STANDARD=23
@@ -204,6 +211,7 @@ externalproject_add(
     GIT_PROGRESS ON
     GIT_SHALLOW ON
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+               -DCMAKE_INSTALL_LIBDIR=lib
                -DCMAKE_BUILD_TYPE=RelWithDebInfo
                -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
                -DCMAKE_CXX_STANDARD=23
@@ -224,6 +232,7 @@ externalproject_add(
     GIT_PROGRESS ON
     GIT_SHALLOW ON
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+               -DCMAKE_INSTALL_LIBDIR=lib
                -DCMAKE_BUILD_TYPE=RelWithDebInfo
                -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
                -DCMAKE_CXX_STANDARD=23
@@ -243,6 +252,7 @@ externalproject_add(
     GIT_PROGRESS ON
     GIT_SHALLOW ON
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+               -DCMAKE_INSTALL_LIBDIR=lib
                -DCMAKE_BUILD_TYPE=RelWithDebInfo
                -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
                -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}
@@ -263,6 +273,7 @@ externalproject_add(
     DEPENDS zlib
     CMAKE_ARGS
         -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+        -DCMAKE_INSTALL_LIBDIR=lib
         -DCMAKE_BUILD_TYPE=RelWithDebInfo
         -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS} # -Wno-unused-command-line-argument
         -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}
@@ -294,6 +305,7 @@ externalproject_add(
         -P ${CMAKE_CURRENT_SOURCE_DIR}/patches/git-apply-or-skip.cmake
     DEPENDS zlib
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+               -DCMAKE_INSTALL_LIBDIR=lib
                -DCMAKE_BUILD_TYPE=RelWithDebInfo
                -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
                -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}
@@ -318,6 +330,7 @@ externalproject_add(
     GIT_PROGRESS ON
     GIT_SHALLOW ON
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+               -DCMAKE_INSTALL_LIBDIR=lib
                -DCMAKE_BUILD_TYPE=RelWithDebInfo
                -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
                -DCMAKE_CXX_STANDARD=23
@@ -368,6 +381,7 @@ externalproject_add(
     GIT_PROGRESS ON
     GIT_SHALLOW ON
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+               -DCMAKE_INSTALL_LIBDIR=lib
                -DCMAKE_BUILD_TYPE=RelWithDebInfo
                -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
                -DCMAKE_CXX_STANDARD=23
@@ -387,6 +401,7 @@ externalproject_add(
     GIT_PROGRESS ON
     GIT_SHALLOW ON
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+               -DCMAKE_INSTALL_LIBDIR=lib
                -DCMAKE_BUILD_TYPE=RelWithDebInfo
                -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
                -DCMAKE_CXX_STANDARD=23
@@ -407,6 +422,7 @@ externalproject_add(
     GIT_PROGRESS ON
     GIT_SHALLOW ON
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+               -DCMAKE_INSTALL_LIBDIR=lib
                -DCMAKE_BUILD_TYPE=RelWithDebInfo
                -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
                -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}
