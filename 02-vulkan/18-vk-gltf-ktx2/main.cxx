@@ -9,7 +9,7 @@ import vulkan;
 import sdl.SDL;
 import sdl.vulkan;
 import glm;
-import tinyobj;
+import gltf;
 
 int main_cant_throw(int argc, char** argv);
 
@@ -180,8 +180,8 @@ int main_cant_throw(int argc, char** argv)
             false);
         uniform_buffer_object ubo{};
 
-        om::vulkan::mesh mesh = om::tinyobj::load_model(
-            "02-vulkan/18-vk-gltf-ktx2/model/viking_room.obj", render);
+        om::vulkan::mesh mesh = om::gltf::load_model(
+            "02-vulkan/18-vk-gltf-ktx2/model/viking_room.gltf", render);
 
         // User creates initial particles (same layout as compute SSBO).
         std::default_random_engine rnd_engine(

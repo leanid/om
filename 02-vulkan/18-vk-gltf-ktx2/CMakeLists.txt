@@ -6,9 +6,9 @@ find_program(SLANGC_EXECUTABLE slangc HINTS "$ENV{VULKAN_SDK}/bin" REQUIRED)
 
 om_clang_tidy_enable()
 
-add_library(18-vk-gltf-ktx2-tinyobj)
+add_library(18-vk-gltf-ktx2-gltf)
 target_sources(
-    18-vk-gltf-ktx2-tinyobj
+    18-vk-gltf-ktx2-gltf
     PUBLIC FILE_SET
            cxx_modules
            TYPE
@@ -16,9 +16,9 @@ target_sources(
            BASE_DIRS
            "${CMAKE_CURRENT_SOURCE_DIR}"
            FILES
-           "${CMAKE_CURRENT_SOURCE_DIR}/tinyobj.cxx")
-target_link_libraries(18-vk-gltf-ktx2-tinyobj PRIVATE 18-vk-gltf-ktx2-vulkan
-                                                      tinyobjloader::tinyobjloader)
+           "${CMAKE_CURRENT_SOURCE_DIR}/gltf.cxx")
+target_link_libraries(18-vk-gltf-ktx2-gltf PRIVATE 18-vk-gltf-ktx2-vulkan
+                                                  fastgltf::fastgltf)
 
 add_library(18-vk-gltf-ktx2-log)
 target_sources(
@@ -50,7 +50,7 @@ target_link_libraries(
             18-vk-gltf-ktx2-vulkan
             18-vk-gltf-ktx2-sdl
             18-vk-gltf-ktx2-sdl-vulkan
-            18-vk-gltf-ktx2-tinyobj
+            18-vk-gltf-ktx2-gltf
             SDL3::SDL3-shared
             om::io::read_file)
 target_include_directories(18-vk-gltf-ktx2-platform
