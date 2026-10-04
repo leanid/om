@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 4.2)
+cmake_minimum_required(VERSION 4.4)
 
 project(prebuilt_dependencies C CXX)
 
