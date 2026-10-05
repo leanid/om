@@ -466,46 +466,46 @@ externalproject_add(
         ${CMAKE_COMMAND}
         -DPATCH_FILE=${CMAKE_CURRENT_SOURCE_DIR}/patches/ktx-basisu-exception.patch
         -P ${CMAKE_CURRENT_SOURCE_DIR}/patches/git-apply-or-skip.cmake
-    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
-               -DCMAKE_INSTALL_LIBDIR=lib
-               -DCMAKE_BUILD_TYPE=RelWithDebInfo
-               -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
-               -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}
-               -DCMAKE_CXX_STANDARD=23
-               -DCMAKE_CXX_STANDARD_REQUIRED=ON
-               -DCMAKE_CXX_EXTENSIONS=OFF
-               -DCMAKE_POSITION_INDEPENDENT_CODE=ON
-               -DCMAKE_LINKER_TYPE=${CMAKE_LINKER_TYPE}
-               -DCMAKE_EXE_LINKER_FLAGS=${CMAKE_EXE_LINKER_FLAGS}
-               -DCMAKE_SHARED_LINKER_FLAGS=${CMAKE_SHARED_LINKER_FLAGS}
-               -DCMAKE_POLICY_VERSION_MINIMUM=3.5
-               -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-               -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
-               -DCMAKE_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}
-               -DBUILD_SHARED_LIBS=OFF
-               -DKTX_FEATURE_DOC=OFF
-               -DKTX_FEATURE_JNI=OFF
-               -DKTX_FEATURE_PY=OFF
-               -DKTX_FEATURE_TESTS=OFF
-               -DKTX_FEATURE_TOOLS_CTS=OFF
-               -DKTX_FEATURE_JS=OFF
-               -DKTX_FEATURE_TOOLS=OFF
-               -DKTX_FEATURE_LOADTEST_APPS=OFF
-               -DKTX_GENERATE_VK_FILES=OFF
-               -DKTX_WERROR=OFF
-               -DLIBKTX_VERSION_READ_ONLY=ON
-               -DLIBKTX_FEATURE_KTX1=ON
-               -DLIBKTX_FEATURE_KTX2=ON
-               -DLIBKTX_FEATURE_VK_UPLOAD=ON
-               -DLIBKTX_FEATURE_GL_UPLOAD=ON
-               -DLIBKTX_FEATURE_ETC_UNPACK=ON)
+    CMAKE_ARGS
+        -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+        -DCMAKE_INSTALL_LIBDIR=lib
+        -DCMAKE_BUILD_TYPE=RelWithDebInfo
+        -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}\ -Wno-deprecated-this-capture
+        -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}
+        -DCMAKE_CXX_STANDARD=23
+        -DCMAKE_CXX_STANDARD_REQUIRED=ON
+        -DCMAKE_CXX_EXTENSIONS=OFF
+        -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+        -DCMAKE_LINKER_TYPE=${CMAKE_LINKER_TYPE}
+        -DCMAKE_EXE_LINKER_FLAGS=${CMAKE_EXE_LINKER_FLAGS}
+        -DCMAKE_SHARED_LINKER_FLAGS=${CMAKE_SHARED_LINKER_FLAGS}
+        -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+        -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+        -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+        -DCMAKE_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}
+        -DBUILD_SHARED_LIBS=OFF
+        -DKTX_FEATURE_DOC=OFF
+        -DKTX_FEATURE_JNI=OFF
+        -DKTX_FEATURE_PY=OFF
+        -DKTX_FEATURE_TESTS=OFF
+        -DKTX_FEATURE_TOOLS_CTS=OFF
+        -DKTX_FEATURE_JS=OFF
+        -DKTX_FEATURE_TOOLS=ON
+        -DKTX_FEATURE_LOADTEST_APPS=OFF
+        -DKTX_GENERATE_VK_FILES=OFF
+        -DKTX_WERROR=OFF
+        -DLIBKTX_VERSION_READ_ONLY=ON
+        -DLIBKTX_FEATURE_KTX1=ON
+        -DLIBKTX_FEATURE_KTX2=ON
+        -DLIBKTX_FEATURE_VK_UPLOAD=ON
+        -DLIBKTX_FEATURE_GL_UPLOAD=ON
+        -DLIBKTX_FEATURE_ETC_UNPACK=ON)
 
 # upstream installs lib/cmake/ktx/KtxConfig.cmake which find_package() cannot
 # find on case-sensitive filesystems (it looks for ktx-config.cmake) -
 # install a copy with the expected name
 externalproject_add_step(
-    ktx_software
-    install_config_compat
+    ktx_software install_config_compat
     COMMAND
         ${CMAKE_COMMAND} -E copy
         ${CMAKE_INSTALL_PREFIX}/lib/cmake/ktx/KtxConfig.cmake
