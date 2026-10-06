@@ -11,7 +11,9 @@ ktx create warning: No color primaries in PNG input file "02-vulkan/18-vk-gltf-k
 2. drag and drop `02-vulkan/18-vk-gltf-ktx2/model/viking_room.ktx2`
 
 # Statistics png vs ktx2 (basis-lz)
+```sh
   -rw-rw-r-- 1 l-chayka l-chayka  98K Oct  6 11:09 viking_room.ktx2
   -rw-rw-r-- 1 l-chayka l-chayka 940K Oct  5 10:01 viking_room.png
   -rw-rw-r-- 1 l-chayka l-chayka 469K Oct  5 10:01 viking_room.obj
   -rw-rw-r-- 1 l-chayka l-chayka 230K Oct  5 10:01 viking_room.gltf
+```
