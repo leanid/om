@@ -26,3 +26,18 @@ ktx create warning: No color primaries in PNG input file "02-vulkan/18-vk-gltf-k
   -rw-rw-r-- 1 l-chayka l-chayka 469K Oct  5 10:01 viking_room.obj
   -rw-rw-r-- 1 l-chayka l-chayka 940K Oct  5 10:01 viking_room.png
 ```
+
+# If you check out file like:
+```sh
+$ ./deps/prebuilt/linux-clang23-x86_64/bin/ktx info ./02-vulkan/18-vk-gltf-ktx2/model/viking_room.6.255.ktx2
+Validation successful
+
+Header
+
+identifier: «KTX 20»\r\n\x1A\n
+vkFormat: VK_FORMAT_UNDEFINED
+typeSize: 1
+pixelWidth: 1024
+pixelHeight: 1024
+```
+Be advised FORMAT_UNDEFINED - mean - need transcode to real gpu compression format.
