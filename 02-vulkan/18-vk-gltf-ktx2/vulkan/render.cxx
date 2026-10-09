@@ -16,6 +16,7 @@ auto current()
 
 #include "experimental/report_duration.hxx"
 
+#include <ktx.h>
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb/stb_image.h>
 #include <vulkan/vulkan_profiles.hpp>
@@ -229,15 +230,18 @@ public:
 
 private:
     friend class render;
-    void                   load_stb_image(render&               r,
-                                          std::filesystem::path path,
-                                          std::string           dbg_name,
-                                          bool                  generate_mip_levels);
-    void                   load_ktx2(render&               r,
-                                     std::filesystem::path path,
-                                     std::string           dbg_name,
-                                     bool                  generate_mip_levels);
-    vk::raii::Image        img         = nullptr;
+    void                       load_stb_image(render&               r,
+                                              std::filesystem::path path,
+                                              std::string           dbg_name,
+                                              bool                  generate_mip_levels);
+    void                       load_ktx2(render&               r,
+                                         std::filesystem::path path,
+                                         std::string           dbg_name,
+                                         bool                  generate_mip_levels);
+    void                       create_sampler(render& r);
+    static ktx_transcode_fmt_e pick_ktx_transcode_target(vk::Format format);
+    static vk::Format transcode_target_to_vk_format(ktx_transcode_fmt_e target);
+    vk::raii::Image   img              = nullptr;
     vk::raii::DeviceMemory img_memory  = nullptr;
     vk::raii::ImageView    img_view    = nullptr;
     vk::raii::Sampler      img_sampler = nullptr;
@@ -495,6 +499,10 @@ private:
     void copy_buffer_to_image(const vk::raii::Buffer& buffer,
                               vk::raii::Image&        image,
                               vk::Extent2D            size);
+    void copy_buffer_to_image_levels(
+        const vk::raii::Buffer&              buffer,
+        vk::raii::Image&                     image,
+        std::span<const vk::BufferImageCopy> regions);
 
     void copy_buffer(vk::raii::Buffer& src_buffer,
                      vk::DeviceSize    size,
@@ -3913,11 +3921,280 @@ image::image(render&               r,
     }
 }
 
-void image::load_ktx2(render& /*r*/,
-                      std::filesystem::path /*path*/,
-                      std::string /*dbg_name*/,
-                      bool /*generate_mip_levels*/)
+void image::load_ktx2(render&               r,
+                      std::filesystem::path path,
+                      std::string           dbg_name,
+                      bool                  generate_mip_levels)
 {
+    std::string path_str = path.generic_string();
+
+    ktxTexture*    ktx_texture = nullptr;
+    KTX_error_code result      = ktxTexture_CreateFromNamedFile(
+        path_str.c_str(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &ktx_texture);
+    if (result != KTX_SUCCESS || ktx_texture == nullptr)
+    {
+        throw std::runtime_error("failed to load ktx2 texture image! [" +
+                                 path_str + "]: " + ktxErrorString(result));
+    }
+    std::unique_ptr<ktxTexture, void (*)(ktxTexture*)> ktx_guard(
+        ktx_texture, [](ktxTexture* texture) { ktxTexture_Destroy(texture); });
+
+    if (ktx_texture->classId != ktxTexture2_c)
+    {
+        throw std::runtime_error("not a ktx2 texture! [" + path_str + "]");
+    }
+    auto* ktx2 = reinterpret_cast<ktxTexture2*>(ktx_texture);
+
+    if (ktx_texture->numFaces != 1 || ktx_texture->numLayers > 1 ||
+        ktx_texture->numDimensions != 2)
+    {
+        throw std::runtime_error(
+            "unsupported ktx2 texture type (need 2D image)! [" + path_str +
+            "]");
+    }
+
+    auto vk_format = static_cast<vk::Format>(ktx2->vkFormat);
+    if (ktxTexture_NeedsTranscoding(ktx_texture) != KTX_FALSE)
+    {
+        // BasisLZ/ETC1S or UASTC payload - transcode on the fly
+        // to the fastest format supported by this gpu.
+        if (ktxTexture_IsTranscodable(ktx_texture) == KTX_FALSE)
+        {
+            throw std::runtime_error("ktx2 texture is not transcodable! [" +
+                                     path_str + "]");
+        }
+        ktx_transcode_fmt_e target = KTX_TTF_RGBA32;
+        vk_format                  = vk::Format::eR8G8B8A8Srgb;
+        for (vk::Format candidate : r.get_supported_compressed_formats())
+        {
+            // pick_ktx_transcode_target throws for unknown formats,
+            // so probe with try/catch order - first supported wins.
+            try
+            {
+                target    = pick_ktx_transcode_target(candidate);
+                vk_format = transcode_target_to_vk_format(target);
+                break;
+            }
+            catch (const std::exception&)
+            {
+                continue;
+            }
+        }
+        result = ktxTexture2_TranscodeBasis(ktx2, target, 0);
+        if (result != KTX_SUCCESS)
+        {
+            throw std::runtime_error("failed to transcode ktx2 texture! [" +
+                                     path_str + "]: " + ktxErrorString(result));
+        }
+    }
+    else if (ktx2->vkFormat == VK_FORMAT_UNDEFINED)
+    {
+        vk_format = vk::Format::eR8G8B8A8Srgb;
+    }
+
+    const auto base_width  = ktx_texture->baseWidth;
+    const auto base_height = ktx_texture->baseHeight;
+    if (base_width == 0 || base_height == 0)
+    {
+        throw std::runtime_error("invalid ktx2 texture size! [" + path_str +
+                                 "]");
+    }
+
+    const bool is_uncompressed = vk_format == vk::Format::eR8G8B8A8Srgb;
+    // Compressed formats usually can not be blit-generated,
+    // so use mip chain from file. Generate only for single-level
+    // uncompressed images (same as stb path).
+    const bool need_generate =
+        generate_mip_levels && ktx_texture->numLevels == 1 && is_uncompressed;
+    if (generate_mip_levels)
+    {
+        if (need_generate)
+        {
+            // 3840 x 2160 pixels == log2(3840) == 11.9069
+            // std::floor(11.9069) == 11, +1 for 1x1 level
+            mip_levels = static_cast<std::uint8_t>(std::floor(
+                             std::log2(std::max(base_width, base_height)))) +
+                         1;
+        }
+        else
+        {
+            mip_levels = static_cast<std::uint8_t>(ktx_texture->numLevels);
+        }
+    }
+    else
+    {
+        mip_levels = 1;
+    }
+
+    om::cout << "ktx2 image loaded: " << path << " w: " << base_width
+             << " h: " << base_height
+             << " vk_format: " << vk::to_string(vk_format)
+             << " mip_levels: " << static_cast<std::uint32_t>(mip_levels)
+             << " gen_mip_levels: " << generate_mip_levels
+             << " name: " << dbg_name << '\n';
+
+    const auto data_size =
+        static_cast<vk::DeviceSize>(ktxTexture_GetDataSize(ktx_texture));
+    const auto* ktx_data = ktxTexture_GetData(ktx_texture);
+    if (data_size == 0 || ktx_data == nullptr)
+    {
+        throw std::runtime_error("empty ktx2 texture data! [" + path_str + "]");
+    }
+
+    vk::raii::Buffer       staging_buffer        = nullptr;
+    vk::raii::DeviceMemory staging_buffer_memory = nullptr;
+
+    r.create_buffer(data_size,
+                    vk::BufferUsageFlagBits::eTransferSrc,
+                    vk::MemoryPropertyFlagBits::eHostVisible |
+                        vk::MemoryPropertyFlagBits::eHostCoherent,
+                    staging_buffer,
+                    staging_buffer_memory);
+
+    void* data = staging_buffer_memory.mapMemory(0, data_size);
+    std::uninitialized_copy_n(
+        ktx_data, data_size, static_cast<std::uint8_t*>(data));
+    staging_buffer_memory.unmapMemory();
+
+    vk::ImageUsageFlags usage =
+        vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled;
+    if (need_generate)
+    {
+        usage |= vk::ImageUsageFlagBits::eTransferSrc;
+    }
+
+    std::tie(img, img_memory) =
+        r.create_image(base_width,
+                       base_height,
+                       vk_format,
+                       vk::ImageTiling::eOptimal,
+                       usage,
+                       vk::MemoryPropertyFlagBits::eDeviceLocal,
+                       mip_levels);
+
+    r.transition_image_layout(vk::ImageLayout::eUndefined,
+                              img,
+                              vk::ImageLayout::eTransferDstOptimal,
+                              mip_levels);
+
+    std::vector<vk::BufferImageCopy> regions;
+    regions.reserve(mip_levels);
+    for (std::uint8_t level = 0; level < mip_levels; ++level)
+    {
+        ktx_size_t level_offset = 0;
+        result =
+            ktxTexture_GetImageOffset(ktx_texture, level, 0, 0, &level_offset);
+        if (result != KTX_SUCCESS)
+        {
+            throw std::runtime_error("failed to get ktx2 level offset! [" +
+                                     path_str + "]: " + ktxErrorString(result));
+        }
+        const auto level_size = static_cast<vk::DeviceSize>(
+            ktxTexture_GetImageSize(ktx_texture, level));
+        if (level_offset + level_size > static_cast<ktx_size_t>(data_size))
+        {
+            throw std::runtime_error("corrupted ktx2 level data! [" + path_str +
+                                     "]");
+        }
+        const auto level_width  = std::max(base_width >> level, 1u);
+        const auto level_height = std::max(base_height >> level, 1u);
+        regions.push_back(vk::BufferImageCopy{
+            .bufferOffset      = level_offset,
+            .bufferRowLength   = 0,
+            .bufferImageHeight = 0,
+            .imageSubresource = { .aspectMask = vk::ImageAspectFlagBits::eColor,
+                                  .mipLevel   = level,
+                                  .baseArrayLayer = 0,
+                                  .layerCount     = 1 },
+            .imageOffset      = { .x = 0, .y = 0, .z = 0 },
+            .imageExtent      = {
+                .width = level_width, .height = level_height, .depth = 1 } });
+    }
+    r.copy_buffer_to_image_levels(staging_buffer, img, regions);
+
+    if (need_generate)
+    {
+        r.generate_mipmaps(img, vk_format, base_width, base_height, mip_levels);
+    }
+    else
+    {
+        r.transition_image_layout(vk::ImageLayout::eTransferDstOptimal,
+                                  img,
+                                  vk::ImageLayout::eShaderReadOnlyOptimal,
+                                  mip_levels);
+    }
+
+    img_view = r.create_image_view(
+        img, vk_format, vk::ImageAspectFlagBits::eColor, mip_levels);
+
+    create_sampler(r);
+}
+
+ktx_transcode_fmt_e image::pick_ktx_transcode_target(vk::Format format)
+{
+    switch (format)
+    {
+        case vk::Format::eBc7SrgbBlock:
+            return KTX_TTF_BC7_RGBA;
+        case vk::Format::eBc3SrgbBlock:
+            return KTX_TTF_BC3_RGBA;
+        case vk::Format::eBc1RgbaSrgbBlock:
+            return KTX_TTF_BC1_RGB;
+        case vk::Format::eAstc4x4SrgbBlock:
+            return KTX_TTF_ASTC_LDR_4x4_RGBA;
+        case vk::Format::eEtc2R8G8B8A8SrgbBlock:
+            return KTX_TTF_ETC2_RGBA;
+        default:
+            throw std::runtime_error("no ktx transcode target for format: " +
+                                     vk::to_string(format));
+    }
+}
+
+vk::Format image::transcode_target_to_vk_format(ktx_transcode_fmt_e target)
+{
+    switch (target)
+    {
+        case KTX_TTF_BC7_RGBA:
+            return vk::Format::eBc7SrgbBlock;
+        case KTX_TTF_BC3_RGBA:
+            return vk::Format::eBc3SrgbBlock;
+        case KTX_TTF_BC1_RGB:
+            return vk::Format::eBc1RgbaSrgbBlock;
+        case KTX_TTF_ASTC_LDR_4x4_RGBA:
+            return vk::Format::eAstc4x4SrgbBlock;
+        case KTX_TTF_ETC2_RGBA:
+            return vk::Format::eEtc2R8G8B8A8SrgbBlock;
+        case KTX_TTF_RGBA32:
+            return vk::Format::eR8G8B8A8Srgb;
+        default:
+            throw std::runtime_error("unknown ktx transcode target");
+    }
+}
+
+void image::create_sampler(render& r)
+{
+    vk::PhysicalDeviceProperties properties =
+        r.devices.physical.getProperties();
+
+    vk::SamplerCreateInfo sampler_info{
+        .magFilter               = vk::Filter::eLinear,
+        .minFilter               = vk::Filter::eLinear,
+        .mipmapMode              = vk::SamplerMipmapMode::eLinear,
+        .addressModeU            = vk::SamplerAddressMode::eRepeat,
+        .addressModeV            = vk::SamplerAddressMode::eRepeat,
+        .addressModeW            = vk::SamplerAddressMode::eRepeat,
+        .mipLodBias              = 0.0f,
+        .anisotropyEnable        = vk::True,
+        .maxAnisotropy           = properties.limits.maxSamplerAnisotropy,
+        .compareEnable           = vk::False,
+        .compareOp               = vk::CompareOp::eAlways,
+        .minLod                  = 0.0f,
+        .maxLod                  = vk::LodClampNone,
+        .borderColor             = vk::BorderColor::eIntOpaqueBlack,
+        .unnormalizedCoordinates = vk::False
+    };
+
+    img_sampler = vk::raii::Sampler(r.devices.logical, sampler_info);
 }
 
 void image::load_stb_image(render&               r,
@@ -4024,28 +4301,7 @@ void image::load_stb_image(render&               r,
                                    vk::ImageAspectFlagBits::eColor,
                                    mip_levels);
 
-    vk::PhysicalDeviceProperties properties =
-        r.devices.physical.getProperties();
-
-    vk::SamplerCreateInfo sampler_info{
-        .magFilter               = vk::Filter::eLinear,
-        .minFilter               = vk::Filter::eLinear,
-        .mipmapMode              = vk::SamplerMipmapMode::eLinear,
-        .addressModeU            = vk::SamplerAddressMode::eRepeat,
-        .addressModeV            = vk::SamplerAddressMode::eRepeat,
-        .addressModeW            = vk::SamplerAddressMode::eRepeat,
-        .mipLodBias              = 0.0f,
-        .anisotropyEnable        = vk::True,
-        .maxAnisotropy           = properties.limits.maxSamplerAnisotropy,
-        .compareEnable           = vk::False,
-        .compareOp               = vk::CompareOp::eAlways,
-        .minLod                  = 0.0f,
-        .maxLod                  = vk::LodClampNone,
-        .borderColor             = vk::BorderColor::eIntOpaqueBlack,
-        .unnormalizedCoordinates = vk::False
-    };
-
-    img_sampler = vk::raii::Sampler(r.devices.logical, sampler_info);
+    create_sampler(r);
 }
 
 uint32_t render::find_mem_type_index(
@@ -4338,6 +4594,18 @@ void render::copy_buffer_to_image(const vk::raii::Buffer& buffer,
 
     operation.copyBufferToImage(
         buffer, image, vk::ImageLayout::eTransferDstOptimal, { region });
+}
+
+void render::copy_buffer_to_image_levels(
+    const vk::raii::Buffer&              buffer,
+    vk::raii::Image&                     image,
+    std::span<const vk::BufferImageCopy> regions)
+{
+    one_time_submit operation(
+        devices.logical, transfer_command_pool, transfer_queue);
+
+    operation.copyBufferToImage(
+        buffer, image, vk::ImageLayout::eTransferDstOptimal, regions);
 }
 
 void render::copy_buffer(vk::raii::Buffer& src_buffer,
