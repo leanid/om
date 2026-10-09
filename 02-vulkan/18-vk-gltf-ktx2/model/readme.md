@@ -3,7 +3,7 @@
 2. convert from png like (add `--generate-mipmap` to embed the full mip
    chain - the renderer expects mip levels in the file):
 ```sh
-./deps/prebuilt/linux-clang21-x86_64/bin/ktx create --format R8G8B8A8_SRGB --encode basis-lz --assign-tf srgb --generate-mipmap 02-vulkan/18-vk-gltf-ktx2/model/viking_room.png 02-vulkan/18-vk-gltf-ktx2/model/viking_room.ktx2
+./deps/prebuilt/linux-clang23-x86_64/bin/ktx create --format R8G8B8A8_SRGB --encode basis-lz --assign-tf srgb --generate-mipmap 02-vulkan/18-vk-gltf-ktx2/model/viking_room.png 02-vulkan/18-vk-gltf-ktx2/model/viking_room.ktx2
 ktx create warning: No color primaries in PNG input file "02-vulkan/18-vk-gltf-ktx2/model/viking_room.png", defaulting to BT.709.
 ```
 3. --qlevel <1,255> - arg to change quality, default 128
