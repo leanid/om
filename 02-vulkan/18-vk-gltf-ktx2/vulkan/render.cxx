@@ -566,6 +566,8 @@ private:
     vk::Format find_supported_format(const std::vector<vk::Format>& candidates,
                                      vk::ImageTiling                tiling,
                                      vk::FormatFeatureFlags         features);
+    void       collect_supported_compressed_formats();
+    [[nodiscard]] std::vector<vk::Format> get_supported_compressed_formats() const;
 
     static uint32_t find_mem_type_index(
         uint32_t                           allowed_types,
@@ -697,6 +699,9 @@ private:
     vk::Format              swapchain_image_format{ vk::Format::eUndefined };
     vk::Extent2D            swapchain_image_extent{};
     vk::SampleCountFlagBits msaa_samples = vk::SampleCountFlagBits::e1;
+    // compressed texture formats supported by physical device,
+    // ordered from fastest/preferable to slowest
+    std::vector<vk::Format> supported_compressed_formats_;
 
     // sinchronization
     struct
@@ -2047,6 +2052,8 @@ void render::get_physical_device()
         get_max_usable_sample_count(); // vk::SampleCountFlagBits::e1;
 
     log << "msaa_samples: " << vk::to_string(msaa_samples) << '\n';
+
+    collect_supported_compressed_formats();
 }
 
 uint32_t render::get_graphics_queue_family_index(
@@ -3197,6 +3204,81 @@ vk::Format render::find_depth_format()
           vk::Format::eD24UnormS8Uint },
         vk::ImageTiling::eOptimal,
         vk::FormatFeatureFlagBits::eDepthStencilAttachment);
+}
+
+void render::collect_supported_compressed_formats()
+{
+    const vk::PhysicalDeviceFeatures features =
+        devices.physical.getFeatures();
+
+    auto is_sampled_supported = [this](vk::Format format)
+    {
+        const vk::FormatProperties props =
+            devices.physical.getFormatProperties(format);
+        return (props.optimalTilingFeatures &
+                vk::FormatFeatureFlagBits::eSampledImage) ==
+               vk::FormatFeatureFlagBits::eSampledImage;
+    };
+
+    // candidates ordered from fastest/preferable to slowest.
+    // desktop GPUs have native BC decoders, mobile GPUs - ASTC/ETC2.
+    std::vector<vk::Format> candidates;
+    if (features.textureCompressionBC != VK_FALSE)
+    {
+        candidates = { vk::Format::eBc7UnormBlock,
+                       vk::Format::eBc3UnormBlock,
+                       vk::Format::eBc1RgbaUnormBlock,
+                       vk::Format::eAstc4x4UnormBlock,
+                       vk::Format::eEtc2R8G8B8A8UnormBlock };
+    }
+    else
+    {
+        candidates = { vk::Format::eAstc4x4UnormBlock,
+                       vk::Format::eEtc2R8G8B8A8UnormBlock,
+                       vk::Format::eBc7UnormBlock,
+                       vk::Format::eBc3UnormBlock,
+                       vk::Format::eBc1RgbaUnormBlock };
+    }
+
+    supported_compressed_formats_.clear();
+    for (vk::Format format : candidates)
+    {
+        bool feature_present = false;
+        if (format == vk::Format::eBc7UnormBlock ||
+            format == vk::Format::eBc3UnormBlock ||
+            format == vk::Format::eBc1RgbaUnormBlock)
+        {
+            feature_present =
+                features.textureCompressionBC != VK_FALSE;
+        }
+        else if (format == vk::Format::eAstc4x4UnormBlock)
+        {
+            feature_present =
+                features.textureCompressionASTC_LDR != VK_FALSE;
+        }
+        else if (format == vk::Format::eEtc2R8G8B8A8UnormBlock)
+        {
+            feature_present =
+                features.textureCompressionETC2 != VK_FALSE;
+        }
+
+        if (feature_present && is_sampled_supported(format))
+        {
+            supported_compressed_formats_.push_back(format);
+        }
+    }
+
+    log << "supported compressed formats:";
+    for (vk::Format format : supported_compressed_formats_)
+    {
+        log << ' ' << vk::to_string(format);
+    }
+    log << '\n';
+}
+
+std::vector<vk::Format> render::get_supported_compressed_formats() const
+{
+    return supported_compressed_formats_;
 }
 
 void render::create_depth_resources()
