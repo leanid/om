@@ -3929,8 +3929,13 @@ void image::load_ktx2(render&               r,
     std::string path_str = path.generic_string();
 
     ktxTexture*    ktx_texture = nullptr;
-    KTX_error_code result      = ktxTexture_CreateFromNamedFile(
-        path_str.c_str(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &ktx_texture);
+    KTX_error_code result      = KTX_SUCCESS;
+    {
+        om::tools::report_duration duration{ om::cout, "ktx2 load file" };
+        result = ktxTexture_CreateFromNamedFile(path_str.c_str(),
+                                                KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT,
+                                                &ktx_texture);
+    }
     if (result != KTX_SUCCESS || ktx_texture == nullptr)
     {
         throw std::runtime_error("failed to load ktx2 texture image! [" +
@@ -3980,7 +3985,10 @@ void image::load_ktx2(render&               r,
                 continue;
             }
         }
-        result = ktxTexture2_TranscodeBasis(ktx2, target, 0);
+        {
+            om::tools::report_duration duration{ om::cout, "ktx2 transcode" };
+            result = ktxTexture2_TranscodeBasis(ktx2, target, 0);
+        }
         if (result != KTX_SUCCESS)
         {
             throw std::runtime_error("failed to transcode ktx2 texture! [" +
@@ -4041,8 +4049,10 @@ void image::load_ktx2(render&               r,
         throw std::runtime_error("empty ktx2 texture data! [" + path_str + "]");
     }
 
-    vk::raii::Buffer       staging_buffer        = nullptr;
-    vk::raii::DeviceMemory staging_buffer_memory = nullptr;
+    {
+        om::tools::report_duration duration{ om::cout, "ktx2 vulkan upload" };
+        vk::raii::Buffer       staging_buffer        = nullptr;
+        vk::raii::DeviceMemory staging_buffer_memory = nullptr;
 
     r.create_buffer(data_size,
                     vk::BufferUsageFlagBits::eTransferSrc,
@@ -4128,6 +4138,7 @@ void image::load_ktx2(render&               r,
         img, vk_format, vk::ImageAspectFlagBits::eColor, mip_levels);
 
     create_sampler(r);
+    }
 }
 
 ktx_transcode_fmt_e image::pick_ktx_transcode_target(vk::Format format)
