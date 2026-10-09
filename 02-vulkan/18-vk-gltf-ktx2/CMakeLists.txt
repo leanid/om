@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 4.0)
 
-project(18-vk-gltf-ktx2 CXX)
+project(18-vk-gltf-ktx2 CXX C)
 
 find_program(SLANGC_EXECUTABLE slangc HINTS "$ENV{VULKAN_SDK}/bin" REQUIRED)
 

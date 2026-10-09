@@ -32,6 +32,7 @@ target_link_libraries(
         vulkan::cppm
         glm::cppm
         stb::stb
+        KTX::ktx
         18-vk-gltf-ktx2-args
         18-vk-gltf-ktx2-log)
 target_include_directories(18-vk-gltf-ktx2-vulkan
