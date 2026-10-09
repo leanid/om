@@ -567,7 +567,8 @@ private:
                                      vk::ImageTiling                tiling,
                                      vk::FormatFeatureFlags         features);
     void       collect_supported_compressed_formats();
-    [[nodiscard]] std::vector<vk::Format> get_supported_compressed_formats() const;
+    [[nodiscard]] std::vector<vk::Format> get_supported_compressed_formats()
+        const;
 
     static uint32_t find_mem_type_index(
         uint32_t                           allowed_types,
@@ -3208,8 +3209,7 @@ vk::Format render::find_depth_format()
 
 void render::collect_supported_compressed_formats()
 {
-    const vk::PhysicalDeviceFeatures features =
-        devices.physical.getFeatures();
+    const vk::PhysicalDeviceFeatures features = devices.physical.getFeatures();
 
     auto is_sampled_supported = [this](vk::Format format)
     {
@@ -3248,18 +3248,15 @@ void render::collect_supported_compressed_formats()
             format == vk::Format::eBc3UnormBlock ||
             format == vk::Format::eBc1RgbaUnormBlock)
         {
-            feature_present =
-                features.textureCompressionBC != VK_FALSE;
+            feature_present = features.textureCompressionBC != VK_FALSE;
         }
         else if (format == vk::Format::eAstc4x4UnormBlock)
         {
-            feature_present =
-                features.textureCompressionASTC_LDR != VK_FALSE;
+            feature_present = features.textureCompressionASTC_LDR != VK_FALSE;
         }
         else if (format == vk::Format::eEtc2R8G8B8A8UnormBlock)
         {
-            feature_present =
-                features.textureCompressionETC2 != VK_FALSE;
+            feature_present = features.textureCompressionETC2 != VK_FALSE;
         }
 
         if (feature_present && is_sampled_supported(format))
