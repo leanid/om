@@ -170,8 +170,8 @@ int main_cant_throw(int argc, char** argv)
         // clang-format on
         om::vulkan::image image_mip_on(
             render,
-            "02-vulkan/18-vk-gltf-ktx2/model/viking_room.png",
-            "viking_room.png_on",
+            "02-vulkan/18-vk-gltf-ktx2/model/viking_room.6.255.ktx2",
+            "viking_room.ktx2_on",
             true);
         om::vulkan::image image_mip_off(
             render,

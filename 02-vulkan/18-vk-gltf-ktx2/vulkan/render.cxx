@@ -3233,36 +3233,36 @@ void render::collect_supported_compressed_formats()
     std::vector<vk::Format> candidates;
     if (features.textureCompressionBC != VK_FALSE)
     {
-        candidates = { vk::Format::eBc7UnormBlock,
-                       vk::Format::eBc3UnormBlock,
-                       vk::Format::eBc1RgbaUnormBlock,
-                       vk::Format::eAstc4x4UnormBlock,
-                       vk::Format::eEtc2R8G8B8A8UnormBlock };
+        candidates = { vk::Format::eBc7SrgbBlock,
+                       vk::Format::eBc3SrgbBlock,
+                       vk::Format::eBc1RgbaSrgbBlock,
+                       vk::Format::eAstc4x4SrgbBlock,
+                       vk::Format::eEtc2R8G8B8A8SrgbBlock };
     }
     else
     {
-        candidates = { vk::Format::eAstc4x4UnormBlock,
-                       vk::Format::eEtc2R8G8B8A8UnormBlock,
-                       vk::Format::eBc7UnormBlock,
-                       vk::Format::eBc3UnormBlock,
-                       vk::Format::eBc1RgbaUnormBlock };
+        candidates = { vk::Format::eAstc4x4SrgbBlock,
+                       vk::Format::eEtc2R8G8B8A8SrgbBlock,
+                       vk::Format::eBc7SrgbBlock,
+                       vk::Format::eBc3SrgbBlock,
+                       vk::Format::eBc1RgbaSrgbBlock };
     }
 
     supported_compressed_formats_.clear();
     for (vk::Format format : candidates)
     {
         bool feature_present = false;
-        if (format == vk::Format::eBc7UnormBlock ||
-            format == vk::Format::eBc3UnormBlock ||
-            format == vk::Format::eBc1RgbaUnormBlock)
+        if (format == vk::Format::eBc7SrgbBlock ||
+            format == vk::Format::eBc3SrgbBlock ||
+            format == vk::Format::eBc1RgbaSrgbBlock)
         {
             feature_present = features.textureCompressionBC != VK_FALSE;
         }
-        else if (format == vk::Format::eAstc4x4UnormBlock)
+        else if (format == vk::Format::eAstc4x4SrgbBlock)
         {
             feature_present = features.textureCompressionASTC_LDR != VK_FALSE;
         }
-        else if (format == vk::Format::eEtc2R8G8B8A8UnormBlock)
+        else if (format == vk::Format::eEtc2R8G8B8A8SrgbBlock)
         {
             feature_present = features.textureCompressionETC2 != VK_FALSE;
         }
