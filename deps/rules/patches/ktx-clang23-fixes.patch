@@ -1,0 +1,25 @@
+diff --git a/external/basis_universal/transcoder/basisu_containers_impl.h b/external/basis_universal/transcoder/basisu_containers_impl.h
+index 2ac1302..aae4dc6 100644
+--- a/external/basis_universal/transcoder/basisu_containers_impl.h
++++ b/external/basis_universal/transcoder/basisu_containers_impl.h
+@@ -3,6 +3,8 @@
+ 
+ #include <ctype.h>
+ 
++#include <exception>
++
+ #ifdef _MSC_VER
+ #pragma warning (disable:4127) // warning C4127: conditional expression is constant
+ #endif
+diff --git a/external/fmt/include/fmt/format.h b/external/fmt/include/fmt/format.h
+index 50e5714..544e249 100644
+--- a/external/fmt/include/fmt/format.h
++++ b/external/fmt/include/fmt/format.h
+@@ -44,6 +44,7 @@
+ #  include <cmath>    // std::signbit
+ #  include <cstddef>  // std::byte
+ #  include <cstdint>  // uint32_t
++#  include <cstdlib>  // std::malloc, std::free
+ #  include <cstring>  // std::memcpy
+ #  include <limits>   // std::numeric_limits
+ #  include <new>      // std::bad_alloc

@@ -460,11 +460,11 @@ externalproject_add(
     GIT_PROGRESS ON
     GIT_SHALLOW ON
     GIT_SUBMODULES ""
-    # fix clang 23 + libc++ build: basisu uses std::terminate
-    # without including <exception>
+    # fix clang 23 + libc++ build: basisu uses std::terminate without
+    # <exception>; vendored fmt uses malloc/free without <cstdlib>
     PATCH_COMMAND
         ${CMAKE_COMMAND}
-        -DPATCH_FILE=${CMAKE_CURRENT_SOURCE_DIR}/patches/ktx-basisu-exception.patch
+        -DPATCH_FILE=${CMAKE_CURRENT_SOURCE_DIR}/patches/ktx-clang23-fixes.patch
         -P ${CMAKE_CURRENT_SOURCE_DIR}/patches/git-apply-or-skip.cmake
     CMAKE_ARGS
         -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
