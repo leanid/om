@@ -244,6 +244,11 @@ Run adapter: lldb-dap
 :args ["-v" "-l"]
 :cwd "."
 ```
+3. add to you config:
+```elisp
+(after! dape
+  (add-hook 'dape-display-source-hook #'recenter))
+```
 ### How to visualize vertical wrap line?
 Doom emacs: `SPC+t+c` Fill Column indicator
 ### How to format text block in ORG mode?
