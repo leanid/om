@@ -4063,6 +4063,8 @@ void image::load_ktx2(render&               r,
                         staging_buffer_memory);
 
         void* data = staging_buffer_memory.mapMemory(0, data_size);
+        // ktx_data holds all mip levels stored in ktx2 file in one
+        // contiguous block, so single copy uploads them all at once.
         std::uninitialized_copy_n(
             ktx_data, data_size, static_cast<std::uint8_t*>(data));
         staging_buffer_memory.unmapMemory();
@@ -4089,8 +4091,12 @@ void image::load_ktx2(render&               r,
                                   mip_levels);
 
         std::vector<vk::BufferImageCopy> regions;
-        regions.reserve(mip_levels);
-        for (std::uint8_t level = 0; level < mip_levels; ++level)
+        // With need_generate staging holds only level 0, the rest is
+        // produced later by blits in generate_mipmaps.
+        const std::uint8_t num_copy_levels =
+            need_generate ? std::uint8_t{ 1 } : mip_levels;
+        regions.reserve(num_copy_levels);
+        for (std::uint8_t level = 0; level < num_copy_levels; ++level)
         {
             ktx_size_t level_offset = 0;
             result                  = ktxTexture_GetImageOffset(
