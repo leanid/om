@@ -128,7 +128,12 @@ export struct particle final
         };
     }
 
-    static std::array<vk::VertexInputAttributeDescription, 3>
+    // NB: no attribute for velocity (location 1): the particle vertex
+    // shader reads only position and color, velocity is used solely by
+    // the compute shader via the SSBO. Declaring an attribute the vertex
+    // shader does not consume triggers a validation performance warning
+    // in vkCreateGraphicsPipelines. Buffer stride stays sizeof(particle).
+    static std::array<vk::VertexInputAttributeDescription, 2>
     get_attribute_descriptions()
     {
         return {
@@ -137,12 +142,6 @@ export struct particle final
                 .binding  = 0,
                 .format   = vk::Format::eR32G32Sfloat,
                 .offset   = offsetof(particle, position),
-            },
-            vk::VertexInputAttributeDescription{
-                .location = 1,
-                .binding  = 0,
-                .format   = vk::Format::eR32G32Sfloat,
-                .offset   = offsetof(particle, velocity),
             },
             vk::VertexInputAttributeDescription{
                 .location = 2,
@@ -3191,7 +3190,7 @@ void render::create_particle_graphics_pipeline()
 
     vk::VertexInputBindingDescription binding_description =
         particle::get_binding_description();
-    std::array<vk::VertexInputAttributeDescription, 3> attribute_descriptions =
+    std::array<vk::VertexInputAttributeDescription, 2> attribute_descriptions =
         particle::get_attribute_descriptions();
 
     vk::PipelineVertexInputStateCreateInfo vertex_input_state_info =
