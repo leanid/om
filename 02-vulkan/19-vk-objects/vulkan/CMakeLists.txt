@@ -1,0 +1,40 @@
+add_library(19-vk-objects-args)
+target_sources(
+    19-vk-objects-args
+    PUBLIC FILE_SET
+           cxx_modules
+           TYPE
+           CXX_MODULES
+           BASE_DIRS
+           "${CMAKE_CURRENT_SOURCE_DIR}"
+           FILES
+           "${CMAKE_CURRENT_SOURCE_DIR}/args_parser.cxx")
+
+target_link_libraries(19-vk-objects-args PRIVATE Boost::program_options)
+
+add_library(19-vk-objects-vulkan STATIC)
+target_sources(
+    19-vk-objects-vulkan
+    PUBLIC FILE_SET
+           cxx_modules
+           TYPE
+           CXX_MODULES
+           BASE_DIRS
+           "${CMAKE_CURRENT_SOURCE_DIR}"
+           FILES
+           "${CMAKE_CURRENT_SOURCE_DIR}/render.cxx")
+
+target_link_libraries(
+    19-vk-objects-vulkan
+    PUBLIC
+        $<IF:$<CXX_COMPILER_ID:MSVC>,Boost::stacktrace_basic,Boost::stacktrace>
+        SDL3::SDL3-shared
+        vulkan::cppm
+        glm::cppm
+        stb::stb
+        KTX::ktx
+        19-vk-objects-args
+        19-vk-objects-log)
+target_include_directories(19-vk-objects-vulkan
+                           PRIVATE ${CMAKE_SOURCE_DIR}/support/cxx_lib/
+                                   "${Vulkan_INCLUDE_DIR}")
