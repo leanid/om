@@ -460,6 +460,21 @@ private:
     friend class object;
     friend class particles;
 
+    /// Range of particles assigned to one worker thread.
+    struct particle_group
+    {
+        std::uint32_t start_index = 0u;
+        std::uint32_t count       = 0u;
+    };
+
+    /// Push constants passed to the compute shader - must match
+    /// struct push_constants in shaders/compute.slang.
+    struct compute_push_constants
+    {
+        std::uint32_t start_index;
+        std::uint32_t count;
+    };
+
     class one_time_submit : public vk::raii::CommandBuffer
     {
     public:
@@ -595,7 +610,16 @@ private:
                          std::uint32_t            image_index);
     void record_compute_commands(vk::raii::CommandBuffer& cmd_buf,
                                  std::uint32_t            frame_index,
-                                 const particles&         parts);
+                                 const particles&         parts,
+                                 const particle_group&    group);
+
+    // multithreading: worker threads record compute command buffers for
+    // their own particle groups in parallel on the CPU
+    void init_compute_threads(const particles& parts);
+    void worker_thread_func(std::uint32_t thread_index);
+    void signal_threads_to_work();
+    void wait_for_threads_to_complete();
+    void stop_compute_threads() noexcept;
     void transition_image_layout(vk::raii::CommandBuffer& cmd_buf,
                                  vk::Image                image,
                                  vk::ImageLayout          old_layout,
@@ -748,18 +772,41 @@ private:
 
     // pools
     vk::raii::CommandPool    graphics_command_pool   = nullptr;
-    vk::raii::CommandPool    compute_command_pool    = nullptr;
     vk::raii::CommandPool    transfer_command_pool   = nullptr;
     vk::raii::DescriptorPool compute_descriptor_pool = nullptr;
+
+    // one command pool per worker thread: command pools must not be
+    // accessed concurrently, so each thread owns its pool and buffers
+    // ([thread][frame_in_flight]) and records without any locking
+    std::uint32_t                         compute_thread_count = 1u;
+    std::vector<vk::raii::CommandPool>    compute_thread_pools;
+    std::vector<vk::raii::CommandBuffers> compute_thread_cmd_buffers;
 
     static constexpr std::uint32_t max_frames_in_flight =
         3; // <= shapchain_images.size()
     static constexpr std::uint32_t compute_workgroup_size = 256u;
 
-    vk::raii::CommandBuffers command_buffers         = nullptr;
-    vk::raii::CommandBuffers compute_command_buffers = nullptr;
+    vk::raii::CommandBuffers command_buffers = nullptr;
 
     std::vector<vk::raii::DescriptorSet> compute_descriptor_sets;
+
+    // worker thread state (lesson: multithreaded command buffer recording)
+    // NB: std::deque, because std::atomic is not movable and std::vector
+    // relocates its elements on resize
+    std::vector<std::thread>      worker_threads;
+    std::atomic<bool>             should_exit{ false };
+    std::deque<std::atomic<bool>> thread_work_ready;
+    std::deque<std::atomic<bool>> thread_work_done;
+    std::mutex                    work_done_mutex;
+    std::condition_variable       work_done_cv;
+    std::vector<particle_group>   particle_groups;
+    bool                          threads_running = false;
+
+    // frame data handed from the main thread to the workers; written
+    // before thread_work_ready is set (release) and read after it is
+    // observed (acquire), so no extra locking is needed
+    std::uint32_t    work_frame_index = 0u;
+    const particles* work_parts       = nullptr;
 
     // vulkan utilities
     vk::Format              swapchain_image_format{ vk::Format::eUndefined };
@@ -1378,6 +1425,10 @@ render::render(platform_interface& platform, hints hints)
     , hints_{ hints }
     , queue_family{}
 {
+    // leave one core for the main thread (window events + presentation)
+    const std::uint32_t cores = std::thread::hardware_concurrency();
+    compute_thread_count      = cores > 1u ? cores - 1u : 1u;
+
     create_instance(hints.enable_validation_layers,
                     hints.enable_debug_callback_ext);
     create_debug_callback(hints.enable_debug_callback_ext);
@@ -1407,6 +1458,7 @@ render::~render()
 try
 {
     om::tools::report_duration duration{ log, "render::~render()" };
+    stop_compute_threads();
     {
         om::tools::report_duration duration{ log,
                                              "devices.logical.waitIdle()" };
@@ -1510,14 +1562,41 @@ void render::draw(const particles& parts, std::span<std::byte> compute_ubo)
         parts.update_uniform_buffer(current_frame, compute_ubo);
     }
 
+    // first draw call with actual particles - split them into groups and
+    // start the worker threads (thread count was fixed in the constructor)
+    if (!threads_running)
+    {
+        init_compute_threads(parts);
+    }
+
     const std::uint64_t compute_wait_value   = timeline_value;
     const std::uint64_t compute_signal_value = ++timeline_value;
     graphics_wait_value_                     = compute_signal_value;
     graphics_signal_value_                   = ++timeline_value;
 
-    auto& compute_cmd_buf = compute_command_buffers[current_frame];
-    compute_cmd_buf.reset();
-    record_compute_commands(compute_cmd_buf, current_frame, parts);
+    // hand the frame data to the workers, then signal them to start
+    // recording their compute command buffers in parallel
+    work_frame_index = current_frame;
+    work_parts       = &parts;
+    signal_threads_to_work();
+
+    // while the worker threads are busy recording on their own cores,
+    // record the particle graphics commands on the main thread
+    auto& cmd_buf = command_buffers[current_frame];
+    record_particle_commands(cmd_buf, current_frame, parts);
+    particles_drawn_ = true;
+
+    // all compute buffers must be fully recorded before the submit below
+    wait_for_threads_to_complete();
+
+    // collect the per-thread command buffers into one queue submission
+    std::vector<vk::CommandBuffer> compute_cmd_buffers;
+    compute_cmd_buffers.reserve(compute_thread_count);
+    for (std::uint32_t i = 0; i < compute_thread_count; ++i)
+    {
+        compute_cmd_buffers.push_back(
+            *compute_thread_cmd_buffers[i][current_frame]);
+    }
 
     vk::TimelineSemaphoreSubmitInfo compute_timeline_info{
         .waitSemaphoreValueCount   = 1u,
@@ -1531,22 +1610,19 @@ void render::draw(const particles& parts, std::span<std::byte> compute_ubo)
     };
 
     vk::SubmitInfo compute_submit_info{
-        .pNext                = &compute_timeline_info,
-        .waitSemaphoreCount   = 1u,
-        .pWaitSemaphores      = &*timeline_semaphore,
-        .pWaitDstStageMask    = compute_wait_stages,
-        .commandBufferCount   = 1u,
-        .pCommandBuffers      = &*compute_cmd_buf,
+        .pNext              = &compute_timeline_info,
+        .waitSemaphoreCount = 1u,
+        .pWaitSemaphores    = &*timeline_semaphore,
+        .pWaitDstStageMask  = compute_wait_stages,
+        .commandBufferCount =
+            static_cast<std::uint32_t>(compute_cmd_buffers.size()),
+        .pCommandBuffers      = compute_cmd_buffers.data(),
         .signalSemaphoreCount = 1u,
         .pSignalSemaphores    = &*timeline_semaphore,
     };
 
     compute_queue.submit(compute_submit_info,
                          *sync.compute_in_flight_fence[current_frame]);
-
-    auto& cmd_buf = command_buffers[current_frame];
-    record_particle_commands(cmd_buf, current_frame, parts);
-    particles_drawn_ = true;
 }
 
 void render::end_frame()
@@ -3147,9 +3223,18 @@ void render::create_compute_pipeline()
         .pName  = "comp_main",
     };
 
+    // each worker thread passes its particle range via push constants
+    vk::PushConstantRange push_constant_range{
+        .stageFlags = vk::ShaderStageFlagBits::eCompute,
+        .offset     = 0,
+        .size       = sizeof(compute_push_constants),
+    };
+
     vk::PipelineLayoutCreateInfo layout_info{
-        .setLayoutCount = 1,
-        .pSetLayouts    = &*compute_descriptor_set_layout,
+        .setLayoutCount         = 1,
+        .pSetLayouts            = &*compute_descriptor_set_layout,
+        .pushConstantRangeCount = 1,
+        .pPushConstantRanges    = &push_constant_range,
     };
     compute_pipeline_layout =
         vk::raii::PipelineLayout(devices.logical, layout_info);
@@ -3315,8 +3400,15 @@ void render::create_command_pool()
         .queueFamilyIndex = queue_family.index.graphics,
     };
 
-    compute_command_pool = vk::raii::CommandPool(devices.logical, info_compute);
-    set_object_name(*compute_command_pool, "om_compute_cmd_pool");
+    // one command pool per worker thread - no cross-thread synchronization
+    // is needed while recording because pools are never shared
+    compute_thread_pools.clear();
+    for (std::uint32_t i = 0; i < compute_thread_count; ++i)
+    {
+        compute_thread_pools.emplace_back(devices.logical, info_compute);
+        set_object_name(*compute_thread_pools.back(),
+                        "om_compute_cmd_pool_" + std::to_string(i));
+    }
 
     vk::CommandPoolCreateInfo info_transfer{
         .flags            = vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
@@ -3475,20 +3567,24 @@ void render::create_command_buffers()
 
 void render::create_compute_command_buffers()
 {
-    vk::CommandBufferAllocateInfo alloc_info{
-        .commandPool        = compute_command_pool,
-        .level              = vk::CommandBufferLevel::ePrimary,
-        .commandBufferCount = max_frames_in_flight,
-    };
-
-    compute_command_buffers.clear();
-    compute_command_buffers =
-        vk::raii::CommandBuffers(devices.logical, alloc_info);
-
-    for (uint32_t i = 0; auto& cmd_buf : compute_command_buffers)
+    // each worker thread gets max_frames_in_flight buffers from its own pool
+    compute_thread_cmd_buffers.clear();
+    for (std::uint32_t t = 0; t < compute_thread_count; ++t)
     {
-        set_object_name(*cmd_buf,
-                        "compute_command_buffer_" + std::to_string(i++));
+        vk::CommandBufferAllocateInfo alloc_info{
+            .commandPool        = compute_thread_pools[t],
+            .level              = vk::CommandBufferLevel::ePrimary,
+            .commandBufferCount = max_frames_in_flight,
+        };
+
+        compute_thread_cmd_buffers.emplace_back(devices.logical, alloc_info);
+
+        for (uint32_t i = 0; auto& cmd_buf : compute_thread_cmd_buffers.back())
+        {
+            set_object_name(*cmd_buf,
+                            "compute_command_buffer_" + std::to_string(t) +
+                                '_' + std::to_string(i++));
+        }
     }
 }
 
@@ -3510,7 +3606,8 @@ void render::create_timeline_semaphore()
 
 void render::record_compute_commands(vk::raii::CommandBuffer& cmd_buf,
                                      std::uint32_t            frame_index,
-                                     const particles&         parts)
+                                     const particles&         parts,
+                                     const particle_group&    group)
 {
     cmd_buf.begin({});
 
@@ -3521,11 +3618,23 @@ void render::record_compute_commands(vk::raii::CommandBuffer& cmd_buf,
                                *compute_descriptor_sets[frame_index],
                                nullptr);
 
-    const std::uint32_t particle_count = parts.get_count();
+    // tell the shader which particle range this thread is responsible for
+    const compute_push_constants push_constants{
+        .start_index = group.start_index,
+        .count       = group.count,
+    };
+    cmd_buf.pushConstants<compute_push_constants>(
+        *compute_pipeline_layout,
+        vk::ShaderStageFlagBits::eCompute,
+        0,
+        push_constants);
+
     const std::uint32_t group_count =
-        (particle_count + compute_workgroup_size - 1u) / compute_workgroup_size;
+        (group.count + compute_workgroup_size - 1u) / compute_workgroup_size;
     cmd_buf.dispatch(group_count, 1, 1);
 
+    // make this group's storage writes visible to the vertex attribute
+    // input stage (each thread's buffer covers its own disjoint range)
     const vk::BufferMemoryBarrier2 storage_barrier{
         .srcStageMask  = vk::PipelineStageFlagBits2::eComputeShader,
         .srcAccessMask = vk::AccessFlagBits2::eShaderStorageWrite,
@@ -3534,8 +3643,8 @@ void render::record_compute_commands(vk::raii::CommandBuffer& cmd_buf,
         .srcQueueFamilyIndex = vk::QueueFamilyIgnored,
         .dstQueueFamilyIndex = vk::QueueFamilyIgnored,
         .buffer              = parts.get_write_buffer(frame_index),
-        .offset              = 0,
-        .size                = sizeof(particle) * particle_count,
+        .offset              = sizeof(particle) * group.start_index,
+        .size                = sizeof(particle) * group.count,
     };
 
     const vk::DependencyInfo dependency_info{
@@ -3545,6 +3654,123 @@ void render::record_compute_commands(vk::raii::CommandBuffer& cmd_buf,
     cmd_buf.pipelineBarrier2(dependency_info);
 
     cmd_buf.end();
+}
+
+void render::init_compute_threads(const particles& parts)
+{
+    // divide the particles into groups, one for each worker thread
+    const std::uint32_t particle_count = parts.get_count();
+    const std::uint32_t particles_per_thread =
+        particle_count / compute_thread_count;
+
+    particle_groups.resize(compute_thread_count);
+    for (std::uint32_t i = 0; i < compute_thread_count; ++i)
+    {
+        particle_groups[i].start_index = i * particles_per_thread;
+        particle_groups[i].count =
+            (i == compute_thread_count - 1u)
+                ? (particle_count - i * particles_per_thread)
+                : particles_per_thread;
+    }
+
+    thread_work_ready.resize(compute_thread_count);
+    thread_work_done.resize(compute_thread_count);
+    for (std::uint32_t i = 0; i < compute_thread_count; ++i)
+    {
+        thread_work_ready[i] = false;
+        thread_work_done[i]  = true;
+    }
+
+    // start the worker threads
+    for (std::uint32_t i = 0; i < compute_thread_count; ++i)
+    {
+        worker_threads.emplace_back(&render::worker_thread_func, this, i);
+    }
+
+    threads_running = true;
+
+    log << "started " << compute_thread_count << " compute worker threads ("
+        << particle_count << " particles)\n";
+}
+
+void render::worker_thread_func(std::uint32_t thread_index)
+{
+    auto& work_ready = thread_work_ready[thread_index];
+    auto& work_done  = thread_work_done[thread_index];
+
+    while (!should_exit.load(std::memory_order_acquire))
+    {
+        // wait for work to be ready
+        if (!work_ready.load(std::memory_order_acquire))
+        {
+            std::this_thread::yield();
+            continue;
+        }
+
+        // record the compute commands for this thread's particle group
+        auto& cmd_buf =
+            compute_thread_cmd_buffers[thread_index][work_frame_index];
+        cmd_buf.reset();
+        record_compute_commands(cmd_buf,
+                                work_frame_index,
+                                *work_parts,
+                                particle_groups[thread_index]);
+
+        // mark work as done and notify the main thread;
+        // NB: work_ready is cleared BEFORE work_done is set - otherwise
+        // the main thread could signal the next frame (work_ready=true)
+        // in between and this store would erase that signal (deadlock)
+        work_ready.store(false, std::memory_order_release);
+        {
+            // done-flag and the waiter's predicate check are serialized
+            // by the same mutex - this excludes a lost wakeup between
+            // the predicate check and the actual sleep
+            std::lock_guard<std::mutex> lock(work_done_mutex);
+            work_done.store(true, std::memory_order_release);
+        }
+        work_done_cv.notify_one();
+    }
+}
+
+void render::signal_threads_to_work()
+{
+    for (std::uint32_t i = 0; i < compute_thread_count; ++i)
+    {
+        thread_work_done[i].store(false, std::memory_order_relaxed);
+        thread_work_ready[i].store(true, std::memory_order_release);
+    }
+}
+
+void render::wait_for_threads_to_complete()
+{
+    std::unique_lock<std::mutex> lock(work_done_mutex);
+    work_done_cv.wait(
+        lock,
+        [this]()
+        {
+            for (std::uint32_t i = 0; i < compute_thread_count; ++i)
+            {
+                if (!thread_work_done[i].load(std::memory_order_acquire))
+                {
+                    return false;
+                }
+            }
+            return true;
+        });
+}
+
+void render::stop_compute_threads() noexcept
+{
+    should_exit.store(true, std::memory_order_release);
+    for (auto& thread : worker_threads)
+    {
+        if (thread.joinable())
+        {
+            thread.join();
+        }
+    }
+    worker_threads.clear();
+    threads_running = false;
 }
 
 void render::begin_render_pass(vk::raii::CommandBuffer& cmd_buf,
