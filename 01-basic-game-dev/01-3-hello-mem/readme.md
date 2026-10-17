@@ -14,6 +14,6 @@
 cmake --build build/ninja-llvm --config Debug \
     --target 01-3-mem-layout 01-3-hello-mem 01-3-mem-libs-static \
     01-3-mem-libs-shared 01-3-mem-libs-dlopen
-ctest --test-dir build/ninja-llvm -R "mem_layout|hello_mem|mem_libs" \
+ctest --test-dir build/ninja-llvm -C Debug -R "mem_layout|hello_mem|mem_libs" \
     --output-on-failure
 ```

@@ -1,5 +1,6 @@
 #include "greedy_lib.hxx"
 
+#include <array>
 #include <cstdlib>
 
 #include <sys/mman.h>
@@ -8,8 +9,8 @@ namespace
 {
 
 // Статический пул: живёт в .bss библиотеки, куча не нужна.
-char        g_pool[1024 * 1024];
-std::size_t g_pool_used = 0;
+std::array<char, 1024ul * 1024ul> g_pool;
+std::size_t                       g_pool_used = 0;
 
 } // namespace
 
@@ -36,11 +37,11 @@ void* greedy_mmap(std::size_t bytes)
 
 char* greedy_pool(std::size_t bytes)
 {
-    if (bytes > sizeof(g_pool) - g_pool_used)
+    if (bytes > g_pool.size() - g_pool_used)
     {
         return nullptr;
     }
-    char* p = g_pool + g_pool_used;
+    char* p = g_pool.data() + g_pool_used;
     g_pool_used += bytes;
     return p;
 }
