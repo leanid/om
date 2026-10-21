@@ -248,6 +248,10 @@ Run adapter: lldb-dap
 ```elisp
 (after! dape
   (add-hook 'dape-display-source-hook #'recenter))
+;; For a more ergonomic Emacs and `dape' experience
+(use-package repeat
+  :custom
+  (repeat-mode +1))
 ```
 ### How to visualize vertical wrap line?
 Doom emacs: `SPC+t+c` Fill Column indicator
