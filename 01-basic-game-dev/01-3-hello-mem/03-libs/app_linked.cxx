@@ -20,8 +20,10 @@ int main()
     om::print_maps_containing(om::snapshot_maps(0), "greedy");
 
     om::print("-- четыре способа выделить память внутри библиотеки:\n");
-    om::run_allocation_demos(
-        { &greedy_new, &greedy_malloc, &greedy_mmap, &greedy_pool });
+    om::run_allocation_demos({ .do_new    = &greedy_new,
+                               .do_malloc = &greedy_malloc,
+                               .do_mmap   = &greedy_mmap,
+                               .do_pool   = &greedy_pool });
 
     om::print("=== done ===\n");
     return 0;
