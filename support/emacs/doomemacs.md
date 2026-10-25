@@ -235,6 +235,12 @@ export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:\
 /home/leo/LLVM-21.1.1-Linux-X64/lib/x86_64-unknown-linux-gnu"
 ```
 6. now both g++ and clang++ works on same machine
+7. Simple solution: ```sudo ln -s /usr/lib64/gcc/x86_64-alt-linux /usr/lib64/gcc/x86_64-linux-gnu```
+8. And add systemd rule for `$LD_LIBRARY_PATH` only for your `$USER`
+```sh
+ cat ~/.config/environment.d/10-llvm.conf
+LD_LIBRARY_PATH="$HOME/llvm-23.1.4/lib/x86_64-unknown-linux-gnu:${LD_LIBRARY_PATH}"
+```
 ### How to debug using Dape in C++
 1. ```SPC+d+d```
 2. put all your params and args in minibufer like:
