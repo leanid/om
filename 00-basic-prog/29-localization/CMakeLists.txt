@@ -3,8 +3,8 @@ cmake_minimum_required(VERSION 3.31)
 project(29-localization CXX)
 
 find_package(
-    Boost 1.91.0 # should match version in root CMakeLists.txt
-    EXACT # Minimum or EXACT version e.g. 1.67.0
+    Boost # should match version in root CMakeLists.txt
+    # EXACT # Minimum or EXACT version e.g. 1.67.0
     # REQUIRED # Fail with error if Boost is not found
     COMPONENTS locale algorithm range # Boost libraries by their canonical name
     # REQUIRED

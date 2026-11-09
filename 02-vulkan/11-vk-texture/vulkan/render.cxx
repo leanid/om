@@ -694,7 +694,7 @@ debug_callback(vk::DebugUtilsMessageSeverityFlagBitsEXT      severity,
     return vk::False; // VK_FALSE;
 }
 
-static std::string version_to_string(uint32_t apiVersion)
+export std::string version_to_string(uint32_t apiVersion)
 {
     std::stringstream version;
     version << vk::versionMajor(apiVersion) << '.'
@@ -991,10 +991,11 @@ void render::validate_instance_layers_present(
                           });
     for (auto const& required_layer : required_layers)
     {
-        if (std::ranges::none_of(
-                available_layers,
-                [required_layer](auto const& layer_property)
-                { return layer_property.layerName.data() == required_layer; }))
+        if (std::ranges::none_of(available_layers,
+                                 [required_layer](auto const& layer_property) {
+                                     return layer_property.layerName.data() ==
+                                            required_layer;
+                                 }))
         {
             log << "see: support/vulkan/install.md how to install validation "
                    "layer\n";
@@ -1045,8 +1046,7 @@ bool render::check_device_suitable(const vk::PhysicalDevice& physical)
         {
             return std::ranges::any_of(
                 available_extensions,
-                [&](const auto& available_extension)
-                {
+                [&](const auto& available_extension) {
                     return available_extension.extensionName.data() ==
                            required_extension;
                 });
