@@ -248,7 +248,7 @@ externalproject_add(
 externalproject_add(
     zlib
     GIT_REPOSITORY https://github.com/madler/zlib.git
-    GIT_TAG v1.3.1
+    GIT_TAG v1.4
     GIT_PROGRESS ON
     GIT_SHALLOW ON
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
