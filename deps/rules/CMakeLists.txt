@@ -4,7 +4,7 @@ project(prebuilt_dependencies C CXX)
 
 get_filename_component(cmake_custom_pkg_dir "${CMAKE_SOURCE_DIR}/../../cmake"
                        ABSOLUTE)
-list(APPEND CMAKE_PREFIX_PATH ${cmake_custom_pkg_dir})
+list(PREPEND CMAKE_PREFIX_PATH ${cmake_custom_pkg_dir})
 message(STATUS "CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}")
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Android")
@@ -48,7 +48,6 @@ externalproject_add(
         -DCMAKE_INSTALL_LIBDIR=lib
         -DCMAKE_PREFIX_PATH=${CMAKE_INSTALL_PREFIX}
         -DCMAKE_BUILD_TYPE=RelWithDebInfo
-        -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
         -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}
         -DCMAKE_POSITION_INDEPENDENT_CODE=ON
         -DCMAKE_LINKER_TYPE=${CMAKE_LINKER_TYPE}
@@ -94,8 +93,7 @@ externalproject_add(
         -DREDIS_PLUS_PLUS_BUILD_STATIC=ON
         -DREDIS_PLUS_PLUS_BUILD_STATIC_WITH_PIC=ON
         -DREDIS_PLUS_PLUS_BUILD_TEST=OFF
-        -DREDIS_PLUS_PLUS_BUILD_ASYNC_TEST=OFF
-        -DREDIS_PLUS_PLUS_BUILD_MOCK=OFF)
+        -DREDIS_PLUS_PLUS_BUILD_ASYNC_TEST=OFF)
 
 externalproject_add(
     microsoft_gsl
@@ -105,6 +103,7 @@ externalproject_add(
     GIT_SHALLOW ON
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
                -DCMAKE_INSTALL_LIBDIR=lib
+               -DCMAKE_PREFIX_PATH=${CMAKE_INSTALL_PREFIX}
                -DCMAKE_BUILD_TYPE=RelWithDebInfo
                -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
                -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}
@@ -115,7 +114,7 @@ externalproject_add(
                -DCMAKE_LINKER_TYPE=${CMAKE_LINKER_TYPE}
                -DCMAKE_EXE_LINKER_FLAGS=${CMAKE_EXE_LINKER_FLAGS}
                -DCMAKE_SHARED_LINKER_FLAGS=${CMAKE_SHARED_LINKER_FLAGS}
-               -DGSL_CXX_STANDARD:STRING=c++23
+               -DGSL_CXX_STANDARD:STRING=23
                -DGSL_INSTALL=ON
                -DGSL_TEST:STRING=OFF)
 
@@ -125,9 +124,12 @@ externalproject_add(
     Catch2
     GIT_REPOSITORY https://github.com/catchorg/Catch2.git
     GIT_TAG v3.8.1
+    GIT_PROGRESS ON
+    GIT_SHALLOW ON
     # Передаем префикс установки вашего основного проекта во внешний
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
                -DCMAKE_INSTALL_LIBDIR=lib
+               -DCMAKE_PREFIX_PATH=${CMAKE_INSTALL_PREFIX}
                -DCMAKE_BUILD_TYPE=RelWithDebInfo
                -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
                -DCMAKE_CXX_STANDARD=23
@@ -138,9 +140,9 @@ externalproject_add(
                -DCMAKE_EXE_LINKER_FLAGS=${CMAKE_EXE_LINKER_FLAGS}
                -DCMAKE_SHARED_LINKER_FLAGS=${CMAKE_SHARED_LINKER_FLAGS}
                -DCATCH_INSTALL_DOCS=OFF
-               -DCATCH_INSTALL_EXTRAS=OFF
+               -DCATCH_INSTALL_EXTRAS=ON
                -DCATCH_DEVELOPMENT_BUILD=OFF
-               -DCATCH_ENABLE_REPRODUCIBLE_BUILD=OFF)
+               -DCATCH_ENABLE_REPRODUCIBLE_BUILD=ON)
 # install SDL3 dependencies from:
 # https://wiki.libsdl.org/SDL3/README-linux#build-dependencies
 externalproject_add(
@@ -152,8 +154,9 @@ externalproject_add(
     CMAKE_ARGS
         -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
         -DCMAKE_INSTALL_LIBDIR=lib
+        -DCMAKE_PREFIX_PATH=${CMAKE_INSTALL_PREFIX}
         -DCMAKE_BUILD_TYPE=RelWithDebInfo
-        -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
+        -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}
         -DCMAKE_POSITION_INDEPENDENT_CODE=ON
         -DCMAKE_LINKER_TYPE=${CMAKE_LINKER_TYPE}
         -DCMAKE_EXE_LINKER_FLAGS=${CMAKE_EXE_LINKER_FLAGS}
@@ -164,28 +167,31 @@ externalproject_add(
         -DSDL_TESTS=OFF
         -DSDL_TEST_LIBRARY=OFF
         -DSDL_INSTALL_DOCS=OFF)
+
 externalproject_add(
     glm
     GIT_REPOSITORY https://github.com/g-truc/glm.git
     GIT_TAG 1.0.3
     GIT_SHALLOW ON
     GIT_PROGRESS ON
-    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
-               -DCMAKE_INSTALL_LIBDIR=lib
-               -DCMAKE_BUILD_TYPE=RelWithDebInfo
-               -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
-               -DCMAKE_CXX_STANDARD=23
-               -DCMAKE_CXX_STANDARD_REQUIRED=ON
-               -DCMAKE_CXX_EXTENSIONS=OFF
-               -DCMAKE_POSITION_INDEPENDENT_CODE=ON
-               -DCMAKE_LINKER_TYPE=${CMAKE_LINKER_TYPE}
-               -DCMAKE_EXE_LINKER_FLAGS=${CMAKE_EXE_LINKER_FLAGS}
-               -DCMAKE_SHARED_LINKER_FLAGS=${CMAKE_SHARED_LINKER_FLAGS}
-               -DGLM_BUILD_TESTS=OFF
-               -DGLM_ENABLE_FAST_MATH=ON
-               -DGLM_ENABLE_CXX_20=ON
-               -DGLM_ENABLE_LANG_EXTENSIONS=OFF
-               -DGLM_BUILD_LIBRARY=ON # static/dynamic
+    CMAKE_ARGS
+        -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+        -DCMAKE_INSTALL_LIBDIR=lib
+        -DCMAKE_PREFIX_PATH=${CMAKE_INSTALL_PREFIX}
+        -DCMAKE_BUILD_TYPE=RelWithDebInfo
+        -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
+        -DCMAKE_CXX_STANDARD=23
+        -DCMAKE_CXX_STANDARD_REQUIRED=ON
+        -DCMAKE_CXX_EXTENSIONS=OFF
+        -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+        -DCMAKE_LINKER_TYPE=${CMAKE_LINKER_TYPE}
+        -DCMAKE_EXE_LINKER_FLAGS=${CMAKE_EXE_LINKER_FLAGS}
+        -DCMAKE_SHARED_LINKER_FLAGS=${CMAKE_SHARED_LINKER_FLAGS}
+        -DGLM_BUILD_TESTS=OFF
+        -DGLM_ENABLE_FAST_MATH=OFF # нет необходимости реальной, только риски, нужно доказать, что это помогает
+        -DGLM_ENABLE_CXX_20=OFF
+        -DGLM_ENABLE_LANG_EXTENSIONS=OFF
+        -DGLM_BUILD_LIBRARY=OFF # static/dynamic
     )
 externalproject_add(
     googletest
@@ -195,6 +201,7 @@ externalproject_add(
     GIT_SHALLOW ON
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
                -DCMAKE_INSTALL_LIBDIR=lib
+               -DCMAKE_PREFIX_PATH=${CMAKE_INSTALL_PREFIX}
                -DCMAKE_BUILD_TYPE=RelWithDebInfo
                -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
                -DCMAKE_CXX_STANDARD=23
@@ -204,14 +211,16 @@ externalproject_add(
                -DCMAKE_LINKER_TYPE=${CMAKE_LINKER_TYPE}
                -DCMAKE_EXE_LINKER_FLAGS=${CMAKE_EXE_LINKER_FLAGS}
                -DCMAKE_SHARED_LINKER_FLAGS=${CMAKE_SHARED_LINKER_FLAGS})
+
 externalproject_add(
     doctest
     GIT_REPOSITORY https://github.com/doctest/doctest.git
-    GIT_TAG v2.4.12
+    GIT_TAG v2.5.3
     GIT_PROGRESS ON
     GIT_SHALLOW ON
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
                -DCMAKE_INSTALL_LIBDIR=lib
+               -DCMAKE_PREFIX_PATH=${CMAKE_INSTALL_PREFIX}
                -DCMAKE_BUILD_TYPE=RelWithDebInfo
                -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
                -DCMAKE_CXX_STANDARD=23
@@ -222,9 +231,10 @@ externalproject_add(
                -DCMAKE_EXE_LINKER_FLAGS=${CMAKE_EXE_LINKER_FLAGS}
                -DCMAKE_SHARED_LINKER_FLAGS=${CMAKE_SHARED_LINKER_FLAGS}
                -DDOCTEST_WITH_TESTS=OFF
-               -DDOCTEST_WITH_MAIN_IN_STATIC_LIB=ON
+               # -DDOCTEST_WITH_MAIN_IN_STATIC_LIB=ON
                -DDOCTEST_NO_INSTALL=OFF
                -DDOCTEST_USE_STD_HEADERS=ON)
+
 externalproject_add(
     trompeloeil
     GIT_REPOSITORY https://github.com/rollbear/trompeloeil.git
@@ -233,6 +243,7 @@ externalproject_add(
     GIT_SHALLOW ON
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
                -DCMAKE_INSTALL_LIBDIR=lib
+               -DCMAKE_PREFIX_PATH=${CMAKE_INSTALL_PREFIX}
                -DCMAKE_BUILD_TYPE=RelWithDebInfo
                -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
                -DCMAKE_CXX_STANDARD=23
@@ -252,9 +263,9 @@ externalproject_add(
     GIT_PROGRESS ON
     GIT_SHALLOW ON
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+               -DCMAKE_PREFIX_PATH=${CMAKE_INSTALL_PREFIX}
                -DCMAKE_INSTALL_LIBDIR=lib
                -DCMAKE_BUILD_TYPE=RelWithDebInfo
-               -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
                -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}
                -DCMAKE_POSITION_INDEPENDENT_CODE=ON
                -DCMAKE_LINKER_TYPE=${CMAKE_LINKER_TYPE}
@@ -267,12 +278,13 @@ externalproject_add(
 externalproject_add(
     Boost
     GIT_REPOSITORY https://github.com/boostorg/boost.git
-    GIT_TAG boost-1.91.0
+    GIT_TAG boost-1.92.0
     GIT_PROGRESS ON
     GIT_SHALLOW ON
     DEPENDS zlib
     CMAKE_ARGS
         -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+        -DCMAKE_PREFIX_PATH=${CMAKE_INSTALL_PREFIX}
         -DCMAKE_INSTALL_LIBDIR=lib
         -DCMAKE_BUILD_TYPE=RelWithDebInfo
         -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS} # -Wno-unused-command-line-argument
@@ -305,6 +317,7 @@ externalproject_add(
         -P ${CMAKE_CURRENT_SOURCE_DIR}/patches/git-apply-or-skip.cmake
     DEPENDS zlib
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+               -DCMAKE_PREFIX_PATH=${CMAKE_INSTALL_PREFIX}
                -DCMAKE_INSTALL_LIBDIR=lib
                -DCMAKE_BUILD_TYPE=RelWithDebInfo
                -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
@@ -330,6 +343,7 @@ externalproject_add(
     GIT_PROGRESS ON
     GIT_SHALLOW ON
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+               -DCMAKE_PREFIX_PATH=${CMAKE_INSTALL_PREFIX}
                -DCMAKE_INSTALL_LIBDIR=lib
                -DCMAKE_BUILD_TYPE=RelWithDebInfo
                -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
@@ -358,6 +372,7 @@ externalproject_add(
     stb
     GIT_REPOSITORY https://github.com/nothings/stb.git
     # only master branch exist no tags to specify
+    GIT_TAG 4e9b368bfc071e97206ea5c6adba68dd0cbf8897
     GIT_PROGRESS ON
     GIT_SHALLOW ON
     CONFIGURE_COMMAND ""
@@ -381,6 +396,7 @@ externalproject_add(
     GIT_PROGRESS ON
     GIT_SHALLOW ON
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+               -DCMAKE_PREFIX_PATH=${CMAKE_INSTALL_PREFIX}
                -DCMAKE_INSTALL_LIBDIR=lib
                -DCMAKE_BUILD_TYPE=RelWithDebInfo
                -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
@@ -401,6 +417,7 @@ externalproject_add(
     GIT_PROGRESS ON
     GIT_SHALLOW ON
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+               -DCMAKE_PREFIX_PATH=${CMAKE_INSTALL_PREFIX}
                -DCMAKE_INSTALL_LIBDIR=lib
                -DCMAKE_BUILD_TYPE=RelWithDebInfo
                -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
@@ -422,6 +439,7 @@ externalproject_add(
     GIT_PROGRESS ON
     GIT_SHALLOW ON
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+               -DCMAKE_PREFIX_PATH=${CMAKE_INSTALL_PREFIX}
                -DCMAKE_INSTALL_LIBDIR=lib
                -DCMAKE_BUILD_TYPE=RelWithDebInfo
                -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
@@ -468,6 +486,7 @@ externalproject_add(
         -P ${CMAKE_CURRENT_SOURCE_DIR}/patches/git-apply-or-skip.cmake
     CMAKE_ARGS
         -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+        -DCMAKE_PREFIX_PATH=${CMAKE_INSTALL_PREFIX}
         -DCMAKE_INSTALL_LIBDIR=lib
         -DCMAKE_BUILD_TYPE=RelWithDebInfo
         -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}\ -Wno-deprecated-this-capture
