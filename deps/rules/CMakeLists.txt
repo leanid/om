@@ -281,6 +281,15 @@ externalproject_add(
     GIT_TAG boost-1.92.0
     GIT_PROGRESS ON
     GIT_SHALLOW ON
+    # fix boost-1.92.0 + CMake >= 4.5 (boostorg/boost#1162): Boost.Locale's
+    # source_group(TREE) fails on the top-level locale.hpp header.
+    # Backport of the upstream fix (boostorg/locale 1d07074 + f51b58c).
+    # NOTE: the file lives in the libs/locale git submodule -> apply there.
+    # REMOVE this patch when updating to boost >= 1.93 - fixed upstream.
+    PATCH_COMMAND
+        ${CMAKE_COMMAND} -E chdir libs/locale ${CMAKE_COMMAND}
+        -DPATCH_FILE=${CMAKE_CURRENT_SOURCE_DIR}/patches/boost-locale-source-group.patch
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/patches/git-apply-or-skip.cmake
     DEPENDS zlib
     CMAKE_ARGS
         -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
@@ -377,9 +386,12 @@ externalproject_add(
     stb
     GIT_REPOSITORY https://github.com/nothings/stb.git
     # only master branch exist no tags to specify
+    # NOTE: no GIT_SHALLOW here - with a pinned commit hash it clones only
+    # branch tips (--depth 1), so the pinned commit becomes unavailable as
+    # soon as master moves forward ("unable to read tree"). The full stb
+    # clone is ~1.5 MB anyway.
     GIT_TAG 4e9b368bfc071e97206ea5c6adba68dd0cbf8897
     GIT_PROGRESS ON
-    GIT_SHALLOW ON
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ""
     INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${stb_include_dir}
