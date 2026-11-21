@@ -742,7 +742,7 @@ debug_callback(vk::DebugUtilsMessageSeverityFlagBitsEXT      severity,
     return vk::False; // VK_FALSE;
 }
 
-static std::string version_to_string(uint32_t apiVersion)
+export std::string version_to_string(uint32_t apiVersion)
 {
     std::stringstream version;
     version << vk::versionMajor(apiVersion) << '.'
@@ -1679,7 +1679,7 @@ void render::create_logical_device()
 
     uint32_t queue_index = 0; // Because we’re only creating a single queue from
                               // this family, we’ll simply use index 0
-    graphics_queue = vk::raii::Queue(
+    graphics_queue       = vk::raii::Queue(
         devices.logical, queue_family.index.graphics, queue_index);
     log << "got graphics queue\n";
     set_object_name(*graphics_queue, "graphics_queue");
@@ -2518,9 +2518,9 @@ void render::create_descriptor_sets(const image& image)
     std::vector<vk::DescriptorSetLayout> layouts(max_frames_in_flight,
                                                  *descriptor_set_layout);
     vk::DescriptorSetAllocateInfo        alloc_info{
-               .descriptorPool     = descriptor_pool,
-               .descriptorSetCount = static_cast<uint32_t>(layouts.size()),
-               .pSetLayouts        = layouts.data()
+        .descriptorPool     = descriptor_pool,
+        .descriptorSetCount = static_cast<uint32_t>(layouts.size()),
+        .pSetLayouts        = layouts.data()
     };
 
     descriptor_sets.clear();
@@ -2532,9 +2532,9 @@ void render::create_descriptor_sets(const image& image)
                                               .offset = 0,
                                               .range  = sizeof(glm::mat4) * 3 };
         vk::DescriptorImageInfo  image_info{
-             .sampler     = image.img_sampler, // texture_sampler,
-             .imageView   = image.img_view,    // texture_image_view,
-             .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal
+            .sampler     = image.img_sampler, // texture_sampler,
+            .imageView   = image.img_view,    // texture_image_view,
+            .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal
         };
 
         vk::WriteDescriptorSet ubo_descriptor_write{
@@ -2584,8 +2584,8 @@ vk::Extent2D render::choose_best_swapchain_image_resolution(
         << buffer_size.width << 'x' << buffer_size.height << std::endl;
 
     return { .width  = std::clamp(extent.width,
-                                 capabilities.minImageExtent.width,
-                                 capabilities.maxImageExtent.width),
+                                  capabilities.minImageExtent.width,
+                                  capabilities.maxImageExtent.width),
              .height = std::clamp(extent.height,
                                   capabilities.minImageExtent.height,
                                   capabilities.maxImageExtent.height) };
@@ -3046,12 +3046,12 @@ void render::generate_mipmaps(vk::raii::Image& image,
 
         vk::ArrayWrapper1D<vk::Offset3D, 2> offsets;
         vk::ArrayWrapper1D<vk::Offset3D, 2> dstOffsets;
-        offsets[0]    = vk::Offset3D(0, 0, 0);
-        offsets[1]    = vk::Offset3D(mip_width, mip_height, 1);
-        dstOffsets[0] = vk::Offset3D(0, 0, 0);
-        dstOffsets[1] = vk::Offset3D(mip_width > 1 ? mip_width / 2 : 1,
-                                     mip_height > 1 ? mip_height / 2 : 1,
-                                     1);
+        offsets[0]         = vk::Offset3D(0, 0, 0);
+        offsets[1]         = vk::Offset3D(mip_width, mip_height, 1);
+        dstOffsets[0]      = vk::Offset3D(0, 0, 0);
+        dstOffsets[1]      = vk::Offset3D(mip_width > 1 ? mip_width / 2 : 1,
+                                          mip_height > 1 ? mip_height / 2 : 1,
+                                          1);
         vk::ImageBlit blit = {
             .srcSubresource = { .aspectMask = vk::ImageAspectFlagBits::eColor,
                                 .mipLevel   = i - 1,

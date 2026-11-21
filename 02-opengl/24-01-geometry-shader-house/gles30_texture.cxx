@@ -132,19 +132,18 @@ texture::texture(const std::filesystem::path& path,
 static std::string join_strings_with_spaces(
     const std::array<std::filesystem::path, 6>& faces)
 {
-    std::string result;
-    std::accumulate(begin(faces),
-                    end(faces),
-                    result,
-                    [](std::string result, const std::filesystem::path& p)
-                    {
-                        if (!result.empty())
-                        {
-                            result.push_back(' ');
-                        }
-                        return result += p.string();
-                    });
-    return result;
+    return std::accumulate(
+        begin(faces),
+        end(faces),
+        std::string{},
+        [](std::string result, const std::filesystem::path& p)
+        {
+            if (!result.empty())
+            {
+                result.push_back(' ');
+            }
+            return result += p.string();
+        });
 }
 
 texture::texture(const std::array<std::filesystem::path, 6>& faces,

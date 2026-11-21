@@ -318,6 +318,11 @@ externalproject_add(
     DEPENDS zlib
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
                -DCMAKE_PREFIX_PATH=${CMAKE_INSTALL_PREFIX}
+               # assimp ships its own FindZLIB.cmake which ignores
+               # CMAKE_PREFIX_PATH; ZLIB_HOME is the only hint it honors.
+               # Without it assimp links the system zlib and exports an
+               # absolute /usr/lib64/libz.so path in assimpTargets.cmake.
+               -DZLIB_HOME=${CMAKE_INSTALL_PREFIX}
                -DCMAKE_INSTALL_LIBDIR=lib
                -DCMAKE_BUILD_TYPE=RelWithDebInfo
                -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}

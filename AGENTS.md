@@ -164,27 +164,28 @@ Detailed rules live in `.opencode/rules/` (loaded via `opencode.json` `instructi
 
 ## Common Pitfalls
 
-| Problem                              | Cause                                     | Fix                                                                     |
-|--------------------------------------|-------------------------------------------|-------------------------------------------------------------------------|
-| `find_package(SDL3)` fails           | Empty `deps/prebuilt/`                    | Run `deps/rules/linux-build.cmake` first (vcpkg preset won't help)      |
-| `import std` not found               | CMake < 4.5 or scanning disabled          | Use CMake 4.5.1+ and keep `CMAKE_CXX_SCAN_FOR_MODULES` ON              |
-| `slangc` not found                   | Vulkan SDK not on PATH                    | `source $VULKAN_SDK/setup-env.sh`                                       |
-| Module import errors                 | Deps built with different compiler        | Rebuild deps with same compiler as preset (`ninja-llvm` → clang++)      |
-| SPIR-V missing at runtime            | Shader target not wired                   | `add_dependencies(<target> generate_spirv_N)` in example CMakeLists     |
-| libc++ link errors on Linux          | GCC used with llvm preset                 | Use `ninja-llvm` toolchain consistently                                 |
-| Toolchain fatal about GCC lib path   | `gcc` not installed for clang build       | Install gcc — `cmake/toolchain/Linux.cmake` needs it for crt paths      |
-| CI looks broken                      | It is: all CI configs are stale           | `.github/workflows/*`, `appveyor.yml`, `bitbucket-pipelines.yml` reference old layouts / skip the deps stage — don't use as build recipes |
+| Problem                            | Cause                                                         | Fix                                                                                                                                       |
+|------------------------------------|---------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------|
+| `find_package(SDL3)` fails         | Empty `deps/prebuilt/`                                        | Run `deps/rules/linux-build.cmake` first (vcpkg preset won't help)                                                                        |
+| `import std` not found             | CMake < 4.5 or scanning disabled                              | Use CMake 4.5.1+ and keep `CMAKE_CXX_SCAN_FOR_MODULES` ON                                                                                 |
+| RPATH warning about `libz.so.1`    | assimp's bundled `FindZLIB.cmake` ignores `CMAKE_PREFIX_PATH` | Pass `-DZLIB_HOME=<prebuilt>` when building assimp (already in `deps/rules`)                                                              |
+| `slangc` not found                 | Vulkan SDK not on PATH                                        | `source $VULKAN_SDK/setup-env.sh`                                                                                                         |
+| Module import errors               | Deps built with different compiler                            | Rebuild deps with same compiler as preset (`ninja-llvm` → clang++)                                                                        |
+| SPIR-V missing at runtime          | Shader target not wired                                       | `add_dependencies(<target> generate_spirv_N)` in example CMakeLists                                                                       |
+| libc++ link errors on Linux        | GCC used with llvm preset                                     | Use `ninja-llvm` toolchain consistently                                                                                                   |
+| Toolchain fatal about GCC lib path | `gcc` not installed for clang build                           | Install gcc — `cmake/toolchain/Linux.cmake` needs it for crt paths                                                                        |
+| CI looks broken                    | It is: all CI configs are stale                               | `.github/workflows/*`, `appveyor.yml`, `bitbucket-pipelines.yml` reference old layouts / skip the deps stage — don't use as build recipes |
 
 ## Key References
 
-| File                                     | Purpose                                          |
-|------------------------------------------|--------------------------------------------------|
-| `readme.md`                              | Install hints, two-stage build (RU/EN)           |
-| `CMakeLists.txt`                         | Root options, `import std` setup, section toggles |
-| `CMakePresets.json`                      | Presets (`ninja-llvm` recommended)                |
+| File                                     | Purpose                                                        |
+|------------------------------------------|----------------------------------------------------------------|
+| `readme.md`                              | Install hints, two-stage build (RU/EN)                         |
+| `CMakeLists.txt`                         | Root options, `import std` setup, section toggles              |
+| `CMakePresets.json`                      | Presets (`ninja-llvm` recommended)                             |
 | `cmake/om-common-functions-config.cmake` | `om_add_slang_shader_target`, clang-tidy, `Profile` build type |
-| `.opencode/rules/`, `opencode.json`      | Style rules, clang-format, git-mutation denies   |
-| `01-basic-game-dev/readme.md`            | Game-dev course curriculum                       |
+| `.opencode/rules/`, `opencode.json`      | Style rules, clang-format, git-mutation denies                 |
+| `01-basic-game-dev/readme.md`            | Game-dev course curriculum                                     |
 
 ## Quick Verification Checklist
 
