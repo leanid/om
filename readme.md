@@ -159,6 +159,12 @@ clang wine git SDL3-devel SDL3-static mingw64-SDL3 mingw64-SDL3-static \
 libstdc++-static glibc-static ninja-build
 ```
 
+### Docker образ для сборки проекта (Linux, CI/GitHub Actions)
+
+Актуальный образ на базе ALT p11 с LLVM 23, GCC 13 и всеми собранными
+зависимостями в `/deps/linux-clang23-x86_64` — как собрать образ и собирать
+проект внутри него: **[deps/docker/readme.md](deps/docker/readme.md)**.
+
 ### Building
 
 Проект собирается в два этапа: сначала зависимости, затем основной код.

@@ -1,0 +1,9 @@
+# BuildKit-specific ignore file for deps/docker/Dockerfile.
+# The build context is the repository root (build with
+# `docker build -f deps/docker/Dockerfile .`); the image only needs
+# the dependency build scripts and the shared cmake helpers.
+**
+!/cmake/
+!/deps/rules/
+# ... but never the host's own build tree (ExternalProject clones+builds).
+deps/rules/build/

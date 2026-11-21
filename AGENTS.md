@@ -27,6 +27,7 @@ Docs and comments are often in **Russian**; code identifiers and agent instructi
 | `08-web/`                              | nginx/FastCGI, HTTP, Redis dashboard (3 examples)                            | yes (`OM_WEB`)            |
 | `cmake/`                               | Shared packages: `om-common-functions`, `om-triplet-name`, `toolchain/`      |                           |
 | `deps/`                                | Two-stage dependency build → `deps/prebuilt/<triplet>/`                      |                           |
+| `deps/docker/`                         | CI Docker image (ALT p11 + LLVM 23 + deps in `/deps/linux-clang23-x86_64`)   |                           |
 | `support/`                             | Dev-environment docs (Emacs, Docker, Vulkan, Android)                        |                           |
 
 ## Build System
