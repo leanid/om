@@ -5,7 +5,7 @@
 # 2. on PowerShell set environment vars like:
 #    $ENV:CC = "clang"
 #    $ENV:CXX = "clang++"
-cmake_minimum_required(VERSION 4.2)
+cmake_minimum_required(VERSION 4.5.1)
 
 get_filename_component(
     toolchain_path

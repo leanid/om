@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 4.5.1)
 
 project(07-multi-threading CXX)
 add_executable(07-multi-threading "main.cxx")

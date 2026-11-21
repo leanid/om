@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.25)
+cmake_minimum_required(VERSION 4.5.1)
 project(08-3-engine-cleanup CXX)
 
 add_executable(

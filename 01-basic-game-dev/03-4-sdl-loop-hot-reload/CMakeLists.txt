@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.30)
+cmake_minimum_required(VERSION 4.5.1)
 project(03-4-sdl-loop-hot-reload)
 if(APPLE)
     message(STATUS "skip on apple arm platform")

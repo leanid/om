@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.22)
+cmake_minimum_required(VERSION 4.5.1)
 project(01-1-hello-world CXX)
 
 add_executable(01-1-hello-world main.cxx)

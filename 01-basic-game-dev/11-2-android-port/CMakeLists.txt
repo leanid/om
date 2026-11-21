@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.6)
+cmake_minimum_required(VERSION 4.5.1)
 
 if(SDL2_SRC_DIR)
 add_subdirectory( # Specifies the directory of the CMakeLists.txt file.

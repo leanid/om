@@ -2,7 +2,7 @@
 [tools]
 # "github:llvm/llvm-project" = "llvmorg-24.1.2"
 # ninja = "1.13.2"
-# cmake = "4.4.3"
+# cmake = "4.5.1"
 # python = ["3.14.8"]
 # black = "26.5.1"
 # pipenv = "2026.8.0"

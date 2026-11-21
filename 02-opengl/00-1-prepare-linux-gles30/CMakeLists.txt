@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 4.5.1)
 project(00-1-prepare-linux-gles30)
 
 add_executable(${PROJECT_NAME} main.cxx)

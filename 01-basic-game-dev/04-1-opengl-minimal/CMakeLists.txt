@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.26)
+cmake_minimum_required(VERSION 4.5.1)
 project(04-1-opengl-minimal CXX C)
 
 add_library(

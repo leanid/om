@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 4.0)
+cmake_minimum_required(VERSION 4.5.1)
 
 project(10-vk-res-loading-1 CXX)
 

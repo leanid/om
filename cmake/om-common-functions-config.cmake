@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.31)
+cmake_minimum_required(VERSION 4.5.1)
 
 # just right after top project(..) command
 # you may add custom build types

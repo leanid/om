@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.19.7...3.22)
+cmake_minimum_required(VERSION 4.5.1)
 project(02-sdl-dynamic)
 
 add_executable(02-sdl-dynamic main.cxx)

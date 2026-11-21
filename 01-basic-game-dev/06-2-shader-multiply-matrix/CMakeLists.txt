@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 4.5.1)
 project(06-2-shader-multiply-matrix CXX)
 
 add_library(engine-06-2 SHARED engine.cxx engine.hxx picopng.hxx)

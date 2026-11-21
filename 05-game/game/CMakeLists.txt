@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.9...3.23)
+cmake_minimum_required(VERSION 4.5.1)
 project(game LANGUAGES CXX)
 
 add_library(game SHARED game.cxx)

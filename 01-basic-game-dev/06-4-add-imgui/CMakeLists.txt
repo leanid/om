@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.26)
+cmake_minimum_required(VERSION 4.5.1)
 project(06-4-add-imgui)
 
 add_library(engine-06-4 SHARED engine.cxx engine.hxx picopng.hxx)

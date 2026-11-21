@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.30)
+cmake_minimum_required(VERSION 4.5.1)
 project(09-2-start-game-prototype)
 
 add_executable(

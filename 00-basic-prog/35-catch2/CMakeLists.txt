@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.31)
+cmake_minimum_required(VERSION 4.5.1)
 return() # TODO disable for ninja-llvm - compilation failed
 project(35-catch2 CXX)
 

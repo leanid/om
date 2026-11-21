@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.19...3.23)
+cmake_minimum_required(VERSION 4.5.1)
 project(match3 LANGUAGES CXX)
 
 # add dependencies (SDL2, boost, CATCH2, and etc)

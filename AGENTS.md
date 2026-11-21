@@ -5,8 +5,8 @@ Instructions for AI coding agents working in this repository.
 ## Project Overview
 
 **OM** (🕉) is a monorepo of ~160 self-contained tutorials for modern C++ game development.
-CMake project name: `rgd`. Language: **C++23** with experimental `import std`
-(`CMAKE_CXX_MODULE_STD=1` set globally in root `CMakeLists.txt`).
+CMake project name: `rgd`. Language: **C++23** with `import std`
+(supported natively since CMake 4.5, no experimental flag needed).
 
 Stack: SDL3, Boost, GLM, OpenGL ES 3.0, Vulkan 1.3, Slang shaders, web backends (Boost.Beast / httplib + Redis).
 
@@ -33,22 +33,21 @@ Docs and comments are often in **Russian**; code identifiers and agent instructi
 
 ### Prerequisites
 
-- **CMake 4.4+** (root requires `4.4.0`), Ninja
-- Toolchain pinned in `mise.toml`: cmake 4.4.3, LLVM 21.1.8, ninja 1.13.2, python 3.14.5
+- **CMake 4.5.1+** (root requires `4.5.1`), Ninja
+- Toolchain pinned in `mise.toml`: cmake 4.5.1, LLVM 21.1.8, ninja 1.13.2, python 3.14.5
 - `gcc` must be on PATH **even for clang builds** — `cmake/toolchain/Linux.cmake` runs
   `gcc -print-libgcc-file-name` to locate crt/libgcc paths
 - Vulkan SDK with `slangc` on `PATH` for `02-vulkan/`
 
-### `import std` is gated by a CMake-version-locked UUID
+### `import std` needs no experimental flag
 
-- Root `CMakeLists.txt:14` sets `CMAKE_EXPERIMENTAL_CXX_IMPORT_STD` to
-  `f35a9ac6-8463-4d38-8eec-5d6008153e7d` — valid **only for CMake 4.4.x**
-  (verified against the mise-pinned 4.4.3 binaries).
-- When bumping CMake, the UUID must be replaced with the new release's value
-  (see `Help/dev/experimental.rst` in the CMake distribution) or configure fails.
-- The `ninja-llvm` preset in `CMakePresets.json` carries a **different, stale UUID**
-  (`451f2fe2-…`) as a cache variable. The root `set()` shadows it, so builds work —
-  but never copy the preset value, and clean it up when touching this area.
+- Since **CMake 4.5**, `import std` is a stable feature: it works for C++20+
+  code with `CXX_SCAN_FOR_MODULES` enabled, with no `CMAKE_EXPERIMENTAL_*`
+  UUID and no `CMAKE_CXX_MODULE_STD` variable.
+- The old `CMAKE_EXPERIMENTAL_CXX_IMPORT_STD` UUIDs were removed from the
+  root `CMakeLists.txt`, `CMakePresets.json`, and the module examples.
+- Do not reintroduce version-locked UUIDs; they are only needed for
+  CMake < 4.5.
 
 ### Two-Stage Build (default path)
 
@@ -168,7 +167,7 @@ Detailed rules live in `.opencode/rules/` (loaded via `opencode.json` `instructi
 | Problem                              | Cause                                     | Fix                                                                     |
 |--------------------------------------|-------------------------------------------|-------------------------------------------------------------------------|
 | `find_package(SDL3)` fails           | Empty `deps/prebuilt/`                    | Run `deps/rules/linux-build.cmake` first (vcpkg preset won't help)      |
-| Invalid `CXX_IMPORT_STD` UUID error  | CMake upgraded, UUID stale                | Update root `CMakeLists.txt:14` UUID for the new CMake version          |
+| `import std` not found               | CMake < 4.5 or scanning disabled          | Use CMake 4.5.1+ and keep `CMAKE_CXX_SCAN_FOR_MODULES` ON              |
 | `slangc` not found                   | Vulkan SDK not on PATH                    | `source $VULKAN_SDK/setup-env.sh`                                       |
 | Module import errors                 | Deps built with different compiler        | Rebuild deps with same compiler as preset (`ninja-llvm` → clang++)      |
 | SPIR-V missing at runtime            | Shader target not wired                   | `add_dependencies(<target> generate_spirv_N)` in example CMakeLists     |
@@ -181,8 +180,8 @@ Detailed rules live in `.opencode/rules/` (loaded via `opencode.json` `instructi
 | File                                     | Purpose                                          |
 |------------------------------------------|--------------------------------------------------|
 | `readme.md`                              | Install hints, two-stage build (RU/EN)           |
-| `CMakeLists.txt`                         | Root options, `import std` UUID, section toggles |
-| `CMakePresets.json`                      | Presets; note stale UUID in `ninja-llvm`         |
+| `CMakeLists.txt`                         | Root options, `import std` setup, section toggles |
+| `CMakePresets.json`                      | Presets (`ninja-llvm` recommended)                |
 | `cmake/om-common-functions-config.cmake` | `om_add_slang_shader_target`, clang-tidy, `Profile` build type |
 | `.opencode/rules/`, `opencode.json`      | Style rules, clang-format, git-mutation denies   |
 | `01-basic-game-dev/readme.md`            | Game-dev course curriculum                       |

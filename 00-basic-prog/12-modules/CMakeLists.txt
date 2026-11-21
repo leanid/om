@@ -1,14 +1,7 @@
 # this example currently works on msvc-2022 x64 with Ninja generator
-cmake_minimum_required(VERSION 4.1.1)
-# Set experimental flag to enable `import std` support from CMake.
-# This must be enabled before C++ language support.
-set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "451f2fe2-a8a2-47c3-bc32-94786d8fc91b")
-set(CMAKE_CXX_MODULE_STD ON)
+cmake_minimum_required(VERSION 4.5.1)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED YES)
-# Currently CMake requires extensions enabled when using import std.
-# https://gitlab.kitware.com/cmake/cmake/-/issues/25916
-# https://gitlab.kitware.com/cmake/cmake/-/issues/25539
 set(CMAKE_CXX_EXTENSIONS OFF) # no -std=gnu-23
 
 # C++ needs to be enabled.

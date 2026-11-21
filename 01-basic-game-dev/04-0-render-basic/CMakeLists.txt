@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16..3.22)
+cmake_minimum_required(VERSION 4.5.1)
 project(04-0-render-basic CXX)
 
 add_executable(

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.22)
+cmake_minimum_required(VERSION 4.5.1)
 
 # Все три под-примера Linux-only: /proc/self/maps, sbrk, mmap/munmap,
 # интерпозиция символов malloc/new, dlopen.

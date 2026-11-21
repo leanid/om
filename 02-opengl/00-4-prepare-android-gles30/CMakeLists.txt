@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.6)
+cmake_minimum_required(VERSION 4.5.1)
 
 if(SDL3_SRC_DIR)  # Android build directly from source
     set(SDL_DISABLE_IMMINTRIN_H 1)

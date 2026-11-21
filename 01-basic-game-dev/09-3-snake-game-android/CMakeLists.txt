@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 4.5.1)
 
 if(SDL3_SRC_DIR)
     add_subdirectory(

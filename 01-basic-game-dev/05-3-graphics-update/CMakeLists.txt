@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 4.5.1)
 project(05-3-texture-loading)
 
 add_library(engine-05-3 SHARED engine.cxx engine.hxx picopng.hxx)

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 4.5.1)
 project(02-sdl-static)
 
 add_executable(02-sdl-static main.cxx)

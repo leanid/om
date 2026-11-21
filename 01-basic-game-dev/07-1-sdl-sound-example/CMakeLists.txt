@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 4.5.1)
 project(07-1-add-sound CXX)
 
 add_executable(sound_test-07-1 sound_test.cxx)

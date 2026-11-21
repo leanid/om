@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 4.2)
+cmake_minimum_required(VERSION 4.5.1)
 
 if(CMAKE_SYSTEM_NAME MATCHES "Windows")
     return()

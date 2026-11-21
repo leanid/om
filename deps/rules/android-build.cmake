@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 4.0)
+cmake_minimum_required(VERSION 4.5.1)
 
 set(android_toolchain_file "$ENV{ANDROID_NDK}/build/cmake/android.toolchain.cmake")
 

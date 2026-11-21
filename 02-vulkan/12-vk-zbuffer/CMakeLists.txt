@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 4.0)
+cmake_minimum_required(VERSION 4.5.1)
 
 project(12-vk-zbuffer CXX)
 

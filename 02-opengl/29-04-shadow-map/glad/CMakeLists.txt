@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.20...3.22)
+cmake_minimum_required(VERSION 4.5.1)
 
 project(glad_29_4 C)
 

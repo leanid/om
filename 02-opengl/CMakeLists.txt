@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 4.5.1)
 
 #add_subdirectory(00-1-prepare-linux-gles30)
 #add_subdirectory(00-2-prepare-macos-gles30)

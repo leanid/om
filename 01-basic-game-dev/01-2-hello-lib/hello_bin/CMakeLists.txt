@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.22)
+cmake_minimum_required(VERSION 4.5.1)
 project(hello-bin CXX)
 
 include(CheckCXXCompilerFlag)

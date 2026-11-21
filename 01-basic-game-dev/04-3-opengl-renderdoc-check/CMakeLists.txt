@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.31)
+cmake_minimum_required(VERSION 4.5.1)
 project(04-3-opengl-renderdoc-check)
 
 add_library(engine-04-3 STATIC engine.cxx engine.hxx)

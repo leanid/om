@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 4.0)
+cmake_minimum_required(VERSION 4.5.1)
 
 project(20-vk-multithreading CXX C)
 

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 4.4.0)
+cmake_minimum_required(VERSION 4.5.1)
 
 option(OM_BASIC_GAME_DEV "turn ON to build 01-basic-game-dev" ON)
 option(OM_BASIC_PROG "turn ON if need to build 00-basic-prog" ON)
@@ -8,19 +8,11 @@ option(OM_GAME_EXAMPLE "turn ON if need to build 05-game" OFF)
 option(OM_WEB "turn ON if need to build 08-web" ON)
 option(OM_CLANG_TIDY "turn ON if need to run clang-tidy" OFF)
 
-# Enables the Standard module support. This needs to be done
-# before selecting the languages.
-# https://github.com/Kitware/CMake/blob/master/Help/dev/experimental.rst
-set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "f35a9ac6-8463-4d38-8eec-5d6008153e7d")
-# Currently CMake requires extensions enabled when using import std.
-# https://gitlab.kitware.com/cmake/cmake/-/issues/25916
-# https://gitlab.kitware.com/cmake/cmake/-/issues/25539
+# `import std` is supported natively since CMake 4.5, no experimental
+# flag is needed anymore.
 set(CMAKE_CXX_EXTENSIONS OFF) # no -std=gnu-23
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-# Tell CMake that we explicitly want `import std`. This will initialize the
-# property on all targets declared after this to 1
-set(CMAKE_CXX_MODULE_STD 1)
 
 project(
     rgd

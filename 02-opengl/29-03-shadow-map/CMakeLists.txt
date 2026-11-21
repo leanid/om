@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.20...3.22)
+cmake_minimum_required(VERSION 4.5.1)
 
 if(SDL3_SRC_DIR)  # Android build directly from source
     add_subdirectory( # Specifies the directory of the CMakeLists.txt file.

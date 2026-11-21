@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.30)
+cmake_minimum_required(VERSION 4.5.1)
 project(03-sdl-loop-to-engine-dll)
 
 add_library(engine-03-3 SHARED engine.cxx engine.hxx)

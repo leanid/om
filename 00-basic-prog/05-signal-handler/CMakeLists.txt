@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 4.5.1)
 
 project(05-signal-handler CXX)
 add_executable(05-signal-handler "main.cpp")
