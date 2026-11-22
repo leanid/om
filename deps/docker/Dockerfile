@@ -49,7 +49,7 @@ ENV VULKAN_SDK="/opt/vulkan/x86_64"
 RUN apt-get update && apt-get install -y \
         gcc gcc-c++ libstdc++-devel libstdc++-devel-static binutils glibc-devel \
         git patch make python3 pkg-config \
-        curl wget xz zstd tar unzip which ca-certificates \
+        curl wget xz zstd tar unzip which ca-certificates aria2 \
         liblzma zlib zlib-devel libzstd libzstd-devel \
         libffi-devel libssl-devel \
         libpng-devel libjpeg-devel bzlib-devel \
@@ -62,10 +62,12 @@ RUN apt-get update && apt-get install -y \
         libXtst-devel libXrandr-devel libXScrnSaver-devel \
         liburing-devel libunwind-devel libusb-devel libudev-devel libdecor-devel \
         wayland-devel wayland-protocols \
-    && apt-get clean && rm -rf /var/lib/apt/lists/* /var/cache/apt/*
+    && apt-get clean && rm -rf /var/lib/apt/lists/* \
+    && mkdir -p /var/lib/apt/lists/partial /var/cache/apt/archives/partial
 
 # 2. ICU 70.1 -> /opt/icu70 (shared libs only).
-RUN curl -fsSL https://github.com/unicode-org/icu/releases/download/release-${ICU_RELEASE}/icu4c-${ICU_VERSION}-src.tgz \
+RUN curl -fsSL --retry 5 --retry-all-errors --retry-delay 10 \
+        https://github.com/unicode-org/icu/releases/download/release-${ICU_RELEASE}/icu4c-${ICU_VERSION}-src.tgz \
         | tar -xz -C /tmp \
     && mkdir /tmp/icu-build && cd /tmp/icu-build \
     && /tmp/icu/source/runConfigureICU Linux \
@@ -86,8 +88,16 @@ RUN curl -fsSL https://github.com/unicode-org/icu/releases/download/release-${IC
 #      include c++ (libc++ headers), x86_64-unknown-linux-gnu/c++,
 #              libunwind headers
 #      share/  libc++/v1/*.cppm (sources for `import std`)
-RUN curl -fsSL -o /tmp/llvm.tar.zst https://github.com/llvm/llvm-project/releases/download/llvmorg-${LLVM_VERSION}/LLVM-${LLVM_VERSION}-Linux-X64.tar.zst \
-    && zstd -d --rm /tmp/llvm.tar.zst \
+# NOTE 1: the LLVM .tar.zst uses a 1 GB compression window; plain `zstd -d`
+#         refuses it ("Frame requires too much memory"), hence --long=31.
+# NOTE 2: aria2c instead of curl - GitHub's release CDN throttles a single
+#         connection to ~20-70 KB/s here (and resets HTTP/2 streams), while
+#         parallel segments are ~10-30x faster and resumable.
+RUN aria2c -x 16 -s 16 -k 64M --max-tries=10 --retry-wait=10 \
+        --file-allocation=none --console-log-level=warn --summary-interval=60 \
+        -d /tmp -o llvm.tar.zst \
+        https://github.com/llvm/llvm-project/releases/download/llvmorg-${LLVM_VERSION}/LLVM-${LLVM_VERSION}-Linux-X64.tar.zst \
+    && zstd -d --long=31 --rm /tmp/llvm.tar.zst \
     && mkdir -p /opt/llvm \
     && tar -xf /tmp/llvm.tar -C /opt/llvm --strip-components=1 \
     && rm /tmp/llvm.tar \
@@ -111,15 +121,18 @@ RUN curl -fsSL -o /tmp/llvm.tar.zst https://github.com/llvm/llvm-project/release
 
 # 4. CMake + Ninja (official binaries; p11's cmake 3.31 is too old,
 #    the project requires >= 4.5.1).
-RUN curl -fsSL -o /tmp/cmake.tar.gz https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz \
+RUN curl -fsSL --retry 5 --retry-all-errors --retry-delay 10 -C - \
+        -o /tmp/cmake.tar.gz https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz \
     && mkdir -p /opt/cmake \
     && tar -xzf /tmp/cmake.tar.gz -C /opt/cmake --strip-components=1 \
     && rm /tmp/cmake.tar.gz \
-    && curl -fsSL -o /tmp/ninja.zip https://github.com/ninja-build/ninja/releases/download/v${NINJA_VERSION}/ninja-linux.zip \
+    && curl -fsSL --retry 5 --retry-all-errors --retry-delay 10 -C - \
+        -o /tmp/ninja.zip https://github.com/ninja-build/ninja/releases/download/v${NINJA_VERSION}/ninja-linux.zip \
     && unzip -o /tmp/ninja.zip -d /usr/local/bin && rm /tmp/ninja.zip
 
 # 5. Vulkan SDK (slangc, glslangValidator, Vulkan headers + loader).
-RUN curl -fsSL -o /tmp/vulkansdk.tar.xz https://sdk.lunarg.com/sdk/download/${VULKAN_SDK_VERSION}/linux/vulkansdk-linux-x86_64-${VULKAN_SDK_VERSION}.tar.xz \
+RUN curl -fsSL --retry 5 --retry-all-errors --retry-delay 10 -C - \
+        -o /tmp/vulkansdk.tar.xz https://sdk.lunarg.com/sdk/download/${VULKAN_SDK_VERSION}/linux/vulkansdk-linux-x86_64-${VULKAN_SDK_VERSION}.tar.xz \
     && mkdir -p /tmp/vulkansdk /opt/vulkan \
     && tar -xf /tmp/vulkansdk.tar.xz -C /tmp/vulkansdk \
     && mv /tmp/vulkansdk/*/x86_64 /opt/vulkan/x86_64 \
