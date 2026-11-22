@@ -140,22 +140,40 @@ RUN gcc_lib_dir="$(dirname "$(gcc -print-libgcc-file-name)")" \
             > "/etc/clang/$cfg"; \
     done
 
-# 7. Linker search paths + smoke test: the image build fails here if the
-#    toolchain (clang + LLD + ICU + libc++) cannot compile, link and run.
+# 7. Linker search paths + full toolchain smoke test (the image build fails
+#    here if anything is broken):
+#      a) versions: cmake 4.5.x, ninja 1.13.x, clang 23.x, slangc, glslang
+#      b) lld from the LLVM tarball resolves libicu*.so.70
+#      c) bare clang++ compiles + links + runs with libc++ and LLD
+#         (uses the /etc/clang/*.cfg gcc paths from step 6)
+#      d) a minimal CMake project using `import std`, configured exactly like
+#         the OM `ninja-llvm` preset (Ninja Multi-Config generator +
+#         cmake/toolchain/Linux.cmake)
+COPY deps/docker/toolchain-check /tmp/toolchain-check
+COPY cmake/toolchain /opt/om-cmake/toolchain
 RUN printf '%s\n' \
         /opt/icu70/lib64 \
         /opt/llvm/lib/x86_64-unknown-linux-gnu \
         /opt/vulkan/x86_64/lib \
         > /etc/ld.so.conf.d/om-toolchain.conf && ldconfig \
-    && clang++ --version && ldd /opt/llvm/bin/lld | grep -q 'libicuuc.so.70' \
-    && cmake --version && ninja --version \
+    && clang++ --version | grep -q "clang version ${LLVM_VERSION}" \
+    && cmake --version | grep -q "cmake version ${CMAKE_VERSION}" \
+    && ninja --version | grep -q "^${NINJA_VERSION}" \
     && slangc -v && glslangValidator --version \
-    && printf '#import std;\nint main() { std::print("toolchain ok\\n"); }\n' \
-        > /tmp/toolchain_check.cxx \
+    && ldd /opt/llvm/bin/lld | grep -q 'libicuuc.so.70' \
+    && printf '#include <print>\nint main() { std::print("bare toolchain ok\\n"); }\n' \
+        > /tmp/bare_check.cxx \
     && clang++ -std=c++23 -stdlib=libc++ -fuse-ld=lld \
-        /tmp/toolchain_check.cxx -o /tmp/toolchain_check \
-    && /tmp/toolchain_check \
-    && rm /tmp/toolchain_check.cxx /tmp/toolchain_check
+        /tmp/bare_check.cxx -o /tmp/bare_check \
+    && /tmp/bare_check \
+    && cmake -S /tmp/toolchain-check -B /tmp/toolchain-check/build \
+        -G "Ninja Multi-Config" \
+        -DCMAKE_TOOLCHAIN_FILE=/opt/om-cmake/toolchain/Linux.cmake \
+        -DCMAKE_LINKER_TYPE=LLD \
+        -DCMAKE_CXX_SCAN_FOR_MODULES=ON \
+    && cmake --build /tmp/toolchain-check/build --config Debug \
+    && /tmp/toolchain-check/build/Debug/toolchain_check | grep -q 'toolchain ok' \
+    && rm -rf /tmp/toolchain-check /tmp/bare_check.cxx /tmp/bare_check
 
 # ---------------------------------------------------------------------------
 # deps: build all project dependencies inside the image

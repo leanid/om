@@ -5,5 +5,6 @@
 **
 !/cmake/
 !/deps/rules/
+!/deps/docker/toolchain-check/
 # ... but never the host's own build tree (ExternalProject clones+builds).
 deps/rules/build/

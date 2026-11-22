@@ -61,8 +61,12 @@ docker build -f deps/docker/Dockerfile -t ghcr.io/leanid/om-deps:linux-clang23 .
 Стадии Dockerfile:
 
 1. **toolchain** — `alt:p11` + пакеты p11 + ICU 70.1 + LLVM 23 + CMake/Ninja +
-   Vulkan SDK + smoke-тест (компиляция и запуск программы с `libc++` и LLD —
-   если тулчейн сломан, сборка образа упадёт здесь);
+   Vulkan SDK + smoke-тест всей цепочки: версии (cmake 4.5.x, ninja 1.13.x,
+   clang 23.x, slangc, glslangValidator), LLD+ICU, компиляция и запуск
+   программы с `libc++` голым `clang++`, а также мини-проект
+   `deps/docker/toolchain-check/` с `import std`, собранный через
+   **Ninja Multi-Config** с `cmake/toolchain/Linux.cmake` (ровно как пресет
+   `ninja-llvm`). Если что-то сломано — сборка образа упадёт здесь;
 2. **deps** — сборка всех зависимостей (`CXX=clang++ cmake -P linux-build.cmake`);
 3. **final** — toolchain + `/deps/linux-clang23-x86_64` + `ENV`.
 
