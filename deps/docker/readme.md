@@ -159,8 +159,13 @@ docker build --no-cache -f deps/docker/Dockerfile \
 - Только x86_64 Linux. Windows/Android/macOS вне scope этого образа.
 - `lld` из tarball'а LLVM слинкован с `libicu*.so.70`, поэтому в образе
   собран ICU 70.1 (`/opt/icu70`); системный ICU (74 в p11) не используется.
-- Пути к crt/libgcc от GCC вшиты в `/etc/clang/*.cfg` — аналог того, что на
-  хосте делает `cmake/toolchain/Linux.cmake`; благодаря этому голый
-  `clang++` внутри контейнера тоже линкует корректно.
+- Пути к crt/libgcc от GCC вшиты в `/etc/clang/om.cfg` и подставляются через
+  `--config` обёртками `/opt/llvm/bin/clang{,++}` (настоящие бинарники в
+  `/opt/llvm/libexec`; официальный tarball LLVM игнорирует `/etc/clang` и
+  прочие дефолтные конфиги — работает только `--config <file>`). Обёртки
+  обязаны лежать внутри дерева LLVM: `clang-scan-deps` вычисляет пути к
+  заголовкам libc++ от расположения компилятора, иначе ломается `import std`.
+  Аналог того, что на хосте делает `cmake/toolchain/Linux.cmake`; голый
+  `clang++` в контейнере линкует корректно.
 - JACK-девел пакет в p11 отсутствует — SDL3 собирается без JACK.
 - Размер финального образа — порядка 4–5 ГБ (не сжатый).

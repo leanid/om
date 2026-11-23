@@ -81,7 +81,8 @@ RUN curl -fsSL --retry 5 --retry-all-errors --retry-delay 10 \
 # 3. LLVM -> /opt/llvm (minimal set; the full tarball unpacks to ~12 GB,
 #    we keep only what the OM build needs).
 #    Kept:
-#      bin/    clang-23 (+clang, clang++ symlinks), lld (+ld.lld, ...)
+#      bin/    clang-23 (+clang, clang++ symlinks), clang-scan-deps (needed
+#              by CMake for `import std` scanning), lld (+ld.lld, ...)
 #      lib/    clang/23 resource dir (headers, compiler-rt builtins),
 #              x86_64-unknown-linux-gnu: libc++/libc++abi/libunwind
 #              (.so and .a), libc++.modules.json
@@ -103,6 +104,7 @@ RUN aria2c -x 16 -s 16 -k 64M --max-tries=10 --retry-wait=10 \
     && rm /tmp/llvm.tar \
     && find /opt/llvm/bin -mindepth 1 -maxdepth 1 \
         ! -name 'clang-23' ! -name 'clang' ! -name 'clang++' \
+        ! -name 'clang-scan-deps' \
         ! -name 'lld' ! -name 'ld.lld' ! -name 'ld64.lld' ! -name 'wasm-ld' \
         -delete \
     && find /opt/llvm/lib -mindepth 1 -maxdepth 1 \
@@ -138,19 +140,28 @@ RUN curl -fsSL --retry 5 --retry-all-errors --retry-delay 10 -C - \
     && mv /tmp/vulkansdk/*/x86_64 /opt/vulkan/x86_64 \
     && rm -rf /tmp/vulkansdk /tmp/vulkansdk.tar.xz
 
-# 6. Clang config files: on ALT Linux clang cannot locate the GCC
+# 6. GCC paths for clang: on ALT Linux clang cannot locate the GCC
 #    installation by itself (crtbeginS.o, -lgcc, -lgcc_s) — on the host this
-#    is fixed by cmake/toolchain/Linux.cmake (-B/-L flags); here we bake the
-#    same flags into /etc/clang/*.cfg so every clang/clang++ invocation finds
-#    crt/libgcc even without the toolchain file.
+#    is fixed by cmake/toolchain/Linux.cmake (-B/-L flags). The official LLVM
+#    tarball ignores all default config locations — only `--config <file>`
+#    works — so the flags are baked into /etc/clang/om.cfg and injected via
+#    wrapper scripts. The wrappers MUST live inside the LLVM tree
+#    (/opt/llvm/bin), with the real binaries moved to /opt/llvm/libexec:
+#    clang-scan-deps resolves libc++ include paths relative to the compiler
+#    location, so wrappers placed elsewhere (e.g. /usr/local/bin) break
+#    `import std` dependency scanning (verified experimentally).
 RUN gcc_lib_dir="$(dirname "$(gcc -print-libgcc-file-name)")" \
-    && mkdir -p /etc/clang \
-    && for cfg in \
-        x86_64-unknown-linux-gnu-clang.cfg \
-        x86_64-unknown-linux-gnu-clang++.cfg \
-        clang.cfg clang++.cfg; do \
-        printf -- '-B%s\n-L%s\n' "$gcc_lib_dir" "$gcc_lib_dir" \
-            > "/etc/clang/$cfg"; \
+    && mkdir -p /etc/clang /opt/llvm/libexec \
+    && printf -- '-B%s\n-L%s\n' "$gcc_lib_dir" "$gcc_lib_dir" \
+        > /etc/clang/om.cfg \
+    && mv /opt/llvm/bin/clang-23 /opt/llvm/libexec/clang-23 \
+    && ln -s clang-23 /opt/llvm/libexec/clang \
+    && ln -s clang-23 /opt/llvm/libexec/clang++ \
+    && rm /opt/llvm/bin/clang /opt/llvm/bin/clang++ \
+    && for drv in clang clang++; do \
+        printf '#!/bin/sh\nexec /opt/llvm/libexec/%s --config /etc/clang/om.cfg "$@"\n' \
+            "$drv" > "/opt/llvm/bin/$drv" \
+        && chmod +x "/opt/llvm/bin/$drv"; \
     done
 
 # 7. Linker search paths + full toolchain smoke test (the image build fails

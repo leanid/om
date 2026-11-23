@@ -3,7 +3,10 @@
 find_path(
     stb_INCLUDE_DIR
     NAMES stb/stb_image.h
-    PATHS ${CMAKE_PREFIX_PATH}
+    # NOTE: CMake does NOT materialize the CMAKE_PREFIX_PATH environment
+    # variable into the CMake variable, so consult both (find_package does
+    # the same natively). The env way is used by the Docker CI image.
+    PATHS ${CMAKE_PREFIX_PATH} $ENV{CMAKE_PREFIX_PATH}
     PATH_SUFFIXES include
     NO_DEFAULT_PATH)
 
