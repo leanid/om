@@ -1,0 +1,37 @@
+# Builds the whole OM project inside the pre-built Docker image
+# (ALT p11 + LLVM 23 + all dependencies in /deps/linux-clang23-x86_64).
+# See deps/docker/readme.md for how the image is built and published.
+name: Linux (Docker, clang23)
+
+on:
+  push:
+    branches: ["master"]
+  pull_request:
+    branches: ["master"]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: RelWithDebInfo
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/leanid/om-deps:linux-clang23
+      # only needed while the GHCR package is private
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # The image provides CMAKE_PREFIX_PATH=/deps/linux-clang23-x86_64,
+      # VULKAN_SDK and the clang 23 toolchain, so the preset works as-is.
+      # Note: no ctest here - the container has no display/GPU.
+      - name: Configure
+        run: cmake --preset ninja-llvm
+
+      - name: Build
+        run: cmake --build --preset ninja-llvm --config RelWithDebInfo
