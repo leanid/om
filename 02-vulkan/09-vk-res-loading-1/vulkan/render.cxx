@@ -590,7 +590,7 @@ debug_callback(vk::DebugUtilsMessageSeverityFlagBitsEXT      severity,
     return vk::False; // VK_FALSE;
 }
 
-static std::string version_to_string(uint32_t apiVersion)
+export std::string version_to_string(uint32_t apiVersion)
 {
     std::stringstream version;
     version << vk::versionMajor(apiVersion) << '.'
@@ -1508,7 +1508,7 @@ void render::create_logical_device()
 
     uint32_t queue_index = 0; // Because we’re only creating a single queue from
                               // this family, we’ll simply use index 0
-    graphics_queue = vk::raii::Queue(
+    graphics_queue       = vk::raii::Queue(
         devices.logical, queue_family.index.graphics, queue_index);
     log << "got graphics queue\n";
     set_object_name(*graphics_queue, "graphics_queue");
@@ -2171,8 +2171,8 @@ vk::Extent2D render::choose_best_swapchain_image_resolution(
         << buffer_size.width << 'x' << buffer_size.height << std::endl;
 
     return { .width  = std::clamp(extent.width,
-                                 capabilities.minImageExtent.width,
-                                 capabilities.maxImageExtent.width),
+                                  capabilities.minImageExtent.width,
+                                  capabilities.maxImageExtent.width),
              .height = std::clamp(extent.height,
                                   capabilities.minImageExtent.height,
                                   capabilities.maxImageExtent.height) };
