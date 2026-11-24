@@ -71,7 +71,7 @@ void mesh::draw(shader& shader) const
         texture::type        type = texture.get_type();
         std::array<char, 32> str{};
 
-        int32_t is_ok = 0;
+        [[maybe_unused]] int32_t is_ok = 0;
 
         if (type == texture::type::diffuse)
         {
@@ -133,7 +133,7 @@ void mesh::draw_instanced(shader& shader, size_t instance_count) const
         texture::type        type = texture.get_type();
         std::array<char, 32> str{};
 
-        int32_t is_ok = 0;
+        [[maybe_unused]] int32_t is_ok = 0;
 
         if (type == texture::type::diffuse)
         {

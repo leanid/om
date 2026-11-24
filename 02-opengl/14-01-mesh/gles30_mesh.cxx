@@ -60,7 +60,7 @@ void mesh::draw(shader& shader)
         texture::uv_type     type    = texture.get_type();
         std::array<char, 32> str{};
 
-        int32_t is_ok = 0;
+        [[maybe_unused]] int32_t is_ok = 0;
 
         if (type == texture::uv_type::diffuse)
         {

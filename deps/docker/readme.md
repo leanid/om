@@ -123,21 +123,15 @@ docker push ghcr.io/leanid/om-deps:linux-clang23
 
 ## Использование в GitHub Actions
 
-Workflow добавим отдельным шагом после проверки образа. Минимальный пример:
+Готовый workflow: [`.github/workflows/linux-docker.yml`](../../.github/workflows/linux-docker.yml).
+Он собирает проект в контейнере `ghcr.io/leanid/om-deps:linux-clang23`
+(preset `ninja-llvm`, конфиг RelWithDebInfo) на каждый push/PR в `master`.
 
-```yaml
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/leanid/om-deps:linux-clang23
-    steps:
-      - uses: actions/checkout@v4
-      - name: Configure
-        run: cmake --preset ninja-llvm
-      - name: Build
-        run: cmake --build --preset ninja-llvm --config RelWithDebInfo
-```
+Если пакет GHCR приватный — в workflow уже прописаны `credentials`
+(`GITHUB_TOKEN` хватает для `packages:read` в пределах того же репозитория).
+
+Планы на будущее: такие же образы/джобы для macOS и Windows, чтобы проверять
+сборку всех уроков на трёх ОС.
 
 ## Обновление версий
 

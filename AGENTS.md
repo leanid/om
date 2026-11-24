@@ -175,7 +175,7 @@ Detailed rules live in `.opencode/rules/` (loaded via `opencode.json` `instructi
 | SPIR-V missing at runtime          | Shader target not wired                                       | `add_dependencies(<target> generate_spirv_N)` in example CMakeLists                                                                       |
 | libc++ link errors on Linux        | GCC used with llvm preset                                     | Use `ninja-llvm` toolchain consistently                                                                                                   |
 | Toolchain fatal about GCC lib path | `gcc` not installed for clang build                           | Install gcc — `cmake/toolchain/Linux.cmake` needs it for crt paths                                                                        |
-| CI looks broken                    | It is: all CI configs are stale                               | `.github/workflows/*`, `appveyor.yml`, `bitbucket-pipelines.yml` reference old layouts / skip the deps stage — don't use as build recipes |
+| CI looks broken                    | Old configs are stale; `.github/workflows/linux-docker.yml` is the current one | `linux-docker.yml` uses the `deps/docker` image; `cmake-multi-platform.yml`, `appveyor.yml`, `bitbucket-pipelines.yml` reference old layouts — don't use as build recipes |
 
 ## Key References
 
