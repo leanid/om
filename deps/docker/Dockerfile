@@ -133,12 +133,20 @@ RUN curl -fsSL --retry 5 --retry-all-errors --retry-delay 10 -C - \
     && unzip -o /tmp/ninja.zip -d /usr/local/bin && rm /tmp/ninja.zip
 
 # 5. Vulkan SDK (slangc, glslangValidator, Vulkan headers + loader).
+#    The sed on vulkan.cppm mirrors the maintainer's machine: their SDK has
+#    `export import :video;` commented out, because 02-vulkan/09-vk-res-loading-1
+#    compiles vulkan.cppm alone (without the vulkan_video.cppm partition unit),
+#    and clang fails on the missing `vulkan:video` partition otherwise.
 RUN curl -fsSL --retry 5 --retry-all-errors --retry-delay 10 -C - \
         -o /tmp/vulkansdk.tar.xz https://sdk.lunarg.com/sdk/download/${VULKAN_SDK_VERSION}/linux/vulkansdk-linux-x86_64-${VULKAN_SDK_VERSION}.tar.xz \
     && mkdir -p /tmp/vulkansdk /opt/vulkan \
     && tar -xf /tmp/vulkansdk.tar.xz -C /tmp/vulkansdk \
     && mv /tmp/vulkansdk/*/x86_64 /opt/vulkan/x86_64 \
-    && rm -rf /tmp/vulkansdk /tmp/vulkansdk.tar.xz
+    && rm -rf /tmp/vulkansdk /tmp/vulkansdk.tar.xz \
+    && sed -i 's|^export import :video;|// export import :video;|' \
+        /opt/vulkan/x86_64/include/vulkan/vulkan.cppm \
+    && grep -q '^// export import :video;' \
+        /opt/vulkan/x86_64/include/vulkan/vulkan.cppm
 
 # 6. GCC paths for clang: on ALT Linux clang cannot locate the GCC
 #    installation by itself (crtbeginS.o, -lgcc, -lgcc_s) — on the host this

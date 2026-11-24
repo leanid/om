@@ -168,4 +168,10 @@ docker build --no-cache -f deps/docker/Dockerfile \
   Аналог того, что на хосте делает `cmake/toolchain/Linux.cmake`; голый
   `clang++` в контейнере линкует корректно.
 - JACK-девел пакет в p11 отсутствует — SDL3 собирается без JACK.
+- В `vulkan.cppm` внутри образа закомментирован `export import :video;`
+  (sed в шаге 5) — в точности как на машине автора: пример
+  `02-vulkan/09-vk-res-loading-1` компилирует `vulkan.cppm` без
+  `vulkan_video.cppm`, и clang не находит partition `vulkan:video`. Если
+  когда-нибудь примеры начнут собирать `vulkan_video.cppm`, этот sed можно
+  убрать.
 - Размер финального образа — порядка 4–5 ГБ (не сжатый).
