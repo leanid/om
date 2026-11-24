@@ -125,7 +125,25 @@ docker push ghcr.io/leanid/om-deps:linux-clang23
 
 Готовый workflow: [`.github/workflows/linux-docker.yml`](../../.github/workflows/linux-docker.yml).
 Он собирает проект в контейнере `ghcr.io/leanid/om-deps:linux-clang23`
-(preset `ninja-llvm`, конфиг RelWithDebInfo) на каждый push/PR в `master`.
+(preset `ninja-llvm`) на каждый push/PR в `master`.
+
+При ручном запуске (**Actions → Linux (Docker, clang23) → Run workflow**)
+доступны параметры; по умолчанию они совпадают с опциями корневого
+`CMakeLists.txt`, поэтому «просто запустить» = собрать всё:
+
+| Параметр            | По умолчанию     | Что включает                             |
+|---------------------|------------------|------------------------------------------|
+| `build_config`      | `RelWithDebInfo` | конфигурация CMake (`Debug`/`Release`/…) |
+| `om_basic_prog`     | `ON`             | `00-basic-prog`                          |
+| `om_basic_game_dev` | `ON`             | `01-basic-game-dev`                      |
+| `om_opengl`         | `ON`             | `02-opengl`                              |
+| `om_vulkan`         | `ON`             | `02-vulkan`                              |
+| `om_web`            | `ON`             | `08-web`                                 |
+
+`OM_CLANG_TIDY` намеренно не вынесен: clang-tidy нет в минимальном наборе
+LLVM внутри образа. `OM_GAME_EXAMPLE` (`05-game`) тоже не вынесен: он тянет
+SDL2 2.0.22 через FetchContent, а её `cmake_minimum_required(3.0.0)` уже
+несовместим с CMake 4.5.
 
 Если пакет GHCR приватный — в workflow уже прописаны `credentials`
 (`GITHUB_TOKEN` хватает для `packages:read` в пределах того же репозитория).

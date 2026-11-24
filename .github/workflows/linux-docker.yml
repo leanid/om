@@ -8,7 +8,44 @@ on:
     branches: ["master"]
   pull_request:
     branches: ["master"]
+  # Manual runs: every option below defaults to the value from the root
+  # CMakeLists.txt, so "Run workflow" with no changes builds everything.
+  # NOTE: OM_CLANG_TIDY is intentionally not exposed - clang-tidy is not
+  # part of the minimal LLVM set in the image. OM_GAME_EXAMPLE is not
+  # exposed either: 05-game fetches SDL2 2.0.22, whose CMakeLists requires
+  # cmake_minimum_required(3.0.0), dropped by CMake 4.5.
   workflow_dispatch:
+    inputs:
+      build_config:
+        description: "CMake build configuration"
+        type: choice
+        options: ["RelWithDebInfo", "Debug", "Release", "MinSizeRel"]
+        default: RelWithDebInfo
+      om_basic_prog:
+        description: "00-basic-prog"
+        type: choice
+        options: ["ON", "OFF"]
+        default: "ON"
+      om_basic_game_dev:
+        description: "01-basic-game-dev"
+        type: choice
+        options: ["ON", "OFF"]
+        default: "ON"
+      om_opengl:
+        description: "02-opengl"
+        type: choice
+        options: ["ON", "OFF"]
+        default: "ON"
+      om_vulkan:
+        description: "02-vulkan"
+        type: choice
+        options: ["ON", "OFF"]
+        default: "ON"
+      om_web:
+        description: "08-web"
+        type: choice
+        options: ["ON", "OFF"]
+        default: "ON"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -16,7 +53,7 @@ concurrency:
 
 jobs:
   build:
-    name: RelWithDebInfo
+    name: ${{ github.event.inputs.build_config || 'RelWithDebInfo' }}
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/leanid/om-deps:linux-clang23
@@ -24,6 +61,14 @@ jobs:
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
+    env:
+      # push/PR have no inputs: fall back to the CMake defaults
+      BUILD_CONFIG: ${{ github.event.inputs.build_config || 'RelWithDebInfo' }}
+      OM_BASIC_PROG: ${{ github.event.inputs.om_basic_prog || 'ON' }}
+      OM_BASIC_GAME_DEV: ${{ github.event.inputs.om_basic_game_dev || 'ON' }}
+      OM_OPENGL: ${{ github.event.inputs.om_opengl || 'ON' }}
+      OM_VULKAN: ${{ github.event.inputs.om_vulkan || 'ON' }}
+      OM_WEB: ${{ github.event.inputs.om_web || 'ON' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -31,7 +76,29 @@ jobs:
       # VULKAN_SDK and the clang 23 toolchain, so the preset works as-is.
       # Note: no ctest here - the container has no display/GPU.
       - name: Configure
-        run: cmake --preset ninja-llvm
+        run: |
+          cmake --preset ninja-llvm \
+            -DOM_BASIC_PROG="$OM_BASIC_PROG" \
+            -DOM_BASIC_GAME_DEV="$OM_BASIC_GAME_DEV" \
+            -DOM_OPENGL="$OM_OPENGL" \
+            -DOM_VULKAN="$OM_VULKAN" \
+            -DOM_WEB="$OM_WEB"
 
       - name: Build
-        run: cmake --build --preset ninja-llvm --config RelWithDebInfo
+        run: cmake --build --preset ninja-llvm --config "$BUILD_CONFIG"
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### OM build"
+            echo ""
+            echo "| Parameter | Value |"
+            echo "|---|---|"
+            echo "| build_config | \`$BUILD_CONFIG\` |"
+            echo "| OM_BASIC_PROG | \`$OM_BASIC_PROG\` |"
+            echo "| OM_BASIC_GAME_DEV | \`$OM_BASIC_GAME_DEV\` |"
+            echo "| OM_OPENGL | \`$OM_OPENGL\` |"
+            echo "| OM_VULKAN | \`$OM_VULKAN\` |"
+            echo "| OM_WEB | \`$OM_WEB\` |"
+          } >> "$GITHUB_STEP_SUMMARY"
