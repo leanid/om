@@ -69,23 +69,51 @@ jobs:
       OM_OPENGL: ${{ github.event.inputs.om_opengl || 'ON' }}
       OM_VULKAN: ${{ github.event.inputs.om_vulkan || 'ON' }}
       OM_WEB: ${{ github.event.inputs.om_web || 'ON' }}
+      # ccache lives in the workspace, so actions/cache can persist it
+      # between runs (the container itself is ephemeral).
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+      CCACHE_MAXSIZE: 2G
+      CCACHE_COMPILERCHECK: content
+      CCACHE_BASEDIR: ${{ github.workspace }}
+      CCACHE_NOHASHDIR: "true"
+      # Bump v1 whenever the Docker image toolchain changes (new LLVM,
+      # wrapper scripts, ...), otherwise stale objects could be reused.
+      CCACHE_KEY_PREFIX: ccache-v1-linux-clang23
     steps:
       - uses: actions/checkout@v4
+
+      # The container is thrown away after the job; actions/cache stores this
+      # archive in GitHub's cache service and restores it on the next run.
+      - name: Restore ccache
+        uses: actions/cache@v6
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: ${{ env.CCACHE_KEY_PREFIX }}-${{ github.sha }}
+          restore-keys: |
+            ${{ env.CCACHE_KEY_PREFIX }}-
 
       # The image provides CMAKE_PREFIX_PATH=/deps/linux-clang23-x86_64,
       # VULKAN_SDK and the clang 23 toolchain, so the preset works as-is.
       # Note: no ctest here - the container has no display/GPU.
       - name: Configure
         run: |
+          # fail early if the image predates ccache
+          ccache --version
           cmake --preset ninja-llvm \
             -DOM_BASIC_PROG="$OM_BASIC_PROG" \
             -DOM_BASIC_GAME_DEV="$OM_BASIC_GAME_DEV" \
             -DOM_OPENGL="$OM_OPENGL" \
             -DOM_VULKAN="$OM_VULKAN" \
-            -DOM_WEB="$OM_WEB"
+            -DOM_WEB="$OM_WEB" \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
       - name: Build
         run: cmake --build --preset ninja-llvm --config "$BUILD_CONFIG"
+
+      - name: ccache stats
+        if: always()
+        run: ccache --show-stats --verbose || true
 
       - name: Summary
         if: always()

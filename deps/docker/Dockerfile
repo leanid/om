@@ -240,6 +240,15 @@ RUN old_prefix=/opt/om/deps/prebuilt/linux-clang23-x86_64 \
     && grep -rIl "$old_prefix" "$new_prefix" \
         | xargs -r sed -i "s|$old_prefix|$new_prefix|g"
 
+# ccache for CI builds: .github/workflows/linux-docker.yml keeps its cache
+# directory between runs via actions/cache. Installed in the final stage so
+# adding it does not invalidate the expensive toolchain/deps layers.
+RUN apt-get update \
+    && apt-get install -y ccache \
+    && ccache --version \
+    && apt-get clean && rm -rf /var/lib/apt/lists/* \
+    && mkdir -p /var/lib/apt/lists/partial /var/cache/apt/archives/partial
+
 # So `cmake --preset ninja-llvm` finds the dependencies out of the box.
 ENV CMAKE_PREFIX_PATH="/deps/linux-clang23-x86_64" \
     OM_DEPS_DIR="/deps/linux-clang23-x86_64"
